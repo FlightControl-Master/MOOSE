@@ -69,7 +69,7 @@ end
 function CLIENT:ClientGroup()
 --trace.f(self.ClassName)
 	local ReturnGroup = Group.getByName( self.ClientName )
-	if ReturnGroup and ReturnGroup::isExist() then
+	if ReturnGroup and ReturnGroup:isExist() then
 		return ReturnGroup
 	else
 		return nil
