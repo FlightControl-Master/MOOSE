@@ -1,0 +1,178 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>MOOSE</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>MOOSE</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Context">Context </a></li>
+<li><a href="#Currently_supported_functions">Currently supported functions </a></li>
+<li><a href="#Installation">Installation </a></li>
+<li><a href="#What_has_changed_">What has changed? </a></li>
+</ul>
+
+
+<h2>Topics</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><strong>manual</strong></li>
+</ul>
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../modules/routines.html">routines</a></li>
+  <li><a href="../modules/trace.html">trace</a></li>
+</ul>
+<h2>Scripts</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
+</ul>
+<h2>Classes</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../classes/BASE.html">BASE</a></li>
+  <li><a href="../classes/CARGO.html">CARGO</a></li>
+  <li><a href="../classes/CLEANUP.html">CLEANUP</a></li>
+  <li><a href="../classes/CLIENT.html">CLIENT</a></li>
+  <li><a href="../classes/DATABASE.html">DATABASE</a></li>
+  <li><a href="../classes/DEPLOYTASK.html">DEPLOYTASK</a></li>
+  <li><a href="../classes/DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+  <li><a href="../classes/DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+  <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+  <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+  <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/MENU.html">MENU</a></li>
+  <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
+  <li><a href="../classes/MISSION.html">MISSION</a></li>
+  <li><a href="../classes/MOVEMENT.html">MOVEMENT</a></li>
+  <li><a href="../classes/NOTASK.html">NOTASK</a></li>
+  <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
+  <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
+  <li><a href="../classes/SEAD.html">SEAD</a></li>
+  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
+  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
+  <li><a href="../classes/SPAWN.html">SPAWN</a></li>
+  <li><a href="../classes/STAGE.html">STAGE</a></li>
+  <li><a href="../classes/TASK.html">TASK</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+
+<h1>MOOSE Framework for Eagle Dynamics <a href="https://www.digitalcombatsimulator.com">DCS World</a></h1>
+
+<p><a name="Context"></a></p>
+<h2>Context</h2>
+<p><strong>MOOSE</strong> is a <strong>M</strong>ission <strong>O</strong>bject <strong>O</strong>riented <strong>S</strong>cripting <strong>E</strong>nvironment, and is meant for mission designers and mission hosters.
+It allows (will allow) to quickly setup complex missions using pre-scripted scenarios.
+In order to run missions using this framework, you will need to install the framework within your Eagle Dynamics program files folder.</p>
+
+<p>The goal of MOOSE is to allow mission designers to enhance their scripting with mission orchestration objects, which can be instantiated from defined classes within the framework.
+This will allow to write mission scripts with minimal code embedded. Of course, the richness of the framework will determine the richness of the misson scenarios.
+We can expect that MOOSE will evolve over time, as more missions will be designed within the framework.</p>
+
+<p><a name="Currently_supported_functions"></a></p>
+<h2>Currently supported functions</h2>
+<p>MOOSE contains currently the following mission design functions. The words in CAPITAL letters document the classes that can be used within MOOSE to accomplish these functions.</p>
+
+<ol>
+    <li><a href="../classes/SPAWN.html#">SPAWN</a>        Dynamic spawning and respawning of Groups with related functions.</li>
+    <li><a href="../classes/MOVEMENT.html#">MOVEMENT</a>    Keeps control over the amount of units driving around the battlefield simultaneously.</li>
+    <li><a href="../classes/CLEANUP.html#">CLEANUP</a>    Clean-Up zones with air units that crashed. Can be used to prevent airports blocking air traffic and ground control operations due to crashed units near the airfield.</li>
+    <li><a href="../classes/SEAD.html#">SEAD</a>        Enables the defenses for SAM sites. Mobile SAMs will evade fired anti-radiation missiles by shutting down their radars (for a while). If they are mobile, they will also drive away.</li>
+    <li><a href="../classes/MISSION.html#">MISSION</a>    Create Taskforces or Missions within a DCS Mission. A mission will consist of <a href="../classes/TASK.html#">TASK</a>s, and <a href="../classes/CLIENT.html#">CLIENT</a>s.</li>
+    <li><a href="../classes/TASK.html#">TASK</a>        Add tasks for the mission. There are many different tasks that can be given, by using the classes derived from TASK.</li>
+    <li><a href="../classes/DEPLOYTASK.html#">DEPLOYTASK</a>            Deploy Cargo within a zone.</li>
+    <li><a href="../classes/PICKUPTASK.html#">PICKUPTASK</a>            Pick-Up Cargo from a zone.</li>
+    <li><a href="../classes/GOHOMETASK.html#">GOHOMETASK</a>            Fly back home.</li>
+    <li><a href="../classes/DESTROYGROUPSTASK.html#">DESTROYGROUPSTASK</a>        Destroy Groups.</li>
+    <li><a href="../classes/DESTROYUNITTYPESTASK.html#">DESTROYUNITTYPESTASK</a>    Destroy Units by measuring their UNIT Type.</li>
+    <li><a href="../classes/DESTROYRADARSTASK.html#">DESTROYRADARSTASK</a>        Destroy Radars of SAM Groups.</li>
+    <li><a href="../classes/SLINGLOADHOOKTASK.html#">SLINGLOADHOOKTASK</a>        Hook-Up Cargo within a zone and sling-load it outside of the zone.</li>
+    <li><a href="../classes/SLINGLOADUNHOOKTASK.html#">SLINGLOADUNHOOKTASK</a>    Sling-load Cargo to a zone and Un-Hook the Cargo within the zone.</li>
+    <li><a href="../classes/CLIENT.html#">CLIENT</a>    Registers a client within MOOSE.</li>
+    <li><a href="../classes/MESSAGE.html#">MESSAGE</a>    Send messages to <a href="../classes/CLIENT.html#">CLIENT</a>s.</li>
+    <li><a href="../classes/MENU.html#">MENU</a>        Menu System.</li>
+</ol>
+
+<p><a name="Installation"></a></p>
+<h2>Installation</h2>
+<p>The installation of the MOOSE framework is straightforward.</p>
+
+<ol>
+    <li><p>Extract MOOSE.zip. You can do this quickly by right clicking the MOOSE.zip file, and select "Extract All".</p></li>
+    <li><p>The extraction will add a directory within the Scripts directory of the Eagle Dynamics DCS world installation.
+    Example, the Scripts directory of my DCS World installation folder is C:\Program Files\Eagle Dynamics\DCS World\Scripts</p></li>
+    <li><p>Browse within the new MOOSE directory to the DCS_Script directory and run Install.bat as an administrator.
+    This will make a backup of the missionScripting.lua file and replace this with a new one.</p></li>
+</ol>
+
+<p>And you're done.</p>
+
+<p><a name="What_has_changed_"></a></p>
+<h2>What has changed?</h2>
+
+<p>Not much. The missionscripting.lua file has been enhanced with the following code:</p>
+
+<hr/>
+
+<pre>
+Include = {}
+
+Include.LoadPath = <span class="string">'Scripts/MOOSE'</span>
+Include.Files = {}
+
+Include.File = <span class="keyword">function</span>( IncludeFile )
+    <span class="keyword">if</span> <span class="keyword">not</span> Include.Files[ IncludeFile ] <span class="keyword">then</span>
+        Include.Files[IncludeFile] = IncludeFile
+        <span class="global">dofile</span>( Include.LoadPath .. <span class="string">"/"</span> .. IncludeFile .. <span class="string">".lua"</span> )
+        env.info( <span class="string">"Include:"</span> .. IncludeFile .. <span class="string">" loaded."</span> )
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+Include.File( <span class="string">"Database"</span> )
+Include.File( <span class="string">"StatHandler"</span> )
+</pre>
+
+<hr/>
+
+<p>This code allows for the inclusion of the MOOSE framework, and this now becomes part of your DCS World Simulation Engine.
+Missions designed with the MOOSE framework will now run.</p>
+
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

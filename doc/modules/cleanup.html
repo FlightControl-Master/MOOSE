@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>MOOSE</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>MOOSE</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><strong>cleanup</strong></li>
+  <li><a href="../modules/routines.html">routines</a></li>
+  <li><a href="../modules/trace.html">trace</a></li>
+  <li><a href="../modules/routines.html">routines</a></li>
+</ul>
+<h2>Scripts</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
+</ul>
+<h2>Classes</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../classes/BASE.html">BASE</a></li>
+  <li><a href="../classes/CARGO.html">CARGO</a></li>
+  <li><a href="../classes/CLIENT.html">CLIENT</a></li>
+  <li><a href="../classes/DATABASE.html">DATABASE</a></li>
+  <li><a href="../classes/DEPLOYTASK.html">DEPLOYTASK</a></li>
+  <li><a href="../classes/DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+  <li><a href="../classes/DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+  <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+  <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+  <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/MENU.html">MENU</a></li>
+  <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
+  <li><a href="../classes/MISSION.html">MISSION</a></li>
+  <li><a href="../classes/MOVEMENT.html">MOVEMENT</a></li>
+  <li><a href="../classes/NOTASK.html">NOTASK</a></li>
+  <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
+  <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
+  <li><a href="../classes/SEAD.html">SEAD</a></li>
+  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
+  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
+  <li><a href="../classes/SPAWN.html">SPAWN</a></li>
+  <li><a href="../classes/STAGE.html">STAGE</a></li>
+  <li><a href="../classes/TASK.html">TASK</a></li>
+  <li><a href="../classes/DATABASE.html">DATABASE</a></li>
+  <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../topics/manual.md.html">manual</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>cleanup</code></h1>
+<p>CLEANUP will keep (a) CleanUp Zone(s) clean.</p>
+<p> This class can be used to KEEP airbases or farps clean (note the word keep here, it cannot destroy units that are already dead).
+ The CleanUp class works with 2 validation logic compontents:
+ * EVENT validation: An event detection to intercept HIT events, upon which a validation of units CLEANUP CONDITIONS are applied. Once a unit is HIT, it is registered in a TIMED validation logic.
+ * TIMED validation: Units registered in a TIMED validation, are repeatedly validated of certain CLEANUP CONDITIONS.
+ If the CLEANUP CONDITIONS apply, the unit will be destroyed, and the group will be destroyed.
+ * It does not clean the zone, it tries to keep it clean by destroying units or groups before they explode or crash into the ground.
+ * For airplanes or helicopters, when in the CleanUpZone:
+ ** When the unit is airborne, and it is HIT ( by a weapon or a crash of another unit ), CLEANUP will destroy the unit or group when the health of the unit reaches an AIRBORNE HEALTH LIMIT. </p>
+
+<pre>
+When the unit is HIT, it will register the unit <span class="keyword">for</span> further repeated health monitoring, <span class="keyword">until</span>:
+</pre>
+
+<p> <strong>* the unit's health is beyond the an AIRBORNE HEALTH LIMIT
+ *</strong> until the height of the unit is below the safety zone to prevent it from crashing.
+ <em>* When the unit is not airborne, and it is HIT, it will be registered
+ *</em> When the unit is </p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:New">CLEANUP:New (ZoneNames, TimeInterval)</a></td>
+	<td class="summary">Creates the main object which is handling the cleaning of the debris within the given Zone Names.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:_ExecuteDeadEvents">CLEANUP:_ExecuteDeadEvents (CleanUpUnit)</a></td>
+	<td class="summary">This function is required, and used a non-documented feature.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:_CheckLife">CLEANUP:_CheckLife (the)</a></td>
+	<td class="summary">Measures the life of a Unit using the LifeLimit treshold.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:_CleanUnit">CLEANUP:_CleanUnit (CleanUpUnit)</a></td>
+	<td class="summary">Cleans a Group from the DCSRTE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:_EventAddForCleanUp">CLEANUP:_EventAddForCleanUp (event)</a></td>
+	<td class="summary">Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given ZoneNames.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLEANUP:_Scheduler">CLEANUP:_Scheduler ()</a></td>
+	<td class="summary">At the defined time interval, CleanUp the Groups within the CleanUpList.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "CLEANUP:New"></a>
+    <strong>CLEANUP:New (ZoneNames, TimeInterval)</strong>
+    </dt>
+    <dd>
+    Creates the main object which is handling the cleaning of the debris within the given Zone Names.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">ZoneNames</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table{string,...}</a> or <a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
+        </li>
+        <li><span class="parameter">TimeInterval</span>
+            <span class="types">optional <span class="type">number</span></span>
+         is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">CLEANUP</span></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Clean these Zones.
+</span> CleanUpAirports = CLEANUP:New( { <span class="string">'CLEAN Tbilisi'</span>, <span class="string">'CLEAN Kutaisi'</span> }, <span class="number">150</span> )
+ <span class="keyword">or</span>
+ CleanUpTbilisi = CLEANUP:New( <span class="string">'CLEAN Tbilisi'</span>, <span class="number">150</span> )
+ CleanUpKutaisi = CLEANUP:New( <span class="string">'CLEAN Kutaisi'</span>, <span class="number">600</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "CLEANUP:_ExecuteDeadEvents"></a>
+    <strong>CLEANUP:_ExecuteDeadEvents (CleanUpUnit)</strong>
+    </dt>
+    <dd>
+    This function is required, and used a non-documented feature.  The function world.onEvent will loop through all registered event handlers with the event structure given.
+ This is required to be done because the method Group.destroy(Group) does not generate the S<em>EVENT</em>DEAD through all the registered event handlers.
+ As such, the other classes using the S<em>EVENT</em>DEAD will get confused if this event is not catched properly...
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">CleanUpUnit</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLEANUP:_CheckLife"></a>
+    <strong>CLEANUP:_CheckLife (the)</strong>
+    </dt>
+    <dd>
+    Measures the life of a Unit using the LifeLimit treshold.  Returns true if Group has a life lower than the treshold, false if the life is still okay.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">the</span>
+            <span class="types"><span class="type">Group</span></span>
+         Group to be cleaned.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">bool</span></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLEANUP:_CleanUnit"></a>
+    <strong>CLEANUP:_CleanUnit (CleanUpUnit)</strong>
+    </dt>
+    <dd>
+    Cleans a Group from the DCSRTE.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">CleanUpUnit</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLEANUP:_EventAddForCleanUp"></a>
+    <strong>CLEANUP:_EventAddForCleanUp (event)</strong>
+    </dt>
+    <dd>
+    Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given ZoneNames.  If this is the case, add the Group to the CLEANUP List.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLEANUP:_Scheduler"></a>
+    <strong>CLEANUP:_Scheduler ()</strong>
+    </dt>
+    <dd>
+    At the defined time interval, CleanUp the Groups within the CleanUpList.
+
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-02-11 11:12:10 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

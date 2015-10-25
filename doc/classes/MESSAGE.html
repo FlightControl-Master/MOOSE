@@ -1,0 +1,351 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>MOOSE</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>MOOSE</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Methods">Methods</a></li>
+<li><a href="#Class_MESSAGEQUEUE">Class MESSAGEQUEUE </a></li>
+</ul>
+
+
+<h2>Classes</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../classes/BASE.html">BASE</a></li>
+  <li><a href="../classes/CARGO.html">CARGO</a></li>
+  <li><a href="../classes/CLEANUP.html">CLEANUP</a></li>
+  <li><a href="../classes/CLIENT.html">CLIENT</a></li>
+  <li><a href="../classes/DATABASE.html">DATABASE</a></li>
+  <li><a href="../classes/DEPLOYTASK.html">DEPLOYTASK</a></li>
+  <li><a href="../classes/DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+  <li><a href="../classes/DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+  <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+  <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+  <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/MENU.html">MENU</a></li>
+  <li><strong>MESSAGE</strong></li>
+  <li><a href="../classes/MISSION.html">MISSION</a></li>
+  <li><a href="../classes/MOVEMENT.html">MOVEMENT</a></li>
+  <li><a href="../classes/NOTASK.html">NOTASK</a></li>
+  <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
+  <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
+  <li><a href="../classes/SEAD.html">SEAD</a></li>
+  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
+  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
+  <li><a href="../classes/SPAWN.html">SPAWN</a></li>
+  <li><a href="../classes/STAGE.html">STAGE</a></li>
+  <li><a href="../classes/TASK.html">TASK</a></li>
+</ul>
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../modules/routines.html">routines</a></li>
+  <li><a href="../modules/trace.html">trace</a></li>
+</ul>
+<h2>Scripts</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../topics/manual.md.html">manual</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Class <code>MESSAGE</code></h1>
+<p>Message System to display Messages for Clients and Coalitions or All.</p>
+<p> Messages are grouped on the display panel per Category to improve readability for the players.
+ Messages are shown on the display panel for an amount of seconds, and will then disappear.
+ Messages are identified by an ID. The messages with the same ID belonging to the same category will be overwritten if they were still being displayed on the display panel.
+ Messages are created with MESSAGE:<a href="../classes/MESSAGE.html#MESSAGE:New">New</a>().
+ Messages are sent to Clients with MESSAGE:<a href="../classes/MESSAGE.html#MESSAGE:ToClient">ToClient</a>().
+ Messages are sent to Coalitions with MESSAGE:<a href="../classes/MESSAGE.html#MESSAGE:ToCoalition">ToCoalition</a>().
+ Messages are sent to All Players with MESSAGE:<a href="../classes/MESSAGE.html#MESSAGE:ToAll">ToAll</a>().</p>
+
+
+<h2><a href="#Methods">Methods</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:New">MESSAGE:New (MessageText, MessageCategory, MessageDuration, MessageID)</a></td>
+	<td class="summary">Creates a new MESSAGE object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:ToClient">MESSAGE:ToClient (Client)</a></td>
+	<td class="summary">Sends a MESSAGE to a Client Group.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:ToCoalition">MESSAGE:ToCoalition (CoalitionSide)</a></td>
+	<td class="summary">Sends a MESSAGE to a Coalition.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:ToAll">MESSAGE:ToAll ()</a></td>
+	<td class="summary">Sends a MESSAGE to all players.</td>
+	</tr>
+</table>
+<h2><a href="#Class_MESSAGEQUEUE">Class MESSAGEQUEUE </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGEQUEUE:_DisplayMessages">MESSAGEQUEUE:_DisplayMessages ()</a></td>
+	<td class="summary">This function is called automatically by the MESSAGEQUEUE scheduler.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE._MessageQueue">MESSAGE._MessageQueue</a></td>
+	<td class="summary">The _MessageQueue object is created when the MESSAGE class module is loaded.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Methods"></a>Methods</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "MESSAGE:New"></a>
+    <strong>MESSAGE:New (MessageText, MessageCategory, MessageDuration, MessageID)</strong>
+    </dt>
+    <dd>
+    Creates a new MESSAGE object.  Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions <a href="../classes/MESSAGE.html#MESSAGE:ToClient">ToClient</a> or <a href="../classes/MESSAGE.html#MESSAGE:ToCoalition">ToCoalition</a> or <a href="../classes/MESSAGE.html#MESSAGE:ToAll">ToAll</a> to send these Messages to the respective recipients.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">MessageText</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is the text of the Message.
+        </li>
+        <li><span class="parameter">MessageCategory</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
+        </li>
+        <li><span class="parameter">MessageDuration</span>
+            <span class="types"><span class="type">number</span></span>
+         is a number in seconds of how long the MESSAGE should be shown on the display panel.
+        </li>
+        <li><span class="parameter">MessageID</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is a string expressing the ID of the Message.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Create a series of new Messages.
+</span> <span class="comment">-- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
+</span> <span class="comment">-- MessageRED is meant to be sent to the RED players only, for 10 seconds, and is classified as "End of Mission", with ID "Win".
+</span> <span class="comment">-- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
+</span> <span class="comment">-- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
+</span> MessageAll = MESSAGE:New( <span class="string">"To all Players: BLUE has won! Each player of BLUE wins 50 points!"</span>, <span class="string">"End of Mission"</span>, <span class="number">25</span>, <span class="string">"Win"</span> )
+ MessageRED = MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageClient1 = MESSAGE:New( <span class="string">"Congratulations, you've just hit a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageClient2 = MESSAGE:New( <span class="string">"Congratulations, you've just killed a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "MESSAGE:ToClient"></a>
+    <strong>MESSAGE:ToClient (Client)</strong>
+    </dt>
+    <dd>
+    Sends a MESSAGE to a Client Group.  Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">Client</span>
+            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
+         is the Group of the Client.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Send the 2 messages created with the <a href="../classes/MESSAGE.html#MESSAGE:New">New</a> method to the Client Group.
+</span> <span class="comment">-- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
+</span> ClientGroup = Group.getByName( <span class="string">"ClientGroup"</span> )
+
+ MessageClient1 = MESSAGE:New( <span class="string">"Congratulations, you've just hit a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToClient( ClientGroup )
+ MessageClient2 = MESSAGE:New( <span class="string">"Congratulations, you've just killed a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToClient( ClientGroup )
+ <span class="keyword">or</span>
+ MESSAGE:New( <span class="string">"Congratulations, you've just hit a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToClient( ClientGroup )
+ MESSAGE:New( <span class="string">"Congratulations, you've just killed a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToClient( ClientGroup )
+ <span class="keyword">or</span>
+ MessageClient1 = MESSAGE:New( <span class="string">"Congratulations, you've just hit a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageClient2 = MESSAGE:New( <span class="string">"Congratulations, you've just killed a target"</span>, <span class="string">"Score"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageClient1:ToClient( ClientGroup )
+ MessageClient2:ToClient( ClientGroup )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "MESSAGE:ToCoalition"></a>
+    <strong>MESSAGE:ToCoalition (CoalitionSide)</strong>
+    </dt>
+    <dd>
+    Sends a MESSAGE to a Coalition.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">CoalitionSide</span>
+         needs to be filled out by the defined structure of the standard scripting engine ???.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Send a message created with the <a href="../classes/MESSAGE.html#MESSAGE:New">New</a> method to the RED coalition.
+</span> MessageRED = MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToCoalition( coalition.side.RED )
+ <span class="keyword">or</span>
+ MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToCoalition( coalition.side.RED )
+ <span class="keyword">or</span>
+ MessageRED = MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageRED:ToCoalition( coalition.side.RED )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "MESSAGE:ToAll"></a>
+    <strong>MESSAGE:ToAll ()</strong>
+    </dt>
+    <dd>
+    Sends a MESSAGE to all players.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Send a message created to all players.
+</span> MessageAll = MESSAGE:New( <span class="string">"To all Players: BLUE has won! Each player of BLUE wins 50 points!"</span>, <span class="string">"End of Mission"</span>, <span class="number">25</span>, <span class="string">"Win"</span> ):ToAll()
+ <span class="keyword">or</span>
+ MESSAGE:New( <span class="string">"To all Players: BLUE has won! Each player of BLUE wins 50 points!"</span>, <span class="string">"End of Mission"</span>, <span class="number">25</span>, <span class="string">"Win"</span> ):ToAll()
+ <span class="keyword">or</span>
+ MessageAll = MESSAGE:New( <span class="string">"To all Players: BLUE has won! Each player of BLUE wins 50 points!"</span>, <span class="string">"End of Mission"</span>, <span class="number">25</span>, <span class="string">"Win"</span> )
+ MessageAll:ToAll()</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2><a name="Class_MESSAGEQUEUE"></a>Class MESSAGEQUEUE </h2>
+
+        MESSAGEQUEUE
+    <dl class="function">
+    <dt>
+    <a name = "MESSAGEQUEUE:_DisplayMessages"></a>
+    <strong>MESSAGEQUEUE:_DisplayMessages ()</strong>
+    </dt>
+    <dd>
+    This function is called automatically by the MESSAGEQUEUE scheduler.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "MESSAGE._MessageQueue"></a>
+    <strong>MESSAGE._MessageQueue</strong>
+    </dt>
+    <dd>
+    The _MessageQueue object is created when the MESSAGE class module is loaded.
+
+
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

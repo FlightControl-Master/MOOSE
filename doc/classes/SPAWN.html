@@ -1,0 +1,995 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>MOOSE</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>MOOSE</h1>
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Private">Private </a></li>
+<li><a href="#Events">Events </a></li>
+<li><a href="#Scheduled">Scheduled </a></li>
+<li><a href="#Public">Public </a></li>
+</ul>
+
+
+<h2>Classes</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../classes/BASE.html">BASE</a></li>
+  <li><a href="../classes/CARGO.html">CARGO</a></li>
+  <li><a href="../classes/CLEANUP.html">CLEANUP</a></li>
+  <li><a href="../classes/CLIENT.html">CLIENT</a></li>
+  <li><a href="../classes/DATABASE.html">DATABASE</a></li>
+  <li><a href="../classes/DEPLOYTASK.html">DEPLOYTASK</a></li>
+  <li><a href="../classes/DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+  <li><a href="../classes/DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+  <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+  <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+  <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/MENU.html">MENU</a></li>
+  <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
+  <li><a href="../classes/MISSION.html">MISSION</a></li>
+  <li><a href="../classes/MOVEMENT.html">MOVEMENT</a></li>
+  <li><a href="../classes/NOTASK.html">NOTASK</a></li>
+  <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
+  <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
+  <li><a href="../classes/SEAD.html">SEAD</a></li>
+  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
+  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
+  <li><strong>SPAWN</strong></li>
+  <li><a href="../classes/STAGE.html">STAGE</a></li>
+  <li><a href="../classes/TASK.html">TASK</a></li>
+</ul>
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../modules/routines.html">routines</a></li>
+  <li><a href="../modules/trace.html">trace</a></li>
+</ul>
+<h2>Scripts</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
+</ul>
+<h2>Topics</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="../topics/manual.md.html">manual</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Class <code>SPAWN</code></h1>
+<p>Dynamic spawning of Groups and Units.</p>
+<p>
+
+</p>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Author</strong>: Flightcontrol</li>
+    </ul>
+
+
+<h2><a href="#Private">Private </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_GetGroupCategoryID">SPAWN:_GetGroupCategoryID (SpawnPrefix)</a></td>
+	<td class="summary">Gets the CategoryID of the Group with the given SpawnPrefix</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_GetGroupCoalitionID">SPAWN:_GetGroupCoalitionID (SpawnPrefix)</a></td>
+	<td class="summary">Gets the CoalitionID of the Group with the given SpawnPrefix</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_GetGroupCountryID">SPAWN:_GetGroupCountryID (SpawnPrefix)</a></td>
+	<td class="summary">Gets the CountryID of the Group with the given SpawnPrefix</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_GetTemplate">SPAWN:_GetTemplate (SpawnPrefix)</a></td>
+	<td class="summary">Gets the Group Template from the ME environment definition.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_Prepare">SPAWN:_Prepare (SpawnIncrement)</a></td>
+	<td class="summary">Prepares the new Group Template before Spawning.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_RandomizeRoute">SPAWN:_RandomizeRoute (SpawnTemplate)</a></td>
+	<td class="summary">Will randomize the route of the Group Template.</td>
+	</tr>
+</table>
+<h2><a href="#Events">Events </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:OnBirth">SPAWN:OnBirth (event)</a></td>
+	<td class="summary">Obscolete</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:OnDeadOrCrash">SPAWN:OnDeadOrCrash (event)</a></td>
+	<td class="summary">Obscolete</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:OnLand">SPAWN:OnLand (event)</a></td>
+	<td class="summary">Will detect AIR Units landing...</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:OnTakeOff">SPAWN:OnTakeOff (event)</a></td>
+	<td class="summary">Will detect AIR Units taking off...</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:OnEngineShutDown">SPAWN:OnEngineShutDown (event)</a></td>
+	<td class="summary">Will detect AIR Units shutting down their engines ...</td>
+	</tr>
+</table>
+<h2><a href="#Scheduled">Scheduled </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:_Scheduler">SPAWN:_Scheduler ()</a></td>
+	<td class="summary">This function is called automatically by the Spawning scheduler.</td>
+	</tr>
+</table>
+<h2><a href="#Public">Public </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:New">SPAWN:New (SpawnPrefix)</a></td>
+	<td class="summary">Creates the main object to spawn a Group defined in the DCS ME.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:RandomizeRoute">SPAWN:RandomizeRoute (SpawnStartPoint, SpawnEndPoint, SpawnRadius)</a></td>
+	<td class="summary">Randomizes a defined route of the Template Group in the ME when the Group is Spawned.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:Schedule">SPAWN:Schedule (SpawnTime, SpawnTimeVariation)</a></td>
+	<td class="summary">SPAWNs a new Group within varying time intervals.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:ScheduleStart">SPAWN:ScheduleStart ()</a></td>
+	<td class="summary">Will start the SPAWNing timers.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:ScheduleStop">SPAWN:ScheduleStop ()</a></td>
+	<td class="summary">Will stop the scheduled SPAWNing activity.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:Limit">SPAWN:Limit (SpawnMaxGroupsAlive, SpawnMaxGroups)</a></td>
+	<td class="summary">Limits the Maximum amount of Units to be alive, and the maximum amount of Groups to be SPAWNed within the DCS World run-time environment.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:RandomizeTemplate">SPAWN:RandomizeTemplate (SpawnPrefixTable)</a></td>
+	<td class="summary">This function is rather complicated to understand.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:Repeat">SPAWN:Repeat ()</a></td>
+	<td class="summary">When a Group got SPAWNed, it has a life within the DCSRTE.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:RepeatOnLanding">SPAWN:RepeatOnLanding ()</a></td>
+	<td class="summary">Same as the @{Repeat) method.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:RepeatOnEngineShutDown">SPAWN:RepeatOnEngineShutDown ()</a></td>
+	<td class="summary">Same as the @{Repeat) method, but now the Group will respawn after its engines have shut down.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:Spawn">SPAWN:Spawn ()</a></td>
+	<td class="summary">Will SPAWN a Group whenever you want to do this.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:ReSpawn">SPAWN:ReSpawn (SpawnGroupName)</a></td>
+	<td class="summary">Will Re-SPAWN a Group based on a given GroupName.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:SpawnUncontrolled">SPAWN:SpawnUncontrolled ()</a></td>
+	<td class="summary">Will SPAWN a Group whenever you want to do this, but for AIR Groups only to be applied, and will SPAWN the Group in Uncontrolled mode...</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:FromCarrier">SPAWN:FromCarrier (CarrierGroup, TargetZonePrefix, NewGroupName, LateActivate)</a></td>
+	<td class="summary">Will SPAWN a Group from a Carrier.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#SPAWN:InZone">SPAWN:InZone (ZonePrefix)</a></td>
+	<td class="summary">Will SPAWN a Group within a given ZoneName.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Private"></a>Private </h2>
+
+
+    <dl class="function">
+    <dt>
+    <a name = "SPAWN:_GetGroupCategoryID"></a>
+    <strong>SPAWN:_GetGroupCategoryID (SpawnPrefix)</strong>
+    </dt>
+    <dd>
+    Gets the CategoryID of the Group with the given SpawnPrefix
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefix</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:_GetGroupCoalitionID"></a>
+    <strong>SPAWN:_GetGroupCoalitionID (SpawnPrefix)</strong>
+    </dt>
+    <dd>
+    Gets the CoalitionID of the Group with the given SpawnPrefix
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefix</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:_GetGroupCountryID"></a>
+    <strong>SPAWN:_GetGroupCountryID (SpawnPrefix)</strong>
+    </dt>
+    <dd>
+    Gets the CountryID of the Group with the given SpawnPrefix
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefix</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:_GetTemplate"></a>
+    <strong>SPAWN:_GetTemplate (SpawnPrefix)</strong>
+    </dt>
+    <dd>
+    Gets the Group Template from the ME environment definition.
+ This method used the <a href="../classes/DATABASE.html#">DATABASE</a> object, which contains ALL initial and new SPAWNed object in MOOSE.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefix</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:_Prepare"></a>
+    <strong>SPAWN:_Prepare (SpawnIncrement)</strong>
+    </dt>
+    <dd>
+    Prepares the new Group Template before Spawning.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnIncrement</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:_RandomizeRoute"></a>
+    <strong>SPAWN:_RandomizeRoute (SpawnTemplate)</strong>
+    </dt>
+    <dd>
+    Will randomize the route of the Group Template.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnTemplate</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="Events"></a>Events </h2>
+
+
+    <dl class="function">
+    <dt>
+    <a name = "SPAWN:OnBirth"></a>
+    <strong>SPAWN:OnBirth (event)</strong>
+    </dt>
+    <dd>
+    Obscolete
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:OnDeadOrCrash"></a>
+    <strong>SPAWN:OnDeadOrCrash (event)</strong>
+    </dt>
+    <dd>
+    Obscolete
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:OnLand"></a>
+    <strong>SPAWN:OnLand (event)</strong>
+    </dt>
+    <dd>
+    Will detect AIR Units landing...  When the event takes place, the SPAWNed Group is registered as landed.
+ This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:OnTakeOff"></a>
+    <strong>SPAWN:OnTakeOff (event)</strong>
+    </dt>
+    <dd>
+    Will detect AIR Units taking off...  When the event takes place, the SPAWNed Group is registered as airborne...
+ This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:OnEngineShutDown"></a>
+    <strong>SPAWN:OnEngineShutDown (event)</strong>
+    </dt>
+    <dd>
+    Will detect AIR Units shutting down their engines ...
+ When the event takes place, and the method <a href="../classes/SPAWN.html#SPAWN:RepeatOnEngineShutDown">RepeatOnEngineShutDown</a> was called, the SPAWNed Group will Re-SPAWN.
+ But only when the Unit was registered to have landed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">event</span>
+
+
+
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <li><a href="../classes/SPAWN.html#SPAWN:OnTakeOff">OnTakeOff</a></li>
+         <li><a href="../classes/SPAWN.html#SPAWN:OnLand">OnLand</a></li>
+    </ul>
+
+
+</dd>
+</dl>
+    <h2><a name="Scheduled"></a>Scheduled </h2>
+
+
+    <dl class="function">
+    <dt>
+    <a name = "SPAWN:_Scheduler"></a>
+    <strong>SPAWN:_Scheduler ()</strong>
+    </dt>
+    <dd>
+    This function is called automatically by the Spawning scheduler.
+ It is the internal worker method SPAWNing new Groups on the defined time intervals.
+
+
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="Public"></a>Public </h2>
+
+
+    <dl class="function">
+    <dt>
+    <a name = "SPAWN:New"></a>
+    <strong>SPAWN:New (SpawnPrefix)</strong>
+    </dt>
+    <dd>
+
+<p>Creates the main object to spawn a Group defined in the DCS ME.
+ Spawned Groups and Units will follow the following naming convention within the DCS World run-time environment:</p>
+<pre><code>   Groups will have the name SpawnPrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
+   Units will have the name SpawnPrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
+</code></pre>
+
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefix</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnPrefix name should not contain any # character.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- NATO helicopters engaging in the battle field.
+</span> Spawn_BE_KA50 = SPAWN:New( <span class="string">'BE KA-50@RAMP-Ground Defense'</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:RandomizeRoute"></a>
+    <strong>SPAWN:RandomizeRoute (SpawnStartPoint, SpawnEndPoint, SpawnRadius)</strong>
+    </dt>
+    <dd>
+    Randomizes a defined route of the Template Group in the ME when the Group is Spawned.  This is very useful to define extra variation in the DCS World run-time environment of the behaviour of Groups like Ground Units, Ships, Planes, Helicopters.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnStartPoint</span>
+            <span class="types"><span class="type">number</span></span>
+         is the waypoint where the randomization begins. Note that the StartPoint = 0 equals the point where the Group is Spawned. This parameter is useful to avoid randomization to start from the first waypoint, but a bit further down the route...
+        </li>
+        <li><span class="parameter">SpawnEndPoint</span>
+            <span class="types"><span class="type">number</span></span>
+         is the waypoint where the randomization ends. this parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
+        </li>
+        <li><span class="parameter">SpawnRadius</span>
+            <span class="types"><span class="type">number</span></span>
+         is the radius in meters, that defines the concentric circle in which the randomization of the new waypoint will take place, with the original waypoint located in the middle...
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- NATO helicopters engaging in the battle field.
+</span> <span class="comment">-- The KA-50 has waypoints SP, 1, 2, 3, 4, DP.
+</span> <span class="comment">-- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new ${SPAWN} of the helicopter.
+</span> <span class="comment">-- The randomization of waypoint 2 and 3 will take place within a diameter of 4000 meters.
+</span> Spawn_BE_KA50 = SPAWN:New( <span class="string">'BE KA-50@RAMP-Ground Defense'</span> ):RandomizeRoute( <span class="number">2</span>, <span class="number">2</span>, <span class="number">2000</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:Schedule"></a>
+    <strong>SPAWN:Schedule (SpawnTime, SpawnTimeVariation)</strong>
+    </dt>
+    <dd>
+    SPAWNs a new Group within varying time intervals.  This is useful if you want to have continuity within your missions of certain (AI) Groups to be present (alive) within your missions.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnTime</span>
+            <span class="types"><span class="type">number</span></span>
+         is the time interval defined in seconds between each new SPAWN of new Groups.
+        </li>
+        <li><span class="parameter">SpawnTimeVariation</span>
+            <span class="types"><span class="type">number</span></span>
+         is the variation to be applied on the defined time interval between each new SPAWN. The variation is defined as a value between 0 and 1, which expresses the %-tage of variation to be applied as the low and high time interval boundaries. Between these boundaries a new time interval will be applied. See usage.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- NATO helicopters engaging in the battle field.
+</span> <span class="comment">-- The time interval is set to SPAWN new helicopters between each 600 seconds, with a time variation of 50%.
+</span> <span class="comment">-- The time variation in this case will be between 450 seconds and 750 seconds.
+</span> <span class="comment">-- This is calculated as follows:
+</span> <span class="comment">--      Low limit:   600 * ( 1 - 0.5 / 2 ) = 450
+</span> <span class="comment">--      High limit:  600 * ( 1 + 0.5 / 2 ) = 750
+</span> <span class="comment">-- Between these two values, a random amount of seconds will be choosen for each new SPAWN of the helicopters.
+</span> Spawn_BE_KA50 = SPAWN:New( <span class="string">'BE KA-50@RAMP-Ground Defense'</span> ):Schedule( <span class="number">600</span>, <span class="number">0.5</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:ScheduleStart"></a>
+    <strong>SPAWN:ScheduleStart ()</strong>
+    </dt>
+    <dd>
+    Will start the SPAWNing timers.
+ This function is called automatically when <a href="../classes/SPAWN.html#SPAWN:Schedule">Schedule</a> is called.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:ScheduleStop"></a>
+    <strong>SPAWN:ScheduleStop ()</strong>
+    </dt>
+    <dd>
+    Will stop the scheduled SPAWNing activity.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:Limit"></a>
+    <strong>SPAWN:Limit (SpawnMaxGroupsAlive, SpawnMaxGroups)</strong>
+    </dt>
+    <dd>
+    Limits the Maximum amount of Units to be alive, and the maximum amount of Groups to be SPAWNed within the DCS World run-time environment.
+ Note that this method is exceptionally important to balance the amount of Units alive within the DCSRTE and the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
+ If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnMaxGroupsAlive</span>
+            <span class="types"><span class="type">number</span></span>
+         is the Maximum amount of Units to be alive. When there are more Units alive in the DCSRTE of SpawnPrefix, then no new SPAWN will happen of the Group, until some of these Units will be destroyed.
+        </li>
+        <li><span class="parameter">SpawnMaxGroups</span>
+            <span class="types"><span class="type">number</span></span>
+
+<p> is the Maximum amount of Groups that can be SPAWNed from SpawnPrefix. When there are more Groups alive in the DCSRTE of SpawnPrefix, then no more SPAWNs will happen of the Group. This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. </p>
+<pre><code>    This parameter accepts the value 0, which expresses no Group count limits.
+</code></pre>
+
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- NATO helicopters engaging in the battle field.
+</span> <span class="comment">-- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
+</span> <span class="comment">-- There will be maximum 24 groups SPAWNed during the whole mission lifetime.
+</span> Spawn_BE_KA50 = SPAWN:New( <span class="string">'BE KA-50@RAMP-Ground Defense'</span> ):Limit( <span class="number">2</span>, <span class="number">24</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:RandomizeTemplate"></a>
+    <strong>SPAWN:RandomizeTemplate (SpawnPrefixTable)</strong>
+    </dt>
+    <dd>
+    This function is rather complicated to understand.  But I'll try to explain...
+ This function becomes useful when you need to SPAWN random types of Groups defined within the ME, but they all need to follow the same Template route and have the same SpawnPrefix name, then this method becomes very useful.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnPrefixTable</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.5">table{string,...}</a></span>
+         is a table with the names of the Groups defined within the ME (with late activatio on), from which on a new SPAWN of SpawnPrefix (the main Group name), a NEW Group will be choosen as the Group to be SPAWNed.
+ In other words, this method randomizes between a defined set of Groups the Group to be SPAWNed for each new SPAWN.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- NATO Tank Platoons invading Gori.
+</span> <span class="comment">-- Choose between 13 different 'US Tank Platoon' configurations for each new SPAWN the Group to be SPAWNed for the
+</span> <span class="comment">-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SpawnPrefixes.
+</span> <span class="comment">-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and
+</span> <span class="comment">-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be SPAWNed during the whole mission.
+</span> Spawn_US_Platoon = { <span class="string">'US Tank Platoon 1'</span>, <span class="string">'US Tank Platoon 2'</span>, <span class="string">'US Tank Platoon 3'</span>, <span class="string">'US Tank Platoon 4'</span>, <span class="string">'US Tank Platoon 5'</span>,
+                      <span class="string">'US Tank Platoon 6'</span>, <span class="string">'US Tank Platoon 7'</span>, <span class="string">'US Tank Platoon 8'</span>, <span class="string">'US Tank Platoon 9'</span>, <span class="string">'US Tank Platoon 10'</span>,
+                      <span class="string">'US Tank Platoon 11'</span>, <span class="string">'US Tank Platoon 12'</span>, <span class="string">'US Tank Platoon 13'</span> }
+ Spawn_US_Platoon_Left = SPAWN:New( <span class="string">'US Tank Platoon Left'</span> ):Limit( <span class="number">12</span>, <span class="number">150</span> ):Schedule( <span class="number">200</span>, <span class="number">0.4</span> ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( <span class="number">3</span>, <span class="number">3</span>, <span class="number">2000</span> )
+ Spawn_US_Platoon_Middle = SPAWN:New( <span class="string">'US Tank Platoon Middle'</span> ):Limit( <span class="number">12</span>, <span class="number">150</span> ):Schedule( <span class="number">200</span>, <span class="number">0.4</span> ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( <span class="number">3</span>, <span class="number">3</span>, <span class="number">2000</span> )
+ Spawn_US_Platoon_Right = SPAWN:New( <span class="string">'US Tank Platoon Right'</span> ):Limit( <span class="number">12</span>, <span class="number">150</span> ):Schedule( <span class="number">200</span>, <span class="number">0.4</span> ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( <span class="number">3</span>, <span class="number">3</span>, <span class="number">2000</span> )</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:Repeat"></a>
+    <strong>SPAWN:Repeat ()</strong>
+    </dt>
+    <dd>
+    When a Group got SPAWNed, it has a life within the DCSRTE.  For planes and helicopters, when these Units go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the DCSRTE.
+ This function is used to Re-Spawn automatically (so no extra call is needed anymore) the same Group after it landed. This will enable a SPAWNed group to be Re-SPAWNed after it lands, until it is destroyed...
+ Note: When the Group is respawned, it will <a href="../classes/SPAWN.html#SPAWN:ReSpawn">ReSpawn</a> at the original airbase where it took off. So ensure that the paths for Groups that ReSpawn, always return to the orignal airbase.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- RU Su-34 - AI Ship Attack
+</span> <span class="comment">-- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically.
+</span> SpawnRU_SU34 = SPAWN:New( <span class="string">'TF1 RU Su-34 Krymsk@AI - Attack Ships'</span> ):Schedule( <span class="number">2</span>, <span class="number">3</span>, <span class="number">1800</span>, <span class="number">0.4</span> ):SpawnUncontrolled():RandomizeRoute( <span class="number">1</span>, <span class="number">1</span>, <span class="number">3000</span> ):RepeatOnEngineShutDown()</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "SPAWN:RepeatOnLanding"></a>
+    <strong>SPAWN:RepeatOnLanding ()</strong>
+    </dt>
+    <dd>
+    Same as the @{Repeat) method.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../classes/SPAWN.html#SPAWN:Repeat">Repeat</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:RepeatOnEngineShutDown"></a>
+    <strong>SPAWN:RepeatOnEngineShutDown ()</strong>
+    </dt>
+    <dd>
+    Same as the @{Repeat) method, but now the Group will respawn after its engines have shut down.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../classes/SPAWN.html#SPAWN:Repeat">Repeat</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:Spawn"></a>
+    <strong>SPAWN:Spawn ()</strong>
+    </dt>
+    <dd>
+    Will SPAWN a Group whenever you want to do this.
+ Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
+ Uses <a href="../classes/DATABASE.html#">DATABASE</a> global object defined in MOOSE.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:ReSpawn"></a>
+    <strong>SPAWN:ReSpawn (SpawnGroupName)</strong>
+    </dt>
+    <dd>
+    Will Re-SPAWN a Group based on a given GroupName.  The GroupName must be a group that is already alive within the DCSRTE and should have a Group Template defined in the ME (with Late Activation flag on).
+ Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">SpawnGroupName</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+
+
+
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+        Uses _Database global object defined in MOOSE.
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:SpawnUncontrolled"></a>
+    <strong>SPAWN:SpawnUncontrolled ()</strong>
+    </dt>
+    <dd>
+    Will SPAWN a Group whenever you want to do this, but for AIR Groups only to be applied, and will SPAWN the Group in Uncontrolled mode...  This will be similar to the Uncontrolled flag setting in the ME.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/SPAWN.html#">SPAWN</a></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:FromCarrier"></a>
+    <strong>SPAWN:FromCarrier (CarrierGroup, TargetZonePrefix, NewGroupName, LateActivate)</strong>
+    </dt>
+    <dd>
+    Will SPAWN a Group from a Carrier.  This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">CarrierGroup</span>
+            <span class="types"><span class="type">Group</span></span>
+         is the Group of the AIR unit or GROUND unit dropping or unloading other units.
+        </li>
+        <li><span class="parameter">TargetZonePrefix</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is the Prefix of the Zone defined in the ME where the Group should be moving to after drop.
+        </li>
+        <li><span class="parameter">NewGroupName</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         (forgot this).
+        </li>
+        <li><span class="parameter">LateActivate</span>
+            <span class="types"><span class="type">bool</span></span>
+         (optional) does the SPAWNing with Lateactivation on.
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "SPAWN:InZone"></a>
+    <strong>SPAWN:InZone (ZonePrefix)</strong>
+    </dt>
+    <dd>
+    Will SPAWN a Group within a given ZoneName.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">ZonePrefix</span>
+            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
+         is the name of the zone where the Group is to be SPAWNed.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">SpawnTemplate</span></span>
+
+
+
+    </ol>
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
+<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
