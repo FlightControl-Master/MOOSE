@@ -1,0 +1,2 @@
+d:\my dcs missions\scripts\moose\pickuptask.lua:5: ?: unknown tag: 'parent' nil
+d:\my dcs missions\scripts\moose\message.lua:98: MESSAGE:ToCoalition: module not found: coalition coalition.side
