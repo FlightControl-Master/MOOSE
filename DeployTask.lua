@@ -26,7 +26,7 @@ trace.f(self.ClassName)
 	
     if Valid then
 		Child.Name = 'Deploy Cargo'
-		Child.TaskBriefing = "Task: Fly to one of the indicated landing zones and deploy " .. CargoType.TEXT .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
+		Child.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType.TEXT .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
 		if type( LandingZones ) == "table" then
 			Child.LandingZones = LandingZones
 		else

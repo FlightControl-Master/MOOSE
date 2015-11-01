@@ -6,10 +6,14 @@ trace = {}
 trace.names = {}
 trace.scheduledfunction = ""
 
-trace.names.all = true
+trace.names.all = false
 trace.names.New = false
 trace.names.Inherit = false
-trace.names.do_scheduled_functions = false 
+--trace.names.ClientGroup = true
+trace.names.Scheduler = true
+trace.names.ToCoalition = true
+trace.names.ToClient = true
+trace.names.do_scheduled_functions = true 
 trace.names.main = false 
 trace.names.Meta = false 
 trace.names.mistdisplayV3 = false 
@@ -257,5 +261,22 @@ trace.i = function(object, variable)
 		
 		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "I", objecttrace, trace.nametrace .. variabletrace) )
 	end
+
+end
+
+trace.x = function( object, variable )
+
+	local info = debug.getinfo( 2, "nl" )
+	trace.nametrace = info.name
+	local objecttrace = ""
+	if object then
+		objecttrace = object
+	end
+	local variabletrace = ""
+	if variable then
+		variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
+	end
+	
+	env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "I", objecttrace, trace.nametrace .. variabletrace) )
 
 end

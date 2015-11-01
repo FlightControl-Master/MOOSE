@@ -76,8 +76,9 @@ trace.f(self.ClassName )
 
 	if Client and Client:ClientGroup() then
 
-		local ClientGroupName = Client:ClientGroup():getName()
-		trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+		local ClientGroup = Client:ClientGroup()
+		trace.i( self.ClassName, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		trigger.action.outTextForGroup( ClientGroup:getID(), self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
@@ -98,6 +99,7 @@ function MESSAGE:ToCoalition( CoalitionSide )
 trace.f(self.ClassName )
 
 	if CoalitionSide then
+		trace.i(self.ClassName, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
 		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	

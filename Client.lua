@@ -68,10 +68,12 @@ end
 -- @treturn Group
 function CLIENT:ClientGroup()
 --trace.f(self.ClassName)
-	local ReturnGroup = Group.getByName( self.ClientName )
-	if ReturnGroup and ReturnGroup:isExist() then
-		return ReturnGroup
+	local ClientData = Group.getByName( self.ClientName )
+	if ClientData and ClientData:isExist() then
+		trace.i( self.ClassName, self.ClientName .. " : group found!" )
+		return ClientData
 	else
+--		trace.x( self.ClassName, self.ClientName .. " : no group found!" )
 		return nil
 	end
 end 
@@ -218,14 +220,14 @@ trace.f( self.ClassName, { Message, MessageDuration, MessageId, MessageCategory,
 			self.Messages[MessageId].MessageTime = timer.getTime()
 			self.Messages[MessageId].MessageDuration = MessageDuration
 			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 300
+				self.Messages[MessageId].MessageInterval = 600
 			else
 				self.Messages[MessageId].MessageInterval = MessageInterval
 			end
 			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 		else
 			if self:ClientGroup() and self:ClientGroup():getUnits() and self:ClientGroup():getUnits()[1] and not self:ClientGroup():getUnits()[1]:inAir() then
-				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration - 1 then
+				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
 					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()
 				end

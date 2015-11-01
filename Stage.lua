@@ -59,7 +59,7 @@ STAGEBRIEF = {
 	MSG = { ID = "Brief", TIME = 30 },
 	Name = "Brief",
 	StageBriefingTime = 0,
-	StageBriefingDuration = 10
+	StageBriefingDuration = 30
 }
 
 function STAGEBRIEF:New()
@@ -97,7 +97,7 @@ STAGESTART = {
   MSG = { ID = "Start", TIME = 30 },
   Name = "Start",
   StageStartTime = 0,
-  StageStartDuration = 10
+  StageStartDuration = 30
 }
 
 function STAGESTART:New()
@@ -137,7 +137,7 @@ end
 
 STAGEROUTE = {
   ClassName = "STAGEROUTE",
-  MSG = { ID = "Route", TIME = 5 },
+  MSG = { ID = "Route", TIME = 1 },
   Frequency = STAGE.FREQUENCY.REPEAT,
   Name = "Route"
 }
@@ -163,7 +163,7 @@ trace.f(self.ClassName)
 		end
 		Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 10 )
 	else
-		Client:Message( "Fly to " .. Task.LandingZones .. ' at ' .. routines.getBRStringZone( { zone = Task.LandingZones, ref = Client:ClientGroup():getUnit(1):getPoint(), true, true } ) .. ' km. ', self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 10 )
+		Client:Message( "Fly to " .. Task.LandingZones .. ' at ' .. routines.getBRStringZone( { zone = Task.LandingZones, ref = Client:ClientGroup():getUnit(1):getPoint(), true, true } ) .. ' km. ', self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 1 )
 	end
 	if Client:IsTransport() then
 		Client:ShowCargo()
