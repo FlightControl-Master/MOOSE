@@ -67,12 +67,15 @@ trace.f( self.ClassName, { event } )
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
 		if event.initiator and event.initiator:getName() then
 			trace.l(self.ClassName, "OnBirth", "Birth object : " .. event.initiator:getName() )
-			local EventGroupName = Unit.getGroup(event.initiator):getName()
-			for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-				if string.find( EventGroupName, MovePrefix, 1, true ) then
-					self.AliveUnits = self.AliveUnits + 1
-					self.MoveGroups[EventGroupName] = EventGroupName
-					trace.l(self.ClassName, "OnBirth", self.AliveUnits )
+			local GroupData = Unit.getGroup(event.initiator)
+			if GroupData and GroupData:isExist() then
+				local EventGroupName = GroupData:getName()
+				for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
+					if string.find( EventGroupName, MovePrefix, 1, true ) then
+						self.AliveUnits = self.AliveUnits + 1
+						self.MoveGroups[EventGroupName] = EventGroupName
+						trace.l(self.ClassName, "OnBirth", self.AliveUnits )
+					end
 				end
 			end
 		end

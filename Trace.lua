@@ -6,7 +6,7 @@ trace = {}
 trace.names = {}
 trace.scheduledfunction = ""
 
-trace.names.all = false
+trace.names.all = true
 trace.names.New = false
 trace.names.Inherit = false
 trace.names.do_scheduled_functions = false 
