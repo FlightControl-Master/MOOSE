@@ -75,14 +75,9 @@ function MESSAGE:ToClient( Client )
 trace.f(self.ClassName )
 
 	if Client and Client:ClientGroup() then
-		local ClientGroupName = Client:ClientGroup():getName()
 
-		if not _MessageQueue.ClientGroups[ClientGroupName] then
-			_MessageQueue.ClientGroups[ClientGroupName] = {}
-			_MessageQueue.ClientGroups[ClientGroupName].Messages = {}
-		end
-		
-		_MessageQueue.ClientGroups[ClientGroupName].Messages[self.MessageID] = self
+		local ClientGroupName = Client:ClientGroup():getName()
+		trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
@@ -103,12 +98,7 @@ function MESSAGE:ToCoalition( CoalitionSide )
 trace.f(self.ClassName )
 
 	if CoalitionSide then
-		if not _MessageQueue.CoalitionSides[CoalitionSide] then
-			_MessageQueue.CoalitionSides[CoalitionSide] = {}
-			_MessageQueue.CoalitionSides[CoalitionSide].Messages = {}
-		end
-		
-		_MessageQueue.CoalitionSides[CoalitionSide].Messages[self.MessageID] = self
+		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
@@ -162,7 +152,7 @@ function MESSAGEQUEUE:_DisplayMessages()
 	for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
 		for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
 			if MessageData.MessageSent == false then
-				trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
+				--trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
 				MessageData.MessageSent = true
 			end
 			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
@@ -187,24 +177,24 @@ function MESSAGEQUEUE:_DisplayMessages()
 		end
 		
 		-- Now check if the Client also has messages that belong to the Coalition of the Client...
-		-- for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
-			-- for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
-				-- local CoalitionGroup = Group.getByName( ClientGroupName )
-				-- if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
-					-- if MessageData.MessageCoalition == false then
-						-- trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
-						-- MessageData.MessageCoalition = true
-					-- end
-				-- end
-				-- local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
-				-- if MessageTimeLeft <= 0 then
-					-- MessageData = nil
-				-- end
-			-- end
-		-- end
+		for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
+			for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
+				local CoalitionGroup = Group.getByName( ClientGroupName )
+				if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
+					if MessageData.MessageCoalition == false then
+						trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
+						MessageData.MessageCoalition = true
+					end
+				end
+				local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
+				if MessageTimeLeft <= 0 then
+					MessageData = nil
+				end
+			end
+		end
 	end
 end
 
 --- The _MessageQueue object is created when the MESSAGE class module is loaded.
-_MessageQueue = MESSAGEQUEUE:New( 0.5 )
+--_MessageQueue = MESSAGEQUEUE:New( 0.5 )
 
