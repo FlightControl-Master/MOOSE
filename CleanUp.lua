@@ -96,22 +96,34 @@ end
 function CLEANUP:_Scheduler()
 
 	for GroupName, ListData in pairs( self.CleanUpList ) do
-		env.info( "CleanUp: GroupName = " .. GroupName )
-		env.info( "CleanUp: UnitName = " .. ListData )
+		env.info( "CleanUp: GroupName = " .. GroupName .. " UnitName = " .. ListData )
 		local CleanUpGroup = Group.getByName( GroupName )
 		local CleanUpUnit = Unit.getByName( ListData )
 		if CleanUpUnit and CleanUpGroup then
 			env.info( "CleanUp: Check Database" )
-			if _Database:GetStatusGroup( GroupName ) ~= "ReSpawn" then
-				env.info( "CleanUp: Database OK" )
-				local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
-				local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
-				if CleanUpUnitVelocityTotal < 1 then
-					env.info( "CleanUp: Destroy: " .. GroupName )
-					CleanUpGroup:destroy()
+			if CleanUpGroup:isExist() and CleanUpUnit:isExist() then
+				env.info( "CleanUp: Group Existing" )
+				if _Database:GetStatusGroup( GroupName ) ~= "ReSpawn" then
+					env.info( "CleanUp: Database OK" )
+					local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
+					local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
+					if CleanUpUnitVelocityTotal < 1 then
+						env.info( "CleanUp: Destroy: " .. GroupName )
+						trigger.action.deactivateGroup(CleanUpGroup)
+						ListData = nil
+					end
+				else
 					ListData = nil
 				end
 			else
+				env.info( "CleanUp: Not Existing anymore, cleaning: " .. GroupName )
+				Event = {
+				  id = 8,
+				  time = Time,
+				  initiator = CleanUpUnit,
+				}
+				world.onEvent(Event)
+				trigger.action.deactivateGroup(CleanUpGroup)
 				ListData = nil
 			end
 		else

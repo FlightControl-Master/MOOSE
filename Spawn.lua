@@ -182,7 +182,7 @@ end
 
 --- When a Group got SPAWNed, it has a life within the DCSRTE. For planes and helicopters, when these Units go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the DCSRTE.
 -- This function is used to Re-Spawn automatically (so no extra call is needed anymore) the same Group after it landed. This will enable a SPAWNed group to be Re-SPAWNed after it lands, until it is destroyed...
--- Note: When the Group is respawned, it will @{ReSpawn} at the original airbase where it took off. So ensure that the paths for Groups that ReSpawn, always return to the orignal airbase.
+-- Note: When the Group is respawned, it will @{ReSpawn} at the original airbase where it took off. So ensure that the paths for Groups that ReSpawn, always return to the original airbase.
 -- @treturn SPAWN
 -- @usage
 -- -- RU Su-34 - AI Ship Attack

@@ -116,7 +116,6 @@ trace.f(self.ClassName, event )
 				--env.info( 'onEvent EventObject.Event = ' .. tostring(EventObject.Event) )
 				if event.id == EventObject.Event then
 					if self == EventObject.Self then
-						--env.info( 'onEvent Call EventFunction' )
 						EventObject.EventFunction( self, event )
 					end
 				end

@@ -60,6 +60,7 @@ trace.names._GetTemplate = false
 trace.names.FollowPlayers = false
 trace.names.AddPlayerFromUnit = false
 trace.names.FromCarrier = false
+trace.names.OnDeadOrCrash = true
 trace.cache = {}
 
 trace.tracefunction = function( functionname )
