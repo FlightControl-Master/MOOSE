@@ -506,7 +506,7 @@ end
 function STAGE_SLINGLOAD_HOOK:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
 
---[[
+
 	for CargoID, CargoName in pairs( Task.CargoPrefixes ) do
 		env.info( CargoName )
 		if StaticObject.getByName( CargoName ):inAir() then
@@ -520,11 +520,11 @@ trace.f(self.ClassName)
 	if Task.CargoName then
 		if  routines.IsStaticInZones( StaticObject.getByName( Task.CargoName ), Task.LandingZones[Task.CurrentLandingZoneID] ) then
 		else
---			Mission._Cargos[Task.CargoName].Status = CARGOSTATUS.LOADED
+			Mission._Cargos[Task.CargoName].Status = CARGOSTATUS.LOADED
 			return 1
 		end
 	end
---]]  
+  
 	return 1
 end
 
@@ -550,7 +550,6 @@ end
 function STAGE_SLINGLOAD_UNHOOK:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
 	
-	--[[
 	for CargoID, CargoName in pairs( Task.CargoPrefixes ) do
 		if StaticObject.getByName( CargoName ):inAir() then
 			Task.CargoName = CargoName
@@ -570,7 +569,6 @@ trace.f(self.ClassName)
 			end
 		end
 	end
-	--]]
   
 	return 1
 end
