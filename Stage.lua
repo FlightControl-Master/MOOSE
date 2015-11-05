@@ -560,7 +560,6 @@ trace.f(self.ClassName)
 	end
 
 	if Task.CargoName then
-		if GE_CARGO[CargoID] == 4 then
 		if not StaticObject.getByName( Task.CargoName ):inAir() then
 			if routines.IsUnitInZones( Client:ClientGroup():getUnits()[1], Task.LandingZones[Task.CurrentLandingZoneID] ) then
 			else
