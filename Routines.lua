@@ -1693,6 +1693,179 @@ trace.r( "", "", { Valid } )
   return Valid
 end
 
+function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints but returns speed and formation type along with vec2 of point}
+		-- refactor to search by groupId and allow groupId and groupName as inputs
+	local gpId = groupIdent
+	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
+		gpId = _Database.Groups[groupIdent].groupId
+	end
+	
+	for coa_name, coa_data in pairs(env.mission.coalition) do
+		if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then			
+			if coa_data.country then --there is a country table
+				for cntry_id, cntry_data in pairs(coa_data.country) do
+					for obj_type_name, obj_type_data in pairs(cntry_data) do
+						if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" then	-- only these types have points						
+							if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!				
+								for group_num, group_data in pairs(obj_type_data.group) do		
+									if group_data and group_data.groupId == gpId  then -- this is the group we are looking for
+										if group_data.route and group_data.route.points and #group_data.route.points > 0 then
+											local points = {}
+											
+											for point_num, point in pairs(group_data.route.points) do
+												local routeData = {}
+												if not point.point then
+													routeData.x = point.x
+													routeData.y = point.y
+												else
+													routeData.point = point.point  --it's possible that the ME could move to the point = Vec2 notation.
+												end
+												routeData.form = point.action
+												routeData.speed = point.speed
+												routeData.alt = point.alt
+												routeData.alt_type = point.alt_type
+												routeData.airdromeId = point.airdromeId
+												routeData.helipadId = point.helipadId
+												routeData.type = point.type
+												routeData.action = point.action
+												if task then
+													routeData.task = point.task
+												end
+												points[point_num] = routeData
+											end
+											
+											return points
+										end
+										return
+									end  --if group_data and group_data.name and group_data.name == 'groupname'
+								end --for group_num, group_data in pairs(obj_type_data.group) do		
+							end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then	
+						end --if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then
+					end --for obj_type_name, obj_type_data in pairs(cntry_data) do
+				end --for cntry_id, cntry_data in pairs(coa_data.country) do
+			end --if coa_data.country then --there is a country table
+		end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then	
+	end --for coa_name, coa_data in pairs(mission.coalition) do
+end
+routines.ground.patrolRoute = function(vars)
+	
+	
+	local tempRoute = {}
+	local useRoute = {}
+	local gpData = vars.gpData
+	if type(gpData) == 'string' then
+		gpData = Group.getByName(gpData)
+	end
+	
+	local useGroupRoute 
+	if not vars.useGroupRoute then
+		useGroupRoute = vars.gpData
+	else
+		useGroupRoute = vars.useGroupRoute
+	end
+	local routeProvided = false
+	if not vars.route then
+		if useGroupRoute then
+			tempRoute = routines.getGroupRoute(useGroupRoute)
+		end
+	else
+		useRoute = vars.route
+		local posStart = routines.getLeadPos(gpData)
+		useRoute[1] = routines.ground.buildWP(posStart, useRoute[1].action, useRoute[1].speed)
+		routeProvided = true
+	end
+	
+	
+	local overRideSpeed = vars.speed or 'default'
+	local pType = vars.pType 
+	local offRoadForm = vars.offRoadForm or 'default'
+	local onRoadForm = vars.onRoadForm or 'default'
+		
+	if routeProvided == false and #tempRoute > 0 then
+		local posStart = routines.getLeadPos(gpData)
+		
+		
+		useRoute[#useRoute + 1] = routines.ground.buildWP(posStart, offRoadForm, overRideSpeed)
+		for i = 1, #tempRoute do
+			local tempForm = tempRoute[i].action
+			local tempSpeed = tempRoute[i].speed
+			
+			if offRoadForm == 'default' then
+				tempForm = tempRoute[i].action
+			end
+			if onRoadForm == 'default' then
+				onRoadForm = 'On Road'
+			end
+			if (string.lower(tempRoute[i].action) == 'on road' or  string.lower(tempRoute[i].action) == 'onroad' or string.lower(tempRoute[i].action) == 'on_road') then
+				tempForm = onRoadForm
+			else
+				tempForm = offRoadForm
+			end
+			
+			if type(overRideSpeed) == 'number' then
+				tempSpeed = overRideSpeed
+			end
+			
+			
+			useRoute[#useRoute + 1] = routines.ground.buildWP(tempRoute[i], tempForm, tempSpeed)
+		end
+			
+		if pType and string.lower(pType) == 'doubleback' then
+			local curRoute = routines.utils.deepCopy(useRoute)
+			for i = #curRoute, 2, -1 do
+				useRoute[#useRoute + 1] = routines.ground.buildWP(curRoute[i], curRoute[i].action, curRoute[i].speed)
+			end
+		end
+		
+		useRoute[1].action = useRoute[#useRoute].action -- make it so the first WP matches the last WP
+	end
+	
+	local cTask3 = {}
+	local newPatrol = {}
+	newPatrol.route = useRoute
+	newPatrol.gpData = gpData:getName()
+	cTask3[#cTask3 + 1] = 'routines.ground.patrolRoute('
+	cTask3[#cTask3 + 1] = routines.utils.oneLineSerialize(newPatrol)
+	cTask3[#cTask3 + 1] = ')'
+	cTask3 = table.concat(cTask3)
+	local tempTask = {
+		id = 'WrappedAction', 
+		params = { 
+			action = {
+				id = 'Script',
+				params = {
+					command = cTask3, 
+					
+				},
+			},
+		},
+	}
+
+		
+	useRoute[#useRoute].task = tempTask
+	routines.goRoute(gpData, useRoute)
+	
+	return
+end
+
+routines.ground.patrol = function(gpData, pType, form, speed)
+	local vars = {}
+	
+	if type(gpData) == 'table' and gpData:getName() then
+		gpData = gpData:getName()
+	end
+	
+	vars.useGroupRoute = gpData
+	vars.gpData = gpData
+	vars.pType = pType
+	vars.offRoadForm = form
+	vars.speed = speed
+	
+	routines.ground.patrolRoute(vars)
+
+	return
+end
+
 
 
 Su34Status = { status = {} }
