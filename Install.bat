@@ -1,4 +1,4 @@
-copy "..\MissionScripting.lua" "..\MissionScripting_old.lua"
+copy "%~dp0..\MissionScripting.lua" "%~dp0..\MissionScripting_old.lua"
 pause
-copy "Script_DCS\MissionScripting.lua" "..\MissionScripting.lua"
+copy "%~dp0MissionScripting.lua" "%~dp0..\MissionScripting.lua"
 pause

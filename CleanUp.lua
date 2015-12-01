@@ -40,13 +40,206 @@ trace.f( self.ClassName, { ZoneNames, TimeInterval } )
 	end
 	
 	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_DEAD, self._EventAddForCleanUp )
+	self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
+	self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
+	--self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
+	self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
+	
 	self:EnableEvents()
 
 	self.CleanUpFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
 	return self
+end
+
+
+--- Destroys a group from the simulator, but checks first if it is still existing!
+-- @see CLEANUP
+function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
+trace.f( self.ClassName )
+
+	if GroupObject then -- and GroupObject:isExist() then
+		MESSAGE:New( "Destroy " .. CleanUpGroupName, CleanUpGroupName, 10, CleanUpGroupName ):ToAll()
+		trigger.action.deactivateGroup(GroupObject)
+		trace.i(self.ClassName, "GroupObject Destroyed")
+	end
+end
+
+--- Destroys a unit from the simulator, but checks first if it is still existing!
+-- @see CLEANUP
+function CLEANUP:_DestroyUnit( CleanUpUnitObject, CleanUpUnitName )
+trace.f( self.ClassName )
+
+	if CleanUpUnitObject then
+		MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
+		CleanUpUnitObject:destroy()
+		trace.i(self.ClassName, "UnitObject Destroyed")
+	end
+end
+
+--- Destroys a missile from the simulator, but checks first if it is still existing!
+-- @see CLEANUP
+function CLEANUP:_DestroyMissile( MissileObject )
+trace.f( self.ClassName )
+
+	if MissileObject and MissileObject:isExist() then
+		MissileObject:destroy()
+		trace.i(self.ClassName, "MissileObject Destroyed")
+	end
+end
+
+--- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+-- @see CLEANUP
+function CLEANUP:_EventCrash( event )
+trace.f( self.ClassName )
+
+	MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
+	trace.i(self.ClassName,"before getGroup")
+	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
+	trace.i(self.ClassName,"after getGroup")
+	_grp:destroy()
+	trace.i(self.ClassName,"after deactivateGroup")
+	event.initiator:destroy()
+
+	
+
+end
+--- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+-- @see CLEANUP
+function CLEANUP:_EventShot( event )
+trace.f( self.ClassName )
+
+	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
+	local _groupname = _grp:getName() -- return the name of the group
+	local _unittable = {event.initiator:getName()} -- return the name of the units in the group
+	local _SEADmissile = event.weapon -- Identify the weapon fired					
+	--local _SEADmissileName = _SEADmissile:getTypeName()	-- return weapon type
+	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(_SEADmissileName)), 20) --debug message
+	-- Start of the 2nd loop
+	--trace.i( self.ClassName, "Missile Launched = " .. _SEADmissileName )
+	
+	-- Test if the missile was fired within one of the CLEANUP.ZoneNames.
+	local CurrentLandingZoneID = 0
+	CurrentLandingZoneID  = routines.IsUnitInZones( event.initiator, self.ZoneNames )
+	if  ( CurrentLandingZoneID ) then
+		-- Okay, the missile was fired within the CLEANUP.ZoneNames, destroy the fired weapon.
+		--_SEADmissile:destroy()
+		routines.scheduleFunction( CLEANUP._DestroyMissile, {self, _SEADmissile}, timer.getTime() + 0.1)
+	end
+
+--[[
+	if _SEADmissileName == "KH-58" or _SEADmissileName == "KH-25MPU" or _SEADmissileName == "AGM-88" or _SEADmissileName == "KH-31A" or _SEADmissileName == "KH-31P" then -- Check if the missile is a SEAD
+		local _evade = math.random (1,100) -- random number for chance of evading action
+		local _targetMim = Weapon.getTarget(_SEADmissile) -- Identify target
+		local _targetMimname = Unit.getName(_targetMim)
+		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(_SEADmissile))
+		local _targetMimgroupName = _targetMimgroup:getName()
+		local _targetMimcont= _targetMimgroup:getController()
+		local _targetskill =  _Database.Units[_targetMimname].Template.skill
+		trace.i( self.ClassName, self.SEADGroupPrefixes )
+		trace.i( self.ClassName, _targetMimgroupName )
+		local SEADGroupFound = false
+		for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
+			if string.find( _targetMimgroupName, SEADGroupPrefix, 1, true ) then
+				SEADGroupFound = true
+				trace.i( self.ClassName, 'Group Found' )
+				break
+			end
+		end		
+		if SEADGroupFound == true then
+			if _targetskill == "Random" then -- when skill is random, choose a skill
+				local Skills = { "Average", "Good", "High", "Excellent" }
+				_targetskill = Skills[ math.random(1,4) ]
+			end
+			trace.i( self.ClassName, _targetskill ) -- debug message for skill check
+			if self.TargetSkill[_targetskill] then
+				if (_evade > self.TargetSkill[_targetskill].Evade) then
+					trace.i( self.ClassName, string.format("Evading, target skill  " ..string.format(_targetskill)) ) --debug message
+					local _targetMim = Weapon.getTarget(_SEADmissile)
+					local _targetMimname = Unit.getName(_targetMim)
+					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(_SEADmissile))
+					local _targetMimcont= _targetMimgroup:getController()
+					routines.groupRandomDistSelf(_targetMimgroup,300,'Rank',250,20) -- move randomly
+					local SuppressedGroups1 = {} -- unit suppressed radar off for a random time
+					local function SuppressionEnd1(id)
+						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
+						SuppressedGroups1[id.groupName] = nil
+					end
+					local id = {
+					groupName = _targetMimgroup,
+					ctrl = _targetMimcont
+					}
+					local delay1 = math.random(self.TargetSkill[_targetskill].DelayOff[1], self.TargetSkill[_targetskill].DelayOff[2])
+					if SuppressedGroups1[id.groupName] == nil then
+						SuppressedGroups1[id.groupName] = {
+							SuppressionEndTime1 = timer.getTime() + delay1,
+							SuppressionEndN1 = SuppressionEndCounter1	--Store instance of SuppressionEnd() scheduled function
+						}	
+						Controller.setOption(_targetMimcont, AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)
+						timer.scheduleFunction(SuppressionEnd1, id, SuppressedGroups1[id.groupName].SuppressionEndTime1)	--Schedule the SuppressionEnd() function
+						--trigger.action.outText( string.format("Radar Off " ..string.format(delay1)), 20)
+					end
+					
+					local SuppressedGroups = {}
+					local function SuppressionEnd(id)
+						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.RED)
+						SuppressedGroups[id.groupName] = nil
+					end
+					local id = {
+						groupName = _targetMimgroup,
+						ctrl = _targetMimcont
+					}
+					local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
+					if SuppressedGroups[id.groupName] == nil then
+						SuppressedGroups[id.groupName] = {
+							SuppressionEndTime = timer.getTime() + delay,
+							SuppressionEndN = SuppressionEndCounter	--Store instance of SuppressionEnd() scheduled function
+						}
+						timer.scheduleFunction(SuppressionEnd, id, SuppressedGroups[id.groupName].SuppressionEndTime)	--Schedule the SuppressionEnd() function
+						--trigger.action.outText( string.format("Radar On " ..string.format(delay)), 20)
+					end
+				end
+			end
+		end
+	end
+	--]]
+end
+
+--- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
+function CLEANUP:_EventHitCleanUp( event )
+trace.f( self.ClassName )
+
+	local CleanUpUnit = event.initiator -- the Unit
+	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
+		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
+		local CleanUpGroup = Unit.getGroup(event.initiator)-- Identify the Group 
+		local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+		
+		if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
+			trace.i( self.ClassName, "Life: " .. CleanUpUnitName .. ' = ' .. CleanUpUnit:getLife() .. "/" .. CleanUpUnit:getLife0() )
+			if CleanUpUnit:getLife() < CleanUpUnit:getLife0() then
+				trace.i( self.ClassName, "CleanUp: Destroy: " .. CleanUpUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpUnit}, timer.getTime() + 0.1)
+			end
+		end
+	end
+
+	local CleanUpTgtUnit = event.target -- the target Unit
+	if CleanUpTgtUnit and CleanUpTgtUnit:isExist() and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
+		local CleanUpTgtUnitName = event.target:getName() -- return the name of the target Unit
+		local CleanUpTgtGroup = Unit.getGroup(event.target)-- Identify the target Group 
+		local CleanUpTgtGroupName = CleanUpTgtGroup:getName() -- return the name of the target Group
+		
+		
+		if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
+			trace.i( self.ClassName, "Life: " .. CleanUpTgtUnitName .. ' = ' .. CleanUpTgtUnit:getLife() .. "/" .. CleanUpTgtUnit:getLife0() )
+			if CleanUpTgtUnit:getLife() < CleanUpTgtUnit:getLife0() then
+				trace.i( self.ClassName, "CleanUp: Destroy: " .. CleanUpTgtUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpTgtUnit}, timer.getTime() + 0.1)
+			end
+		end
+	end
+	
 end
 
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
@@ -62,10 +255,9 @@ trace.f( self.ClassName, { event } )
 			local AddForCleanUp = false
 			if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
 				AddForCleanUp = true
-				env.info( "CleanUp:" .. CleanUpGroupName .. "/" .. CleanUpUnitName )
 			end
 			if AddForCleanUp == true then
-				self.CleanUpList[CleanUpGroupName] = CleanUpUnitName
+				trace.i( self.ClassName, "CleanUp: Add for CleanUp: " .. CleanUpGroupName .. "/" .. CleanUpUnitName )
 			end
 		end
 	end
@@ -77,14 +269,19 @@ trace.f( self.ClassName, { event } )
 			local CleanUpTgtUnitName = event.target:getName() -- return the name of the target Unit
 			local CleanUpTgtGroup = Unit.getGroup(event.target)-- Identify the target Group 
 			local CleanUpTgtGroupName = CleanUpTgtGroup:getName() -- return the name of the target Group
-			if not self.CleanUpList[CleanUpTgtGroupName] then
+			if not self.CleanUpList[CleanUpTgtUnitName] then
 				local AddForCleanUp = false
 				if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
 					AddForCleanUp = true
-					env.info( "CleanUp:" .. CleanUpTgtGroupName .. "/" .. CleanUpTgtUnitName )
+					--env.info( "CleanUp:" .. CleanUpTgtGroupName .. "/" .. CleanUpTgtUnitName )
 				end
 				if AddForCleanUp == true then
-					self.CleanUpList[CleanUpTgtGroupName] = CleanUpTgtUnitName
+					trace.i( self.ClassName, "CleanUp: Add for CleanUp: " .. CleanUpTgtGroupName .. "/" .. CleanUpTgtUnitName )
+					self.CleanUpList[CleanUpTgtUnitName] = {}
+					self.CleanUpList[CleanUpTgtUnitName].CleanUpUnit = CleanUpTgtUnit
+					self.CleanUpList[CleanUpTgtUnitName].CleanUpGroup = CleanUpTgtGroup
+					self.CleanUpList[CleanUpTgtUnitName].CleanUpGroupName = CleanUpTgtGroupName
+					self.CleanUpList[CleanUpTgtUnitName].CleanUpUnitName = CleanUpTgtUnitName
 				end
 			end
 		end
@@ -95,39 +292,39 @@ end
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 function CLEANUP:_Scheduler()
 
-	for GroupName, ListData in pairs( self.CleanUpList ) do
-		env.info( "CleanUp: GroupName = " .. GroupName .. " UnitName = " .. ListData )
-		local CleanUpGroup = Group.getByName( GroupName )
-		local CleanUpUnit = Unit.getByName( ListData )
-		if CleanUpUnit and CleanUpGroup then
-			env.info( "CleanUp: Check Database" )
+	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
+		--env.info( "CleanUp: GroupName = " .. GroupName .. " UnitName = " .. ListData )
+		local CleanUpGroup = UnitData.CleanUpGroup
+		local CleanUpUnit = UnitData.CleanUpUnit
+		local CleanUpGroupName = UnitData.CleanUpGroupName
+		local CleanUpUnitName = UnitData.CleanUpUnitName
+		if CleanUpGroup then
+			trace.i( self.ClassName, "CleanUp: " .. CleanUpGroupName )
 			if CleanUpGroup:isExist() and CleanUpUnit:isExist() then
-				env.info( "CleanUp: Group Existing" )
-				if _Database:GetStatusGroup( GroupName ) ~= "ReSpawn" then
-					env.info( "CleanUp: Database OK" )
+				if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
 					local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
 					local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
 					if CleanUpUnitVelocityTotal < 1 then
-						env.info( "CleanUp: Destroy: " .. GroupName )
-						trigger.action.deactivateGroup(CleanUpGroup)
-						ListData = nil
+						trace.i( self.ClassName, "CleanUp: Destroy: " .. CleanUpGroupName )
+						self:_DestroyGroup(CleanUpGroup, CleanUpGroupName)
+						--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
+						--trigger.action.deactivateGroup(CleanUpGroup)
+						UnitData = nil
 					end
 				else
-					ListData = nil
+					UnitData = nil
 				end
 			else
-				env.info( "CleanUp: Not Existing anymore, cleaning: " .. GroupName )
-				Event = {
-				  id = 8,
-				  time = Time,
-				  initiator = CleanUpUnit,
-				}
-				world.onEvent(Event)
-				trigger.action.deactivateGroup(CleanUpGroup)
-				ListData = nil
+				trace.i( self.ClassName, "CleanUp: Does not exist:" .. CleanUpGroupName )
+				self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
+				--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
+				UnitData = nil
 			end
 		else
-			ListData = nil -- Not anymore in the DCSRTE
+			trace.i( self.ClassName, "CleanUp: Cleaning: " .. CleanUpGroupName )
+			self:_DestroyGroup(CleanUpGroup, CleanUpGroupName)
+			--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
+			UnitData = nil -- Not anymore in the DCSRTE
 		end
 	end
 end

@@ -1477,13 +1477,13 @@ trace.f("", "routines.IsUnitInZones" )
 			end
 		end
 		if TransportZoneResult then
-			env.info("TransportZone:"..TransportZoneResult)
+			trace.i( "routines", "TransportZone:" .. TransportZoneResult )
 		else
-			env.info("TransportZone:nil logic")
+			trace.i( "routines", "TransportZone:nil logic" )
 		end
 		return TransportZoneResult
 	else
-		env.info("TransportZone:nil hard")
+		trace.i( "routines", "TransportZone:nil hard" )
 		return nil
 	end
 end

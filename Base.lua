@@ -52,7 +52,7 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 	end
-	Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
+	--Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
 	trace.i( Child.ClassName, 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
@@ -103,9 +103,36 @@ trace.f( self.ClassName )
 
 	return self
 end
+
+BaseEventCodes = {
+   "S_EVENT_SHOT",
+   "S_EVENT_HIT",
+   "S_EVENT_TAKEOFF",
+   "S_EVENT_LAND",
+   "S_EVENT_CRASH",
+   "S_EVENT_EJECTION",
+   "S_EVENT_REFUELING",
+   "S_EVENT_DEAD",
+   "S_EVENT_PILOT_DEAD",
+   "S_EVENT_BASE_CAPTURED",
+   "S_EVENT_MISSION_START",
+   "S_EVENT_MISSION_END",
+   "S_EVENT_TOOK_CONTROL",
+   "S_EVENT_REFUELING_STOP",
+   "S_EVENT_BIRTH",
+   "S_EVENT_HUMAN_FAILURE",
+   "S_EVENT_ENGINE_STARTUP",
+   "S_EVENT_ENGINE_SHUTDOWN",
+   "S_EVENT_PLAYER_ENTER_UNIT",
+   "S_EVENT_PLAYER_LEAVE_UNIT",
+   "S_EVENT_PLAYER_COMMENT",
+   "S_EVENT_SHOOTING_START",
+   "S_EVENT_SHOOTING_END",
+   "S_EVENT_MAX",
+ }
 												
 function BASE:onEvent(event)
-trace.f(self.ClassName, event )
+--trace.f(self.ClassName, event )
 
 	--env.info( 'onEvent Table self = ' .. tostring(self) )
 	if self then
@@ -116,6 +143,7 @@ trace.f(self.ClassName, event )
 				--env.info( 'onEvent EventObject.Event = ' .. tostring(EventObject.Event) )
 				if event.id == EventObject.Event then
 					if self == EventObject.Self then
+						trace.i( self.ClassName, { BaseEventCodes[event.id], event } )
 						EventObject.EventFunction( self, event )
 					end
 				end

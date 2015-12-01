@@ -4,6 +4,7 @@
 
 trace = {}
 trace.names = {}
+trace.classes = {}
 trace.scheduledfunction = ""
 
 trace.names.all = false
@@ -61,6 +62,7 @@ trace.names.FollowPlayers = false
 trace.names.AddPlayerFromUnit = false
 trace.names.FromCarrier = false
 trace.names.OnDeadOrCrash = false
+trace.classes.CLEANUP = true
 trace.cache = {}
 
 trace.tracefunction = function( functionname )
@@ -80,7 +82,7 @@ end
 trace.f = function(object, parameters)
 
 	local info = debug.getinfo( 2, "nl" )
-	if trace.names.all or trace.tracefunction( info.name ) then
+	if trace.names.all or trace.tracefunction( info.name ) or trace.classes[object] then
 
 		local objecttrace = ""
 		if object then
@@ -250,7 +252,7 @@ trace.i = function(object, variable)
 	if info.name ~= trace.nametrace then
 		trace.nametrace = info.name
 	end
-	if trace.names.all or trace.tracefunction( trace.nametrace ) then
+	if trace.names.all or trace.tracefunction( trace.nametrace ) or trace.classes[ object ] then
 		local objecttrace = ""
 		if object then
 			objecttrace = object
