@@ -94,12 +94,23 @@ function CLEANUP:_EventCrash( event )
 trace.f( self.ClassName )
 
 	MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
-	trace.i(self.ClassName,"before getGroup")
-	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
-	trace.i(self.ClassName,"after getGroup")
-	_grp:destroy()
-	trace.i(self.ClassName,"after deactivateGroup")
-	event.initiator:destroy()
+	-- trace.i(self.ClassName,"before getGroup")
+	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
+	-- trace.i(self.ClassName,"after getGroup")
+	-- _grp:destroy()
+	-- trace.i(self.ClassName,"after deactivateGroup")
+	-- event.initiator:destroy()
+
+	local CleanUpUnit = event.initiator -- the Unit
+	local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
+	local CleanUpGroup = Unit.getGroup(CleanUpUnit)-- Identify the Group 
+	local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+
+	self.CleanUpList[CleanUpUnitName] = {}
+	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
+	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
+	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroupName
+	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
 
 	
 
@@ -289,41 +300,70 @@ trace.f( self.ClassName, { event } )
 	
 end
 
+CleanUpSurfaceTypeText = {
+   "LAND",
+   "SHALLOW_WATER",
+   "WATER",
+   "ROAD",
+   "RUNWAY"
+ }
+
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 function CLEANUP:_Scheduler()
 
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
 		--env.info( "CleanUp: GroupName = " .. GroupName .. " UnitName = " .. ListData )
-		local CleanUpGroup = UnitData.CleanUpGroup
-		local CleanUpUnit = UnitData.CleanUpUnit
+		local CleanUpGroup = Group.getByName(UnitData.CleanUpGroupName)
+		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
 		local CleanUpGroupName = UnitData.CleanUpGroupName
 		local CleanUpUnitName = UnitData.CleanUpUnitName
-		if CleanUpGroup then
+		if CleanUpGroup and CleanUpUnit then
 			trace.i( self.ClassName, "CleanUp: " .. CleanUpGroupName )
 			if CleanUpGroup:isExist() and CleanUpUnit:isExist() then
 				if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
+					local CleanUpUnitVec3 = CleanUpUnit:getPoint()
+					trace.i( self.ClassName, CleanUpUnitVec3 )
+					local CleanUpUnitVec2 = {}
+					CleanUpUnitVec2.x = CleanUpUnitVec3.x
+					CleanUpUnitVec2.y = CleanUpUnitVec3.z
+					trace.i( self.ClassName, CleanUpUnitVec2 )
+					local CleanUpSurfaceType = land.getSurfaceType(CleanUpUnitVec2)
+					trace.i( self.ClassName, CleanUpSurfaceType )
+					MESSAGE:New( "Surface " .. CleanUpUnitName .. " = " .. CleanUpSurfaceTypeText[CleanUpSurfaceType], CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
+					
+					if CleanUpUnit:getLife() <= CleanUpUnit:getLife0() * 0.95 then
+						if CleanUpSurfaceType == land.SurfaceType.RUNWAY then
+							trace.i( self.ClassName, "CleanUp: Destroy " .. CleanUpGroupName .. " because above runway and damaged." )
+							self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
+							UnitData = nil
+						end
+						if CleanUpUnit:inAir() then
+							if CleanUpUnit.getHeight(CleanUpUnitVec2) < 20 then
+								trace.i( self.ClassName, "CleanUp: Destroy " .. CleanUpGroupName .. " because below safe height and damaged." )
+								self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
+								UnitData = nil
+							end
+						end
+					end
+					
+					
 					local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
 					local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
 					if CleanUpUnitVelocityTotal < 1 then
 						trace.i( self.ClassName, "CleanUp: Destroy: " .. CleanUpGroupName )
-						self:_DestroyGroup(CleanUpGroup, CleanUpGroupName)
-						--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
-						--trigger.action.deactivateGroup(CleanUpGroup)
+						self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
 						UnitData = nil
 					end
 				else
+					-- Do nothing ...
 					UnitData = nil
 				end
 			else
-				trace.i( self.ClassName, "CleanUp: Does not exist:" .. CleanUpGroupName )
-				self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
-				--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
+				trace.i( self.ClassName, "CleanUp: Group " .. CleanUpGroupName .. " does not exist anymore in CleanUpList, Removing ..." )
 				UnitData = nil
 			end
 		else
-			trace.i( self.ClassName, "CleanUp: Cleaning: " .. CleanUpGroupName )
-			self:_DestroyGroup(CleanUpGroup, CleanUpGroupName)
-			--routines.scheduleFunction( CLEANUP._DestroyGroup, {self, CleanUpGroup}, timer.getTime() + 0.1)
+			trace.i( self.ClassName, "CleanUp: Group " .. CleanUpGroupName .. " cannot be found in DCS RTE, removing ..." )
 			UnitData = nil -- Not anymore in the DCSRTE
 		end
 	end
