@@ -143,6 +143,12 @@ function BASE:onEvent(event)
 				--env.info( 'onEvent EventObject.Event = ' .. tostring(EventObject.Event) )
 				if event.id == EventObject.Event then
 					if self == EventObject.Self then
+						if event.initiator and event.initiator:isExist() then
+							event.IniUnitName = event.initiator:getName()
+						end
+						if event.target and event.target:isExist() then
+							event.TgtUnitName = event.target:getName()
+						end
 						trace.i( self.ClassName, { BaseEventCodes[event.id], event } )
 						EventObject.EventFunction( self, event )
 					end

@@ -59,7 +59,7 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 trace.f( self.ClassName )
 
 	if GroupObject then -- and GroupObject:isExist() then
-		MESSAGE:New( "Destroy " .. CleanUpGroupName, CleanUpGroupName, 10, CleanUpGroupName ):ToAll()
+		MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
 		trigger.action.deactivateGroup(GroupObject)
 		trace.i(self.ClassName, "GroupObject Destroyed")
 	end
@@ -67,13 +67,13 @@ end
 
 --- Destroys a unit from the simulator, but checks first if it is still existing!
 -- @see CLEANUP
-function CLEANUP:_DestroyUnit( CleanUpUnitObject, CleanUpUnitName )
+function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 trace.f( self.ClassName )
 
-	if CleanUpUnitObject then
-		MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
-		CleanUpUnitObject:destroy()
-		trace.i(self.ClassName, "UnitObject Destroyed")
+	if CleanUpUnit then
+		MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
+		CleanUpUnit:destroy()
+		trace.i(self.ClassName, "Destroyed " .. CleanUpUnitName )
 	end
 end
 
@@ -216,6 +216,7 @@ trace.f( self.ClassName )
 	--]]
 end
 
+
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
 function CLEANUP:_EventHitCleanUp( event )
 trace.f( self.ClassName )
@@ -253,47 +254,37 @@ trace.f( self.ClassName )
 	
 end
 
+function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
+
+	self.CleanUpList[CleanUpUnitName] = {}
+	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
+	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
+	self.CleanUpList[CleanUpUnitName].CleanUpGroup = Unit.getGroup(CleanUpUnit)
+	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = Unit.getGroup(CleanUpUnit):getName()
+
+	trace.i( self.ClassName, "CleanUp: Add to CleanUpList: " .. Unit.getGroup(CleanUpUnit):getName() .. " / " .. CleanUpUnitName )
+
+end
+
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
 function CLEANUP:_EventAddForCleanUp( event )
-trace.f( self.ClassName, { event } )
 
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		local CleanUpUnit = event.initiator -- the Unit
-		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
-		local CleanUpGroup = Unit.getGroup(event.initiator)-- Identify the Group 
-		local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
-		if not self.CleanUpList[CleanUpGroupName] then
-			local AddForCleanUp = false
+	local CleanUpUnit = event.initiator -- the Unit
+	if CleanUpUnit and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
+		local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
+		if self.CleanUpList[CleanUpUnitName] == nil then
 			if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
-				AddForCleanUp = true
-			end
-			if AddForCleanUp == true then
-				trace.i( self.ClassName, "CleanUp: Add for CleanUp: " .. CleanUpGroupName .. "/" .. CleanUpUnitName )
+				self:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 			end
 		end
 	end
 
-	if event.target and Object.getCategory(event.target) == Object.Category.UNIT then
-
-		local CleanUpTgtUnit = event.target -- the target Unit
-		if CleanUpTgtUnit then
-			local CleanUpTgtUnitName = event.target:getName() -- return the name of the target Unit
-			local CleanUpTgtGroup = Unit.getGroup(event.target)-- Identify the target Group 
-			local CleanUpTgtGroupName = CleanUpTgtGroup:getName() -- return the name of the target Group
-			if not self.CleanUpList[CleanUpTgtUnitName] then
-				local AddForCleanUp = false
-				if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
-					AddForCleanUp = true
-					--env.info( "CleanUp:" .. CleanUpTgtGroupName .. "/" .. CleanUpTgtUnitName )
-				end
-				if AddForCleanUp == true then
-					trace.i( self.ClassName, "CleanUp: Add for CleanUp: " .. CleanUpTgtGroupName .. "/" .. CleanUpTgtUnitName )
-					self.CleanUpList[CleanUpTgtUnitName] = {}
-					self.CleanUpList[CleanUpTgtUnitName].CleanUpUnit = CleanUpTgtUnit
-					self.CleanUpList[CleanUpTgtUnitName].CleanUpGroup = CleanUpTgtGroup
-					self.CleanUpList[CleanUpTgtUnitName].CleanUpGroupName = CleanUpTgtGroupName
-					self.CleanUpList[CleanUpTgtUnitName].CleanUpUnitName = CleanUpTgtUnitName
-				end
+	local CleanUpTgtUnit = event.target -- the target Unit
+	if CleanUpTgtUnit and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
+		local CleanUpTgtUnitName = CleanUpTgtUnit:getName() -- return the name of the target Unit
+		if self.CleanUpList[CleanUpTgtUnitName] == nil then
+			if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
+				self:_AddForCleanUp( CleanUpTgtUnit, CleanUpTgtUnitName )
 			end
 		end
 	end
@@ -312,59 +303,59 @@ CleanUpSurfaceTypeText = {
 function CLEANUP:_Scheduler()
 
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
-		--env.info( "CleanUp: GroupName = " .. GroupName .. " UnitName = " .. ListData )
+		trace.i( self.ClassName, { CleanUpUnitName, UnitData } )
 		local CleanUpGroup = Group.getByName(UnitData.CleanUpGroupName)
 		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
 		local CleanUpGroupName = UnitData.CleanUpGroupName
 		local CleanUpUnitName = UnitData.CleanUpUnitName
-		if CleanUpGroup and CleanUpUnit then
-			trace.i( self.ClassName, "CleanUp: " .. CleanUpGroupName )
-			if CleanUpGroup:isExist() and CleanUpUnit:isExist() then
-				if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
-					local CleanUpUnitVec3 = CleanUpUnit:getPoint()
-					trace.i( self.ClassName, CleanUpUnitVec3 )
-					local CleanUpUnitVec2 = {}
-					CleanUpUnitVec2.x = CleanUpUnitVec3.x
-					CleanUpUnitVec2.y = CleanUpUnitVec3.z
-					trace.i( self.ClassName, CleanUpUnitVec2 )
-					local CleanUpSurfaceType = land.getSurfaceType(CleanUpUnitVec2)
-					trace.i( self.ClassName, CleanUpSurfaceType )
-					MESSAGE:New( "Surface " .. CleanUpUnitName .. " = " .. CleanUpSurfaceTypeText[CleanUpSurfaceType], CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
-					
-					if CleanUpUnit:getLife() <= CleanUpUnit:getLife0() * 0.95 then
-						if CleanUpSurfaceType == land.SurfaceType.RUNWAY then
-							trace.i( self.ClassName, "CleanUp: Destroy " .. CleanUpGroupName .. " because above runway and damaged." )
-							self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
-							UnitData = nil
-						end
+		if CleanUpUnit then
+			trace.i( self.ClassName, "Checking " .. CleanUpUnitName )
+			if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
+				local CleanUpUnitVec3 = CleanUpUnit:getPoint()
+				trace.i( self.ClassName, CleanUpUnitVec3 )
+				local CleanUpUnitVec2 = {}
+				CleanUpUnitVec2.x = CleanUpUnitVec3.x
+				CleanUpUnitVec2.y = CleanUpUnitVec3.z
+				trace.i( self.ClassName, CleanUpUnitVec2 )
+				local CleanUpSurfaceType = land.getSurfaceType(CleanUpUnitVec2)
+				trace.i( self.ClassName, CleanUpSurfaceType )
+				MESSAGE:New( "Surface " .. CleanUpUnitName .. " = " .. CleanUpSurfaceTypeText[CleanUpSurfaceType], CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
+				
+				if CleanUpUnit:getLife() <= CleanUpUnit:getLife0() * 0.95 then
+					if CleanUpSurfaceType == land.SurfaceType.RUNWAY then
+						trace.i( self.ClassName, "Destroy " .. CleanUpUnitName .. " because above runway and damaged." )
+						self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
+						self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
+					else
 						if CleanUpUnit:inAir() then
-							if CleanUpUnit.getHeight(CleanUpUnitVec2) < 20 then
-								trace.i( self.ClassName, "CleanUp: Destroy " .. CleanUpGroupName .. " because below safe height and damaged." )
+							local CleanUpLandHeight = land.getHeight(CleanUpUnitVec2)
+							local CleanUpUnitHeight = CleanUpUnitVec3.y - CleanUpLandHeight
+							trace.i( self.ClassName, "In and height = " .. CleanUpUnitHeight )
+							--if CleanUpUnitHeight < 20 then
+							--	trace.i( self.ClassName, "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." )
+							--	self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
+							--	self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
+							--end
+						else
+							local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
+							local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
+							if CleanUpUnitVelocityTotal < 1 then
+								trace.i( self.ClassName, "Destroy: " .. CleanUpGroupName )
 								self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
-								UnitData = nil
+								self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
 							end
 						end
 					end
-					
-					
-					local CleanUpUnitVelocity = CleanUpUnit:getVelocity()
-					local CleanUpUnitVelocityTotal = math.abs(CleanUpUnitVelocity.x) + math.abs(CleanUpUnitVelocity.y) + math.abs(CleanUpUnitVelocity.z)
-					if CleanUpUnitVelocityTotal < 1 then
-						trace.i( self.ClassName, "CleanUp: Destroy: " .. CleanUpGroupName )
-						self:_DestroyUnit(CleanUpUnit, CleanUpUnitName)
-						UnitData = nil
-					end
-				else
-					-- Do nothing ...
-					UnitData = nil
 				end
+				
+				
 			else
-				trace.i( self.ClassName, "CleanUp: Group " .. CleanUpGroupName .. " does not exist anymore in CleanUpList, Removing ..." )
-				UnitData = nil
+				-- Do nothing ...
+				self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
 			end
 		else
 			trace.i( self.ClassName, "CleanUp: Group " .. CleanUpGroupName .. " cannot be found in DCS RTE, removing ..." )
-			UnitData = nil -- Not anymore in the DCSRTE
+			self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
 		end
 	end
 end

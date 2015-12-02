@@ -2388,6 +2388,22 @@ trace.f()
 
 end
 
+function GetUnitHeight( CheckUnit )
+trace.f()
+
+	local UnitPoint = CheckUnit:getPoint()
+	local UnitPosition = { x = CurrentPoint.x, y = CurrentPoint.z }
+	local UnitHeight = CurrentPoint.y
+
+	local LandHeight = land.getHeight( CurrentPosition )
+
+	--env.info(( 'CarrierHeight: LandHeight = ' .. LandHeight .. ' CarrierHeight = ' .. CarrierHeight ))
+
+	return CarrierHeight - LandHeight
+
+end
+
+
 _MusicTable = {}
 _MusicTable.Files = {}
 _MusicTable.Queue = {}

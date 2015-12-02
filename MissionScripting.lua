@@ -16,7 +16,7 @@ Include.File = function( IncludeFile )
 end
 
 Include.File( "Database" )
-Include.File( "StatHandler" )
+--Include.File( "StatHandler" )
 
 --Sanitize Mission Scripting environment
 --This makes unavailable some unsecure functions. 
