@@ -4,7 +4,7 @@ dofile('Scripts/ScriptingSystem.lua')
 
 Include = {}
 
-Include.LoadPath = 'Scripts/MOOSE'
+Include.LoadPath = 'Scripts/MOOSE/MOOSE'
 Include.Files = {}
 
 Include.File = function( IncludeFile )

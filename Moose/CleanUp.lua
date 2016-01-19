@@ -292,7 +292,7 @@ function CLEANUP:_Scheduler()
 					else
 						UnitData.CleanUpTime = timer.getTime()
 						UnitData.CleanUpMoved = true
-						MESSAGE:New( "Moved " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
+						--MESSAGE:New( "Moved " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
 					end
 				end
 				
