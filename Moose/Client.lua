@@ -134,6 +134,26 @@ trace.f(self.ClassName)
 
 end
 
+--- InitCargo allows to initialize @{CARGO} on the CLIENT when the client initializes.
+-- @tparam string InitCargoNames is a string or a table containing the names of the @{CARGO}s initialized in the Mission.
+-- @treturn CLIENT
+function CLIENT:InitCargo( InitCargoNames )
+trace.f(self.ClassName, { InitCargoNames } )
+
+  local Valid = true
+  
+  if Valid then
+	if type( InitCargoNames ) == "table" then
+		self.InitCargoNames = InitCargoNames
+	else
+		self.InitCargoNames = { InitCargoNames }
+	end
+  end
+  
+  return self
+  
+end
+
 --- AddCargo allows to add @{CARGO} on the CLIENT.
 -- @tparam string CargoName is the name of the @{CARGO}.
 -- @tparam string CargoGroupName is the name of an active Group defined within the Mission Editor or Dynamically Spawned. Note that this is only applicable for Unit @{CARGO} Types.
@@ -150,13 +170,15 @@ trace.f(self.ClassName, { CargoName, CargoGroupName, CargoType, CargoWeight, Car
   Valid = routines.ValidateEnumeration( CargoType, "CargoType", CARGO_TYPE, Valid )
   Valid = routines.ValidateNumber( CargoWeight, "CargoWeight", Valid )
 
-  if  Valid then
+  if Valid then
     local Cargo = {}
     Cargo.CargoName = CargoName
     Cargo.CargoGroupName = CargoGroupName
     Cargo.CargoType = CargoType
     Cargo.CargoWeight = CargoWeight
-	Cargo.CargoGroupTemplate = CargoGroupTemplate
+	if CargoGroupTemplate then
+		Cargo.CargoGroupTemplate = CargoGroupTemplate
+	end
     self._Cargos[CargoName] = Cargo
     self:ShowCargo()
   end

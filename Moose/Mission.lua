@@ -478,6 +478,11 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							Client._Tasks[TaskNumber].MissionTask = Mission._Tasks[TaskNumber]
 						end
 						Client._Cargos = {}
+						if Client.InitCargoNames then
+							for InitCargoID, InitCargoName in pairs( Client.InitCargoNames ) do
+								Client._Cargos[InitCargoName] = Mission._Cargos[InitCargoName]
+							end
+						end
 						Mission:Ongoing()				
 					end
 					
