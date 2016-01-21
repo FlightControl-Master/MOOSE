@@ -33,7 +33,7 @@ trace.names.SpawnScheduled = false
 trace.names.SpawnInZone = false
 trace.names.Spawn = false
 trace.names.ShowCargo = false 
-trace.names.AddCargo = true
+trace.names.AddCargo = false
 trace.names.RemoveCargo = false 
 trace.names.MenuAction = false
 trace.names.DeploySA6TroopsGoal = false
@@ -62,7 +62,7 @@ trace.names.FollowPlayers = false
 trace.names.AddPlayerFromUnit = false
 trace.names.FromCarrier = false
 trace.names.OnDeadOrCrash = false
-trace.classes.CLEANUP = true
+trace.classes.CLEANUP = false
 trace.cache = {}
 
 trace.tracefunction = function( functionname )
