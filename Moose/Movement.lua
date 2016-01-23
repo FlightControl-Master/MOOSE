@@ -49,7 +49,7 @@ end
 --- Call this function to start the MOVEMENT scheduling.
 function MOVEMENT:ScheduleStart()
 trace.f( self.ClassName )
-	self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 60 )
+	self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
 end
 
 --- Call this function to stop the MOVEMENT scheduling.
