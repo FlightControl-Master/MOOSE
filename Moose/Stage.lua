@@ -483,7 +483,7 @@ trace.f(self.ClassName)
 
   -- If the Cargo is ready to be loaded, load it into the Client.
   
-	trace.i(self.ClassName, Task.Cargo)
+	trace.i(self.ClassName, Task.Cargo.CargoName)
 	
 	if Task.Cargo:OnBoarded( Client, Task.CurrentCargoZone ) then
 

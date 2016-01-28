@@ -231,7 +231,8 @@ CARGO = {
 		LOADED = 1,
 		UNLOADED = 2,
 		LOADING = 3
-	}
+	},
+	CargoCarrierGroupName = nil
 }
 
 --- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
@@ -549,11 +550,13 @@ CARGO_PACKAGE = {
 }
 
 
-function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight )
-trace.f( self.ClassName, { CargoType, CargoName, CargoWeight } )
+function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, InitClientGroupName )
+trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, InitClientGroupName } )
 
 	-- Arrange meta tables
 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
+	
+	self.InitClientGroupName = InitClientGroupName .. '#' -- to fix
 	
 	CARGOS[self.CargoName] = self
 
@@ -564,6 +567,32 @@ end
 function CARGO_PACKAGE:Spawn()
 trace.f( self.ClassName )
 
+	-- this needs to be checked thoroughly
+
+
+	local SpawnCargo = true
+	
+	if self.Client and self.Client:ClientGroup() then
+		trace.i( self.ClassName, 'There is a Client ' .. self.Client.ClientName )
+		if self.Client:FindCargo( self.CargoName ) then
+			if self.Client:ClientUnit():getPlayerName() then -- this needs to be checked thoroughly
+				trace.i( self.ClassName, 'ok, Client is of player ' .. self.Client:ClientUnit():getPlayerName() .. ' and contains the Cargo, do nothing' )
+				SpawnCargo = false
+			end
+		end
+	else
+		if self.InitClientGroupName then
+			local ClientGroup = Group.getByName( self.InitClientGroupName )
+			if ClientGroup and ClientGroup:isExist() then
+				self.Client = CLIENT:New( self.InitClientGroupName, '' )
+			end
+		end
+	end
+	
+	if SpawnCargo then
+		self.Client:AddCargo( self ) -- Adding cargo to the AI client
+	end
+
 	return self
 end
 
@@ -571,10 +600,20 @@ function CARGO_PACKAGE:IsNear( Client, LandingZone )
 trace.f( self.ClassName )
 
 	local Near = false
-	
-	local CargoHostGroup = LandingZone:GetCargoHostGroup()
-	if routines.IsPartOfGroupInRadius( CargoHostGroup, Client:ClientPosition(), 150 ) then
-		Near = true
+
+	trace.i( self.ClassName, self.Client.ClientName )
+	if self.Client and self.Client:ClientGroup():getName() then
+		trace.i( self.ClassName, 'Client Exists.' )
+		trace.i( self.ClassName, 'self.Client:ClientGroup():getName() = ' .. self.Client:ClientGroup():getName() )
+
+		-- Find the cargo in the client
+		local Cargo = self.Client:FindCargo( self.CargoName )
+		if Cargo == self then
+			trace.i( self.ClassName, 'Cargo is loaded in Client.' )
+			if routines.IsPartOfGroupInRadius( self.Client:ClientGroup(), Client:ClientPosition(), 150 ) then
+				Near = true
+			end
+		end
 	end
 	
 	return Near
@@ -593,8 +632,8 @@ trace.f(self.ClassName )
 	local CarrierPosOnBoard = ClientUnit:getPoint()
 	local CarrierPosMoveAway = ClientUnit:getPoint()
 	
-	local CargoHostGroup = LandingZone:GetCargoHostGroup()
-	local CargoHostGroupName = LandingZone:GetCargoHostGroup():getName()
+	local CargoHostGroup = self.Client:ClientGroup()
+	local CargoHostGroupName = self.Client:ClientGroup():getName()
 
 	local CargoHostUnits = CargoHostGroup:getUnits()
 	local CargoPos = CargoHostUnits[1]:getPoint()
@@ -677,10 +716,21 @@ trace.f(self.ClassName )
 
 	local OnBoarded = false
   
-	local CargoHostGroup = LandingZone:GetCargoHostGroup()
-	if routines.IsPartOfGroupInRadius( CargoHostGroup, Client:ClientPosition(), 25 ) then
-		--CargoGroup:destroy()
-		OnBoarded = true
+	if self.Client and self.Client:ClientGroup() then
+		if routines.IsPartOfGroupInRadius( self.Client:ClientGroup(), Client:ClientPosition(), 25 ) then
+			
+			-- Switch Cargo from self.Client to Client ...
+			Client:AddCargo( self )
+			self.Client:RemoveCargo( self )
+			trace.i( self.ClassName, 'Cargo switched from ' .. self.Client:ClientGroup():getName() .. ' to ' .. Client:ClientGroup():getName() )
+			trace.i( self.ClassName, 'Cargo is ' .. self.CargoName ) -- Should not be null
+			
+			-- ok, so the Cargo has a new Client, thus, change the Owning Client of the Cargo.
+			self.Client = Client
+			
+			-- All done, onboarded the Cargo to the new Client.
+			OnBoarded = true
+		end
 	end
 
 	return OnBoarded

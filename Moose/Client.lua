@@ -45,7 +45,7 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 
 function CLIENT:New( ClientName, ClientBriefing )
-trace.f(self.ClassName)
+trace.f( self.ClassName, { ClientName, ClientBriefing } )
 
 	-- Arrange meta tables
 	local self = BASE:Inherit( self, BASE:New() )
@@ -184,7 +184,7 @@ end
 -- @tparam string Cargo is the @{CARGO}.
 -- @treturn CLIENT
 function CLIENT:AddCargo( Cargo )
-trace.f(self.ClassName, { Cargo } )
+trace.f(self.ClassName, { Cargo.CargoName } )
 
 	local Valid = true
 	  
@@ -201,7 +201,7 @@ end
 -- @tparam string CargoName is the name of the @{CARGO}.
 -- @treturn Cargo
 function CLIENT:RemoveCargo( Cargo )
-trace.f(self.ClassName )
+trace.f(self.ClassName, { Cargo.CargoName } )
 
   local Valid = true
 
