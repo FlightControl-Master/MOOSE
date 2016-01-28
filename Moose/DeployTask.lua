@@ -13,7 +13,7 @@ DEPLOYTASK = {
 --- Creates a new DEPLOYTASK object, which models the sequence of STAGEs to unload a cargo.
 -- @tparam table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
 -- @tparam CARGO_TYPE CargoType Type of the Cargo.
-function DEPLOYTASK:New( LandingZones, CargoType )
+function DEPLOYTASK:New( CargoType )
 trace.f(self.ClassName)
 
 	-- Child holds the inherited instance of the DEPLOYTASK Class to the BASE class.
@@ -21,24 +21,52 @@ trace.f(self.ClassName)
   
 	local Valid = true
   
-	Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
-    Valid = routines.ValidateEnumeration( CargoType, "CargoType", CARGO_TYPE, Valid )
-	
     if Valid then
 		Child.Name = 'Deploy Cargo'
-		Child.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType.TEXT .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
-		if type( LandingZones ) == "table" then
-			Child.LandingZones = LandingZones
-		else
-			Child.LandingZones = { LandingZones }
-		end
+		Child.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
 		Child.CargoType = CargoType
-		Child.GoalVerb = CargoType.TEXT .. " " .. self.GoalVerb
-		Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGEUNLOAD:New(), STAGEDONE:New() }
+		Child.GoalVerb = CargoType .. " " .. self.GoalVerb
+		Child.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGEUNLOAD:New(), STAGEDONE:New() }
 		Child.SetStage( Child, 1 )
 	end
   
 	return Child
+end
+
+function DEPLOYTASK:ToZone( LandingZone )
+trace.f(self.ClassName)
+
+	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
+	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
+	
+	return self
+end
+
+
+function DEPLOYTASK:InitCargo( InitCargos )
+trace.f( self.ClassName, { InitCargos } )
+
+	if type( InitCargos ) == "table" then
+		self.Cargos.InitCargos = InitCargos
+	else
+		self.Cargos.InitCargos = { InitCargos }
+	end
+
+
+	return self
+end
+
+
+function DEPLOYTASK:LoadCargo( LoadCargos )
+trace.f( self.ClassName, { LoadCargos } )
+
+	if type( LoadCargos ) == "table" then
+		self.Cargos.LoadCargos = LoadCargos
+	else
+		self.Cargos.LoadCargos = { LoadCargos }
+	end
+
+	return self
 end
 
 
@@ -60,46 +88,51 @@ trace.f(self.ClassName)
 end
 
 function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-trace.f(self.ClassName, {Client, Cargos, TransportRadius})
+trace.f( self.ClassName )
 
-	for CargoID, CargoData in pairs( Client._Cargos ) do
+	for CargoID, Cargo in pairs( Cargos ) do
 
-		trace.i( self.ClassName, { CargoData.CargoName } )
-		if Client._Menus[CargoData.CargoType] == nil then
-			Client._Menus[CargoData.CargoType] = {}
-		end
+		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType } )
 		
-		if not Client._Menus[CargoData.CargoType].DeployMenu then
-			Client._Menus[CargoData.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
+		if Cargo:IsStatusLoaded() then
+
+
+			if Client._Menus[Cargo.CargoType] == nil then
+				Client._Menus[Cargo.CargoType] = {}
+			end
+			
+			if not Client._Menus[Cargo.CargoType].DeployMenu then
+				Client._Menus[Cargo.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
+					Client:ClientGroup():getID(), 
+					self.TEXT[1], 
+					nil
+				)
+				trace.i( self.ClassName, 'Added DeployMenu ' .. self.TEXT[1] )
+			end
+			
+			if Client._Menus[Cargo.CargoType].DeploySubMenus == nil then
+				Client._Menus[Cargo.CargoType].DeploySubMenus = {}
+			end
+			
+			if Client._Menus[Cargo.CargoType].DeployMenu == nil then
+				trace.i( self.ClassName, 'deploymenu is nil' )
+			end
+
+			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ].MenuPath = missionCommands.addCommandForGroup(
 				Client:ClientGroup():getID(), 
-				self.TEXT[1], 
-				nil
+				Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
+				Client._Menus[Cargo.CargoType].DeployMenu, 
+				self.MenuAction,
+				{ ReferenceTask = self, CargoTask = Cargo }
 			)
-			trace.i( self.ClassName, 'Added DeployMenu ' .. self.TEXT[1] )
+			trace.i( self.ClassName, 'Added DeploySubMenu ' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
 		end
-		
-		if Client._Menus[CargoData.CargoType].DeploySubMenus == nil then
-			Client._Menus[CargoData.CargoType].DeploySubMenus = {}
-		end
-		
-		if Client._Menus[CargoData.CargoType].DeployMenu == nil then
-			trace.i( self.ClassName, 'deploymenu is nil' )
-		end
-
-		Client._Menus[CargoData.CargoType].DeploySubMenus[ #Client._Menus[CargoData.CargoType].DeploySubMenus + 1 ].MenuPath = missionCommands.addCommandForGroup(
-			Client:ClientGroup():getID(), 
-			CargoData.CargoName .. " ( " .. CargoData.CargoWeight .. "kg )",
-			Client._Menus[CargoData.CargoType].DeployMenu, 
-			self.MenuAction,
-			{ ReferenceTask = self, CargoName = CargoData.CargoName }
-		)
-			trace.i( self.ClassName, 'Added DeploySubMenu ' .. CargoData.CargoType.TEXT .. ":" .. CargoData.CargoName .. " ( " .. CargoData.CargoWeight .. "kg )" )
 	end
 
 end
 
 function DEPLOYTASK:RemoveCargoMenus( Client )
-trace.f(self.ClassName, { Client } )
+trace.f(self.ClassName )
 
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		if MenuData.DeploySubMenus ~= nil then

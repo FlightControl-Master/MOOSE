@@ -4,7 +4,6 @@
 
 Include.File( "Routines" )
 Include.File( "Base" )
-Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
@@ -28,15 +27,6 @@ MISSION = {
 	FAILED = 2,
 	REPEAT = 3,
 	_GoalTasks = {}
-}
-
-CARGOSTATUS = {
-	NONE = 0,
-	LOADED = 1,
-	UNLOADED = 2,
-	LOADING = 3,
-	LoadCount= 0,
-	UnloadCount = 0
 }
 
 
@@ -252,7 +242,7 @@ end
 -- @tparam CLIENT Client to show briefing to.
 -- @treturn CLIENT
 function MISSION:ShowBriefing( Client )
-trace.f(self.ClassName, { Client } )
+trace.f(self.ClassName, { Client.ClientName } )
 
 	if not Client.ClientBriefingShown then
 		Client.ClientBriefingShown = true
@@ -263,7 +253,6 @@ trace.f(self.ClassName, { Client } )
 		end
 	end
 
-trace.r( "", "", { Client } )
 	return Client
 end
 
@@ -377,43 +366,17 @@ end
  
 --- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
 SpawnCargo = {}
-function MISSION:AddCargo( CargoName, CargoType, CargoWeight, CargoGroupControlCenter, CargoGroupTemplate, CargoZone )
-trace.f(self.ClassName, { CargoName, CargoType, CargoWeight, CargoGroupControlCenter, CargoGroupTemplate, CargoZone } )
+function MISSION:AddCargo( Cargos )
+trace.f(self.ClassName, { Cargos } )
 
-	local Cargo = {}
-	Cargo.CargoName = CargoName
-	if CargoType.TRANSPORT == CARGO_TRANSPORT.UNIT then
-		if not SpawnCargo[CargoGroupTemplate] then
-			SpawnCargo[CargoGroupTemplate] = SPAWN:New( CargoGroupTemplate )
+	if type( Cargos ) == "table" then
+		for CargoID, Cargo in pairs( Cargos ) do
+			self._Cargos[Cargo.CargoName] = Cargo
 		end
-		if CargoGroupControlCenter == nil then
-			--- @todo check this
-			Cargo.CargoGroupName = SpawnCargo[CargoGroupTemplate]:InZone( CargoZone ).name
-		else
-			--- @todo check this
-			env.info( "SpawnFromCarrier")
-			Cargo.CargoGroupName = SpawnCargo[CargoGroupTemplate]:FromCarrier( Group.getByName( CargoGroupControlCenter ), CargoZone, nil, true ).name
-			--trigger.action.activateGroup( Group.getByName( Cargo.CargoGroupName ) )
-			--trigger.action.setGroupAIOff( Cargo.CargoGroupName )
-			trace.i( self.ClassName, Cargo.CargoGroupName )
-
-		end
-    else
-		Cargo.CargoGroupName = CargoGroupControlCenter
+	else
+		self._Cargos[Cargos.CargoName] = Cargos
 	end
-	Cargo.CargoType = CargoType
-    Cargo.CargoWeight = CargoWeight
-	Cargo.CargoGroupControlCenter = CargoGroupControlCenter
-	Cargo.CargoGroupTemplate = CargoGroupTemplate
-	Cargo.CargoZone = CargoZone
-	Cargo.Status = CARGOSTATUS.NONE
-    self._Cargos[CargoName] = Cargo
-
-trace.r( self.ClassName, "AddCargo", { Cargo.CargoGroupName } )
-	return Cargo.CargoGroupName
 end
-
-
 
 
 --[[
@@ -450,6 +413,8 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 
 	-- loop through the missions in the TransportTasks
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
+	
+		env.info( "Mission: " .. MissionName )
 		
 		if not Mission:IsCompleted() then
 		
@@ -457,6 +422,8 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			local ClientsAlive = false
 			
 			for ClientID, Client in pairs( Mission._Clients ) do
+			
+				env.info( "Client: " .. Client.ClientName )
 
 				if Client:ClientGroup() and Client:ClientGroup():getUnits() and Client:ClientGroup():getUnits()[1] and Client:ClientGroup():getUnits()[1]:getLife() > 0.0 then
 
@@ -476,13 +443,12 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							Client._Tasks[TaskNumber] = routines.utils.deepCopy( Mission._Tasks[TaskNumber] )
 							-- Each MissionTask must point to the original Mission.
 							Client._Tasks[TaskNumber].MissionTask = Mission._Tasks[TaskNumber]
+							Client._Tasks[TaskNumber].Cargos = Mission._Tasks[TaskNumber].Cargos
+							Client._Tasks[TaskNumber].LandingZones = Mission._Tasks[TaskNumber].LandingZones
 						end
+
 						Client._Cargos = {}
-						if Client.InitCargoNames then
-							for InitCargoID, InitCargoName in pairs( Client.InitCargoNames ) do
-								Client._Cargos[InitCargoName] = Mission._Cargos[InitCargoName]
-							end
-						end
+
 						Mission:Ongoing()				
 					end
 					

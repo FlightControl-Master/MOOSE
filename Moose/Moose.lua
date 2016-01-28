@@ -11,8 +11,8 @@ end
 
 Include = {}
 
-Include.MissionPath = script_path() .. "Mission\\"
-Include.ProgramPath = "Scripts\\Moose\\Moose\\"
+Include.MissionPath = script_path() .. "Mission/"
+Include.ProgramPath = "Scripts/Moose/Moose/"
 
 env.info( "Include.MissionPath = " .. Include.MissionPath)
 env.info( "Include.ProgramPath = " .. Include.ProgramPath)
@@ -21,17 +21,17 @@ Include.Files = {}
 Include.File = function( IncludeFile )
 	if not Include.Files[ IncludeFile ] then
 		Include.Files[IncludeFile] = IncludeFile
-		local f = base.loadfile( Include.ProgramPath .. IncludeFile .. ".lua" )
+		local f = assert( base.loadfile( Include.ProgramPath .. IncludeFile .. ".lua" ) )
 		if f == nil then
-			local f = base.loadfile( Include.MissionPath .. IncludeFile .. ".lua" )
+			local f = assert( base.loadfile( Include.MissionPath .. IncludeFile .. ".lua" ) )
 			if f == nil then
 				error ("Could not load MOOSE file " .. IncludeFile .. ".lua" )
 			else
-				env.info( "Include:" .. IncludeFile .. " loaded from " .. Include.ProgramPath )
+				env.info( "Include:" .. IncludeFile .. " loaded from " .. Include.MissionPath )
 				return f()
 			end
 		else
-			env.info( "Include:" .. IncludeFile .. " loaded from " .. Include.MissionPath )
+			env.info( "Include:" .. IncludeFile .. " loaded from " .. Include.ProgramPath )
 			return f()
 		end
 	end

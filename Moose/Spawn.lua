@@ -237,9 +237,9 @@ end
 -- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @treturn SPAWN
-function SPAWN:Spawn()
+function SPAWN:Spawn( SpawnGroupName )
 trace.f( self.ClassName )
-	local SpawnTemplate = self:_Prepare( true )
+	local SpawnTemplate = self:_Prepare( SpawnGroupName )
 	if self.SpawnStartPoint ~= 0 or self.SpawnEndPoint ~= 0 then
 		SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
 	end
@@ -258,11 +258,14 @@ end
 -- Uses _Database global object defined in MOOSE.
 function SPAWN:ReSpawn( SpawnGroupName )
 trace.f( self.ClassName, { SpawnGroupName } )
+	
 	local SpawnGroup = Group.getByName( SpawnGroupName )
-	SpawnGroup:destroy()
-	local SpawnTemplate = self:_Prepare( false )
-	-- Give the Group the original name of the Group.
-	SpawnTemplate.name = SpawnGroupName
+		if SpawnGroup then
+		SpawnGroup:destroy()
+	end
+	
+	local SpawnTemplate = self:_Prepare( SpawnGroupName )
+
 	-- Give the units of the Group the name following the SPAWN naming convention, so that they don't replace other units within the ME.
 	local SpawnUnits = table.getn( SpawnTemplate.units )
 	for u = 1, SpawnUnits do
@@ -282,7 +285,7 @@ trace.f( self.ClassName )
 	
 	local SpawnCountStart = self.SpawnCount + 1
 	for SpawnCount = SpawnCountStart, self.SpawnMaxGroups do
-		local SpawnTemplate = self:_Prepare( true )
+		local SpawnTemplate = self:_Prepare( )
 		SpawnTemplate.uncontrolled = true
 		_Database:Spawn( SpawnTemplate )
 	end
@@ -313,14 +316,10 @@ trace.f( self.ClassName, { CarrierGroup, TargetZonePrefix, NewGroupName, LateAct
 		
 			UnitDeploy = UnitData
 			
-			SpawnTemplate = self:_Prepare( true )
+			SpawnTemplate = self:_Prepare( NewGroupName )
 			
 			if ( self.SpawnMaxGroups == 0 ) or ( self.SpawnCount <= self.SpawnMaxGroups ) then
 				if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
-
-					if NewGroupName ~= nil then
-						SpawnTemplate.name = NewGroupName
-					end
 
 					if LateActivate ~= nil then
 						if LateActivate == true then
@@ -374,13 +373,34 @@ trace.f( self.ClassName, { CarrierGroup, TargetZonePrefix, NewGroupName, LateAct
 	return SpawnTemplate 
 end
 
+
+--- Will return the SpawnGroupName either with with a specific count number or without any count.
+-- @tparam number SpawnNumber is the number of the Group that is to be SPAWNed.
+-- @treturn string SpawnGroupName
+function SPAWN:SpawnGroupName( SpawnNumber )
+trace.f("Spawn", SpawnNumber )
+	
+	if SpawnNumber then
+		return string.format( self.SpawnPrefix .. '#%03d', SpawnNumber )
+	else
+		return string.format( self.SpawnPrefix .. '#' )
+	end
+	
+end
+
 --- Will SPAWN a Group within a given ZoneName.
 -- @tparam string ZonePrefix is the name of the zone where the Group is to be SPAWNed.
 -- @treturn SpawnTemplate
-function SPAWN:InZone( ZonePrefix )
+function SPAWN:InZone( ZonePrefix, SpawnGroupName )
 trace.f("Spawn", ZonePrefix )
 	
-	local SpawnTemplate =  self:_Prepare( true )
+	local SpawnTemplate
+	
+	if SpawnGroupName then
+		SpawnTemplate = self:_Prepare( SpawnGroupName )
+	else
+		SpawnTemplate =  self:_Prepare()
+	end
 
 	local Zone = trigger.misc.getZone( ZonePrefix )
 	local ZonePos = {}
@@ -462,7 +482,7 @@ trace.f( self.ClassName, SpawnPrefix )
 end
 
 --- Prepares the new Group Template before Spawning.
-function SPAWN:_Prepare( SpawnIncrement )
+function SPAWN:_Prepare( SpawnGroupName )
 trace.f( self.ClassName )
 	
 	local SpawnCount
@@ -476,11 +496,14 @@ trace.f( self.ClassName )
 	end
 	
 	-- Increase the spawn counter for the group
-	if SpawnIncrement == true then
+	if SpawnGroupName then
+		SpawnTemplate.name = SpawnGroupName
+	else
 		self.SpawnCount = self.SpawnCount + 1
+		SpawnTemplate.name = self:SpawnGroupName( self.SpawnCount )
 	end
 
-	SpawnTemplate.name = string.format( self.SpawnPrefix .. '#%03d', self.SpawnCount )
+	
 	SpawnTemplate.groupId = nil
 	SpawnTemplate.lateActivation = false
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
@@ -501,7 +524,7 @@ trace.f( self.ClassName )
 	
 	SpawnUnits = table.getn( SpawnTemplate.units )
 	for u = 1, SpawnUnits do
-		SpawnTemplate.units[u].name = string.format( self.SpawnPrefix .. '#%03d-%02d', self.SpawnCount, u )
+		SpawnTemplate.units[u].name = string.format( SpawnTemplate.name .. '-%02d', u )
 		SpawnTemplate.units[u].unitId = nil
 		SpawnTemplate.units[u].x = SpawnTemplate.route.points[1].x
 		SpawnTemplate.units[u].y = SpawnTemplate.route.points[1].y

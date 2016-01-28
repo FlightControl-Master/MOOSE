@@ -52,7 +52,7 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 	end
-	--Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
+	Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
 	trace.i( Child.ClassName, 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end

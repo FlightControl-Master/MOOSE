@@ -1521,83 +1521,46 @@ trace.r( "", "", { TransportZoneResult } )
 end
 
 
-function routines.IsUnitInRadius( CargoUnit, ReferenceGroup, Radius )
+function routines.IsUnitInRadius( CargoUnit, ReferencePosition, Radius )
 trace.f()
 
   local Valid = true
 
   -- fill-up some local variables to support further calculations to determine location of units within the zone.
   local CargoPos = CargoUnit:getPosition().p
-  local ReferenceGroupPos = ReferenceGroup:getUnits()[1]:getPosition().p
+  local ReferenceP = ReferencePosition.p
 
-  if  (((CargoPos.x - ReferenceGroupPos.x)^2 + (CargoPos.z - ReferenceGroupPos.z)^2)^0.5 <= Radius) then
+  if  (((CargoPos.x - ReferenceP.x)^2 + (CargoPos.z - ReferenceP.z)^2)^0.5 <= Radius) then
   else
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
   return Valid
 end
 
-function routines.IsPartOfGroupInRadius( CargoGroup, ReferenceGroup, Radius )
+function routines.IsPartOfGroupInRadius( CargoGroup, ReferencePosition, Radius )
 trace.f()
 
   local Valid = true
 
   Valid = routines.ValidateGroup( CargoGroup, "CargoGroup", Valid )
-  Valid = routines.ValidateGroup( ReferenceGroup, "ReferenceGroup", Valid )
 
   -- fill-up some local variables to support further calculations to determine location of units within the zone
   local CargoUnits = CargoGroup:getUnits()
   for CargoUnitId, CargoUnit in pairs( CargoUnits ) do
     local CargoUnitPos = CargoUnit:getPosition().p
 --    env.info( 'routines.IsPartOfGroupInRadius: CargoUnitPos.x = ' .. CargoUnitPos.x .. ' CargoUnitPos.z = ' .. CargoUnitPos.z )
-    local ReferenceGroupPos = ReferenceGroup:getUnits()[1]:getPosition().p
+    local ReferenceP = ReferencePosition.p
 --    env.info( 'routines.IsPartOfGroupInRadius: ReferenceGroupPos.x = ' .. ReferenceGroupPos.x .. ' ReferenceGroupPos.z = ' .. ReferenceGroupPos.z )
 
-    if  ((( CargoUnitPos.x - ReferenceGroupPos.x)^2 + (CargoUnitPos.z - ReferenceGroupPos.z)^2)^0.5 <= Radius) then
+    if  ((( CargoUnitPos.x - ReferenceP.x)^2 + (CargoUnitPos.z - ReferenceP.z)^2)^0.5 <= Radius) then
     else
       Valid = false
       break
     end
   end
 
-trace.r( "", "", { Valid } )
   return Valid
-end
-
-function routines.DestroyGroupInRadiusFromGroup( CargoGroup, ReferenceGroup, Radius )
-trace.f()
-
-  local Valid = true
-
-  Valid = routines.ValidateGroup( CargoGroup, "CargoGroup", Valid )
-  Valid = routines.ValidateGroup( ReferenceGroup, "ReferenceGroup", Valid )
-
-  if Valid then
-    -- fill-up some local variables to support further calculations to determine location of units within the zone
-    local CargoUnits = CargoGroup:getUnits()
-    local AliveCargoUnits = #CargoUnits
-    for CargoUnitId, CargoUnit in pairs( CargoUnits ) do
-      local CargoUnitPos = CargoUnit:getPosition().p
---      env.info( 'routines.DestroyGroupInRadiusFromGroup: CargoUnitPos.x = ' .. CargoUnitPos.x .. ' CargoUnitPos.z = ' .. CargoUnitPos.z )
-      local ReferenceGroupPos = ReferenceGroup:getUnits()[1]:getPosition().p
---      env.info( 'routines.DestroyGroupInRadiusFromGroup: ReferenceGroupPos.x = ' .. ReferenceGroupPos.x .. ' ReferenceGroupPos.z = ' .. ReferenceGroupPos.z )
-
-      if  ((( CargoUnitPos.x - ReferenceGroupPos.x)^2 + (CargoUnitPos.z - ReferenceGroupPos.z)^2)^0.5 <= Radius) then
-        CargoUnit:destroy()
-        AliveCargoUnits = AliveCargoUnits - 1
-      else
-        Valid = false
-        break
-      end
-    end
-  else
-    AliveCargoUnits = -1
-  end
-
-trace.r( "", "", { AliveCargoUnits } )
-  return AliveCargoUnits
 end
 
 

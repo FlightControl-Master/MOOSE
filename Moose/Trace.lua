@@ -62,6 +62,7 @@ trace.names.FollowPlayers = false
 trace.names.AddPlayerFromUnit = false
 trace.names.FromCarrier = false
 trace.names.OnDeadOrCrash = false
+
 trace.classes.CLEANUP = false
 trace.cache = {}
 

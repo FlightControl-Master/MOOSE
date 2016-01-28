@@ -9,29 +9,37 @@ Include.File( "Stage" )
 
 TASK = {
 
-  -- Defines the different signal types with a Task.
-  SIGNAL = {
-    COLOR = { 
-      RED = { ID = 1, COLOR = trigger.smokeColor.Red, TEXT = "A red" },
-      GREEN = { ID = 2, COLOR = trigger.smokeColor.Green, TEXT = "A green" }, 
-      BLUE = { ID = 3, COLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
-      WHITE = { ID = 4, COLOR = trigger.smokeColor.White, TEXT = "A white" }, 
-      ORANGE = { ID = 5, COLOR = trigger.smokeColor.Orange, TEXT = "An orange" } 
-    },
-    TYPE = {
-      SMOKE = { ID = 1, TEXT = "smoke" },
-      FLARE = { ID = 2, TEXT = "flare" }
-    }
-  },
-  ClassName = "TASK",
-  Mission = {}, -- Owning mission of the Task
-  Name = '',
-  Stages = {},
-  Stage = {},
-  ActiveStage = 0,
-  TaskDone = false,
-  TaskFailed = false,
-  GoalTasks = {}
+	-- Defines the different signal types with a Task.
+	SIGNAL = {
+		COLOR = { 
+			RED = { ID = 1, COLOR = trigger.smokeColor.Red, TEXT = "A red" },
+			GREEN = { ID = 2, COLOR = trigger.smokeColor.Green, TEXT = "A green" }, 
+			BLUE = { ID = 3, COLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
+			WHITE = { ID = 4, COLOR = trigger.smokeColor.White, TEXT = "A white" }, 
+			ORANGE = { ID = 5, COLOR = trigger.smokeColor.Orange, TEXT = "An orange" } 
+		},
+		TYPE = {
+			SMOKE = { ID = 1, TEXT = "smoke" },
+			FLARE = { ID = 2, TEXT = "flare" }
+		}
+	},
+	ClassName = "TASK",
+	Mission = {}, -- Owning mission of the Task
+	Name = '',
+	Stages = {},
+	Stage = {},
+	Cargos = {
+		InitCargos = {},
+		LoadCargos = {}
+	},
+	LandingZones = {
+		LandingZoneNames = {},
+		LandingZones = {}
+	},
+	ActiveStage = 0,
+	TaskDone = false,
+	TaskFailed = false,
+	GoalTasks = {}
 }
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
@@ -319,10 +327,9 @@ end
 
 function TASK.MenuAction( Parameter )
 trace.menu("TASK","MenuAction")
-  trace.l( "TASK", "MenuAction", { Parameter } )
+  trace.l( "TASK", "MenuAction" )
   Parameter.ReferenceTask.ExecuteStage = _TransportExecuteStage.EXECUTING
-  Parameter.ReferenceTask.CargoName = Parameter.CargoName
-  
+  Parameter.ReferenceTask.Cargo = Parameter.CargoTask
 end
 
 function TASK:StageExecute()

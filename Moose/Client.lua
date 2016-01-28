@@ -73,7 +73,33 @@ function CLIENT:ClientGroup()
 		trace.i( self.ClassName, self.ClientName .. " : group found!" )
 		return ClientData
 	else
---		trace.x( self.ClassName, self.ClientName .. " : no group found!" )
+		return nil
+	end
+end 
+
+--- Returns the Unit of the @{CLIENT}.
+-- @treturn Unit
+function CLIENT:ClientUnit()
+--trace.f(self.ClassName)
+	local ClientData = Group.getByName( self.ClientName )
+	if ClientData and ClientData:isExist() then
+		trace.i( self.ClassName, self.ClientName .. " : group found!" )
+		return ClientData:getUnits()[1]
+	else
+		return nil
+	end
+end 
+
+
+--- Returns the Position of the @{CLIENT}.
+-- @treturn Position
+function CLIENT:ClientPosition()
+--trace.f(self.ClassName)
+	local ClientData = Group.getByName( self.ClientName )
+	if ClientData and ClientData:isExist() then
+		trace.i( self.ClassName, self.ClientName .. " : group found!" )
+		return ClientData:getUnits()[1]:getPosition()
+	else
 		return nil
 	end
 end 
@@ -115,22 +141,22 @@ end
 --- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
 -- The @{CARGO} is shown throught the MESSAGE system of DCS World.
 function CLIENT:ShowCargo()
-trace.f(self.ClassName)
+trace.f( self.ClassName )
 
-  local CargoMsg = ""
+	local CargoMsg = ""
   
-  for CargoName, Cargo in pairs( self._Cargos ) do
-    if CargoMsg  ~= "" then
-      CargoMsg = CargoMsg .. "\n"
-    end
-    CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType.TEXT .. " Weight: " .. Cargo.CargoWeight
-  end
+	for CargoName, Cargo in pairs( self._Cargos ) do
+		if CargoMsg  ~= "" then
+			CargoMsg = CargoMsg .. "\n"
+		end
+		CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight
+	end
   
-  if CargoMsg == '' then
-	CargoMsg = "empty"
-  end
+	if CargoMsg == '' then
+		CargoMsg = "empty"
+	end
   
-  self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
+	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
 
 end
 
@@ -155,57 +181,37 @@ trace.f(self.ClassName, { InitCargoNames } )
 end
 
 --- AddCargo allows to add @{CARGO} on the CLIENT.
--- @tparam string CargoName is the name of the @{CARGO}.
--- @tparam string CargoGroupName is the name of an active Group defined within the Mission Editor or Dynamically Spawned. Note that this is only applicable for Unit @{CARGO} Types.
--- @tparam CARGO_TYPE CargoType is the Type of the @{CARGO}.
--- @tparam number CargoWeight is the weight of the cargo in Kg.
--- @tparam string CargoGroupTemplate is the name of an active Group defined within the Mission Editor with "Late Activation".
+-- @tparam string Cargo is the @{CARGO}.
 -- @treturn CLIENT
-function CLIENT:AddCargo( CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate )
-trace.f(self.ClassName, { CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate } )
+function CLIENT:AddCargo( Cargo )
+trace.f(self.ClassName, { Cargo } )
 
-  local Valid = true
-  
-  Valid = routines.ValidateString( CargoName, "CargoName", Valid )
-  Valid = routines.ValidateEnumeration( CargoType, "CargoType", CARGO_TYPE, Valid )
-  Valid = routines.ValidateNumber( CargoWeight, "CargoWeight", Valid )
-
-  if Valid then
-    local Cargo = {}
-    Cargo.CargoName = CargoName
-    Cargo.CargoGroupName = CargoGroupName
-    Cargo.CargoType = CargoType
-    Cargo.CargoWeight = CargoWeight
-	if CargoGroupTemplate then
-		Cargo.CargoGroupTemplate = CargoGroupTemplate
+	local Valid = true
+	  
+	if Valid then
+		self._Cargos[Cargo.CargoName] = Cargo
+		self:ShowCargo()
 	end
-    self._Cargos[CargoName] = Cargo
-    self:ShowCargo()
-  end
-  
-  return self
+	  
+	return self
   
 end
 
 --- RemoveCargo removes @{CARGO} from the CLIENT.
 -- @tparam string CargoName is the name of the @{CARGO}.
 -- @treturn Cargo
-function CLIENT:RemoveCargo( CargoName )
-trace.f(self.ClassName, { CargoName } )
-
+function CLIENT:RemoveCargo( Cargo )
+trace.f(self.ClassName )
 
   local Valid = true
-  local Cargo = nil
-  
-  Valid = routines.ValidateString( CargoName, "CargoName", Valid )
 
   if  Valid then
-    trace.i( "CLIENT", "RemoveCargo: CargoName = " .. CargoName )
-    Cargo = routines.utils.deepCopy( self._Cargos[CargoName] )
-    self._Cargos[CargoName] = nil
+    trace.i( "CLIENT", "RemoveCargo: CargoName = " .. Cargo.CargoName )
+	local CargoNew = self._Cargos[Cargo.CargoName]
+    self._Cargos[Cargo.CargoName] = nil
   end
   
-  return Cargo
+  return CargoNew
   
 end
 
