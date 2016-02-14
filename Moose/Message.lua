@@ -84,6 +84,42 @@ trace.f(self.ClassName )
 	return self
 end
 
+--- Sends a MESSAGE to the Blue coalition. 
+-- @treturn MESSAGE
+-- @usage
+-- -- Send a message created with the @{New} method to the BLUE coalition.
+-- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
+-- or
+-- MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
+-- or
+-- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
+-- MessageBLUE:ToBlue()
+function MESSAGE:ToBlue()
+trace.f(self.ClassName )
+
+	self:ToCoalition( coalition.side.BLUE )
+	
+	return self
+end
+
+--- Sends a MESSAGE to the Red Coalition. 
+-- @treturn MESSAGE
+-- @usage
+-- -- Send a message created with the @{New} method to the RED coalition.
+-- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
+-- or
+-- MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
+-- or
+-- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
+-- MessageRED:ToRed()
+function MESSAGE:ToRed( )
+trace.f(self.ClassName )
+
+	self:ToCoalition( coalition.side.RED )
+	
+	return self
+end
+
 --- Sends a MESSAGE to a Coalition. 
 -- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
 -- @treturn MESSAGE

@@ -207,11 +207,11 @@ trace.f(self.ClassName, { Cargo.CargoName } )
 
   if  Valid then
     trace.i( "CLIENT", "RemoveCargo: CargoName = " .. Cargo.CargoName )
-	local CargoNew = self._Cargos[Cargo.CargoName]
+	--local CargoNew = self._Cargos[Cargo.CargoName]
     self._Cargos[Cargo.CargoName] = nil
   end
   
-  return CargoNew
+  return Cargo
   
 end
 

@@ -128,7 +128,9 @@ trace.f(self.ClassName)
 		end
 	end
 	
-	Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+	if Mission.MissionReportFlash or Mission.MissionReportShow then
+		Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+	end
 end
 
 --- Sets a TASK to status Done.

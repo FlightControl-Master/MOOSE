@@ -28,9 +28,10 @@ trace.f(self.ClassName)
 		Child.CargoType = CargoType
 		Child.GoalVerb = CargoType .. " " .. Child.GoalVerb
 		Child.OnBoardSide = OnBoardSide
+		Child.IsLandingRequired = false -- required to decide whether the client needs to land or not
+		Child.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
 		Child.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
 		Child.SetStage( Child, 1 )
-
 	end
   
   return Child
@@ -91,10 +92,10 @@ trace.f( self.ClassName )
 				if not Client._Menus[Cargo.CargoType].PickupMenu then
 					Client._Menus[Cargo.CargoType].PickupMenu = missionCommands.addSubMenuForGroup(
 						Client:ClientGroup():getID(), 
-						self.TEXT[1], 
+						self.TEXT[1] .. " " .. Cargo.CargoType, 
 						nil
 					)
-					trace.i( self.ClassName, 'Added PickupMenu' .. self.TEXT[1] )
+					trace.i( self.ClassName, 'Added PickupMenu: ' .. self.TEXT[1] .. " " .. Cargo.CargoType )
 				end
 
 				if Client._Menus[Cargo.CargoType].PickupSubMenus == nil then

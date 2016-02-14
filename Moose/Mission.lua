@@ -102,7 +102,7 @@ end
 function MISSION:Ongoing()
 trace.f(self.ClassName)
 	self.MissionStatus = "ONGOING"
-	self:StatusToClients()
+	--self:StatusToClients()
 end
 
 --- Returns if a Mission is pending.
@@ -136,7 +136,7 @@ end
 --- Send the status of the MISSION to all Clients.
 function MISSION:StatusToClients()
 trace.f(self.ClassName)
-	if timer.getTime() >= self.MissionReportTrigger then
+	if self.MissionReportFlash then
 		for ClientID, Client in pairs( self._Clients ) do
 			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10,  self.Name .. '/Status', "Mission Command: Mission Status")
 		end
@@ -414,7 +414,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 	-- loop through the missions in the TransportTasks
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 	
-		env.info( "Mission: " .. MissionName )
+		trace.i( "MISSIONSCHEDULER", MissionName )
 		
 		if not Mission:IsCompleted() then
 		
@@ -423,7 +423,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			
 			for ClientID, Client in pairs( Mission._Clients ) do
 			
-				env.info( "Client: " .. Client.ClientName )
+				trace.i( "MISSIONSCHEDULER", "Client: " .. Client.ClientName )
 
 				if Client:ClientGroup() and Client:ClientGroup():getUnits() and Client:ClientGroup():getUnits()[1] and Client:ClientGroup():getUnits()[1]:getLife() > 0.0 then
 

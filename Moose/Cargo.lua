@@ -33,37 +33,83 @@ CARGO_ZONE = {
 	}
 }
 
-function CARGO_ZONE:New( CargoZoneName, CargoHostGroupName )
-trace.f( self.ClassName, { CargoZoneName, CargoHostGroupName } )
+function CARGO_ZONE:New( CargoZoneName, CargoHostName )
+trace.f( self.ClassName, { CargoZoneName, CargoHostName } )
 
 	local self = BASE:Inherit( self, BASE:New() )
 
 	self.CargoZoneName = CargoZoneName
 	self.CargoZone = trigger.misc.getZone( CargoZoneName )
 
-	if CargoHostGroupName then
-		self.CargoHostGroupName = CargoHostGroupName
-		self.CargoHostSpawn = SPAWN:New( CargoHostGroupName )
+	if CargoHostName then
+		self.CargoHostName = CargoHostName
+		self.CargoHostSpawn = SPAWN:New( CargoHostName )
 	end
 	
 	return self
 end
 
 function CARGO_ZONE:Spawn()
-trace.f( self.ClassName )
+trace.f( self.ClassName, CargoHostSpawn )
 
 	if self.CargoHostSpawn then
 		local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
 		if CargoHostGroup then
 			if not CargoHostGroup:isExist() then
-				self.CargoHostSpawn:ReSpawn( self.CargoHostSpawn:SpawnGroupName() )
+				self.CargoHostSpawn:ReSpawn()
 			end
 		else
-			self.CargoHostSpawn:ReSpawn( self.CargoHostSpawn:SpawnGroupName() )
+			self.CargoHostSpawn:ReSpawn()
 		end
 	end
 
 	return self
+end
+
+function CARGO_ZONE:GetHostUnit()
+
+	if self.CargoHostName then
+		
+		-- A Host has been given, signal the host
+		local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
+		local CargoHostUnit
+		if CargoHostGroup == nil then
+			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
+		else
+			CargoHostUnit = CargoHostGroup:getUnits()[1]
+		end
+		
+		return CargoHostUnit
+	end
+	
+	return nil
+end
+
+function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
+trace.f( self.ClassName )
+
+	local SignalUnit = self:GetHostUnit()
+
+	if SignalUnit then
+		
+		local SignalUnitTypeName = SignalUnit:getTypeName()
+		
+		local HostMessage = ""
+
+		local IsCargo = false
+		for CargoID, Cargo in pairs( Cargos ) do
+			if Cargo.CargoType == Task.CargoType then
+				HostMessage = HostMessage .. "\n - " .. Cargo.CargoName
+				IsCargo = true
+			end
+		end
+		
+		if not IsCargo then
+			HostMessage = HostMessage .. "No Cargo Available."
+		end
+
+		Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageHosts." .. SignalUnitTypeName, SignalUnitTypeName .. ": Reporting Cargo", 10 )
+	end
 end
 
 function CARGO_ZONE:Signal()
@@ -73,21 +119,17 @@ trace.f( self.ClassName )
 
 	if self.SignalType then
 	
-		if self.CargoHostGroupName then
+		if self.CargoHostName then
 			
 			-- A Host has been given, signal the host
-			local SignalUnit = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
-			if SignalUnit == nil then
-				SignalUnit = StaticObject.getByName( self.CargoHostGroupName )
-			else
-				SignalUnit = SignalUnit:getUnits()[1]
-			end
 			
-			if SignalUnit ~= nil then
+			local SignalUnit = self:GetHostUnit()
+			
+			if SignalUnit then
 			
 				trace.i( self.ClassName, 'Signalling Unit' )
 				local SignalVehiclePos = SignalUnit:getPosition().p
-				SignalVehiclePos.y = SignalVehiclePos.y + 10
+				SignalVehiclePos.y = SignalVehiclePos.y + 2
 
 				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
@@ -105,7 +147,7 @@ trace.f( self.ClassName )
 		else
 		
 			local CurrentPosition = { x = self.CargoZone.point.x, y = self.CargoZone.point.z }
-			self.CargoZone.point.y = land.getHeight( CurrentPosition ) + 10
+			self.CargoZone.point.y = land.getHeight( CurrentPosition ) + 2
 	  
 			if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
@@ -210,9 +252,9 @@ end
 function CARGO_ZONE:GetCargoHostGroup()
 trace.f( self.ClassName )
 
-	local CargoHost = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
-	if CargoHost and CargoHost:isExist() then
-		return CargoHost
+	local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
+	if CargoHostGroup and CargoHostGroup:isExist() then
+		return CargoHostGroup
 	end
 
 	return nil
@@ -317,6 +359,17 @@ trace.f(self.ClassName )
   
 	return OnBoarded
 end
+
+function CARGO:IsLandingRequired()
+trace.f( self.ClassName )
+	return true
+end
+
+function CARGO:IsSlingLoad()
+trace.f( self.ClassName )
+	return false
+end
+
 
 function CARGO:StatusNone()
 trace.f(self.ClassName )
@@ -541,7 +594,7 @@ trace.f( self.ClassName )
 	local Cargo = Client:RemoveCargo( self )
 
 
-	return Cargo
+	return self
 end
 
 
@@ -550,13 +603,15 @@ CARGO_PACKAGE = {
 }
 
 
-function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, InitClientGroupName )
-trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, InitClientGroupName } )
+function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoHostName )
+trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, CargoHostName } )
 
 	-- Arrange meta tables
 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 	
-	self.InitClientGroupName = InitClientGroupName .. '#' -- to fix
+	self.CargoHostName = CargoHostName
+	
+	self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
 	
 	CARGOS[self.CargoName] = self
 
@@ -572,6 +627,8 @@ trace.f( self.ClassName )
 
 	local SpawnCargo = true
 	
+	trace.i( self.ClassName, self.CargoHostName )
+	
 	if self.Client and self.Client:ClientGroup() then
 		trace.i( self.ClassName, 'There is a Client ' .. self.Client.ClientName )
 		if self.Client:FindCargo( self.CargoName ) then
@@ -581,10 +638,14 @@ trace.f( self.ClassName )
 			end
 		end
 	else
-		if self.InitClientGroupName then
-			local ClientGroup = Group.getByName( self.InitClientGroupName )
-			if ClientGroup and ClientGroup:isExist() then
-				self.Client = CLIENT:New( self.InitClientGroupName, '' )
+		if self.CargoHostName then
+			local CargoHostGroup = Group.getByName( self.CargoHostName )
+			if not CargoHostGroup then
+				self.CargoHostSpawn:ReSpawn()
+			end
+			local CargoHostGroup = Group.getByName( self.CargoHostName )
+			if CargoHostGroup and CargoHostGroup:isExist() then
+				self.Client = CLIENT:New( self.CargoHostGroup, '' )
 			end
 		end
 	end
@@ -601,8 +662,8 @@ trace.f( self.ClassName )
 
 	local Near = false
 
-	trace.i( self.ClassName, self.Client.ClientName )
 	if self.Client and self.Client:ClientGroup():getName() then
+		trace.i( self.ClassName, self.Client.ClientName )
 		trace.i( self.ClassName, 'Client Exists.' )
 		trace.i( self.ClassName, 'self.Client:ClientGroup():getName() = ' .. self.Client:ClientGroup():getName() )
 
@@ -633,7 +694,7 @@ trace.f(self.ClassName )
 	local CarrierPosMoveAway = ClientUnit:getPoint()
 	
 	local CargoHostGroup = self.Client:ClientGroup()
-	local CargoHostGroupName = self.Client:ClientGroup():getName()
+	local CargoHostName = self.Client:ClientGroup():getName()
 
 	local CargoHostUnits = CargoHostGroup:getUnits()
 	local CargoPos = CargoHostUnits[1]:getPoint()
@@ -702,9 +763,9 @@ trace.f(self.ClassName )
 		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
 	
 	end
-	trace.i( self.ClassName, "Routing " .. CargoHostGroupName )
+	trace.i( self.ClassName, "Routing " .. CargoHostName )
 
-	routines.scheduleFunction( routines.goRoute, { CargoHostGroupName, Points}, timer.getTime() + 4 )
+	routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
      
 	return Valid
   
@@ -750,29 +811,154 @@ trace.f( self.ClassName )
 end
 
 
+CARGO_SLINGLOAD = {
+	ClassName = "CARGO_SLINGLOAD"
+}
+
+
+function CARGO_SLINGLOAD:New( CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID )
+trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID } )
+
+	-- Arrange meta tables
+	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
+
+	self.CargoHostName = CargoHostName
+
+	-- Cargo will be initialized around the CargoZone position.
+	self.CargoZone = CargoZone
+	
+	self.CargoCount = 0
+	self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
+
+	-- The country ID needs to be correctly set.
+	self.CargoCountryID = CargoCountryID
+
+	CARGOS[self.CargoName] = self
+
+	return self
+
+end
+
+function CARGO_SLINGLOAD:IsLandingRequired()
+trace.f( self.ClassName )
+	return false
+end
+
+function CARGO_SLINGLOAD:IsSlingLoad()
+trace.f( self.ClassName )
+	return true
+end
+
+
+function CARGO_SLINGLOAD:Spawn()
+trace.f( self.ClassName )
+
+	local Zone = trigger.misc.getZone( self.CargoZone )
+
+	local ZonePos = {}
+	ZonePos.x = Zone.point.x + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
+	ZonePos.y = Zone.point.z + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
+	
+	trace.i( self.ClassName, "Cargo Location = " .. ZonePos.x .. ", " .. ZonePos.y )
+
+	--[[
+	-- This does not work in 1.5.2.
+	CargoStatic = StaticObject.getByName( self.CargoName )
+	if CargoStatic then
+		CargoStatic:destroy()
+	end
+	--]]
+	
+	CargoStatic = StaticObject.getByName( self.CargoStaticName )
+
+	if CargoStatic and CargoStatic:isExist() then
+		CargoStatic:destroy()
+	end
+
+	-- I need to make every time a new cargo due to bugs in 1.5.2.
+	
+		self.CargoCount = self.CargoCount + 1
+		self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
+
+		local CargoTemplate = {
+				["category"] = "Cargo",
+				["shape_name"] = "ab-212_cargo",
+				["type"] = "Cargo1",
+				["x"] = ZonePos.x,
+				["y"] = ZonePos.y,
+				["mass"] = self.CargoWeight,
+				["name"] =  self.CargoStaticName,
+				["canCargo"] = true,
+				["heading"] = 0,
+			}
+			
+		coalition.addStaticObject( self.CargoCountryID, CargoTemplate )
+		
+--	end
+
+	return self
+end
+
+function CARGO_SLINGLOAD:IsInLandingZone( Client, LandingZone )
+trace.f( self.ClassName )
+
+	local Near = false
+
+	local CargoStaticUnit = StaticObject.getByName( self.CargoName )
+	if CargoStaticUnit then 
+		if routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
+			Near = true
+		end
+	end
+	
+	return Near
+	
+end
+
+
+
+function CARGO_SLINGLOAD:OnBoard( Client, LandingZone, OnBoardSide )
+trace.f(self.ClassName )
+  
+	local Valid = true
+  
+     
+	return Valid
+  
+end
+
+
+function CARGO_SLINGLOAD:OnBoarded( Client, LandingZone )
+trace.f(self.ClassName )
+
+	local OnBoarded = false
+  
+	local CargoStaticUnit = StaticObject.getByName( self.CargoName )
+	if CargoStaticUnit then 
+		if not routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
+			Onboarded = true
+		end
+	end
+
+	return OnBoarded
+end
+
+function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
+trace.f( self.ClassName )
+
+	trace.i( self.ClassName, 'self.CargoName = ' .. self.CargoName ) 
+	trace.i( self.ClassName, 'self.CargoGroupName = ' .. self.CargoGroupName ) 
+	
+	self:StatusUnLoaded()
+	local Cargo = Client:RemoveCargo( self )
+
+
+	return Cargo
+end
+
 --[[--
 	Internal Table to understand the form of the CARGO.
 	@table CARGO_TRANSPORT
 --]]
 CARGO_TRANSPORT = { UNIT = 1, SLING = 2, STATIC = 3, INVISIBLE = 4 }
 
---[[--
-	CARGO_TYPE Defines the different types of transports, which has an impact on the menu commands shown in F10.
-	@table CARGO_TYPE
-	@field TROOPS
-	@field GOODS
-	@field VEHICLES
-	@field INFANTRY
-	@field ENGINEERS
-	@field PACKAGE
-	@field CARGO
---]]
-CARGO_TYPE = { 
-	TROOPS    = { ID = 1, TEXT = "Troops", TRANSPORT = CARGO_TRANSPORT.UNIT }, 
-	GOODS     = { ID = 2, TEXT = "Goods", TRANSPORT = CARGO_TRANSPORT.STATIC }, 
-	VEHICLES  = { ID = 3, TEXT = "Vehicles", TRANSPORT = CARGO_TRANSPORT.STATIC },
-	INFANTRY  = { ID = 4, TEXT = "Infantry", TRANSPORT = CARGO_TRANSPORT.UNIT },
-	ENGINEERS = { ID = 5, TEXT = "Engineers", TRANSPORT = CARGO_TRANSPORT.UNIT },
-	PACKAGE   = { ID = 6, TEXT = "Package", TRANSPORT = CARGO_TRANSPORT.INVISIBLE },
-	CARGO     = { ID = 7, TEXT = "Cargo", TRANSPORT = CARGO_TRANSPORT.STATIC },
-}

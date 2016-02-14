@@ -332,8 +332,8 @@ trace.f( self.ClassName, { CarrierGroup, TargetZonePrefix, NewGroupName, LateAct
 					
 					local TargetZone = trigger.misc.getZone( TargetZonePrefix )
 					local TargetZonePos = {}
-					TargetZonePos.x = TargetZone.point.x + math.random(TargetZone.radius * -1, TargetZone.radius)
-					TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius * -1, TargetZone.radius)
+					TargetZonePos.x = TargetZone.point.x + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
+					TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
 
 					local RouteCount = table.getn( SpawnTemplate.route.points )
 					trace.i( self.ClassName, "RouteCount = " .. RouteCount )
@@ -379,11 +379,13 @@ end
 -- @treturn string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnNumber )
 trace.f("Spawn", SpawnNumber )
-	
+
 	if SpawnNumber then
-		return string.format( self.SpawnPrefix .. '#%03d', SpawnNumber )
+		trace.i( self.ClassName, string.format( '%s#%03d', self.SpawnPrefix, SpawnNumber ) )
+		return string.format( '%s#%03d', self.SpawnPrefix, SpawnNumber )
 	else
-		return string.format( self.SpawnPrefix .. '#' )
+		trace.i( self.ClassName, self.SpawnPrefix )
+		return self.SpawnPrefix
 	end
 	
 end
