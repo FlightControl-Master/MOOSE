@@ -5,6 +5,8 @@
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Database" )
+Include.File( "Group" )
+
 
 SPAWN = {
 	ClassName = "SPAWN",
@@ -375,20 +377,35 @@ end
 
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
--- @tparam number SpawnNumber is the number of the Group that is to be SPAWNed.
+-- @tparam number SpawnIndex is the number of the Group that is to be SPAWNed.
 -- @treturn string SpawnGroupName
-function SPAWN:SpawnGroupName( SpawnNumber )
-trace.f("Spawn", SpawnNumber )
+function SPAWN:SpawnGroupName( SpawnIndex )
+trace.f("Spawn", SpawnIndex )
 
-	if SpawnNumber then
-		trace.i( self.ClassName, string.format( '%s#%03d', self.SpawnPrefix, SpawnNumber ) )
-		return string.format( '%s#%03d', self.SpawnPrefix, SpawnNumber )
+	if SpawnIndex then
+		trace.i( self.ClassName, string.format( '%s#%03d', self.SpawnPrefix, SpawnIndex ) )
+		return string.format( '%s#%03d', self.SpawnPrefix, SpawnIndex )
 	else
 		trace.i( self.ClassName, self.SpawnPrefix )
 		return self.SpawnPrefix
 	end
 	
 end
+
+function SPAWN:GetLastIndex()
+
+	return self.SpawnCount
+end
+
+
+function SPAWN:GetLastGroup()
+trace.f( self.ClassName )
+
+	local LastGroupName = self:SpawnGroupName( self:GetLastIndex() )
+	
+	return GROUP:New( Group.getByName( LastGroupName ) )
+end
+
 
 --- Will SPAWN a Group within a given ZoneName.
 -- @tparam string ZonePrefix is the name of the zone where the Group is to be SPAWNed.
@@ -528,8 +545,8 @@ trace.f( self.ClassName )
 	for u = 1, SpawnUnits do
 		SpawnTemplate.units[u].name = string.format( SpawnTemplate.name .. '-%02d', u )
 		SpawnTemplate.units[u].unitId = nil
-		SpawnTemplate.units[u].x = SpawnTemplate.route.points[1].x
-		SpawnTemplate.units[u].y = SpawnTemplate.route.points[1].y
+		SpawnTemplate.units[u].x = SpawnTemplate.route.points[1].x + math.random( -50, 50 )
+		SpawnTemplate.units[u].y = SpawnTemplate.route.points[1].y + math.random( -50, 50 )
 	end
 	
 	trace.r( self.ClassName, "", SpawnTemplate.name )

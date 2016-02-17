@@ -3,6 +3,7 @@
 -- @parent TASK
 
 Include.File("Task")
+Include.File("Cargo")
 
 PICKUPTASK = {
   ClassName = "PICKUPTASK",
