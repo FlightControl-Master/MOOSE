@@ -65,16 +65,45 @@ trace.f(self.ClassName)
 end
 
 --- ClientGroup returns the Group of a Client.
+-- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @treturn Group
 function CLIENT:ClientGroup()
 --trace.f(self.ClassName)
-	local ClientData = Group.getByName( self.ClientName )
-	if ClientData and ClientData:isExist() then
-		trace.i( self.ClassName, self.ClientName .. " : group found!" )
-		return ClientData
-	else
-		return nil
+--    local ClientData = Group.getByName( self.ClientName )
+--	if ClientData and ClientData:isExist() then
+--		trace.i( self.ClassName, self.ClientName .. " : group found!" )
+--		return ClientData
+--	else
+--		return nil
+--	end
+
+	local ClientGroup = Group.getByName( self.ClientName )
+	
+	if ClientGroup then
+		
+		local ClientUnits = ClientGroup:getUnits()
+		
+		if ClientGroup:isExist() then
+			trace.i( self.ClassName, self.ClientName .. " : group found!" )
+			return ClientGroup
+		else
+			-- Now we need to resolve the bugs in DCS 1.5 ...
+			local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+			for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+				trace.i( self.ClassName, CoalitionData )
+				for UnitId, UnitData in pairs( CoalitionData ) do
+					trace.i( self.ClassName, UnitData )
+					if UnitData and UnitData:isExist() then
+						if UnitData:getID() == ClientUnits[1]:getID() then
+							trace.i( self.ClassName, self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+							return self.ClientGroup
+						end
+					end
+				end
+			end
+		end
 	end
+	return nil
 end 
 
 --- Returns the Unit of the @{CLIENT}.

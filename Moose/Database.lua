@@ -13,6 +13,7 @@ DATABASE = {
 	NavPoints = {},
 	Statics = {},
 	Players = {},
+	ActivePlayers = {},
 	ClientsByName = {},
 	ClientsByID = {},
 }
