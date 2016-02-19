@@ -339,8 +339,8 @@ trace.f( self.ClassName, UnitData )
 			end
 		end
 		self.Players[PlayerName].UnitName = UnitName
-		self.Players[PlayerName].UnitCoalition = Unit:getCoalition()
-		self.Players[PlayerName].UnitCategory = Unit:getCategory()
+		self.Players[PlayerName].UnitCoalition = UnitData:getCoalition()
+		self.Players[PlayerName].UnitCategory = UnitData:getCategory()
 		self.Players[PlayerName].UnitType = UnitData:getTypeName()
 	end
 
