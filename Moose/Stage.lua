@@ -233,7 +233,7 @@ trace.f(self.ClassName)
 
 	local RouteMessage = "Fly to "
 	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
-		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:ClientGroupUnit():getPoint(), true, true } ) .. ' km. '
+		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupUnit():getPoint(), true, true } ) .. ' km. '
 	end
 	Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 20 )
 
@@ -250,7 +250,7 @@ trace.f(self.ClassName)
 	
 	-- check if the Client is in the landing zone
 	trace.i( self.ClassName, Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:ClientUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -339,7 +339,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:ClientUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -365,7 +365,7 @@ trace.f(self.ClassName)
 		return -1
 	end
   
-	if Task.IsLandingRequired and Client:ClientUnit():inAir() then
+	if Task.IsLandingRequired and Client:GetClientGroupUnit():inAir() then
 		return 0
 	end
   
@@ -406,14 +406,14 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
 
-	if not routines.IsUnitInZones( Client:ClientUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
 	    trace.i( self.ClassName, "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
 		return -2
 	end
   
-	if Task.IsLandingRequired and Client:ClientUnit():inAir() then
+	if Task.IsLandingRequired and Client:GetClientGroupUnit():inAir() then
 		trace.i( self.ClassName, "Client went back in the air. Go back to stage Landing." )
 		Task.Signalled = false 
 		return -1
@@ -474,7 +474,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:ClientUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
 	Task:RemoveCargoMenus( Client )
@@ -483,7 +483,7 @@ trace.f(self.ClassName)
     return 1
   end
   
-  if not Client:ClientUnit():inAir() then
+  if not Client:GetClientGroupUnit():inAir() then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
 	Task:RemoveCargoMenus( Client )
@@ -592,7 +592,7 @@ trace.f(self.ClassName)
 	trace.i( self.ClassName, "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:ClientUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
@@ -601,7 +601,7 @@ trace.f(self.ClassName)
 			return -1
 		end
 
-		if not Client:ClientUnit():inAir() then
+		if not Client:GetClientGroupUnit():inAir() then
 		else
 			-- The carrier is back in the air, undo the loading process.
 			Task:RemoveCargoMenus( Client )
@@ -715,7 +715,7 @@ trace.f(self.ClassName)
 
 	if Task.CargoName then
 		if not StaticObject.getByName( Task.CargoName ):inAir() then
-			if routines.IsUnitInZones( Client:ClientUnit(), Task.CurrentLandingZoneName ) then
+			if routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
 			else
 				Client:Message( 'Co-Pilot: The Cargo is Dropped in the Landing Zone, and You have flown outside of the landing zone.', self.MSG.TIME,  Mission.Name .. "/Stage" )
 				return 1
@@ -777,7 +777,7 @@ trace.f(self.ClassName)
 function STAGEARRIVE:Validate( Mission, Client, Task )
 trace.f(self.ClassName)
   
-  Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:ClientUnit(), Task.LandingZones )
+  Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones )
   if  ( Task.CurrentLandingZoneID ) then
   else
     return -1

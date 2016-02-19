@@ -347,7 +347,7 @@ trace.f(self.ClassName )
   
 	local Valid = true
   
-	local ClientUnit = Client:ClientUnit()
+	local ClientUnit = Client:GetClientGroupUnit()
 
 	return Valid
 end
@@ -497,7 +497,7 @@ trace.f(self.ClassName )
   
 	local Valid = true
   
-	local ClientUnit = Client:ClientUnit()
+	local ClientUnit = Client:GetClientGroupUnit()
 	
 	local CarrierPos = ClientUnit:getPoint()
 	local CarrierPosMove = ClientUnit:getPoint()
@@ -632,8 +632,8 @@ trace.f( self.ClassName )
 	if self.Client and self.Client:ClientGroup() then
 		trace.i( self.ClassName, 'There is a Client ' .. self.Client.ClientName )
 		if self.Client:FindCargo( self.CargoName ) then
-			if self.Client:ClientUnit():getPlayerName() then -- this needs to be checked thoroughly
-				trace.i( self.ClassName, 'ok, Client is of player ' .. self.Client:ClientUnit():getPlayerName() .. ' and contains the Cargo, do nothing' )
+			if self.Client:GetClientGroupUnit():getPlayerName() then -- this needs to be checked thoroughly
+				trace.i( self.ClassName, 'ok, Client is of player ' .. self.Client:GetClientGroupUnit():getPlayerName() .. ' and contains the Cargo, do nothing' )
 				SpawnCargo = false
 			end
 		end
@@ -686,7 +686,7 @@ trace.f(self.ClassName )
   
 	local Valid = true
   
-	local ClientUnit = Client:ClientUnit()
+	local ClientUnit = Client:GetClientGroupUnit()
 	
 	local CarrierPos = ClientUnit:getPoint()
 	local CarrierPosMove = ClientUnit:getPoint()

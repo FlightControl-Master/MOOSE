@@ -139,6 +139,8 @@ trace.f(self.ClassName)
 	return nil
 end
 
+--- Returns the Unit of the @{CLIENT}.
+-- @treturn Unit
 function CLIENT:GetClientGroupUnit()
 trace.f(self.ClassName)
 
@@ -154,20 +156,6 @@ trace.f(self.ClassName)
 	
 	return nil
 end
-
-
---- Returns the Unit of the @{CLIENT}.
--- @treturn Unit
-function CLIENT:ClientUnit()
---trace.f(self.ClassName)
-	local ClientData = Group.getByName( self.ClientName )
-	if ClientData and ClientData:isExist() then
-		trace.i( self.ClassName, self.ClientName .. " : group found!" )
-		return ClientData:getUnits()[1]
-	else
-		return nil
-	end
-end 
 
 
 --- Returns the Position of the @{CLIENT}.
