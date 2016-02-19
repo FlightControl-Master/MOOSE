@@ -163,7 +163,7 @@ end
 function CLIENT:ClientPosition()
 --trace.f(self.ClassName)
 
-	ClientGroupUnit = self:ClientGroupUnit()
+	ClientGroupUnit = self:GetClientGroupUnit()
 	
 	if ClientGroupUnit then
 		if ClientGroupUnit:isExist() then
