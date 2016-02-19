@@ -298,76 +298,65 @@ end
 
 
 --- Will SPAWN a Group from a Carrier. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
--- @tparam Group CarrierGroup is the Group of the AIR unit or GROUND unit dropping or unloading other units.
+-- @tparam Group CarrierUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
 -- @tparam string TargetZonePrefix is the Prefix of the Zone defined in the ME where the Group should be moving to after drop.
 -- @tparam string NewGroupName (forgot this).
 -- @tparam bool LateActivate (optional) does the SPAWNing with Lateactivation on.
-function SPAWN:FromCarrier( CarrierGroup, TargetZonePrefix, NewGroupName, LateActivate )
-trace.f( self.ClassName, { CarrierGroup, TargetZonePrefix, NewGroupName, LateActivate } )
+function SPAWN:FromCarrier( CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate )
+trace.f( self.ClassName, { CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate } )
 
 	local SpawnTemplate
 
-	if  CarrierGroup and CarrierGroup:isExist() and CarrierGroup:getUnit(1)  then -- and CarrierGroup:getUnit(1):inAir() == false then
+	if CarrierUnit and CarrierUnit:isExist() then -- and CarrierUnit:getUnit(1):inAir() == false then
 
-		local GroupUnits = CarrierGroup:getUnits()
-		local GroupUnitCount = table.getn(GroupUnits)
-		trace.i( self.ClassName, "CarrierGroup:getSize() = " .. CarrierGroup:getSize() )
-		trace.i( self.ClassName, 'GroupUnitCount = ' .. GroupUnitCount )
-
-		for UnitId, UnitData in pairs(GroupUnits)  do
+		SpawnTemplate = self:_Prepare( NewGroupName )
 		
-			UnitDeploy = UnitData
-			
-			SpawnTemplate = self:_Prepare( NewGroupName )
-			
-			if ( self.SpawnMaxGroups == 0 ) or ( self.SpawnCount <= self.SpawnMaxGroups ) then
-				if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
+		if ( self.SpawnMaxGroups == 0 ) or ( self.SpawnCount <= self.SpawnMaxGroups ) then
+			if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
 
-					if LateActivate ~= nil then
-						if LateActivate == true then
-							SpawnTemplate.lateActivation = true
-							SpawnTemplate.visible = true
-						end
+				if LateActivate ~= nil then
+					if LateActivate == true then
+						SpawnTemplate.lateActivation = true
+						SpawnTemplate.visible = true
 					end
-
-					SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
-					
-					local TargetZone = trigger.misc.getZone( TargetZonePrefix )
-					local TargetZonePos = {}
-					TargetZonePos.x = TargetZone.point.x + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
-					TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
-
-					local RouteCount = table.getn( SpawnTemplate.route.points )
-					trace.i( self.ClassName, "RouteCount = " .. RouteCount )
-
-					local UnitDeployPosition = UnitDeploy:getPoint()
-					SpawnTemplate.route.points[1].x = UnitDeployPosition.x - 50
-					SpawnTemplate.route.points[1].y = UnitDeployPosition.z
-					SpawnTemplate.route.points[1].alt = nil
-					SpawnTemplate.route.points[1].alt_type = nil
-
-					if SpawnStartPoint ~= 0 and SpawnEndPoint ~= 0 then
-						SpawnTemplate.route.points[RouteCount].x = TargetZonePos.x
-						SpawnTemplate.route.points[RouteCount].y = TargetZonePos.z
-					else 
-						SpawnTemplate.route.points[RouteCount].x = TargetZone.point.x
-						SpawnTemplate.route.points[RouteCount].y = TargetZone.point.z
-					end
-					
-					trace.i( self.ClassName, 'SpawnTemplate.route.points['..RouteCount..'].x = ' .. SpawnTemplate.route.points[RouteCount].x .. ', SpawnTemplate.route.points['..RouteCount..'].y = ' .. SpawnTemplate.route.points[RouteCount].y )
-
-					for v = 1, table.getn( SpawnTemplate.units ) do
-						local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, 40, 10 )
-						SpawnTemplate.units[v].x = SpawnPos.x
-						SpawnTemplate.units[v].y = SpawnPos.y
-						trace.i( self.ClassName, 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
-					end
-					
-					_Database:Spawn( SpawnTemplate )
 				end
+
+				SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
+				
+				local TargetZone = trigger.misc.getZone( TargetZonePrefix )
+				local TargetZonePos = {}
+				TargetZonePos.x = TargetZone.point.x + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
+				TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
+
+				local RouteCount = table.getn( SpawnTemplate.route.points )
+				trace.i( self.ClassName, "RouteCount = " .. RouteCount )
+
+				local UnitDeployPosition = CarrierUnit:getPoint()
+				SpawnTemplate.route.points[1].x = UnitDeployPosition.x - 50
+				SpawnTemplate.route.points[1].y = UnitDeployPosition.z
+				SpawnTemplate.route.points[1].alt = nil
+				SpawnTemplate.route.points[1].alt_type = nil
+
+				if SpawnStartPoint ~= 0 and SpawnEndPoint ~= 0 then
+					SpawnTemplate.route.points[RouteCount].x = TargetZonePos.x
+					SpawnTemplate.route.points[RouteCount].y = TargetZonePos.z
+				else 
+					SpawnTemplate.route.points[RouteCount].x = TargetZone.point.x
+					SpawnTemplate.route.points[RouteCount].y = TargetZone.point.z
+				end
+				
+				trace.i( self.ClassName, 'SpawnTemplate.route.points['..RouteCount..'].x = ' .. SpawnTemplate.route.points[RouteCount].x .. ', SpawnTemplate.route.points['..RouteCount..'].y = ' .. SpawnTemplate.route.points[RouteCount].y )
+
+				for v = 1, table.getn( SpawnTemplate.units ) do
+					local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, 40, 10 )
+					SpawnTemplate.units[v].x = SpawnPos.x
+					SpawnTemplate.units[v].y = SpawnPos.y
+					trace.i( self.ClassName, 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
+				end
+				
+				_Database:Spawn( SpawnTemplate )
 			end
 		end
-		
 	end
 	
 	trace.r( self.ClassName, "" ) 

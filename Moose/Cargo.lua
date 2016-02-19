@@ -249,12 +249,12 @@ trace.f( self.ClassName )
 end
 
 
-function CARGO_ZONE:GetCargoHostGroup()
+function CARGO_ZONE:GetCargoHostUnit()
 trace.f( self.ClassName )
 
-	local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
-	if CargoHostGroup and CargoHostGroup:isExist() then
-		return CargoHostGroup
+	local CargoHostUnit = Group.getByName( self.CargoHostSpawn:SpawnGroupName() ):getUnit(1)
+	if CargoHostUnit and CargoHostUnit:isExist() then
+		return CargoHostUnit
 	end
 
 	return nil
@@ -462,9 +462,9 @@ trace.f( self.ClassName )
 	end
 	
 	if SpawnCargo then 
-		if self.CargoZone:GetCargoHostGroup() then
+		if self.CargoZone:GetCargoHostUnit() then
 			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:FromCarrier( self.CargoZone:GetCargoHostGroup(), self.CargoZone:GetCargoZoneName(), self.CargoName, false ).name
+			self.CargoGroupName = self.CargoSpawn:FromCarrier( self.CargoZone:GetCargoHostUnit(), self.CargoZone:GetCargoZoneName(), self.CargoName, false ).name
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
 			self.CargoGroupName = self.CargoSpawn:InZone( self.CargoZone:GetCargoZoneName(), self.CargoName ).name
@@ -589,7 +589,7 @@ trace.f( self.ClassName )
 	trace.i( self.ClassName, 'self.CargoName = ' .. self.CargoName ) 
 	trace.i( self.ClassName, 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
-	self.CargoSpawn:FromCarrier( Client:ClientGroup(), TargetZoneName, self.CargoGroupName )
+	self.CargoSpawn:FromCarrier( Client:GetClientGroupUnit(), TargetZoneName, self.CargoGroupName )
 	self:StatusUnLoaded()
 	local Cargo = Client:RemoveCargo( self )
 
