@@ -644,11 +644,11 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 		
 		if PlayerUnit then
 			if not PlayerUnitCategory then
-				PlayerUnitCategory = DATABASECategory[Unit.getGroup(PlayerUnit):getCategory()]
+				PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
 			end
 			
 			if not PlayerUnitCoalition then
-				PlayerUnitCoalition = DATABASECoalition[Unit.getGroup(PlayerUnit):getCoalition()]
+				PlayerUnitCoalition = DATABASECoalition[PlayerUnit:getCoalition()]
 			end
 			
 			if not PlayerUnitType then
