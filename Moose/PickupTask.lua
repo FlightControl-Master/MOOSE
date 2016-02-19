@@ -92,7 +92,7 @@ trace.f( self.ClassName )
 				
 				if not Client._Menus[Cargo.CargoType].PickupMenu then
 					Client._Menus[Cargo.CargoType].PickupMenu = missionCommands.addSubMenuForGroup(
-						Client:ClientGroup():getID(), 
+						Client:GetClientGroupID(), 
 						self.TEXT[1] .. " " .. Cargo.CargoType, 
 						nil
 					)
@@ -104,7 +104,7 @@ trace.f( self.ClassName )
 				end
 
 				Client._Menus[Cargo.CargoType].PickupSubMenus[ #Client._Menus[Cargo.CargoType].PickupSubMenus + 1 ] = missionCommands.addCommandForGroup(
-					Client:ClientGroup():getID(), 
+					Client:GetClientGroupID(), 
 					Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
 					Client._Menus[Cargo.CargoType].PickupMenu, 
 					self.MenuAction,
@@ -122,12 +122,12 @@ trace.f( self.ClassName )
 
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		for SubMenuID, SubMenuData in pairs( MenuData.PickupSubMenus ) do
-			missionCommands.removeItemForGroup( Client:ClientGroup():getID(), SubMenuData )
+			missionCommands.removeItemForGroup( Client:GetClientGroupID(), SubMenuData )
 			trace.i( self.ClassName, "Removed PickupSubMenu " )
 			SubMenuData = nil
 		end
 		if MenuData.PickupMenu then
-			missionCommands.removeItemForGroup( Client:ClientGroup():getID(), MenuData.PickupMenu )
+			missionCommands.removeItemForGroup( Client:GetClientGroupID(), MenuData.PickupMenu )
 			trace.i( self.ClassName, "Removed PickupMenu " )
 			MenuData.PickupMenu = nil
 		end

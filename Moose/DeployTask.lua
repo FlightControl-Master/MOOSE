@@ -103,7 +103,7 @@ trace.f( self.ClassName )
 			
 			if not Client._Menus[Cargo.CargoType].DeployMenu then
 				Client._Menus[Cargo.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
-					Client:ClientGroup():getID(), 
+					Client:GetClientGroupID(), 
 					self.TEXT[1], 
 					nil
 				)
@@ -119,7 +119,7 @@ trace.f( self.ClassName )
 			end
 
 			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ].MenuPath = missionCommands.addCommandForGroup(
-				Client:ClientGroup():getID(), 
+				Client:GetClientGroupID(), 
 				Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
 				Client._Menus[Cargo.CargoType].DeployMenu, 
 				self.MenuAction,
@@ -137,13 +137,13 @@ trace.f(self.ClassName )
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		if MenuData.DeploySubMenus ~= nil then
 			for SubMenuID, SubMenuData in pairs( MenuData.DeploySubMenus ) do
-				missionCommands.removeItemForGroup( Client:ClientGroup():getID(), SubMenuData )
+				missionCommands.removeItemForGroup( Client:GetClientGroupID(), SubMenuData )
 				trace.i( self.ClassName, "Removed DeploySubMenu " )
 				SubMenuData = nil
 			end
 		end
 		if MenuData.DeployMenu then
-			missionCommands.removeItemForGroup( Client:ClientGroup():getID(), MenuData.DeployMenu )
+			missionCommands.removeItemForGroup( Client:GetClientGroupID(), MenuData.DeployMenu )
 			trace.i( self.ClassName, "Removed DeployMenu " )
 			MenuData.DeployMenu = nil
 		end
