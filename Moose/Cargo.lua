@@ -453,7 +453,7 @@ trace.f( self.ClassName )
 	local SpawnCargo = true
 	
 	if self.CargoGroupName then
-		local Client = self.IsLoadedInClient()
+		local Client = self:IsLoadedInClient()
 		if Client and Client:ClientGroup() then
 			if Client:FindCargo( self.CargoName ) then
 				SpawnCargo = false
