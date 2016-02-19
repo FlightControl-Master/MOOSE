@@ -162,13 +162,16 @@ end
 -- @treturn Position
 function CLIENT:ClientPosition()
 --trace.f(self.ClassName)
-	local ClientData = Group.getByName( self.ClientName )
-	if ClientData and ClientData:isExist() then
-		trace.i( self.ClassName, self.ClientName .. " : group found!" )
-		return ClientData:getUnits()[1]:getPosition()
-	else
-		return nil
+
+	ClientGroupUnit = self:ClientGroupUnit()
+	
+	if ClientGroupUnit then
+		if ClientGroupUnit:isExist() then
+			return ClientGroupUnit:getPosition()
+		end
 	end
+	
+	return nil
 end 
 
 --- Transport defines that the Client is a Transport.
