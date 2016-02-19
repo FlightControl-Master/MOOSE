@@ -175,12 +175,12 @@ trace.f(self.ClassName)
 	local AlivePlayers = ''
 	for ClientID, Client in pairs( self._Clients ) do
 		if  Client:ClientGroup() then
-			if Client:ClientGroup():getUnit(1) then
-				if Client:ClientGroup():getUnit(1):getLife() > 0.0 then
+			if Client:ClientGroupUnit() then
+				if Client:ClientGroupUnit():getLife() > 0.0 then
 					if AlivePlayers == '' then
-						AlivePlayers = ' Players: ' .. Client:ClientGroup():getUnit(1):getPlayerName()
+						AlivePlayers = ' Players: ' .. Client:ClientGroupUnit():getPlayerName()
 					else
-						AlivePlayers = AlivePlayers .. ' / ' .. Client:ClientGroup():getUnit(1):getPlayerName()
+						AlivePlayers = AlivePlayers .. ' / ' .. Client:ClientGroupUnit():getPlayerName()
 					end
 				end
 			end
@@ -505,7 +505,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_Database:_AddMissionTaskScore( Client:ClientGroup():getUnit(1), Mission.Name, 25 )
+								_Database:_AddMissionTaskScore( Client:ClientGroupUnit(), Mission.Name, 25 )
 
 --								if not Mission:IsCompleted() then
 --								end

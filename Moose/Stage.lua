@@ -233,7 +233,7 @@ trace.f(self.ClassName)
 
 	local RouteMessage = "Fly to "
 	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
-		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:ClientGroup():getUnit(1):getPoint(), true, true } ) .. ' km. '
+		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:ClientGroupUnit():getPoint(), true, true } ) .. ' km. '
 	end
 	Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 20 )
 
