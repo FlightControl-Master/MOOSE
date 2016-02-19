@@ -326,16 +326,16 @@ trace.f( self.ClassName, UnitData )
 		end
 
 		if not self.Players[PlayerName].UnitCoalition then
-			self.Players[PlayerName].UnitCoalition = Unit:getCoalition()
+			self.Players[PlayerName].UnitCoalition = UnitData:getCoalition()
 		else
-			if self.Players[PlayerName].UnitCoalition ~= Unit.getGroup(UnitData):getCoalition() then
+			if self.Players[PlayerName].UnitCoalition ~= UnitData:getCoalition() then
 				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
 				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
 				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[Unit.getGroup(UnitData):getCoalition()] ..  
 							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
 							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
 				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
-							   UnitName, DATABASECategory[Unit.getGroup(UnitData):getCoalition()], DATABASECategory[Unit.getGroup(UnitData):getCategory()], UnitData:getTypeName() )
+							   UnitName, DATABASECategory[UnitData:getCoalition()], DATABASECategory[UnitData:getCategory()], UnitData:getTypeName() )
 			end
 		end
 		self.Players[PlayerName].UnitName = UnitName
