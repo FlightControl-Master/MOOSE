@@ -305,50 +305,43 @@ trace.f( self.ClassName, UnitData )
 
 	if UnitData:isExist() then
 		local UnitName = UnitData:getName()
-		local GroupData = UnitData:getGroup()
+		local PlayerName = UnitData:getPlayerName()
 
-		if GroupData and GroupData:isExist() then
-			local GroupName = GroupData:getName()
-			local PlayerName = UnitData:getPlayerName()
+		trace.i(self.ClassName, "Player : " .. PlayerName .. " Unit : " .. UnitName )
 
-			trace.i(self.ClassName, "Player : " .. PlayerName .. " Unit : " .. UnitName .. " Group : " .. GroupName )
-
-			if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
-				self.Players[PlayerName] = {}
-				self.Players[PlayerName].Hit = {}
-				self.Players[PlayerName].Kill = {}
-				self.Players[PlayerName].Mission = {}
-				
-				-- for CategoryID, CategoryName in pairs( DATABASECategory ) do
-					-- self.Players[PlayerName].Hit[CategoryID] = {}
-					-- self.Players[PlayerName].Kill[CategoryID] = {}
-				-- end
-				self.Players[PlayerName].HitPlayers = {}
-				self.Players[PlayerName].HitUnits = {}
-				self.Players[PlayerName].Penalty = 0
-				self.Players[PlayerName].PenaltyCoalition = 0
-			end
-
-			if not self.Players[PlayerName].UnitCoalition then
-				self.Players[PlayerName].UnitCoalition = Unit.getGroup(UnitData):getCoalition()
-			else
-				if self.Players[PlayerName].UnitCoalition ~= Unit.getGroup(UnitData):getCoalition() then
-					self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
-					self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-					MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[Unit.getGroup(UnitData):getCoalition()] ..  
-								  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
-								  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
-					self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
-								   UnitName, DATABASECategory[Unit.getGroup(UnitData):getCoalition()], DATABASECategory[Unit.getGroup(UnitData):getCategory()], UnitData:getTypeName() )
-				end
-			end
-			self.Players[PlayerName].UnitName = UnitName
-			self.Players[PlayerName].GroupName = GroupName
-
-			self.Players[PlayerName].UnitCoalition = Unit.getGroup(UnitData):getCoalition()
-			self.Players[PlayerName].UnitCategory = Unit.getGroup(UnitData):getCategory()
-			self.Players[PlayerName].UnitType = UnitData:getTypeName()
+		if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
+			self.Players[PlayerName] = {}
+			self.Players[PlayerName].Hit = {}
+			self.Players[PlayerName].Kill = {}
+			self.Players[PlayerName].Mission = {}
+			
+			-- for CategoryID, CategoryName in pairs( DATABASECategory ) do
+				-- self.Players[PlayerName].Hit[CategoryID] = {}
+				-- self.Players[PlayerName].Kill[CategoryID] = {}
+			-- end
+			self.Players[PlayerName].HitPlayers = {}
+			self.Players[PlayerName].HitUnits = {}
+			self.Players[PlayerName].Penalty = 0
+			self.Players[PlayerName].PenaltyCoalition = 0
 		end
+
+		if not self.Players[PlayerName].UnitCoalition then
+			self.Players[PlayerName].UnitCoalition = Unit:getCoalition()
+		else
+			if self.Players[PlayerName].UnitCoalition ~= Unit.getGroup(UnitData):getCoalition() then
+				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
+				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
+				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[Unit.getGroup(UnitData):getCoalition()] ..  
+							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
+							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
+				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
+							   UnitName, DATABASECategory[Unit.getGroup(UnitData):getCoalition()], DATABASECategory[Unit.getGroup(UnitData):getCategory()], UnitData:getTypeName() )
+			end
+		end
+		self.Players[PlayerName].UnitName = UnitName
+		self.Players[PlayerName].UnitCoalition = Unit:getCoalition()
+		self.Players[PlayerName].UnitCategory = Unit:getCategory()
+		self.Players[PlayerName].UnitType = UnitData:getTypeName()
 	end
 
 end
@@ -427,8 +420,8 @@ trace.f( self.ClassName, { event } )
 			InitGroupName = Unit.getGroup(event.initiator):getName()
 			InitPlayerName = event.initiator:getPlayerName()
 			
-			InitCoalition = Unit.getGroup(event.initiator):getCoalition()
-			InitCategory = Unit.getGroup(event.initiator):getCategory()
+			InitCoalition = Unit:getCoalition()
+			InitCategory = Unit:getCategory()
 			InitType = event.initiator:getTypeName()
 
 			InitUnitCoalition = DATABASECoalition[InitCoalition]

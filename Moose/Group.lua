@@ -78,6 +78,7 @@ trace.f( self.ClassName, { self.GroupName, Point, Radius } )
 	return self
 end
 
+
 function GROUP:_GetController()
 
 	return self._Group:getController()
