@@ -176,6 +176,8 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 	self.Groups[GroupTemplateName].Template = GroupTemplate
 	self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
 	self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+	self.Groups[GroupTemplateName].Units = GroupTemplate.units
+	
 	trace.i( self.ClassName, { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
 						
 	for unit_num, UnitTemplate in pairs(GroupTemplate.units) do

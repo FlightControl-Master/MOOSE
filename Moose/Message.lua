@@ -74,11 +74,11 @@ end
 function MESSAGE:ToClient( Client )
 trace.f(self.ClassName )
 
-	if Client and Client:ClientGroup() then
+	if Client and Client:GetClientGroupID() then
 
-		local ClientGroup = Client:ClientGroup()
+		local ClientGroupID = Client:GetClientGroupID()
 		trace.i( self.ClassName, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-		trigger.action.outTextForGroup( ClientGroup:getID(), self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self

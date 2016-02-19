@@ -21,8 +21,10 @@ Include.Files = {}
 Include.File = function( IncludeFile )
 	if not Include.Files[ IncludeFile ] then
 		Include.Files[IncludeFile] = IncludeFile
+		env.info( "Include:" .. IncludeFile .. " from " .. Include.ProgramPath )
 		local f = assert( base.loadfile( Include.ProgramPath .. IncludeFile .. ".lua" ) )
 		if f == nil then
+			env.info( "Include:" .. IncludeFile .. " from " .. Include.MissionPath )
 			local f = assert( base.loadfile( Include.MissionPath .. IncludeFile .. ".lua" ) )
 			if f == nil then
 				error ("Could not load MOOSE file " .. IncludeFile .. ".lua" )

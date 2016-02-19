@@ -425,7 +425,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			
 				trace.i( "MISSIONSCHEDULER", "Client: " .. Client.ClientName )
 
-				if Client:ClientGroup() and Client:ClientGroup():getUnits() and Client:ClientGroup():getUnits()[1] and Client:ClientGroup():getUnits()[1]:getLife() > 0.0 then
+				if Client:ClientGroup() then
 
 					-- There is at least one Client that is alive... So the Mission status is set to Ongoing.
 					ClientsAlive = true 

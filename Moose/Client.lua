@@ -68,8 +68,9 @@ end
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @treturn Group
 function CLIENT:ClientGroup()
---trace.f(self.ClassName)
---    local ClientData = Group.getByName( self.ClientName )
+trace.f(self.ClassName)
+
+--  local ClientData = Group.getByName( self.ClientName )
 --	if ClientData and ClientData:isExist() then
 --		trace.i( self.ClassName, self.ClientName .. " : group found!" )
 --		return ClientData
@@ -77,34 +78,83 @@ function CLIENT:ClientGroup()
 --		return nil
 --	end
 
-	local ClientGroup = Group.getByName( self.ClientName )
-	
-	if ClientGroup then
-		
-		local ClientUnits = ClientGroup:getUnits()
-		
-		if ClientGroup:isExist() then
-			trace.i( self.ClassName, self.ClientName .. " : group found!" )
-			return ClientGroup
-		else
-			-- Now we need to resolve the bugs in DCS 1.5 ...
-			local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
-			for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-				trace.i( self.ClassName, CoalitionData )
-				for UnitId, UnitData in pairs( CoalitionData ) do
-					trace.i( self.ClassName, UnitData )
-					if UnitData and UnitData:isExist() then
-						if UnitData:getID() == ClientUnits[1]:getID() then
-							trace.i( self.ClassName, self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
-							return self.ClientGroup
+	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+		trace.i( self.ClassName, CoalitionData )
+		for UnitId, UnitData in pairs( CoalitionData ) do
+			trace.i( self.ClassName, UnitData )
+			if UnitData and UnitData:isExist() then
+
+				local ClientGroup = Group.getByName( self.ClientName )
+				if ClientGroup then
+					trace.i( self.ClassName, "ClientGroup = " .. self.ClientName )
+					if ClientGroup:isExist() and ClientGroup:getID() == UnitData:getGroup():getID() then
+						trace.i( self.ClassName, "Normal logic" )
+						trace.i( self.ClassName, self.ClientName .. " : group found!" )
+						return ClientGroup
+					else
+						-- Now we need to resolve the bugs in DCS 1.5 ...
+						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
+						trace.i( self.ClassName, "Bug 1.5 logic" )
+						local ClientUnits = _Database.Groups[self.ClientName].Units
+						trace.i( self.ClassName, { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
+						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
+							trace.i( self.ClassName, { tonumber(UnitData:getID()), ClientUnitData.unitId } )
+							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
+								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
+								self.ClientGroupID = ClientGroupTemplate.groupId
+								self.ClientGroupUnit = UnitData
+								trace.i( self.ClassName, self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+								return ClientGroup
+							end
 						end
 					end
+--				else
+--					error( "Client " .. self.ClientName .. " not found!" )
 				end
 			end
 		end
 	end
+	
+	self.ClientGroupID = nil
+	self.ClientGroupUnit = nil
+	
 	return nil
 end 
+
+
+function CLIENT:GetClientGroupID()
+trace.f(self.ClassName)
+
+	ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
+			return ClientGroup:getID()
+		else
+			return self.ClientGroupID
+		end
+	end
+	
+	return nil
+end
+
+function CLIENT:GetClientGroupUnit()
+trace.f(self.ClassName)
+
+	ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
+			return ClientGroup:getUnits()[1]
+		else
+			return self.ClientGroupUnit
+		end
+	end
+	
+	return nil
+end
+
 
 --- Returns the Unit of the @{CLIENT}.
 -- @treturn Unit
@@ -260,10 +310,10 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 trace.f( self.ClassName, { Message, MessageDuration, MessageId, MessageCategory, MessageInterval } )
 
 	if not self.MenuMessages then
-		if self:ClientGroup() and self:ClientGroup():getID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self:ClientGroup():getID(), 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:ClientGroup():getID(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:ClientGroup():getID(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+		if self:GetClientGroupID() then
+			self.MenuMessages = MENU_SUB_GROUP:New( self:GetClientGroupID(), 'Messages' )
+			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:GetClientGroupID(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:GetClientGroupID(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 
@@ -283,7 +333,7 @@ trace.f( self.ClassName, { Message, MessageDuration, MessageId, MessageCategory,
 			end
 			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 		else
-			if self:ClientGroup() and self:ClientGroup():getUnits() and self:ClientGroup():getUnits()[1] and not self:ClientGroup():getUnits()[1]:inAir() then
+			if self:GetClientGroupUnit() and not self:GetClientGroupUnit():inAir() then
 				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
 					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()

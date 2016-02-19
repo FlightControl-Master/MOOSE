@@ -104,6 +104,7 @@ trace.f( self.ClassName )
 	return self
 end
 
+
 BaseEventCodes = {
    "S_EVENT_SHOT",
    "S_EVENT_HIT",
@@ -129,7 +130,35 @@ BaseEventCodes = {
    "S_EVENT_SHOOTING_START",
    "S_EVENT_SHOOTING_END",
    "S_EVENT_MAX",
- }
+}
+ 
+--onEvent( {[1]="S_EVENT_BIRTH",[2]={["subPlace"]=5,["time"]=0,["initiator"]={["id_"]=16884480,},["place"]={["id_"]=5000040,},["id"]=15,["IniUnitName"]="US F-15C@RAMP-Air Support Mountains#001-01",},}
+-- Event = {
+--   id = enum world.event,
+--   time = Time,
+--   initiator = Unit,
+--   target = Unit,
+--   place = Unit,
+--   subPlace = enum world.BirthPlace,
+--   weapon = Weapon
+-- }
+
+
+function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
+trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } )
+
+	local Event = {
+		id = world.event.S_EVENT_BIRTH,
+		time = EventTime,
+		initiator = Initiator,
+		IniUnitName = IniUnitName,
+		place = place,
+		subplace = subplace
+		}
+
+		world.onEvent( Event )
+end
+
 												
 function BASE:onEvent(event)
 --trace.f(self.ClassName, event )
