@@ -121,7 +121,7 @@ trace.f( self.ClassName )
 				trace.i( self.ClassName, 'deploymenu is nil' )
 			end
 
-			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ].MenuPath = missionCommands.addCommandForGroup(
+			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ] = missionCommands.addCommandForGroup(
 				ClientGroupID, 
 				Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
 				Client._Menus[Cargo.CargoType].DeployMenu, 
