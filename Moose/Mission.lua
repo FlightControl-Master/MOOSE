@@ -490,6 +490,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							end
 							 
 							if Task:IsDone() then
+								trace.i( "MISSIONSCHEDULER", "Task " .. Task.Name .. " is Done." )
 								--env.info( 'Scheduler: Mission '.. Mission.Name .. ' Task ' .. Task.Name .. ' Stage ' .. Task.Stage.Name .. ' done. TaskComplete = ' .. string.format ( "%s", TaskComplete and "true" or "false" ) )
 								TaskComplete = true -- when a task is not yet completed, a mission cannot be completed
 								

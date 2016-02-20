@@ -464,7 +464,7 @@ trace.f( self.ClassName )
 	if SpawnCargo then 
 		if self.CargoZone:GetCargoHostUnit() then
 			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:FromCarrier( self.CargoZone:GetCargoHostUnit(), self.CargoZone:GetCargoZoneName(), self.CargoName, false ).name
+			self.CargoGroupName = self.CargoSpawn:FromHost( self.CargoZone:GetCargoHostUnit(), 60, 30, self.CargoName, false ).name
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
 			self.CargoGroupName = self.CargoSpawn:InZone( self.CargoZone:GetCargoZoneName(), self.CargoName ).name

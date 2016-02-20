@@ -298,6 +298,58 @@ end
 
 
 --- Will SPAWN a Group from a Carrier. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+-- @tparam Group HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
+-- @tparam string TargetZonePrefix is the Prefix of the Zone defined in the ME where the Group should be moving to after drop.
+-- @tparam string NewGroupName (forgot this).
+-- @tparam bool LateActivate (optional) does the SPAWNing with Lateactivation on.
+function SPAWN:FromHost( HostUnit, OuterRadius, InnerRadius, NewGroupName, LateActivate )
+trace.f( self.ClassName, { HostUnit, OuterRadius, InnerRadius, NewGroupName, LateActivate } )
+
+	local SpawnTemplate
+
+	if HostUnit and HostUnit:isExist() then -- and HostUnit:getUnit(1):inAir() == false then
+
+		SpawnTemplate = self:_Prepare( NewGroupName )
+		
+		if ( self.SpawnMaxGroups == 0 ) or ( self.SpawnCount <= self.SpawnMaxGroups ) then
+			if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
+
+				if LateActivate ~= nil then
+					if LateActivate == true then
+						SpawnTemplate.lateActivation = true
+						SpawnTemplate.visible = true
+					end
+				end
+
+				SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
+				
+				local RouteCount = table.getn( SpawnTemplate.route.points )
+				trace.i( self.ClassName, "RouteCount = " .. RouteCount )
+
+				local UnitDeployPosition = HostUnit:getPoint()
+				for PointID, Point in pairs( SpawnTemplate.route.points ) do
+					Point.x = UnitDeployPosition.x
+					Point.y = UnitDeployPosition.z
+					Point.alt = nil
+					Point.alt_type = nil
+				end
+				
+				for v = 1, table.getn( SpawnTemplate.units ) do
+					local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, OuterRadius, InnerRadius )
+					SpawnTemplate.units[v].x = SpawnPos.x
+					SpawnTemplate.units[v].y = SpawnPos.y
+					trace.i( self.ClassName, 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
+				end
+				
+				_Database:Spawn( SpawnTemplate )
+			end
+		end
+	end
+	
+	return SpawnTemplate 
+end
+
+--- Will SPAWN a Group from a Carrier. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- @tparam Group CarrierUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
 -- @tparam string TargetZonePrefix is the Prefix of the Zone defined in the ME where the Group should be moving to after drop.
 -- @tparam string NewGroupName (forgot this).

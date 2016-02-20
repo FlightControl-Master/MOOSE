@@ -335,7 +335,7 @@ trace.f( self.ClassName, UnitData )
 							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
 							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
 				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
-							   UnitName, DATABASECategory[UnitData:getCoalition()], DATABASECategory[UnitData:getCategory()], UnitData:getTypeName() )
+							   UnitName, DATABASECoalition[UnitData:getCoalition()], DATABASECategory[UnitData:getCategory()], UnitData:getTypeName() )
 			end
 		end
 		self.Players[PlayerName].UnitName = UnitName
@@ -357,6 +357,9 @@ trace.f( self.ClassName, { PlayerUnit, MissionName, Score } )
 		self.Players[PlayerName].Mission[MissionName].ScoreTask = 0
 		self.Players[PlayerName].Mission[MissionName].ScoreMission = 0
 	end
+	
+	trace.i( self.ClassName, PlayerName )
+	trace.i( self.ClassName, self.Players[PlayerName].Mission[MissionName] )
 
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
@@ -496,12 +499,16 @@ end
 
 function DATABASE:ReportScoreAll()
 
+env.info( "Hello World " )
+
 	local ScoreMessage = ""
 	local PlayerMessage = ""
+	
+	trace.i( self.ClassName, "Score Report" )
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
 		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			trace.i( self.ClassName, "Score" )
+			trace.i( self.ClassName, "Score Player: " .. PlayerName )
 
 			-- Some variables
 			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
@@ -517,18 +524,22 @@ function DATABASE:ReportScoreAll()
 			local ScoreMessageHits = ""
 
 			for CategoryID, CategoryName in pairs( DATABASECategory ) do
+				trace.i( self.ClassName, CategoryName )
 				if PlayerData.Hit[CategoryID] then
 					local Score = 0
 					local ScoreHit = 0
 					local Penalty = 0
 					local PenaltyHit = 0
+					trace.i( self.ClassName, "Hit scores exist for player " .. PlayerName )
 					for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
 						Score = Score + UnitData.Score
 						ScoreHit = ScoreHit + UnitData.ScoreHit
 						Penalty = Penalty + UnitData.Penalty
 						PenaltyHit = UnitData.PenaltyHit
 					end
-					ScoreMessageHits = ScoreMessageHits .. string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
+					local ScoreMessageHit = string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
+					trace.i( self.ClassName, ScoreMessageHit )
+					ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
 					PlayerScore = PlayerScore + Score
 					PlayerPenalty = PlayerPenalty + Penalty
 				else
@@ -541,6 +552,7 @@ function DATABASE:ReportScoreAll()
 	
 			local ScoreMessageKills = ""
 			for CategoryID, CategoryName in pairs( DATABASECategory ) do
+				trace.i( self.ClassName, "Kill scores exist for player " .. PlayerName )
 				if PlayerData.Kill[CategoryID] then
 					local Score = 0
 					local ScoreKill = 0
@@ -553,8 +565,10 @@ function DATABASE:ReportScoreAll()
 						Penalty = Penalty + UnitData.Penalty
 						PenaltyKill = PenaltyKill + UnitData.PenaltyKill
 					end
-
-					ScoreMessageKills = ScoreMessageKills .. string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
+					
+					local ScoreMessageKill = string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
+					trace.i( self.ClassName, ScoreMessageKill )
+					ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
 
 					PlayerScore = PlayerScore + Score
 					PlayerPenalty = PlayerPenalty + Penalty

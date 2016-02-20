@@ -142,7 +142,7 @@ end
 --- Returns if a TASK is done.
 -- @treturn bool
 function TASK:IsDone()
-trace.f(self.ClassName)
+	trace.i( self.ClassName, self.TaskDone )
 	return self.TaskDone
 end
 
@@ -155,7 +155,7 @@ end
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-trace.f(self.ClassName)
+	trace.i( self.ClassName, self.TaskFailed )
 	return self.TaskFailed
 end
 
@@ -278,7 +278,6 @@ end
 --- Returns if all the Goals of the TASK were achieved.
 -- @treturn bool
 function TASK:IsGoalReached( )
-trace.f(self.ClassName)
 
 	local GoalReached = true
 
@@ -297,6 +296,7 @@ trace.f(self.ClassName)
 		end
 	end
 	
+	trace.i( self.ClassName, GoalReached )
 	return GoalReached
 end
 

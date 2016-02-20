@@ -90,12 +90,15 @@ end
 function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
 trace.f( self.ClassName )
 
+	local ClientGroupID = Client:GetClientGroupID()
+	
+	trace.i( self.ClassName, ClientGroupID )
+	
 	for CargoID, Cargo in pairs( Cargos ) do
 
-		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType } )
+		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo.CargoWeight } )
 		
 		if Cargo:IsStatusLoaded() then
-
 
 			if Client._Menus[Cargo.CargoType] == nil then
 				Client._Menus[Cargo.CargoType] = {}
@@ -103,7 +106,7 @@ trace.f( self.ClassName )
 			
 			if not Client._Menus[Cargo.CargoType].DeployMenu then
 				Client._Menus[Cargo.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
-					Client:GetClientGroupID(), 
+					ClientGroupID, 
 					self.TEXT[1], 
 					nil
 				)
@@ -119,7 +122,7 @@ trace.f( self.ClassName )
 			end
 
 			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ].MenuPath = missionCommands.addCommandForGroup(
-				Client:GetClientGroupID(), 
+				ClientGroupID, 
 				Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
 				Client._Menus[Cargo.CargoType].DeployMenu, 
 				self.MenuAction,
@@ -134,16 +137,19 @@ end
 function DEPLOYTASK:RemoveCargoMenus( Client )
 trace.f(self.ClassName )
 
+	local ClientGroupID = Client:GetClientGroupID()
+	trace.i( self.ClassName, ClientGroupID )
+
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		if MenuData.DeploySubMenus ~= nil then
 			for SubMenuID, SubMenuData in pairs( MenuData.DeploySubMenus ) do
-				missionCommands.removeItemForGroup( Client:GetClientGroupID(), SubMenuData )
+				missionCommands.removeItemForGroup( ClientGroupID, SubMenuData )
 				trace.i( self.ClassName, "Removed DeploySubMenu " )
 				SubMenuData = nil
 			end
 		end
 		if MenuData.DeployMenu then
-			missionCommands.removeItemForGroup( Client:GetClientGroupID(), MenuData.DeployMenu )
+			missionCommands.removeItemForGroup( ClientGroupID, MenuData.DeployMenu )
 			trace.i( self.ClassName, "Removed DeployMenu " )
 			MenuData.DeployMenu = nil
 		end
