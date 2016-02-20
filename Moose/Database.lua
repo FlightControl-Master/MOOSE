@@ -393,6 +393,7 @@ end
 function DATABASE:OnHit( event )
 trace.f( self.ClassName, { event } )
 
+	local InitUnit = nil
 	local InitUnitName = nil
 	local InitGroupName = nil
 	local InitPlayerName = nil
@@ -404,6 +405,7 @@ trace.f( self.ClassName, { event } )
 	local InitUnitCategory = nil
 	local InitUnitType = nil
 
+	local TargetUnit = nil
 	local TargetUnitName = nil
 	local TargetGroupName = nil
 	local TargetPlayerName = nil
@@ -418,14 +420,16 @@ trace.f( self.ClassName, { event } )
 	if event.initiator and event.initiator:getName() then
 	
 		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
+		
+			InitUnit = event.initiator
 			
-			InitUnitName = event.initiator:getName()
-			InitGroupName = Unit.getGroup(event.initiator):getName()
-			InitPlayerName = event.initiator:getPlayerName()
+			InitUnitName = InitUnit:getName()
+			InitGroupName = Unit.getGroup(InitUnit):getName()
+			InitPlayerName = InitUnit:getPlayerName()
 			
-			InitCoalition = Unit:getCoalition()
-			InitCategory = Unit:getCategory()
-			InitType = event.initiator:getTypeName()
+			InitCoalition = InitUnit:getCoalition()
+			InitCategory = InitUnit:getCategory()
+			InitType = InitUnit:getTypeName()
 
 			InitUnitCoalition = DATABASECoalition[InitCoalition]
 			InitUnitCategory = DATABASECategory[InitCategory]
@@ -436,14 +440,16 @@ trace.f( self.ClassName, { event } )
 
 			
 		if event.target and Object.getCategory(event.target) == Object.Category.UNIT then
+		
+			TargetUnit = event.target
 			
-			TargetUnitName = event.target:getName()
-			TargetGroupName = Unit.getGroup(event.target):getName()
-			TargetPlayerName = event.target:getPlayerName()
+			TargetUnitName = TargetUnit:getName()
+			TargetGroupName = Unit.getGroup(TargetUnit):getName()
+			TargetPlayerName = TargetUnit:getPlayerName()
 
-			TargetCoalition = Unit.getGroup(event.target):getCoalition()
-			TargetCategory = Unit.getGroup(event.target):getCategory()
-			TargetType = event.target:getTypeName()
+			TargetCoalition = TargetUnit:getCoalition()
+			TargetCategory = TargetUnit:getCategory()
+			TargetType = TargetUnit:getTypeName()
 
 			TargetUnitCoalition = DATABASECoalition[TargetCoalition]
 			TargetUnitCategory = DATABASECategory[TargetCategory]
@@ -453,10 +459,10 @@ trace.f( self.ClassName, { event } )
 		end
 		
 		if InitPlayerName ~= nil then -- It is a player that is hitting something
-			self:_AddPlayerFromUnit( event.initiator )
+			self:_AddPlayerFromUnit( InitUnit )
 			if self.Players[InitPlayerName] then -- This should normally not happen, but i'll test it anyway.
 				if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-					self:_AddPlayerFromUnit( event.target )
+					self:_AddPlayerFromUnit( TargetUnit )
 					self.Players[InitPlayerName].HitPlayers = self.Players[InitPlayerName].HitPlayers + 1
 				end
 				
