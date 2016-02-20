@@ -8,8 +8,6 @@ Include.File( "Message" )
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
 -- These clients are defined within the Mission Orchestration Framework (MOF)
 
-trace.names.all = true
-
 CARGOS = {}
 
 
