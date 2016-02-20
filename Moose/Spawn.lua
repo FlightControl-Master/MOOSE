@@ -383,7 +383,7 @@ trace.f( self.ClassName, { CarrierUnit, TargetZonePrefix, NewGroupName, LateActi
 				local RouteCount = table.getn( SpawnTemplate.route.points )
 				trace.i( self.ClassName, "RouteCount = " .. RouteCount )
 
-				local UnitDeployPosition = CarrierUnit:getPoint()
+				local UnitDeployPosition = CarrierUnit:getPosition().p
 				SpawnTemplate.route.points[1].x = UnitDeployPosition.x - 50
 				SpawnTemplate.route.points[1].y = UnitDeployPosition.z
 				SpawnTemplate.route.points[1].alt = nil
