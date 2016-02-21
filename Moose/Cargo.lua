@@ -272,7 +272,7 @@ CARGO = {
 		UNLOADED = 2,
 		LOADING = 3
 	},
-	CargoCarrierGroupName = nil
+	CargoClient = nil
 }
 
 --- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
@@ -285,7 +285,7 @@ trace.f( self.ClassName, { CargoType, CargoName, CargoWeight } )
 	self.CargoName = CargoName
     self.CargoWeight = CargoWeight
 
-	self.Status = self:StatusNone()
+	self:StatusNone()
 	
 	return self
 end
@@ -308,36 +308,21 @@ end
 
 function CARGO:IsLoadedInClient()
 
-	if self:IsStatusLoaded() then
-		return self.Client
+	if self:IsStatusLoaded() or self:IsStatusLoading() then
+		return self.CargoClient
 	end
 	
 	return nil
 
 end
 
-function CARGO:Load( Client )
-trace.f( self.ClassName )
-
-	Client:AddCargo( self )
-
-	self.Client = Client
-	self:StatusLoaded()
-
-	return self
-end
 
 function CARGO:UnLoad( Client, TargetZoneName )
 trace.f( self.ClassName )
 
-	local Cargo = Client:RemoveCargo( self )
-	if Cargo then
-		env.info( 'STAGEUNLOAD:Executing() Cargo.CargoName = ' .. Cargo.CargoName ) 
-		
-		Cargo:StatusUnLoaded()
-	end
+	self:StatusUnLoaded()
 
-	return Cargo
+	return self
 end
 
 function CARGO:OnBoard( Client, LandingZone )
@@ -345,6 +330,7 @@ trace.f(self.ClassName )
   
 	local Valid = true
   
+	self.CargoClient = Client
 	local ClientUnit = Client:GetClientGroupUnit()
 
 	return Valid
@@ -356,6 +342,14 @@ trace.f(self.ClassName )
 	local OnBoarded = true
   
 	return OnBoarded
+end
+
+function CARGO:Load( Client )
+trace.f( self.ClassName )
+
+	self:StatusLoaded( Client )
+
+	return self
 end
 
 function CARGO:IsLandingRequired()
@@ -372,15 +366,26 @@ end
 function CARGO:StatusNone()
 trace.f(self.ClassName )
 
-	self.Status = CARGO.STATUS.NONE
+	self.CargoClient = nil
+	self.CargoStatus = CARGO.STATUS.NONE
 	
 	return self
 end
 
-function CARGO:StatusLoaded()
+function CARGO:StatusLoading( Client )
 trace.f(self.ClassName )
 
-	self.Status = CARGO.STATUS.LOADED
+	self.CargoClient = Client
+	self.CargoStatus = CARGO.STATUS.LOADING
+	
+	return self
+end
+
+function CARGO:StatusLoaded( Client )
+trace.f(self.ClassName )
+
+	self.CargoClient = Client
+	self.CargoStatus = CARGO.STATUS.LOADED
 	
 	return self
 end
@@ -388,42 +393,37 @@ end
 function CARGO:StatusUnLoaded()
 trace.f(self.ClassName )
 
-	self.Status = CARGO.STATUS.UNLOADED
+	self.CargoClient = nil
+	self.CargoStatus = CARGO.STATUS.UNLOADED
 	
 	return self
 end
 
-function CARGO:StatusLoading()
-trace.f(self.ClassName )
-
-	self.Status = CARGO.STATUS.LOADING
-	
-	return self
-end
 
 function CARGO:IsStatusNone()
 trace.f(self.ClassName )
 
-	return self.Status == CARGO.STATUS.NONE
-end
-
-function CARGO:IsStatusLoaded()
-trace.f(self.ClassName )
-
-	return self.Status == CARGO.STATUS.LOADED
-end
-
-function CARGO:IsStatusUnLoaded()
-trace.f(self.ClassName )
-
-	return self.Status == CARGO.STATUS.UNLOADED
+	return self.CargoStatus == CARGO.STATUS.NONE
 end
 
 function CARGO:IsStatusLoading()
 trace.f(self.ClassName )
 
-	return self.Status == CARGO.STATUS.LOADING
+	return self.CargoStatus == CARGO.STATUS.LOADING
 end
+
+function CARGO:IsStatusLoaded()
+trace.f(self.ClassName )
+
+	return self.CargoStatus == CARGO.STATUS.LOADED
+end
+
+function CARGO:IsStatusUnLoaded()
+trace.f(self.ClassName )
+
+	return self.CargoStatus == CARGO.STATUS.UNLOADED
+end
+
 
 CARGO_GROUP = {
 	ClassName = "CARGO_GROUP"
@@ -450,13 +450,19 @@ trace.f( self.ClassName )
 
 	local SpawnCargo = true
 	
-	if self.CargoGroupName then
+	if self:IsStatusNone() then
+	
+	elseif self:IsStatusLoaded() or self:IsStatusLoading() then
+	
 		local Client = self:IsLoadedInClient()
 		if Client and Client:ClientGroup() then
-			if Client:FindCargo( self.CargoName ) then
-				SpawnCargo = false
-			end
+			SpawnCargo = false
 		end
+		
+	elseif self:IsStatusUnLoaded() then
+	
+		SpawnCargo = false
+		
 	end
 	
 	if SpawnCargo then 
@@ -466,9 +472,10 @@ trace.f( self.ClassName )
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
 			self.CargoGroupName = self.CargoSpawn:InZone( self.CargoZone:GetCargoZoneName(), self.CargoName ).name
-
 		end
+		self:StatusNone()	
 	end
+	
 	trace.i( self.ClassName, { self.CargoGroupName, CARGOS[self.CargoName].CargoGroupName } )
 
 	return self
@@ -561,6 +568,8 @@ trace.f(self.ClassName )
 	trace.i( self.ClassName, "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
 
 	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+	
+	self:StatusLoading( Client )
      
 	return Valid
   
@@ -575,6 +584,7 @@ trace.f(self.ClassName )
 	local CargoGroup = Group.getByName( self.CargoGroupName )
 	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
 		CargoGroup:destroy()
+		self:StatusLoaded( Client )
 		OnBoarded = true
 	end
 
@@ -588,9 +598,8 @@ trace.f( self.ClassName )
 	trace.i( self.ClassName, 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
 	self.CargoSpawn:FromCarrier( Client:GetClientGroupUnit(), TargetZoneName, self.CargoGroupName )
-	self:StatusUnLoaded()
-	local Cargo = Client:RemoveCargo( self )
 
+	self:StatusUnLoaded()
 
 	return self
 end
@@ -601,15 +610,18 @@ CARGO_PACKAGE = {
 }
 
 
-function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoHostName )
-trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, CargoHostName } )
+function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClientInitGroupName )
+trace.f( self.ClassName, { CargoType, CargoName, CargoWeight, CargoClientInitGroupName } )
 
 	-- Arrange meta tables
 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 	
-	self.CargoHostName = CargoHostName
+	self.CargoClientInitGroupName = CargoClientInitGroupName
 	
-	self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
+	self.CargoClient = CLIENT:New( self.CargoClientInitGroupName )
+	self:StatusLoaded( self.CargoClient )
+	
+	self.CargoClientInitGroupSpawn = SPAWN:New( self.CargoClientInitGroupName )
 	
 	CARGOS[self.CargoName] = self
 
@@ -622,36 +634,36 @@ trace.f( self.ClassName )
 
 	-- this needs to be checked thoroughly
 
-
 	local SpawnCargo = true
 	
-	trace.i( self.ClassName, self.CargoHostName )
+	trace.i( self.ClassName, self.CargoClientInitGroupName )
+
+	if self:IsStatusNone() then
 	
-	if self.Client and self.Client:ClientGroup() then
-		trace.i( self.ClassName, 'There is a Client ' .. self.Client.ClientName )
-		if self.Client:FindCargo( self.CargoName ) then
-			if self.Client:GetClientGroupUnit():getPlayerName() then -- this needs to be checked thoroughly
-				trace.i( self.ClassName, 'ok, Client is of player ' .. self.Client:GetClientGroupUnit():getPlayerName() .. ' and contains the Cargo, do nothing' )
-				SpawnCargo = false
-			end
+	elseif self:IsStatusLoading() or self:IsStatusLoaded() then
+
+		local Client = self:IsLoadedInClient()
+		if Client and Client:ClientGroup() then
+			SpawnCargo = false
 		end
+	
+	elseif self:IsStatusUnLoaded() then
+	
+		SpawnCargo = false
+	
 	else
-		if self.CargoHostName then
-			local CargoHostGroup = Group.getByName( self.CargoHostName )
-			if not CargoHostGroup then
-				self.CargoHostSpawn:ReSpawn()
-			end
-			local CargoHostGroup = Group.getByName( self.CargoHostName )
-			if CargoHostGroup and CargoHostGroup:isExist() then
-				self.Client = CLIENT:New( self.CargoHostGroup, '' )
-			end
-		end
-	end
-	
-	if SpawnCargo then
-		self.Client:AddCargo( self ) -- Adding cargo to the AI client
+
 	end
 
+	if SpawnCargo then
+		self:StatusNone()
+	end
+		
+	local CargoClientInitGroup = Group.getByName( self.CargoClientInitGroupName )
+	if CargoClientInitGroup then
+		self.CargoClientInitGroupSpawn:Spawn( self.CargoClientInitGroupName )	
+	end
+	
 	return self
 end
 
@@ -660,18 +672,12 @@ trace.f( self.ClassName )
 
 	local Near = false
 
-	if self.Client and self.Client:ClientGroup():getName() then
-		trace.i( self.ClassName, self.Client.ClientName )
+	if self.CargoClient and self.CargoClient:ClientGroup() then
+		trace.i( self.ClassName, self.CargoClient.ClientName )
 		trace.i( self.ClassName, 'Client Exists.' )
-		trace.i( self.ClassName, 'self.Client:ClientGroup():getName() = ' .. self.Client:ClientGroup():getName() )
 
-		-- Find the cargo in the client
-		local Cargo = self.Client:FindCargo( self.CargoName )
-		if Cargo == self then
-			trace.i( self.ClassName, 'Cargo is loaded in Client.' )
-			if routines.IsPartOfGroupInRadius( self.Client:ClientGroup(), Client:ClientPosition(), 150 ) then
-				Near = true
-			end
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), Client:ClientPosition(), 150 ) then
+			Near = true
 		end
 	end
 	
@@ -691,8 +697,8 @@ trace.f(self.ClassName )
 	local CarrierPosOnBoard = ClientUnit:getPoint()
 	local CarrierPosMoveAway = ClientUnit:getPoint()
 	
-	local CargoHostGroup = self.Client:ClientGroup()
-	local CargoHostName = self.Client:ClientGroup():getName()
+	local CargoHostGroup = self.CargoClient:ClientGroup()
+	local CargoHostName = self.CargoClient:ClientGroup():getName()
 
 	local CargoHostUnits = CargoHostGroup:getUnits()
 	local CargoPos = CargoHostUnits[1]:getPoint()
@@ -775,17 +781,11 @@ trace.f(self.ClassName )
 
 	local OnBoarded = false
   
-	if self.Client and self.Client:ClientGroup() then
-		if routines.IsPartOfGroupInRadius( self.Client:ClientGroup(), Client:ClientPosition(), 25 ) then
+	if self.CargoClient and self.CargoClient:ClientGroup() then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), CargoClient:ClientPosition(), 25 ) then
 			
-			-- Switch Cargo from self.Client to Client ...
-			Client:AddCargo( self )
-			self.Client:RemoveCargo( self )
-			trace.i( self.ClassName, 'Cargo switched from ' .. self.Client:ClientGroup():getName() .. ' to ' .. Client:ClientGroup():getName() )
-			trace.i( self.ClassName, 'Cargo is ' .. self.CargoName ) -- Should not be null
-			
-			-- ok, so the Cargo has a new Client, thus, change the Owning Client of the Cargo.
-			self.Client = Client
+			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
+			self:StatusLoaded( Client )
 			
 			-- All done, onboarded the Cargo to the new Client.
 			OnBoarded = true
@@ -803,7 +803,6 @@ trace.f( self.ClassName )
 	
 	--self.CargoSpawn:FromCarrier( Client:ClientGroup(), TargetZoneName, self.CargoHostName )
 	self:StatusUnLoaded()
-	local Cargo = Client:RemoveCargo( self )
 
 	return Cargo
 end
@@ -948,8 +947,6 @@ trace.f( self.ClassName )
 	trace.i( self.ClassName, 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
 	self:StatusUnLoaded()
-	local Cargo = Client:RemoveCargo( self )
-
 
 	return Cargo
 end

@@ -494,7 +494,6 @@ trace.f(self.ClassName)
   
   if  Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
     Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Co-Pilot: Unload" )
-	Task.Cargo:StatusUnLoaded()
 	Task:RemoveCargoMenus( Client )
 	Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 ) -- We set the cargo as one more goal completed in the mission.
     return 1
@@ -551,9 +550,7 @@ trace.f(self.ClassName)
 							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
-			if Mission.MissionReportFlash then
-				Client:ShowCargo()
-			end
+			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
@@ -613,7 +610,6 @@ trace.f(self.ClassName)
 		end
 
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
-			Task.Cargo:StatusLoaded()
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
 							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )

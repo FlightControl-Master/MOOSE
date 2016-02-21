@@ -23,7 +23,6 @@ CLIENT = {
 	ClientTransport = false,
 	ClientBriefingShown = false,
 	_Menus = {},
-	_Cargos = {},
 	_Tasks = {},
 	Messages = { 
 	}
@@ -61,7 +60,6 @@ end
 function CLIENT:Reset( ClientName )
 trace.f(self.ClassName)
 	self._Menus = {}
-	self._Cargos = {}
 end
 
 --- ClientGroup returns the Group of a Client.
@@ -199,15 +197,6 @@ trace.f(self.ClassName)
 	return self.ClientTransport
 end
 
---- FindCargo finds loaded Cargo within a CLIENT instance.
--- Cargo is loaded when certain PICK-UP or DEPLOY Tasks are properly executed.
--- @tparam string CargoName is the name of the cargo.
--- @treturn CARGO_TYPE
-function CLIENT:FindCargo( CargoName )
-trace.f(self.ClassName)
-	return self._Cargos[CargoName]
-end
-
 --- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
 -- The @{CARGO} is shown throught the MESSAGE system of DCS World.
 function CLIENT:ShowCargo()
@@ -215,74 +204,18 @@ trace.f( self.ClassName )
 
 	local CargoMsg = ""
   
-	for CargoName, Cargo in pairs( self._Cargos ) do
-		if CargoMsg  ~= "" then
-			CargoMsg = CargoMsg .. "\n"
+	for CargoName, Cargo in pairs( CARGOS ) do
+		if self == Cargo:IsLoadedInClient() then
+			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
 		end
-		CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight
 	end
   
-	if CargoMsg == '' then
+	if CargoMsg == "" then
 		CargoMsg = "empty"
 	end
   
 	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
 
-end
-
---- InitCargo allows to initialize @{CARGO} on the CLIENT when the client initializes.
--- @tparam string InitCargoNames is a string or a table containing the names of the @{CARGO}s initialized in the Mission.
--- @treturn CLIENT
-function CLIENT:InitCargo( InitCargoNames )
-trace.f(self.ClassName, { InitCargoNames } )
-
-  local Valid = true
-  
-  if Valid then
-	if type( InitCargoNames ) == "table" then
-		self.InitCargoNames = InitCargoNames
-	else
-		self.InitCargoNames = { InitCargoNames }
-	end
-  end
-  
-  return self
-  
-end
-
---- AddCargo allows to add @{CARGO} on the CLIENT.
--- @tparam string Cargo is the @{CARGO}.
--- @treturn CLIENT
-function CLIENT:AddCargo( Cargo )
-trace.f(self.ClassName, { Cargo.CargoName } )
-
-	local Valid = true
-	  
-	if Valid then
-		self._Cargos[Cargo.CargoName] = Cargo
-		self:ShowCargo()
-	end
-	  
-	return self
-  
-end
-
---- RemoveCargo removes @{CARGO} from the CLIENT.
--- @tparam string CargoName is the name of the @{CARGO}.
--- @treturn Cargo
-function CLIENT:RemoveCargo( Cargo )
-trace.f(self.ClassName, { Cargo.CargoName } )
-
-  local Valid = true
-
-  if  Valid then
-    trace.i( "CLIENT", "RemoveCargo: CargoName = " .. Cargo.CargoName )
-	--local CargoNew = self._Cargos[Cargo.CargoName]
-    self._Cargos[Cargo.CargoName] = nil
-  end
-  
-  return Cargo
-  
 end
 
 --- SwitchMessages is a local function called by the DCS World Menu system to switch off messages.

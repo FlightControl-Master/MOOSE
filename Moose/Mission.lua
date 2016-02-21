@@ -15,7 +15,6 @@ MISSION = {
 	_Clients = {},
 	_Tasks = {},
 	_ActiveTasks = {},
-	_Cargos = {},
 	GoalFunction = nil,
 	MissionReportTrigger = 0,
 	MissionProgressTrigger = 0,
@@ -360,20 +359,6 @@ function MISSION:GetTasks()
 	return self._Tasks
 end
  
---- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
-SpawnCargo = {}
-function MISSION:AddCargo( Cargos )
-	self:T( { Cargos } )
-
-	if type( Cargos ) == "table" then
-		for CargoID, Cargo in pairs( Cargos ) do
-			self._Cargos[Cargo.CargoName] = Cargo
-		end
-	else
-		self._Cargos[Cargos.CargoName] = Cargos
-	end
-end
-
 
 --[[
   _TransportExecuteStage: Defines the different stages of Transport unload/load execution. This table is internal and is used to control the validity of Transport load/unload timing.
@@ -442,8 +427,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							Client._Tasks[TaskNumber].Cargos = Mission._Tasks[TaskNumber].Cargos
 							Client._Tasks[TaskNumber].LandingZones = Mission._Tasks[TaskNumber].LandingZones
 						end
-
-						Client._Cargos = {}
 
 						Mission:Ongoing()				
 					end
@@ -543,9 +526,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 						-- So first sanitize Client._Tasks[TaskNumber].MissionTask, after that, sanitize only the whole _Tasks structure...
 						--Client._Tasks[TaskNumber].MissionTask = nil
 						--Client._Tasks = nil
-						
-						-- Sanitize the Client._Cargos. Any cargo within the Client will be lost when the client crashes. This is an important statement.
-						Client._Cargos = nil
 					end
 				end
 			end
