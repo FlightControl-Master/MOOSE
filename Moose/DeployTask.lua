@@ -107,7 +107,7 @@ trace.f( self.ClassName )
 			if not Client._Menus[Cargo.CargoType].DeployMenu then
 				Client._Menus[Cargo.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
 					ClientGroupID, 
-					self.TEXT[1], 
+					self.TEXT[1] .. " " .. Cargo.CargoType, 
 					nil
 				)
 				trace.i( self.ClassName, 'Added DeployMenu ' .. self.TEXT[1] )
