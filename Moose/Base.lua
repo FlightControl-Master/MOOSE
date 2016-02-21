@@ -7,9 +7,9 @@ Include.File( "Routines" )
 BASE = {
 
   ClassName = "BASE",
+  TraceOn = false,
   ClassID = 0,
   Events = {}
-
 }
 
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
@@ -188,3 +188,22 @@ function BASE:onEvent(event)
 
 end
 
+-- Trace section
+
+
+function BASE:T( Arguments )
+
+	if BASE.TraceOn then
+
+		local DebugInfo = debug.getinfo( 2, "nl" )
+		
+		local Function = "function"
+		if DebugInfo.name then
+			Function = DebugInfo.name
+		end
+
+		local Line = DebugInfo.currentline
+	
+		env.info( string.format( "%6d/%1s:%20s.%s\(%s\)" , Line, "T", self.ClassName, Function .. routines.utils.oneLineSerialize( Arguments ) ) )
+	end
+end

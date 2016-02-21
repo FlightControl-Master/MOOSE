@@ -31,12 +31,11 @@ MISSION = {
 
 
 function MISSION:Meta()
-trace.f(self.ClassName)
 
-  -- Arrange meta tables
-  local Child = BASE:Inherit( self, BASE:New() )
-trace.r( self.ClassName, "", { Child } )
-  return Child
+	local self = BASE:Inherit( self, BASE:New() )
+	self:T()
+	
+	return self
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
@@ -56,8 +55,9 @@ end
 -- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Sling Load', 'Operational', 'Fly to the cargo pickup zone at Dzegvi or Kaspi, and sling the cargo to Soganlug airbase.', 'NATO' )
 -- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 'In order to be in full control of the situation, we need you to rescue a secret agent from the woods behind enemy lines. Avoid the Russian defenses and rescue the agent. Keep south until Khasuri, and keep your eyes open for any SAM presence. The agent is located at waypoint 4 on your kneeboard.', 'NATO'  )
 function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoalition )
-trace.f(self.ClassName, { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
+
 	self = MISSION:Meta()
+	self:T({ MissionName, MissionPriority, MissionBriefing, MissionCoalition })
   
 	local Valid = true
   
@@ -73,20 +73,19 @@ trace.f(self.ClassName, { MissionName, MissionPriority, MissionBriefing, Mission
 		self.MissionCoalition = MissionCoalition
 	end
 
-trace.r( self.ClassName, "" )
 	return self
 end
 
 --- Returns if a Mission has completed.
 -- @treturn bool
 function MISSION:IsCompleted()
-trace.f(self.ClassName)
+	self:T()
 	return self.MissionStatus == "ACCOMPLISHED"
 end
 
 --- Set a Mission to completed.
 function MISSION:Completed()
-trace.f(self.ClassName)
+	self:T()
 	self.MissionStatus = "ACCOMPLISHED"
 	self:StatusToClients()
 end
@@ -94,13 +93,13 @@ end
 --- Returns if a Mission is ongoing.
 -- treturn bool
 function MISSION:IsOngoing()
-trace.f(self.ClassName)
+	self:T()
 	return self.MissionStatus == "ONGOING"
 end
 
 --- Set a Mission to ongoing.
 function MISSION:Ongoing()
-trace.f(self.ClassName)
+	self:T()
 	self.MissionStatus = "ONGOING"
 	--self:StatusToClients()
 end
@@ -108,13 +107,13 @@ end
 --- Returns if a Mission is pending.
 -- treturn bool
 function MISSION:IsPending()
-trace.f(self.ClassName)
+	self:T()
 	return self.MissionStatus == "PENDING"
 end
 
 --- Set a Mission to pending.
 function MISSION:Pending()
-trace.f(self.ClassName)
+	self:T()
 	self.MissionStatus = "PENDING"
 	self:StatusToClients()
 end
@@ -122,31 +121,31 @@ end
 --- Returns if a Mission has failed.
 -- treturn bool
 function MISSION:IsFailed() 
-trace.f(self.ClassName)
+	self:T()
 	return self.MissionStatus == "FAILED"
 end
 
 --- Set a Mission to failed.
 function MISSION:Failed()
-trace.f(self.ClassName)
+	self:T()
 	self.MissionStatus = "FAILED"
 	self:StatusToClients()
 end
 
 --- Send the status of the MISSION to all Clients.
 function MISSION:StatusToClients()
-trace.f(self.ClassName)
+	self:T()
 	if self.MissionReportFlash then
 		for ClientID, Client in pairs( self._Clients ) do
 			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10,  self.Name .. '/Status', "Mission Command: Mission Status")
 		end
 	end
-trace.e()
 end
 
 --- Handles the reporting. After certain time intervals, a MISSION report MESSAGE will be shown to All Players.
 function MISSION:ReportTrigger()
-trace.f(self.ClassName)
+	self:T()
+
 	if self.MissionReportShow == true then
 		self.MissionReportShow = false
 trace.r( "MISSION", "1", { true } )
@@ -171,7 +170,8 @@ end
 
 --- Report the status of all MISSIONs to all active Clients.
 function MISSION:ReportToAll()
-trace.f(self.ClassName)
+	self:T()
+
 	local AlivePlayers = ''
 	for ClientID, Client in pairs( self._Clients ) do
 		if  Client:ClientGroup() then
@@ -192,7 +192,6 @@ trace.f(self.ClassName)
 		TaskText = TaskText .. "         - Task " .. TaskID .. ": " .. TaskData.Name .. ": " .. TaskData:GetGoalProgress() .. "\n"
 	end
 	MESSAGE:New( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. ' ( ' .. self.MissionPriority .. ' mission )' .. AlivePlayers .. "\n" .. TaskText:gsub("\n$",""), "Mission Command: Mission Report", 10,  self.Name .. '/Status'):ToAll()
-trace.e()
 end
 
 
@@ -233,16 +232,15 @@ end
 --	local Mission = MISSIONSCHEDULER.AddMission( 'NATO Transport Troops', 'Operational', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.', 'NATO' )
 --	Mission:AddGoalFunction( DeployPatriotTroopsGoal )
 function MISSION:AddGoalFunction( GoalFunction )
-trace.f(self.ClassName)
+	self:T()
 	self.GoalFunction = GoalFunction 
-trace.e()
 end
 
 --- Show the briefing of the MISSION to the CLIENT.
 -- @tparam CLIENT Client to show briefing to.
 -- @treturn CLIENT
 function MISSION:ShowBriefing( Client )
-trace.f(self.ClassName, { Client.ClientName } )
+	self:T( { Client.ClientName } )
 
 	if not Client.ClientBriefingShown then
 		Client.ClientBriefingShown = true
@@ -266,7 +264,7 @@ end
 --	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
 function MISSION:AddClient( Client )
-trace.f(self.ClassName, { Client } )
+	self:T( { Client } )
 
 	local Valid = true
  
@@ -285,8 +283,7 @@ end
 -- -- Seach for Client "Bomber" within the Mission.
 -- local BomberClient = Mission:FindClient( "Bomber" )
 function MISSION:FindClient( ClientName )
-trace.f(self.ClassName)
-trace.r( "", "", { self._Clients[ClientName] } )
+	self:T( { self._Clients[ClientName] } )
 	return self._Clients[ClientName]
 end
 
@@ -317,13 +314,12 @@ end
 --	Mission:AddTask( DeployTask, 2 )
 	
 function MISSION:AddTask( Task, TaskNumber )
-trace.f(self.ClassName)
+	self:T()
 
 	self._Tasks[TaskNumber] = Task
 	self._Tasks[TaskNumber]:EnableEvents()
 	self._Tasks[TaskNumber].ID = TaskNumber
 
-trace.r( self.ClassName, "" )
 	return Task
  end
 
@@ -335,7 +331,7 @@ trace.r( self.ClassName, "" )
 -- Task2 = Mission:GetTask( 2 )
 
 function MISSION:GetTask( TaskNumber )
-trace.f(self.ClassName)
+	self:T()
 
 	local Valid = true
 
@@ -359,7 +355,7 @@ end
 -- Tasks = Mission:GetTasks()
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
-trace.f(self.ClassName)
+	self:T()
 
 	return self._Tasks
 end
@@ -367,7 +363,7 @@ end
 --- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
 SpawnCargo = {}
 function MISSION:AddCargo( Cargos )
-trace.f(self.ClassName, { Cargos } )
+	self:T( { Cargos } )
 
 	if type( Cargos ) == "table" then
 		for CargoID, Cargo in pairs( Cargos ) do

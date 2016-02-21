@@ -1,22 +1,13 @@
 
 local base = _G
-
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
-
-function script_path()
-   local str = debug.getinfo(2, "S").source
-   return str:match("(.*/)"):sub(1,-2)
-end
-
 
 Include = {}
 
-Include.MissionPath = script_path() .. "Mission/"
-Include.ProgramPath = "Scripts/Moose/Moose/"
-
-env.info( "Include.MissionPath = " .. Include.MissionPath)
-env.info( "Include.ProgramPath = " .. Include.ProgramPath)
-Include.Files = {}
+Include.Path = function()
+   local str = debug.getinfo(2, "S").source
+   return str:match("(.*/)"):sub(1,-2):gsub("\\","/")
+end
 
 Include.File = function( IncludeFile )
 	if not Include.Files[ IncludeFile ] then
@@ -38,6 +29,14 @@ Include.File = function( IncludeFile )
 		end
 	end
 end
+
+Include.ProgramPath = "Scripts/Moose/Moose/"
+Include.MissionPath = Include.Path()
+
+env.info( "Include.ProgramPath = " .. Include.ProgramPath)
+env.info( "Include.MissionPath = " .. Include.MissionPath)
+
+Include.Files = {}
 
 Include.File( "Database" )
 

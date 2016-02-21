@@ -2,6 +2,8 @@
 -- @classmod SPAWN
 -- @author Flightcontrol
 
+MOOSE_Version = "0.1.1.1"
+
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Database" )
