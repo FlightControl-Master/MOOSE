@@ -86,10 +86,12 @@ trace.f(self.ClassName)
 				local ClientGroup = Group.getByName( self.ClientName )
 				if ClientGroup then
 					trace.i( self.ClassName, "ClientGroup = " .. self.ClientName )
-					if ClientGroup:isExist() and ClientGroup:getID() == UnitData:getGroup():getID() then
-						trace.i( self.ClassName, "Normal logic" )
-						trace.i( self.ClassName, self.ClientName .. " : group found!" )
-						return ClientGroup
+					if ClientGroup:isExist() then 
+						if ClientGroup:getID() == UnitData:getGroup():getID() then
+							trace.i( self.ClassName, "Normal logic" )
+							trace.i( self.ClassName, self.ClientName .. " : group found!" )
+							return ClientGroup
+						end
 					else
 						-- Now we need to resolve the bugs in DCS 1.5 ...
 						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
@@ -111,6 +113,17 @@ trace.f(self.ClassName)
 --					error( "Client " .. self.ClientName .. " not found!" )
 				end
 			end
+		end
+	end
+
+	-- For non player clients
+	local ClientGroup = Group.getByName( self.ClientName )
+	if ClientGroup then
+		trace.i( self.ClassName, "ClientGroup = " .. self.ClientName )
+		if ClientGroup:isExist() then 
+			trace.i( self.ClassName, "Normal logic" )
+			trace.i( self.ClassName, self.ClientName .. " : group found!" )
+			return ClientGroup
 		end
 	end
 	

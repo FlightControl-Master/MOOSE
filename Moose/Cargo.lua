@@ -307,6 +307,7 @@ trace.f( self.ClassName )
 end
 
 function CARGO:IsLoadedInClient()
+trace.f( self.ClassName )
 
 	if self:IsStatusLoaded() or self:IsStatusLoading() then
 		return self.CargoClient
@@ -656,7 +657,8 @@ trace.f( self.ClassName )
 	end
 
 	if SpawnCargo then
-		self:StatusNone()
+		self.CargoClient = CLIENT:New( self.CargoClientInitGroupName )
+		self:StatusLoaded( self.CargoClient )
 	end
 		
 	local CargoClientInitGroup = Group.getByName( self.CargoClientInitGroupName )
@@ -782,7 +784,7 @@ trace.f(self.ClassName )
 	local OnBoarded = false
   
 	if self.CargoClient and self.CargoClient:ClientGroup() then
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), CargoClient:ClientPosition(), 25 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), self.CargoClient:ClientPosition(), 10 ) then
 			
 			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
 			self:StatusLoaded( Client )

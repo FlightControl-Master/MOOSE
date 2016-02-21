@@ -98,7 +98,7 @@ trace.f( self.ClassName )
 
 		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo.CargoWeight } )
 		
-		if Cargo:IsStatusLoaded() then
+		if Cargo:IsStatusLoaded() and Client == Cargo:IsLoadedInClient() then
 
 			if Client._Menus[Cargo.CargoType] == nil then
 				Client._Menus[Cargo.CargoType] = {}

@@ -78,7 +78,7 @@ trace.f( self.ClassName )
 
 		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
 		
-		if Cargo:IsStatusNone() then
+		if Cargo:IsStatusNone() or ( Cargo:IsStatusLoaded() and Client ~= Cargo:IsLoadedInClient() ) then
 		
 			local MenuAdd = false
 			if Cargo:IsNear( Client, self.CurrentCargoZone ) then
