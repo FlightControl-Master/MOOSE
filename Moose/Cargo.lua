@@ -898,6 +898,15 @@ trace.f( self.ClassName )
 	return self
 end
 
+function CARGO_SLINGLOAD:IsNear( Client, LandingZone )
+trace.f( self.ClassName )
+
+	local Near = false
+
+	return Near
+end
+
+
 function CARGO_SLINGLOAD:IsInLandingZone( Client, LandingZone )
 trace.f( self.ClassName )
 
@@ -911,7 +920,6 @@ trace.f( self.ClassName )
 	end
 	
 	return Near
-	
 end
 
 
@@ -923,7 +931,6 @@ trace.f(self.ClassName )
   
      
 	return Valid
-  
 end
 
 
