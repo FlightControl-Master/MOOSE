@@ -14,27 +14,25 @@ DEPLOYTASK = {
 -- @tparam table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
 -- @tparam CARGO_TYPE CargoType Type of the Cargo.
 function DEPLOYTASK:New( CargoType )
-trace.f(self.ClassName)
+	local self = BASE:Inherit( self, TASK:New() )
+	self:T()
 
-	-- Child holds the inherited instance of the DEPLOYTASK Class to the BASE class.
-	local Child = BASE:Inherit( self, TASK:New() )
-  
 	local Valid = true
   
     if Valid then
-		Child.Name = 'Deploy Cargo'
-		Child.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
-		Child.CargoType = CargoType
-		Child.GoalVerb = CargoType .. " " .. self.GoalVerb
-		Child.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGEUNLOAD:New(), STAGEDONE:New() }
-		Child.SetStage( Child, 1 )
+		self.Name = 'Deploy Cargo'
+		self.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
+		self.CargoType = CargoType
+		self.GoalVerb = CargoType .. " " .. self.GoalVerb
+		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGEUNLOAD:New(), STAGEDONE:New() }
+		self.SetStage( self, 1 )
 	end
   
-	return Child
+	return self
 end
 
 function DEPLOYTASK:ToZone( LandingZone )
-trace.f(self.ClassName)
+self:T()
 
 	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
 	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
@@ -44,7 +42,7 @@ end
 
 
 function DEPLOYTASK:InitCargo( InitCargos )
-trace.f( self.ClassName, { InitCargos } )
+self:T( { InitCargos } )
 
 	if type( InitCargos ) == "table" then
 		self.Cargos.InitCargos = InitCargos
@@ -52,13 +50,12 @@ trace.f( self.ClassName, { InitCargos } )
 		self.Cargos.InitCargos = { InitCargos }
 	end
 
-
 	return self
 end
 
 
 function DEPLOYTASK:LoadCargo( LoadCargos )
-trace.f( self.ClassName, { LoadCargos } )
+self:T( { LoadCargos } )
 
 	if type( LoadCargos ) == "table" then
 		self.Cargos.LoadCargos = LoadCargos
@@ -73,7 +70,7 @@ end
 --- When the cargo is unloaded, it will move to the target zone name.
 -- @tparam string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
 function DEPLOYTASK:SetCargoTargetZoneName( TargetZoneName )
-trace.f(self.ClassName)
+self:T()
   
   local Valid = true
   
@@ -88,7 +85,7 @@ trace.f(self.ClassName)
 end
 
 function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-trace.f( self.ClassName )
+self:T()
 
 	local ClientGroupID = Client:GetClientGroupID()
 	
@@ -135,7 +132,7 @@ trace.f( self.ClassName )
 end
 
 function DEPLOYTASK:RemoveCargoMenus( Client )
-trace.f(self.ClassName )
+self:T()
 
 	local ClientGroupID = Client:GetClientGroupID()
 	trace.i( self.ClassName, ClientGroupID )

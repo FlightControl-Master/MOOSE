@@ -48,53 +48,69 @@ end
 
 -- porting in Slmod's serialize_slmod2
 routines.utils.oneLineSerialize = function(tbl)  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
-	if type(tbl) == 'table' then --function only works for tables!
 
-		local tbl_str = {}
+	lookup_table = {}
+	
+	local function _Serialize( tbl )
 
-		tbl_str[#tbl_str + 1] = '{'
-
-		for ind,val in pairs(tbl) do -- serialize its fields
-			if type(ind) == "number" then
-				tbl_str[#tbl_str + 1] = '['
-				tbl_str[#tbl_str + 1] = tostring(ind)
-				tbl_str[#tbl_str + 1] = ']='
-			else --must be a string
-				tbl_str[#tbl_str + 1] = '['
-				tbl_str[#tbl_str + 1] = routines.utils.basicSerialize(ind)
-				tbl_str[#tbl_str + 1] = ']='
+		if type(tbl) == 'table' then --function only works for tables!
+		
+			if lookup_table[tbl] then
+				return lookup_table[object]
 			end
 
-			if ((type(val) == 'number') or (type(val) == 'boolean')) then
-				tbl_str[#tbl_str + 1] = tostring(val)
-				tbl_str[#tbl_str + 1] = ','
-			elseif type(val) == 'string' then
-				tbl_str[#tbl_str + 1] = routines.utils.basicSerialize(val)
-				tbl_str[#tbl_str + 1] = ','
-			elseif type(val) == 'nil' then -- won't ever happen, right?
-				tbl_str[#tbl_str + 1] = 'nil,'
-			elseif type(val) == 'table' then
-				if ind == "__index" then
-					tbl_str[#tbl_str + 1] = "__index"
+			local tbl_str = {}
+			
+			lookup_table[tbl] = tbl_str
+			
+			tbl_str[#tbl_str + 1] = '{'
+
+			for ind,val in pairs(tbl) do -- serialize its fields
+				if type(ind) == "number" then
+					tbl_str[#tbl_str + 1] = '['
+					tbl_str[#tbl_str + 1] = tostring(ind)
+					tbl_str[#tbl_str + 1] = ']='
+				else --must be a string
+					tbl_str[#tbl_str + 1] = '['
+					tbl_str[#tbl_str + 1] = routines.utils.basicSerialize(ind)
+					tbl_str[#tbl_str + 1] = ']='
+				end
+
+				if ((type(val) == 'number') or (type(val) == 'boolean')) then
+					tbl_str[#tbl_str + 1] = tostring(val)
+					tbl_str[#tbl_str + 1] = ','
+				elseif type(val) == 'string' then
+					tbl_str[#tbl_str + 1] = routines.utils.basicSerialize(val)
+					tbl_str[#tbl_str + 1] = ','
+				elseif type(val) == 'nil' then -- won't ever happen, right?
+					tbl_str[#tbl_str + 1] = 'nil,'
+				elseif type(val) == 'table' then
+					if ind == "__index" then
+						tbl_str[#tbl_str + 1] = "__index"
+						tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+					else
+
+						tbl_str[#tbl_str + 1] = _Serialize(val)
+						tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+					end
+				elseif type(val) == 'function' then
+					tbl_str[#tbl_str + 1] = "function " .. tostring(ind)
 					tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
 				else
-					tbl_str[#tbl_str + 1] = routines.utils.oneLineSerialize(val)
-					tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+					env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
+					env.info( debug.traceback() )
 				end
-			elseif type(val) == 'function' then
-				tbl_str[#tbl_str + 1] = "function " .. tostring(ind)
-				tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
-			else
-				env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
-				env.info( debug.traceback() )
-			end
 
+			end
+			tbl_str[#tbl_str + 1] = '}'
+			return table.concat(tbl_str)
+		else
+			return tostring(tbl)
 		end
-		tbl_str[#tbl_str + 1] = '}'
-		return table.concat(tbl_str)
-	else
-		return tostring(tbl)
 	end
+	
+	local objectreturn = _Serialize(tbl)
+	return objectreturn
 end
 
 --porting in Slmod's "safestring" basic serialize

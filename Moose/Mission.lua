@@ -243,11 +243,12 @@ function MISSION:ShowBriefing( Client )
 
 	if not Client.ClientBriefingShown then
 		Client.ClientBriefingShown = true
-		Client:Message( '(Press the keys [LEFT ALT]+[B] to view the briefing pages. Browse through the graphical briefing.)\n' .. 
-						self.MissionBriefing, 40,  self.Name .. '/MissionBriefing', "Mission Command: Mission Briefing" )
+		local Briefing = self.MissionBriefing 
 		if Client.ClientBriefing then
-			Client:Message( Client.ClientBriefing, 40,  self.Name .. '/ClientBriefing', "Mission Command: Mission Briefing" )
+			Briefing = Briefing .. "\n" .. Client.ClientBriefing
 		end
+		Briefing = Briefing .. "\n (Press [LEFT ALT]+[B] to view the graphical documentation.)"
+		Client:Message( Briefing, 30,  self.Name .. '/MissionBriefing', "Command: Mission Briefing" )
 	end
 
 	return Client

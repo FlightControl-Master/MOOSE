@@ -156,9 +156,20 @@ trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } 
 		subplace = subplace
 		}
 
-		world.onEvent( Event )
+	world.onEvent( Event )
 end
 
+function BASE:CreateEventCrash( EventTime, Initiator )
+trace.f( self.ClassName, { EventTime, Initiator } )
+
+	local Event = {
+		id = world.event.S_EVENT_CRASH,
+		time = EventTime,
+		initiator = Initiator,
+		}
+
+	world.onEvent( Event )
+end
 												
 function BASE:onEvent(event)
 --trace.f(self.ClassName, event )
@@ -204,6 +215,6 @@ function BASE:T( Arguments )
 
 		local Line = DebugInfo.currentline
 	
-		env.info( string.format( "%6d/%1s:%20s.%s\(%s\)" , Line, "T", self.ClassName, Function .. routines.utils.oneLineSerialize( Arguments ) ) )
+		env.info( string.format( "%6d/%1s:%20s.%s\(%s\)" , Line, "T", self.ClassName, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end

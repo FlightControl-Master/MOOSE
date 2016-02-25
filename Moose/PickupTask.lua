@@ -16,30 +16,30 @@ PICKUPTASK = {
 -- @tparam CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
 -- @tparam number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
 function PICKUPTASK:New( CargoType, OnBoardSide )
-trace.f(self.ClassName)
+    local self = BASE:Inherit( self, TASK:New() )
+	self:T()
 
-    -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-    local Child = BASE:Inherit( self, TASK:New() )
+    -- self holds the inherited instance of the PICKUPTASK Class to the BASE class.
 
     local Valid = true
   
     if  Valid then
-		Child.Name = 'Pickup Cargo'
-		Child.TaskBriefing = "Task: Fly to the indicated landing zones and pickup " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the pickup zone."
-		Child.CargoType = CargoType
-		Child.GoalVerb = CargoType .. " " .. Child.GoalVerb
-		Child.OnBoardSide = OnBoardSide
-		Child.IsLandingRequired = false -- required to decide whether the client needs to land or not
-		Child.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
-		Child.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
-		Child.SetStage( Child, 1 )
+		self.Name = 'Pickup Cargo'
+		self.TaskBriefing = "Task: Fly to the indicated landing zones and pickup " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the pickup zone."
+		self.CargoType = CargoType
+		self.GoalVerb = CargoType .. " " .. self.GoalVerb
+		self.OnBoardSide = OnBoardSide
+		self.IsLandingRequired = false -- required to decide whether the client needs to land or not
+		self.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
+		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
+		self.SetStage( self, 1 )
 	end
   
-  return Child
+  return self
 end
 
 function PICKUPTASK:FromZone( LandingZone )
-trace.f(self.ClassName)
+self:T()
 
 	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
 	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
@@ -48,7 +48,7 @@ trace.f(self.ClassName)
 end
 
 function PICKUPTASK:InitCargo( InitCargos )
-trace.f( self.ClassName, { InitCargos } )
+self:T( { InitCargos } )
 
 	if type( InitCargos ) == "table" then
 		self.Cargos.InitCargos = InitCargos
@@ -60,7 +60,7 @@ trace.f( self.ClassName, { InitCargos } )
 end
 
 function PICKUPTASK:LoadCargo( LoadCargos )
-trace.f( self.ClassName, { LoadCargos } )
+self:T( { LoadCargos } )
 
 	if type( LoadCargos ) == "table" then
 		self.Cargos.LoadCargos = LoadCargos
@@ -72,11 +72,11 @@ trace.f( self.ClassName, { LoadCargos } )
 end
 
 function PICKUPTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-trace.f( self.ClassName )
+self:T()
   
 	for CargoID, Cargo in pairs( Cargos ) do
 
-		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
+		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
 		
 		if Cargo:IsStatusNone() or ( Cargo:IsStatusLoaded() and Client ~= Cargo:IsLoadedInClient() ) then
 		
@@ -96,7 +96,7 @@ trace.f( self.ClassName )
 						self.TEXT[1] .. " " .. Cargo.CargoType, 
 						nil
 					)
-					trace.i( self.ClassName, 'Added PickupMenu: ' .. self.TEXT[1] .. " " .. Cargo.CargoType )
+					self:T( 'Added PickupMenu: ' .. self.TEXT[1] .. " " .. Cargo.CargoType )
 				end
 
 				if Client._Menus[Cargo.CargoType].PickupSubMenus == nil then
@@ -110,7 +110,7 @@ trace.f( self.ClassName )
 					self.MenuAction,
 					{ ReferenceTask = self, CargoTask = Cargo }
 				)
-				trace.i( self.ClassName, 'Added PickupSubMenu' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
+				self:T( 'Added PickupSubMenu' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
 			end
 		end
 	end
@@ -118,17 +118,17 @@ trace.f( self.ClassName )
 end
 
 function PICKUPTASK:RemoveCargoMenus( Client )
-trace.f( self.ClassName )
+self:T()
 
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		for SubMenuID, SubMenuData in pairs( MenuData.PickupSubMenus ) do
 			missionCommands.removeItemForGroup( Client:GetClientGroupID(), SubMenuData )
-			trace.i( self.ClassName, "Removed PickupSubMenu " )
+			self:T( "Removed PickupSubMenu " )
 			SubMenuData = nil
 		end
 		if MenuData.PickupMenu then
 			missionCommands.removeItemForGroup( Client:GetClientGroupID(), MenuData.PickupMenu )
-			trace.i( self.ClassName, "Removed PickupMenu " )
+			self:T( "Removed PickupMenu " )
 			MenuData.PickupMenu = nil
 		end
 	end
@@ -138,7 +138,7 @@ end
 
 
 function PICKUPTASK:HasFailed( ClientDead )
-trace.f(self.ClassName)
+self:T()
 
 	local TaskHasFailed = self.TaskFailed
 	return TaskHasFailed

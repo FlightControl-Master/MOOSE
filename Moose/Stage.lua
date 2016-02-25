@@ -27,13 +27,12 @@ STAGE = {
 
 
 function STAGE:New()
-trace.f(self.ClassName)
 	local self = BASE:Inherit( self, BASE:New() )
+	self:T()
 	return self
 end
 
 function STAGE:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
 
 	local Valid = true
   
@@ -41,13 +40,10 @@ trace.f(self.ClassName)
 end
 
 function STAGE:Executing( Mission, Client, Task )
-trace.f(self.ClassName)
 
 end
 
 function STAGE:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
-
   local Valid = true
 
   return Valid
@@ -63,24 +59,23 @@ STAGEBRIEF = {
 }
 
 function STAGEBRIEF:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGEBRIEF:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
+	self:T()
 	Mission:ShowBriefing( Client )
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
 end
 
 function STAGEBRIEF:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
 	local Valid = STAGE:Validate( Mission, Client, Task )
+	self:T()
 
 	if timer.getTime() - self.StageBriefingTime <= self.StageBriefingDuration then
 		return 0
@@ -101,27 +96,26 @@ STAGESTART = {
 }
 
 function STAGESTART:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGESTART:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	if Task.TaskBriefing then
-		Client:Message( Task.TaskBriefing, 15,  Mission.Name .. "/Stage", "Mission Command: Tasking" )
+		Client:Message( Task.TaskBriefing, 30,  Mission.Name .. "/Stage", "Mission Command: Tasking" )
 	else
-		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 15, Mission.Name .. "/Stage", "Mission Command: Tasking" )
+		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, Mission.Name .. "/Stage", "Mission Command: Tasking" )
 	end
 	self.StageStartTime = timer.getTime()
 	return Valid 
 end
 
 function STAGESTART:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	if timer.getTime() - self.StageStartTime <= self.StageStartDuration then
@@ -140,15 +134,14 @@ STAGE_CARGO_LOAD = {
 }
 
 function STAGE_CARGO_LOAD:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
 	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGE_CARGO_LOAD:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	for LoadCargoID, LoadCargo in pairs( Task.Cargos.LoadCargos ) do
@@ -163,7 +156,7 @@ trace.f(self.ClassName)
 end
 
 function STAGE_CARGO_LOAD:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	return 1
@@ -175,26 +168,26 @@ STAGE_CARGO_INIT = {
 }
 
 function STAGE_CARGO_INIT:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
 	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGE_CARGO_INIT:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	for InitLandingZoneID, InitLandingZone in pairs( Task.LandingZones.LandingZones ) do
-		trace.i( self.ClassName, InitLandingZone )
+		self:T( InitLandingZone )
 		InitLandingZone:Spawn()
 	end
 	
-	
-	for InitCargoID, InitCargo in pairs( Task.Cargos.InitCargos ) do
-		trace.i( self.ClassName )
-		InitCargo:Spawn()
+
+	self:T( Task.Cargos.InitCargos )
+	for InitCargoID, InitCargoData in pairs( Task.Cargos.InitCargos ) do
+		self:T( { InitCargoData } )
+		InitCargoData:Spawn()
 	end
 	
 	return Valid
@@ -202,7 +195,7 @@ end
 
 
 function STAGE_CARGO_INIT:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	return 1
@@ -218,9 +211,8 @@ STAGEROUTE = {
 }
 
 function STAGEROUTE:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
 	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
 	self.StageType = 'CLIENT'
 	self.MessageSwitch = true
 	return self
@@ -228,10 +220,11 @@ end
 
 
 function STAGEROUTE:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	local RouteMessage = "Fly to "
+	self:T( Task.LandingZones )
 	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
 		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupUnit():getPoint(), true, true } ) .. ' km. '
 	end
@@ -245,11 +238,11 @@ trace.f(self.ClassName)
 end
 
 function STAGEROUTE:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
-	trace.i( self.ClassName, Task.LandingZones.LandingZoneNames )
+	self:T( Task.LandingZones.LandingZoneNames )
 	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
 	
 	if  Task.CurrentLandingZoneName then
@@ -279,15 +272,14 @@ STAGELANDING = {
 }
 
 function STAGELANDING:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGELANDING:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
  
 	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot: Arrived", 10 )
 
@@ -307,12 +299,12 @@ trace.f(self.ClassName)
 			if Cargo.CargoType == Task.CargoType then
 
 				if Cargo:IsLandingRequired() then
-					trace.i( self.ClassName, "Task for cargo " .. Cargo.CargoType .. " requires landing.")
+					self:T( "Task for cargo " .. Cargo.CargoType .. " requires landing.")
 					Task.IsLandingRequired = true
 				end
 				
 				if Cargo:IsSlingLoad() then
-					trace.i( self.ClassName, "Task for cargo " .. Cargo.CargoType .. " is a slingload.")
+					self:T( "Task for cargo " .. Cargo.CargoType .. " is a slingload.")
 					Task.IsSlingLoad = true
 				end
 
@@ -337,13 +329,13 @@ trace.f(self.ClassName)
 end
 
 function STAGELANDING:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
   
 	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
-		trace.i( self.ClassName, Task.CurrentLandingZoneName )
+		self:T( Task.CurrentLandingZoneName )
 		
 		Task.CurrentLandingZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName].CargoZone
 		Task.CurrentCargoZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName]
@@ -380,15 +372,14 @@ STAGELANDED = {
 }
 
 function STAGELANDED:New()
-trace.f(self.ClassName)
-  -- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGELANDED:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
 	if Task.IsLandingRequired then
 		Client:Message( 'We have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
@@ -404,17 +395,17 @@ end
 
 
 function STAGELANDED:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
 	if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
-	    trace.i( self.ClassName, "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
+	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
 		return -2
 	end
   
 	if Task.IsLandingRequired and Client:GetClientGroupUnit():inAir() then
-		trace.i( self.ClassName, "Client went back in the air. Go back to stage Landing." )
+		self:T( "Client went back in the air. Go back to stage Landing." )
 		Task.Signalled = false 
 		return -1
 	end
@@ -436,22 +427,21 @@ STAGEUNLOAD = {
 }
 
 function STAGEUNLOAD:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGEUNLOAD:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
                     self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Co-Pilot: Unload" )
 	Task:RemoveCargoMenus( Client )
 end
 
 function STAGEUNLOAD:Executing( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	env.info( 'STAGEUNLOAD:Executing() Task.Cargo.CargoName = ' .. Task.Cargo.CargoName )
 	
 	local TargetZoneName
@@ -471,7 +461,7 @@ trace.f(self.ClassName)
 end
 
 function STAGEUNLOAD:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
   if routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
@@ -509,15 +499,14 @@ STAGELOAD = {
 }
 
 function STAGELOAD:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGELOAD:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 	
 	if not Task.IsSlingLoad then
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
@@ -532,7 +521,7 @@ trace.f(self.ClassName)
 end
 
 function STAGELOAD:Executing( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
 	-- If the Cargo is ready to be loaded, load it into the Client.
 
@@ -556,7 +545,7 @@ trace.f(self.ClassName)
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
 						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":", 10 )
 		for CargoID, Cargo in pairs( CARGOS ) do
-			trace.i( self.ClassName, "Cargo.CargoName = " .. Cargo.CargoName )
+			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
 			if Cargo:IsSlingLoad() then
 				local CargoStatic = StaticObject.getByName( Cargo.CargoStaticName )
@@ -575,7 +564,7 @@ trace.f(self.ClassName)
 						break
 					end
 				else
-					trace.i( self.ClassName, "Cargo not found in the DCS simulator." )
+					self:T( "Cargo not found in the DCS simulator." )
 				end
 			end
 		end
@@ -584,9 +573,9 @@ trace.f(self.ClassName)
 end
 
 function STAGELOAD:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
-	trace.i( self.ClassName, "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
+	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
  	if not Task.IsSlingLoad then
 		if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
@@ -634,93 +623,6 @@ trace.f(self.ClassName)
 	return 0
 end
 
-STAGE_SLINGLOAD_HOOK = {
-  ClassName = "STAGE_SLINGLOAD_HOOK",
-  MSG = { ID = "SlingLoadHook", TIME = 10 },
-  Name = "SlingLoadHook"
-}
-
-function STAGE_SLINGLOAD_HOOK:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local self = BASE:Inherit( self, STAGE:New() )
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGE_SLINGLOAD_HOOK:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
-	Client:Message( 'Hook the Cargo onto the helicopter, and fly out the pick-up zone. Due to a bug in DCS world it cannot be chacked (for the moment) ' ..
-	                'if the cargo is in our out of the zone and attached to your helicopter...', self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot: Hook" )
-end
-
-function STAGE_SLINGLOAD_HOOK:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
-
-
-	for CargoID, CargoName in pairs( Task.CargoPrefixes ) do
-		env.info( CargoName )
-		if StaticObject.getByName( CargoName ):inAir() then
-			Task.CargoName = CargoName
-			Task.CargoID = CargoID
-			Client:Message( 'Co-Pilot: The Cargo has been successfully hooked onto the helicopter within the landing zone.', self.MSG.TIME,  Mission.Name .. "/StageSuccess" )
-			break
-		end
-	end
-	
-	if Task.CargoName then
-		if  routines.IsStaticInZones( StaticObject.getByName( Task.CargoName ), Task.CurrentLandingZoneName ) then
-		else
-			return 1
-		end
-	end
-  
-	return 1
-end
-
-STAGE_SLINGLOAD_UNHOOK = {
-  ClassName = "STAGE_SLINGLOAD_UNHOOK",
-  MSG = { ID = "SlingLoadUnHook", TIME = 10 },
-  Name = "SlingLoadUnHook"
-}
-
-function STAGE_SLINGLOAD_UNHOOK:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local self = BASE:Inherit( self, STAGE:New() )
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGE_SLINGLOAD_UNHOOK:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
-	Client:Message( 'Deploy the Cargo in the Landing Zone and unhook the cargo, and fly out of the drop zone.', self.MSG.TIME,  Mission.Name .. "/StageUnhook", "Co-Pilot: Unhook" )
-end
-
-function STAGE_SLINGLOAD_UNHOOK:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
-	
-	for CargoID, CargoName in pairs( Task.CargoPrefixes ) do
-		if StaticObject.getByName( CargoName ):inAir() then
-			Task.CargoName = CargoName
-			Task.CargoID = CargoID
-			Client:Message( 'Co-Pilot: Drop the cargo within the landing zone and unhook.', self.MSG.TIME,  Mission.Name .. "/Stage" )
-			break
-		end
-	end
-
-	if Task.CargoName then
-		if not StaticObject.getByName( Task.CargoName ):inAir() then
-			if routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
-			else
-				Client:Message( 'Co-Pilot: The Cargo is Dropped in the Landing Zone, and You have flown outside of the landing zone.', self.MSG.TIME,  Mission.Name .. "/Stage" )
-				return 1
-			end
-		end
-	end
-  
-	return 1
-end
 
 STAGEDONE = {
   ClassName = "STAGEDONE",
@@ -729,20 +631,19 @@ STAGEDONE = {
 }
 
 function STAGEDONE:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'AI'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'AI'
+	return self
 end
 
 function STAGEDONE:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
 end
 
 function STAGEDONE:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
 
 	Task:Done()
   
@@ -756,22 +657,21 @@ STAGEARRIVE = {
 }
 
 function STAGEARRIVE:New()
-trace.f(self.ClassName)
-  -- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'CLIENT'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'CLIENT'
+	return self
 end
 
 function STAGEARRIVE:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
  
   Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot: Arrived" )
 
   end
 
 function STAGEARRIVE:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
   
   Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones )
   if  ( Task.CurrentLandingZoneID ) then
@@ -791,11 +691,10 @@ STAGEGROUPSDESTROYED = {
 }
 
 function STAGEGROUPSDESTROYED:New()
-trace.f(self.ClassName)
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, STAGE:New() )
-	Child.StageType = 'AI'
-	return Child
+	local self = BASE:Inherit( self, STAGE:New() )
+	self:T()
+	self.StageType = 'AI'
+	return self
 end
 
 --function STAGEGROUPSDESTROYED:Execute( Mission, Client, Task )
@@ -805,7 +704,7 @@ end
 --end
 
 function STAGEGROUPSDESTROYED:Validate( Mission, Client, Task )
-trace.f(self.ClassName)
+self:T()
  
 	if Task.MissionTask:IsGoalReached() then
 		return 1
@@ -815,8 +714,8 @@ trace.f(self.ClassName)
 end
 
 function STAGEGROUPSDESTROYED:Execute( Mission, Client, Task )
-trace.f(self.ClassName)
-	trace.i( self.ClassName, { Task.ClassName, Task.Destroyed } )
+self:T()
+	self:T( { Task.ClassName, Task.Destroyed } )
 	--env.info( 'Event Table Task = ' .. tostring(Task) )
 
 end

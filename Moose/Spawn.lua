@@ -236,6 +236,37 @@ trace.f( self.ClassName )
 	return self
 end
 
+function SPAWN:CleanUp( SpawnCleanUpInterval )
+self:T()
+
+	self.SpawnCleanUpInterval = SpawnCleanUpInterval
+	self.SpawnCleanUpTimeStamps = {}
+	self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, 60 )
+end
+
+function SPAWN:_SpawnCleanUpScheduler()
+self:T()
+
+	local SpawnGroup = self:GetFirstAliveGroup()
+	
+	while SpawnGroup do
+		
+		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
+			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
+				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
+			else
+				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
+					SpawnGroup:Destroy()
+				end
+			end
+		else
+			self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = nil
+		end
+		
+		SpawnGroup = self:GetNextAliveGroup()
+	end
+	
+end
 
 --- Will SPAWN a Group whenever you want to do this.
 -- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
@@ -441,14 +472,48 @@ function SPAWN:GetLastIndex()
 end
 
 
-function SPAWN:GetLastGroup()
+
+function SPAWN:GetFirstAliveGroup()
+self:T()
+
+	self.SpawnIndex = 1
+	for SpawnIndex = 1, self.SpawnCount do
+		SpawnGroupName = self:SpawnGroupName( SpawnIndex )
+		SpawnGroup = Group.getByName( SpawnGroupName )
+		if SpawnGroup and SpawnGroup:isExist() then
+			self.SpawnIndex = SpawnIndex
+			return GROUP:New( SpawnGroup )
+		end
+	end
+	
+	self.SpawnIndex = nil
+	return nil
+end
+
+function SPAWN:GetNextAliveGroup()
+self:T()
+
+	self.SpawnIndex = self.SpawnIndex + 1
+	for SpawnIndex = self.SpawnIndex, self.SpawnCount do
+		SpawnGroupName = self:SpawnGroupName( SpawnIndex )
+		SpawnGroup = Group.getByName( SpawnGroupName )
+		if SpawnGroup and SpawnGroup:isExist() then
+			self.SpawnIndex = SpawnIndex
+			return GROUP:New( SpawnGroup )
+		end
+	end
+
+	self.SpawnIndex = nil
+	return nil
+end
+
+function SPAWN:GetLastAliveGroup()
 trace.f( self.ClassName )
 
 	local LastGroupName = self:SpawnGroupName( self:GetLastIndex() )
 	
 	return GROUP:New( Group.getByName( LastGroupName ) )
 end
-
 
 --- Will SPAWN a Group within a given ZoneName.
 -- @tparam string ZonePrefix is the name of the zone where the Group is to be SPAWNed.
