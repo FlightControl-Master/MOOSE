@@ -467,7 +467,7 @@ self:T()
 	
 	if self:IsStatusNone() then
 		local CargoGroup = Group.getByName( self.CargoSpawn:SpawnGroupName() )
-		if CargoGroup then
+		if CargoGroup and CargoGroup:isExist() then
 			SpawnCargo = false
 		end
 		
@@ -478,7 +478,7 @@ self:T()
 			SpawnCargo = false
 		else
 			local CargoGroup = Group.getByName( self.CargoSpawn:SpawnGroupName() )
-			if CargoGroup then
+			if CargoGroup and CargoGroup:isExist() then
 				SpawnCargo = false
 			end
 		end
