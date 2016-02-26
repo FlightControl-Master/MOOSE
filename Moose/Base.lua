@@ -7,7 +7,7 @@ Include.File( "Routines" )
 BASE = {
 
   ClassName = "BASE",
-  TraceOn = true,
+  TraceOn = false,
   ClassID = 0,
   Events = {}
 }
