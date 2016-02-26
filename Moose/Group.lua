@@ -4,6 +4,7 @@
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
+Include.File( "Unit" )
 
 GROUPS = {}
 
@@ -13,13 +14,24 @@ GROUP = {
 	}
 	
 function GROUP:New( _Group )
-trace.f( self.ClassName, _Group:getName() )
-
 	local self = BASE:Inherit( self, BASE:New() )
+	self:T( _Group:getName() )
 
 	self._Group = _Group
 	self.GroupName = _Group:getName()
 	self.GroupID = _Group:getID()
+
+	return self
+end
+
+
+function GROUP:NewFromName( GroupName )
+	local self = BASE:Inherit( self, BASE:New() )
+	self:T( GroupName )
+
+	self._Group = Group.getByName( GroupName )
+	self.GroupName = self._Group:getName()
+	self.GroupID = self._Group:getID()
 
 	return self
 end
@@ -31,6 +43,7 @@ function GROUP:GetName()
 	return self.GroupName
 end
 
+
 function GROUP:Destroy()
 	self:T( self.GroupName )
 	
@@ -41,6 +54,13 @@ function GROUP:Destroy()
 	self._Group:destroy()
 end
 
+
+function GROUP:GetUnit( UnitNumber )
+	self:T( self.GroupName )
+	return UNIT:New( self._Group:getUnit( UnitNumber ) )
+end
+
+
 function GROUP:IsAir()
 self:T()
 	
@@ -49,6 +69,7 @@ self:T()
 	self:T( IsAirResult )
 	return IsAirResult
 end
+
 
 function GROUP:AllOnGround()
 self:T()
@@ -106,6 +127,7 @@ trace.f( self.ClassName, { self.GroupName, Point, Duration } )
 	return self
 end
 
+
 function GROUP:Embarking( Point, Duration, EmbarkingGroup )
 trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup._Group } )
 
@@ -129,6 +151,7 @@ trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup._Grou
 	
 	return self
 end
+
 
 function GROUP:EmbarkToTransport( Point, Radius )
 trace.f( self.ClassName, { self.GroupName, Point, Radius } )

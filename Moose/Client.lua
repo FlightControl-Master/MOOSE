@@ -65,7 +65,7 @@ end
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @treturn Group
 function CLIENT:ClientGroup()
-self:T()
+--self:T()
 
 --  local ClientData = Group.getByName( self.ClientName )
 --	if ClientData and ClientData:isExist() then
@@ -77,9 +77,9 @@ self:T()
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T( { "CoalitionData:", CoalitionData } )
+		--self:T( { "CoalitionData:", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
-			self:T( { "UnitData:", UnitData } )
+			--self:T( { "UnitData:", UnitData } )
 			if UnitData and UnitData:isExist() then
 
 				local ClientGroup = Group.getByName( self.ClientName )
@@ -173,7 +173,7 @@ end
 function CLIENT:GetClientGroupUnit()
 self:T()
 
-	ClientGroup = self:ClientGroup()
+	local ClientGroup = self:ClientGroup()
 	
 	if ClientGroup then
 		if ClientGroup:isExist() then
@@ -184,6 +184,12 @@ self:T()
 	end
 	
 	return nil
+end
+
+function CLIENT:GetUnit()
+	self:T()
+	
+	return UNIT:New( self:GetClientGroupUnit() )
 end
 
 

@@ -273,8 +273,26 @@ end
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @treturn SPAWN
 function SPAWN:Spawn( SpawnGroupName )
-trace.f( self.ClassName )
+	self:T( { self.SpawnPrefix, SpawnGroupName } )
 	local SpawnTemplate = self:_Prepare( SpawnGroupName )
+	if self.SpawnStartPoint ~= 0 or self.SpawnEndPoint ~= 0 then
+		SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
+	end
+	_Database:Spawn( SpawnTemplate )
+	if self.SpawnRepeat then
+		_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+	end
+	return self
+end
+
+
+--- Will SPAWN a Group with a specified index number whenever you want to do this.
+-- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
+-- Uses @{DATABASE} global object defined in MOOSE.
+-- @treturn SPAWN
+function SPAWN:SpawnWithIndex( SpawnIndex )
+	self:T( { self.SpawnPrefix, SpawnIndex } )
+	local SpawnTemplate = self:_Prepare( self:SpawnGroupName( SpawnIndex ) )
 	if self.SpawnStartPoint ~= 0 or self.SpawnEndPoint ~= 0 then
 		SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
 	end
@@ -454,13 +472,13 @@ end
 -- @tparam number SpawnIndex is the number of the Group that is to be SPAWNed.
 -- @treturn string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
-trace.f("Spawn", SpawnIndex )
+	self:T( { self.SpawnPrefix, SpawnIndex } )
 
 	if SpawnIndex then
-		trace.i( self.ClassName, string.format( '%s#%03d', self.SpawnPrefix, SpawnIndex ) )
+		self:T( string.format( '%s#%03d', self.SpawnPrefix, SpawnIndex ) )
 		return string.format( '%s#%03d', self.SpawnPrefix, SpawnIndex )
 	else
-		trace.i( self.ClassName, self.SpawnPrefix )
+		self:T( self.SpawnPrefix )
 		return self.SpawnPrefix
 	end
 	
