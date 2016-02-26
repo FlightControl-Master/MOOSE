@@ -308,10 +308,23 @@ self:T()
 	
 end
 
+
+function CARGO:IsLoadingToClient()
+self:T()
+
+	if self:IsStatusLoading() then
+		return self.CargoClient
+	end
+	
+	return nil
+
+end
+
+
 function CARGO:IsLoadedInClient()
 self:T()
 
-	if self:IsStatusLoaded() or self:IsStatusLoading() then
+	if self:IsStatusLoaded() then
 		return self.CargoClient
 	end
 	
@@ -380,7 +393,7 @@ self:T()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADING
-	self:T( "Cargo loaded in Client: " .. CargoClient:GetClientGroupName() )
+	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. CargoClient:GetClientGroupName() )
 	
 	return self
 end
@@ -390,6 +403,7 @@ self:T()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADED
+	self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. CargoClient:GetClientGroupName() )
 	
 	return self
 end
@@ -452,8 +466,24 @@ self:T()
 	local SpawnCargo = true
 	
 	if self:IsStatusNone() then
+		local CargoGroup = Group.getByName( self.CargoSpawn:SpawnGroupName() )
+		if CargoGroup then
+			SpawnCargo = false
+		end
+		
+	elseif self:IsStatusLoading() then
 	
-	elseif self:IsStatusLoaded() or self:IsStatusLoading() then
+		local Client = self:IsLoadingToClient()
+		if Client and Client:ClientGroup() then
+			SpawnCargo = false
+		else
+			local CargoGroup = Group.getByName( self.CargoSpawn:SpawnGroupName() )
+			if CargoGroup then
+				SpawnCargo = false
+			end
+		end
+	
+	elseif self:IsStatusLoaded()  then
 	
 		local Client = self:IsLoadedInClient()
 		if Client and Client:ClientGroup() then

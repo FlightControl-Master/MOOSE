@@ -78,7 +78,8 @@ self:T()
 
 		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
 		
-		if Cargo:IsStatusNone() or ( Cargo:IsStatusLoaded() and Client ~= Cargo:IsLoadedInClient() ) then
+		-- If the Cargo has no status, allow the menu option.
+		if Cargo:IsStatusNone() or ( Cargo:IsStatusLoading() and Client == Cargo:IsLoadingToClient() ) then
 		
 			local MenuAdd = false
 			if Cargo:IsNear( Client, self.CurrentCargoZone ) then
@@ -132,7 +133,14 @@ self:T()
 			MenuData.PickupMenu = nil
 		end
 	end
-			
+	
+	for CargoID, Cargo in pairs( Cargos ) do
+		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
+		if Cargo:IsStatusLoading() and Client == Cargo:IsLoadingToClient() then
+			Cargo:StatusNone()
+		end
+	end
+		
 end
 
 
