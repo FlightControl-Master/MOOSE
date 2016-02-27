@@ -28,7 +28,7 @@ DATABASECategory =
 {
 	[Unit.Category.AIRPLANE] = "Plane",
 	[Unit.Category.HELICOPTER] = "Helicopter",
-	[Unit.Category.GROUND_UNIT] = "Ground",
+	[Unit.Category.GROUND_UNIT] = "Vehicle",
 	[Unit.Category.SHIP] = "Ship",
 	[Unit.Category.STRUCTURE] = "Structure",	
 }
@@ -40,7 +40,6 @@ DATABASECategory =
 -- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = DATABASE:New()
 function DATABASE:New()
-trace.f(self.ClassName )
 
 	-- Inherits from BASE
 	local self = BASE:Inherit( self, BASE:New() )
@@ -127,9 +126,8 @@ end
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
 function DATABASE:Spawn( SpawnTemplate )
-trace.f( self.ClassName, SpawnTemplate )
 
-	trace.i( self.ClassName, { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
+	self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
 	
 	local SpawnCountryID = SpawnTemplate.SpawnCountryID
 	local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
@@ -145,7 +143,7 @@ end
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
-trace.f( self.ClassName, Status )
+	self:T( Status )
 
 	self.Groups[GroupName].Status = Status
 end
@@ -153,7 +151,7 @@ end
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
-trace.f( self.ClassName, Status )
+	self:T( Status )
 
 	if self.Groups[GroupName] then
 		return self.Groups[GroupName].Status
@@ -182,7 +180,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 	self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
 	self.Groups[GroupTemplateName].Units = GroupTemplate.units
 	
-	trace.i( self.ClassName, { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+	self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
 						
 	for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
 	
@@ -197,7 +195,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 			self.ClientsByName[UnitTemplateName] = UnitTemplate
 			self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
 		end
-		trace.i( self.ClassName, { "Unit", self.Units[UnitTemplateName].UnitName } )
+		self:T( { "Unit", self.Units[UnitTemplateName].UnitName } )
 	end 
 end
 
@@ -208,7 +206,7 @@ end
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
-trace.f( self.ClassName, { event } )
+	self:T( { event } )
 
 	local TargetUnit = nil
 	local TargetGroup = nil
@@ -226,6 +224,7 @@ trace.f( self.ClassName, { event } )
 	
 		TargetUnit = event.initiator
 		TargetGroup = Unit.getGroup( TargetUnit )
+		TargetUnitDesc = TargetUnit:getDesc()
 		
 		TargetUnitName = TargetUnit:getName()
 		if TargetGroup and TargetGroup:isExist() then
@@ -234,25 +233,30 @@ trace.f( self.ClassName, { event } )
 		TargetPlayerName = TargetUnit:getPlayerName()
 
 		TargetCoalition = TargetUnit:getCoalition()
-		TargetCategory = TargetUnit:getCategory()
+		--TargetCategory = TargetUnit:getCategory()
+		TargetCategory = TargetUnitDesc.category  -- Workaround
 		TargetType = TargetUnit:getTypeName()
 
 		TargetUnitCoalition = DATABASECoalition[TargetCoalition]
 		TargetUnitCategory = DATABASECategory[TargetCategory]
 		TargetUnitType = TargetType
 
-		trace.i( self.ClassName, { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
 	end
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
 		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			trace.i( self.ClassName, "Something got killed" )
+			self:T( "Something got killed" )
 
 			-- Some variables
-			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
-			local InitUnitCategory = DATABASECategory[PlayerData.UnitCategory]
-			local InitUnitType = PlayerData.UnitType
 			local InitUnitName = PlayerData.UnitName
+			local InitUnitType = PlayerData.UnitType
+			local InitCoalition = PlayerData.UnitCoalition
+			local InitCategory = PlayerData.UnitCategory
+			local InitUnitCoalition = DATABASECoalition[InitCoalition]
+			local InitUnitCategory = DATABASECategory[InitCategory]
+			
+			self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
 
 			-- What is he hitting?
 			if TargetCategory then
@@ -268,17 +272,17 @@ trace.f( self.ClassName, { event } )
 						PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = 0
 					end
 
-					if PlayerData.UnitCoalition == TargetCoalition then
+					if InitCoalition == TargetCoalition then
 						PlayerData.Kill[TargetCategory][TargetType].Penalty = PlayerData.Kill[TargetCategory][TargetType].Penalty + 25						
 						PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = PlayerData.Kill[TargetCategory][TargetType].PenaltyKill + 1
-						MESSAGE:New( "Player '" .. PlayerName .. "' killed a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-									PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Penalty, 
-									"Game Status: Score", 20, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+						MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
+									PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty, 
+									"Game Status: Penalty", 20, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
 						self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					else
 						PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10						
 						PlayerData.Kill[TargetCategory][TargetType].ScoreKill = PlayerData.Kill[TargetCategory][TargetType].ScoreKill + 1
-						MESSAGE:New( "Player '" .. PlayerName .. "' killed a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
+						MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
 									  PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score, 
 									  "Game Status: Score", 20, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
 						self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
@@ -296,7 +300,7 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-trace.scheduled( self.ClassName, "_FollowPlayers" )
+	self:T( "_FollowPlayers" )
 
 	local ClientUnit = 0
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
@@ -305,7 +309,7 @@ trace.scheduled( self.ClassName, "_FollowPlayers" )
 	local AlivePlayerUnits = {}
 	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		trace.l( self.ClassName, "_FollowPlayers", CoalitionData )
+		self:T( { "_FollowPlayers", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
 			self:_AddPlayerFromUnit( UnitData )
 		end
@@ -319,13 +323,17 @@ end
 
 --- Add a new player entering a Unit.
 function DATABASE:_AddPlayerFromUnit( UnitData )
-trace.f( self.ClassName, UnitData )
+	self:T( UnitData )
 
 	if UnitData:isExist() then
 		local UnitName = UnitData:getName()
 		local PlayerName = UnitData:getPlayerName()
+		local UnitDesc = UnitData:getDesc()
+		local UnitCategory = UnitDesc.category
+		local UnitCoalition = UnitData:getCoalition()
+		local UnitTypeName = UnitData:getTypeName()
 
-		trace.i(self.ClassName, "Player : " .. PlayerName .. " Unit : " .. UnitName )
+		self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
 		if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
 			self.Players[PlayerName] = {}
@@ -344,22 +352,22 @@ trace.f( self.ClassName, UnitData )
 		end
 
 		if not self.Players[PlayerName].UnitCoalition then
-			self.Players[PlayerName].UnitCoalition = UnitData:getCoalition()
+			self.Players[PlayerName].UnitCoalition = UnitCoalition
 		else
-			if self.Players[PlayerName].UnitCoalition ~= UnitData:getCoalition() then
+			if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
 				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
 				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[UnitData:getCoalition()] ..  
+				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[UnitCoalition] ..  
 							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
 							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
 				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
-							   UnitName, DATABASECoalition[UnitData:getCoalition()], DATABASECategory[UnitData:getCategory()], UnitData:getTypeName() )
+							   UnitName, DATABASECoalition[UnitCoalition], DATABASECategory[UnitCategory], UnitData:getTypeName() )
 			end
 		end
 		self.Players[PlayerName].UnitName = UnitName
-		self.Players[PlayerName].UnitCoalition = UnitData:getCoalition()
-		self.Players[PlayerName].UnitCategory = UnitData:getCategory()
-		self.Players[PlayerName].UnitType = UnitData:getTypeName()
+		self.Players[PlayerName].UnitCoalition = UnitCoalition
+		self.Players[PlayerName].UnitCategory = UnitCategory
+		self.Players[PlayerName].UnitType = UnitTypeName
 	end
 
 end
@@ -367,7 +375,7 @@ end
 
 --- Registers Scores the players completing a Mission Task.
 function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
-trace.f( self.ClassName, { PlayerUnit, MissionName, Score } )
+	self:T( { PlayerUnit, MissionName, Score } )
 
 	local PlayerName = PlayerUnit:getPlayerName()
 	
@@ -377,8 +385,8 @@ trace.f( self.ClassName, { PlayerUnit, MissionName, Score } )
 		self.Players[PlayerName].Mission[MissionName].ScoreMission = 0
 	end
 	
-	trace.i( self.ClassName, PlayerName )
-	trace.i( self.ClassName, self.Players[PlayerName].Mission[MissionName] )
+	self:T( PlayerName )
+	self:T( self.Players[PlayerName].Mission[MissionName] )
 
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
@@ -392,7 +400,7 @@ end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 function DATABASE:_AddMissionScore( MissionName, Score )
-trace.f( self.ClassName, { PlayerUnit, MissionName, Score } )
+	self:T( { PlayerUnit, MissionName, Score } )
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
 	
@@ -412,7 +420,7 @@ end
 
 
 function DATABASE:OnHit( event )
-trace.f( self.ClassName, { event } )
+	self:T( { event } )
 
 	local InitUnit = nil
 	local InitUnitName = ""
@@ -444,6 +452,7 @@ trace.f( self.ClassName, { event } )
 		
 			InitUnit = event.initiator
 			InitGroup = Unit.getGroup( InitUnit )
+			InitUnitDesc = InitUnit:getDesc()
 			
 			InitUnitName = InitUnit:getName()
 			if InitGroup and InitGroup:isExist() then 
@@ -452,14 +461,16 @@ trace.f( self.ClassName, { event } )
 			InitPlayerName = InitUnit:getPlayerName()
 			
 			InitCoalition = InitUnit:getCoalition()
-			InitCategory = InitUnit:getCategory()
+			--InitCategory = InitUnit:getCategory()
+			InitCategory = InitUnitDesc.category  -- Workaround
 			InitType = InitUnit:getTypeName()
 
 			InitUnitCoalition = DATABASECoalition[InitCoalition]
 			InitUnitCategory = DATABASECategory[InitCategory]
 			InitUnitType = InitType
 			
-			trace.i( self.ClassName, { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType , InitUnitCoalition, InitUnitCategory, InitUnitType } )
+			self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType , InitUnitCoalition, InitUnitCategory, InitUnitType } )
+			self:T( { InitUnitDesc } )
 		end
 
 			
@@ -467,6 +478,7 @@ trace.f( self.ClassName, { event } )
 		
 			TargetUnit = event.target
 			TargetGroup = Unit.getGroup( TargetUnit )
+			TargetUnitDesc = TargetUnit:getDesc()
 			
 			TargetUnitName = TargetUnit:getName()
 			if TargetGroup and TargetGroup:isExist() then 
@@ -475,14 +487,16 @@ trace.f( self.ClassName, { event } )
 			TargetPlayerName = TargetUnit:getPlayerName()
 
 			TargetCoalition = TargetUnit:getCoalition()
-			TargetCategory = TargetUnit:getCategory()
+			--TargetCategory = TargetUnit:getCategory()
+			TargetCategory = TargetUnitDesc.category  -- Workaround
 			TargetType = TargetUnit:getTypeName()
 
 			TargetUnitCoalition = DATABASECoalition[TargetCoalition]
 			TargetUnitCategory = DATABASECategory[TargetCategory]
 			TargetUnitType = TargetType
 			
-			trace.i( self.ClassName, { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
+			self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
+			self:T( { TargetUnitDesc } )
 		end
 		
 		if InitPlayerName ~= nil then -- It is a player that is hitting something
@@ -493,7 +507,7 @@ trace.f( self.ClassName, { event } )
 					self.Players[InitPlayerName].HitPlayers = self.Players[InitPlayerName].HitPlayers + 1
 				end
 				
-				trace.i( self.ClassName, "Hitting Something" )
+				self:T( "Hitting Something" )
 				-- What is he hitting?
 				if TargetCategory then
 					if not self.Players[InitPlayerName].Hit[TargetCategory] then
@@ -511,7 +525,7 @@ trace.f( self.ClassName, { event } )
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty + 10						
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit + 1
 						MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty, 
+						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty, 
 									  "Game Status: Penalty", 20, "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName ):ToAll()
 						self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					else
@@ -538,11 +552,11 @@ env.info( "Hello World " )
 	local ScoreMessage = ""
 	local PlayerMessage = ""
 	
-	trace.i( self.ClassName, "Score Report" )
+	self:T( "Score Report" )
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
 		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			trace.i( self.ClassName, "Score Player: " .. PlayerName )
+			self:T( "Score Player: " .. PlayerName )
 
 			-- Some variables
 			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
@@ -558,21 +572,21 @@ env.info( "Hello World " )
 			local ScoreMessageHits = ""
 
 			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				trace.i( self.ClassName, CategoryName )
+				self:T( CategoryName )
 				if PlayerData.Hit[CategoryID] then
 					local Score = 0
 					local ScoreHit = 0
 					local Penalty = 0
 					local PenaltyHit = 0
-					trace.i( self.ClassName, "Hit scores exist for player " .. PlayerName )
+					self:T( "Hit scores exist for player " .. PlayerName )
 					for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
 						Score = Score + UnitData.Score
 						ScoreHit = ScoreHit + UnitData.ScoreHit
 						Penalty = Penalty + UnitData.Penalty
 						PenaltyHit = UnitData.PenaltyHit
 					end
-					local ScoreMessageHit = string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
-					trace.i( self.ClassName, ScoreMessageHit )
+					local ScoreMessageHit = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
+					self:T( ScoreMessageHit )
 					ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
 					PlayerScore = PlayerScore + Score
 					PlayerPenalty = PlayerPenalty + Penalty
@@ -581,12 +595,12 @@ env.info( "Hello World " )
 				end
 			end
 			if ScoreMessageHits ~= "" then
-				ScoreMessage = ScoreMessage .. "   Hits: " .. ScoreMessageHits .. " "
+				ScoreMessage = ScoreMessage .. "\n  Hits: " .. ScoreMessageHits .. " "
 			end
 	
 			local ScoreMessageKills = ""
 			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				trace.i( self.ClassName, "Kill scores exist for player " .. PlayerName )
+				self:T( "Kill scores exist for player " .. PlayerName )
 				if PlayerData.Kill[CategoryID] then
 					local Score = 0
 					local ScoreKill = 0
@@ -600,8 +614,8 @@ env.info( "Hello World " )
 						PenaltyKill = PenaltyKill + UnitData.PenaltyKill
 					end
 					
-					local ScoreMessageKill = string.format( "  %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
-					trace.i( self.ClassName, ScoreMessageKill )
+					local ScoreMessageKill = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
+					self:T( ScoreMessageKill )
 					ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
 
 					PlayerScore = PlayerScore + Score
@@ -611,16 +625,16 @@ env.info( "Hello World " )
 				end
 			end
 			if ScoreMessageKills ~= "" then
-				ScoreMessage = ScoreMessage .. "   Kills: " .. ScoreMessageKills .. " "
+				ScoreMessage = ScoreMessage .. "\n  Kills: " .. ScoreMessageKills .. " "
 			end
 			
 			local ScoreMessageCoalitionChangePenalties = ""
 			if PlayerData.PenaltyCoalition ~= 0 then
-				ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( "-%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
+				ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
 				PlayerPenalty = PlayerPenalty + PlayerData.Penalty
 			end
 			if ScoreMessageCoalitionChangePenalties ~= "" then
-				ScoreMessage = ScoreMessage .. "   Coalition: " .. ScoreMessageCoalitionChangePenalties .. " "
+				ScoreMessage = ScoreMessage .. "\n  Coalition: " .. ScoreMessageCoalitionChangePenalties .. " "
 			end
 
 			local ScoreMessageMission = ""
@@ -634,13 +648,13 @@ env.info( "Hello World " )
 			PlayerScore = PlayerScore + ScoreMission + ScoreTask
 
 			if ScoreMessageMission ~= "" then
-				ScoreMessage = ScoreMessage .. "   Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ") "
+				ScoreMessage = ScoreMessage .. "\n  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ") "
 			end
 			
-			PlayerMessage = string.format( "     Player '%s' Score = %d ( %d Score, -%d Penalties ):", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty )
-			MESSAGE:New( PlayerMessage .. ScoreMessage, "Player Scores", 30, "/SCORE/" .. PlayerName ):ToAll()
+			PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties ):%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
 		end
 	end
+	MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
 end
 
 
@@ -699,7 +713,8 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 		
 		if PlayerUnit then
 			if not PlayerUnitCategory then
-				PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
+				--PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
+				PlayerUnitCategory = DATABASECategory[PlayerUnit:getDesc().category]
 			end
 			
 			if not PlayerUnitCoalition then

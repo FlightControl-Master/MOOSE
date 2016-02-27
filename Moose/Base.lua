@@ -4,10 +4,14 @@
 
 Include.File( "Routines" )
 
+_TraceOn = true
+_TraceClass = {
+	DATABASE = true,
+	}
+
 BASE = {
 
   ClassName = "BASE",
-  TraceOn = true,
   ClassID = 0,
   Events = {}
 }
@@ -52,8 +56,8 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 	end
-	Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
-	trace.i( Child.ClassName, 'Inherited from ' .. Parent.ClassName ) 
+	--Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
+	self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -204,7 +208,7 @@ end
 
 function BASE:T( Arguments )
 
-	if BASE.TraceOn then
+	if _TraceOn and _TraceClass[self.ClassName] then
 
 		local DebugInfo = debug.getinfo( 2, "nl" )
 		
@@ -215,6 +219,6 @@ function BASE:T( Arguments )
 
 		local Line = DebugInfo.currentline
 	
-		env.info( string.format( "%6d/%1s:%20s.%s\(%s\)" , Line, "T", self.ClassName, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+		env.info( string.format( "%6d/%1s:%20s%05d.%s\(%s\)" , Line, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end
