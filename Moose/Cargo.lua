@@ -477,7 +477,7 @@ self:T()
 		if Client and Client:ClientGroup() then
 			SpawnCargo = false
 		else
-			local CargoGroup = Group.getByName( self.CargoName )
+			local CargoGroup = Group.getByName( self.CargoName	 )
 			if CargoGroup and CargoGroup:isExist() then
 				SpawnCargo = false
 			end

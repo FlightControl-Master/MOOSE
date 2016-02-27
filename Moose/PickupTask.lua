@@ -134,7 +134,7 @@ self:T()
 		end
 	end
 	
-	for CargoID, Cargo in pairs( Cargos ) do
+	for CargoID, Cargo in pairs( CARGOS ) do
 		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
 		if Cargo:IsStatusLoading() and Client == Cargo:IsLoadingToClient() then
 			Cargo:StatusNone()

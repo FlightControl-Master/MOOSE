@@ -121,6 +121,7 @@ trace.f(self.ClassName )
 	return self
 end
 
+
 --- Instantiate new Groups within the DCSRTE.
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
@@ -141,12 +142,14 @@ trace.f( self.ClassName, SpawnTemplate )
 	coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 end
 
+
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
 trace.f( self.ClassName, Status )
 
 	self.Groups[GroupName].Status = Status
 end
+
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
@@ -162,6 +165,7 @@ end
 
 --- Private
 -- @section Private
+
 
 --- Registers new Group Templates within the DATABASE Object.
 function DATABASE:_RegisterGroup( GroupTemplate )
@@ -197,16 +201,20 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 	end 
 end
 
+
 --- Events
 -- @section Events
+
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
 trace.f( self.ClassName, { event } )
 
-	local TargetUnitName = nil
-	local TargetGroupName = nil
-	local TargetPlayerName = nil
+	local TargetUnit = nil
+	local TargetGroup = nil
+	local TargetUnitName = ""
+	local TargetGroupName = ""
+	local TargetPlayerName = ""
 	local TargetCoalition = nil
 	local TargetCategory = nil
 	local TargetType = nil
@@ -215,13 +223,19 @@ trace.f( self.ClassName, { event } )
 	local TargetUnitType = nil
 
 	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		TargetUnitName = event.initiator:getName()
-		TargetGroupName = Unit.getGroup(event.initiator):getName()
-		TargetPlayerName = event.initiator:getPlayerName()
+	
+		TargetUnit = event.initiator
+		TargetGroup = Unit.getGroup( TargetUnit )
+		
+		TargetUnitName = TargetUnit:getName()
+		if TargetGroup then
+			TargetGroupName = TargetGroup:getName()
+		end
+		TargetPlayerName = TargetUnit:getPlayerName()
 
-		TargetCoalition = Unit.getGroup(event.initiator):getCoalition()
-		TargetCategory = Unit.getGroup(event.initiator):getCategory()
-		TargetType = event.initiator:getTypeName()
+		TargetCoalition = TargetUnit:getCoalition()
+		TargetCategory = TargetUnit:getCategory()
+		TargetType = TargetUnit:getTypeName()
 
 		TargetUnitCoalition = DATABASECoalition[TargetCoalition]
 		TargetUnitCategory = DATABASECategory[TargetCategory]
@@ -275,8 +289,10 @@ trace.f( self.ClassName, { event } )
 	end
 end
 
+
 --- Scheduled
 -- @section Scheduled
+
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
@@ -296,8 +312,10 @@ trace.scheduled( self.ClassName, "_FollowPlayers" )
 	end
 end
 
+
 --- Private
 -- @section Private
+
 
 --- Add a new player entering a Unit.
 function DATABASE:_AddPlayerFromUnit( UnitData )
@@ -331,7 +349,7 @@ trace.f( self.ClassName, UnitData )
 			if self.Players[PlayerName].UnitCoalition ~= UnitData:getCoalition() then
 				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
 				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[Unit.getGroup(UnitData):getCoalition()] ..  
+				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[UnitData:getCoalition()] ..  
 							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
 							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
 				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
@@ -345,6 +363,7 @@ trace.f( self.ClassName, UnitData )
 	end
 
 end
+
 
 --- Registers Scores the players completing a Mission Task.
 function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
@@ -387,16 +406,18 @@ trace.f( self.ClassName, { PlayerUnit, MissionName, Score } )
 	end
 end
 
+
 --- Events
 -- @section Events
+
 
 function DATABASE:OnHit( event )
 trace.f( self.ClassName, { event } )
 
 	local InitUnit = nil
-	local InitUnitName = nil
-	local InitGroupName = nil
-	local InitPlayerName = nil
+	local InitUnitName = ""
+	local InitGroupName = ""
+	local InitPlayerName = ""
 
 	local InitCoalition = nil
 	local InitCategory = nil
@@ -406,9 +427,9 @@ trace.f( self.ClassName, { event } )
 	local InitUnitType = nil
 
 	local TargetUnit = nil
-	local TargetUnitName = nil
-	local TargetGroupName = nil
-	local TargetPlayerName = nil
+	local TargetUnitName = ""
+	local TargetGroupName = ""
+	local TargetPlayerName = ""
 
 	local TargetCoalition = nil
 	local TargetCategory = nil
@@ -422,9 +443,12 @@ trace.f( self.ClassName, { event } )
 		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
 		
 			InitUnit = event.initiator
+			InitGroup = Unit.getGroup( InitUnit )
 			
 			InitUnitName = InitUnit:getName()
-			InitGroupName = Unit.getGroup(InitUnit):getName()
+			if InitGroup then 
+				InitGroupName = InitGroup:getName()
+			end
 			InitPlayerName = InitUnit:getPlayerName()
 			
 			InitCoalition = InitUnit:getCoalition()
@@ -442,9 +466,12 @@ trace.f( self.ClassName, { event } )
 		if event.target and Object.getCategory(event.target) == Object.Category.UNIT then
 		
 			TargetUnit = event.target
+			TargetGroup = Unit.getGroup( TargetUnit )
 			
 			TargetUnitName = TargetUnit:getName()
-			TargetGroupName = Unit.getGroup(TargetUnit):getName()
+			if TargetGroup then 
+				TargetGroupName = TargetGroup:getName() 
+			end
 			TargetPlayerName = TargetUnit:getPlayerName()
 
 			TargetCoalition = TargetUnit:getCoalition()
@@ -502,6 +529,7 @@ trace.f( self.ClassName, { event } )
 		end
 	end
 end
+
 
 function DATABASE:ReportScoreAll()
 
@@ -615,16 +643,21 @@ env.info( "Hello World " )
 	end
 end
 
+
 function DATABASE:ReportScorePlayer()
 
 
 end
+
 
 function DATABASE:ScoreMenu()
 	local ReportScore = SUBMENU:New( 'Scoring' )
 	local ReportAllScores = COMMANDMENU:New( 'Score All Active Players', ReportScore, DATABASE.ReportScoreAll, self )
 	local ReportPlayerScores = COMMANDMENU:New('Your Current Score', ReportScore, DATABASE.ReportScorePlayer, self )
 end
+
+
+
 
 -- File Logic for tracking the scores
 
@@ -641,6 +674,7 @@ local nSeconds = sSeconds
 	end
 end
 
+
 function DATABASE:ScoreOpen()
 	if lfs then
 		local fdir = lfs.writedir() .. [[Logs\]] .. "Player_Scores_" .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
@@ -654,6 +688,7 @@ function DATABASE:ScoreOpen()
 	end
 end
 
+
 function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 	--write statistic information to file
 	local ScoreTime = self:SecondsToClock(timer.getTime())
@@ -663,7 +698,7 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 		local PlayerUnit = Unit.getByName( PlayerUnitName )
 		
 		if PlayerUnit then
-			if not PlayerUnitCategory then
+☺			if not PlayerUnitCategory then
 				PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
 			end
 			
@@ -711,6 +746,7 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 		self.StatFile:write( "\n" )
 	end
 end
+
 	
 function LogClose()
 	if lfs then
