@@ -228,7 +228,7 @@ trace.f( self.ClassName, { event } )
 		TargetGroup = Unit.getGroup( TargetUnit )
 		
 		TargetUnitName = TargetUnit:getName()
-		if TargetGroup then
+		if TargetGroup and TargetGroup:isExist() then
 			TargetGroupName = TargetGroup:getName()
 		end
 		TargetPlayerName = TargetUnit:getPlayerName()
@@ -446,7 +446,7 @@ trace.f( self.ClassName, { event } )
 			InitGroup = Unit.getGroup( InitUnit )
 			
 			InitUnitName = InitUnit:getName()
-			if InitGroup then 
+			if InitGroup and InitGroup:isExist() then 
 				InitGroupName = InitGroup:getName()
 			end
 			InitPlayerName = InitUnit:getPlayerName()
@@ -469,7 +469,7 @@ trace.f( self.ClassName, { event } )
 			TargetGroup = Unit.getGroup( TargetUnit )
 			
 			TargetUnitName = TargetUnit:getName()
-			if TargetGroup then 
+			if TargetGroup and TargetGroup:isExist() then 
 				TargetGroupName = TargetGroup:getName() 
 			end
 			TargetPlayerName = TargetUnit:getPlayerName()
