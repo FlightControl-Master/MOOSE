@@ -698,7 +698,7 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 		local PlayerUnit = Unit.getByName( PlayerUnitName )
 		
 		if PlayerUnit then
-☺			if not PlayerUnitCategory then
+			if not PlayerUnitCategory then
 				PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
 			end
 			
