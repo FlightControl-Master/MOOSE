@@ -403,7 +403,7 @@ self:T()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADED
-	self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. CargoClient:GetClientGroupName() )
+	self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. self.CargoClient:GetClientGroupName() )
 	
 	return self
 end
