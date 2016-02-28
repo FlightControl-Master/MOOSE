@@ -45,7 +45,7 @@ end
 function DESTROYBASETASK:EventDead( event )
 	self:T( { 'EventDead', event } )
 	
-	if event.initiator then
+	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
 		local DestroyUnit = event.initiator
 		local DestroyUnitName = DestroyUnit:getName()
 		local DestroyGroup = Unit.getGroup( DestroyUnit )
