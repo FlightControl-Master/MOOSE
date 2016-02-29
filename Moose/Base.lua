@@ -9,6 +9,7 @@ _TraceClass = {
 	DATABASE = true,
 	SEAD = true,
 	DESTROYBASETASK = true,
+	MOVEMENT = true,
 	}
 
 BASE = {

@@ -20,61 +20,61 @@ MOVEMENT = {
 -- Movement_US_Platoons = MOVEMENT:New( { 'US Tank Platoon Left', 'US Tank Platoon Middle', 'US Tank Platoon Right', 'US CH-47D Troops' }, 15 )
 
 function MOVEMENT:New( MovePrefixes, MoveMaximum )
-trace.f(self.ClassName, { MovePrefixes, MoveMaximum } )
-
-	-- Inherits from BASE
-	local Child = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() )
+	self:T( { MovePrefixes, MoveMaximum } )
   
 	if type( MovePrefixes ) == 'table' then
-		Child.MovePrefixes = MovePrefixes
+		self.MovePrefixes = MovePrefixes
 	else
-		Child.MovePrefixes = { MovePrefixes }
+		self.MovePrefixes = { MovePrefixes }
 	end
-	Child.MoveCount = 0															-- The internal counter of the amount of Moveing the has happened since MoveStart.
-	Child.MoveMaximum = MoveMaximum												-- Contains the Maximum amount of units that are allowed to move...
-	Child.AliveUnits = 0														-- Contains the counter how many units are currently alive
-	Child.MoveGroups = {}														-- Reflects if the Moveing for this MovePrefixes is going to be scheduled or not.
+	self.MoveCount = 0															-- The internal counter of the amount of Moveing the has happened since MoveStart.
+	self.MoveMaximum = MoveMaximum												-- Contains the Maximum amount of units that are allowed to move...
+	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
+	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	Child.AddEvent( Child, world.event.S_EVENT_BIRTH, Child.OnBirth )
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.OnDeadOrCrash )
-	Child.AddEvent( Child, world.event.S_EVENT_CRASH, Child.OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_BIRTH, self.OnBirth )
+	self.AddEvent( self, world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
 	
-	Child.EnableEvents( Child )
+	self.EnableEvents( self )
 	
-	Child.ScheduleStart( Child )
+	self.ScheduleStart( self )
 
-	return Child
+	return self
 end
 
 --- Call this function to start the MOVEMENT scheduling.
 function MOVEMENT:ScheduleStart()
-trace.f( self.ClassName )
+self:T()
 	self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
 end
 
 --- Call this function to stop the MOVEMENT scheduling.
 -- @todo need to implement it ... Forgot.
 function MOVEMENT:ScheduleStop()
-trace.f( self.ClassName )
+self:T()
 
 end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
 function MOVEMENT:OnBirth( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
-		if event.initiator and event.initiator:getName() then
-			trace.l(self.ClassName, "OnBirth", "Birth object : " .. event.initiator:getName() )
-			local GroupData = Unit.getGroup(event.initiator)
-			if GroupData and GroupData:isExist() then
-				local EventGroupName = GroupData:getName()
+		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
+			local MovementUnit = event.initiator
+			local MovementUnitName = MovementUnit:getName()
+			self:T( "Birth object : " .. MovementUnitName )
+			local MovementGroup = MovementUnit:getGroup()
+			if MovementGroup and MovementGroup:isExist() then
+				local MovementGroupName = MovementGroup:getName()
 				for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-					if string.find( EventGroupName, MovePrefix, 1, true ) then
+					if string.find( MovementUnitName, MovePrefix, 1, true ) then
 						self.AliveUnits = self.AliveUnits + 1
-						self.MoveGroups[EventGroupName] = EventGroupName
-						trace.l(self.ClassName, "OnBirth", self.AliveUnits )
+						self.MoveUnits[MovementUnitName] = MovementGroupName
+						self:T( self.AliveUnits )
 					end
 				end
 			end
@@ -86,16 +86,17 @@ end
 --- Captures the Dead or Crash events when Units crash or are destroyed.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
 function MOVEMENT:OnDeadOrCrash( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
-	if event.initiator and event.initiator:getName() then
-		trace.l( self.ClassName, "OnDeadOrCrash", "Dead object : " .. event.initiator:getName() )
-		local EventGroupName = Unit.getGroup(event.initiator):getName()
+	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
+		local MovementUnit = event.initiator
+		local MovementUnitName = MovementUnit:getName()
+		self:T( "Dead object : " .. MovementUnitName )
 		for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-			if string.find( EventGroupName, MovePrefix, 1, true ) then
+			if string.find( MovementUnitName, MovePrefix, 1, true ) then
 				self.AliveUnits = self.AliveUnits - 1
-				self.MoveGroups[EventGroupName] = nil
-				trace.l( self.ClassName, "OnDeadOrCrash", self.AliveUnits )
+				self.MoveUnits[MovementUnitName] = nil
+				self:T( self.AliveUnits )
 			end
 		end
 	end
@@ -103,24 +104,26 @@ end
 
 --- This function is called automatically by the MOVEMENT scheduler. A new function is scheduled when MoveScheduled is true.
 function MOVEMENT:_Scheduler()
-trace.l( self.ClassName, '_Scheduler', { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MoveGroups } )
+self:T( { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MovementGroups } )
 	
 	if self.AliveUnits > 0 then
 		local MoveProbability = ( self.MoveMaximum * 100 ) / self.AliveUnits
-		trace.l( self.ClassName, '_Scheduler', 'Move Probability = ' .. MoveProbability )
+		self:T( 'Move Probability = ' .. MoveProbability )
 		
-		for MoveGroupID, MoveGroupName in pairs( self.MoveGroups ) do
-			local MoveGroup = Group.getByName( MoveGroupName )
-			if MoveGroup then
+		for MovementUnitName, MovementGroupName in pairs( self.MoveUnits ) do
+			local MovementGroup = Group.getByName( MovementGroupName )
+			if MovementGroup and MovementGroup:isExist() then
 				local MoveOrStop = math.random( 1, 100 )
-				trace.l( self.ClassName, '_Scheduler', 'MoveOrStop = ' .. MoveOrStop )
+				self:T( 'MoveOrStop = ' .. MoveOrStop )
 				if MoveOrStop <= MoveProbability then
-					trace.l( self.ClassName, '_Scheduler', 'Group continues moving = ' .. MoveGroupName )
-					trigger.action.groupContinueMoving( MoveGroup )
+					self:T( 'Group continues moving = ' .. MovementGroupName )
+					trigger.action.groupContinueMoving( MovementGroup )
 				else
-					trace.l( self.ClassName, '_Scheduler', 'Group stops moving = ' .. MoveGroupName )
-					trigger.action.groupStopMoving( MoveGroup )
+					self:T( 'Group stops moving = ' .. MovementGroupName )
+					trigger.action.groupStopMoving( MovementGroup )
 				end
+			else
+				self.MoveUnits[MovementUnitName] = nil
 			end
 		end
 	end
