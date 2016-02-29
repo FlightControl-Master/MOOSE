@@ -41,6 +41,7 @@ function SPAWN:New( SpawnPrefix )
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
 		self.SpawnMaxGroupsAlive = 0												-- The maximum amount of groups that can be alive of SpawnPrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
+		self.SpawnRandomize = false
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnPrefix = '" .. SpawnPrefix .. "'" )
 	end
@@ -72,6 +73,7 @@ self:T( { SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
 	self.SpawnStartPoint = SpawnStartPoint						-- When the spawning occurs, randomize the route points from SpawnStartPoint.
 	self.SpawnEndPoint = SpawnEndPoint							-- When the spawning occurs, randomize the route points till SpawnEndPoint.
 	self.SpawnRadius = SpawnRadius								-- The Radius of randomization of the route points from SpawnStartPoint till SpawnEndPoint.
+	self.SpawnRandomize = true
 	
 	return self
 end
@@ -273,7 +275,7 @@ end
 function SPAWN:Spawn( SpawnGroupName )
 	self:T( { self.SpawnPrefix, SpawnGroupName } )
 	local SpawnTemplate = self:_Prepare( SpawnGroupName )
-	if self.SpawnStartPoint ~= 0 or self.SpawnEndPoint ~= 0 then
+	if self.SpawnRandomize then
 		SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
 	end
 	_Database:Spawn( SpawnTemplate )
@@ -291,7 +293,7 @@ end
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:T( { self.SpawnPrefix, SpawnIndex } )
 	local SpawnTemplate = self:_Prepare( self:SpawnGroupName( SpawnIndex ) )
-	if self.SpawnStartPoint ~= 0 or self.SpawnEndPoint ~= 0 then
+	if self.SpawnRandomize then
 		SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
 	end
 	_Database:Spawn( SpawnTemplate )
@@ -438,7 +440,7 @@ self:T( { CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate } )
 				SpawnTemplate.route.points[1].alt = nil
 				SpawnTemplate.route.points[1].alt_type = nil
 
-				if SpawnStartPoint ~= 0 and SpawnEndPoint ~= 0 then
+				if self.SpawnRandomize then
 					SpawnTemplate.route.points[RouteCount].x = TargetZonePos.x
 					SpawnTemplate.route.points[RouteCount].y = TargetZonePos.z
 				else 
@@ -690,7 +692,7 @@ end
 function SPAWN:_RandomizeRoute( SpawnTemplate )
 self:T( SpawnTemplate.name )
 
-	if self.SpawnStartPoint and self.SpawnEndPoint then
+	if self.SpawnRandomize then
 		local RouteCount = table.getn( SpawnTemplate.route.points )
 		for t = self.SpawnStartPoint, RouteCount - self.SpawnEndPoint do
 			SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRadius * -1, self.SpawnRadius )
