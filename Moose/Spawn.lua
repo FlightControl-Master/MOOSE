@@ -694,7 +694,7 @@ self:T( SpawnTemplate.name )
 
 	if self.SpawnRandomize then
 		local RouteCount = table.getn( SpawnTemplate.route.points )
-		for t = self.SpawnStartPoint, RouteCount - self.SpawnEndPoint do
+		for t = self.SpawnStartPoint+1, RouteCount - self.SpawnEndPoint do
 			SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRadius * -1, self.SpawnRadius )
 			SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRadius * -1, self.SpawnRadius )
 			SpawnTemplate.route.points[t].alt = nil
