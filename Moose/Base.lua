@@ -4,13 +4,15 @@
 
 Include.File( "Routines" )
 
-_TraceOn = false
+_TraceOn = true
 _TraceClass = {
 	--DATABASE = true,
 	--SEAD = true,
 	--DESTROYBASETASK = true,
 	--MOVEMENT = true,
 	SPAWN = true,
+	GROUP = true,
+	UNIT = true,
 	}
 
 BASE = {
