@@ -27,10 +27,8 @@ SPAWN = {
 -- -- NATO helicopters engaging in the battle field.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
 function SPAWN:New( SpawnPrefix )
-trace.f(self.ClassName, SpawnPrefix)
-
-	-- Inherits from BASE
 	local self = BASE:Inherit( self, BASE:New() )
+	self:T( SpawnPrefix)
   
 	local TemplateGroup = Group.getByName( SpawnPrefix )
 	if TemplateGroup then
@@ -69,7 +67,7 @@ end
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
  
 function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
-trace.f( self.ClassName, { SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
+self:T( { SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
 
 	self.SpawnStartPoint = SpawnStartPoint						-- When the spawning occurs, randomize the route points from SpawnStartPoint.
 	self.SpawnEndPoint = SpawnEndPoint							-- When the spawning occurs, randomize the route points till SpawnEndPoint.
@@ -93,7 +91,7 @@ end
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 function SPAWN:Schedule( SpawnTime, SpawnTimeVariation )
-trace.f( self.ClassName, { SpawnTime, SpawnTimeVariation } )
+self:T( { SpawnTime, SpawnTimeVariation } )
 
 	self.SpawnCurrentTimer = 0									-- The internal timer counter to trigger a scheduled spawning of SpawnPrefix.
 	self.SpawnSetTimer = 0										-- The internal timer value when a scheduled spawning of SpawnPrefix occurs.
@@ -107,7 +105,7 @@ trace.f( self.ClassName, { SpawnTime, SpawnTimeVariation } )
 		self:ScheduleStart()
 	end
 
-	trace.i( self.ClassName, { self.SpawnLowTimer, self.SpawnHighTimer } )
+	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
 	
 	return self
 end
@@ -115,7 +113,7 @@ end
 --- Will start the SPAWNing timers.
 -- This function is called automatically when @{Schedule} is called.
 function SPAWN:ScheduleStart()
-trace.f( self.ClassName )
+self:T()
 
 	--local ClientUnit = #AlivePlayerUnits()
 	
@@ -132,7 +130,7 @@ end
 
 --- Will stop the scheduled SPAWNing activity.
 function SPAWN:ScheduleStop()
-trace.f( self.ClassName )
+self:T()
 	self.SpawnScheduled = false
 end
 
@@ -150,7 +148,7 @@ end
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )
 
 function SPAWN:Limit( SpawnMaxGroupsAlive, SpawnMaxGroups )
-trace.f( self.ClassName, { SpawnMaxGroupsAlive, SpawnMaxGroups } )
+self:T( { SpawnMaxGroupsAlive, SpawnMaxGroups } )
 
 	self.SpawnMaxGroupsAlive = SpawnMaxGroupsAlive				-- The maximum amount of groups that can be alive of SpawnPrefix at the same time.
 	self.SpawnMaxGroups = SpawnMaxGroups						-- The maximum amount of groups that can be spawned.
@@ -177,7 +175,7 @@ end
 -- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
 
 function SPAWN:RandomizeTemplate( SpawnPrefixTable )
-trace.f( self.ClassName, { SpawnPrefix, SpawnPrefixTable } )
+self:T( { SpawnPrefix, SpawnPrefixTable } )
 
 	self.SpawnPrefixTable = SpawnPrefixTable
 
@@ -194,7 +192,7 @@ end
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
 
 function SPAWN:Repeat()
-trace.f( self.ClassName )
+self:T()
 
 	self.SpawnRepeat = true
 	self.RepeatOnEngineShutDown = false
@@ -213,7 +211,7 @@ end
 -- @see Repeat
 
 function SPAWN:RepeatOnLanding()
-trace.f( self.ClassName )
+self:T()
 
 	self:Repeat()
 	self.RepeatOnEngineShutDown = false
@@ -227,7 +225,7 @@ end
 -- @see Repeat
 
 function SPAWN:RepeatOnEngineShutDown()
-trace.f( self.ClassName )
+self:T()
 
 	self:Repeat()
 	self.RepeatOnEngineShutDown = true
@@ -310,7 +308,7 @@ end
 -- @treturn SPAWN
 -- Uses _Database global object defined in MOOSE.
 function SPAWN:ReSpawn( SpawnGroupName )
-trace.f( self.ClassName, { SpawnGroupName } )
+self:T( { SpawnGroupName } )
 	
 	local SpawnGroup = Group.getByName( SpawnGroupName )
 		if SpawnGroup then
@@ -332,7 +330,7 @@ end
 --- Will SPAWN a Group whenever you want to do this, but for AIR Groups only to be applied, and will SPAWN the Group in Uncontrolled mode... This will be similar to the Uncontrolled flag setting in the ME.
 -- @treturn SPAWN
 function SPAWN:SpawnUncontrolled()
-trace.f( self.ClassName )
+self:T()
 	
 	self.UnControlled = true
 	
@@ -354,7 +352,7 @@ end
 -- @tparam string NewGroupName (forgot this).
 -- @tparam bool LateActivate (optional) does the SPAWNing with Lateactivation on.
 function SPAWN:FromHost( HostUnit, OuterRadius, InnerRadius, NewGroupName, LateActivate )
-trace.f( self.ClassName, { HostUnit, OuterRadius, InnerRadius, NewGroupName, LateActivate } )
+self:T( { HostUnit, OuterRadius, InnerRadius, NewGroupName, LateActivate } )
 
 	local SpawnTemplate
 
@@ -375,7 +373,7 @@ trace.f( self.ClassName, { HostUnit, OuterRadius, InnerRadius, NewGroupName, Lat
 				SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
 				
 				local RouteCount = table.getn( SpawnTemplate.route.points )
-				trace.i( self.ClassName, "RouteCount = " .. RouteCount )
+				self:T( "RouteCount = " .. RouteCount )
 
 				local UnitDeployPosition = HostUnit:getPoint()
 				for PointID, Point in pairs( SpawnTemplate.route.points ) do
@@ -389,7 +387,7 @@ trace.f( self.ClassName, { HostUnit, OuterRadius, InnerRadius, NewGroupName, Lat
 					local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, OuterRadius, InnerRadius )
 					SpawnTemplate.units[v].x = SpawnPos.x
 					SpawnTemplate.units[v].y = SpawnPos.y
-					trace.i( self.ClassName, 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
+					self:T( 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
 				end
 				
 				_Database:Spawn( SpawnTemplate )
@@ -406,7 +404,7 @@ end
 -- @tparam string NewGroupName (forgot this).
 -- @tparam bool LateActivate (optional) does the SPAWNing with Lateactivation on.
 function SPAWN:FromCarrier( CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate )
-trace.f( self.ClassName, { CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate } )
+self:T( { CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate } )
 
 	local SpawnTemplate
 
@@ -432,7 +430,7 @@ trace.f( self.ClassName, { CarrierUnit, TargetZonePrefix, NewGroupName, LateActi
 				TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
 
 				local RouteCount = table.getn( SpawnTemplate.route.points )
-				trace.i( self.ClassName, "RouteCount = " .. RouteCount )
+				self:T( "RouteCount = " .. RouteCount )
 
 				local UnitDeployPosition = CarrierUnit:getPosition().p
 				SpawnTemplate.route.points[1].x = UnitDeployPosition.x - 50
@@ -448,21 +446,19 @@ trace.f( self.ClassName, { CarrierUnit, TargetZonePrefix, NewGroupName, LateActi
 					SpawnTemplate.route.points[RouteCount].y = TargetZone.point.z
 				end
 				
-				trace.i( self.ClassName, 'SpawnTemplate.route.points['..RouteCount..'].x = ' .. SpawnTemplate.route.points[RouteCount].x .. ', SpawnTemplate.route.points['..RouteCount..'].y = ' .. SpawnTemplate.route.points[RouteCount].y )
+				self:T( 'SpawnTemplate.route.points['..RouteCount..'].x = ' .. SpawnTemplate.route.points[RouteCount].x .. ', SpawnTemplate.route.points['..RouteCount..'].y = ' .. SpawnTemplate.route.points[RouteCount].y )
 
 				for v = 1, table.getn( SpawnTemplate.units ) do
 					local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, 40, 10 )
 					SpawnTemplate.units[v].x = SpawnPos.x
 					SpawnTemplate.units[v].y = SpawnPos.y
-					trace.i( self.ClassName, 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
+					self:T( 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
 				end
 				
 				_Database:Spawn( SpawnTemplate )
 			end
 		end
-	end
-	
-	trace.r( self.ClassName, "" ) 
+	end 
 
 	return SpawnTemplate 
 end
@@ -481,6 +477,17 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 		self:T( self.SpawnPrefix )
 		return self.SpawnPrefix
 	end
+	
+end
+
+function SPAWN:GetIndexFromGroup( Group )
+	self:T( { self.SpawnPrefix, Group } )
+	
+	local IndexString = string.match( Group:GetName(), "#.*$" )
+	local Index = tonumber( IndexString:sub(2) )
+	
+	self:T( IndexString, Index )
+	return Index
 	
 end
 
@@ -526,7 +533,7 @@ self:T()
 end
 
 function SPAWN:GetLastAliveGroup()
-trace.f( self.ClassName )
+self:T()
 
 	local LastGroupName = self:SpawnGroupName( self:GetLastIndex() )
 	
@@ -537,7 +544,7 @@ end
 -- @tparam string ZonePrefix is the name of the zone where the Group is to be SPAWNed.
 -- @treturn SpawnTemplate
 function SPAWN:InZone( ZonePrefix, SpawnGroupName )
-trace.f("Spawn", ZonePrefix )
+self:T( ZonePrefix )
 	
 	local SpawnTemplate
 	
@@ -608,7 +615,7 @@ end
 --- Gets the Group Template from the ME environment definition.
 -- This method used the @{DATABASE} object, which contains ALL initial and new SPAWNed object in MOOSE.
 function SPAWN:_GetTemplate( SpawnPrefix )
-trace.f( self.ClassName, SpawnPrefix )
+self:T( SpawnPrefix )
 
 	local SpawnTemplate = nil
 
@@ -622,13 +629,13 @@ trace.f( self.ClassName, SpawnPrefix )
 	SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnPrefix )
 	SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnPrefix )
 	
-	trace.r( self.ClassName, "", { SpawnTemplate } )
+	self:T( { SpawnTemplate } )
 	return SpawnTemplate
 end
 
 --- Prepares the new Group Template before Spawning.
 function SPAWN:_Prepare( SpawnGroupName )
-trace.f( self.ClassName )
+self:T()
 	
 	local SpawnCount
 	local SpawnUnits
@@ -675,13 +682,13 @@ trace.f( self.ClassName )
 		SpawnTemplate.units[u].y = SpawnTemplate.route.points[1].y + math.random( -50, 50 )
 	end
 	
-	trace.r( self.ClassName, "", SpawnTemplate.name )
+	self:T( SpawnTemplate.name )
 	return SpawnTemplate
 end
 
 --- Will randomize the route of the Group Template.
 function SPAWN:_RandomizeRoute( SpawnTemplate )
-trace.f( self.ClassName, SpawnTemplate.name )
+self:T( SpawnTemplate.name )
 
 	if self.SpawnStartPoint and self.SpawnEndPoint then
 		local RouteCount = table.getn( SpawnTemplate.route.points )
@@ -690,11 +697,11 @@ trace.f( self.ClassName, SpawnTemplate.name )
 			SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRadius * -1, self.SpawnRadius )
 			SpawnTemplate.route.points[t].alt = nil
 			--SpawnGroup.route.points[t].alt_type = nil
-			trace.i( self.ClassName, 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
+			self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
 		end
 	end
 	
-	trace.r( self.ClassName, "", SpawnTemplate.name )
+	self:T( SpawnTemplate.name )
 	return SpawnTemplate
 end
 
@@ -704,16 +711,16 @@ end
 --- Obscolete
 -- @todo Need to delete this... _Database does this now ...
 function SPAWN:OnBirth( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
 		if event.initiator and event.initiator:getName() then
-			trace.l(self.ClassName, "OnBirth", "Birth object : " .. event.initiator:getName() )
+			self:T( "Birth object : " .. event.initiator:getName() )
 			local EventPrefix = string.match( event.initiator:getName(), ".*#" )
 			if EventPrefix == self.SpawnPrefix .. '#' then
 				--MessageToAll( "Mission command: unit " .. SpawnPrefix .. " spawned." , 5,  EventPrefix .. '/Event')
 				self.AliveUnits = self.AliveUnits + 1
-				trace.l(self.ClassName, "OnBirth", self.AliveUnits )
+				self:T( self.AliveUnits )
 			end
 		end
 	end
@@ -723,17 +730,17 @@ end
 --- Obscolete
 -- @todo Need to delete this... _Database does this now ...
 function SPAWN:OnDeadOrCrash( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if event.initiator and event.initiator:getName() then
-		trace.l( self.ClassName, "OnDeadOrCrash", "Dead object : " .. event.initiator:getName() )
+		self:T( "Dead object : " .. event.initiator:getName() )
 		local EventPrefix = string.match( event.initiator:getName(), ".*#" )
 		if EventPrefix == self.SpawnPrefix .. '#' then
 --					local DestroyedUnit = Unit.getByName( EventPrefix )
 --					if DestroyedUnit and DestroyedUnit.getLife() <= 1.0 then
 				--MessageToAll( "Mission command: unit " .. SpawnPrefix .. " crashed." , 5,  EventPrefix .. '/Event')
 				self.AliveUnits = self.AliveUnits - 1
-				trace.l( self.ClassName, "OnDeadOrCrash", self.AliveUnits )
+				self:T( self.AliveUnits )
 --					end
 		end
 	end
@@ -743,17 +750,17 @@ end
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:OnLand( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if event.initiator and event.initiator:getName() then
-		trace.l( self.ClassName, "OnLand", "Landed object : " .. event.initiator:getName() )
+		self:T( "Landed object : " .. event.initiator:getName() )
 		local EventPrefix = string.match( event.initiator:getName(), ".*#" )
 		if EventPrefix == self.SpawnPrefix .. '#' then
 			self.Landed = true
-			trace.l( self.ClassName, "OnLand", "self.Landed = true" )
+			self:T( "self.Landed = true" )
 			if self.Landed and self.RepeatOnLanding then
 				local SpawnGroupName = Unit.getGroup(event.initiator):getName()
-				trace.l( self.ClassName, "OnLand", "ReSpawn " .. SpawnGroupName )
+				self:T( "ReSpawn " .. SpawnGroupName )
 				self:ReSpawn( SpawnGroupName )
 			end
 		end
@@ -764,13 +771,13 @@ end
 -- This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:OnTakeOff( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if event.initiator and event.initiator:getName() then
-		trace.l( self.ClassName, "OnTakeOff", "TakeOff object : " .. event.initiator:getName() )
+		self:T( "TakeOff object : " .. event.initiator:getName() )
 		local EventPrefix = string.match( event.initiator:getName(), ".*#" )
 		if EventPrefix == self.SpawnPrefix .. '#' then
-			trace.l( self.ClassName, "OnTakeOff", "self.Landed = false" )
+			self:T( "self.Landed = false" )
 			self.Landed = false
 		end
 	end
@@ -783,15 +790,15 @@ end
 -- @see OnLand
 -- @todo Need to test for AIR Groups only...
 function SPAWN:OnEngineShutDown( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
 	if event.initiator and event.initiator:getName() then
-		trace.l( self.ClassName, "OnEngineShutDown", "EngineShutDown object : " .. event.initiator:getName() )
+		self:T( "EngineShutDown object : " .. event.initiator:getName() )
 		local EventPrefix = string.match( event.initiator:getName(), ".*#" )
 		if EventPrefix == self.SpawnPrefix .. '#' then
 			if self.Landed and self.RepeatOnEngineShutDown then
 				local SpawnGroupName = Unit.getGroup(event.initiator):getName()
-				trace.l( self.ClassName, "OnEngineShutDown", "ReSpawn " .. SpawnGroupName )
+				self:T( "ReSpawn " .. SpawnGroupName )
 				self:ReSpawn( SpawnGroupName )
 			end
 		end
@@ -804,7 +811,7 @@ end
 --- This function is called automatically by the Spawning scheduler.
 -- It is the internal worker method SPAWNing new Groups on the defined time intervals.
 function SPAWN:_Scheduler()
-trace.l( self.ClassName, '_Scheduler', self.SpawnPrefix )
+self:T( self.SpawnPrefix )
 	
 	if self.SpawnInit or self.SpawnCurrentTimer == self.SpawnSetTimer then
 		-- Validate if there are still groups left in the batch...

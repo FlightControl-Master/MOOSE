@@ -6,10 +6,11 @@ Include.File( "Routines" )
 
 _TraceOn = false
 _TraceClass = {
-	DATABASE = true,
-	SEAD = true,
-	DESTROYBASETASK = true,
-	MOVEMENT = true,
+	--DATABASE = true,
+	--SEAD = true,
+	--DESTROYBASETASK = true,
+	--MOVEMENT = true,
+	SPAWN = true,
 	}
 
 BASE = {
