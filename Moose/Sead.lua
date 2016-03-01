@@ -88,7 +88,7 @@ self:T( { event } )
 					local _targetMimname = Unit.getName(_targetMim)
 					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 					local _targetMimcont= _targetMimgroup:getController()
-					routines.groupRandomDistSelf(_targetMimgroup,300,'Rank',250,20) -- move randomly
+					routines.groupRandomDistSelf(_targetMimgroup,300,'Diamond',250,20) -- move randomly
 					local SuppressedGroups1 = {} -- unit suppressed radar off for a random time
 					local function SuppressionEnd1(id)
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)

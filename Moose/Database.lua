@@ -567,6 +567,119 @@ env.info( "Hello World " )
 			local PlayerScore = 0
 			local PlayerPenalty = 0
 			
+			ScoreMessage = ":\n"
+			
+			local ScoreMessageHits = ""
+
+			for CategoryID, CategoryName in pairs( DATABASECategory ) do
+				self:T( CategoryName )
+				if PlayerData.Hit[CategoryID] then
+					local Score = 0
+					local ScoreHit = 0
+					local Penalty = 0
+					local PenaltyHit = 0
+					self:T( "Hit scores exist for player " .. PlayerName )
+					for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
+						Score = Score + UnitData.Score
+						ScoreHit = ScoreHit + UnitData.ScoreHit
+						Penalty = Penalty + UnitData.Penalty
+						PenaltyHit = UnitData.PenaltyHit
+					end
+					local ScoreMessageHit = string.format( "%s:%d  ", CategoryName, Score - Penalty )
+					self:T( ScoreMessageHit )
+					ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
+					PlayerScore = PlayerScore + Score
+					PlayerPenalty = PlayerPenalty + Penalty
+				else
+					--ScoreMessageHits = ScoreMessageHits .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+				end
+			end
+			if ScoreMessageHits ~= "" then
+				ScoreMessage = ScoreMessage .. "  Hits: " .. ScoreMessageHits .. "\n"
+			end
+	
+			local ScoreMessageKills = ""
+			for CategoryID, CategoryName in pairs( DATABASECategory ) do
+				self:T( "Kill scores exist for player " .. PlayerName )
+				if PlayerData.Kill[CategoryID] then
+					local Score = 0
+					local ScoreKill = 0
+					local Penalty = 0
+					local PenaltyKill = 0
+					
+					for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
+						Score = Score + UnitData.Score
+						ScoreKill = ScoreKill + UnitData.ScoreKill
+						Penalty = Penalty + UnitData.Penalty
+						PenaltyKill = PenaltyKill + UnitData.PenaltyKill
+					end
+					
+					local ScoreMessageKill = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
+					self:T( ScoreMessageKill )
+					ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+
+					PlayerScore = PlayerScore + Score
+					PlayerPenalty = PlayerPenalty + Penalty
+				else
+					--ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+				end
+			end
+			if ScoreMessageKills ~= "" then
+				ScoreMessage = ScoreMessage .. "  Kills: " .. ScoreMessageKills .. "\n"
+			end
+			
+			local ScoreMessageCoalitionChangePenalties = ""
+			if PlayerData.PenaltyCoalition ~= 0 then
+				ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
+				PlayerPenalty = PlayerPenalty + PlayerData.Penalty
+			end
+			if ScoreMessageCoalitionChangePenalties ~= "" then
+				ScoreMessage = ScoreMessage .. "  Coalition Penalties: " .. ScoreMessageCoalitionChangePenalties .. "\n"
+			end
+
+			local ScoreMessageMission = ""
+			local ScoreMission = 0
+			local ScoreTask = 0
+			for MissionName, MissionData in pairs( PlayerData.Mission ) do
+				ScoreMission = ScoreMission + MissionData.ScoreMission
+				ScoreTask = ScoreTask + MissionData.ScoreTask
+				ScoreMessageMission = ScoreMessageMission .. "'" .. MissionName .. "'; " 
+			end
+			PlayerScore = PlayerScore + ScoreMission + ScoreTask
+
+			if ScoreMessageMission ~= "" then
+				ScoreMessage = ScoreMessage .. "  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ")\n"
+			end
+			
+			PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score:%d (%d Score -%d Penalties)%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
+		end
+	end
+	MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
+end
+
+
+function DATABASE:ReportScorePlayer()
+
+env.info( "Hello World " )
+
+	local ScoreMessage = ""
+	local PlayerMessage = ""
+	
+	self:T( "Score Report" )
+
+	for PlayerName, PlayerData in pairs( self.Players ) do
+		if PlayerData then -- This should normally not happen, but i'll test it anyway.
+			self:T( "Score Player: " .. PlayerName )
+
+			-- Some variables
+			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
+			local InitUnitCategory = DATABASECategory[PlayerData.UnitCategory]
+			local InitUnitType = PlayerData.UnitType
+			local InitUnitName = PlayerData.UnitName
+			
+			local PlayerScore = 0
+			local PlayerPenalty = 0
+			
 			ScoreMessage = ""
 			
 			local ScoreMessageHits = ""
@@ -655,11 +768,6 @@ env.info( "Hello World " )
 		end
 	end
 	MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
-end
-
-
-function DATABASE:ReportScorePlayer()
-
 
 end
 
