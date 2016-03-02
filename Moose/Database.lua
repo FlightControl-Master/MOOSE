@@ -425,7 +425,7 @@ function DATABASE:OnHit( event )
 	local InitUnit = nil
 	local InitUnitName = ""
 	local InitGroupName = ""
-	local InitPlayerName = ""
+	local InitPlayerName = "dummy"
 
 	local InitCoalition = nil
 	local InitCategory = nil
