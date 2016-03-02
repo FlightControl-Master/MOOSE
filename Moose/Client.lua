@@ -23,7 +23,6 @@ CLIENT = {
 	ClientTransport = false,
 	ClientBriefingShown = false,
 	_Menus = {},
-	_Cargos = {},
 	_Tasks = {},
 	Messages = { 
 	}
@@ -45,10 +44,9 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 
 function CLIENT:New( ClientName, ClientBriefing )
-trace.f(self.ClassName)
-
-	-- Arrange meta tables
 	local self = BASE:Inherit( self, BASE:New() )
+	self:T()
+
 	self.ClientName = ClientName
 	self:AddBriefing( ClientBriefing )
 	self.MessageSwitch = true
@@ -59,29 +57,162 @@ end
 --- Resets a CLIENT.
 -- @tparam string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
-trace.f(self.ClassName)
+self:T()
 	self._Menus = {}
-	self._Cargos = {}
 end
 
 --- ClientGroup returns the Group of a Client.
+-- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @treturn Group
 function CLIENT:ClientGroup()
---trace.f(self.ClassName)
-	local ClientData = Group.getByName( self.ClientName )
-	if ClientData and ClientData:isExist() then
-		trace.i( self.ClassName, self.ClientName .. " : group found!" )
-		return ClientData
-	else
---		trace.x( self.ClassName, self.ClientName .. " : no group found!" )
-		return nil
+--self:T()
+
+--  local ClientData = Group.getByName( self.ClientName )
+--	if ClientData and ClientData:isExist() then
+--		self:T( self.ClientName .. " : group found!" )
+--		return ClientData
+--	else
+--		return nil
+--	end
+
+	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+		--self:T( { "CoalitionData:", CoalitionData } )
+		for UnitId, UnitData in pairs( CoalitionData ) do
+			--self:T( { "UnitData:", UnitData } )
+			if UnitData and UnitData:isExist() then
+
+				local ClientGroup = Group.getByName( self.ClientName )
+				if ClientGroup then
+					self:T( "ClientGroup = " .. self.ClientName )
+					if ClientGroup:isExist() then 
+						if ClientGroup:getID() == UnitData:getGroup():getID() then
+							self:T( "Normal logic" )
+							self:T( self.ClientName .. " : group found!" )
+							return ClientGroup
+						end
+					else
+						-- Now we need to resolve the bugs in DCS 1.5 ...
+						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
+						self:T( "Bug 1.5 logic" )
+						local ClientUnits = _Database.Groups[self.ClientName].Units
+						self:T( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
+						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
+							self:T( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
+							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
+								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
+								self.ClientGroupID = ClientGroupTemplate.groupId
+								self.ClientGroupUnit = UnitData
+								self:T( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+								return ClientGroup
+							end
+						end
+					end
+--				else
+--					error( "Client " .. self.ClientName .. " not found!" )
+				end
+			end
+		end
 	end
+
+	-- For non player clients
+	local ClientGroup = Group.getByName( self.ClientName )
+	if ClientGroup then
+		self:T( "ClientGroup = " .. self.ClientName )
+		if ClientGroup:isExist() then 
+			self:T( "Normal logic" )
+			self:T( self.ClientName .. " : group found!" )
+			return ClientGroup
+		end
+	end
+	
+	self.ClientGroupID = nil
+	self.ClientGroupUnit = nil
+	
+	return nil
+end 
+
+
+function CLIENT:GetClientGroupID()
+self:T()
+
+	ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
+			return ClientGroup:getID()
+		else
+			return self.ClientGroupID
+		end
+	end
+	
+	return nil
+end
+
+
+function CLIENT:GetClientGroupName()
+self:T()
+
+	ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
+			self:T( ClientGroup:getName() )
+			return ClientGroup:getName()
+		else
+			self:T( self.ClientName )
+			return self.ClientName
+		end
+	end
+	
+	return nil
+end
+
+--- Returns the Unit of the @{CLIENT}.
+-- @treturn Unit
+function CLIENT:GetClientGroupUnit()
+self:T()
+
+	local ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
+			return ClientGroup:getUnits()[1]
+		else
+			return self.ClientGroupUnit
+		end
+	end
+	
+	return nil
+end
+
+function CLIENT:GetUnit()
+	self:T()
+	
+	return UNIT:New( self:GetClientGroupUnit() )
+end
+
+
+--- Returns the Position of the @{CLIENT}.
+-- @treturn Position
+function CLIENT:ClientPosition()
+--self:T()
+
+	ClientGroupUnit = self:GetClientGroupUnit()
+	
+	if ClientGroupUnit then
+		if ClientGroupUnit:isExist() then
+			return ClientGroupUnit:getPosition()
+		end
+	end
+	
+	return nil
 end 
 
 --- Transport defines that the Client is a Transport.
 -- @treturn CLIENT
 function CLIENT:Transport()
-trace.f(self.ClassName)
+self:T()
 
 	self.ClientTransport = true
 	return self
@@ -91,7 +222,7 @@ end
 -- @tparam string ClientBriefing is the text defining the Mission briefing.
 -- @treturn CLIENT
 function CLIENT:AddBriefing( ClientBriefing )
-trace.f(self.ClassName)
+self:T()
 	self.ClientBriefing = ClientBriefing
 	return self
 end
@@ -99,114 +230,29 @@ end
 --- IsTransport returns if a Client is a transport.
 -- @treturn bool
 function CLIENT:IsTransport()
-trace.f(self.ClassName)
+self:T()
 	return self.ClientTransport
-end
-
---- FindCargo finds loaded Cargo within a CLIENT instance.
--- Cargo is loaded when certain PICK-UP or DEPLOY Tasks are properly executed.
--- @tparam string CargoName is the name of the cargo.
--- @treturn CARGO_TYPE
-function CLIENT:FindCargo( CargoName )
-trace.f(self.ClassName)
-	return self._Cargos[CargoName]
 end
 
 --- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
 -- The @{CARGO} is shown throught the MESSAGE system of DCS World.
 function CLIENT:ShowCargo()
-trace.f(self.ClassName)
+self:T()
 
-  local CargoMsg = ""
+	local CargoMsg = ""
   
-  for CargoName, Cargo in pairs( self._Cargos ) do
-    if CargoMsg  ~= "" then
-      CargoMsg = CargoMsg .. "\n"
-    end
-    CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType.TEXT .. " Weight: " .. Cargo.CargoWeight
-  end
-  
-  if CargoMsg == '' then
-	CargoMsg = "empty"
-  end
-  
-  self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
-
-end
-
---- InitCargo allows to initialize @{CARGO} on the CLIENT when the client initializes.
--- @tparam string InitCargoNames is a string or a table containing the names of the @{CARGO}s initialized in the Mission.
--- @treturn CLIENT
-function CLIENT:InitCargo( InitCargoNames )
-trace.f(self.ClassName, { InitCargoNames } )
-
-  local Valid = true
-  
-  if Valid then
-	if type( InitCargoNames ) == "table" then
-		self.InitCargoNames = InitCargoNames
-	else
-		self.InitCargoNames = { InitCargoNames }
+	for CargoName, Cargo in pairs( CARGOS ) do
+		if self == Cargo:IsLoadedInClient() then
+			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
+		end
 	end
-  end
   
-  return self
-  
-end
-
---- AddCargo allows to add @{CARGO} on the CLIENT.
--- @tparam string CargoName is the name of the @{CARGO}.
--- @tparam string CargoGroupName is the name of an active Group defined within the Mission Editor or Dynamically Spawned. Note that this is only applicable for Unit @{CARGO} Types.
--- @tparam CARGO_TYPE CargoType is the Type of the @{CARGO}.
--- @tparam number CargoWeight is the weight of the cargo in Kg.
--- @tparam string CargoGroupTemplate is the name of an active Group defined within the Mission Editor with "Late Activation".
--- @treturn CLIENT
-function CLIENT:AddCargo( CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate )
-trace.f(self.ClassName, { CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate } )
-
-  local Valid = true
-  
-  Valid = routines.ValidateString( CargoName, "CargoName", Valid )
-  Valid = routines.ValidateEnumeration( CargoType, "CargoType", CARGO_TYPE, Valid )
-  Valid = routines.ValidateNumber( CargoWeight, "CargoWeight", Valid )
-
-  if Valid then
-    local Cargo = {}
-    Cargo.CargoName = CargoName
-    Cargo.CargoGroupName = CargoGroupName
-    Cargo.CargoType = CargoType
-    Cargo.CargoWeight = CargoWeight
-	if CargoGroupTemplate then
-		Cargo.CargoGroupTemplate = CargoGroupTemplate
+	if CargoMsg == "" then
+		CargoMsg = "empty"
 	end
-    self._Cargos[CargoName] = Cargo
-    self:ShowCargo()
-  end
   
-  return self
-  
-end
+	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
 
---- RemoveCargo removes @{CARGO} from the CLIENT.
--- @tparam string CargoName is the name of the @{CARGO}.
--- @treturn Cargo
-function CLIENT:RemoveCargo( CargoName )
-trace.f(self.ClassName, { CargoName } )
-
-
-  local Valid = true
-  local Cargo = nil
-  
-  Valid = routines.ValidateString( CargoName, "CargoName", Valid )
-
-  if  Valid then
-    trace.i( "CLIENT", "RemoveCargo: CargoName = " .. CargoName )
-    Cargo = routines.utils.deepCopy( self._Cargos[CargoName] )
-    self._Cargos[CargoName] = nil
-  end
-  
-  return Cargo
-  
 end
 
 --- SwitchMessages is a local function called by the DCS World Menu system to switch off messages.
@@ -222,13 +268,13 @@ end
 -- @tparam string MessageCategory is the category of the message (the title).
 -- @tparam number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-trace.f( self.ClassName, { Message, MessageDuration, MessageId, MessageCategory, MessageInterval } )
+self:T()
 
 	if not self.MenuMessages then
-		if self:ClientGroup() and self:ClientGroup():getID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self:ClientGroup():getID(), 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:ClientGroup():getID(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:ClientGroup():getID(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+		if self:GetClientGroupID() then
+			self.MenuMessages = MENU_SUB_GROUP:New( self:GetClientGroupID(), 'Messages' )
+			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:GetClientGroupID(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:GetClientGroupID(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 
@@ -248,7 +294,7 @@ trace.f( self.ClassName, { Message, MessageDuration, MessageId, MessageCategory,
 			end
 			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 		else
-			if self:ClientGroup() and self:ClientGroup():getUnits() and self:ClientGroup():getUnits()[1] and not self:ClientGroup():getUnits()[1]:inAir() then
+			if self:GetClientGroupUnit() and not self:GetClientGroupUnit():inAir() then
 				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
 					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()

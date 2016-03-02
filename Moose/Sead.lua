@@ -30,51 +30,48 @@ SEAD = {
 -- -- Defends the Russian SA installations from SEAD attacks.
 -- SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
 function SEAD:New( SEADGroupPrefixes )
-trace.f(self.ClassName, SEADGroupPrefixes )
-
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() )
+	self:T( SEADGroupPrefixes )	
 	if type( SEADGroupPrefixes ) == 'table' then
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
-			Child.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
+			self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
 		end
 	else
-		Child.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
+		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	Child.AddEvent( Child, world.event.S_EVENT_SHOT, Child.EventShot )
-	Child.EnableEvents( Child )
+	self.AddEvent( self, world.event.S_EVENT_SHOT, self.EventShot )
+	self.EnableEvents( self )
 	
-	return Child
+	return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
 function SEAD:EventShot( event )
-trace.f( self.ClassName, { event } )
+self:T( { event } )
 
-	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
-	local _groupname = _grp:getName() -- return the name of the group
-	local _unittable = {event.initiator:getName()} -- return the name of the units in the group
-	local _SEADmissile = event.weapon -- Identify the weapon fired						
-	local _SEADmissileName = _SEADmissile:getTypeName()	-- return weapon type
-	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(_SEADmissileName)), 20) --debug message
+	local SEADUnit = event.initiator
+	local SEADUnitName = SEADUnit:getName()
+	local SEADWeapon = event.weapon -- Identify the weapon fired						
+	local SEADWeaponName = SEADWeapon:getTypeName()	-- return weapon type
+	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(SEADWeaponName)), 20) --debug message
 	-- Start of the 2nd loop
-	trace.i( self.ClassName, "Missile Launched = " .. _SEADmissileName )
-	if _SEADmissileName == "KH-58" or _SEADmissileName == "KH-25MPU" or _SEADmissileName == "AGM-88" or _SEADmissileName == "KH-31A" or _SEADmissileName == "KH-31P" then -- Check if the missile is a SEAD
+	self:T( "Missile Launched = " .. SEADWeaponName )
+	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
 		local _evade = math.random (1,100) -- random number for chance of evading action
-		local _targetMim = Weapon.getTarget(_SEADmissile) -- Identify target
+		local _targetMim = Weapon.getTarget(SEADWeapon) -- Identify target
 		local _targetMimname = Unit.getName(_targetMim)
-		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(_SEADmissile))
+		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()
 		local _targetMimcont= _targetMimgroup:getController()
 		local _targetskill =  _Database.Units[_targetMimname].Template.skill
-		trace.i( self.ClassName, self.SEADGroupPrefixes )
-		trace.i( self.ClassName, _targetMimgroupName )
+		self:T( self.SEADGroupPrefixes )
+		self:T( _targetMimgroupName )
 		local SEADGroupFound = false
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( self.SEADGroupPrefixes ) do
 			if string.find( _targetMimgroupName, SEADGroupPrefix, 1, true ) then
 				SEADGroupFound = true
-				trace.i( self.ClassName, 'Group Found' )
+				self:T( 'Group Found' )
 				break
 			end
 		end		
@@ -83,15 +80,15 @@ trace.f( self.ClassName, { event } )
 				local Skills = { "Average", "Good", "High", "Excellent" }
 				_targetskill = Skills[ math.random(1,4) ]
 			end
-			trace.i( self.ClassName, _targetskill ) -- debug message for skill check
+			self:T( _targetskill ) -- debug message for skill check
 			if self.TargetSkill[_targetskill] then
 				if (_evade > self.TargetSkill[_targetskill].Evade) then
-					trace.i( self.ClassName, string.format("Evading, target skill  " ..string.format(_targetskill)) ) --debug message
-					local _targetMim = Weapon.getTarget(_SEADmissile)
+					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) ) --debug message
+					local _targetMim = Weapon.getTarget(SEADWeapon)
 					local _targetMimname = Unit.getName(_targetMim)
-					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(_SEADmissile))
+					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 					local _targetMimcont= _targetMimgroup:getController()
-					routines.groupRandomDistSelf(_targetMimgroup,300,'Rank',250,20) -- move randomly
+					routines.groupRandomDistSelf(_targetMimgroup,300,'Diamond',250,20) -- move randomly
 					local SuppressedGroups1 = {} -- unit suppressed radar off for a random time
 					local function SuppressionEnd1(id)
 						id.ctrl:setOption(AI.Option.Ground.id.ALARM_STATE,AI.Option.Ground.val.ALARM_STATE.GREEN)

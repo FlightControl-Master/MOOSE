@@ -9,29 +9,37 @@ Include.File( "Stage" )
 
 TASK = {
 
-  -- Defines the different signal types with a Task.
-  SIGNAL = {
-    COLOR = { 
-      RED = { ID = 1, COLOR = trigger.smokeColor.Red, TEXT = "A red" },
-      GREEN = { ID = 2, COLOR = trigger.smokeColor.Green, TEXT = "A green" }, 
-      BLUE = { ID = 3, COLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
-      WHITE = { ID = 4, COLOR = trigger.smokeColor.White, TEXT = "A white" }, 
-      ORANGE = { ID = 5, COLOR = trigger.smokeColor.Orange, TEXT = "An orange" } 
-    },
-    TYPE = {
-      SMOKE = { ID = 1, TEXT = "smoke" },
-      FLARE = { ID = 2, TEXT = "flare" }
-    }
-  },
-  ClassName = "TASK",
-  Mission = {}, -- Owning mission of the Task
-  Name = '',
-  Stages = {},
-  Stage = {},
-  ActiveStage = 0,
-  TaskDone = false,
-  TaskFailed = false,
-  GoalTasks = {}
+	-- Defines the different signal types with a Task.
+	SIGNAL = {
+		COLOR = { 
+			RED = { ID = 1, COLOR = trigger.smokeColor.Red, TEXT = "A red" },
+			GREEN = { ID = 2, COLOR = trigger.smokeColor.Green, TEXT = "A green" }, 
+			BLUE = { ID = 3, COLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
+			WHITE = { ID = 4, COLOR = trigger.smokeColor.White, TEXT = "A white" }, 
+			ORANGE = { ID = 5, COLOR = trigger.smokeColor.Orange, TEXT = "An orange" } 
+		},
+		TYPE = {
+			SMOKE = { ID = 1, TEXT = "smoke" },
+			FLARE = { ID = 2, TEXT = "flare" }
+		}
+	},
+	ClassName = "TASK",
+	Mission = {}, -- Owning mission of the Task
+	Name = '',
+	Stages = {},
+	Stage = {},
+	Cargos = {
+		InitCargos = {},
+		LoadCargos = {}
+	},
+	LandingZones = {
+		LandingZoneNames = {},
+		LandingZones = {}
+	},
+	ActiveStage = 0,
+	TaskDone = false,
+	TaskFailed = false,
+	GoalTasks = {}
 }
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
@@ -120,7 +128,9 @@ trace.f(self.ClassName)
 		end
 	end
 	
-	Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+	if Mission.MissionReportFlash or Mission.MissionReportShow then
+		Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+	end
 end
 
 --- Sets a TASK to status Done.
@@ -132,7 +142,7 @@ end
 --- Returns if a TASK is done.
 -- @treturn bool
 function TASK:IsDone()
-trace.f(self.ClassName)
+	trace.i( self.ClassName, self.TaskDone )
 	return self.TaskDone
 end
 
@@ -145,7 +155,7 @@ end
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-trace.f(self.ClassName)
+	trace.i( self.ClassName, self.TaskFailed )
 	return self.TaskFailed
 end
 
@@ -268,7 +278,6 @@ end
 --- Returns if all the Goals of the TASK were achieved.
 -- @treturn bool
 function TASK:IsGoalReached( )
-trace.f(self.ClassName)
 
 	local GoalReached = true
 
@@ -287,6 +296,7 @@ trace.f(self.ClassName)
 		end
 	end
 	
+	trace.i( self.ClassName, GoalReached )
 	return GoalReached
 end
 
@@ -319,10 +329,9 @@ end
 
 function TASK.MenuAction( Parameter )
 trace.menu("TASK","MenuAction")
-  trace.l( "TASK", "MenuAction", { Parameter } )
+  trace.l( "TASK", "MenuAction" )
   Parameter.ReferenceTask.ExecuteStage = _TransportExecuteStage.EXECUTING
-  Parameter.ReferenceTask.CargoName = Parameter.CargoName
-  
+  Parameter.ReferenceTask.Cargo = Parameter.CargoTask
 end
 
 function TASK:StageExecute()

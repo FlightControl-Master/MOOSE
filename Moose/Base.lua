@@ -4,12 +4,22 @@
 
 Include.File( "Routines" )
 
+_TraceOn = true
+_TraceClass = {
+	DATABASE = true,
+	--SEAD = true,
+	--DESTROYBASETASK = true,
+	--MOVEMENT = true,
+	--SPAWN = true,
+	--GROUP = true,
+	--UNIT = true,
+	}
+
 BASE = {
 
   ClassName = "BASE",
   ClassID = 0,
   Events = {}
-
 }
 
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
@@ -53,7 +63,7 @@ function BASE:Inherit( Child, Parent )
 		Child.__index = Child
 	end
 	--Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
-	trace.i( Child.ClassName, 'Inherited from ' .. Parent.ClassName ) 
+	self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -104,6 +114,7 @@ trace.f( self.ClassName )
 	return self
 end
 
+
 BaseEventCodes = {
    "S_EVENT_SHOT",
    "S_EVENT_HIT",
@@ -129,7 +140,46 @@ BaseEventCodes = {
    "S_EVENT_SHOOTING_START",
    "S_EVENT_SHOOTING_END",
    "S_EVENT_MAX",
- }
+}
+ 
+--onEvent( {[1]="S_EVENT_BIRTH",[2]={["subPlace"]=5,["time"]=0,["initiator"]={["id_"]=16884480,},["place"]={["id_"]=5000040,},["id"]=15,["IniUnitName"]="US F-15C@RAMP-Air Support Mountains#001-01",},}
+-- Event = {
+--   id = enum world.event,
+--   time = Time,
+--   initiator = Unit,
+--   target = Unit,
+--   place = Unit,
+--   subPlace = enum world.BirthPlace,
+--   weapon = Weapon
+-- }
+
+
+function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
+trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } )
+
+	local Event = {
+		id = world.event.S_EVENT_BIRTH,
+		time = EventTime,
+		initiator = Initiator,
+		IniUnitName = IniUnitName,
+		place = place,
+		subplace = subplace
+		}
+
+	world.onEvent( Event )
+end
+
+function BASE:CreateEventCrash( EventTime, Initiator )
+trace.f( self.ClassName, { EventTime, Initiator } )
+
+	local Event = {
+		id = world.event.S_EVENT_CRASH,
+		time = EventTime,
+		initiator = Initiator,
+		}
+
+	world.onEvent( Event )
+end
 												
 function BASE:onEvent(event)
 --trace.f(self.ClassName, event )
@@ -159,3 +209,22 @@ function BASE:onEvent(event)
 
 end
 
+-- Trace section
+
+
+function BASE:T( Arguments )
+
+	if _TraceOn and _TraceClass[self.ClassName] then
+
+		local DebugInfo = debug.getinfo( 2, "nl" )
+		
+		local Function = "function"
+		if DebugInfo.name then
+			Function = DebugInfo.name
+		end
+
+		local Line = DebugInfo.currentline
+	
+		env.info( string.format( "%6d/%1s:%20s%05d.%s\(%s\)" , Line, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+	end
+end

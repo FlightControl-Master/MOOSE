@@ -62,6 +62,7 @@ trace.names.FollowPlayers = false
 trace.names.AddPlayerFromUnit = false
 trace.names.FromCarrier = false
 trace.names.OnDeadOrCrash = false
+
 trace.classes.CLEANUP = false
 trace.cache = {}
 
@@ -249,8 +250,9 @@ end
 trace.i = function(object, variable)
 
 	local info = debug.getinfo( 2, "nl" )
-	if info.name ~= trace.nametrace then
-		trace.nametrace = info.name
+	trace.nametrace = info.name
+	if trace.nametrace == nil then
+		trace.nametrace = "function"
 	end
 	if trace.names.all or trace.tracefunction( trace.nametrace ) or trace.classes[ object ] then
 		local objecttrace = ""
