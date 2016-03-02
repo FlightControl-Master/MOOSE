@@ -804,7 +804,7 @@ function DATABASE:ScoreOpen()
 		if not self.StatFile then
 			error( "Error: Cannot open 'Player Scores.csv' file in " .. lfs.writedir() )
 		end
-		self.StatFile:write( '"Run-ID";Time;"PlayerName";"ScoreType";"PlayerUnitCoaltion";"PlayerUnitCategory";"PlayerUnitType"; "PlayerUnitName";"TargetUnitCoalition";"TargetUnitCategory";"TargetUnitType";"TargetUnitName";Times;Score\n' )
+		self.StatFile:write( '"RunID";"Time";"PlayerName";"ScoreType";"PlayerUnitCoaltion";"PlayerUnitCategory";"PlayerUnitType";"PlayerUnitName";"TargetUnitCoalition";"TargetUnitCategory";"TargetUnitType";"TargetUnitName";"Times";"Score"\n' )
 		
 		self.RunID = os.date("%y-%m-%d_%H-%M-%S")
 	end
