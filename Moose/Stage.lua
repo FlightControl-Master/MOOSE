@@ -226,7 +226,7 @@ self:T()
 	local RouteMessage = "Fly to "
 	self:T( Task.LandingZones )
 	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
-		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupUnit():getPoint(), true, true } ) .. ' km. '
+		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupDCSUnit():getPoint(), true, true } ) .. ' km. '
 	end
 	Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 20 )
 
@@ -243,7 +243,7 @@ self:T()
 	
 	-- check if the Client is in the landing zone
 	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -331,7 +331,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 self:T()
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -357,7 +357,7 @@ self:T()
 		return -1
 	end
   
-	if Task.IsLandingRequired and Client:GetClientGroupUnit():inAir() then
+	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
 		return 0
 	end
   
@@ -397,14 +397,14 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 self:T()
 
-	if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
 		return -2
 	end
   
-	if Task.IsLandingRequired and Client:GetClientGroupUnit():inAir() then
+	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
 		self:T( "Client went back in the air. Go back to stage Landing." )
 		Task.Signalled = false 
 		return -1
@@ -464,7 +464,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 self:T()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
 	Task:RemoveCargoMenus( Client )
@@ -473,7 +473,7 @@ self:T()
     return 1
   end
   
-  if not Client:GetClientGroupUnit():inAir() then
+  if not Client:GetClientGroupDCSUnit():inAir() then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
 	Task:RemoveCargoMenus( Client )
@@ -578,7 +578,7 @@ self:T()
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
@@ -587,7 +587,7 @@ self:T()
 			return -1
 		end
 
-		if not Client:GetClientGroupUnit():inAir() then
+		if not Client:GetClientGroupDCSUnit():inAir() then
 		else
 			-- The carrier is back in the air, undo the loading process.
 			Task:RemoveCargoMenus( Client )
@@ -673,7 +673,7 @@ self:T()
 function STAGEARRIVE:Validate( Mission, Client, Task )
 self:T()
   
-  Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupUnit(), Task.LandingZones )
+  Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones )
   if  ( Task.CurrentLandingZoneID ) then
   else
     return -1

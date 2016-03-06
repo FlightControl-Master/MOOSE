@@ -10,8 +10,8 @@ _TraceClass = {
 	--SEAD = true,
 	--DESTROYBASETASK = true,
 	--MOVEMENT = true,
-	--SPAWN = true,
-	--GROUP = true,
+	SPAWN = true,
+	GROUP = true,
 	--UNIT = true,
 	}
 

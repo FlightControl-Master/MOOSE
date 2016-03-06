@@ -174,12 +174,12 @@ function MISSION:ReportToAll()
 	local AlivePlayers = ''
 	for ClientID, Client in pairs( self._Clients ) do
 		if  Client:ClientGroup() then
-			if Client:GetClientGroupUnit() then
-				if Client:GetClientGroupUnit():getLife() > 0.0 then
+			if Client:GetClientGroupDCSUnit() then
+				if Client:GetClientGroupDCSUnit():getLife() > 0.0 then
 					if AlivePlayers == '' then
-						AlivePlayers = ' Players: ' .. Client:GetClientGroupUnit():getPlayerName()
+						AlivePlayers = ' Players: ' .. Client:GetClientGroupDCSUnit():getPlayerName()
 					else
-						AlivePlayers = AlivePlayers .. ' / ' .. Client:GetClientGroupUnit():getPlayerName()
+						AlivePlayers = AlivePlayers .. ' / ' .. Client:GetClientGroupDCSUnit():getPlayerName()
 					end
 				end
 			end
@@ -486,7 +486,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_Database:_AddMissionTaskScore( Client:GetClientGroupUnit(), Mission.Name, 25 )
+								_Database:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
 
 --								if not Mission:IsCompleted() then
 --								end
