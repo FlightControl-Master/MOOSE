@@ -285,8 +285,8 @@ self:T( { SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 		for u = 1, SpawnUnitCount do
 			
 			-- Translate
-			local TranslatedX = SpawnX - 10 * ( u - 1 )
-			local TranslatedY = SpawnY
+			local TranslatedX = SpawnX 
+			local TranslatedY = SpawnY - 10 * ( u - 1 )
 			
 			-- Rotate
 			local RotatedX = - TranslatedX * math.cos( math.rad( SpawnAngle ) ) 
@@ -461,8 +461,9 @@ end
 -- Note that each point in the route assigned to the spawning @{GROUP} is reset to the Point of the spawn.
 -- You can use the returned @{GROUP} to further define the route to be followed.
 -- @tparam UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
--- @treturn GROUP
-function SPAWN:SpawnFromUnit( HostUnit )
+-- @treturn GROUP Spawned.
+-- @treturn nil when nothing was spawned.
+function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius )
 	self:T( { HostUnit, SpawnFormation, self.SpawnIndex } )
 
 	if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
@@ -488,15 +489,29 @@ function SPAWN:SpawnFromUnit( HostUnit )
 					SpawnTemplate.route.points[1] = {}
 					SpawnTemplate.route.points[1].x = UnitPoint.x
 					SpawnTemplate.route.points[1].y = UnitPoint.y
+
+					if not InnerRadius then
+						InnerRadius = 10
+					end
+					
+					if not OuterRadius then
+						OuterRadius = 50
+					end
 					
 					-- Apply SpawnFormation
 					for UnitID = 1, #SpawnTemplate.units do
-						SpawnTemplate.units[UnitID].x = UnitPoint.x
-						SpawnTemplate.units[UnitID].y = UnitPoint.y
+						if InnerRadius == 0 then
+							SpawnTemplate.units[UnitID].x = UnitPoint.x
+							SpawnTemplate.units[UnitID].y = UnitPoint.y
+						else
+							local CirclePos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
+							SpawnTemplate.units[UnitID].x = CirclePos.x
+							SpawnTemplate.units[UnitID].y = CirclePos.y
+						end
 						self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
 					end
 					
-					local SpawnPos = routines.getRandPointInCircle( UnitPoint, 80, 20 )
+					local SpawnPos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
 					local Point = {}
 					Point.type = "Turning Point"
 					Point.x = SpawnPos.x
@@ -517,7 +532,8 @@ end
 
 --- Will spawn a Group within a given @{ZONE}.
 -- @tparam ZONE The @{ZONE} where the Group is to be SPAWNed.
--- @treturn SpawnTemplate
+-- @treturn GROUP that was spawned.
+-- @treturn nil when nothing as spawned.
 function SPAWN:SpawnInZone( Zone )
 	self:T( Zone )
 	
@@ -563,72 +579,6 @@ function SPAWN:SpawnInZone( Zone )
 	end
 	
 	return nil
-end
-
-
---- Will SPAWN a Group from a Carrier. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
--- @tparam Group CarrierUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
--- @tparam string TargetZonePrefix is the Prefix of the Zone defined in the ME where the Group should be moving to after drop.
--- @tparam string NewGroupName (forgot this).
--- @tparam bool LateActivate (optional) does the SPAWNing with Lateactivation on.
-function SPAWN:FromCarrier( CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate )
-	self:T( { CarrierUnit, TargetZonePrefix, NewGroupName, LateActivate } )
-
-	local SpawnTemplate
-
-	if CarrierUnit and CarrierUnit:isExist() then -- and CarrierUnit:getUnit(1):inAir() == false then
-
-		SpawnTemplate = self:_Prepare( NewGroupName )
-		
-		if ( self.SpawnMaxGroups == 0 ) or ( self.SpawnCount <= self.SpawnMaxGroups ) then
-			if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
-
-				if LateActivate ~= nil then
-					if LateActivate == true then
-						SpawnTemplate.lateActivation = true
-						SpawnTemplate.visible = true
-					end
-				end
-
-				SpawnTemplate = self:_RandomizeRoute( SpawnTemplate )
-				
-				local TargetZone = trigger.misc.getZone( TargetZonePrefix )
-				local TargetZonePos = {}
-				TargetZonePos.x = TargetZone.point.x + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
-				TargetZonePos.z = TargetZone.point.z + math.random(TargetZone.radius / 2 * -1, TargetZone.radius / 2 )
-
-				local RouteCount = table.getn( SpawnTemplate.route.points )
-				self:T( "RouteCount = " .. RouteCount )
-
-				local UnitDeployPosition = CarrierUnit:getPosition().p
-				SpawnTemplate.route.points[1].x = UnitDeployPosition.x - 50
-				SpawnTemplate.route.points[1].y = UnitDeployPosition.z
-				SpawnTemplate.route.points[1].alt = nil
-				SpawnTemplate.route.points[1].alt_type = nil
-
-				if self.SpawnRandomize then
-					SpawnTemplate.route.points[RouteCount].x = TargetZonePos.x
-					SpawnTemplate.route.points[RouteCount].y = TargetZonePos.z
-				else 
-					SpawnTemplate.route.points[RouteCount].x = TargetZone.point.x
-					SpawnTemplate.route.points[RouteCount].y = TargetZone.point.z
-				end
-				
-				self:T( 'SpawnTemplate.route.points['..RouteCount..'].x = ' .. SpawnTemplate.route.points[RouteCount].x .. ', SpawnTemplate.route.points['..RouteCount..'].y = ' .. SpawnTemplate.route.points[RouteCount].y )
-
-				for v = 1, table.getn( SpawnTemplate.units ) do
-					local SpawnPos = routines.getRandPointInCircle( UnitDeployPosition, 40, 10 )
-					SpawnTemplate.units[v].x = SpawnPos.x
-					SpawnTemplate.units[v].y = SpawnPos.y
-					self:T( 'SpawnTemplate.units['..v..'].x = ' .. SpawnTemplate.units[v].x .. ', SpawnTemplate.units['..v..'].y = ' .. SpawnTemplate.units[v].y )
-				end
-				
-				_Database:Spawn( SpawnTemplate )
-			end
-		end
-	end 
-
-	return SpawnTemplate 
 end
 
 

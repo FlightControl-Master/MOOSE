@@ -632,7 +632,7 @@ self:T()
 	
 	--self.CargoSpawn:FromCarrier( Client:GetClientGroupDCSUnit(), TargetZoneName, self.CargoGroupName )
 
-	self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), self.CargoGroupName ):RouteToZone( ZONE:New( TargetZoneName ) )
+	self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), self.CargoGroupName ):RouteToZone( ZONE:New( TargetZoneName ), true )
 	
 	self:StatusUnLoaded()
 
