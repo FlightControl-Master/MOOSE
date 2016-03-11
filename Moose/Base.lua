@@ -6,13 +6,21 @@ Include.File( "Routines" )
 
 _TraceOn = true
 _TraceClass = {
-	DATABASE = true,
+	--DATABASE = true,
 	--SEAD = true,
 	--DESTROYBASETASK = true,
 	--MOVEMENT = true,
-	--SPAWN = true,
-	--GROUP = true,
-	--UNIT = true,
+	SPAWN = true,
+	STAGE = true,
+	ZONE = true,
+	GROUP = true,
+	UNIT = true,
+	--CLIENT = true,
+	--CARGO = true,
+	CARGO_GROUP = true,
+	--CARGO_PACKAGE = true,
+	--CARGO_SLINGLOAD = true,
+	CARGO_ZONE = true,
 	}
 
 BASE = {

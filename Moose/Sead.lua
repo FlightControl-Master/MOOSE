@@ -132,5 +132,3 @@ self:T( { event } )
 		end
 	end
 end
-
-

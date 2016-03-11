@@ -40,7 +40,6 @@ self:T( { CargoZoneName, CargoHostName } )
 
 	if CargoHostName then
 		self.CargoHostName = CargoHostName
-		self.CargoHostSpawn = SPAWN:New( CargoHostName )
 	end
 
 	self:T( self.CargoZone )
@@ -49,33 +48,35 @@ self:T( { CargoZoneName, CargoHostName } )
 end
 
 function CARGO_ZONE:Spawn()
-self:T( CargoHostSpawn )
+	self:T( self.CargoHostName )
 
 	if self.CargoHostSpawn then
-		local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
-		if CargoHostGroup then
-			if not CargoHostGroup:isExist() then
-				self.CargoHostSpawn:ReSpawn()
-			end
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
 		else
-			self.CargoHostSpawn:ReSpawn()
+			self.CargoHostSpawn:ReSpawn( 1 )
 		end
+	else
+		self:T( "Initialize CargoHostSpawn" )
+		self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
+		self.CargoHostSpawn:ReSpawn( 1 )
 	end
 
 	return self
 end
 
 function CARGO_ZONE:GetHostUnit()
+	self:T( self )
 
 	if self.CargoHostName then
 		
 		-- A Host has been given, signal the host
-		local CargoHostGroup = Group.getByName( self.CargoHostSpawn:SpawnGroupName() )
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
 		local CargoHostUnit
-		if CargoHostGroup == nil then
-			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
+			CargoHostUnit = CargoHostGroup:GetUnit(1)
 		else
-			CargoHostUnit = CargoHostGroup:getUnits()[1]
+			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
 		end
 		
 		return CargoHostUnit
@@ -129,7 +130,7 @@ self:T()
 			if SignalUnit then
 			
 				self:T( 'Signalling Unit' )
-				local SignalVehiclePos = SignalUnit:getPosition().p
+				local SignalVehiclePos = SignalUnit:GetPositionVec3()
 				SignalVehiclePos.y = SignalVehiclePos.y + 2
 
 				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
@@ -251,11 +252,16 @@ end
 
 
 function CARGO_ZONE:GetCargoHostUnit()
-self:T()
+	self:T( self )
 
-	local CargoHostUnit = Group.getByName( self.CargoHostSpawn:SpawnGroupName() ):getUnit(1)
-	if CargoHostUnit and CargoHostUnit:isExist() then
-		return CargoHostUnit
+	if self.CargoHostSpawn then 
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex(1)
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
+			local CargoHostUnit = CargoHostGroup:GetUnit(1)
+			if CargoHostUnit and CargoHostUnit:IsAlive() then
+				return CargoHostUnit
+			end
+		end
 	end
 
 	return nil
@@ -347,7 +353,7 @@ self:T()
 	local Valid = true
   
 	self.CargoClient = Client
-	local ClientUnit = Client:GetClientGroupUnit()
+	local ClientUnit = Client:GetClientGroupDCSUnit()
 
 	return Valid
 end
@@ -451,7 +457,7 @@ CARGO_GROUP = {
 function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
-	self.CargoSpawn = SPAWN:New( CargoGroupTemplate )
+	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
 	self.CargoZone = CargoZone
 
 	CARGOS[self.CargoName] = self
@@ -499,10 +505,10 @@ self:T()
 	if SpawnCargo then 
 		if self.CargoZone:GetCargoHostUnit() then
 			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:FromHost( self.CargoZone:GetCargoHostUnit(), 60, 30, self.CargoName, false ).name
+			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self.CargoGroupName = self.CargoSpawn:InZone( self.CargoZone:GetCargoZoneName(), self.CargoName ).name
+			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone ):GetName()
 		end
 		self:StatusNone()	
 	end
@@ -534,7 +540,7 @@ self:T()
   
 	local Valid = true
   
-	local ClientUnit = Client:GetClientGroupUnit()
+	local ClientUnit = Client:GetClientGroupDCSUnit()
 	
 	local CarrierPos = ClientUnit:getPoint()
 	local CarrierPosMove = ClientUnit:getPoint()
@@ -630,8 +636,10 @@ self:T()
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
 	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
-	self.CargoSpawn:FromCarrier( Client:GetClientGroupUnit(), TargetZoneName, self.CargoGroupName )
+	--self.CargoSpawn:FromCarrier( Client:GetClientGroupDCSUnit(), TargetZoneName, self.CargoGroupName )
 
+	self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), self.CargoGroupName ):RouteToZone( ZONE:New( TargetZoneName ), true )
+	
 	self:StatusUnLoaded()
 
 	return self
@@ -645,7 +653,7 @@ CARGO_PACKAGE = {
 
 function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 
-	self:T( { CargoType, CargoName, CargoWeight, CargoClient.ClientName } )
+	self:T( { CargoType, CargoName, CargoWeight, CargoClient } )
 
 	self.CargoClient = CargoClient
 	
@@ -657,16 +665,16 @@ end
 
 
 function CARGO_PACKAGE:Spawn()
-self:T()
+self:T( self )
 
 	-- this needs to be checked thoroughly
 
-	local CargoClientInitGroup = self.CargoClient:ClientGroup()
-	if not CargoClientInitGroup then
-		if not self.CargoClientInitGroupSpawn then
-			self.CargoClientInitGroupSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
+	local CargoClientGroup = self.CargoClient:ClientGroup()
+	if not CargoClientGroup then
+		if not self.CargoClientSpawn then
+			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
 		end
-		self.CargoClientInitGroupSpawn:Spawn( self.CargoClient:GetClientGroupName() )	
+		self.CargoClientSpawn:ReSpawn( 1 )	
 	end
 
 	local SpawnCargo = true
@@ -705,7 +713,7 @@ self:T()
 		self:T( self.CargoClient.ClientName )
 		self:T( 'Client Exists.' )
 
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), Client:ClientPosition(), 150 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:ClientPosition(), 150 ) then
 			Near = true
 		end
 	end
@@ -720,7 +728,7 @@ self:T()
   
 	local Valid = true
   
-	local ClientUnit = Client:GetClientGroupUnit()
+	local ClientUnit = Client:GetClientGroupDCSUnit()
 	
 	local CarrierPos = ClientUnit:getPoint()
 	local CarrierPosMove = ClientUnit:getPoint()
@@ -812,7 +820,7 @@ self:T()
 	local OnBoarded = false
   
 	if self.CargoClient and self.CargoClient:ClientGroup() then
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupUnit(), self.CargoClient:ClientPosition(), 10 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:ClientPosition(), 10 ) then
 			
 			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
 			self:StatusLoaded( Client )

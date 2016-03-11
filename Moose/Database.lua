@@ -5,6 +5,7 @@
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
+Include.File( "Group" )
 
 DATABASE = {
 	ClassName = "DATABASE",
@@ -138,6 +139,9 @@ function DATABASE:Spawn( SpawnTemplate )
 	
 	self:_RegisterGroup( SpawnTemplate )
 	coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
+	
+	local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
+	return SpawnGroup
 end
 
 
@@ -206,7 +210,7 @@ end
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
-	self:T( { event } )
+	--self:T( { event } )
 
 	local TargetUnit = nil
 	local TargetGroup = nil
@@ -241,7 +245,7 @@ function DATABASE:OnDeadOrCrash( event )
 		TargetUnitCategory = DATABASECategory[TargetCategory]
 		TargetUnitType = TargetType
 
-		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+		--self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
 	end
 
 	for PlayerName, PlayerData in pairs( self.Players ) do

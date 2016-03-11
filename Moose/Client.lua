@@ -177,6 +177,24 @@ self:T()
 	
 	if ClientGroup then
 		if ClientGroup:isExist() then
+			return UNIT:New( ClientGroup:getUnit(1) )
+		else
+			return UNIT:New( self.ClientGroupUnit )
+		end
+	end
+	
+	return nil
+end
+
+--- Returns the DCSUnit of the @{CLIENT}.
+-- @treturn DCSUnit
+function CLIENT:GetClientGroupDCSUnit()
+self:T()
+
+	local ClientGroup = self:ClientGroup()
+	
+	if ClientGroup then
+		if ClientGroup:isExist() then
 			return ClientGroup:getUnits()[1]
 		else
 			return self.ClientGroupUnit
@@ -189,7 +207,7 @@ end
 function CLIENT:GetUnit()
 	self:T()
 	
-	return UNIT:New( self:GetClientGroupUnit() )
+	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
 
 
@@ -198,7 +216,7 @@ end
 function CLIENT:ClientPosition()
 --self:T()
 
-	ClientGroupUnit = self:GetClientGroupUnit()
+	ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
 	if ClientGroupUnit then
 		if ClientGroupUnit:isExist() then
@@ -294,7 +312,7 @@ self:T()
 			end
 			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 		else
-			if self:GetClientGroupUnit() and not self:GetClientGroupUnit():inAir() then
+			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
 				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
 					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()

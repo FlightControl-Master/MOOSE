@@ -30,6 +30,17 @@ trace.f( self.ClassName, ZoneName )
 	return self
 end
 
+function ZONE:GetPoint()
+	self:T( self.ZoneName )
+
+	local Zone = trigger.misc.getZone( self.ZoneName )
+	local Point = { x = Zone.point.x, y = Zone.point.z }
+
+	self:T( { Zone, Point } )
+	
+	return Point	
+end
+
 function ZONE:GetRandomPoint()
 trace.f( self.ClassName, self.ZoneName )
 
@@ -55,3 +66,4 @@ trace.f( self.ClassName, self.ZoneName )
 
 	return Zone.radius
 end
+
