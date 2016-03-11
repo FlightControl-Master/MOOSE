@@ -40,7 +40,6 @@ self:T( { CargoZoneName, CargoHostName } )
 
 	if CargoHostName then
 		self.CargoHostName = CargoHostName
-		self.CargoHostSpawn = SPAWN:New( CargoHostName )
 	end
 
 	self:T( self.CargoZone )
@@ -49,33 +48,35 @@ self:T( { CargoZoneName, CargoHostName } )
 end
 
 function CARGO_ZONE:Spawn()
-self:T( CargoHostSpawn )
+	self:T( self.CargoHostName )
 
 	if self.CargoHostSpawn then
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex():GetDCSGroup()
-		if CargoHostGroup then
-			if not CargoHostGroup:isExist() then
-				self.CargoHostSpawn:ReSpawn(1)
-			end
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
 		else
-			self.CargoHostSpawn:ReSpawn(1)
+			self.CargoHostSpawn:ReSpawn( 1 )
 		end
+	else
+		self:T( "Initialize CargoHostSpawn" )
+		self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
+		self.CargoHostSpawn:ReSpawn( 1 )
 	end
 
 	return self
 end
 
 function CARGO_ZONE:GetHostUnit()
+	self:T( self )
 
 	if self.CargoHostName then
 		
 		-- A Host has been given, signal the host
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex():GetDCSGroup()
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
 		local CargoHostUnit
-		if CargoHostGroup == nil then
-			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
+			CargoHostUnit = CargoHostGroup:GetUnit(1)
 		else
-			CargoHostUnit = CargoHostGroup:getUnits()[1]
+			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
 		end
 		
 		return CargoHostUnit
@@ -129,7 +130,7 @@ self:T()
 			if SignalUnit then
 			
 				self:T( 'Signalling Unit' )
-				local SignalVehiclePos = SignalUnit:getPosition().p
+				local SignalVehiclePos = SignalUnit:GetPositionVec3()
 				SignalVehiclePos.y = SignalVehiclePos.y + 2
 
 				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
@@ -251,11 +252,16 @@ end
 
 
 function CARGO_ZONE:GetCargoHostUnit()
-self:T()
+	self:T( self )
 
-	local CargoHostUnit = self.CargoHostSpawn:GetGroupFromIndex(1):GetUnit(1)
-	if CargoHostUnit and CargoHostUnit:IsAlive() then
-		return CargoHostUnit
+	if self.CargoHostSpawn then 
+		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex(1)
+		if CargoHostGroup and CargoHostGroup:IsAlive() then
+			local CargoHostUnit = CargoHostGroup:GetUnit(1)
+			if CargoHostUnit and CargoHostUnit:IsAlive() then
+				return CargoHostUnit
+			end
+		end
 	end
 
 	return nil
@@ -451,7 +457,7 @@ CARGO_GROUP = {
 function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
-	self.CargoSpawn = SPAWN:New( CargoGroupTemplate )
+	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
 	self.CargoZone = CargoZone
 
 	CARGOS[self.CargoName] = self
@@ -647,7 +653,7 @@ CARGO_PACKAGE = {
 
 function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
 
-	self:T( { CargoType, CargoName, CargoWeight, CargoClient.ClientName } )
+	self:T( { CargoType, CargoName, CargoWeight, CargoClient } )
 
 	self.CargoClient = CargoClient
 	
@@ -659,16 +665,16 @@ end
 
 
 function CARGO_PACKAGE:Spawn()
-self:T()
+self:T( self )
 
 	-- this needs to be checked thoroughly
 
-	local CargoClientInitGroup = self.CargoClient:ClientGroup()
-	if not CargoClientInitGroup then
-		if not self.CargoClientInitGroupSpawn then
-			self.CargoClientInitGroupSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
+	local CargoClientGroup = self.CargoClient:ClientGroup()
+	if not CargoClientGroup then
+		if not self.CargoClientSpawn then
+			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
 		end
-		self.CargoClientInitGroupSpawn:ReSpawn( 1 )	
+		self.CargoClientSpawn:ReSpawn( 1 )	
 	end
 
 	local SpawnCargo = true

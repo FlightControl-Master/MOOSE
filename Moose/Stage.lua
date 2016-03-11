@@ -284,11 +284,13 @@ self:T()
 	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot: Arrived", 10 )
 
  	Task.HostUnit = Task.CurrentCargoZone:GetHostUnit()
+	
+	self:T( { Task.HostUnit } )
 
 	if Task.HostUnit then
 	
-		Task.HostUnitName = Task.HostUnit:getName()
-		Task.HostUnitTypeName = Task.HostUnit:getTypeName()
+		Task.HostUnitName = Task.HostUnit:GetPrefix()
+		Task.HostUnitTypeName = Task.HostUnit:GetTypeName()
 		
 		local HostMessage = ""
 		Task.CargoNames = ""

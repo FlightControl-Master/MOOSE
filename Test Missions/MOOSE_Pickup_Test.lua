@@ -62,14 +62,13 @@ end
 do
 	local Mission = MISSION:New( 'Deliver secret letter', 'Operational', 'Pickup letter to the commander.', 'NATO' )
 
-	Mission:AddClient( CLIENT:New( 'BE Package Test 1' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'BE Package Test 2' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'DE Pickup Test 1' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'DE Pickup Test 2' ):Transport() )
+	Client_Package_1 = CLIENT:New( 'BE Package Test 1' ):Transport()
+	
+	Mission:AddClient( Client_Package_1 )
 
 	Package_Pickup_Zone = CARGO_ZONE:New( 'Package Pickup Zone', 'DE Guard' ):GreenSmoke()
 
-	Cargo_Package = CARGO_PACKAGE:New( 'Letter', 'Letter to Command', 0.1, 'DE Guard' )
+	Cargo_Package = CARGO_PACKAGE:New( 'Letter', 'Letter to Command', 0.1, Client_Package_1 )
 	--Cargo_Goods = CARGO_STATIC:New( 'Goods', 20, 'Goods', 'Pickup Zone Goods', 'DE Collection Point' )
 	--Cargo_SlingLoad = CARGO_SLING:New( 'Basket', 40, 'Basket', 'Pickup Zone Sling Load', 'DE Cargo Guard' )
 

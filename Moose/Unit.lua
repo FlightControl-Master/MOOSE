@@ -30,6 +30,28 @@ function UNIT:IsAlive()
 end
 
 
+function UNIT:GetName()
+	self:T( self.UnitName )
+	
+	return self.UnitName
+end
+
+function UNIT:GetTypeName()
+	self:T( self.UnitName )
+	
+	return self.DCSUnit:getTypeName()
+end
+
+function UNIT:GetPrefix()
+	self:T( self.UnitName )
+	
+	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+	self:T( UnitPrefix )
+
+	return UnitPrefix
+end
+
+
 function UNIT:GetCallSign()
 	self:T( self.UnitName )
 	

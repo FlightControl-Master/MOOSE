@@ -31,14 +31,17 @@ function GROUP:NewFromName( GroupName )
 	self:T( GroupName )
 
 	self.DCSGroup = Group.getByName( GroupName )
-	self.GroupName = self.DCSGroup:getName()
-	self.GroupID = self.DCSGroup:getID()
+	if self.DCSGroup then
+		self.GroupName = self.DCSGroup:getName()
+		self.GroupID = self.DCSGroup:getID()
+	end
 
 	return self
 end
 
 function GROUP:GetDCSGroup()
 	self:T( { self.GroupName } )
+	self.DCSGroup = Group.getByName( self.GroupName )
 	return self.DCSGroup
 end
 
