@@ -5213,11 +5213,13 @@ function CARGO_GROUP:UnLoad( Client, TargetZoneName )
 self:T()
 
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
+
+	local CargoGroup = self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), 60, 30 )
+
+	self.CargoGroupName = CargoGroup:GetName()
 	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
-	--self.CargoSpawn:FromCarrier( Client:GetClientGroupDCSUnit(), TargetZoneName, self.CargoGroupName )
-
-	self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), self.CargoGroupName ):RouteToZone( ZONE:New( TargetZoneName ), true )
+	CargoGroup:RouteToZone( ZONE:New( TargetZoneName ), true )
 	
 	self:StatusUnLoaded()
 
