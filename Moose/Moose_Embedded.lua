@@ -3082,16 +3082,18 @@ function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
 
-		local DebugInfo = debug.getinfo( 2, "nl" )
+		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+		local DebugInfoFrom = debug.getinfo( 3, "l" )
 		
 		local Function = "function"
-		if DebugInfo.name then
-			Function = DebugInfo.name
+		if DebugInfoCurrent.name then
+			Function = DebugInfoCurrent.name
 		end
 
-		local Line = DebugInfo.currentline
+		local LineCurrent = DebugInfoCurrent.currentline
+		local LineFrom = DebugInfoFrom.currentline
 	
-		env.info( string.format( "%6d/%1s:%20s%05d.%s\(%s\)" , Line, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
@@ -3823,15 +3825,24 @@ function DATABASE:Spawn( SpawnTemplate )
 
 	self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
 	
+	-- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
+	local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
 	local SpawnCountryID = SpawnTemplate.SpawnCountryID
 	local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
 	
+	-- Nullify
 	SpawnTemplate.SpawnCoalitionID = nil
 	SpawnTemplate.SpawnCountryID = nil
 	SpawnTemplate.SpawnCategoryID = nil
 	
 	self:_RegisterGroup( SpawnTemplate )
 	coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
+
+	-- Restore
+	SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
+	SpawnTemplate.SpawnCountryID = SpawnCountryID
+	SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+
 	
 	local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
 	return SpawnGroup
@@ -4637,7 +4648,7 @@ function CARGO_ZONE:Spawn()
 		end
 	else
 		self:T( "Initialize CargoHostSpawn" )
-		self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
+		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
 		self.CargoHostSpawn:ReSpawn( 1 )
 	end
 
@@ -4877,8 +4888,8 @@ self:T( { CargoType, CargoName, CargoWeight } )
 	return self
 end
 
-function CARGO:Spawn()
-self:T()
+function CARGO:Spawn( Client )
+	self:T()
 
 	return self
 
@@ -4978,7 +4989,7 @@ self:T()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADING
-	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. CargoClient:GetClientGroupName() )
+	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
 	
 	return self
 end
@@ -5034,7 +5045,7 @@ CARGO_GROUP = {
 
 
 function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
+	self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
 	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
 	self.CargoZone = CargoZone
@@ -5045,8 +5056,8 @@ self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
 end
 
-function CARGO_GROUP:Spawn()
-self:T()
+function CARGO_GROUP:Spawn( Client )
+	self:T( { Client } )
 
 	local SpawnCargo = true
 	
@@ -5070,9 +5081,18 @@ self:T()
 	
 	elseif self:IsStatusLoaded()  then
 	
-		local Client = self:IsLoadedInClient()
-		if Client and Client:ClientGroup() then
-			SpawnCargo = false
+		local ClientLoaded = self:IsLoadedInClient()
+		-- Now test if another Client is alive (not this one), and it has the CARGO, then this cargo does not need to be initialized and spawned.
+		if ClientLoaded and ClientLoaded ~= Client then
+			local ClientGroup = Client:ClientGroup()
+			if ClientLoaded:GetClientGroupDCSUnit() and ClientLoaded:GetClientGroupDCSUnit():isExist() then
+				SpawnCargo = false
+			else
+				self:StatusNone()
+			end
+		else
+			-- Same Client, but now in initialize, so set back the status to None.
+			self:StatusNone()
 		end
 		
 	elseif self:IsStatusUnLoaded() then
@@ -5084,10 +5104,10 @@ self:T()
 	if SpawnCargo then 
 		if self.CargoZone:GetCargoHostUnit() then
 			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30 ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, 1 ):GetName()
 		end
 		self:StatusNone()	
 	end
@@ -5245,15 +5265,15 @@ function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) loc
 end
 
 
-function CARGO_PACKAGE:Spawn()
-self:T( self )
+function CARGO_PACKAGE:Spawn( Client )
+	self:T( { self, Client } )
 
 	-- this needs to be checked thoroughly
 
 	local CargoClientGroup = self.CargoClient:ClientGroup()
 	if not CargoClientGroup then
 		if not self.CargoClientSpawn then
-			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
+			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() ):Limit( 1, 1 )
 		end
 		self.CargoClientSpawn:ReSpawn( 1 )	
 	end
@@ -5468,8 +5488,8 @@ self:T()
 end
 
 
-function CARGO_SLINGLOAD:Spawn()
-self:T()
+function CARGO_SLINGLOAD:Spawn( Client )
+	self:T( { self, Client } )
 
 	local Zone = trigger.misc.getZone( self.CargoZone )
 
@@ -6334,7 +6354,7 @@ self:T()
 	self:T( Task.Cargos.InitCargos )
 	for InitCargoID, InitCargoData in pairs( Task.Cargos.InitCargos ) do
 		self:T( { InitCargoData } )
-		InitCargoData:Spawn()
+		InitCargoData:Spawn( Client )
 	end
 	
 	return Valid
@@ -9495,6 +9515,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
+			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			--if self.SpawnRepeat then
 			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
@@ -9605,12 +9626,17 @@ end
 -- @tparam UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
 -- @treturn GROUP Spawned.
 -- @treturn nil when nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius )
-	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation } )
+function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
+	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation, SpawnIndex } )
 
 	if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
 
-		if self:GetSpawnIndex( self.SpawnIndex + 1 ) then
+		if SpawnIndex then
+		else
+			SpawnIndex = self.SpawnIndex + 1
+		end
+		
+		if self:GetSpawnIndex( SpawnIndex ) then
 			
 			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 		
@@ -9673,12 +9699,17 @@ end
 -- @tparam ZONE The @{ZONE} where the Group is to be SPAWNed.
 -- @treturn GROUP that was spawned.
 -- @treturn nil when nothing as spawned.
-function SPAWN:SpawnInZone( Zone )
-	self:T( { self.SpawnTemplatePrefix, Zone } )
+function SPAWN:SpawnInZone( Zone, SpawnIndex )
+	self:T( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
 	
 	if Zone then
-	
-		if self:GetSpawnIndex( self.SpawnIndex + 1) then
+		
+		if SpawnIndex then
+		else
+			SpawnIndex = self.SpawnIndex + 1
+		end
+		
+		if self:GetSpawnIndex( SpawnIndex ) then
 
 			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 			
@@ -9909,6 +9940,8 @@ end
 
 --- Gets the CountryID of the Group with the given SpawnPrefix
 function SPAWN:_GetGroupCountryID( SpawnPrefix )
+	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnPrefix } )
+	
 	local TemplateGroup = Group.getByName( SpawnPrefix )
 	
 	if TemplateGroup then
@@ -9944,7 +9977,7 @@ end
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
-	local SpawnTemplate = routines.utils.deepCopy( self:_GetTemplate( SpawnTemplatePrefix ) )
+	local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil

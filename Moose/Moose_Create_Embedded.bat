@@ -1,6 +1,6 @@
 rem Generate Moose_Embedded.lua
 
-copy Trace.lua ^
+copy /b Trace.lua ^
 	+ Routines.lua ^
     + Base.lua ^
 	+ Menu.lua ^
@@ -27,5 +27,5 @@ copy Trace.lua ^
 	+ Spawn.lua ^
 	+ Movement.lua ^
 	+ Sead.lua ^
-	Moose_Embedded.lua
+	Moose_Embedded.lua /y
 	
