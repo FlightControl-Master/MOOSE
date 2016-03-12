@@ -224,15 +224,17 @@ function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
 
-		local DebugInfo = debug.getinfo( 2, "nl" )
+		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+		local DebugInfoFrom = debug.getinfo( 3, "l" )
 		
 		local Function = "function"
-		if DebugInfo.name then
-			Function = DebugInfo.name
+		if DebugInfoCurrent.name then
+			Function = DebugInfoCurrent.name
 		end
 
-		local Line = DebugInfo.currentline
+		local LineCurrent = DebugInfoCurrent.currentline
+		local LineFrom = DebugInfoFrom.currentline
 	
-		env.info( string.format( "%6d/%1s:%20s%05d.%s\(%s\)" , Line, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end

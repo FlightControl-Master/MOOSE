@@ -58,7 +58,7 @@ function CARGO_ZONE:Spawn()
 		end
 	else
 		self:T( "Initialize CargoHostSpawn" )
-		self.CargoHostSpawn = SPAWN:New( self.CargoHostName )
+		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
 		self.CargoHostSpawn:ReSpawn( 1 )
 	end
 
@@ -298,8 +298,8 @@ self:T( { CargoType, CargoName, CargoWeight } )
 	return self
 end
 
-function CARGO:Spawn()
-self:T()
+function CARGO:Spawn( Client )
+	self:T()
 
 	return self
 
@@ -399,7 +399,7 @@ self:T()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADING
-	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. CargoClient:GetClientGroupName() )
+	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
 	
 	return self
 end
@@ -455,7 +455,7 @@ CARGO_GROUP = {
 
 
 function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
+	self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
 	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
 	self.CargoZone = CargoZone
@@ -466,8 +466,8 @@ self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
 end
 
-function CARGO_GROUP:Spawn()
-self:T()
+function CARGO_GROUP:Spawn( Client )
+	self:T( { Client } )
 
 	local SpawnCargo = true
 	
@@ -491,9 +491,18 @@ self:T()
 	
 	elseif self:IsStatusLoaded()  then
 	
-		local Client = self:IsLoadedInClient()
-		if Client and Client:ClientGroup() then
-			SpawnCargo = false
+		local ClientLoaded = self:IsLoadedInClient()
+		-- Now test if another Client is alive (not this one), and it has the CARGO, then this cargo does not need to be initialized and spawned.
+		if ClientLoaded and ClientLoaded ~= Client then
+			local ClientGroup = Client:ClientGroup()
+			if ClientLoaded:GetClientGroupDCSUnit() and ClientLoaded:GetClientGroupDCSUnit():isExist() then
+				SpawnCargo = false
+			else
+				self:StatusNone()
+			end
+		else
+			-- Same Client, but now in initialize, so set back the status to None.
+			self:StatusNone()
 		end
 		
 	elseif self:IsStatusUnLoaded() then
@@ -505,10 +514,10 @@ self:T()
 	if SpawnCargo then 
 		if self.CargoZone:GetCargoHostUnit() then
 			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30 ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, 1 ):GetName()
 		end
 		self:StatusNone()	
 	end
@@ -666,15 +675,15 @@ function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) loc
 end
 
 
-function CARGO_PACKAGE:Spawn()
-self:T( self )
+function CARGO_PACKAGE:Spawn( Client )
+	self:T( { self, Client } )
 
 	-- this needs to be checked thoroughly
 
 	local CargoClientGroup = self.CargoClient:ClientGroup()
 	if not CargoClientGroup then
 		if not self.CargoClientSpawn then
-			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() )
+			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() ):Limit( 1, 1 )
 		end
 		self.CargoClientSpawn:ReSpawn( 1 )	
 	end
@@ -889,8 +898,8 @@ self:T()
 end
 
 
-function CARGO_SLINGLOAD:Spawn()
-self:T()
+function CARGO_SLINGLOAD:Spawn( Client )
+	self:T( { self, Client } )
 
 	local Zone = trigger.misc.getZone( self.CargoZone )
 

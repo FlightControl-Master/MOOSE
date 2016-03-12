@@ -130,15 +130,24 @@ function DATABASE:Spawn( SpawnTemplate )
 
 	self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
 	
+	-- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
+	local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
 	local SpawnCountryID = SpawnTemplate.SpawnCountryID
 	local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
 	
+	-- Nullify
 	SpawnTemplate.SpawnCoalitionID = nil
 	SpawnTemplate.SpawnCountryID = nil
 	SpawnTemplate.SpawnCategoryID = nil
 	
 	self:_RegisterGroup( SpawnTemplate )
 	coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
+
+	-- Restore
+	SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
+	SpawnTemplate.SpawnCountryID = SpawnCountryID
+	SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+
 	
 	local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
 	return SpawnGroup

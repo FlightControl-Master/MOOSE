@@ -438,6 +438,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
+			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			--if self.SpawnRepeat then
 			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
@@ -548,12 +549,17 @@ end
 -- @tparam UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
 -- @treturn GROUP Spawned.
 -- @treturn nil when nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius )
-	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation } )
+function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
+	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation, SpawnIndex } )
 
 	if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
 
-		if self:GetSpawnIndex( self.SpawnIndex + 1 ) then
+		if SpawnIndex then
+		else
+			SpawnIndex = self.SpawnIndex + 1
+		end
+		
+		if self:GetSpawnIndex( SpawnIndex ) then
 			
 			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 		
@@ -616,12 +622,17 @@ end
 -- @tparam ZONE The @{ZONE} where the Group is to be SPAWNed.
 -- @treturn GROUP that was spawned.
 -- @treturn nil when nothing as spawned.
-function SPAWN:SpawnInZone( Zone )
-	self:T( { self.SpawnTemplatePrefix, Zone } )
+function SPAWN:SpawnInZone( Zone, SpawnIndex )
+	self:T( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
 	
 	if Zone then
-	
-		if self:GetSpawnIndex( self.SpawnIndex + 1) then
+		
+		if SpawnIndex then
+		else
+			SpawnIndex = self.SpawnIndex + 1
+		end
+		
+		if self:GetSpawnIndex( SpawnIndex ) then
 
 			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 			
@@ -852,6 +863,8 @@ end
 
 --- Gets the CountryID of the Group with the given SpawnPrefix
 function SPAWN:_GetGroupCountryID( SpawnPrefix )
+	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnPrefix } )
+	
 	local TemplateGroup = Group.getByName( SpawnPrefix )
 	
 	if TemplateGroup then
@@ -887,7 +900,7 @@ end
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
-	local SpawnTemplate = routines.utils.deepCopy( self:_GetTemplate( SpawnTemplatePrefix ) )
+	local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil

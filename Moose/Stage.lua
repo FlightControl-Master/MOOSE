@@ -187,7 +187,7 @@ self:T()
 	self:T( Task.Cargos.InitCargos )
 	for InitCargoID, InitCargoData in pairs( Task.Cargos.InitCargos ) do
 		self:T( { InitCargoData } )
-		InitCargoData:Spawn()
+		InitCargoData:Spawn( Client )
 	end
 	
 	return Valid
