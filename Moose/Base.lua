@@ -10,17 +10,18 @@ _TraceClass = {
 	--SEAD = true,
 	--DESTROYBASETASK = true,
 	--MOVEMENT = true,
-	SPAWN = true,
-	STAGE = true,
-	ZONE = true,
-	GROUP = true,
-	UNIT = true,
+	--SPAWN = true,
+	--STAGE = true,
+	--ZONE = true,
+	--GROUP = true,
+	--UNIT = true,
 	--CLIENT = true,
 	--CARGO = true,
-	CARGO_GROUP = true,
+	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
 	--CARGO_SLINGLOAD = true,
-	CARGO_ZONE = true,
+	--CARGO_ZONE = true,
+	--CLEANUP = true,
 	}
 
 BASE = {
@@ -219,7 +220,7 @@ end
 
 -- Trace section
 
-
+-- Log a trace (only shown when trace is on)
 function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
@@ -237,4 +238,22 @@ function BASE:T( Arguments )
 	
 		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
+end
+
+
+-- Log an exception
+function BASE:E( Arguments )
+
+	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+	local DebugInfoFrom = debug.getinfo( 3, "l" )
+	
+	local Function = "function"
+	if DebugInfoCurrent.name then
+		Function = DebugInfoCurrent.name
+	end
+
+	local LineCurrent = DebugInfoCurrent.currentline
+	local LineFrom = DebugInfoFrom.currentline
+
+	env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 end

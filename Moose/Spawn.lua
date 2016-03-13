@@ -381,6 +381,10 @@ function SPAWN:GetSpawnIndex( SpawnIndex )
 	
 	if ( self.SpawnMaxGroups == 0 ) or ( SpawnIndex <= self.SpawnMaxGroups ) then
 		if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
+			if SpawnIndex and SpawnIndex >= self.SpawnCount + 1 then
+				self.SpawnCount = self.SpawnCount + 1
+				SpawnIndex = self.SpawnCount
+			end
 			self.SpawnIndex = SpawnIndex
 			if not self.SpawnGroups[self.SpawnIndex] then
 				self:InitializeSpawnGroups( self.SpawnIndex )
@@ -708,14 +712,16 @@ end
 
 function SPAWN:GetGroupIndexFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-	
-	local IndexString = string.match( DCSUnit:getName(), "#.*-" ):sub( 2, -2 )
-	self:T( IndexString )
-	
-	if IndexString then
-		local Index = tonumber( IndexString )
-		self:T( { "Index:", IndexString, Index } )
-		return Index
+
+	if DCSUnit and DCSUnit:getName() then
+		local IndexString = string.match( DCSUnit:getName(), "#.*-" ):sub( 2, -2 )
+		self:T( IndexString )
+		
+		if IndexString then
+			local Index = tonumber( IndexString )
+			self:T( { "Index:", IndexString, Index } )
+			return Index
+		end
 	end
 	
 	return nil
@@ -724,22 +730,32 @@ end
 function SPAWN:GetPrefixFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
-	local SpawnPrefix = string.match( DCSUnit:getName(), ".*#" ):sub( 1, -2 )
-	self:T( SpawnPrefix )
-
-	return SpawnPrefix
+	if DCSUnit and DCSUnit:getName() then
+		local SpawnPrefix = string.match( DCSUnit:getName(), ".*#" )
+		if SpawnPrefix then
+			SpawnPrefix = SpawnPrefix:sub( 1, -2 )
+		else
+			self:E( { "This name does not contain a #", DCSUnit:getName() } )
+		end
+		self:T( SpawnPrefix )
+		return SpawnPrefix
+	end
+	
+	return nil
 end
 
 function SPAWN:GetGroupFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 	
-	local SpawnPrefix = self:GetPrefixFromDCSUnit( DCSUnit )
-	
-	if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
-		local SpawnGroupIndex = self:GetGroupIndexFromDCSUnit( DCSUnit )
-		local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
-		self:T( SpawnGroup )
-		return SpawnGroup
+	if DCSUnit then
+		local SpawnPrefix = self:GetPrefixFromDCSUnit( DCSUnit )
+		
+		if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
+			local SpawnGroupIndex = self:GetGroupIndexFromDCSUnit( DCSUnit )
+			local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
+			self:T( SpawnGroup )
+			return SpawnGroup
+		end
 	end
 
 	return nil
@@ -1046,10 +1062,12 @@ self:T( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.Sp
 end
 
 function SPAWN:_SpawnCleanUpScheduler()
-	self:T( "CleanUp Scheduler:" .. self.SpawnTemplatePrefix )
+	self:T( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
 
 	local SpawnCursor
 	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup( SpawnCursor )
+	
+	self:T( { "CleanUp Scheduler:", SpawnGroup } )
 
 	while SpawnGroup do
 		
@@ -1058,6 +1076,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
 			else
 				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
+					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
 					SpawnGroup:Destroy()
 				end
 			end
@@ -1066,6 +1085,9 @@ function SPAWN:_SpawnCleanUpScheduler()
 		end
 		
 		SpawnGroup, SpawnCursor = self:GetNextAliveGroup( SpawnCursor )
+		
+		self:T( { "CleanUp Scheduler:", SpawnGroup } )
+		
 	end
 	
 end
