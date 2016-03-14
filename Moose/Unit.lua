@@ -30,6 +30,19 @@ function UNIT:IsAlive()
 end
 
 
+function UNIT:GetDCSUnit()
+	self:T( self.DCSUnit )
+	
+	return self.DCSUnit
+end
+
+function UNIT:GetID()
+	self:T( self.UnitID )
+	
+	return self.UnitID
+end
+
+
 function UNIT:GetName()
 	self:T( self.UnitName )
 	
