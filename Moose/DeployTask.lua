@@ -3,6 +3,9 @@
 
 Include.File( "Task" )
 
+--- A DeployTask
+-- @type DEPLOYTASK
+-- 
 DEPLOYTASK = {
   ClassName = "DEPLOYTASK",
   TEXT = { "Deploy", "deployed", "unloaded" },
@@ -11,8 +14,9 @@ DEPLOYTASK = {
 
 
 --- Creates a new DEPLOYTASK object, which models the sequence of STAGEs to unload a cargo.
--- @tparam table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
--- @tparam CARGO_TYPE CargoType Type of the Cargo.
+-- @function [parent=#DEPLOYTASK] New
+-- @param #string CargoType Type of the Cargo.
+-- @return #DEPLOYTASK The created DeployTask
 function DEPLOYTASK:New( CargoType )
 	local self = BASE:Inherit( self, TASK:New() )
 	self:T()

@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>MOOSE</title>
+    <title>Reference</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 
 <div id="navigation">
 <br/>
-<h1>MOOSE</h1>
+<h1>ldoc</h1>
 
 <ul>
   <li><a href="../index.html">Index</a></li>
@@ -50,6 +50,7 @@
   <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
   <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
   <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/GROUP.html">GROUP</a></li>
   <li><a href="../classes/MENU.html">MENU</a></li>
   <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
   <li><a href="../classes/MISSION.html">MISSION</a></li>
@@ -58,11 +59,11 @@
   <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
   <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
   <li><a href="../classes/SEAD.html">SEAD</a></li>
-  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
-  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
   <li><a href="../classes/SPAWN.html">SPAWN</a></li>
   <li><a href="../classes/STAGE.html">STAGE</a></li>
   <li><a href="../classes/TASK.html">TASK</a></li>
+  <li><a href="../classes/UNIT.html">UNIT</a></li>
+  <li><a href="../classes/ZONE.html">ZONE</a></li>
 </ul>
 <h2>Modules</h2>
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
@@ -73,10 +74,6 @@
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
 </ul>
-<h2>Topics</h2>
-<ul class="$(kind=='Topics' and '' or 'nowrap'">
-  <li><a href="../topics/manual.md.html">manual</a></li>
-</ul>
 
 </div>
 
@@ -84,9 +81,7 @@
 
 <h1>Class <code>CLIENT</code></h1>
 <p>CLIENT Classes</p>
-<p>
-
-</p>
+<p></p>
 
 
 <h2><a href="#Tables">Tables</a></h2>
@@ -111,6 +106,18 @@
 	<td class="summary">ClientGroup returns the Group of a Client.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#CLIENT:GetClientGroupUnit">CLIENT:GetClientGroupUnit ()</a></td>
+	<td class="summary">Returns the Unit of the <a href="../classes/CLIENT.html#">CLIENT</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLIENT:GetClientGroupDCSUnit">CLIENT:GetClientGroupDCSUnit ()</a></td>
+	<td class="summary">Returns the DCSUnit of the <a href="../classes/CLIENT.html#">CLIENT</a>.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#CLIENT:ClientPosition">CLIENT:ClientPosition ()</a></td>
+	<td class="summary">Returns the Position of the <a href="../classes/CLIENT.html#">CLIENT</a>.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#CLIENT:Transport">CLIENT:Transport ()</a></td>
 	<td class="summary">Transport defines that the Client is a Transport.</td>
 	</tr>
@@ -123,20 +130,8 @@
 	<td class="summary">IsTransport returns if a Client is a transport.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#CLIENT:FindCargo">CLIENT:FindCargo (CargoName)</a></td>
-	<td class="summary">FindCargo finds loaded Cargo within a CLIENT instance.</td>
-	</tr>
-	<tr>
 	<td class="name" nowrap><a href="#CLIENT:ShowCargo">CLIENT:ShowCargo ()</a></td>
 	<td class="summary">ShowCargo shows the <a href="../classes/CARGO.html#">CARGO</a> within the CLIENT to the Player.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#CLIENT:AddCargo">CLIENT:AddCargo (CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate)</a></td>
-	<td class="summary">AddCargo allows to add <a href="../classes/CARGO.html#">CARGO</a> on the CLIENT.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#CLIENT:RemoveCargo">CLIENT:RemoveCargo (CargoName)</a></td>
-	<td class="summary">RemoveCargo removes <a href="../classes/CARGO.html#">CARGO</a> from the CLIENT.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#CLIENT:SwitchMessages">CLIENT:SwitchMessages (PrmTable)</a></td>
@@ -168,27 +163,17 @@
     <ul>
         <li><span class="parameter">ONBOARDSIDE</span>
 
-
-
         </li>
         <li><span class="parameter">LEFT</span>
-
-
 
         </li>
         <li><span class="parameter">RIGHT</span>
 
-
-
         </li>
         <li><span class="parameter">BACK</span>
 
-
-
         </li>
         <li><span class="parameter">FRONT</span>
-
-
 
         </li>
     </ul>
@@ -226,8 +211,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
-
-
 
     </ol>
 
@@ -274,6 +257,7 @@
     </dt>
     <dd>
     ClientGroup returns the Group of a Client.
+ This function is modified to deal with a couple of bugs in DCS 1.5.3
 
 
 
@@ -282,7 +266,65 @@
 
            <span class="types"><span class="type">Group</span></span>
 
+    </ol>
 
+
+
+
+</dd>
+    <dt>
+    <a name = "CLIENT:GetClientGroupUnit"></a>
+    <strong>CLIENT:GetClientGroupUnit ()</strong>
+    </dt>
+    <dd>
+    Returns the Unit of the <a href="../classes/CLIENT.html#">CLIENT</a>.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">Unit</span></span>
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLIENT:GetClientGroupDCSUnit"></a>
+    <strong>CLIENT:GetClientGroupDCSUnit ()</strong>
+    </dt>
+    <dd>
+    Returns the DCSUnit of the <a href="../classes/CLIENT.html#">CLIENT</a>.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">DCSUnit</span></span>
+
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "CLIENT:ClientPosition"></a>
+    <strong>CLIENT:ClientPosition ()</strong>
+    </dt>
+    <dd>
+    Returns the Position of the <a href="../classes/CLIENT.html#">CLIENT</a>.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">Position</span></span>
 
     </ol>
 
@@ -303,8 +345,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
-
-
 
     </ol>
 
@@ -333,8 +373,6 @@
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
 
-
-
     </ol>
 
 
@@ -354,38 +392,6 @@
     <ol>
 
            <span class="types"><span class="type">bool</span></span>
-
-
-
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "CLIENT:FindCargo"></a>
-    <strong>CLIENT:FindCargo (CargoName)</strong>
-    </dt>
-    <dd>
-    FindCargo finds loaded Cargo within a CLIENT instance.
- Cargo is loaded when certain PICK-UP or DEPLOY Tasks are properly executed.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">CargoName</span>
-            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         is the name of the cargo.
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><a class="type" href="../classes/CARGO.html#">CARGO_TYPE</a></span>
-
-
 
     </ol>
 
@@ -409,80 +415,6 @@
 
 </dd>
     <dt>
-    <a name = "CLIENT:AddCargo"></a>
-    <strong>CLIENT:AddCargo (CargoName, CargoGroupName, CargoType, CargoWeight, CargoGroupTemplate)</strong>
-    </dt>
-    <dd>
-    AddCargo allows to add <a href="../classes/CARGO.html#">CARGO</a> on the CLIENT.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">CargoName</span>
-            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         is the name of the <a href="../classes/CARGO.html#">CARGO</a>.
-        </li>
-        <li><span class="parameter">CargoGroupName</span>
-            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         is the name of an active Group defined within the Mission Editor or Dynamically Spawned. Note that this is only applicable for Unit <a href="../classes/CARGO.html#">CARGO</a> Types.
-        </li>
-        <li><span class="parameter">CargoType</span>
-            <span class="types"><a class="type" href="../classes/CARGO.html#">CARGO_TYPE</a></span>
-         is the Type of the <a href="../classes/CARGO.html#">CARGO</a>.
-        </li>
-        <li><span class="parameter">CargoWeight</span>
-            <span class="types"><span class="type">number</span></span>
-         is the weight of the cargo in Kg.
-        </li>
-        <li><span class="parameter">CargoGroupTemplate</span>
-            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         is the name of an active Group defined within the Mission Editor with "Late Activation".
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
-
-
-
-    </ol>
-
-
-
-
-</dd>
-    <dt>
-    <a name = "CLIENT:RemoveCargo"></a>
-    <strong>CLIENT:RemoveCargo (CargoName)</strong>
-    </dt>
-    <dd>
-    RemoveCargo removes <a href="../classes/CARGO.html#">CARGO</a> from the CLIENT.
-
-
-    <h3>Parameters:</h3>
-    <ul>
-        <li><span class="parameter">CargoName</span>
-            <span class="types"><a class="type" href="http://www.lua.org/manual/5.1/manual.html#5.4">string</a></span>
-         is the name of the <a href="../classes/CARGO.html#">CARGO</a>.
-        </li>
-    </ul>
-
-    <h3>Returns:</h3>
-    <ol>
-
-           <span class="types"><span class="type">Cargo</span></span>
-
-
-
-    </ol>
-
-
-
-
-</dd>
-    <dt>
     <a name = "CLIENT:SwitchMessages"></a>
     <strong>CLIENT:SwitchMessages (PrmTable)</strong>
     </dt>
@@ -493,8 +425,6 @@
     <h3>Parameters:</h3>
     <ul>
         <li><span class="parameter">PrmTable</span>
-
-
 
         </li>
     </ul>
@@ -549,7 +479,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+<i style="float:right;">Last updated 2016-03-14 10:50:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

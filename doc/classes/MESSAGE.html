@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>MOOSE</title>
+    <title>Reference</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 
 <div id="navigation">
 <br/>
-<h1>MOOSE</h1>
+<h1>ldoc</h1>
 
 <ul>
   <li><a href="../index.html">Index</a></li>
@@ -50,6 +50,7 @@
   <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
   <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
   <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/GROUP.html">GROUP</a></li>
   <li><a href="../classes/MENU.html">MENU</a></li>
   <li><strong>MESSAGE</strong></li>
   <li><a href="../classes/MISSION.html">MISSION</a></li>
@@ -58,11 +59,11 @@
   <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
   <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
   <li><a href="../classes/SEAD.html">SEAD</a></li>
-  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
-  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
   <li><a href="../classes/SPAWN.html">SPAWN</a></li>
   <li><a href="../classes/STAGE.html">STAGE</a></li>
   <li><a href="../classes/TASK.html">TASK</a></li>
+  <li><a href="../classes/UNIT.html">UNIT</a></li>
+  <li><a href="../classes/ZONE.html">ZONE</a></li>
 </ul>
 <h2>Modules</h2>
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
@@ -73,10 +74,6 @@
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
 </ul>
-<h2>Topics</h2>
-<ul class="$(kind=='Topics' and '' or 'nowrap'">
-  <li><a href="../topics/manual.md.html">manual</a></li>
-</ul>
 
 </div>
 
@@ -84,7 +81,8 @@
 
 <h1>Class <code>MESSAGE</code></h1>
 <p>Message System to display Messages for Clients and Coalitions or All.</p>
-<p> Messages are grouped on the display panel per Category to improve readability for the players.
+<p>
+ Messages are grouped on the display panel per Category to improve readability for the players.
  Messages are shown on the display panel for an amount of seconds, and will then disappear.
  Messages are identified by an ID. The messages with the same ID belonging to the same category will be overwritten if they were still being displayed on the display panel.
  Messages are created with MESSAGE:<a href="../classes/MESSAGE.html#MESSAGE:New">New</a>().
@@ -104,6 +102,14 @@
 	<td class="summary">Sends a MESSAGE to a Client Group.</td>
 	</tr>
 	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:ToBlue">MESSAGE:ToBlue ()</a></td>
+	<td class="summary">Sends a MESSAGE to the Blue coalition.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#MESSAGE:ToRed">MESSAGE:ToRed ()</a></td>
+	<td class="summary">Sends a MESSAGE to the Red Coalition.</td>
+	</tr>
+	<tr>
 	<td class="name" nowrap><a href="#MESSAGE:ToCoalition">MESSAGE:ToCoalition (CoalitionSide)</a></td>
 	<td class="summary">Sends a MESSAGE to a Coalition.</td>
 	</tr>
@@ -117,10 +123,6 @@
 	<tr>
 	<td class="name" nowrap><a href="#MESSAGEQUEUE:_DisplayMessages">MESSAGEQUEUE:_DisplayMessages ()</a></td>
 	<td class="summary">This function is called automatically by the MESSAGEQUEUE scheduler.</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#MESSAGE._MessageQueue">MESSAGE._MessageQueue</a></td>
-	<td class="summary">The _MessageQueue object is created when the MESSAGE class module is loaded.</td>
 	</tr>
 </table>
 
@@ -164,8 +166,6 @@
 
            <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
 
-
-
     </ol>
 
 
@@ -206,8 +206,6 @@
 
            <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
 
-
-
     </ol>
 
 
@@ -233,6 +231,68 @@
 
 </dd>
     <dt>
+    <a name = "MESSAGE:ToBlue"></a>
+    <strong>MESSAGE:ToBlue ()</strong>
+    </dt>
+    <dd>
+    Sends a MESSAGE to the Blue coalition.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Send a message created with the <a href="../classes/MESSAGE.html#MESSAGE:New">New</a> method to the BLUE coalition.
+</span> MessageBLUE = MESSAGE:New( <span class="string">"To the BLUE Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToBlue()
+ <span class="keyword">or</span>
+ MESSAGE:New( <span class="string">"To the BLUE Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToBlue()
+ <span class="keyword">or</span>
+ MessageBLUE = MESSAGE:New( <span class="string">"To the BLUE Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageBLUE:ToBlue()</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "MESSAGE:ToRed"></a>
+    <strong>MESSAGE:ToRed ()</strong>
+    </dt>
+    <dd>
+    Sends a MESSAGE to the Red Coalition.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
+
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="comment">-- Send a message created with the <a href="../classes/MESSAGE.html#MESSAGE:New">New</a> method to the RED coalition.
+</span> MessageRED = MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToRed()
+ <span class="keyword">or</span>
+ MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> ):ToRed()
+ <span class="keyword">or</span>
+ MessageRED = MESSAGE:New( <span class="string">"To the RED Players: You receive a penalty because you've killed one of your own units"</span>, <span class="string">"Penalty"</span>, <span class="number">25</span>, <span class="string">"Score"</span> )
+ MessageRED:ToRed()</pre>
+    </ul>
+
+</dd>
+    <dt>
     <a name = "MESSAGE:ToCoalition"></a>
     <strong>MESSAGE:ToCoalition (CoalitionSide)</strong>
     </dt>
@@ -251,8 +311,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
-
-
 
     </ol>
 
@@ -284,8 +342,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/MESSAGE.html#">MESSAGE</a></span>
-
-
 
     </ol>
 
@@ -323,20 +379,6 @@
 
 
 </dd>
-    <dt>
-    <a name = "MESSAGE._MessageQueue"></a>
-    <strong>MESSAGE._MessageQueue</strong>
-    </dt>
-    <dd>
-    The _MessageQueue object is created when the MESSAGE class module is loaded.
-
-
-
-
-
-
-
-</dd>
 </dl>
 
 
@@ -344,7 +386,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+<i style="float:right;">Last updated 2016-03-14 10:50:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

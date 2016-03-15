@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>MOOSE</title>
+    <title>Reference</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 
 <div id="navigation">
 <br/>
-<h1>MOOSE</h1>
+<h1>ldoc</h1>
 
 <ul>
   <li><a href="../index.html">Index</a></li>
@@ -32,8 +32,6 @@
 
 <h2>Contents</h2>
 <ul>
-<li><a href="#Tables">Tables</a></li>
-<li><a href="#Issues">Issues</a></li>
 <li><a href="#Methods">Methods</a></li>
 <li><a href="#Class_MISSIONSCHEDULER">Class MISSIONSCHEDULER </a></li>
 </ul>
@@ -52,6 +50,7 @@
   <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
   <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
   <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/GROUP.html">GROUP</a></li>
   <li><a href="../classes/MENU.html">MENU</a></li>
   <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
   <li><strong>MISSION</strong></li>
@@ -60,11 +59,11 @@
   <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
   <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
   <li><a href="../classes/SEAD.html">SEAD</a></li>
-  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
-  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
   <li><a href="../classes/SPAWN.html">SPAWN</a></li>
   <li><a href="../classes/STAGE.html">STAGE</a></li>
   <li><a href="../classes/TASK.html">TASK</a></li>
+  <li><a href="../classes/UNIT.html">UNIT</a></li>
+  <li><a href="../classes/ZONE.html">ZONE</a></li>
 </ul>
 <h2>Modules</h2>
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
@@ -75,39 +74,17 @@
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
 </ul>
-<h2>Topics</h2>
-<ul class="$(kind=='Topics' and '' or 'nowrap'">
-  <li><a href="../topics/manual.md.html">manual</a></li>
-</ul>
 
 </div>
 
 <div id="content">
 
 <h1>Class <code>MISSION</code></h1>
-<p>A MISSION is the main owner of a Mission orchestration within MOOSE    .</p>
+<p>A MISSION is the main owner of a Mission orchestration within MOOSE	.</p>
 <p> The Mission framework orchestrates <a href="../classes/CLIENT.html#">CLIENT</a>s, <a href="../classes/TASK.html#">TASK</a>s, <a href="../classes/STAGE.html#">STAGE</a>s etc.
  A <a href="../classes/CLIENT.html#">CLIENT</a> needs to be registered within the <a href="../classes/MISSION.html#">MISSION</a> through the function <a href="../classes/MISSION.html#MISSION:AddClient">AddClient</a>. A <a href="../classes/TASK.html#">TASK</a> needs to be registered within the <a href="../classes/MISSION.html#">MISSION</a> through the function <a href="../classes/MISSION.html#MISSION:AddTask">AddTask</a>.</p>
 
 
-<h2><a href="#Tables">Tables</a></h2>
-<table class="function_list">
-	<tr>
-	<td class="name" nowrap><a href="#MISSION.SpawnCargo">MISSION.SpawnCargo</a></td>
-	<td class="summary">Add Cargo to the mission...</td>
-	</tr>
-</table>
-<h2><a href="#Issues">Issues</a></h2>
-<table class="function_list">
-	<tr>
-	<td class="name" nowrap><a href="#MISSION.SpawnCargo-todo1">MISSION.SpawnCargo-todo1</a></td>
-	<td class="summary">check this</td>
-	</tr>
-	<tr>
-	<td class="name" nowrap><a href="#MISSION.SpawnCargo-todo1-todo2">MISSION.SpawnCargo-todo1-todo2</a></td>
-	<td class="summary">check this</td>
-	</tr>
-</table>
 <h2><a href="#Methods">Methods</a></h2>
 <table class="function_list">
 	<tr>
@@ -227,56 +204,6 @@
 <br/>
 
 
-    <h2><a name="Tables"></a>Tables</h2>
-
-    <dl class="function">
-    <dt>
-    <a name = "MISSION.SpawnCargo"></a>
-    <strong>MISSION.SpawnCargo</strong>
-    </dt>
-    <dd>
-    Add Cargo to the mission...  Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
-
-
-
-
-
-
-
-</dd>
-</dl>
-    <h2><a name="Issues"></a>Issues</h2>
-
-    <dl class="function">
-    <dt>
-    <a name = "MISSION.SpawnCargo-todo1"></a>
-    <strong>MISSION.SpawnCargo-todo1</strong>
-    </dt>
-    <dd>
-    check this
-
-
-
-
-
-
-
-</dd>
-    <dt>
-    <a name = "MISSION.SpawnCargo-todo1-todo2"></a>
-    <strong>MISSION.SpawnCargo-todo1-todo2</strong>
-    </dt>
-    <dd>
-    check this
-
-
-
-
-
-
-
-</dd>
-</dl>
     <h2><a name="Methods"></a>Methods</h2>
 
     <dl class="function">
@@ -313,8 +240,6 @@
 
            <span class="types"><a class="type" href="../classes/MISSION.html#">MISSION</a></span>
 
-
-
     </ol>
 
 
@@ -347,8 +272,6 @@
     <ol>
 
            <span class="types"><span class="type">bool</span></span>
-
-
 
     </ol>
 
@@ -578,8 +501,6 @@
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
 
-
-
     </ol>
 
 
@@ -606,8 +527,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
-
-
 
     </ol>
 
@@ -645,8 +564,6 @@
 
            <span class="types"><a class="type" href="../classes/CLIENT.html#">CLIENT</a></span>
 
-
-
     </ol>
 
 
@@ -683,8 +600,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/TASK.html#">TASK</a></span>
-
-
 
     </ol>
 
@@ -735,8 +650,6 @@
     <ol>
 
            <span class="types"><a class="type" href="../classes/TASK.html#">TASK</a></span>
-
-
 
     </ol>
 
@@ -966,7 +879,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+<i style="float:right;">Last updated 2016-03-14 10:50:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

@@ -3,7 +3,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <head>
-    <title>MOOSE</title>
+    <title>Reference</title>
     <link rel="stylesheet" href="../ldoc.css" type="text/css" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 
 <div id="navigation">
 <br/>
-<h1>MOOSE</h1>
+<h1>ldoc</h1>
 
 <ul>
   <li><a href="../index.html">Index</a></li>
@@ -32,7 +32,9 @@
 
 <h2>Contents</h2>
 <ul>
-<li><a href="#Structures">Structures </a></li>
+<li><a href="#Tables">Tables</a></li>
+<li><a href="#Fields">Fields</a></li>
+<li><a href="#Methods">Methods</a></li>
 </ul>
 
 
@@ -49,6 +51,7 @@
   <li><a href="../classes/DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
   <li><a href="../classes/DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
   <li><a href="../classes/GOHOMETASK.html">GOHOMETASK</a></li>
+  <li><a href="../classes/GROUP.html">GROUP</a></li>
   <li><a href="../classes/MENU.html">MENU</a></li>
   <li><a href="../classes/MESSAGE.html">MESSAGE</a></li>
   <li><a href="../classes/MISSION.html">MISSION</a></li>
@@ -57,11 +60,11 @@
   <li><a href="../classes/PICKUPTASK.html">PICKUPTASK</a></li>
   <li><a href="../classes/ROUTETASK.html">ROUTETASK</a></li>
   <li><a href="../classes/SEAD.html">SEAD</a></li>
-  <li><a href="../classes/SLINGLOADHOOKTASK.html">SLINGLOADHOOKTASK</a></li>
-  <li><a href="../classes/SLINGLOADUNHOOKTASK.html">SLINGLOADUNHOOKTASK</a></li>
   <li><a href="../classes/SPAWN.html">SPAWN</a></li>
   <li><a href="../classes/STAGE.html">STAGE</a></li>
   <li><a href="../classes/TASK.html">TASK</a></li>
+  <li><a href="../classes/UNIT.html">UNIT</a></li>
+  <li><a href="../classes/ZONE.html">ZONE</a></li>
 </ul>
 <h2>Modules</h2>
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
@@ -72,31 +75,39 @@
 <ul class="$(kind=='Topics' and '' or 'nowrap'">
   <li><a href="../scripts/eStatHandler.html">eStatHandler</a></li>
 </ul>
-<h2>Topics</h2>
-<ul class="$(kind=='Topics' and '' or 'nowrap'">
-  <li><a href="../topics/manual.md.html">manual</a></li>
-</ul>
 
 </div>
 
 <div id="content">
 
 <h1>Class <code>CARGO</code></h1>
-<p>CARGO</p>
-<p>
-
-</p>
+<p>CARGO Classes</p>
+<p></p>
 
 
-<h2><a href="#Structures">Structures </a></h2>
+<h2><a href="#Tables">Tables</a></h2>
 <table class="function_list">
 	<tr>
-	<td class="name" nowrap><a href="#CARGO.CARGO_TRANSPORT">CARGO.CARGO_TRANSPORT</a></td>
-	<td class="summary">Internal Table to understand the form of the CARGO.</td>
+	<td class="name" nowrap><a href="#CARGO.CARGOS">CARGO.CARGOS</a></td>
+	<td class="summary">Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".</td>
+	</tr>
+</table>
+<h2><a href="#Fields">Fields</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#self.CargoGroupName">self.CargoGroupName</a></td>
+	<td class="summary">ReSpawn the Cargo from the CargoHost</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#CARGO.CARGO_TYPE">CARGO.CARGO_TYPE</a></td>
-	<td class="summary">CARGO_TYPE Defines the different types of transports, which has an impact on the menu commands shown in F10.</td>
+	<td class="name" nowrap><a href="#self.CargoGroupName">self.CargoGroupName</a></td>
+	<td class="summary">ReSpawn the Cargo in the CargoZone without a host ...</td>
+	</tr>
+</table>
+<h2><a href="#Methods">Methods</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#CARGO:New">CARGO:New (CargoType, CargoName, CargoWeight)</a></td>
+	<td class="summary">Add Cargo to the mission...</td>
 	</tr>
 </table>
 
@@ -104,41 +115,36 @@
 <br/>
 
 
-    <h2><a name="Structures"></a>Structures </h2>
-
+    <h2><a name="Tables"></a>Tables</h2>
 
     <dl class="function">
     <dt>
-    <a name = "CARGO.CARGO_TRANSPORT"></a>
-    <strong>CARGO.CARGO_TRANSPORT</strong>
+    <a name = "CARGO.CARGOS"></a>
+    <strong>CARGO.CARGOS</strong>
     </dt>
     <dd>
-    Internal Table to understand the form of the CARGO.
-
-
-    <h3>Fields:</h3>
-    <ul>
-        <li><span class="parameter">UNIT</span>
+    Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
+ These clients are defined within the Mission Orchestration Framework (MOF)
 
 
 
-        </li>
-        <li><span class="parameter">SLING</span>
 
 
 
-        </li>
-        <li><span class="parameter">STATIC</span>
+
+</dd>
+</dl>
+    <h2><a name="Fields"></a>Fields</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "self.CargoGroupName"></a>
+    <strong>self.CargoGroupName</strong>
+    </dt>
+    <dd>
+    ReSpawn the Cargo from the CargoHost
 
 
-
-        </li>
-        <li><span class="parameter">INVISIBLE</span>
-
-
-
-        </li>
-    </ul>
 
 
 
@@ -146,48 +152,40 @@
 
 </dd>
     <dt>
-    <a name = "CARGO.CARGO_TYPE"></a>
-    <strong>CARGO.CARGO_TYPE</strong>
+    <a name = "self.CargoGroupName"></a>
+    <strong>self.CargoGroupName</strong>
     </dt>
     <dd>
-    CARGO_TYPE Defines the different types of transports, which has an impact on the menu commands shown in F10.
+    ReSpawn the Cargo in the CargoZone without a host ...
 
 
-    <h3>Fields:</h3>
+
+
+
+
+
+</dd>
+</dl>
+    <h2><a name="Methods"></a>Methods</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "CARGO:New"></a>
+    <strong>CARGO:New (CargoType, CargoName, CargoWeight)</strong>
+    </dt>
+    <dd>
+    Add Cargo to the mission...  Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
+
+
+    <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">TROOPS</span>
-
-
+        <li><span class="parameter">CargoType</span>
 
         </li>
-        <li><span class="parameter">GOODS</span>
-
-
+        <li><span class="parameter">CargoName</span>
 
         </li>
-        <li><span class="parameter">VEHICLES</span>
-
-
-
-        </li>
-        <li><span class="parameter">INFANTRY</span>
-
-
-
-        </li>
-        <li><span class="parameter">ENGINEERS</span>
-
-
-
-        </li>
-        <li><span class="parameter">PACKAGE</span>
-
-
-
-        </li>
-        <li><span class="parameter">CARGO</span>
-
-
+        <li><span class="parameter">CargoWeight</span>
 
         </li>
     </ul>
@@ -204,7 +202,7 @@
 </div> <!-- id="main" -->
 <div id="about">
 <i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.3</a></i>
-<i style="float:right;">Last updated 2015-01-29 21:06:10 </i>
+<i style="float:right;">Last updated 2016-03-14 10:50:59 </i>
 </div> <!-- id="about" -->
 </div> <!-- id="container" -->
 </body>

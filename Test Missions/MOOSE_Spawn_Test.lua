@@ -9,14 +9,19 @@ Group_Plane = Spawn_Plane:Spawn()
 
 Spawn_Helicopter = SPAWN:New( "Spawn Helicopter" ):RandomizeRoute( 1, 1, 1000 )
 Group_Helicopter = Spawn_Helicopter:Spawn()
+Group_Helicopter2 = Spawn_Helicopter:Spawn()
 
 Spawn_Ship = SPAWN:New( "Spawn Ship" ):RandomizeRoute( 0, 0, 2000 )
 Group_Ship1 = Spawn_Ship:Spawn()
 Group_Ship2 = Spawn_Ship:Spawn()
 
-Spawn_Vehicle = SPAWN:New( "Spawn Vehicle" )
+Spawn_Vehicle = SPAWN:New( "Spawn Vehicle" ):RandomizeRoute( 1, 0, 50 )
 Group_Vehicle1 = Spawn_Vehicle:Spawn()
 Group_Vehicle2 = Spawn_Vehicle:Spawn()
+Group_Vehicle3 = Spawn_Vehicle:Spawn()
+Group_Vehicle4 = Spawn_Vehicle:Spawn()
+Group_Vehicle5 = Spawn_Vehicle:Spawn()
+Group_Vehicle6 = Spawn_Vehicle:Spawn()
 
 Group_Vehicle1:RouteToZone( ZONE:New( "Landing Zone" ), true, 40, "Cone" )
 

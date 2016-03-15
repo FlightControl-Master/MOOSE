@@ -1,17 +1,20 @@
 --- GROUP Classes
--- @classmod GROUP
+-- @module GROUP
+-- @return #GROUP
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 Include.File( "Unit" )
 
-GROUPS = {}
-
-
+--- The GROUP class
+-- @type GROUP
+-- @field ClassName The name of the class.
 GROUP = {
-	ClassName="GROUP",
+	ClassName = "GROUP",
 	}
+
+GROUPS = {}
 	
 function GROUP:New( DCSGroup )
 	local self = BASE:Inherit( self, BASE:New() )

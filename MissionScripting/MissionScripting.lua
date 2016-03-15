@@ -4,7 +4,7 @@ dofile('Scripts/ScriptingSystem.lua')
 
 Include = {}
 
-Include.LoadPath = 'Scripts/MOOSE/MOOSE'
+Include.LoadPath = 'Scripts/MOOSE'
 Include.Files = {}
 
 Include.File = function( IncludeFile )
@@ -15,13 +15,11 @@ Include.File = function( IncludeFile )
 	end
 end
 
-Include.File( "Trace" )
-Include.File( "Routines" )
 Include.File( "Database" )
-Include.File( "StatHandler" )
+--Include.File( "StatHandler" )
 
 --Sanitize Mission Scripting environment
---This makes unavailable some unsecure functions.
+--This makes unavailable some unsecure functions. 
 --Mission downloaded from server to client may contain potentialy harmful lua code that may use these functions.
 --You can remove the code below and make availble these functions at your own risk.
 
