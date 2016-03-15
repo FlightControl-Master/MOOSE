@@ -6,7 +6,7 @@
 --   1. Groups will have the name SpawnTemplatePrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
 --   2. Units will have the name SpawnTemplatePrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
 -- 
--- Some additional notes that need to remember:
+-- Some additional notes that need to be remembered:
 -- 
 --   * Templates are actually groups defined within the mission editor, with the flag "Late Activation" set. As such, these groups are never used within the mission, but are used by the @{#SPAWN} module.
 --   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
@@ -18,15 +18,22 @@
 --
 -- 2. Initialization of the SPAWN object. 
 -- ------------------
--- A SPAWN instance will behave differently based on the usage of initialization methods:  
+-- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
---   * Limit the amount of groups that can be alive at the same time and that can be dynamically spawned using the @{#SPAWN.Limit} method.
---   * Spawned groups can get their routes randomized using the @{#SPAWN.RandomizeRoute} method.
---   * Using the @{#SPAWN.RandomizeTemplate}, random group templates can be defined so that when a new group is spawned, the group template is selected from one of the templates defined. 
---   * Spawing of groups can be scheduled at defined but randomized intervals. Use the @{#SPAWN.Scheduled} method to schedule spawning of groups.
+--   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups.
+--   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+--   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
+--   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
+--   * @{#SPAWN.Repeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.RepeatOnLanding} and @{#SPAWN.RepeatOnEngineShutDown}.
 -- 
--- 2. Instantiation
+-- 2. Spawning groups
 -- ------------------------------
+-- Groups can be spawned at different times and methods:
+-- 
+--   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
+--   * @{#SPAWN.ReSpawn}: Re-spawn a group based on a given index.
+--   * @{#SPAWN.SpawnScheduled}: Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.ScheduleStart} and @{#SPAWN.ScheduleStop} to start and stop the schedule respectively.
 -- 
 -- @module SPAWN
 -- @author FlightControl
