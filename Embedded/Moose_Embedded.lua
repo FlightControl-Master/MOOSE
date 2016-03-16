@@ -2882,6 +2882,10 @@ _TraceClass = {
 	--CLEANUP = true,
 	}
 
+--- The BASE Class
+-- @type BASE
+-- @field ClassName The name of the class.
+-- @field ClassID The ID number of the class.
 BASE = {
 
   ClassName = "BASE",
@@ -2889,9 +2893,17 @@ BASE = {
   Events = {}
 }
 
+--- The Formation Class
+-- @type FORMATION
+-- @field Cone A cone formation.
+FORMATION = {
+  Cone = "Cone" 
+}
+
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
--- @return BASE
+-- @param self
+-- @return #BASE
 -- @usage
 -- function TASK:New()
 -- trace.f(self.ClassName)
@@ -3121,7 +3133,8 @@ end
 Include.File( "Routines" )
 Include.File( "Base" )
 
-
+--- The MENU class
+-- @type
 MENU = {
   ClassName = "MENU",
   MenuPath = nil,
@@ -3141,6 +3154,8 @@ function MENU:New( MenuText, MenuParentPath )
 	return Child
 end
 
+--- The COMMANDMENU class
+-- @type
 COMMANDMENU = {
   ClassName = "COMMANDMENU",
   CommandMenuFunction = nil,
@@ -3164,8 +3179,8 @@ function COMMANDMENU:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenu
 	return Child
 end
 
----
-
+--- The SUBMENU class
+-- @type
 SUBMENU = {
   ClassName = "SUBMENU"
 }
@@ -3184,6 +3199,8 @@ function SUBMENU:New( MenuText, ParentMenu )
 	return Child
 end
 
+--- The MENU_SUB_GROUP class
+-- @type
 MENU_SUB_GROUP = {
   ClassName = "MENU_SUB_GROUP"
 }
@@ -3202,6 +3219,8 @@ function MENU_SUB_GROUP:New( GroupID, MenuText, ParentMenu )
 	return self
 end
 
+--- The MENU_COMMAND_GROUP class
+-- @type
 MENU_COMMAND_GROUP = {
   ClassName = "MENU_COMMAND_GROUP"
 }
@@ -3222,21 +3241,41 @@ function MENU_COMMAND_GROUP:New( GroupID, MenuText, ParentMenu, CommandMenuFunct
 	self.CommandMenuArgument = CommandMenuArgument
 	return self
 end
---- GROUP Classes
+--- A GROUP class abstraction of a DCSGroup class. 
+-- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
+-- 
+-- 
 -- @module GROUP
+-- @extends BASE#BASE
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 Include.File( "Unit" )
 
-GROUPS = {}
-
-
+--- The GROUP class
+-- @type GROUP
+-- @field #Group DCSGroup The DCS group class.
+-- @field #string GroupName The name of the group.
+-- @field #number GroupID the ID of the group.
+-- @field #table Controller The controller of the group.
 GROUP = {
-	ClassName="GROUP",
+	ClassName = "GROUP",
+	GroupName = "",
+	GroupID = 0,
+	Controller = nil,
 	}
 	
+--- A DCSGroup
+-- @type Group
+-- @field id_ The ID of the group in DCS
+
+GROUPS = {}
+	
+--- Create a new GROUP from a DCSGroup
+-- @param self
+-- @param #Group DCSGroup The DCS Group
+-- @return #GROUP self
 function GROUP:New( DCSGroup )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:T( DCSGroup:getName() )
@@ -3250,6 +3289,10 @@ function GROUP:New( DCSGroup )
 end
 
 
+--- Create a new GROUP from an existing DCSGroup in the mission.
+-- @param self
+-- @param GroupName The name of the DCS Group.
+-- @return #GROUP self
 function GROUP:NewFromName( GroupName )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:T( GroupName )
@@ -3258,35 +3301,52 @@ function GROUP:NewFromName( GroupName )
 	if self.DCSGroup then
 		self.GroupName = self.DCSGroup:getName()
 		self.GroupID = self.DCSGroup:getID()
+    self.Controller = DCSGroup:getController()
 	end
 
 	return self
 end
 
+--- Gets the DCSGroup of the GROUP.
+-- @param self
+-- @return #Group The DCSGroup.
 function GROUP:GetDCSGroup()
 	self:T( { self.GroupName } )
 	self.DCSGroup = Group.getByName( self.GroupName )
 	return self.DCSGroup
 end
 
+
+
+--- Gets the DCS Unit of the GROUP.
+-- @param self
+-- @param #number UnitNumber The unit index to be returned from the GROUP.
+-- @return #Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
 	self:T( { self.GroupName, UnitNumber } )
 	return self.DCSGroup:getUnit( UnitNumber )
 
 end
 
+--- Activates a GROUP.
+-- @param self
 function GROUP:Activate()
 	self:T( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
 	return self:GetDCSGroup()
 end
 
+--- Gets the name of the GROUP.
+-- @param self
+-- @return #string The name of the GROUP.
 function GROUP:GetName()
 	self:T( self.GroupName )
 	
 	return self.GroupName
 end
 
+--- Gets the current Point of the GROUP in VEC2 format.
+-- @return #Vec2 Current x and Y position of the group.
 function GROUP:GetPoint()
 	self:T( self.GroupName )
 	
@@ -3295,7 +3355,10 @@ function GROUP:GetPoint()
 	return GroupPoint
 end
 
-
+--- Destroy a GROUP
+-- Note that this destroy method also raises a destroy event at run-time.
+-- So all event listeners will catch the destroy event of this GROUP.
+-- @param self
 function GROUP:Destroy()
 	self:T( self.GroupName )
 	
@@ -3308,13 +3371,19 @@ end
 
 
 
-
+--- Gets the DCS Unit.
+-- @param self
+-- @param #number UnitNumber The number of the Unit to be returned.
+-- @return #Unit The DCS Unit.
 function GROUP:GetUnit( UnitNumber )
 	self:T( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
 end
 
-
+--- Returns if the group is of an air category.
+-- If the group is a helicopter or a plane, then this method will return true, otherwise false.
+-- @param self
+-- @return #boolean Air category evaluation result.
 function GROUP:IsAir()
 self:T()
 	
@@ -3324,6 +3393,10 @@ self:T()
 	return IsAirResult
 end
 
+--- Returns if the group is alive.
+-- When the group exists at run-time, this method will return true, otherwise false.
+-- @param self
+-- @return #boolean Alive result.
 function GROUP:IsAlive()
 self:T()
 	
@@ -3333,7 +3406,10 @@ self:T()
 	return IsAliveResult
 end
 
-
+--- Returns if all units of the group are on the ground or landed.
+-- If all units of this group are on the ground, this function will return true, otherwise false.
+-- @param self
+-- @return #boolean All units on the ground result.
 function GROUP:AllOnGround()
 self:T()
 
@@ -3349,9 +3425,12 @@ self:T()
 	return AllOnGroundResult
 end
 
-
+--- Returns the current maximum velocity of the group.
+-- Each unit within the group gets evaluated, and the maximum velocity (= the unit which is going the fastest) is returned.
+-- @param self
+-- @return #number Maximum velocity found.
 function GROUP:GetMaxVelocity()
-self:T()
+  self:T()
 
 	local MaxVelocity = 0
 	
@@ -3369,13 +3448,31 @@ self:T()
 end
 
 
-function GROUP:GetHeight()
-self:T()
-
+--- Returns the current minimum height of the group.
+-- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
+-- @param self
+-- @return #number Minimum height found.
+function GROUP:GetMinHeight()
+  self:T()
 
 end
 
 
+--- Returns the current maximum height of the group.
+-- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
+-- @param self
+-- @return #number Maximum height found.
+function GROUP:GetMaxHeight()
+self:T()
+
+end
+
+
+--- Land the group at a Vec2Point.
+-- @param self
+-- @param #Vec2 Point The point where to land.
+-- @param #number Duration The duration in seconds to stay on the ground.
+-- @return #GROUP self
 function GROUP:Land( Point, Duration )
 trace.f( self.ClassName, { self.GroupName, Point, Duration } )
 
@@ -3390,7 +3487,12 @@ trace.f( self.ClassName, { self.GroupName, Point, Duration } )
 	return self
 end
 
-
+--- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+-- @param self
+-- @param #Vec2 Point The point where to wait.
+-- @param #number Duration The duration in seconds to wait.
+-- @param EmbarkingGroup The group to be embarked.
+-- @return #GROUP self
 function GROUP:Embarking( Point, Duration, EmbarkingGroup )
 trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
@@ -3415,7 +3517,11 @@ trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup.DCSGr
 	return self
 end
 
-
+--- Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.
+-- @param self
+-- @param #Vec2 Point The point where to wait.
+-- @param #number Radius The radius of the embarking zone around the Point.
+-- @return #GROUP self
 function GROUP:EmbarkToTransport( Point, Radius )
 trace.f( self.ClassName, { self.GroupName, Point, Radius } )
 
@@ -3432,6 +3538,10 @@ trace.f( self.ClassName, { self.GroupName, Point, Radius } )
 	return self
 end
 
+--- Make the group to follow a given route.
+-- @param self
+-- @param #table GoPoints A table of Route Points.
+-- @return #GROUP self 
 function GROUP:Route( GoPoints )
 self:T( GoPoints )
 
@@ -3445,6 +3555,15 @@ self:T( GoPoints )
 	return self
 end
 
+--- Route the group to a given zone.
+-- The group final destination point can be randomized.
+-- A speed can be given in km/h.
+-- A given formation can be given.
+-- @param self
+-- @param ZONE#ZONE Zone The zone where to route to.
+-- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
+-- @param #number Speed The speed.
+-- @param BASE#FORMATION Formation The formation string.
 function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	self:T( Zone )
 	
@@ -3492,6 +3611,12 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	return self
 end
 
+--- Return the route of a group.
+-- @param self
+-- @param #number Begin The route point from where the copy will start. The base route point is 0.
+-- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
+-- @param #boolean Randomize Randomization of the route, when true.
+-- @param #number Radius When randomization is on, the randomization is within the radius. 
 function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 self:T( { Begin, End } )
 
@@ -3535,7 +3660,7 @@ self:T( { Begin, End } )
 	return nil
 end
 
-
+--- Get the controller for the GROUP.
 function GROUP:_GetController()
 
 	return self.DCSGroup:getController()
@@ -3548,9 +3673,8 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
-UNITS = {}
-
-
+--- The UNIT class
+-- @type
 UNIT = {
 	ClassName="UNIT",
 	}
@@ -3663,9 +3787,8 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
-ZONES = {}
-
-
+--- The ZONE class
+-- @type
 ZONE = {
 	ClassName="ZONE",
 	}
@@ -3734,6 +3857,8 @@ Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
 
+--- The DATABASE class
+-- @type DATABASE
 DATABASE = {
 	ClassName = "DATABASE",
 	Units = {},
@@ -5642,6 +5767,8 @@ Include.File( "Message" )
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
 -- These clients are defined within the Mission Orchestration Framework (MOF)
 
+--- The CLIENT class
+-- @type CLIENT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -5675,7 +5802,6 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-
 function CLIENT:New( ClientName, ClientBriefing )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:T()
@@ -5972,7 +6098,8 @@ end
 Include.File( "Trace" )
 Include.File( "Base" )
 
-
+--- The MESSAGE class
+-- @type
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -6124,9 +6251,8 @@ end
 
 
 
---- MESSAGEQUEUE
+--- The MESSAGEQUEUE class
 -- @type MESSAGEQUEUE
-
 MESSAGEQUEUE = {
 	ClientGroups = {},
 	CoalitionSides = {}
@@ -6207,7 +6333,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
-
+--- The STAGE class
+-- @type
 STAGE = {
   ClassName = "STAGE",
   MSG = { ID = "None", TIME = 10 },
@@ -6996,6 +7123,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Stage" )
 
+--- The TASK class
+-- @type
 TASK = {
 
 	-- Defines the different signal types with a Task.
@@ -7454,6 +7583,8 @@ end
 
 Include.File("Task")
 
+--- The GOHOMETASK class
+-- @type
 GOHOMETASK = {
   ClassName = "GOHOMETASK",
 }
@@ -7493,6 +7624,8 @@ end
 
 Include.File("Task")
 
+--- The DESTROYBASETASK class
+-- @type DESTROYBASETASK
 DESTROYBASETASK = {
   ClassName = "DESTROYBASETASK",
   Destroyed = 0,
@@ -7570,7 +7703,8 @@ end
 
 Include.File("DestroyBaseTask")
 
---- To monitor and score the destruction of Groups in the DCSRTE.
+--- The DESTROYGROUPSTASK class
+-- @type
 DESTROYGROUPSTASK = {
   ClassName = "DESTROYGROUPSTASK",
   GoalVerb = "Destroy Groups",
@@ -7627,6 +7761,8 @@ end
 
 Include.File("DestroyBaseTask")
 
+--- The DESTROYRADARS class
+-- @type
 DESTROYRADARSTASK = {
   ClassName = "DESTROYRADARSTASK",
   GoalVerb = "Destroy Radars"
@@ -7669,6 +7805,8 @@ end
 
 Include.File("DestroyBaseTask")
 
+--- The DESTROYUNITTYPESTASK class
+-- @type
 DESTROYUNITTYPESTASK = {
   ClassName = "DESTROYUNITTYPESTASK",
 	GoalVerb = "Destroy",
@@ -7726,6 +7864,8 @@ end
 Include.File("Task")
 Include.File("Cargo")
 
+--- The PICKUPTASK class
+-- @type
 PICKUPTASK = {
   ClassName = "PICKUPTASK",
   TEXT = { "Pick-Up", "picked-up", "loaded" },
@@ -7878,6 +8018,8 @@ end
 
 Include.File( "Task" )
 
+--- A DeployTask
+-- @type DEPLOYTASK
 DEPLOYTASK = {
   ClassName = "DEPLOYTASK",
   TEXT = { "Deploy", "deployed", "unloaded" },
@@ -7886,8 +8028,9 @@ DEPLOYTASK = {
 
 
 --- Creates a new DEPLOYTASK object, which models the sequence of STAGEs to unload a cargo.
--- @param table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
--- @param CARGO_TYPE CargoType Type of the Cargo.
+-- @function [parent=#DEPLOYTASK] New
+-- @param #string CargoType Type of the Cargo.
+-- @return #DEPLOYTASK The created DeployTask
 function DEPLOYTASK:New( CargoType )
 	local self = BASE:Inherit( self, TASK:New() )
 	self:T()
@@ -8033,7 +8176,8 @@ end
 
 Include.File("Task")
 
---- Modeling a sequence of STAGEs to do nothing, but wait for the mission goal.
+--- The NOTASK class
+-- @type
 NOTASK = {
   ClassName = "NOTASK",
 }
@@ -8059,7 +8203,8 @@ end
 --- A ROUTETASK orchestrates the travel to a specific zone defined within the ME.
 -- @module ROUTETASK
 
---- Modeling a sequence of STAGEs to fly back to the home base specified by an Arrival Zone.
+--- The ROUTETASK class
+-- @type
 ROUTETASK = {
   ClassName = "ROUTETASK",
   GoalVerb = "Route",
@@ -8107,7 +8252,8 @@ Include.File( "Base" )
 Include.File( "Client" )
 Include.File( "Task" )
 
-
+--- The MISSION class
+-- @type
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -8479,7 +8625,6 @@ _TransportExecuteStage = {
 
 --- The MISSIONSCHEDULER is an OBJECT and is the main scheduler of ALL active MISSIONs registered within this scheduler. It's workings are considered internal and is automatically created when the Mission.lua file is included.
 -- @type MISSIONSCHEDULER
-
 MISSIONSCHEDULER = {
   Missions = {},
   MissionCount = 0,
@@ -8808,6 +8953,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
+--- The CLEANUP class.
+-- @type CLEANUP
 CLEANUP = {
 	ClassName = "CLEANUP",
 	ZoneNames = {},
@@ -8858,7 +9005,7 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:T( { GroupObject, CleanUpGroupName } )
 
 	if GroupObject then -- and GroupObject:isExist() then
-		MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
+		--MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
 		trigger.action.deactivateGroup(GroupObject)
 		self:T( { "GroupObject Destroyed", GroupObject } )
 	end
@@ -8870,15 +9017,16 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:T( { CleanUpUnit, CleanUpUnitName } )
 
 	if CleanUpUnit then
-		MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
+		--MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
 		local CleanUpGroup = Unit.getGroup(CleanUpUnit)
-		if CleanUpGroup then
+    -- TODO Client bug in 1.5.3
+		if CleanUpGroup and CleanUpGroup:isExist() then
 			local CleanUpGroupUnits = CleanUpGroup:getUnits()
 			if #CleanUpGroupUnits == 1 then
 				local CleanUpGroupName = CleanUpGroup:getName()
 				local Event = {["initiator"]=CleanUpUnit,["id"]=8}
-				world.onEvent(Event)
-				trigger.action.deactivateGroup(CleanUpGroup)
+				world.onEvent( Event )
+				trigger.action.deactivateGroup( CleanUpGroup )
 				self:T( { "Destroyed Group:", CleanUpGroupName } )
 			else
 				CleanUpUnit:destroy()
@@ -8917,7 +9065,10 @@ function CLEANUP:_EventCrash( event )
 	local CleanUpUnit = event.initiator -- the Unit
 	local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
 	local CleanUpGroup = Unit.getGroup(CleanUpUnit)-- Identify the Group 
-	local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+	local CleanUpGroupName = ""
+	if CleanUpGroup and CleanUpGroup:isExist() then
+    CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+  end
 
 	self.CleanUpList[CleanUpUnitName] = {}
 	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
@@ -8960,8 +9111,6 @@ function CLEANUP:_EventHitCleanUp( event )
 	local CleanUpUnit = event.initiator -- the Unit
 	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
 		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
-		local CleanUpGroup = Unit.getGroup(event.initiator)-- Identify the Group 
-		local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
 		
 		if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
 			self:T( "Life: " .. CleanUpUnitName .. ' = ' .. CleanUpUnit:getLife() .. "/" .. CleanUpUnit:getLife0() )
@@ -9045,7 +9194,6 @@ function CLEANUP:_Scheduler()
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
 	
 		self:T( { CleanUpUnitName, UnitData } )
-		local CleanUpGroup = Group.getByName(UnitData.CleanUpGroupName)
 		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
 		local CleanUpGroupName = UnitData.CleanUpGroupName
 		local CleanUpUnitName = UnitData.CleanUpUnitName
@@ -9107,11 +9255,77 @@ function CLEANUP:_Scheduler()
 	end
 end
 
---- Dynamic spawning of Groups and Units.
+--- Dynamic spawning of groups (and units).
+-- The SPAWN class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
+-- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
+-- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
+-- 
+-- Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
+-- When new groups get spawned by using the SPAWN functions (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
+-- When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.
+-- 
+-- Regarding the name of new spawned groups, a _SpawnPrefix_ will be assigned for each new group created. 
+-- If you want to have the Spawn Template name to be used as the _SpawnPrefix_ name, use the @{#SPAWN.New} constructor.
+-- However, when the @{#SPAWN.NewWithAlias} constructor was used, the Alias name will define the _SpawnPrefix_ name.
+-- Groups will follow the following naming structure when spawned at run-time:
+-- 
+--   1. Spawned groups will have the name _SpawnPrefix_#ggg, where ggg is a counter from 0 to 999.
+--   2. Spawned units will have the name _SpawnPrefix_#ggg-uu, where uu is a counter from 0 to 99 for each new spawned unit belonging to the group.
+-- 
+-- Some additional notes that need to be remembered:
+-- 
+--   * Templates are actually groups defined within the mission editor, with the flag "Late Activation" set. As such, these groups are never used within the mission, but are used by the @{#SPAWN} module.
+--   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
+--   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
+--   
+-- 1. SPAWN object construction methods:
+-- ------------------------------------- 
+-- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
+-- 
+--   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
+--
+-- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
+-- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+-- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
+--
+-- 2. SPAWN object initialization methods: 
+-- ---------------------------------------
+-- A spawn object will behave differently based on the usage of initialization methods:  
+-- 
+--   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups.
+--   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+--   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
+--   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
+--   * @{#SPAWN.Repeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.RepeatOnLanding} and @{#SPAWN.RepeatOnEngineShutDown}.
+-- 
+-- 2. SPAWN object spawning methods:
+-- ---------------------------------
+-- Groups can be spawned at different times and methods:
+-- 
+--   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
+--   * @{#SPAWN.ReSpawn}: Re-spawn a group based on a given index.
+--   * @{#SPAWN.SpawnScheduled}: Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart} and @{#SPAWN.SpawnScheduleStop} to start and stop the schedule respectively.
+--   * @{#SPAWN.SpawnFromUnit}: Spawn a new group taking the position of a @{UNIT}.
+--   * @{#SPAWN.SpawnInZone}: Spawn a new group in a @{ZONE}.
+-- 
+-- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
+-- You can use the @{GROUP} object to do further actions with the DCSGroup.
+--  
+-- 3. SPAWN object cleaning:
+-- -------------------------
+-- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
+-- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
+-- and it may occur that no new groups are or can be spawned as limits are reached.
+-- To prevent this, a @{#SPAWN.CleanUp} initialization method has been defined that will silently monitor the status of each spawned group.
+-- Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
+-- There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
+-- In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
+-- This models AI that has succesfully returned to their airbase, to restart their combat activities.
+-- Check the @{#SPAWN.CleanUp} for further info.
+-- 
 -- @module SPAWN
--- @author Flightcontrol
-
-MOOSE_Version = "0.1.1.1"
+-- @author FlightControl
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -9119,23 +9333,23 @@ Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
 
-
+--- SPAWN Class
+-- @type SPAWN
+-- @field ClassName
 SPAWN = {
-	ClassName = "SPAWN",
+  ClassName = "SPAWN",
 }
 
---- Public 
--- @section Public
 
---- Creates the main object to spawn a Group defined in the DCS ME.
--- Spawned Groups and Units will follow the following naming convention within the DCS World run-time environment:
---       Groups will have the name SpawnTemplatePrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
---       Units will have the name SpawnTemplatePrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
--- @param string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
--- @return SPAWN
+
+--- Creates the main object to spawn a GROUP defined in the DCS ME.
+-- @param self
+-- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
+-- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
+-- @usage local Plane = SPAWN:New( "Plane" ) -- Creates a new local variable that can initiate new planes with the name "Plane#ddd" using the template "Plane" as defined within the ME.
 function SPAWN:New( SpawnTemplatePrefix )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:T( { SpawnTemplatePrefix } )
@@ -9150,7 +9364,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
 		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
-		self.SpawnMaxGroupsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
@@ -9160,24 +9374,24 @@ function SPAWN:New( SpawnTemplatePrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self.OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_BIRTH, self._OnBirth )
+	self.AddEvent( self, world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
 	self.EnableEvents( self )
 
 	return self
 end
 
---- Creates the main object to spawn a Group defined in the DCS ME.
--- Spawned Groups and Units will follow the following naming convention within the DCS World run-time environment:
---       Groups will have the name SpawnTemplatePrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
---       Units will have the name SpawnTemplatePrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
--- @param string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
--- @return SPAWN
+--- Creates a new SPAWN instance to create new groups based on the defined template and using a new alias for each new group.
+-- @param self
+-- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.
+-- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
+-- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
+-- Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter Attacking a City' )
+-- @usage local PlaneWithAlias = SPAWN:NewWithAlias( "Plane", "Bomber" ) -- Creates a new local variable that can instantiate new planes with the name "Bomber#ddd" using the template "Plane" as defined within the ME.
 function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:T( { SpawnTemplatePrefix, SpawnAliasPrefix } )
@@ -9193,7 +9407,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
 		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
-		self.SpawnMaxGroupsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
@@ -9203,9 +9417,9 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self.OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_BIRTH, self._OnBirth )
+	self.AddEvent( self, world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	self.AddEvent( self, world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
 	self.EnableEvents( self )
 
@@ -9213,32 +9427,49 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 end
 
 
-function SPAWN:Limit( SpawnMaxGroupsAlive, SpawnMaxGroups )
-	self:T( { self.SpawnTemplatePrefix, SpawnMaxGroupsAlive, SpawnMaxGroups } )
+--- Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.
+-- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
+-- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+-- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
+-- @param self
+-- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
+-- @param #number SpawnMaxGroups The maximum amount of groups that can be spawned. When the limit is reached, then no more actual spawns will happen of the group. 
+-- This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
+-- This parameter accepts the value 0, which defines that there are no maximum group limits, but there are limits on the maximum of units that can be alive at the same time.
+-- @return #SPAWN self
+-- @usage
+-- -- NATO helicopters engaging in the battle field.
+-- -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
+-- -- There will be maximum 24 groups spawned during the whole mission lifetime. 
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )
+function SPAWN:Limit( SpawnMaxUnitsAlive, SpawnMaxGroups )
+	self:T( { self.SpawnTemplatePrefix, SpawnMaxUnitsAlive, SpawnMaxGroups } )
 
-	self.SpawnMaxGroupsAlive = SpawnMaxGroupsAlive				-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+	self.SpawnMaxUnitsAlive = SpawnMaxUnitsAlive				-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 	self.SpawnMaxGroups = SpawnMaxGroups						-- The maximum amount of groups that can be spawned.
 	
 	for SpawnGroupID = 1, self.SpawnMaxGroups do
-		self:InitializeSpawnGroups( SpawnGroupID )
+		self:_InitializeSpawnGroups( SpawnGroupID )
 	end
 
 	return self
 end
 
 
---- Randomizes a defined route of the Template Group in the ME when the Group is Spawned. This is very useful to define extra variation in the DCS World run-time environment of the behaviour of Groups like Ground Units, Ships, Planes, Helicopters.
--- @param number SpawnStartPoint is the waypoint where the randomization begins. Note that the StartPoint = 0 equals the point where the Group is Spawned. This parameter is useful to avoid randomization to start from the first waypoint, but a bit further down the route...
--- @param number SpawnEndPoint is the waypoint where the randomization ends. this parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
--- @param number SpawnRadius is the radius in meters, that defines the concentric circle in which the randomization of the new waypoint will take place, with the original waypoint located in the middle...
--- @return SPAWN
+--- Randomizes the defined route of the SpawnTemplatePrefix group in the ME. This is very useful to define extra variation of the behaviour of groups.
+-- @param self
+-- @param #number SpawnStartPoint is the waypoint where the randomization begins. 
+-- Note that the StartPoint = 0 equaling the point where the group is spawned.
+-- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
+-- This parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
+-- @param #number SpawnRadius is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...
+-- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
--- -- The KA-50 has waypoints SP, 1, 2, 3, 4, DP. 
--- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new ${SPAWN} of the helicopter.
--- -- The randomization of waypoint 2 and 3 will take place within a diameter of 4000 meters.
+-- -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
+-- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
+-- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
- 
 function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
 	self:T( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
 
@@ -9254,44 +9485,26 @@ function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
 	return self
 end
 
-function SPAWN:_RandomizeRoute( SpawnIndex )
-	self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeRoute, self.SpawnRandomizeRouteStartPoint, self.SpawnRandomizeRouteEndPoint, self.SpawnRandomizeRouteRadius } )
 
-	if self.SpawnRandomizeRoute then
-		local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
-		local RouteCount = #SpawnTemplate.route.points
-		
-		for t = self.SpawnRandomizeRouteStartPoint + 1, ( RouteCount - self.SpawnRandomizeRouteEndPoint ) do
-			SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
-			SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
-			-- TODO: manage altitude for airborne units ...
-			SpawnTemplate.route.points[t].alt = nil
-			--SpawnGroup.route.points[t].alt_type = nil
-			self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
-		end
-	end
-	
-	return self
-end
-
---- This function is rather complicated to understand. But I'll try to explain...
--- This function becomes useful when you need to SPAWN random types of Groups defined within the ME, but they all need to follow the same Template route and have the same SpawnTemplatePrefix name, then this method becomes very useful.
--- @param table{string,...} SpawnTemplatePrefixTable is a table with the names of the Groups defined within the ME (with late activatio on), from which on a new SPAWN of SpawnTemplatePrefix (the main Group name), a NEW Group will be choosen as the Group to be SPAWNed.
--- In other words, this method randomizes between a defined set of Groups the Group to be SPAWNed for each new SPAWN.
--- @return SPAWN
+--- This function is rather complicated to understand. But I'll try to explain.
+-- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+-- but they will all follow the same Template route and have the same prefix name.
+-- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
+-- @param self
+-- @param #string SpawnTemplatePrefixTable A table with the names of the groups defined within the mission editor, from which one will be choosen when a new group will be spawned. 
+-- @return #SPAWN
 -- @usage
 -- -- NATO Tank Platoons invading Gori.
--- -- Choose between 13 different 'US Tank Platoon' configurations for each new SPAWN the Group to be SPAWNed for the 
+-- -- Choose between 13 different 'US Tank Platoon' configurations for each new SPAWN the Group to be spawned for the 
 -- -- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SpawnTemplatePrefixes.
 -- -- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
--- -- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be SPAWNed during the whole mission.
+-- -- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
 -- Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 3', 'US Tank Platoon 4', 'US Tank Platoon 5', 
 --                      'US Tank Platoon 6', 'US Tank Platoon 7', 'US Tank Platoon 8', 'US Tank Platoon 9', 'US Tank Platoon 10', 
 --                      'US Tank Platoon 11', 'US Tank Platoon 12', 'US Tank Platoon 13' }
 -- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
 -- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
 -- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
-
 function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
 	self:T( { self.SpawnTemplatePrefix, SpawnTemplatePrefixTable } )
 
@@ -9306,32 +9519,20 @@ function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
 end
 
 
-function SPAWN:_RandomizeTemplate( SpawnIndex )
-	self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
-
-	if self.SpawnRandomizeTemplate then
-		self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefixTable[ math.random( 1, #self.SpawnTemplatePrefixTable ) ]
-		self.SpawnGroups[SpawnIndex].SpawnTemplate = self:_Prepare( self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix, SpawnIndex )
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
-	end
-	
-	return self
-end
 
 
 
-
---- When a Group got SPAWNed, it has a life within the DCSRTE. For planes and helicopters, when these Units go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the DCSRTE.
--- This function is used to Re-Spawn automatically (so no extra call is needed anymore) the same Group after it landed. This will enable a SPAWNed group to be Re-SPAWNed after it lands, until it is destroyed...
--- Note: When the Group is respawned, it will @{ReSpawn} at the original airbase where it took off. So ensure that the paths for Groups that ReSpawn, always return to the original airbase.
--- @return SPAWN
+--- For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.
+-- This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+-- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
+-- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
+-- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
+-- @param self
+-- @return #SPAWN self
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
-
 function SPAWN:Repeat()
 	self:T( { self.SpawnTemplatePrefix } )
 
@@ -9339,9 +9540,9 @@ function SPAWN:Repeat()
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 
-	self:AddEvent( world.event.S_EVENT_LAND, self.OnLand )
-	self:AddEvent( world.event.S_EVENT_TAKEOFF, self.OnTakeOff )
-	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self.OnEngineShutDown )
+	self:AddEvent( world.event.S_EVENT_LAND, self._OnLand )
+	self:AddEvent( world.event.S_EVENT_TAKEOFF, self._OnTakeOff )
+	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._OnEngineShutDown )
 	self:EnableEvents()
 
 	return self
@@ -9361,10 +9562,8 @@ function SPAWN:RepeatOnLanding()
 	return self
 end
 
---- Same as the @{Repeat) method, but now the Group will respawn after its engines have shut down.
+--- Same as the @{#SPAWN.Repeat) method, but now the Group will respawn after its engines have shut down.
 -- @return SPAWN
--- @see Repeat
-
 function SPAWN:RepeatOnEngineShutDown()
 	self:T( { self.SpawnTemplatePrefix } )
 
@@ -9375,31 +9574,37 @@ function SPAWN:RepeatOnEngineShutDown()
 	return self
 end
 
+
+--- CleanUp groups when they are still alive, but inactive.
+-- When groups are still alive and have become inactive due to damage and are unable to contribute anything, then this group will be removed at defined intervals in seconds.
+-- @param self
+-- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
+-- @return #SPAWN self
+-- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
 function SPAWN:CleanUp( SpawnCleanUpInterval )
 	self:T( { self.SpawnTemplatePrefix, SpawnCleanUpInterval } )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
-	self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, 60 )
+	self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
 	
 	return self
 end
 
 
 
---- Makes the Groups visible before start (like a batallion).
--- @param number SpawnZone 		A @{ZONE} where the group will be positioned. The X and Y coordinates of the zone define the start position.
--- @param number SpawnAngle 		The angle in degrees how the Groups and each Unit of the Group will be positioned.
--- @param number SpawnFormation    The formation of the Units within the Group.
--- @param number SpawnWidth		The amount of Groups that will be positioned on the X axis.
--- @param number SpawnDeltaX       The space between each Group on the X-axis.
--- @param number SpawnDeltaY		The space between each Group on the Y-axis.
--- @return SPAWN
+--- Makes the groups visible before start (like a batallion).
+-- The method will take the position of the group as the first position in the array.
+-- @param self
+-- @param #number SpawnAngle         The angle in degrees how the groups and each unit of the group will be positioned.
+-- @param #number SpawnWidth		     The amount of Groups that will be positioned on the X axis.
+-- @param #number SpawnDeltaX        The space between each Group on the X-axis.
+-- @param #number SpawnDeltaY		     The space between each Group on the Y-axis.
+-- @return #SPAWN self
 -- @usage
--- -- Define an array of Groups within Zone "Start".
--- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( ZONE:New( "Start" ), 90, "Diamond", 10, 100, 50 )
-
-function SPAWN:SpawnArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+-- -- Define an array of Groups.
+-- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( 90, "Diamond", 10, 100, 50 )
+function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	self:T( { self.SpawnTemplatePrefix, SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 
 	self.SpawnVisible = true									-- When the first Spawn executes, all the Groups need to be made visible before start.
@@ -9441,89 +9646,23 @@ function SPAWN:SpawnArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	return self
 end
 
-function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle )
-	self:T( { self.SpawnTemplatePrefix, SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle } )
-	
-	-- Translate
-	local TranslatedX = SpawnX
-	local TranslatedY = SpawnY
-	
-	-- Rotate
-	-- From Wikipedia: https://en.wikipedia.org/wiki/Rotation_matrix#Common_rotations
-	-- x' = x \cos \theta - y \sin \theta\
-	-- y' = x \sin \theta + y \cos \theta\ 
-	local RotatedX = - TranslatedX * math.cos( math.rad( SpawnAngle ) )
-					 + TranslatedY * math.sin( math.rad( SpawnAngle ) )
-	local RotatedY =   TranslatedX * math.sin( math.rad( SpawnAngle ) )
-					 + TranslatedY * math.cos( math.rad( SpawnAngle ) )
-	
-	-- Assign
-	self.SpawnGroups[SpawnIndex].SpawnTemplate.x = SpawnRootX - RotatedX
-	self.SpawnGroups[SpawnIndex].SpawnTemplate.y = SpawnRootY + RotatedY
-
-					 
-	local SpawnUnitCount = table.getn( self.SpawnGroups[SpawnIndex].SpawnTemplate.units )
-	for u = 1, SpawnUnitCount do
-		
-		-- Translate
-		local TranslatedX = SpawnX 
-		local TranslatedY = SpawnY - 10 * ( u - 1 )
-		
-		-- Rotate
-		local RotatedX = - TranslatedX * math.cos( math.rad( SpawnAngle ) ) 
-						 + TranslatedY * math.sin( math.rad( SpawnAngle ) )
-		local RotatedY =   TranslatedX * math.sin( math.rad( SpawnAngle ) )
-						 + TranslatedY * math.cos( math.rad( SpawnAngle ) )
-		
-		-- Assign
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].x = SpawnRootX - RotatedX
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].y = SpawnRootY + RotatedY
-		self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading = math.rad( SpawnAngle )
-	end
-	
-	return self
-end
-
-function SPAWN:GetSpawnIndex( SpawnIndex )
-	self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxGroupsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
-
-	
-	if ( self.SpawnMaxGroups == 0 ) or ( SpawnIndex <= self.SpawnMaxGroups ) then
-		if ( self.SpawnMaxGroupsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxGroupsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
-			if SpawnIndex and SpawnIndex >= self.SpawnCount + 1 then
-				self.SpawnCount = self.SpawnCount + 1
-				SpawnIndex = self.SpawnCount
-			end
-			self.SpawnIndex = SpawnIndex
-			if not self.SpawnGroups[self.SpawnIndex] then
-				self:InitializeSpawnGroups( self.SpawnIndex )
-			end
-		else
-			return nil
-		end
-	else
-		return nil
-	end
-	
-	return self.SpawnIndex
-end
 
 
---- Will SPAWN a Group whenever you want to do this.
--- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
--- Uses @{DATABASE} global object defined in MOOSE.
--- @return SPAWN
+--- Will re-spawn a group based on a given index.
+-- Note: Uses @{DATABASE} module defined in MOOSE.
+-- @param self
+-- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
 	self:T( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
 	return self:SpawnWithIndex( self.SpawnIndex + 1 )
 end
 
---- Will Re-SPAWN a Group based on a given GroupName. The GroupName must be a group that is already alive within the DCSRTE and should have a Group Template defined in the ME (with Late Activation flag on).
--- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
--- @param string SpawnGroupName 
--- @return SPAWN
--- Uses _Database global object defined in MOOSE.
+--- Will re-spawn a group based on a given index.
+-- Note: Uses @{DATABASE} module defined in MOOSE.
+-- @param self
+-- @param #string SpawnIndex The index of the group to be spawned.
+-- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:ReSpawn( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
 	
@@ -9539,14 +9678,13 @@ function SPAWN:ReSpawn( SpawnIndex )
 	return self:SpawnWithIndex( SpawnIndex )
 end
 
---- Will SPAWN a Group with a specified index number whenever you want to do this.
--- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
+--- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
--- @return GROUP The @{GROUP} that was spawned. You can use this group for further actions.
+-- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
 	
-	if self:GetSpawnIndex( SpawnIndex ) then
+	if self:_GetSpawnIndex( SpawnIndex ) then
 		
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
@@ -9567,10 +9705,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 	return nil
 end
 
---- SPAWNs a new Group within varying time intervals. This is useful if you want to have continuity within your missions of certain (AI) Groups to be present (alive) within your missions.
--- @param number SpawnTime is the time interval defined in seconds between each new SPAWN of new Groups.
--- @param number SpawnTimeVariation is the variation to be applied on the defined time interval between each new SPAWN. The variation is defined as a value between 0 and 1, which expresses the %-tage of variation to be applied as the low and high time interval boundaries. Between these boundaries a new time interval will be applied. See usage.
--- @return SPAWN
+--- Spawns new groups at varying time intervals.
+-- This is useful if you want to have continuity within your missions of certain (AI) groups to be present (alive) within your missions.
+-- @param self
+-- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
+-- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
+-- The variation is a number between 0 and 1, representing the %-tage of variation to be applied on the time interval.
+-- @return #SPAWN self
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- -- The time interval is set to SPAWN new helicopters between each 600 seconds, with a time variation of 50%.
@@ -9578,9 +9719,8 @@ end
 -- -- This is calculated as follows: 
 -- --      Low limit:   600 * ( 1 - 0.5 / 2 ) = 450 
 -- --      High limit:  600 * ( 1 + 0.5 / 2 ) = 750
--- -- Between these two values, a random amount of seconds will be choosen for each new SPAWN of the helicopters.
+-- -- Between these two values, a random amount of seconds will be choosen for each new spawn of the helicopters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
-
 function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:T( { SpawnTime, SpawnTimeVariation } )
 
@@ -9593,7 +9733,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
 		self.SpawnLowTimer = SpawnTime - SpawnTime / 2 * SpawnTimeVariation
 		self.SpawnHighTimer = SpawnTime + SpawnTime / 2 * SpawnTimeVariation
-		self:ScheduleStart()
+		self:SpawnScheduleStart()
 	end
 
 	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
@@ -9601,9 +9741,11 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	return self
 end
 
---- Will start the SPAWNing timers.
--- This function is called automatically when @{Schedule} is called.
-function SPAWN:ScheduleStart()
+
+
+--- Will start the spawning scheduler.
+-- Note: This function is called automatically when @{#SPAWN.Scheduled} is called.
+function SPAWN:SpawnScheduleStart()
 	self:T( { self.SpawnTemplatePrefix } )
 
 	--local ClientUnit = #AlivePlayerUnits()
@@ -9619,30 +9761,152 @@ function SPAWN:ScheduleStart()
 	end
 end
 
---- Will stop the scheduled SPAWNing activity.
-function SPAWN:ScheduleStop()
+--- Will stop the scheduled spawning scheduler.
+function SPAWN:SpawnScheduleStop()
 	self:T( { self.SpawnTemplatePrefix } )
 	
 	self.SpawnIsScheduled = false
 end
 
---- Limits the Maximum amount of Units to be alive, and the maximum amount of Groups to be SPAWNed within the DCS World run-time environment.
--- Note that this method is exceptionally important to balance the amount of Units alive within the DCSRTE and the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
--- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
--- @param number SpawnMaxGroupsAlive is the Maximum amount of Units to be alive. When there are more Units alive in the DCSRTE of SpawnTemplatePrefix, then no new SPAWN will happen of the Group, until some of these Units will be destroyed.
--- @param number SpawnMaxGroups is the Maximum amount of Groups that can be SPAWNed from SpawnTemplatePrefix. When there are more Groups alive in the DCSRTE of SpawnTemplatePrefix, then no more SPAWNs will happen of the Group. This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
---        This parameter accepts the value 0, which expresses no Group count limits.
--- @return SPAWN
--- @usage
--- -- NATO helicopters engaging in the battle field.
--- -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
--- -- There will be maximum 24 groups SPAWNed during the whole mission lifetime. 
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )
+--- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param self
+-- @param #UNIT HostUnit The air or ground unit dropping or unloading the group.
+-- @param #number OuterRadius The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius The inner radius in meters where the new group will NOT be spawned.
+-- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @return GROUP#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
+
+  if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
+
+    if SpawnIndex then
+    else
+      SpawnIndex = self.SpawnIndex + 1
+    end
+    
+    if self:_GetSpawnIndex( SpawnIndex ) then
+      
+      local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+    
+      if SpawnTemplate then
+
+        local UnitPoint = HostUnit:GetPoint()
+        --for PointID, Point in pairs( SpawnTemplate.route.points ) do
+          --Point.x = UnitPoint.x
+          --Point.y = UnitPoint.y
+          --Point.alt = nil
+          --Point.alt_type = nil
+        --end
+        
+        SpawnTemplate.route.points = nil
+        SpawnTemplate.route.points = {}
+        SpawnTemplate.route.points[1] = {}
+        SpawnTemplate.route.points[1].x = UnitPoint.x
+        SpawnTemplate.route.points[1].y = UnitPoint.y
+
+        if not InnerRadius then
+          InnerRadius = 10
+        end
+        
+        if not OuterRadius then
+          OuterRadius = 50
+        end
+        
+        -- Apply SpawnFormation
+        for UnitID = 1, #SpawnTemplate.units do
+          if InnerRadius == 0 then
+            SpawnTemplate.units[UnitID].x = UnitPoint.x
+            SpawnTemplate.units[UnitID].y = UnitPoint.y
+          else
+            local CirclePos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
+            SpawnTemplate.units[UnitID].x = CirclePos.x
+            SpawnTemplate.units[UnitID].y = CirclePos.y
+          end
+          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        end
+        
+        local SpawnPos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
+        local Point = {}
+        Point.type = "Turning Point"
+        Point.x = SpawnPos.x
+        Point.y = SpawnPos.y
+        Point.action = "Cone"
+        Point.speed = 5
+        
+        table.insert( SpawnTemplate.route.points, 2, Point )
+        
+        return self:SpawnWithIndex( self.SpawnIndex )
+      end
+    end
+  end
+  
+  return nil
+end
+
+--- Will spawn a Group within a given @{ZONE}.
+-- @param self
+-- @param #ZONE Zone The zone where the group is to be spawned.
+-- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @return GROUP#GROUP that was spawned.
+-- @return #nil when nothing was spawned.
+function SPAWN:SpawnInZone( Zone, SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
+  
+  if Zone then
+    
+    if SpawnIndex then
+    else
+      SpawnIndex = self.SpawnIndex + 1
+    end
+    
+    if self:_GetSpawnIndex( SpawnIndex ) then
+
+      local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+      
+      if SpawnTemplate then
+    
+        local ZonePoint = Zone:GetPoint()
+
+        SpawnTemplate.route.points = nil
+        SpawnTemplate.route.points = {}
+        SpawnTemplate.route.points[1] = {}
+        SpawnTemplate.route.points[1].x = ZonePoint.x
+        SpawnTemplate.route.points[1].y = ZonePoint.y
+        
+        -- Apply SpawnFormation
+        for UnitID = 1, #SpawnTemplate.units do
+          SpawnTemplate.units[UnitID].x = ZonePoint.x
+          SpawnTemplate.units[UnitID].y = ZonePoint.y
+          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        end
+        
+        local SpawnPos = Zone:GetRandomPoint()
+        local Point = {}
+        Point.type = "Turning Point"
+        Point.x = SpawnPos.x
+        Point.y = SpawnPos.y
+        Point.action = "Cone"
+        Point.speed = 5
+        
+        table.insert( SpawnTemplate.route.points, 2, Point )
+        
+        return self:SpawnWithIndex( self.SpawnIndex )
+      end
+    end
+  end
+  
+  return nil
+end
 
 
 
---- Will SPAWN a Group whenever you want to do this, but for AIR Groups only to be applied, and will SPAWN the Group in Uncontrolled mode... This will be similar to the Uncontrolled flag setting in the ME.
--- @return SPAWN
+--- Will spawn a plane group in uncontrolled mode... 
+-- This will be similar to the uncontrolled flag setting in the ME.
+-- @return #SPAWN self
 function SPAWN:UnControlled()
 	self:T( { self.SpawnTemplatePrefix } )
 	
@@ -9656,137 +9920,10 @@ function SPAWN:UnControlled()
 end
 
 
---- Will SPAWN a Group from a Hosting @{UNIT}. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
--- Note that each point in the route assigned to the spawning @{GROUP} is reset to the Point of the spawn.
--- You can use the returned @{GROUP} to further define the route to be followed.
--- @param UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
--- @return GROUP Spawned.
--- @return nil when nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
-	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation, SpawnIndex } )
-
-	if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
-
-		if SpawnIndex then
-		else
-			SpawnIndex = self.SpawnIndex + 1
-		end
-		
-		if self:GetSpawnIndex( SpawnIndex ) then
-			
-			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-		
-			if SpawnTemplate then
-
-				local UnitPoint = HostUnit:GetPoint()
-				--for PointID, Point in pairs( SpawnTemplate.route.points ) do
-					--Point.x = UnitPoint.x
-					--Point.y = UnitPoint.y
-					--Point.alt = nil
-					--Point.alt_type = nil
-				--end
-				
-				SpawnTemplate.route.points = nil
-				SpawnTemplate.route.points = {}
-				SpawnTemplate.route.points[1] = {}
-				SpawnTemplate.route.points[1].x = UnitPoint.x
-				SpawnTemplate.route.points[1].y = UnitPoint.y
-
-				if not InnerRadius then
-					InnerRadius = 10
-				end
-				
-				if not OuterRadius then
-					OuterRadius = 50
-				end
-				
-				-- Apply SpawnFormation
-				for UnitID = 1, #SpawnTemplate.units do
-					if InnerRadius == 0 then
-						SpawnTemplate.units[UnitID].x = UnitPoint.x
-						SpawnTemplate.units[UnitID].y = UnitPoint.y
-					else
-						local CirclePos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
-						SpawnTemplate.units[UnitID].x = CirclePos.x
-						SpawnTemplate.units[UnitID].y = CirclePos.y
-					end
-					self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-				end
-				
-				local SpawnPos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
-				local Point = {}
-				Point.type = "Turning Point"
-				Point.x = SpawnPos.x
-				Point.y = SpawnPos.y
-				Point.action = "Cone"
-				Point.speed = 5
-				
-				table.insert( SpawnTemplate.route.points, 2, Point )
-				
-				return self:SpawnWithIndex( self.SpawnIndex )
-			end
-		end
-	end
-	
-	return nil
-end
-
---- Will spawn a Group within a given @{ZONE}.
--- @param ZONE The @{ZONE} where the Group is to be SPAWNed.
--- @return GROUP that was spawned.
--- @return nil when nothing as spawned.
-function SPAWN:SpawnInZone( Zone, SpawnIndex )
-	self:T( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
-	
-	if Zone then
-		
-		if SpawnIndex then
-		else
-			SpawnIndex = self.SpawnIndex + 1
-		end
-		
-		if self:GetSpawnIndex( SpawnIndex ) then
-
-			local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-			
-			if SpawnTemplate then
-		
-				local ZonePoint = Zone:GetPoint()
-
-				SpawnTemplate.route.points = nil
-				SpawnTemplate.route.points = {}
-				SpawnTemplate.route.points[1] = {}
-				SpawnTemplate.route.points[1].x = ZonePoint.x
-				SpawnTemplate.route.points[1].y = ZonePoint.y
-				
-				-- Apply SpawnFormation
-				for UnitID = 1, #SpawnTemplate.units do
-					SpawnTemplate.units[UnitID].x = ZonePoint.x
-					SpawnTemplate.units[UnitID].y = ZonePoint.y
-					self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-				end
-				
-				local SpawnPos = Zone:GetRandomPoint()
-				local Point = {}
-				Point.type = "Turning Point"
-				Point.x = SpawnPos.x
-				Point.y = SpawnPos.y
-				Point.action = "Cone"
-				Point.speed = 5
-				
-				table.insert( SpawnTemplate.route.points, 2, Point )
-				
-				return self:SpawnWithIndex( self.SpawnIndex )
-			end
-		end
-	end
-	
-	return nil
-end
-
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
--- @param number SpawnIndex is the number of the Group that is to be SPAWNed.
+-- @param self
+-- @param #number SpawnIndex Is the number of the Group that is to be spawned.
 -- @return string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
@@ -9807,6 +9944,71 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
+--- Find the first alive group.
+-- @param self
+-- @param #number SpawnCursor A number holding the index from where to find the first group from.
+-- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return #nil, #nil When no group is found, #nil is returned.
+function SPAWN:GetFirstAliveGroup( SpawnCursor )
+  self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+
+  for SpawnIndex = 1, self.SpawnCount do
+    local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+    if SpawnGroup and SpawnGroup:IsAlive() then
+      SpawnCursor = SpawnIndex
+      return SpawnGroup, SpawnCursor
+    end
+  end
+  
+  return nil, nil
+end
+
+
+--- Find the next alive group.
+-- @param self
+-- @param #number SpawnCursor A number holding the last found previous index.
+-- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return #nil, #nil When no group is found, #nil is returned.
+function SPAWN:GetNextAliveGroup( SpawnCursor )
+  self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+
+  SpawnCursor = SpawnCursor + 1
+  for SpawnIndex = SpawnCursor, self.SpawnCount do
+    local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+    if SpawnGroup and SpawnGroup:IsAlive() then
+      SpawnCursor = SpawnIndex
+      return SpawnGroup, SpawnCursor
+    end
+  end
+  
+  return nil, nil
+end
+
+--- Find the last alive group during runtime.
+function SPAWN:GetLastAliveGroup()
+  self:T( { self.SpawnTemplatePrefixself.SpawnAliasPrefix } )
+
+  self.SpawnIndex = self:_GetLastIndex()
+  for SpawnIndex = self.SpawnIndex, 1, -1 do
+    local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+    if SpawnGroup and SpawnGroup:IsAlive() then
+      self.SpawnIndex = SpawnIndex
+      return SpawnGroup
+    end
+  end
+
+  self.SpawnIndex = nil
+  return nil
+end
+
+
+
+--- Get the group from an index.
+-- Returns the group from the SpawnGroups list.
+-- If no index is given, it will return the first group in the list.
+-- @param self
+-- @param #number SpawnIndex The index of the group to return.
+-- @return GROUP#GROUP
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
@@ -9819,7 +10021,14 @@ function SPAWN:GetGroupFromIndex( SpawnIndex )
 	end
 end
 
-function SPAWN:GetGroupIndexFromDCSUnit( DCSUnit )
+--- Get the group index from a DCSUnit.
+-- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
+-- It will return nil of no prefix was found.
+-- @param self
+-- @param DCSUnit The DCS unit to be searched.
+-- @return #string The prefix
+-- @return #nil Nothing found
+function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
 	if DCSUnit and DCSUnit:getName() then
@@ -9836,15 +10045,20 @@ function SPAWN:GetGroupIndexFromDCSUnit( DCSUnit )
 	return nil
 end
 
-function SPAWN:GetPrefixFromDCSUnit( DCSUnit )
+--- Return the prefix of a DCSUnit.
+-- The method will search for a #-mark, and will return the text before the #-mark.
+-- It will return nil of no prefix was found.
+-- @param self
+-- @param DCSUnit The DCS unit to be searched.
+-- @return #string The prefix
+-- @return #nil Nothing found
+function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
 	if DCSUnit and DCSUnit:getName() then
 		local SpawnPrefix = string.match( DCSUnit:getName(), ".*#" )
 		if SpawnPrefix then
 			SpawnPrefix = SpawnPrefix:sub( 1, -2 )
-		else
-			self:E( { "This name does not contain a #", DCSUnit:getName() } )
 		end
 		self:T( SpawnPrefix )
 		return SpawnPrefix
@@ -9853,14 +10067,15 @@ function SPAWN:GetPrefixFromDCSUnit( DCSUnit )
 	return nil
 end
 
-function SPAWN:GetGroupFromDCSUnit( DCSUnit )
+--- Return the group within the SpawnGroups collection with input a DCSUnit.
+function SPAWN:_GetGroupFromDCSUnit( DCSUnit )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 	
 	if DCSUnit then
-		local SpawnPrefix = self:GetPrefixFromDCSUnit( DCSUnit )
+		local SpawnPrefix = self:_GetPrefixFromDCSUnit( DCSUnit )
 		
 		if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
-			local SpawnGroupIndex = self:GetGroupIndexFromDCSUnit( DCSUnit )
+			local SpawnGroupIndex = self:_GetGroupIndexFromDCSUnit( DCSUnit )
 			local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
 			self:T( SpawnGroup )
 			return SpawnGroup
@@ -9871,8 +10086,9 @@ function SPAWN:GetGroupFromDCSUnit( DCSUnit )
 end
 
 
---TODO: Rename to GetGroupIndexFromGroup
-function SPAWN:GetGroupIndexFromGroup( SpawnGroup )
+--- Get the index from a given group.
+-- The function will search the name of the group for a #, and will return the number behind the #-mark.
+function SPAWN:_GetGroupIndexFromGroup( SpawnGroup )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 	
 	local IndexString = string.match( SpawnGroup:GetName(), "#.*$" ):sub( 2 )
@@ -9883,14 +10099,15 @@ function SPAWN:GetGroupIndexFromGroup( SpawnGroup )
 	
 end
 
-function SPAWN:GetLastIndex()
+--- Return the last maximum index that can be used.
+function SPAWN:_GetLastIndex()
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
 	return self.SpawnMaxGroups
 end
 
-
-function SPAWN:InitializeSpawnGroups( SpawnIndex )
+--- Initalize the SpawnGroups collection.
+function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 
 	if not self.SpawnGroups[SpawnIndex] then
@@ -9913,56 +10130,6 @@ function SPAWN:InitializeSpawnGroups( SpawnIndex )
 end
 
 
-
-function SPAWN:GetFirstAliveGroup( SpawnCursor )
-	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
-
-	for SpawnIndex = 1, self.SpawnCount do
-		local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
-		if SpawnGroup and SpawnGroup:IsAlive() then
-			SpawnCursor = SpawnIndex
-			return SpawnGroup, SpawnCursor
-		end
-	end
-	
-	return nil, nil
-end
-
-function SPAWN:GetNextAliveGroup( SpawnCursor )
-	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
-
-	SpawnCursor = SpawnCursor + 1
-	for SpawnIndex = SpawnCursor, self.SpawnCount do
-		local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
-		if SpawnGroup and SpawnGroup:IsAlive() then
-			SpawnCursor = SpawnIndex
-			return SpawnGroup, SpawnCursor
-		end
-	end
-	
-	return nil, nil
-end
-
-function SPAWN:GetLastAliveGroup()
-	self:T( { self.SpawnTemplatePrefixself.SpawnAliasPrefix } )
-
-	self.SpawnIndex = self:GetLastIndex()
-	for SpawnIndex = self.SpawnIndex, 1, -1 do
-		local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
-		if SpawnGroup and SpawnGroup:IsAlive() then
-			self.SpawnIndex = SpawnIndex
-			return SpawnGroup
-		end
-	end
-
-	self.SpawnIndex = nil
-	return nil
-end
-
-
-
---- Private
--- @section
 
 --- Gets the CategoryID of the Group with the given SpawnPrefix
 function SPAWN:_GetGroupCategoryID( SpawnPrefix )
@@ -10001,7 +10168,7 @@ function SPAWN:_GetGroupCountryID( SpawnPrefix )
 end
 
 --- Gets the Group Template from the ME environment definition.
--- This method used the @{DATABASE} object, which contains ALL initial and new SPAWNed object in MOOSE.
+-- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
 function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
@@ -10051,16 +10218,123 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		
 end
 
---- Events
--- @section Events
+--- Internal function randomizing the routes.
+-- @param self
+-- @param #number SpawnIndex The index of the group to be spawned.
+-- @return #SPAWN
+function SPAWN:_RandomizeRoute( SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeRoute, self.SpawnRandomizeRouteStartPoint, self.SpawnRandomizeRouteEndPoint, self.SpawnRandomizeRouteRadius } )
 
---- Obscolete
--- @todo Need to delete this... _Database does this now ...
-function SPAWN:OnBirth( event )
+  if self.SpawnRandomizeRoute then
+    local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+    local RouteCount = #SpawnTemplate.route.points
+    
+    for t = self.SpawnRandomizeRouteStartPoint + 1, ( RouteCount - self.SpawnRandomizeRouteEndPoint ) do
+      SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
+      SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
+      -- TODO: manage altitude for airborne units ...
+      SpawnTemplate.route.points[t].alt = nil
+      --SpawnGroup.route.points[t].alt_type = nil
+      self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
+    end
+  end
+  
+  return self
+end
+
+
+function SPAWN:_RandomizeTemplate( SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
+
+  if self.SpawnRandomizeTemplate then
+    self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefixTable[ math.random( 1, #self.SpawnTemplatePrefixTable ) ]
+    self.SpawnGroups[SpawnIndex].SpawnTemplate = self:_Prepare( self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix, SpawnIndex )
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
+    end
+  end
+  
+  return self
+end
+
+function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle )
+  self:T( { self.SpawnTemplatePrefix, SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle } )
+  
+  -- Translate
+  local TranslatedX = SpawnX
+  local TranslatedY = SpawnY
+  
+  -- Rotate
+  -- From Wikipedia: https://en.wikipedia.org/wiki/Rotation_matrix#Common_rotations
+  -- x' = x \cos \theta - y \sin \theta\
+  -- y' = x \sin \theta + y \cos \theta\ 
+  local RotatedX = - TranslatedX * math.cos( math.rad( SpawnAngle ) )
+           + TranslatedY * math.sin( math.rad( SpawnAngle ) )
+  local RotatedY =   TranslatedX * math.sin( math.rad( SpawnAngle ) )
+           + TranslatedY * math.cos( math.rad( SpawnAngle ) )
+  
+  -- Assign
+  self.SpawnGroups[SpawnIndex].SpawnTemplate.x = SpawnRootX - RotatedX
+  self.SpawnGroups[SpawnIndex].SpawnTemplate.y = SpawnRootY + RotatedY
+
+           
+  local SpawnUnitCount = table.getn( self.SpawnGroups[SpawnIndex].SpawnTemplate.units )
+  for u = 1, SpawnUnitCount do
+    
+    -- Translate
+    local TranslatedX = SpawnX 
+    local TranslatedY = SpawnY - 10 * ( u - 1 )
+    
+    -- Rotate
+    local RotatedX = - TranslatedX * math.cos( math.rad( SpawnAngle ) ) 
+             + TranslatedY * math.sin( math.rad( SpawnAngle ) )
+    local RotatedY =   TranslatedX * math.sin( math.rad( SpawnAngle ) )
+             + TranslatedY * math.cos( math.rad( SpawnAngle ) )
+    
+    -- Assign
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].x = SpawnRootX - RotatedX
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].y = SpawnRootY + RotatedY
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading = self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading + math.rad( SpawnAngle )
+  end
+  
+  return self
+end
+
+--- Get the next index of the groups to be spawned. This function is complicated, as it is used at several spaces.
+function SPAWN:_GetSpawnIndex( SpawnIndex )
+  self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
+
+  
+  if ( self.SpawnMaxGroups == 0 ) or ( SpawnIndex <= self.SpawnMaxGroups ) then
+    if ( self.SpawnMaxUnitsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxUnitsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
+      if SpawnIndex and SpawnIndex >= self.SpawnCount + 1 then
+        self.SpawnCount = self.SpawnCount + 1
+        SpawnIndex = self.SpawnCount
+      end
+      self.SpawnIndex = SpawnIndex
+      if not self.SpawnGroups[self.SpawnIndex] then
+        self:_InitializeSpawnGroups( self.SpawnIndex )
+      end
+    else
+      return nil
+    end
+  else
+    return nil
+  end
+  
+  return self.SpawnIndex
+end
+
+
+-- TODO Need to delete this... _Database does this now ...
+function SPAWN:_OnBirth( event )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
 		if event.initiator and event.initiator:getName() then
-			local EventPrefix = self:GetPrefixFromDCSUnit( event.initiator )
+			local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
 			if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
 				self:T( { "Birth event: " .. event.initiator:getName(), event } )
 				--MessageToAll( "Mission command: unit " .. SpawnTemplatePrefix .. " spawned." , 5,  EventPrefix .. '/Event')
@@ -10074,11 +10348,11 @@ end
 
 --- Obscolete
 -- @todo Need to delete this... _Database does this now ...
-function SPAWN:OnDeadOrCrash( event )
+function SPAWN:_OnDeadOrCrash( event )
 
 
 	if event.initiator and event.initiator:getName() then
-		local EventPrefix = self:GetPrefixFromDCSUnit( event.initiator )
+		local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
 		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
 			self:T( { "Dead event: " .. event.initiator:getName(), event } )
 --					local DestroyedUnit = Unit.getByName( EventPrefix )
@@ -10091,13 +10365,13 @@ function SPAWN:OnDeadOrCrash( event )
 	end
 end
 
---- Will detect AIR Units taking off... When the event takes place, the SPAWNed Group is registered as airborne...
+--- Will detect AIR Units taking off... When the event takes place, the spawned Group is registered as airborne...
 -- This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
-function SPAWN:OnTakeOff( event )
+function SPAWN:_OnTakeOff( event )
 
 	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:GetGroupFromDCSUnit( event.initiator )
+		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
 		if SpawnGroup then
 			self:T( { "TakeOff event: " .. event.initiator:getName(), event } )
 			self:T( "self.Landed = false" )
@@ -10106,19 +10380,19 @@ function SPAWN:OnTakeOff( event )
 	end
 end
 
---- Will detect AIR Units landing... When the event takes place, the SPAWNed Group is registered as landed.
+--- Will detect AIR Units landing... When the event takes place, the spawned Group is registered as landed.
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
-function SPAWN:OnLand( event )
+function SPAWN:_OnLand( event )
 
 	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:GetGroupFromDCSUnit( event.initiator )
+		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
 		if SpawnGroup then
 			self:T( { "Landed event:" .. event.initiator:getName(), event } )
 			self.Landed = true
 			self:T( "self.Landed = true" )
 			if self.Landed and self.RepeatOnLanding then
-				local SpawnGroupIndex = self:GetGroupIndexFromGroup( SpawnGroup )
+				local SpawnGroupIndex = self:_GetGroupIndexFromGroup( SpawnGroup )
 				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )
 			end
@@ -10127,19 +10401,19 @@ function SPAWN:OnLand( event )
 end
 
 --- Will detect AIR Units shutting down their engines ...
--- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the SPAWNed Group will Re-SPAWN.
+-- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
 -- But only when the Unit was registered to have landed.
--- @see OnTakeOff
--- @see OnLand
+-- @see _OnTakeOff
+-- @see _OnLand
 -- @todo Need to test for AIR Groups only...
-function SPAWN:OnEngineShutDown( event )
+function SPAWN:_OnLand( event )
 
 	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:GetGroupFromDCSUnit( event.initiator )
+		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
 		if SpawnGroup then
 			self:T( { "EngineShutDown event: " .. event.initiator:getName(), event } )
 			if self.Landed and self.RepeatOnEngineShutDown then
-				local SpawnGroupIndex = self:GetGroupIndexFromGroup( SpawnGroup )
+				local SpawnGroupIndex = self:_GetGroupIndexFromGroup( SpawnGroup )
 				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )
 			end
@@ -10147,13 +10421,10 @@ function SPAWN:OnEngineShutDown( event )
 	end
 end
 
---- Scheduled
--- @section Scheduled
-
 --- This function is called automatically by the Spawning scheduler.
 -- It is the internal worker method SPAWNing new Groups on the defined time intervals.
 function SPAWN:_Scheduler()
-self:T( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxGroupsAlive } )
+self:T( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
 	
 	if self.SpawnInit or self.SpawnCurrentTimer == self.SpawnSetTimer then
 		-- Validate if there are still groups left in the batch...
@@ -10200,8 +10471,6 @@ function SPAWN:_SpawnCleanUpScheduler()
 	end
 	
 end
-
-
 --- Limit the simultaneous movement of Groups within a running Mission.
 -- This module is defined to improve the performance in missions, and to bring additional realism for GROUND vehicles.
 -- Performance: If in a DCSRTE there are a lot of moving GROUND units, then in a multi player mission, this WILL create lag if
@@ -10211,6 +10480,8 @@ end
 
 Include.File( "Routines" )
 
+--- the MOVEMENT class
+-- @type
 MOVEMENT = {
 	ClassName = "MOVEMENT",
 }
@@ -10343,6 +10614,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
+--- The SEAD class
+-- @type
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {
