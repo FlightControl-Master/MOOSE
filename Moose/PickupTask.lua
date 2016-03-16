@@ -1,10 +1,12 @@
 --- A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.
--- @classmod PICKUPTASK
+-- @module PICKUPTASK
 -- @parent TASK
 
 Include.File("Task")
 Include.File("Cargo")
 
+--- The PICKUPTASK class
+-- @type
 PICKUPTASK = {
   ClassName = "PICKUPTASK",
   TEXT = { "Pick-Up", "picked-up", "loaded" },
@@ -12,9 +14,9 @@ PICKUPTASK = {
 }
 
 --- Creates a new PICKUPTASK.
--- @tparam table{string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.
--- @tparam CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
--- @tparam number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
+-- @param table{string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.
+-- @param CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
+-- @param number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
 function PICKUPTASK:New( CargoType, OnBoardSide )
     local self = BASE:Inherit( self, TASK:New() )
 	self:T()

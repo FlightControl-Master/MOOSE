@@ -1,15 +1,17 @@
 --- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
--- @classmod GOHOMETASK
+-- @module GOHOMETASK
 
 Include.File("Task")
 
+--- The GOHOMETASK class
+-- @type
 GOHOMETASK = {
   ClassName = "GOHOMETASK",
 }
 
 --- Creates a new GOHOMETASK.
--- @tparam table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
--- @treturn GOHOMETASK
+-- @param table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
+-- @return GOHOMETASK
 function GOHOMETASK:New( LandingZones )
 trace.f(self.ClassName)
 

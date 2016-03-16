@@ -1,13 +1,12 @@
 --- UNIT Classes
--- @classmod UNIT
+-- @module UNIT
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
-UNITS = {}
-
-
+--- The UNIT class
+-- @type
 UNIT = {
 	ClassName="UNIT",
 	}

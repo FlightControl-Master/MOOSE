@@ -1,19 +1,21 @@
 --- Set TASK to destroy certain unit types.
--- @classmod DESTROYUNITTYPESTASK
+-- @module DESTROYUNITTYPESTASK
 
 Include.File("DestroyBaseTask")
 
+--- The DESTROYUNITTYPESTASK class
+-- @type
 DESTROYUNITTYPESTASK = {
   ClassName = "DESTROYUNITTYPESTASK",
 	GoalVerb = "Destroy",
 }
 
 --- Creates a new DESTROYUNITTYPESTASK.
--- @tparam string DestroyGroupType 		String describing the group to be destroyed. f.e. "Radar Installations", "Fleet", "Batallion", "Command Centers".
--- @tparam string DestroyUnitType 		String describing the unit to be destroyed. f.e. "radars", "ships", "tanks", "centers".
--- @tparam table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @tparam string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
--- @treturn DESTROYUNITTYPESTASK
+-- @param string DestroyGroupType 		String describing the group to be destroyed. f.e. "Radar Installations", "Fleet", "Batallion", "Command Centers".
+-- @param string DestroyUnitType 		String describing the unit to be destroyed. f.e. "radars", "ships", "tanks", "centers".
+-- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
+-- @param string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
+-- @return DESTROYUNITTYPESTASK
 function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes )
 trace.f(self.ClassName)
 
@@ -38,8 +40,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYUNITTYPESTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 

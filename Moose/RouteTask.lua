@@ -1,16 +1,17 @@
 --- A ROUTETASK orchestrates the travel to a specific zone defined within the ME.
--- @classmod ROUTETASK
+-- @module ROUTETASK
 
---- Modeling a sequence of STAGEs to fly back to the home base specified by an Arrival Zone.
+--- The ROUTETASK class
+-- @type
 ROUTETASK = {
   ClassName = "ROUTETASK",
   GoalVerb = "Route",
 }
 
 --- Creates a new ROUTETASK.
--- @tparam table{sring,...}|string LandingZones Table of Zone Names where the target is located.
--- @tparam string TaskBriefing (optional) Defines a text describing the briefing of the task.
--- @treturn ROUTETASK
+-- @param table{sring,...}|string LandingZones Table of Zone Names where the target is located.
+-- @param string TaskBriefing (optional) Defines a text describing the briefing of the task.
+-- @return ROUTETASK
 function ROUTETASK:New( LandingZones, TaskBriefing )
 trace.f(self.ClassName, { LandingZones, TaskBriefing } )
 

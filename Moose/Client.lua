@@ -1,5 +1,5 @@
 --- CLIENT Classes
--- @classmod CLIENT
+-- @module CLIENT
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -9,6 +9,8 @@ Include.File( "Message" )
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
 -- These clients are defined within the Mission Orchestration Framework (MOF)
 
+--- The CLIENT class
+-- @type CLIENT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -30,9 +32,9 @@ CLIENT = {
 
 
 --- Use this method to register new Clients within the MOF.
--- @tparam string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @tparam string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @treturn CLIENT
+-- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return CLIENT
 -- @usage
 -- -- Create new Clients.
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -54,7 +56,7 @@ function CLIENT:New( ClientName, ClientBriefing )
 end
 
 --- Resets a CLIENT.
--- @tparam string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
 self:T()
 	self._Menus = {}
@@ -62,7 +64,7 @@ end
 
 --- ClientGroup returns the Group of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @treturn Group
+-- @return Group
 function CLIENT:ClientGroup()
 --self:T()
 
@@ -168,7 +170,7 @@ self:T()
 end
 
 --- Returns the Unit of the @{CLIENT}.
--- @treturn Unit
+-- @return Unit
 function CLIENT:GetClientGroupUnit()
 self:T()
 
@@ -186,7 +188,7 @@ self:T()
 end
 
 --- Returns the DCSUnit of the @{CLIENT}.
--- @treturn DCSUnit
+-- @return DCSUnit
 function CLIENT:GetClientGroupDCSUnit()
 self:T()
 
@@ -211,7 +213,7 @@ end
 
 
 --- Returns the Position of the @{CLIENT}.
--- @treturn Position
+-- @return Position
 function CLIENT:ClientPosition()
 --self:T()
 
@@ -227,7 +229,7 @@ function CLIENT:ClientPosition()
 end 
 
 --- Transport defines that the Client is a Transport.
--- @treturn CLIENT
+-- @return CLIENT
 function CLIENT:Transport()
 self:T()
 
@@ -236,8 +238,8 @@ self:T()
 end
 
 --- AddBriefing adds a briefing to a Client when a Player joins a Mission.
--- @tparam string ClientBriefing is the text defining the Mission briefing.
--- @treturn CLIENT
+-- @param string ClientBriefing is the text defining the Mission briefing.
+-- @return CLIENT
 function CLIENT:AddBriefing( ClientBriefing )
 self:T()
 	self.ClientBriefing = ClientBriefing
@@ -245,7 +247,7 @@ self:T()
 end
 
 --- IsTransport returns if a Client is a transport.
--- @treturn bool
+-- @return bool
 function CLIENT:IsTransport()
 self:T()
 	return self.ClientTransport
@@ -279,11 +281,11 @@ end
 
 --- Message is the key Message driver for the CLIENT class.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @tparam string Message is the text describing the message.
--- @tparam number MessageDuration is the duration in seconds that the Message should be displayed.
--- @tparam string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @tparam string MessageCategory is the category of the message (the title).
--- @tparam number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
+-- @param string Message is the text describing the message.
+-- @param number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param string MessageCategory is the category of the message (the title).
+-- @param number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
 self:T()
 

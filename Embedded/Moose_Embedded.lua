@@ -2857,7 +2857,7 @@ end
 env.info(( 'Init: Scripts Loaded v1.1' ))
 
 --- BASE The base class for all the classes defined within MOOSE.
--- @classmod BASE
+-- @module BASE
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -2891,7 +2891,7 @@ BASE = {
 
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
--- @treturn BASE
+-- @return BASE
 -- @usage
 -- function TASK:New()
 -- trace.f(self.ClassName)
@@ -2935,8 +2935,8 @@ function BASE:Inherit( Child, Parent )
 end
 
 --- This is the worker method to retrieve the Parent class.
--- @tparam BASE Child is the Child class from which the Parent class needs to be retrieved.
--- @treturn Parent
+-- @param BASE Child is the Child class from which the Parent class needs to be retrieved.
+-- @return Parent
 function BASE:Inherited( Child )
 	local Parent = getmetatable( Child )
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
@@ -3116,7 +3116,7 @@ function BASE:E( Arguments )
 	env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 end
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
--- @classmod MENU
+-- @module MENU
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3223,7 +3223,7 @@ function MENU_COMMAND_GROUP:New( GroupID, MenuText, ParentMenu, CommandMenuFunct
 	return self
 end
 --- GROUP Classes
--- @classmod GROUP
+-- @module GROUP
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3542,7 +3542,7 @@ function GROUP:_GetController()
 
 end
 --- UNIT Classes
--- @classmod UNIT
+-- @module UNIT
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3657,7 +3657,7 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 end
 
 --- ZONE Classes
--- @classmod ZONE
+-- @module ZONE
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3727,7 +3727,7 @@ end
 
 --- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).
--- @classmod DATABASE
+-- @module DATABASE
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3763,7 +3763,7 @@ DATABASECategory =
 
 
 --- Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.
--- @treturn DATABASE
+-- @return DATABASE
 -- @usage
 -- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = DATABASE:New()
@@ -4621,7 +4621,7 @@ _Database = DATABASE:New()
 _Database:ScoreOpen()
 
 --- CARGO Classes
--- @classmod CARGO
+-- @module CARGO
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -5632,7 +5632,7 @@ self:T()
 	return Cargo
 end
 --- CLIENT Classes
--- @classmod CLIENT
+-- @module CLIENT
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -5663,9 +5663,9 @@ CLIENT = {
 
 
 --- Use this method to register new Clients within the MOF.
--- @tparam string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @tparam string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @treturn CLIENT
+-- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return CLIENT
 -- @usage
 -- -- Create new Clients.
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -5688,7 +5688,7 @@ function CLIENT:New( ClientName, ClientBriefing )
 end
 
 --- Resets a CLIENT.
--- @tparam string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
 self:T()
 	self._Menus = {}
@@ -5696,7 +5696,7 @@ end
 
 --- ClientGroup returns the Group of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @treturn Group
+-- @return Group
 function CLIENT:ClientGroup()
 --self:T()
 
@@ -5802,7 +5802,7 @@ self:T()
 end
 
 --- Returns the Unit of the @{CLIENT}.
--- @treturn Unit
+-- @return Unit
 function CLIENT:GetClientGroupUnit()
 self:T()
 
@@ -5820,7 +5820,7 @@ self:T()
 end
 
 --- Returns the DCSUnit of the @{CLIENT}.
--- @treturn DCSUnit
+-- @return DCSUnit
 function CLIENT:GetClientGroupDCSUnit()
 self:T()
 
@@ -5845,7 +5845,7 @@ end
 
 
 --- Returns the Position of the @{CLIENT}.
--- @treturn Position
+-- @return Position
 function CLIENT:ClientPosition()
 --self:T()
 
@@ -5861,7 +5861,7 @@ function CLIENT:ClientPosition()
 end 
 
 --- Transport defines that the Client is a Transport.
--- @treturn CLIENT
+-- @return CLIENT
 function CLIENT:Transport()
 self:T()
 
@@ -5870,8 +5870,8 @@ self:T()
 end
 
 --- AddBriefing adds a briefing to a Client when a Player joins a Mission.
--- @tparam string ClientBriefing is the text defining the Mission briefing.
--- @treturn CLIENT
+-- @param string ClientBriefing is the text defining the Mission briefing.
+-- @return CLIENT
 function CLIENT:AddBriefing( ClientBriefing )
 self:T()
 	self.ClientBriefing = ClientBriefing
@@ -5879,7 +5879,7 @@ self:T()
 end
 
 --- IsTransport returns if a Client is a transport.
--- @treturn bool
+-- @return bool
 function CLIENT:IsTransport()
 self:T()
 	return self.ClientTransport
@@ -5913,11 +5913,11 @@ end
 
 --- Message is the key Message driver for the CLIENT class.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @tparam string Message is the text describing the message.
--- @tparam number MessageDuration is the duration in seconds that the Message should be displayed.
--- @tparam string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @tparam string MessageCategory is the category of the message (the title).
--- @tparam number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
+-- @param string Message is the text describing the message.
+-- @param number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param string MessageCategory is the category of the message (the title).
+-- @param number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
 self:T()
 
@@ -5967,7 +5967,7 @@ end
 -- Messages are sent to Clients with MESSAGE:@{ToClient}().
 -- Messages are sent to Coalitions with MESSAGE:@{ToCoalition}().
 -- Messages are sent to All Players with MESSAGE:@{ToAll}().
--- @classmod MESSAGE
+-- @module MESSAGE
 
 Include.File( "Trace" )
 Include.File( "Base" )
@@ -5981,11 +5981,11 @@ MESSAGE = {
 
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- @tparam string MessageText is the text of the Message.
--- @tparam string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
--- @tparam number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @tparam string MessageID is a string expressing the ID of the Message.
--- @treturn MESSAGE
+-- @param string MessageText is the text of the Message.
+-- @param string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
+-- @param number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
+-- @param string MessageID is a string expressing the ID of the Message.
+-- @return MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
 -- -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
@@ -6015,8 +6015,8 @@ trace.f(self.ClassName, { MessageText, MessageCategory, MessageDuration, Message
 end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
--- @tparam CLIENT Client is the Group of the Client.
--- @treturn MESSAGE
+-- @param CLIENT Client is the Group of the Client.
+-- @return MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
 -- -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
@@ -6046,7 +6046,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to the Blue coalition. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the BLUE coalition.
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
@@ -6064,7 +6064,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to the Red Coalition. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
@@ -6083,7 +6083,7 @@ end
 
 --- Sends a MESSAGE to a Coalition. 
 -- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
@@ -6104,7 +6104,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to all players. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created to all players.
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
@@ -6198,7 +6198,7 @@ end
 --_MessageQueue = MESSAGEQUEUE:New( 0.5 )
 
 --- Stages within a @{TASK} within a @{MISSION}. All of the STAGE functionality is considered internally administered and not to be used by any Mission designer.
--- @classmod STAGE
+-- @module STAGE
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -6988,7 +6988,7 @@ _TransportStageAction = {
   ONCE = 1
 }
 --- The TASK Classes define major end-to-end activities within a MISSION. The TASK Class is the Master Class to orchestrate these activities. From this class, many concrete TASK classes are inherited.
--- @classmod TASK
+-- @module TASK
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -7032,7 +7032,7 @@ TASK = {
 }
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
--- @treturn TASK
+-- @return TASK
 function TASK:New()
 trace.f(self.ClassName)
 
@@ -7076,7 +7076,7 @@ end
 
 
 --- Get progress of a TASK.
--- @treturn string GoalsText
+-- @return string GoalsText
 function TASK:GetGoalProgress()
 trace.f(self.ClassName)
 
@@ -7099,8 +7099,8 @@ trace.f(self.ClassName)
 end
 
 --- Show progress of a TASK.
--- @tparam MISSION 	Mission 		Group structure describing the Mission.
--- @tparam CLIENT	Client	 		Group structure describing the Client.
+-- @param MISSION 	Mission 		Group structure describing the Mission.
+-- @param CLIENT	Client	 		Group structure describing the Client.
 function TASK:ShowGoalProgress( Mission, Client )
 trace.f(self.ClassName)
 
@@ -7129,7 +7129,7 @@ trace.f(self.ClassName)
 end
 
 --- Returns if a TASK is done.
--- @treturn bool
+-- @return bool
 function TASK:IsDone()
 	trace.i( self.ClassName, self.TaskDone )
 	return self.TaskDone
@@ -7154,14 +7154,14 @@ trace.f(self.ClassName)
 end
 
 --- Returns the Goals of a TASK
--- @treturn @table Goals
+-- @return @table Goals
 function TASK:GetGoals()
 	return self.GoalTasks
 end
 
 --- Returns if a TASK has Goal(s).
--- @tparam ?string GoalVerb is the name of the Goal of the TASK.
--- @treturn bool
+-- @param ?string GoalVerb is the name of the Goal of the TASK.
+-- @return bool
 function TASK:Goal( GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7175,8 +7175,8 @@ trace.f(self.ClassName)
 end
 
 --- Sets the total Goals to be achieved of the Goal Name
--- @tparam number GoalTotal is the number of times the GoalVerb needs to be achieved.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @param number GoalTotal is the number of times the GoalVerb needs to be achieved.
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:SetGoalTotal( GoalTotal, GoalVerb )
 trace.f(self.ClassName, { GoalTotal, GoalVerb } )
 	
@@ -7191,7 +7191,7 @@ trace.f(self.ClassName, { GoalTotal, GoalVerb } )
 end
 
 --- Gets the total of Goals to be achieved within the TASK of the GoalVerb.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:GetGoalTotal( GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7205,9 +7205,9 @@ trace.f(self.ClassName)
 end
 
 --- Sets the total of Goals currently achieved within the TASK of the GoalVerb.
--- @tparam number GoalCount is the total number of Goals achieved within the TASK.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
--- @treturn TASK
+-- @param number GoalCount is the total number of Goals achieved within the TASK.
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @return TASK
 function TASK:SetGoalCount( GoalCount, GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7220,9 +7220,9 @@ trace.f(self.ClassName)
 end
 
 --- Increments the total of Goals currently achieved within the TASK of the GoalVerb, with the given GoalCountIncrease.
--- @tparam number GoalCountIncrease is the number of new Goals achieved within the TASK.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
--- @treturn TASK
+-- @param number GoalCountIncrease is the number of new Goals achieved within the TASK.
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @return TASK
 function TASK:IncreaseGoalCount( GoalCountIncrease, GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7235,8 +7235,8 @@ trace.f(self.ClassName)
 end
 
 --- Gets the total of Goals currently achieved within the TASK of the GoalVerb.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
--- @treturn TASK
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @return TASK
 function TASK:GetGoalCount( GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7250,8 +7250,8 @@ trace.f(self.ClassName)
 end
 
 --- Gets the percentage of Goals currently achieved within the TASK of the GoalVerb.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
--- @treturn TASK
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @return TASK
 function TASK:GetGoalPercentage( GoalVerb )
 trace.f(self.ClassName)
 	if not GoalVerb then
@@ -7265,7 +7265,7 @@ trace.f(self.ClassName)
 end
 
 --- Returns if all the Goals of the TASK were achieved.
--- @treturn bool
+-- @return bool
 function TASK:IsGoalReached( )
 
 	local GoalReached = true
@@ -7290,9 +7290,9 @@ function TASK:IsGoalReached( )
 end
 
 --- Adds an Additional Goal for the TASK to be achieved.
--- @tparam string GoalVerb is the name of the Goal of the TASK.
--- @tparam string GoalTask is a text describing the Goal of the TASK to be achieved.
--- @tparam number GoalIncrease is a number by which the Goal achievement is increasing.
+-- @param string GoalVerb is the name of the Goal of the TASK.
+-- @param string GoalTask is a text describing the Goal of the TASK to be achieved.
+-- @param number GoalIncrease is a number by which the Goal achievement is increasing.
 function TASK:AddGoalCompletion( GoalVerb, GoalTask, GoalIncrease )
 trace.f( self.ClassName, { GoalVerb, GoalTask, GoalIncrease } )
 
@@ -7304,8 +7304,8 @@ trace.f( self.ClassName, { GoalVerb, GoalTask, GoalIncrease } )
 end
 
 --- Returns if the additional Goal for the TASK was completed.
--- @tparam ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
--- @treturn string Goals
+-- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
+-- @return string Goals
 function TASK:GetGoalCompletion( GoalVerb )
 trace.f( self.ClassName, { GoalVerb } )
 	
@@ -7371,86 +7371,86 @@ trace.f(self.ClassName)
 end
 
 --- When the CLIENT is approaching the landing zone, a RED SMOKE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeRed( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, a GREEN SMOKE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeGreen( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
 --- When the CLIENT is approaching the landing zone, a BLUE SMOKE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeBlue( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, a WHITE SMOKE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeWhite( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, an ORANGE SMOKE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeOrange( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, a RED FLARE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareRed( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, a GREEN FLARE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareGreen( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
 --- When the CLIENT is approaching the landing zone, a BLUE FLARE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareBlue( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, a WHITE FLARE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareWhite( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
 --- When the CLIENT is approaching the landing zone, an ORANGE FLARE will be fired by an optional SignalUnitNames.
--- @tparam table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
--- @tparam number SignalHeight Altitude that the Signal should be fired...
+-- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
+-- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareOrange( SignalUnitNames, SignalHeight )
 trace.f(self.ClassName)
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end
 --- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
--- @classmod GOHOMETASK
+-- @module GOHOMETASK
 
 Include.File("Task")
 
@@ -7459,8 +7459,8 @@ GOHOMETASK = {
 }
 
 --- Creates a new GOHOMETASK.
--- @tparam table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
--- @treturn GOHOMETASK
+-- @param table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
+-- @return GOHOMETASK
 function GOHOMETASK:New( LandingZones )
 trace.f(self.ClassName)
 
@@ -7486,7 +7486,7 @@ trace.f(self.ClassName)
   return Child
 end
 --- A DESTROYBASETASK will monitor the destruction of Groups and Units. This is a BASE class, other classes are derived from this class.
--- @classmod DESTROYBASETASK
+-- @module DESTROYBASETASK
 -- @see DESTROYGROUPSTASK
 -- @see DESTROYUNITTYPESTASK
 -- @see DESTROY_RADARS_TASK
@@ -7501,11 +7501,11 @@ DESTROYBASETASK = {
 }
 
 --- Creates a new DESTROYBASETASK.
--- @tparam string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
--- @tparam string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
--- @tparam table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
--- @tparam ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
--- @treturn DESTROYBASETASK
+-- @param string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
+-- @param string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
+-- @param table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
+-- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+-- @return DESTROYBASETASK
 function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
 	local self = BASE:Inherit( self, TASK:New() )
 	self:T()
@@ -7566,7 +7566,7 @@ self:T()
 	return 0
 end
 --- DESTROYGROUPSTASK
--- @classmod DESTROYGROUPSTASK
+-- @module DESTROYGROUPSTASK
 
 Include.File("DestroyBaseTask")
 
@@ -7577,11 +7577,11 @@ DESTROYGROUPSTASK = {
 }
 
 --- Creates a new DESTROYGROUPSTASK.
--- @tparam 	string DestroyGroupType 	String describing the group to be destroyed.
--- @tparam 	string DestroyUnitType 	String describing the unit to be destroyed.
--- @tparam 	table{string,...} DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
--- @tparam ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
----@treturn DESTROYGROUPSTASK
+-- @param 	string DestroyGroupType 	String describing the group to be destroyed.
+-- @param 	string DestroyUnitType 	String describing the unit to be destroyed.
+-- @param 	table{string,...} DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
+-- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+---@return DESTROYGROUPSTASK
 function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
 trace.f(self.ClassName)
 
@@ -7599,8 +7599,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 	trace.i( self.ClassName, DestroyGroup:getSize() )
@@ -7623,7 +7623,7 @@ trace.f(self.ClassName)
 	return DestroyCount
 end
 --- Task class to destroy radar installations.
--- @classmod DESTROYRADARSTASK 
+-- @module DESTROYRADARSTASK 
 
 Include.File("DestroyBaseTask")
 
@@ -7633,8 +7633,8 @@ DESTROYRADARSTASK = {
 }
 
 --- Creates a new DESTROYRADARSTASK.
--- @tparam table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @treturn DESTROYRADARSTASK
+-- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
+-- @return DESTROYRADARSTASK
 function DESTROYRADARSTASK:New( DestroyGroupNames )
 trace.f(self.ClassName)
 
@@ -7650,8 +7650,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYRADARSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 
@@ -7665,7 +7665,7 @@ trace.f(self.ClassName)
 	return DestroyCount
 end
 --- Set TASK to destroy certain unit types.
--- @classmod DESTROYUNITTYPESTASK
+-- @module DESTROYUNITTYPESTASK
 
 Include.File("DestroyBaseTask")
 
@@ -7675,11 +7675,11 @@ DESTROYUNITTYPESTASK = {
 }
 
 --- Creates a new DESTROYUNITTYPESTASK.
--- @tparam string DestroyGroupType 		String describing the group to be destroyed. f.e. "Radar Installations", "Fleet", "Batallion", "Command Centers".
--- @tparam string DestroyUnitType 		String describing the unit to be destroyed. f.e. "radars", "ships", "tanks", "centers".
--- @tparam table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @tparam string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
--- @treturn DESTROYUNITTYPESTASK
+-- @param string DestroyGroupType 		String describing the group to be destroyed. f.e. "Radar Installations", "Fleet", "Batallion", "Command Centers".
+-- @param string DestroyUnitType 		String describing the unit to be destroyed. f.e. "radars", "ships", "tanks", "centers".
+-- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
+-- @param string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
+-- @return DESTROYUNITTYPESTASK
 function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes )
 trace.f(self.ClassName)
 
@@ -7704,8 +7704,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYUNITTYPESTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 
@@ -7720,7 +7720,7 @@ trace.f(self.ClassName)
 	return DestroyCount
 end
 --- A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.
--- @classmod PICKUPTASK
+-- @module PICKUPTASK
 -- @parent TASK
 
 Include.File("Task")
@@ -7733,9 +7733,9 @@ PICKUPTASK = {
 }
 
 --- Creates a new PICKUPTASK.
--- @tparam table{string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.
--- @tparam CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
--- @tparam number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
+-- @param table{string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.
+-- @param CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
+-- @param number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
 function PICKUPTASK:New( CargoType, OnBoardSide )
     local self = BASE:Inherit( self, TASK:New() )
 	self:T()
@@ -7874,7 +7874,7 @@ self:T()
 end
 
 --- A DEPLOYTASK orchestrates the deployment of CARGO within a specific landing zone.
--- @classmod DEPLOYTASK
+-- @module DEPLOYTASK
 
 Include.File( "Task" )
 
@@ -7886,8 +7886,8 @@ DEPLOYTASK = {
 
 
 --- Creates a new DEPLOYTASK object, which models the sequence of STAGEs to unload a cargo.
--- @tparam table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
--- @tparam CARGO_TYPE CargoType Type of the Cargo.
+-- @param table{string,...}|string LandingZones Table or name of the zone(s) where Cargo is to be unloaded.
+-- @param CARGO_TYPE CargoType Type of the Cargo.
 function DEPLOYTASK:New( CargoType )
 	local self = BASE:Inherit( self, TASK:New() )
 	self:T()
@@ -7943,7 +7943,7 @@ end
 
 
 --- When the cargo is unloaded, it will move to the target zone name.
--- @tparam string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
+-- @param string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
 function DEPLOYTASK:SetCargoTargetZoneName( TargetZoneName )
 self:T()
   
@@ -8029,7 +8029,7 @@ self:T()
 
 end
 --- A NOTASK is a dummy activity... But it will show a Mission Briefing...
--- @classmod NOTASK
+-- @module NOTASK
 
 Include.File("Task")
 
@@ -8057,7 +8057,7 @@ trace.f(self.ClassName)
   return Child
 end
 --- A ROUTETASK orchestrates the travel to a specific zone defined within the ME.
--- @classmod ROUTETASK
+-- @module ROUTETASK
 
 --- Modeling a sequence of STAGEs to fly back to the home base specified by an Arrival Zone.
 ROUTETASK = {
@@ -8066,9 +8066,9 @@ ROUTETASK = {
 }
 
 --- Creates a new ROUTETASK.
--- @tparam table{sring,...}|string LandingZones Table of Zone Names where the target is located.
--- @tparam string TaskBriefing (optional) Defines a text describing the briefing of the task.
--- @treturn ROUTETASK
+-- @param table{sring,...}|string LandingZones Table of Zone Names where the target is located.
+-- @param string TaskBriefing (optional) Defines a text describing the briefing of the task.
+-- @return ROUTETASK
 function ROUTETASK:New( LandingZones, TaskBriefing )
 trace.f(self.ClassName, { LandingZones, TaskBriefing } )
 
@@ -8100,7 +8100,7 @@ end
 
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
--- @classmod MISSION
+-- @module MISSION
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -8138,11 +8138,11 @@ function MISSION:Meta()
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
--- @tparam string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @tparam string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @tparam string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @tparam string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
--- @treturn MISSION
+-- @param string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @return MISSION
 -- @usage 
 -- -- Declare a few missions.
 -- local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -8176,7 +8176,7 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 end
 
 --- Returns if a Mission has completed.
--- @treturn bool
+-- @return bool
 function MISSION:IsCompleted()
 	self:T()
 	return self.MissionStatus == "ACCOMPLISHED"
@@ -8295,7 +8295,7 @@ end
 
 
 --- Add a goal function to a MISSION. Goal functions are called when a @{TASK} within a mission has been completed.
--- @tparam function GoalFunction is the function defined by the mission designer to evaluate whether a certain goal has been reached after a @{TASK} finishes within the @{MISSION}. A GoalFunction must accept 2 parameters: Mission, Client, which contains the current MISSION object and the current CLIENT object respectively.
+-- @param function GoalFunction is the function defined by the mission designer to evaluate whether a certain goal has been reached after a @{TASK} finishes within the @{MISSION}. A GoalFunction must accept 2 parameters: Mission, Client, which contains the current MISSION object and the current CLIENT object respectively.
 -- @usage
 --  PatriotActivation = { 
 --		{ "US SAM Patriot Zerti", false },
@@ -8336,8 +8336,8 @@ function MISSION:AddGoalFunction( GoalFunction )
 end
 
 --- Show the briefing of the MISSION to the CLIENT.
--- @tparam CLIENT Client to show briefing to.
--- @treturn CLIENT
+-- @param CLIENT Client to show briefing to.
+-- @return CLIENT
 function MISSION:ShowBriefing( Client )
 	self:T( { Client.ClientName } )
 
@@ -8355,8 +8355,8 @@ function MISSION:ShowBriefing( Client )
 end
 
 --- Register a new @{CLIENT} to participate within the mission.
--- @tparam CLIENT Client is the @{CLIENT} object. The object must have been instantiated with @{CLIENT:New}.
--- @treturn CLIENT
+-- @param CLIENT Client is the @{CLIENT} object. The object must have been instantiated with @{CLIENT:New}.
+-- @return CLIENT
 -- @usage
 -- Add a number of Client objects to the Mission.
 -- 	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
@@ -8377,8 +8377,8 @@ trace.r( self.ClassName, "" )
 end
 
 --- Find a @{CLIENT} object within the @{MISSION} by its ClientName.
--- @tparam CLIENT ClientName is a string defining the Client Group as defined within the ME.
--- @treturn CLIENT
+-- @param CLIENT ClientName is a string defining the Client Group as defined within the ME.
+-- @return CLIENT
 -- @usage
 -- -- Seach for Client "Bomber" within the Mission.
 -- local BomberClient = Mission:FindClient( "Bomber" )
@@ -8389,9 +8389,9 @@ end
 
 
 --- Register a @{TASK} to be completed within the @{MISSION}. Note that there can be multiple @{TASK}s registered to be completed. Each TASK can be set a certain Goal. The MISSION will not be completed until all Goals are reached.
--- @tparam TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
--- @tparam number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
--- @treturn TASK
+-- @param TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
+-- @param number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
+-- @return TASK
 -- @usage
 -- -- Define a few tasks for the Mission.
 --	PickupZones = { "NATO Gold Pickup Zone", "NATO Titan Pickup Zone" }
@@ -8424,8 +8424,8 @@ function MISSION:AddTask( Task, TaskNumber )
  end
 
 --- Get the TASK idenified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @tparam number TaskNumber is the number of the @{TASK} within the @{MISSION}.
--- @treturn TASK
+-- @param number TaskNumber is the number of the @{TASK} within the @{MISSION}.
+-- @return TASK
 -- @usage
 -- -- Get Task 2 from the Mission.
 -- Task2 = Mission:GetTask( 2 )
@@ -8449,7 +8449,7 @@ function MISSION:GetTask( TaskNumber )
 end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
--- @treturn {TASK,...} Structure of TASKS with the @{TASK} number as the key.
+-- @return {TASK,...} Structure of TASKS with the @{TASK} number as the key.
 -- @usage
 -- -- Get Tasks from the Mission.
 -- Tasks = Mission:GetTasks()
@@ -8799,7 +8799,7 @@ trace.e()
 end
 
 --- CLEANUP Classes
--- @classmod CLEANUP
+-- @module CLEANUP
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -8816,9 +8816,9 @@ CLEANUP = {
 }
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
--- @tparam table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
--- @tparam ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
--- @treturn CLEANUP
+-- @param table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
+-- @param ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
+-- @return CLEANUP
 -- @usage
 -- -- Clean these Zones.
 -- CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
@@ -9108,7 +9108,7 @@ function CLEANUP:_Scheduler()
 end
 
 --- Dynamic spawning of Groups and Units.
--- @classmod SPAWN
+-- @module SPAWN
 -- @author Flightcontrol
 
 MOOSE_Version = "0.1.1.1"
@@ -9131,8 +9131,8 @@ SPAWN = {
 -- Spawned Groups and Units will follow the following naming convention within the DCS World run-time environment:
 --       Groups will have the name SpawnTemplatePrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
 --       Units will have the name SpawnTemplatePrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
--- @tparam string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
--- @treturn SPAWN
+-- @param string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
+-- @return SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
@@ -9173,8 +9173,8 @@ end
 -- Spawned Groups and Units will follow the following naming convention within the DCS World run-time environment:
 --       Groups will have the name SpawnTemplatePrefix#ggg, where ggg is a counter from 0 to 999 for each new spawned Group.
 --       Units will have the name SpawnTemplatePrefix#ggg-uu, where uu is a counter from 0 to 99 for each new spawned Unit belonging to that Group.
--- @tparam string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
--- @treturn SPAWN
+-- @param string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template. That Group must have the flag "Late Activation" set. Note that this SpawnTemplatePrefix name should not contain any # character.
+-- @return SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
@@ -9228,10 +9228,10 @@ end
 
 
 --- Randomizes a defined route of the Template Group in the ME when the Group is Spawned. This is very useful to define extra variation in the DCS World run-time environment of the behaviour of Groups like Ground Units, Ships, Planes, Helicopters.
--- @tparam number SpawnStartPoint is the waypoint where the randomization begins. Note that the StartPoint = 0 equals the point where the Group is Spawned. This parameter is useful to avoid randomization to start from the first waypoint, but a bit further down the route...
--- @tparam number SpawnEndPoint is the waypoint where the randomization ends. this parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
--- @tparam number SpawnRadius is the radius in meters, that defines the concentric circle in which the randomization of the new waypoint will take place, with the original waypoint located in the middle...
--- @treturn SPAWN
+-- @param number SpawnStartPoint is the waypoint where the randomization begins. Note that the StartPoint = 0 equals the point where the Group is Spawned. This parameter is useful to avoid randomization to start from the first waypoint, but a bit further down the route...
+-- @param number SpawnEndPoint is the waypoint where the randomization ends. this parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
+-- @param number SpawnRadius is the radius in meters, that defines the concentric circle in which the randomization of the new waypoint will take place, with the original waypoint located in the middle...
+-- @return SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
 -- -- The KA-50 has waypoints SP, 1, 2, 3, 4, DP. 
@@ -9276,9 +9276,9 @@ end
 
 --- This function is rather complicated to understand. But I'll try to explain...
 -- This function becomes useful when you need to SPAWN random types of Groups defined within the ME, but they all need to follow the same Template route and have the same SpawnTemplatePrefix name, then this method becomes very useful.
--- @tparam table{string,...} SpawnTemplatePrefixTable is a table with the names of the Groups defined within the ME (with late activatio on), from which on a new SPAWN of SpawnTemplatePrefix (the main Group name), a NEW Group will be choosen as the Group to be SPAWNed.
+-- @param table{string,...} SpawnTemplatePrefixTable is a table with the names of the Groups defined within the ME (with late activatio on), from which on a new SPAWN of SpawnTemplatePrefix (the main Group name), a NEW Group will be choosen as the Group to be SPAWNed.
 -- In other words, this method randomizes between a defined set of Groups the Group to be SPAWNed for each new SPAWN.
--- @treturn SPAWN
+-- @return SPAWN
 -- @usage
 -- -- NATO Tank Platoons invading Gori.
 -- -- Choose between 13 different 'US Tank Platoon' configurations for each new SPAWN the Group to be SPAWNed for the 
@@ -9326,7 +9326,7 @@ end
 --- When a Group got SPAWNed, it has a life within the DCSRTE. For planes and helicopters, when these Units go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the DCSRTE.
 -- This function is used to Re-Spawn automatically (so no extra call is needed anymore) the same Group after it landed. This will enable a SPAWNed group to be Re-SPAWNed after it lands, until it is destroyed...
 -- Note: When the Group is respawned, it will @{ReSpawn} at the original airbase where it took off. So ensure that the paths for Groups that ReSpawn, always return to the original airbase.
--- @treturn SPAWN
+-- @return SPAWN
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
@@ -9348,7 +9348,7 @@ function SPAWN:Repeat()
 end
 
 --- Same as the @{Repeat) method.
--- @treturn SPAWN
+-- @return SPAWN
 -- @see Repeat
 
 function SPAWN:RepeatOnLanding()
@@ -9362,7 +9362,7 @@ function SPAWN:RepeatOnLanding()
 end
 
 --- Same as the @{Repeat) method, but now the Group will respawn after its engines have shut down.
--- @treturn SPAWN
+-- @return SPAWN
 -- @see Repeat
 
 function SPAWN:RepeatOnEngineShutDown()
@@ -9388,13 +9388,13 @@ end
 
 
 --- Makes the Groups visible before start (like a batallion).
--- @tparam number SpawnZone 		A @{ZONE} where the group will be positioned. The X and Y coordinates of the zone define the start position.
--- @tparam number SpawnAngle 		The angle in degrees how the Groups and each Unit of the Group will be positioned.
--- @tparam number SpawnFormation    The formation of the Units within the Group.
--- @tparam number SpawnWidth		The amount of Groups that will be positioned on the X axis.
--- @tparam number SpawnDeltaX       The space between each Group on the X-axis.
--- @tparam number SpawnDeltaY		The space between each Group on the Y-axis.
--- @treturn SPAWN
+-- @param number SpawnZone 		A @{ZONE} where the group will be positioned. The X and Y coordinates of the zone define the start position.
+-- @param number SpawnAngle 		The angle in degrees how the Groups and each Unit of the Group will be positioned.
+-- @param number SpawnFormation    The formation of the Units within the Group.
+-- @param number SpawnWidth		The amount of Groups that will be positioned on the X axis.
+-- @param number SpawnDeltaX       The space between each Group on the X-axis.
+-- @param number SpawnDeltaY		The space between each Group on the Y-axis.
+-- @return SPAWN
 -- @usage
 -- -- Define an array of Groups within Zone "Start".
 -- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( ZONE:New( "Start" ), 90, "Diamond", 10, 100, 50 )
@@ -9512,7 +9512,7 @@ end
 --- Will SPAWN a Group whenever you want to do this.
 -- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
 -- Uses @{DATABASE} global object defined in MOOSE.
--- @treturn SPAWN
+-- @return SPAWN
 function SPAWN:Spawn()
 	self:T( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -9521,8 +9521,8 @@ end
 
 --- Will Re-SPAWN a Group based on a given GroupName. The GroupName must be a group that is already alive within the DCSRTE and should have a Group Template defined in the ME (with Late Activation flag on).
 -- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
--- @tparam string SpawnGroupName 
--- @treturn SPAWN
+-- @param string SpawnGroupName 
+-- @return SPAWN
 -- Uses _Database global object defined in MOOSE.
 function SPAWN:ReSpawn( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
@@ -9542,7 +9542,7 @@ end
 --- Will SPAWN a Group with a specified index number whenever you want to do this.
 -- Note that the configuration with the above functions will apply when calling this method: Maxima, Randomization of routes, Scheduler, ...
 -- Uses @{DATABASE} global object defined in MOOSE.
--- @treturn GROUP The @{GROUP} that was spawned. You can use this group for further actions.
+-- @return GROUP The @{GROUP} that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
 	
@@ -9568,9 +9568,9 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 end
 
 --- SPAWNs a new Group within varying time intervals. This is useful if you want to have continuity within your missions of certain (AI) Groups to be present (alive) within your missions.
--- @tparam number SpawnTime is the time interval defined in seconds between each new SPAWN of new Groups.
--- @tparam number SpawnTimeVariation is the variation to be applied on the defined time interval between each new SPAWN. The variation is defined as a value between 0 and 1, which expresses the %-tage of variation to be applied as the low and high time interval boundaries. Between these boundaries a new time interval will be applied. See usage.
--- @treturn SPAWN
+-- @param number SpawnTime is the time interval defined in seconds between each new SPAWN of new Groups.
+-- @param number SpawnTimeVariation is the variation to be applied on the defined time interval between each new SPAWN. The variation is defined as a value between 0 and 1, which expresses the %-tage of variation to be applied as the low and high time interval boundaries. Between these boundaries a new time interval will be applied. See usage.
+-- @return SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- -- The time interval is set to SPAWN new helicopters between each 600 seconds, with a time variation of 50%.
@@ -9629,10 +9629,10 @@ end
 --- Limits the Maximum amount of Units to be alive, and the maximum amount of Groups to be SPAWNed within the DCS World run-time environment.
 -- Note that this method is exceptionally important to balance the amount of Units alive within the DCSRTE and the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
 -- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
--- @tparam number SpawnMaxGroupsAlive is the Maximum amount of Units to be alive. When there are more Units alive in the DCSRTE of SpawnTemplatePrefix, then no new SPAWN will happen of the Group, until some of these Units will be destroyed.
--- @tparam number SpawnMaxGroups is the Maximum amount of Groups that can be SPAWNed from SpawnTemplatePrefix. When there are more Groups alive in the DCSRTE of SpawnTemplatePrefix, then no more SPAWNs will happen of the Group. This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
+-- @param number SpawnMaxGroupsAlive is the Maximum amount of Units to be alive. When there are more Units alive in the DCSRTE of SpawnTemplatePrefix, then no new SPAWN will happen of the Group, until some of these Units will be destroyed.
+-- @param number SpawnMaxGroups is the Maximum amount of Groups that can be SPAWNed from SpawnTemplatePrefix. When there are more Groups alive in the DCSRTE of SpawnTemplatePrefix, then no more SPAWNs will happen of the Group. This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
 --        This parameter accepts the value 0, which expresses no Group count limits.
--- @treturn SPAWN
+-- @return SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field.
 -- -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
@@ -9642,7 +9642,7 @@ end
 
 
 --- Will SPAWN a Group whenever you want to do this, but for AIR Groups only to be applied, and will SPAWN the Group in Uncontrolled mode... This will be similar to the Uncontrolled flag setting in the ME.
--- @treturn SPAWN
+-- @return SPAWN
 function SPAWN:UnControlled()
 	self:T( { self.SpawnTemplatePrefix } )
 	
@@ -9659,9 +9659,9 @@ end
 --- Will SPAWN a Group from a Hosting @{UNIT}. This function is mostly advisable to be used if you want to simulate SPAWNing from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning @{GROUP} is reset to the Point of the spawn.
 -- You can use the returned @{GROUP} to further define the route to be followed.
--- @tparam UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
--- @treturn GROUP Spawned.
--- @treturn nil when nothing was spawned.
+-- @param UNIT HostUnit is the AIR unit or GROUND unit dropping or unloading the Spawn group.
+-- @return GROUP Spawned.
+-- @return nil when nothing was spawned.
 function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, HostUnit, SpawnFormation, SpawnIndex } )
 
@@ -9732,9 +9732,9 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{ZONE}.
--- @tparam ZONE The @{ZONE} where the Group is to be SPAWNed.
--- @treturn GROUP that was spawned.
--- @treturn nil when nothing as spawned.
+-- @param ZONE The @{ZONE} where the Group is to be SPAWNed.
+-- @return GROUP that was spawned.
+-- @return nil when nothing as spawned.
 function SPAWN:SpawnInZone( Zone, SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
 	
@@ -9786,8 +9786,8 @@ end
 
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
--- @tparam number SpawnIndex is the number of the Group that is to be SPAWNed.
--- @treturn string SpawnGroupName
+-- @param number SpawnIndex is the number of the Group that is to be SPAWNed.
+-- @return string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
 	self:T( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -10207,7 +10207,7 @@ end
 -- Performance: If in a DCSRTE there are a lot of moving GROUND units, then in a multi player mission, this WILL create lag if
 -- the main DCS execution core of your CPU is fully utilized. So, this class will limit the amount of simultaneous moving GROUND units
 -- on defined intervals (currently every minute).
--- @classmod MOVEMENT
+-- @module MOVEMENT
 
 Include.File( "Routines" )
 
@@ -10216,9 +10216,9 @@ MOVEMENT = {
 }
 
 --- Creates the main object which is handling the GROUND forces movement.
--- @tparam table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
--- @tparam number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
--- @treturn MOVEMENT
+-- @param table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
+-- @param number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
+-- @return MOVEMENT
 -- @usage
 -- -- Limit the amount of simultaneous moving units on the ground to prevent lag.
 -- Movement_US_Platoons = MOVEMENT:New( { 'US Tank Platoon Left', 'US Tank Platoon Middle', 'US Tank Platoon Right', 'US CH-47D Troops' }, 15 )
@@ -10333,7 +10333,7 @@ self:T( { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MovementGro
 	end
 end
 --- Provides defensive behaviour to a set of SAM sites within a running Mission.
--- @classmod SEAD
+-- @module SEAD
 -- @author to be searched on the forum
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
@@ -10357,8 +10357,8 @@ SEAD = {
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
--- @tparam table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
--- @treturn SEAD
+-- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
+-- @return SEAD
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.

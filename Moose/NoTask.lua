@@ -1,9 +1,10 @@
 --- A NOTASK is a dummy activity... But it will show a Mission Briefing...
--- @classmod NOTASK
+-- @module NOTASK
 
 Include.File("Task")
 
---- Modeling a sequence of STAGEs to do nothing, but wait for the mission goal.
+--- The NOTASK class
+-- @type
 NOTASK = {
   ClassName = "NOTASK",
 }

@@ -1,20 +1,21 @@
 --- DESTROYGROUPSTASK
--- @classmod DESTROYGROUPSTASK
+-- @module DESTROYGROUPSTASK
 
 Include.File("DestroyBaseTask")
 
---- To monitor and score the destruction of Groups in the DCSRTE.
+--- The DESTROYGROUPSTASK class
+-- @type
 DESTROYGROUPSTASK = {
   ClassName = "DESTROYGROUPSTASK",
   GoalVerb = "Destroy Groups",
 }
 
 --- Creates a new DESTROYGROUPSTASK.
--- @tparam 	string DestroyGroupType 	String describing the group to be destroyed.
--- @tparam 	string DestroyUnitType 	String describing the unit to be destroyed.
--- @tparam 	table{string,...} DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
--- @tparam ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
----@treturn DESTROYGROUPSTASK
+-- @param 	string DestroyGroupType 	String describing the group to be destroyed.
+-- @param 	string DestroyUnitType 	String describing the unit to be destroyed.
+-- @param 	table{string,...} DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
+-- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+---@return DESTROYGROUPSTASK
 function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
 trace.f(self.ClassName)
 
@@ -32,8 +33,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 	trace.i( self.ClassName, DestroyGroup:getSize() )

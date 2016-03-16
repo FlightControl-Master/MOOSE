@@ -340,7 +340,6 @@ end
 -- The method will take the position of the group as the first position in the array.
 -- @param self
 -- @param #number SpawnAngle         The angle in degrees how the groups and each unit of the group will be positioned.
--- @param #number SpawnFormation     The formation of the Units within the Group.
 -- @param #number SpawnWidth		     The amount of Groups that will be positioned on the X axis.
 -- @param #number SpawnDeltaX        The space between each Group on the X-axis.
 -- @param #number SpawnDeltaY		     The space between each Group on the Y-axis.
@@ -348,7 +347,7 @@ end
 -- @usage
 -- -- Define an array of Groups.
 -- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( 90, "Diamond", 10, 100, 50 )
-function SPAWN:SpawnArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	self:T( { self.SpawnTemplatePrefix, SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 
 	self.SpawnVisible = true									-- When the first Spawn executes, all the Groups need to be made visible before start.
@@ -996,6 +995,9 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
     self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
+    end
   end
   
   return self
@@ -1038,7 +1040,7 @@ function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, Spa
     -- Assign
     self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].x = SpawnRootX - RotatedX
     self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].y = SpawnRootY + RotatedY
-    self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading = math.rad( SpawnAngle )
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading = self.SpawnGroups[SpawnIndex].SpawnTemplate.units[u].heading + math.rad( SpawnAngle )
   end
   
   return self

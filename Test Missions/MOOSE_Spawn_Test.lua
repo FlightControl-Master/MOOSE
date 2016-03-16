@@ -1,8 +1,8 @@
 Include.File( "Spawn" )
 
 
--- Tests Anapa
--- -----------
+-- Tests Anapa: Spawn Basics
+-- -------------------------
 -- Spawning groups using Spawn function.
 Spawn_Plane = SPAWN:New( "Spawn Plane" )
 Group_Plane = Spawn_Plane:Spawn()
@@ -38,18 +38,17 @@ Group_Plane:Route( Route_Plane )
 --Group_Helicopter:Route( Route_Helicopter )
 
 
--- Tests Batumi
--- ------------
+-- Tests Batumi: Scheduled Spawning
+-- --------------------------------
 -- Unlimited spawning of groups, scheduled every 30 seconds ...
 Spawn_Plane_Scheduled = SPAWN:New( "Spawn Plane Scheduled" ):SpawnScheduled( 30, 0.4 )
 Spawn_Helicopter_Scheduled = SPAWN:New( "Spawn Helicopter Scheduled" ):SpawnScheduled( 30, 1 )
 Spawn_Ship_Scheduled = SPAWN:New( "Spawn Ship Scheduled" ):SpawnScheduled( 30, 0.5 )
 Spawn_Vehicle_Scheduled = SPAWN:New( "Spawn Vehicle Scheduled" ):SpawnScheduled( 30, 0.5 )
 
--- Tests Tbilisi
--- -------------
+-- Tests Tbilisi: Limited Spawning
+-- -------------------------------
 -- Spawing one group, and respawning the same group when it lands ...
-
 Spawn_Plane_Limited_Repeat = SPAWN:New( "Spawn Plane Limited Repeat" ):Limit( 1, 1 ):Repeat():Spawn()
 Spawn_Plane_Limited_RepeatOnLanding = SPAWN:New( "Spawn Plane Limited RepeatOnLanding" ):Limit( 1, 1 ):Repeat():Spawn()
 Spawn_Plane_Limited_RepeatOnEngineShutDown = SPAWN:New( "Spawn Plane Limited RepeatOnEngineShutDown" ):Limit( 1, 1 ):Repeat():Spawn()

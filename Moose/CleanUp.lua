@@ -1,5 +1,5 @@
 --- CLEANUP Classes
--- @classmod CLEANUP
+-- @module CLEANUP
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -8,6 +8,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
+--- The CLEANUP class.
+-- @type CLEANUP
 CLEANUP = {
 	ClassName = "CLEANUP",
 	ZoneNames = {},
@@ -16,9 +18,9 @@ CLEANUP = {
 }
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
--- @tparam table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
--- @tparam ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
--- @treturn CLEANUP
+-- @param table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
+-- @param ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
+-- @return CLEANUP
 -- @usage
 -- -- Clean these Zones.
 -- CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
@@ -58,7 +60,7 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:T( { GroupObject, CleanUpGroupName } )
 
 	if GroupObject then -- and GroupObject:isExist() then
-		MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
+		--MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
 		trigger.action.deactivateGroup(GroupObject)
 		self:T( { "GroupObject Destroyed", GroupObject } )
 	end
@@ -70,15 +72,16 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:T( { CleanUpUnit, CleanUpUnitName } )
 
 	if CleanUpUnit then
-		MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
+		--MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
 		local CleanUpGroup = Unit.getGroup(CleanUpUnit)
-		if CleanUpGroup then
+    -- TODO Client bug in 1.5.3
+		if CleanUpGroup and CleanUpGroup:isExist() then
 			local CleanUpGroupUnits = CleanUpGroup:getUnits()
 			if #CleanUpGroupUnits == 1 then
 				local CleanUpGroupName = CleanUpGroup:getName()
 				local Event = {["initiator"]=CleanUpUnit,["id"]=8}
-				world.onEvent(Event)
-				trigger.action.deactivateGroup(CleanUpGroup)
+				world.onEvent( Event )
+				trigger.action.deactivateGroup( CleanUpGroup )
 				self:T( { "Destroyed Group:", CleanUpGroupName } )
 			else
 				CleanUpUnit:destroy()
@@ -117,7 +120,10 @@ function CLEANUP:_EventCrash( event )
 	local CleanUpUnit = event.initiator -- the Unit
 	local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
 	local CleanUpGroup = Unit.getGroup(CleanUpUnit)-- Identify the Group 
-	local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+	local CleanUpGroupName = ""
+	if CleanUpGroup and CleanUpGroup:isExist() then
+    CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
+  end
 
 	self.CleanUpList[CleanUpUnitName] = {}
 	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
@@ -160,8 +166,6 @@ function CLEANUP:_EventHitCleanUp( event )
 	local CleanUpUnit = event.initiator -- the Unit
 	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
 		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
-		local CleanUpGroup = Unit.getGroup(event.initiator)-- Identify the Group 
-		local CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
 		
 		if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
 			self:T( "Life: " .. CleanUpUnitName .. ' = ' .. CleanUpUnit:getLife() .. "/" .. CleanUpUnit:getLife0() )
@@ -245,7 +249,6 @@ function CLEANUP:_Scheduler()
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
 	
 		self:T( { CleanUpUnitName, UnitData } )
-		local CleanUpGroup = Group.getByName(UnitData.CleanUpGroupName)
 		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
 		local CleanUpGroupName = UnitData.CleanUpGroupName
 		local CleanUpUnitName = UnitData.CleanUpUnitName

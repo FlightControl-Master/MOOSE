@@ -1,5 +1,5 @@
 --- Stages within a @{TASK} within a @{MISSION}. All of the STAGE functionality is considered internally administered and not to be used by any Mission designer.
--- @classmod STAGE
+-- @module STAGE
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -8,7 +8,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
-
+--- The STAGE class
+-- @type
 STAGE = {
   ClassName = "STAGE",
   MSG = { ID = "None", TIME = 10 },

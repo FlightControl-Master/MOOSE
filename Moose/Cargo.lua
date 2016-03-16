@@ -1,5 +1,5 @@
 --- CARGO Classes
--- @classmod CARGO
+-- @module CARGO
 
 Include.File( "Routines" )
 Include.File( "Base" )

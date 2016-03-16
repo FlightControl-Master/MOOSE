@@ -6,12 +6,13 @@
 -- Messages are sent to Clients with MESSAGE:@{ToClient}().
 -- Messages are sent to Coalitions with MESSAGE:@{ToCoalition}().
 -- Messages are sent to All Players with MESSAGE:@{ToAll}().
--- @classmod MESSAGE
+-- @module MESSAGE
 
 Include.File( "Trace" )
 Include.File( "Base" )
 
-
+--- The MESSAGE class
+-- @type
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -20,11 +21,11 @@ MESSAGE = {
 
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- @tparam string MessageText is the text of the Message.
--- @tparam string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
--- @tparam number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @tparam string MessageID is a string expressing the ID of the Message.
--- @treturn MESSAGE
+-- @param string MessageText is the text of the Message.
+-- @param string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
+-- @param number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
+-- @param string MessageID is a string expressing the ID of the Message.
+-- @return MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
 -- -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
@@ -54,8 +55,8 @@ trace.f(self.ClassName, { MessageText, MessageCategory, MessageDuration, Message
 end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
--- @tparam CLIENT Client is the Group of the Client.
--- @treturn MESSAGE
+-- @param CLIENT Client is the Group of the Client.
+-- @return MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
 -- -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
@@ -85,7 +86,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to the Blue coalition. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the BLUE coalition.
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
@@ -103,7 +104,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to the Red Coalition. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
@@ -122,7 +123,7 @@ end
 
 --- Sends a MESSAGE to a Coalition. 
 -- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
@@ -143,7 +144,7 @@ trace.f(self.ClassName )
 end
 
 --- Sends a MESSAGE to all players. 
--- @treturn MESSAGE
+-- @return MESSAGE
 -- @usage
 -- -- Send a message created to all players.
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
@@ -163,9 +164,8 @@ end
 
 
 
---- MESSAGEQUEUE
+--- The MESSAGEQUEUE class
 -- @type MESSAGEQUEUE
-
 MESSAGEQUEUE = {
 	ClientGroups = {},
 	CoalitionSides = {}

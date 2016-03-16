@@ -1,13 +1,14 @@
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
--- @classmod MISSION
+-- @module MISSION
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Client" )
 Include.File( "Task" )
 
-
+--- The MISSION class
+-- @type
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -38,11 +39,11 @@ function MISSION:Meta()
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
--- @tparam string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @tparam string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @tparam string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @tparam string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
--- @treturn MISSION
+-- @param string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @return MISSION
 -- @usage 
 -- -- Declare a few missions.
 -- local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -76,7 +77,7 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 end
 
 --- Returns if a Mission has completed.
--- @treturn bool
+-- @return bool
 function MISSION:IsCompleted()
 	self:T()
 	return self.MissionStatus == "ACCOMPLISHED"
@@ -195,7 +196,7 @@ end
 
 
 --- Add a goal function to a MISSION. Goal functions are called when a @{TASK} within a mission has been completed.
--- @tparam function GoalFunction is the function defined by the mission designer to evaluate whether a certain goal has been reached after a @{TASK} finishes within the @{MISSION}. A GoalFunction must accept 2 parameters: Mission, Client, which contains the current MISSION object and the current CLIENT object respectively.
+-- @param function GoalFunction is the function defined by the mission designer to evaluate whether a certain goal has been reached after a @{TASK} finishes within the @{MISSION}. A GoalFunction must accept 2 parameters: Mission, Client, which contains the current MISSION object and the current CLIENT object respectively.
 -- @usage
 --  PatriotActivation = { 
 --		{ "US SAM Patriot Zerti", false },
@@ -236,8 +237,8 @@ function MISSION:AddGoalFunction( GoalFunction )
 end
 
 --- Show the briefing of the MISSION to the CLIENT.
--- @tparam CLIENT Client to show briefing to.
--- @treturn CLIENT
+-- @param CLIENT Client to show briefing to.
+-- @return CLIENT
 function MISSION:ShowBriefing( Client )
 	self:T( { Client.ClientName } )
 
@@ -255,8 +256,8 @@ function MISSION:ShowBriefing( Client )
 end
 
 --- Register a new @{CLIENT} to participate within the mission.
--- @tparam CLIENT Client is the @{CLIENT} object. The object must have been instantiated with @{CLIENT:New}.
--- @treturn CLIENT
+-- @param CLIENT Client is the @{CLIENT} object. The object must have been instantiated with @{CLIENT:New}.
+-- @return CLIENT
 -- @usage
 -- Add a number of Client objects to the Mission.
 -- 	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
@@ -277,8 +278,8 @@ trace.r( self.ClassName, "" )
 end
 
 --- Find a @{CLIENT} object within the @{MISSION} by its ClientName.
--- @tparam CLIENT ClientName is a string defining the Client Group as defined within the ME.
--- @treturn CLIENT
+-- @param CLIENT ClientName is a string defining the Client Group as defined within the ME.
+-- @return CLIENT
 -- @usage
 -- -- Seach for Client "Bomber" within the Mission.
 -- local BomberClient = Mission:FindClient( "Bomber" )
@@ -289,9 +290,9 @@ end
 
 
 --- Register a @{TASK} to be completed within the @{MISSION}. Note that there can be multiple @{TASK}s registered to be completed. Each TASK can be set a certain Goal. The MISSION will not be completed until all Goals are reached.
--- @tparam TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
--- @tparam number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
--- @treturn TASK
+-- @param TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
+-- @param number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
+-- @return TASK
 -- @usage
 -- -- Define a few tasks for the Mission.
 --	PickupZones = { "NATO Gold Pickup Zone", "NATO Titan Pickup Zone" }
@@ -324,8 +325,8 @@ function MISSION:AddTask( Task, TaskNumber )
  end
 
 --- Get the TASK idenified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @tparam number TaskNumber is the number of the @{TASK} within the @{MISSION}.
--- @treturn TASK
+-- @param number TaskNumber is the number of the @{TASK} within the @{MISSION}.
+-- @return TASK
 -- @usage
 -- -- Get Task 2 from the Mission.
 -- Task2 = Mission:GetTask( 2 )
@@ -349,7 +350,7 @@ function MISSION:GetTask( TaskNumber )
 end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
--- @treturn {TASK,...} Structure of TASKS with the @{TASK} number as the key.
+-- @return {TASK,...} Structure of TASKS with the @{TASK} number as the key.
 -- @usage
 -- -- Get Tasks from the Mission.
 -- Tasks = Mission:GetTasks()
@@ -379,7 +380,6 @@ _TransportExecuteStage = {
 
 --- The MISSIONSCHEDULER is an OBJECT and is the main scheduler of ALL active MISSIONs registered within this scheduler. It's workings are considered internal and is automatically created when the Mission.lua file is included.
 -- @type MISSIONSCHEDULER
-
 MISSIONSCHEDULER = {
   Missions = {},
   MissionCount = 0,

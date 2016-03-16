@@ -1,10 +1,11 @@
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
--- @classmod MENU
+-- @module MENU
 
 Include.File( "Routines" )
 Include.File( "Base" )
 
-
+--- The MENU class
+-- @type
 MENU = {
   ClassName = "MENU",
   MenuPath = nil,
@@ -24,6 +25,8 @@ function MENU:New( MenuText, MenuParentPath )
 	return Child
 end
 
+--- The COMMANDMENU class
+-- @type
 COMMANDMENU = {
   ClassName = "COMMANDMENU",
   CommandMenuFunction = nil,
@@ -47,8 +50,8 @@ function COMMANDMENU:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenu
 	return Child
 end
 
----
-
+--- The SUBMENU class
+-- @type
 SUBMENU = {
   ClassName = "SUBMENU"
 }
@@ -67,6 +70,8 @@ function SUBMENU:New( MenuText, ParentMenu )
 	return Child
 end
 
+--- The MENU_SUB_GROUP class
+-- @type
 MENU_SUB_GROUP = {
   ClassName = "MENU_SUB_GROUP"
 }
@@ -85,6 +90,8 @@ function MENU_SUB_GROUP:New( GroupID, MenuText, ParentMenu )
 	return self
 end
 
+--- The MENU_COMMAND_GROUP class
+-- @type
 MENU_COMMAND_GROUP = {
   ClassName = "MENU_COMMAND_GROUP"
 }

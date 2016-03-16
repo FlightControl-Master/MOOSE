@@ -1,11 +1,10 @@
 --- A DEPLOYTASK orchestrates the deployment of CARGO within a specific landing zone.
--- @classmod DEPLOYTASK
+-- @module DEPLOYTASK
 
 Include.File( "Task" )
 
 --- A DeployTask
 -- @type DEPLOYTASK
--- 
 DEPLOYTASK = {
   ClassName = "DEPLOYTASK",
   TEXT = { "Deploy", "deployed", "unloaded" },
@@ -72,7 +71,7 @@ end
 
 
 --- When the cargo is unloaded, it will move to the target zone name.
--- @tparam string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
+-- @param string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
 function DEPLOYTASK:SetCargoTargetZoneName( TargetZoneName )
 self:T()
   

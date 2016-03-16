@@ -3,18 +3,20 @@
 -- Performance: If in a DCSRTE there are a lot of moving GROUND units, then in a multi player mission, this WILL create lag if
 -- the main DCS execution core of your CPU is fully utilized. So, this class will limit the amount of simultaneous moving GROUND units
 -- on defined intervals (currently every minute).
--- @classmod MOVEMENT
+-- @module MOVEMENT
 
 Include.File( "Routines" )
 
+--- the MOVEMENT class
+-- @type
 MOVEMENT = {
 	ClassName = "MOVEMENT",
 }
 
 --- Creates the main object which is handling the GROUND forces movement.
--- @tparam table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
--- @tparam number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
--- @treturn MOVEMENT
+-- @param table{string,...}|string MovePrefixes is a table of the Prefixes (names) of the GROUND Groups that need to be controlled by the MOVEMENT Object.
+-- @param number MoveMaximum is a number that defines the maximum amount of GROUND Units to be moving during one minute.
+-- @return MOVEMENT
 -- @usage
 -- -- Limit the amount of simultaneous moving units on the ground to prevent lag.
 -- Movement_US_Platoons = MOVEMENT:New( { 'US Tank Platoon Left', 'US Tank Platoon Middle', 'US Tank Platoon Right', 'US CH-47D Troops' }, 15 )

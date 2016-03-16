@@ -1,5 +1,5 @@
 --- Provides defensive behaviour to a set of SAM sites within a running Mission.
--- @classmod SEAD
+-- @module SEAD
 -- @author to be searched on the forum
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
@@ -9,6 +9,8 @@ Include.File( "Mission" )
 Include.File( "Client" )
 Include.File( "Task" )
 
+--- The SEAD class
+-- @type
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {
@@ -23,8 +25,8 @@ SEAD = {
 --- Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.
 -- When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
 -- Chances are big that the missile will miss.
--- @tparam table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
--- @treturn SEAD
+-- @param table{string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.
+-- @return SEAD
 -- @usage
 -- -- CCCP SEAD Defenses
 -- -- Defends the Russian SA installations from SEAD attacks.

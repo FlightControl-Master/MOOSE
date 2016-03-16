@@ -1,11 +1,13 @@
 --- A DESTROYBASETASK will monitor the destruction of Groups and Units. This is a BASE class, other classes are derived from this class.
--- @classmod DESTROYBASETASK
+-- @module DESTROYBASETASK
 -- @see DESTROYGROUPSTASK
 -- @see DESTROYUNITTYPESTASK
 -- @see DESTROY_RADARS_TASK
 
 Include.File("Task")
 
+--- The DESTROYBASETASK class
+-- @type DESTROYBASETASK
 DESTROYBASETASK = {
   ClassName = "DESTROYBASETASK",
   Destroyed = 0,
@@ -14,11 +16,11 @@ DESTROYBASETASK = {
 }
 
 --- Creates a new DESTROYBASETASK.
--- @tparam string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
--- @tparam string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
--- @tparam table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
--- @tparam ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
--- @treturn DESTROYBASETASK
+-- @param string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
+-- @param string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
+-- @param table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
+-- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+-- @return DESTROYBASETASK
 function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
 	local self = BASE:Inherit( self, TASK:New() )
 	self:T()

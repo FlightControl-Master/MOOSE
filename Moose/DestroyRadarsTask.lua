@@ -1,16 +1,18 @@
 --- Task class to destroy radar installations.
--- @classmod DESTROYRADARSTASK 
+-- @module DESTROYRADARSTASK 
 
 Include.File("DestroyBaseTask")
 
+--- The DESTROYRADARS class
+-- @type
 DESTROYRADARSTASK = {
   ClassName = "DESTROYRADARSTASK",
   GoalVerb = "Destroy Radars"
 }
 
 --- Creates a new DESTROYRADARSTASK.
--- @tparam table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @treturn DESTROYRADARSTASK
+-- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
+-- @return DESTROYRADARSTASK
 function DESTROYRADARSTASK:New( DestroyGroupNames )
 trace.f(self.ClassName)
 
@@ -26,8 +28,8 @@ trace.f(self.ClassName)
 end
 
 --- Report Goal Progress.
--- @tparam 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @tparam 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
+-- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYRADARSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 trace.f(self.ClassName)
 

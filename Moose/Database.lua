@@ -1,12 +1,14 @@
 --- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).
--- @classmod DATABASE
+-- @module DATABASE
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
 
+--- The DATABASE class
+-- @type DATABASE
 DATABASE = {
 	ClassName = "DATABASE",
 	Units = {},
@@ -36,7 +38,7 @@ DATABASECategory =
 
 
 --- Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.
--- @treturn DATABASE
+-- @return DATABASE
 -- @usage
 -- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = DATABASE:New()
