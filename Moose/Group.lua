@@ -368,6 +368,12 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	return self
 end
 
+--- Return the route of a group.
+-- @param self
+-- @param #number Begin The route point from where the copy will start. The base route point is 0.
+-- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
+-- @param #boolean Randomize Randomization of the route, when true.
+-- @param #number Radius When randomization is on, the randomization is within the radius. 
 function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 self:T( { Begin, End } )
 
@@ -411,7 +417,7 @@ self:T( { Begin, End } )
 	return nil
 end
 
-
+--- Get the controller for the GROUP.
 function GROUP:_GetController()
 
 	return self.DCSGroup:getController()
