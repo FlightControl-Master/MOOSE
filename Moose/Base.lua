@@ -1,5 +1,5 @@
 --- BASE The base class for all the classes defined within MOOSE.
--- @classmod BASE
+-- @module BASE
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -24,6 +24,10 @@ _TraceClass = {
 	--CLEANUP = true,
 	}
 
+--- The BASE Class
+-- @type BASE
+-- @field ClassName The name of the class.
+-- @field ClassID The ID number of the class.
 BASE = {
 
   ClassName = "BASE",
@@ -31,9 +35,17 @@ BASE = {
   Events = {}
 }
 
+--- The Formation Class
+-- @type FORMATION
+-- @field Cone A cone formation.
+FORMATION = {
+  Cone = "Cone" 
+}
+
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
--- @treturn BASE
+-- @param self
+-- @return #BASE
 -- @usage
 -- function TASK:New()
 -- trace.f(self.ClassName)
