@@ -1000,6 +1000,8 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     end
   end
   
+  self:_RandomizeRoute( SpawnIndex )
+  
   return self
 end
 
