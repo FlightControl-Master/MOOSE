@@ -37,11 +37,16 @@ MESSAGE = {
 -- MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" )
 -- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
 function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
-trace.f(self.ClassName, { MessageText, MessageCategory, MessageDuration, MessageID } )
-
 	local self = BASE:Inherit( self, BASE:New() )
-	
-	self.MessageCategory = MessageCategory
+  self:T( { MessageText, MessageCategory, MessageDuration, MessageID } )
+
+  -- When no messagecategory is given, we don't show it as a title...	
+	if MessageCategory and MessageCategory ~= "" then
+    self.MessageCategory = MessageCategory .. "\n"
+  else
+    self.MessageCategory = ""
+  end
+
 	self.MessageDuration = MessageDuration
 	self.MessageID = MessageID
 	self.MessageTime = timer.getTime()
@@ -73,13 +78,13 @@ end
 -- MessageClient1:ToClient( ClientGroup )
 -- MessageClient2:ToClient( ClientGroup )
 function MESSAGE:ToClient( Client )
-trace.f(self.ClassName )
+  self:T( Client )
 
 	if Client and Client:GetClientGroupID() then
 
 		local ClientGroupID = Client:GetClientGroupID()
-		trace.i( self.ClassName, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+		trace.i( self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
@@ -96,7 +101,7 @@ end
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageBLUE:ToBlue()
 function MESSAGE:ToBlue()
-trace.f(self.ClassName )
+  self:T()
 
 	self:ToCoalition( coalition.side.BLUE )
 	
@@ -114,7 +119,7 @@ end
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageRED:ToRed()
 function MESSAGE:ToRed( )
-trace.f(self.ClassName )
+  self:T()
 
 	self:ToCoalition( coalition.side.RED )
 	
@@ -133,11 +138,11 @@ end
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageRED:ToCoalition( coalition.side.RED )
 function MESSAGE:ToCoalition( CoalitionSide )
-trace.f(self.ClassName )
+  self:T( CoalitionSide )
 
 	if CoalitionSide then
-		trace.i(self.ClassName, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. '\n' .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+		trace.i(self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
@@ -154,7 +159,7 @@ end
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
 -- MessageAll:ToAll()
 function MESSAGE:ToAll()
-trace.f(self.ClassName )
+  self:T()
 
 	self:ToCoalition( coalition.side.RED )
 	self:ToCoalition( coalition.side.BLUE )
@@ -172,9 +177,8 @@ MESSAGEQUEUE = {
 }
 
 function MESSAGEQUEUE:New( RefreshInterval )
-trace.f( self.ClassName, { RefreshInterval } )
-
 	local self = BASE:Inherit( self, BASE:New() )
+  self:T( { RefreshInterval } )
 	
 	self.RefreshInterval = RefreshInterval
 
