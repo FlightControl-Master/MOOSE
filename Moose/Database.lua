@@ -288,18 +288,22 @@ function DATABASE:OnDeadOrCrash( event )
 					end
 
 					if InitCoalition == TargetCoalition then
+            PlayerData.Penalty = PlayerData.Penalty + 25            
 						PlayerData.Kill[TargetCategory][TargetType].Penalty = PlayerData.Kill[TargetCategory][TargetType].Penalty + 25						
 						PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = PlayerData.Kill[TargetCategory][TargetType].PenaltyKill + 1
 						MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-									PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty, 
-									"Game Status: Penalty", 20, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+									         PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
+									         ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty, 
+									       "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
 						self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					else
+            PlayerData.Score = PlayerData.Score + 10            
 						PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10						
 						PlayerData.Kill[TargetCategory][TargetType].ScoreKill = PlayerData.Kill[TargetCategory][TargetType].ScoreKill + 1
 						MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-									  PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score, 
-									  "Game Status: Score", 20, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+									         PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
+									         ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty, 
+									       "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
 						self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					end
 				end
@@ -362,8 +366,10 @@ function DATABASE:_AddPlayerFromUnit( UnitData )
 			-- end
 			self.Players[PlayerName].HitPlayers = {}
 			self.Players[PlayerName].HitUnits = {}
+      self.Players[PlayerName].Score = 0
 			self.Players[PlayerName].Penalty = 0
 			self.Players[PlayerName].PenaltyCoalition = 0
+			self.Players[PlayerName].PenaltyWarning = 0
 		end
 
 		if not self.Players[PlayerName].UnitCoalition then
@@ -373,8 +379,11 @@ function DATABASE:_AddPlayerFromUnit( UnitData )
 				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
 				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
 				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[UnitCoalition] ..  
-							  "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
-							  "Game Status: Penalty", 20, "/PENALTYCOALITION" .. PlayerName ):ToAll()
+							         "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
+							       "", 
+							       2, 
+							       "/PENALTYCOALITION" .. PlayerName 
+							     ):ToAll()
 				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
 							   UnitName, DATABASECoalition[UnitCoalition], DATABASECategory[UnitCategory], UnitData:getTypeName() )
 			end
@@ -383,8 +392,29 @@ function DATABASE:_AddPlayerFromUnit( UnitData )
 		self.Players[PlayerName].UnitCoalition = UnitCoalition
 		self.Players[PlayerName].UnitCategory = UnitCategory
 		self.Players[PlayerName].UnitType = UnitTypeName
-	end
 
+    if self.Players[PlayerName].Penalty > 100 then
+      if self.Players[PlayerName].PenaltyWarning < 1 then
+        MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than 150, you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty, 
+                       "", 
+                       30, 
+                       "/PENALTYCOALITION" .. PlayerName 
+                     ):ToAll()
+        self.Players[PlayerName].PenaltyWarning = self.Players[PlayerName].PenaltyWarning + 1
+      end
+    end
+    
+    if self.Players[PlayerName].Penalty > 150 then
+      ClientGroup = GROUP:NewFromDCSUnit( UnitData )
+      ClientGroup:Destroy()
+      MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!", 
+                     "", 
+                     10, 
+                     "/PENALTYCOALITION" .. PlayerName 
+                   ):ToAll()
+    end
+		
+	end
 end
 
 
@@ -403,11 +433,12 @@ function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
 	self:T( PlayerName )
 	self:T( self.Players[PlayerName].Mission[MissionName] )
 
+  self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score            
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
 	MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
 				  Score .. " Score points added.", 
-				  "Game Status: Task Completion", 20, "/SCORETASK" .. PlayerName ):ToAll()
+				  "", 20, "/SCORETASK" .. PlayerName ):ToAll()
 	
 	_Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
@@ -420,10 +451,11 @@ function DATABASE:_AddMissionScore( MissionName, Score )
 	for PlayerName, PlayerData in pairs( self.Players ) do
 	
 		if PlayerData.Mission[MissionName] then
+      PlayerData.Score = PlayerData.Score + Score            
 			PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
 			MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..  
 						  Score .. " Score points added.", 
-						  "Game Status: Mission Completion", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
+						  "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
 			_Database:ScoreAdd( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
 		end
 	end
@@ -537,18 +569,28 @@ function DATABASE:OnHit( event )
 					end
 					local Score = 0
 					if InitCoalition == TargetCoalition then
+            self.Players[InitPlayerName].Penalty = self.Players[InitPlayerName].Penalty + 10            
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty + 10						
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit + 1
 						MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty, 
-									  "Game Status: Penalty", 20, "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName ):ToAll()
+						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty .. 
+						              ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty, 
+									       "", 
+									       2, 
+									       "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName 
+									     ):ToAll()
 						self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					else
+            self.Players[InitPlayerName].Score = self.Players[InitPlayerName].Score + 10            
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score + 1						
 						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit + 1
 						MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit .. " times. Score: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score, 
-									  "Game Status: Score", 20, "/SCORE" .. InitPlayerName .. "/" .. InitUnitName ):ToAll()
+						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit .. " times. Score: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score ..
+						              ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty, 
+									       "", 
+									       2, 
+									       "/SCORE" .. InitPlayerName .. "/" .. InitUnitName 
+									     ):ToAll()
 						self:ScoreAdd( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
 					end
 				end
