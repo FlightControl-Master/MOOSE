@@ -37,12 +37,11 @@ MESSAGE = {
 -- MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" )
 -- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
 function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
-self:T( { MessageText, MessageCategory, MessageDuration, MessageID } )
-
 	local self = BASE:Inherit( self, BASE:New() )
+  self:T( { MessageText, MessageCategory, MessageDuration, MessageID } )
 
   -- When no messagecategory is given, we don't show it as a title...	
-	if MessageCategory or MessageCategory ~= "" then
+	if MessageCategory and MessageCategory ~= "" then
     self.MessageCategory = MessageCategory .. "\n"
   else
     self.MessageCategory = ""
@@ -179,7 +178,6 @@ MESSAGEQUEUE = {
 
 function MESSAGEQUEUE:New( RefreshInterval )
 	local self = BASE:Inherit( self, BASE:New() )
-
   self:T( { RefreshInterval } )
 	
 	self.RefreshInterval = RefreshInterval

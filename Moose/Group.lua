@@ -46,7 +46,7 @@ function GROUP:New( DCSGroup )
 end
 
 
---- Create a new GROUP from an existing DCSGroup in the mission.
+--- Create a new GROUP from an existing group name.
 -- @param self
 -- @param GroupName The name of the DCS Group.
 -- @return #GROUP self
@@ -58,10 +58,28 @@ function GROUP:NewFromName( GroupName )
 	if self.DCSGroup then
 		self.GroupName = self.DCSGroup:getName()
 		self.GroupID = self.DCSGroup:getID()
-    self.Controller = DCSGroup:getController()
+    self.Controller = self.DCSGroup:getController()
 	end
 
 	return self
+end
+
+--- Create a new GROUP from an existing DCSUnit in the mission.
+-- @param self
+-- @param DCSUnit The DCSUnit.
+-- @return #GROUP self
+function GROUP:NewFromDCSUnit( DCSUnit )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:T( DCSUnit )
+
+  self.DCSGroup = DCSUnit:getGroup()
+  if self.DCSGroup then
+    self.GroupName = self.DCSGroup:getName()
+    self.GroupID = self.DCSGroup:getID()
+    self.Controller = self.DCSGroup:getController()
+  end
+
+  return self
 end
 
 --- Gets the DCSGroup of the GROUP.
