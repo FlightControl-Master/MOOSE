@@ -831,7 +831,7 @@ end
 
 --- Get the index from a given group.
 -- The function will search the name of the group for a #, and will return the number behind the #-mark.
-function SPAWN:_GetGroupIndexFromGroup( SpawnGroup )
+function SPAWN:GetSpawnIndexFromGroup( SpawnGroup )
 	self:T( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 	
 	local IndexString = string.match( SpawnGroup:GetName(), "#.*$" ):sub( 2 )
@@ -1137,7 +1137,7 @@ function SPAWN:_OnLand( event )
 			self.Landed = true
 			self:T( "self.Landed = true" )
 			if self.Landed and self.RepeatOnLanding then
-				local SpawnGroupIndex = self:_GetGroupIndexFromGroup( SpawnGroup )
+				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )
 			end
@@ -1158,7 +1158,7 @@ function SPAWN:_OnLand( event )
 		if SpawnGroup then
 			self:T( { "EngineShutDown event: " .. event.initiator:getName(), event } )
 			if self.Landed and self.RepeatOnEngineShutDown then
-				local SpawnGroupIndex = self:_GetGroupIndexFromGroup( SpawnGroup )
+				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )
 			end
