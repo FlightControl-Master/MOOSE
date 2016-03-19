@@ -307,7 +307,7 @@ self:T()
 			self.Messages[MessageId].MessageTime = timer.getTime()
 			self.Messages[MessageId].MessageDuration = MessageDuration
 			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 600
+				self.Messages[MessageId].MessageInterval = 0
 			else
 				self.Messages[MessageId].MessageInterval = MessageInterval
 			end

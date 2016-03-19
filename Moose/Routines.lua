@@ -422,7 +422,7 @@ routines.tostringBR = function(az, dist, alt, metric)
 		dist = routines.utils.round(routines.utils.metersToNM(dist), 2)
 	end
 
-	local s = string.format('%03d°', az) .. ' for ' .. dist
+	local s = string.format('%03d', az) .. ' for ' .. dist
 
 	if alt then
 		if metric then

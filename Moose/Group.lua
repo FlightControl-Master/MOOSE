@@ -130,6 +130,16 @@ function GROUP:GetPoint()
 	return GroupPoint
 end
 
+--- Gets the current Point of the GROUP in VEC3 format.
+-- @return #Vec3 Current Vec3 position of the group.
+function GROUP:GetPositionVec3()
+  self:T( self.GroupName )
+  
+  local GroupPoint = self:GetUnit(1):GetPositionVec3()
+  self:T( GroupPoint )
+  return GroupPoint
+end
+
 --- Destroy a GROUP
 -- Note that this destroy method also raises a destroy event at run-time.
 -- So all event listeners will catch the destroy event of this GROUP.
@@ -439,5 +449,20 @@ end
 function GROUP:_GetController()
 
 	return self.DCSGroup:getController()
+
+end
+
+function GROUP:GetDetectedTargets()
+
+  return self:_GetController():getDetectedTargets()
+  
+end
+
+function GROUP:IsTargetDetected( DCSObject )
+
+  local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
+        = self:_GetController():isTargetDetected( DCSObject )
+
+  return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
 
 end

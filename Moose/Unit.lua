@@ -9,6 +9,13 @@ Include.File( "Message" )
 -- @type
 UNIT = {
 	ClassName="UNIT",
+	CategoryName = { 
+    [Unit.Category.AIRPLANE]      = "Airplane",
+    [Unit.Category.HELICOPTER]    = "Helicoper",
+    [Unit.Category.GROUND_UNIT]   = "Ground Unit",
+    [Unit.Category.SHIP]          = "Ship",
+    [Unit.Category.STRUCTURE]     = "Structure",
+    }
 	}
 	
 function UNIT:New( DCSUnit )
@@ -110,5 +117,9 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 
 	self:T( "false" )
 	return false
+end
+
+function UNIT:GetCategoryName()
+  return self.CategoryName[ self.DCSUnit:getDesc().category ]
 end
 

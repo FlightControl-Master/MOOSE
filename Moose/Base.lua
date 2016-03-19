@@ -22,6 +22,7 @@ _TraceClass = {
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
+	ESCORT = true,
 	}
 
 --- The BASE Class
