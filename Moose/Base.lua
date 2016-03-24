@@ -13,18 +13,18 @@ _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	GROUP = true,
+	--GROUP = true,
 	--UNIT = true,
-	CLIENT = true,
+	--CLIENT = true,
 	--CARGO = true,
 	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
-	MENU_SUB_GROUP = true,
-	MENU_COMMAND_GROUP = true,
-	ESCORT = true,
+	--MENU_SUB_GROUP = true,
+	--MENU_COMMAND_GROUP = true,
+	--ESCORT = true,
 	}
 
 --- The BASE Class
