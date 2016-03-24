@@ -27,5 +27,6 @@ copy /b ..\Moose\Trace.lua ^
 	+ ..\Moose\Spawn.lua ^
 	+ ..\Moose\Movement.lua ^
 	+ ..\Moose\Sead.lua ^
+	+ ..\Moose\Escort.lua ^
 	Moose_Embedded.lua /y
 	
