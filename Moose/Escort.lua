@@ -40,8 +40,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortGroup = EscortGroup
   self.EscortName = EscortName
   self.ReportTargets = true
-
-  -- Escort Navigation  
+ 
+   -- Escort Navigation  
   self.EscortMenu = MENU_SUB_GROUP:New( self.EscortClient:GetGroup(), "Escort" .. self.EscortName )
   self.EscortMenuHoldPosition = MENU_COMMAND_GROUP:New( self.EscortClient:GetGroup(), "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
 

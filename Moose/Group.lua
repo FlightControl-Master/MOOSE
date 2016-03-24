@@ -360,7 +360,7 @@ function GROUP:HoldFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPONS_HOLD )
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
   return self
 end
 
