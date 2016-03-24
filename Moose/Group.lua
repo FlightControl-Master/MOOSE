@@ -1,7 +1,5 @@
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
--- 
--- 
 -- @module GROUP
 -- @extends BASE#BASE
 

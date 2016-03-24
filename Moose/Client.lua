@@ -62,21 +62,9 @@ self:T()
 	self._Menus = {}
 end
 
---- Return the Group of a Client.
--- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @return #GROUP
-function CLIENT:GetGroup()
-
-  if not self.ClientGroup then
-    self.ClientGroup = GROUP:New( self:GetDCSGroup() )
-  end
-
-  return self.ClientGroup
-end
-
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @return DCSGroup
+-- @return Group#Group
 function CLIENT:GetDCSGroup()
 --self:T()
 
@@ -139,7 +127,7 @@ function CLIENT:GetDCSGroup()
 		end
 	end
 	
-	self.ClientID = nil
+	self.ClientGroupID = nil
 	self.ClientGroupUnit = nil
 	
 	return nil
@@ -148,15 +136,13 @@ end
 
 function CLIENT:GetClientGroupID()
 
-  if not self.ClientID then
-    if not self.ClientGroup then
-      self.ClientGroup = GROUP:New( self:GetDCSGroup() )
-    end
-    if self.ClientGroup:IsAlive() then
-      self.ClientGroupID = self.ClientGroup:GetID()
+  
+  if not self.ClientGroupID then
+    local ClientGroup = self:GetDCSGroup()
+    if ClientGroup and ClientGroup:isExist() then
+      self.ClientGroupID = ClientGroup:getID()
     else
       self.ClientGroupID = self.ClientID
-      self.ClientGroup.GroupID = self.ClientID
     end
   end
 
@@ -168,14 +154,11 @@ end
 function CLIENT:GetClientGroupName()
 
   if not self.ClientGroupName then
-    if not self.ClientGroup then
-      self.ClientGroup = GROUP:New( self:GetDCSGroup() )
-    end
-    if self.ClientGroup:IsAlive() then
-      self.ClientGroupName = self.ClientGroup:GetName()
+    local ClientGroup = self:GetDCSGroup()
+    if ClientGroup and ClientGroup:isExist() then
+      self.ClientGroupName = ClientGroup:getName()
     else
-        self.ClientGroupName = self.ClientName
-        self.ClientGroup.GroupName = self.ClientGroupName
+      self.ClientGroupName = self.ClientName
     end
   end
 
@@ -188,35 +171,37 @@ end
 function CLIENT:GetClientGroupUnit()
   self:T()
 
-	local ClientGroup = self:GetDCSGroup()
-	
-	if ClientGroup then
-		if ClientGroup:isExist() then
-			return UNIT:New( ClientGroup:getUnit(1) )
+  if not self.ClientGroupUnit then
+  	local ClientGroup = self:GetDCSGroup()
+  	
+  	if ClientGroup and ClientGroup:isExist() then
+			self.ClientGroupUnit = UNIT:New( ClientGroup:getUnit(1) )
 		else
-			return UNIT:New( self.ClientGroupUnit )
-		end
-	end
+			self.ClientGroupUnit = UNIT:New( self.ClientGroupUnit )
+  	end
+  end
 	
-	return nil
+  self:T( { self.ClientGroupUnit } )
+  return self.ClientGroupUnit
 end
 
 --- Returns the DCSUnit of the @{CLIENT}.
 -- @return DCSUnit
 function CLIENT:GetClientGroupDCSUnit()
-self:T()
+  self:T()
 
-	local ClientGroup = self:GetDCSGroup()
+  if not self.ClientGroupDCSUnit then
+    local ClientGroup = self:GetDCSGroup()
+    
+    if ClientGroup and ClientGroup:isExist() then
+      self.ClientGroupDCSUnit = ClientGroup:getUnit(1)
+    else
+      self.ClientGroupDCSUnit = self.ClientGroupUnit
+    end
+  end
 	
-	if ClientGroup then
-		if ClientGroup:isExist() then
-			return ClientGroup:getUnits()[1]
-		else
-			return self.ClientGroupUnit
-		end
-	end
-	
-	return nil
+	self:T( { self.ClientGroupDCSUnit } )
+	return self.ClientGroupDCSUnit
 end
 
 function CLIENT:GetUnit()
@@ -305,9 +290,9 @@ self:T()
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self:GetGroup(), 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:GetGroup(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:GetGroup(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+			self.MenuMessages = MENU_SUB_GROUP:New( self, 'Messages' )
+			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 
