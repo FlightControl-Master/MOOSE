@@ -1,0 +1,73 @@
+-------------------------------------------------------------------------------
+-- @module Object
+
+--- @type Object
+-- @field #Object.Category Category
+-- @field #Object.Desc Desc
+
+--- @type Object.Category
+-- @field UNIT
+-- @field WEAPON
+-- @field STATIC
+-- @field SCENERY
+-- @field BASE
+
+--- @type Object.Desc
+-- @extends #Desc
+-- @field #number life initial life level
+-- @field #Box3 box bounding box of collision geometry
+
+--- @function [parent=#Object] isExist
+-- @param self
+-- @return #boolean
+
+--- @function [parent=#Object] destroy
+-- @param self
+
+--- @function [parent=#Object] getCategory
+-- @param self
+-- @return #Object.Category
+
+--- Returns type name of the Object.
+-- @function [parent=#Object] getTypeName
+-- @param self
+-- @return #string 
+
+--- Returns object descriptor.
+-- @function [parent=#Object] getDesc
+-- @param self
+-- @return #Object.Desc
+
+--- Returns true if the object belongs to the category.
+-- @function [parent=#Object] hasAttribute
+-- @param self
+-- @param #AttributeName attributeName Attribute name to check.
+-- @return #boolean
+
+--- Returns name of the object. This is the name that is assigned to the object in the Mission Editor.
+-- @function [parent=#Object] getName
+-- @param self
+-- @return #string
+
+--- Returns object coordinates for current time.
+-- @function [parent=#Object] getPoint
+-- @param self
+-- @return #Vec3
+
+--- Returns object position for current time. 
+-- @function [parent=#Object] getPosition
+-- @param self
+-- @return #Position3
+
+--- Returns the unit's velocity vector.
+-- @function [parent=#Object] getVelocity
+-- @param self
+-- @return #Vec3
+
+--- Returns true if the unit is in air.
+-- @function [parent=#Object] inAir
+-- @param self
+-- @return #boolean
+
+Object = {} --#Object
+

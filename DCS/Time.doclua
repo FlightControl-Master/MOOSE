@@ -1,0 +1,2 @@
+-- @type ModelTime
+-- @extends #number

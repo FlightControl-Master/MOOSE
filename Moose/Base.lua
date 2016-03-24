@@ -13,15 +13,17 @@ _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	--GROUP = true,
+	GROUP = true,
 	--UNIT = true,
-	--CLIENT = true,
+	CLIENT = true,
 	--CARGO = true,
 	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
+	MENU_SUB_GROUP = true,
+	MENU_COMMAND_GROUP = true,
 	ESCORT = true,
 	}
 
@@ -247,12 +249,13 @@ function BASE:T( Arguments )
 		end
 
 		local LineCurrent = DebugInfoCurrent.currentline
-		local LineFrom = DebugInfoFrom.currentline
-	
+		local LineFrom = 0
+		if DebugInfoFrom then
+		  LineFrom = DebugInfoFrom.currentline
+	  end
 		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end
-
 
 -- Log an exception
 function BASE:E( Arguments )
@@ -270,3 +273,6 @@ function BASE:E( Arguments )
 
 	env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 end
+
+
+

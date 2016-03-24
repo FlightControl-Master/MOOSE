@@ -21,11 +21,12 @@ MESSAGE = {
 
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- @param string MessageText is the text of the Message.
--- @param string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
--- @param number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @param string MessageID is a string expressing the ID of the Message.
--- @return MESSAGE
+-- @param self
+-- @param #string MessageText is the text of the Message.
+-- @param #string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
+-- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
+-- @param #string MessageID is a string expressing the ID of the Message.
+-- @return #MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
 -- -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".

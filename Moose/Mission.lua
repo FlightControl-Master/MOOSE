@@ -174,7 +174,7 @@ function MISSION:ReportToAll()
 
 	local AlivePlayers = ''
 	for ClientID, Client in pairs( self._Clients ) do
-		if  Client:ClientGroup() then
+		if  Client:GetDCSGroup() then
 			if Client:GetClientGroupDCSUnit() then
 				if Client:GetClientGroupDCSUnit():getLife() > 0.0 then
 					if AlivePlayers == '' then
@@ -407,7 +407,7 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			
 				trace.i( "MISSIONSCHEDULER", "Client: " .. Client.ClientName )
 
-				if Client:ClientGroup() then
+				if Client:GetDCSGroup() then
 
 					-- There is at least one Client that is alive... So the Mission status is set to Ongoing.
 					ClientsAlive = true 

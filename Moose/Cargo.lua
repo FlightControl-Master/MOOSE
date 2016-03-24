@@ -480,7 +480,7 @@ function CARGO_GROUP:Spawn( Client )
 	elseif self:IsStatusLoading() then
 	
 		local Client = self:IsLoadingToClient()
-		if Client and Client:ClientGroup() then
+		if Client and Client:GetDCSGroup() then
 			SpawnCargo = false
 		else
 			local CargoGroup = Group.getByName( self.CargoName	 )
@@ -494,7 +494,7 @@ function CARGO_GROUP:Spawn( Client )
 		local ClientLoaded = self:IsLoadedInClient()
 		-- Now test if another Client is alive (not this one), and it has the CARGO, then this cargo does not need to be initialized and spawned.
 		if ClientLoaded and ClientLoaded ~= Client then
-			local ClientGroup = Client:ClientGroup()
+			local ClientGroup = Client:GetDCSGroup()
 			if ClientLoaded:GetClientGroupDCSUnit() and ClientLoaded:GetClientGroupDCSUnit():isExist() then
 				SpawnCargo = false
 			else
@@ -680,7 +680,7 @@ function CARGO_PACKAGE:Spawn( Client )
 
 	-- this needs to be checked thoroughly
 
-	local CargoClientGroup = self.CargoClient:ClientGroup()
+	local CargoClientGroup = self.CargoClient:GetDCSGroup()
 	if not CargoClientGroup then
 		if not self.CargoClientSpawn then
 			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() ):Limit( 1, 1 )
@@ -695,7 +695,7 @@ function CARGO_PACKAGE:Spawn( Client )
 	elseif self:IsStatusLoading() or self:IsStatusLoaded() then
 
 		local CargoClientLoaded = self:IsLoadedInClient()
-		if CargoClientLoaded and CargoClientLoaded:ClientGroup() then
+		if CargoClientLoaded and CargoClientLoaded:GetDCSGroup() then
 			SpawnCargo = false
 		end
 	
@@ -720,7 +720,7 @@ self:T()
 
 	local Near = false
 
-	if self.CargoClient and self.CargoClient:ClientGroup() then
+	if self.CargoClient and self.CargoClient:GetDCSGroup() then
 		self:T( self.CargoClient.ClientName )
 		self:T( 'Client Exists.' )
 
@@ -746,8 +746,8 @@ self:T()
 	local CarrierPosOnBoard = ClientUnit:getPoint()
 	local CarrierPosMoveAway = ClientUnit:getPoint()
 	
-	local CargoHostGroup = self.CargoClient:ClientGroup()
-	local CargoHostName = self.CargoClient:ClientGroup():getName()
+	local CargoHostGroup = self.CargoClient:GetDCSGroup()
+	local CargoHostName = self.CargoClient:GetDCSGroup():getName()
 
 	local CargoHostUnits = CargoHostGroup:getUnits()
 	local CargoPos = CargoHostUnits[1]:getPoint()
@@ -830,7 +830,7 @@ self:T()
 
 	local OnBoarded = false
   
-	if self.CargoClient and self.CargoClient:ClientGroup() then
+	if self.CargoClient and self.CargoClient:GetDCSGroup() then
 		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:ClientPosition(), 10 ) then
 			
 			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
@@ -851,7 +851,7 @@ self:T()
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
 	--self:T( 'self.CargoHostName = ' .. self.CargoHostName ) 
 	
-	--self.CargoSpawn:FromCarrier( Client:ClientGroup(), TargetZoneName, self.CargoHostName )
+	--self.CargoSpawn:FromCarrier( Client:GetDCSGroup(), TargetZoneName, self.CargoHostName )
 	self:StatusUnLoaded()
 
 	return Cargo

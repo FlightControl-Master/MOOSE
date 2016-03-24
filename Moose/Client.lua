@@ -46,7 +46,7 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:New( ClientName, ClientBriefing )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T()
+	self:T( ClientName, ClientBriefing )
 
 	self.ClientName = ClientName
 	self:AddBriefing( ClientBriefing )
@@ -62,10 +62,22 @@ self:T()
 	self._Menus = {}
 end
 
---- ClientGroup returns the Group of a Client.
+--- Return the Group of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @return Group
-function CLIENT:ClientGroup()
+-- @return #GROUP
+function CLIENT:GetGroup()
+
+  if not self.ClientGroup then
+    self.ClientGroup = GROUP:New( self:GetDCSGroup() )
+  end
+
+  return self.ClientGroup
+end
+
+--- Return the DCSGroup of a Client.
+-- This function is modified to deal with a couple of bugs in DCS 1.5.3
+-- @return DCSGroup
+function CLIENT:GetDCSGroup()
 --self:T()
 
 --  local ClientData = Group.getByName( self.ClientName )
@@ -102,7 +114,7 @@ function CLIENT:ClientGroup()
 							self:T( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
 							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
 								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
-								self.ClientGroupID = ClientGroupTemplate.groupId
+								self.ClientID = ClientGroupTemplate.groupId
 								self.ClientGroupUnit = UnitData
 								self:T( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
 								return ClientGroup
@@ -127,7 +139,7 @@ function CLIENT:ClientGroup()
 		end
 	end
 	
-	self.ClientGroupID = nil
+	self.ClientID = nil
 	self.ClientGroupUnit = nil
 	
 	return nil
@@ -135,46 +147,48 @@ end
 
 
 function CLIENT:GetClientGroupID()
-self:T()
 
-	ClientGroup = self:ClientGroup()
-	
-	if ClientGroup then
-		if ClientGroup:isExist() then
-			return ClientGroup:getID()
-		else
-			return self.ClientGroupID
-		end
-	end
-	
-	return nil
+  if not self.ClientID then
+    if not self.ClientGroup then
+      self.ClientGroup = GROUP:New( self:GetDCSGroup() )
+    end
+    if self.ClientGroup:IsAlive() then
+      self.ClientGroupID = self.ClientGroup:GetID()
+    else
+      self.ClientGroupID = self.ClientID
+      self.ClientGroup.GroupID = self.ClientID
+    end
+  end
+
+  self:T( self.ClientGroupID )
+	return self.ClientGroupID
 end
 
 
 function CLIENT:GetClientGroupName()
-self:T()
 
-	ClientGroup = self:ClientGroup()
-	
-	if ClientGroup then
-		if ClientGroup:isExist() then
-			self:T( ClientGroup:getName() )
-			return ClientGroup:getName()
-		else
-			self:T( self.ClientName )
-			return self.ClientName
-		end
-	end
-	
-	return nil
+  if not self.ClientGroupName then
+    if not self.ClientGroup then
+      self.ClientGroup = GROUP:New( self:GetDCSGroup() )
+    end
+    if self.ClientGroup:IsAlive() then
+      self.ClientGroupName = self.ClientGroup:GetName()
+    else
+        self.ClientGroupName = self.ClientName
+        self.ClientGroup.GroupName = self.ClientGroupName
+    end
+  end
+
+  self:T( self.ClientGroupName )
+	return self.ClientGroupName
 end
 
 --- Returns the Unit of the @{CLIENT}.
 -- @return Unit
 function CLIENT:GetClientGroupUnit()
-self:T()
+  self:T()
 
-	local ClientGroup = self:ClientGroup()
+	local ClientGroup = self:GetDCSGroup()
 	
 	if ClientGroup then
 		if ClientGroup:isExist() then
@@ -192,7 +206,7 @@ end
 function CLIENT:GetClientGroupDCSUnit()
 self:T()
 
-	local ClientGroup = self:ClientGroup()
+	local ClientGroup = self:GetDCSGroup()
 	
 	if ClientGroup then
 		if ClientGroup:isExist() then
@@ -291,9 +305,9 @@ self:T()
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self:GetClientGroupID(), 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:GetClientGroupID(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:GetClientGroupID(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+			self.MenuMessages = MENU_SUB_GROUP:New( self:GetGroup(), 'Messages' )
+			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self:GetGroup(), 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self:GetGroup(),'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 
@@ -307,7 +321,7 @@ self:T()
 			self.Messages[MessageId].MessageTime = timer.getTime()
 			self.Messages[MessageId].MessageDuration = MessageDuration
 			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 0
+				self.Messages[MessageId].MessageInterval = 600
 			else
 				self.Messages[MessageId].MessageInterval = MessageInterval
 			end

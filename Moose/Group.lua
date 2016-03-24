@@ -35,12 +35,16 @@ GROUPS = {}
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( DCSGroup:getName() )
+	self:T( DCSGroup )
 
 	self.DCSGroup = DCSGroup
-	self.GroupName = DCSGroup:getName()
-	self.GroupID = DCSGroup:getID()
-	self.Controller = DCSGroup:getController()
+	if self.DCSGroup and self.DCSGroup:isExist() then
+  	self.GroupName = DCSGroup:getName()
+  	self.GroupID = DCSGroup:getID()
+  	self.Controller = DCSGroup:getController()
+  else
+    self:E( { "DCSGroup is nil or does not exist, cannot initialize GROUP!", self.DCSGroup } )
+  end
 
 	return self
 end
@@ -109,6 +113,15 @@ function GROUP:Activate()
 	self:T( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
 	return self:GetDCSGroup()
+end
+
+--- Gets the ID of the GROUP.
+-- @param self
+-- @return #number The ID of the GROUP.
+function GROUP:GetID()
+  self:T( self.GroupName )
+  
+  return self.GroupID
 end
 
 --- Gets the name of the GROUP.
@@ -253,6 +266,39 @@ self:T()
 end
 
 
+--- Hold position at the current position of the first unit of the group.
+-- @param self
+-- @param #number Duration The maximum duration in seconds to hold the position.
+-- @return #GROUP self
+function GROUP:HoldPosition( Duration )
+trace.f( self.ClassName, { self.GroupName, Duration } )
+
+  local Controller = self:_GetController()
+  
+--  pattern = enum AI.Task.OribtPattern,
+--    point = Vec2,
+--    point2 = Vec2,
+--    speed = Distance,
+--    altitude = Distance
+    
+  local GroupPoint = self:GetPoint()
+  --id = 'Orbit', params = { pattern = AI.Task.OrbitPattern.RACE_TRACK } }, stopCondition = { duration = 600 } }
+  Controller:pushTask( { id = 'ControlledTask', 
+                         params = { task = { id = 'Orbit', 
+                                             params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
+                                                        point = GroupPoint, 
+                                                        speed = 0, 
+                                                        altitude = 30 
+                                                      } 
+                                           }, 
+                                    stopCondition = { duration = Duration 
+                                                    } 
+                                  } 
+                       }
+                     )
+  return self
+end
+
 --- Land the group at a Vec2Point.
 -- @param self
 -- @param #Vec2 Point The point where to land.
@@ -271,6 +317,137 @@ trace.f( self.ClassName, { self.GroupName, Point, Duration } )
 
 	return self
 end
+
+--- Attack the Unit.
+-- @param self
+-- @param #UNIT The unit.
+-- @return #GROUP self
+function GROUP:AttackUnit( AttackUnit )
+  self:T( { self.GroupName, AttackUnit } )
+
+  local Controller = self:_GetController()
+  
+--  AttackUnit = { 
+--    id = 'AttackUnit', 
+--    params = { 
+--      unitId = Unit.ID, 
+--      weaponType = number, 
+--      expend = enum AI.Task.WeaponExpend
+--      attackQty = number, 
+--      direction = Azimuth, 
+--      attackQtyLimit = boolean, 
+--      groupAttack = boolean, 
+--    } 
+--  }     
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+
+  Controller:pushTask( { id = 'AttackUnit', 
+                         params = { unitId = AttackUnit:GetID(), 
+                                    expend = AI.Task.WeaponExpend.TWO,
+                                    groupAttack = true, 
+                                  } 
+                       } 
+                     )
+  return self
+end
+
+--- Holding weapons.
+-- @param self
+-- @return #GROUP self
+function GROUP:HoldFire()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPONS_HOLD )
+  return self
+end
+
+--- Return fire.
+-- @param self
+-- @return #GROUP self
+function GROUP:ReturnFire()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  return self
+end
+
+--- Openfire.
+-- @param self
+-- @return #GROUP self
+function GROUP:OpenFire()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  return self
+end
+
+--- Weapon free.
+-- @param self
+-- @return #GROUP self
+function GROUP:WeaponFree()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  return self
+end
+
+--- No evasion on enemy threats.
+-- @param self
+-- @return #GROUP self
+function GROUP:EvasionNoReaction()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  return self
+end
+
+--- Evasion passive defense.
+-- @param self
+-- @return #GROUP self
+function GROUP:EvasionPassiveDefense()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  return self
+end
+
+--- Evade fire.
+-- @param self
+-- @return #GROUP self
+function GROUP:EvasionEvadeFire()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  return self
+end
+
+--- Vertical manoeuvres.
+-- @param self
+-- @return #GROUP self
+function GROUP:EvasionVertical()
+  self:T( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  return self
+end
+
 
 --- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
 -- @param self

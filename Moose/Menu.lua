@@ -76,7 +76,13 @@ MENU_SUB_GROUP = {
   ClassName = "MENU_SUB_GROUP"
 }
 
-function MENU_SUB_GROUP:New( GroupID, MenuText, ParentMenu )
+--- Creates a new menu item for a group
+-- @param self
+-- @param MenuGroup The group owning the menu.
+-- @param MenuText The text for the menu.
+-- @param ParentMenu The parent menu.
+-- @return #MENU_SUB_GROUP self
+function MENU_SUB_GROUP:New( MenuGroup, MenuText, ParentMenu )
 
 	-- Arrange meta tables
 	local MenuParentPath = nil
@@ -86,7 +92,10 @@ function MENU_SUB_GROUP:New( GroupID, MenuText, ParentMenu )
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
 
-	self.MenuPath = missionCommands.addSubMenuForGroup( GroupID, MenuText, MenuParentPath )
+  self:T( { MenuGroup, MenuText, ParentMenu } )
+
+  self.MenuGroup = MenuGroup
+	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroup:GetID(), MenuText, MenuParentPath )
 	return self
 end
 
@@ -96,7 +105,15 @@ MENU_COMMAND_GROUP = {
   ClassName = "MENU_COMMAND_GROUP"
 }
 
-function MENU_COMMAND_GROUP:New( GroupID, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+--- Creates a new radio command item for a group
+-- @param self
+-- @param MenuGroup The group owning the menu.
+-- @param MenuText The text for the menu.
+-- @param ParentMenu The parent menu.
+-- @param CommandMenuFunction A function that is called when the menu key is pressed.
+-- @param CommandMenuArgument An argument for the function.
+-- @return #MENU_COMMAND_GROUP self
+function MENU_COMMAND_GROUP:New( MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
 
 	-- Arrange meta tables
 	
@@ -106,9 +123,18 @@ function MENU_COMMAND_GROUP:New( GroupID, MenuText, ParentMenu, CommandMenuFunct
 	end
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+	
+	self:T( { MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument } )
 
-	self.MenuPath = missionCommands.addCommandForGroup( GroupID, MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+  self.MenuGroup = MenuGroup
+	self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroup:GetID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
 	self.CommandMenuFunction = CommandMenuFunction
 	self.CommandMenuArgument = CommandMenuArgument
 	return self
+end
+
+function MENU_COMMAND_GROUP:Remove()
+
+  missionCommands.removeItemForGroup( self.MenuGroup:GetID(), self.MenuPath )
+  return nil
 end
