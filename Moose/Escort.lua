@@ -181,7 +181,7 @@ function ESCORT:_ScanForTargets()
   --              EscortTargetLastVelocity } )
         
           if EscortTarget.distance then
-            local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec()
+            local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec3()
             local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
             local Distance = routines.utils.get3DDist( EscortTargetUnitPositionVec3, EscortPositionVec3 ) / 1000
             self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget.visible } )
