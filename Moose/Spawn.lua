@@ -538,7 +538,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
     
       if SpawnTemplate then
 
-        local UnitPoint = HostUnit:GetPoint()
+        local UnitPoint = HostUnit:GetPointVec2()
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -613,7 +613,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
       
       if SpawnTemplate then
     
-        local ZonePoint = Zone:GetPoint()
+        local ZonePoint = Zone:GetPointVec2()
 
         SpawnTemplate.route.points = nil
         SpawnTemplate.route.points = {}

@@ -1,3 +1,6 @@
+-------------------------------------------------------------------------------
+--- @module DCSTypes
+
 
 --- Time is given in seconds.
 -- @type Time
@@ -229,3 +232,4 @@ AI = {} --#AI
 -- @type Angle
 
 env.info( 'AI types created' )
+

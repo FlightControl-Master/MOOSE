@@ -3463,10 +3463,10 @@ end
 
 --- Gets the current Point of the GROUP in VEC2 format.
 -- @return #Vec2 Current x and Y position of the group.
-function GROUP:GetPoint()
+function GROUP:GetPointVec2()
 	self:T( self.GroupName )
 	
-	local GroupPoint = self:GetUnit(1):GetPoint()
+	local GroupPoint = self:GetUnit(1):GetPointVec2()
 	self:T( GroupPoint )
 	return GroupPoint
 end
@@ -3609,7 +3609,7 @@ trace.f( self.ClassName, { self.GroupName, Duration } )
 --    speed = Distance,
 --    altitude = Distance
     
-  local GroupPoint = self:GetPoint()
+  local GroupPoint = self:GetPointVec2()
   --id = 'Orbit', params = { pattern = AI.Task.OrbitPattern.RACE_TRACK } }, stopCondition = { duration = 600 } }
   Controller:pushTask( { id = 'ControlledTask', 
                          params = { task = { id = 'Orbit', 
@@ -3857,7 +3857,7 @@ end
 function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	self:T( Zone )
 	
-	local GroupPoint = self:GetPoint()
+	local GroupPoint = self:GetPointVec2()
 	
 	local PointFrom = {}
 	PointFrom.x = GroupPoint.x
@@ -3873,7 +3873,7 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	if Randomize then
 		ZonePoint = Zone:GetRandomPoint()
 	else
-		ZonePoint = Zone:GetPoint()
+		ZonePoint = Zone:GetPointVec2()
 	end
 
 	PointTo.x = ZonePoint.x
@@ -4051,7 +4051,7 @@ function UNIT:GetCallSign()
 end
 
 
-function UNIT:GetPoint()
+function UNIT:GetPointVec2()
 	self:T( self.UnitName )
 	
 	local UnitPos = self.DCSUnit:getPosition().p
@@ -4128,7 +4128,7 @@ trace.f( self.ClassName, ZoneName )
 	return self
 end
 
-function ZONE:GetPoint()
+function ZONE:GetPointVec2()
 	self:T( self.ZoneName )
 
 	local Zone = trigger.misc.getZone( self.ZoneName )
@@ -10152,7 +10152,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
     
       if SpawnTemplate then
 
-        local UnitPoint = HostUnit:GetPoint()
+        local UnitPoint = HostUnit:GetPointVec2()
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -10227,7 +10227,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
       
       if SpawnTemplate then
     
-        local ZonePoint = Zone:GetPoint()
+        local ZonePoint = Zone:GetPointVec2()
 
         SpawnTemplate.route.points = nil
         SpawnTemplate.route.points = {}

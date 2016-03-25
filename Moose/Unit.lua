@@ -79,7 +79,7 @@ function UNIT:GetCallSign()
 end
 
 
-function UNIT:GetPoint()
+function UNIT:GetPointVec2()
 	self:T( self.UnitName )
 	
 	local UnitPos = self.DCSUnit:getPosition().p

@@ -131,14 +131,24 @@ function GROUP:GetName()
 	return self.GroupName
 end
 
---- Gets the current Point of the GROUP in VEC2 format.
--- @return #Vec2 Current x and Y position of the group.
-function GROUP:GetPoint()
+--- Gets the current Point of the GROUP in VEC3 format.
+-- @return #Vec3 Current x,y and z position of the group.
+function GROUP:GetPointVec2()
 	self:T( self.GroupName )
 	
-	local GroupPoint = self:GetUnit(1):GetPoint()
+	local GroupPoint = self:GetUnit(1):GetPointVec2()
 	self:T( GroupPoint )
 	return GroupPoint
+end
+
+--- Gets the current Point of the GROUP in VEC2 format.
+-- @return #Vec2 Current x and y position of the group in the 2D plane.
+function GROUP:GetPointVec2()
+  self:T( self.GroupName )
+  
+  local GroupPoint = self:GetUnit(1):GetPointVec2()
+  self:T( GroupPoint )
+  return GroupPoint
 end
 
 --- Gets the current Point of the GROUP in VEC3 format.
@@ -259,43 +269,110 @@ end
 -- @param self
 -- @return #number Maximum height found.
 function GROUP:GetMaxHeight()
-self:T()
+  self:T()
 
 end
 
 
---- Hold position at the current position of the first unit of the group.
--- @param self
--- @param #number Duration The maximum duration in seconds to hold the position.
--- @return #GROUP self
-function GROUP:HoldPosition( Duration )
-trace.f( self.ClassName, { self.GroupName, Duration } )
+--- Popping current Task from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:PopCurrentTask()
+  self:T()
 
   local Controller = self:_GetController()
   
+  Controller:popTask()
+
+  return self
+end
+
+
+--- Pushing Task on the queue from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:PushTask( DCSTask )
+  self:T()
+
+  local Controller = self:_GetController()
+  
+  Controller:pushTask( DCSTask )
+
+  return self
+end
+
+--- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+-- @param #GROUP self
+-- @param #Vec2 Point The point to hold the position.
+-- @param #number Duration The maximum duration in seconds to hold the position.
+-- @param #number Altitude The altitude to hold the position.
+-- @param #number Speed The speed flying when holding the position.
+-- @return #GROUP self
+function GROUP:OrbitCircleAtVec2( Point, Duration, Altitude, Speed )
+  self:T( { self.GroupName, Point, Duration, Altitude, Speed  } )
+
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,
 --    point2 = Vec2,
 --    speed = Distance,
 --    altitude = Distance
     
-  local GroupPoint = self:GetPoint()
-  --id = 'Orbit', params = { pattern = AI.Task.OrbitPattern.RACE_TRACK } }, stopCondition = { duration = 600 } }
-  Controller:pushTask( { id = 'ControlledTask', 
-                         params = { task = { id = 'Orbit', 
-                                             params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
-                                                        point = GroupPoint, 
-                                                        speed = 0, 
-                                                        altitude = 30 
-                                                      } 
-                                           }, 
-                                    stopCondition = { duration = Duration 
-                                                    } 
-                                  } 
-                       }
-                     )
-  return self
+  local LandHeight = land.getHeight( Point )
+  
+  self:T( { LandHeight } )
+
+  local AITask = { id = 'Orbit', 
+                   params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
+                              point = Point, 
+                              speed = Speed, 
+                              altitude = Altitude + LandHeight
+                            } 
+                 } 
+
+  
+--  local AITask = { id = 'ControlledTask', 
+--                   params = { task = { id = 'Orbit', 
+--                                       params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
+--                                                  point = Point, 
+--                                                  speed = Speed, 
+--                                                  altitude = Altitude + LandHeight
+--                                                } 
+--                                     }, 
+--                              stopCondition = { duration = Duration 
+--                                              } 
+--                            } 
+--                 }
+--               )
+               
+  return AITask
 end
+
+--- Orbit at the current position of the first unit of the group at a specified alititude during a specified duration
+-- @param #GROUP self
+-- @param #number Duration The maximum duration in seconds to hold the position.
+-- @param #number Altitude The altitude to hold the position.
+-- @param #number Speed The speed flying when holding the position.
+-- @return #GROUP self
+function GROUP:OrbitCircle( Duration, Altitude, Speed )
+  self:T( { self.GroupName, Duration, Altitude, Speed } )
+
+  local GroupPoint = self:GetPointVec2()
+  
+  return self:OrbitCircleAtVec2( GroupPoint, Duration, Altitude, Speed )
+end
+
+
+
+--- Hold position at the current position of the first unit of the group.
+-- @param #GROUP self
+-- @param #number Duration The maximum duration in seconds to hold the position.
+-- @return #GROUP self
+function GROUP:HoldPosition( Duration )
+  self:T( { self.GroupName, Duration } )
+
+  return self:OrbitCircle( Duration, 30, 0 )
+end
+
 
 --- Land the group at a Vec2Point.
 -- @param self
@@ -303,7 +380,7 @@ end
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
 function GROUP:Land( Point, Duration )
-trace.f( self.ClassName, { self.GroupName, Point, Duration } )
+  self:T( { self.GroupName, Point, Duration } )
 
 	local Controller = self:_GetController()
 	
@@ -498,12 +575,25 @@ trace.f( self.ClassName, { self.GroupName, Point, Radius } )
 	return self
 end
 
+--- Return a Misson task to follow a given route.
+-- @param self
+-- @param #table GoPoints A table of Route Points.
+-- @return #DCSTask 
+function GROUP:TaskMission( Points )
+  self:T( Points )
+  
+  local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
+  
+  return MissionTask
+end
+
+
 --- Make the group to follow a given route.
 -- @param self
 -- @param #table GoPoints A table of Route Points.
 -- @return #GROUP self 
 function GROUP:Route( GoPoints )
-self:T( GoPoints )
+  self:T( GoPoints )
 
 	local Points = routines.utils.deepCopy( GoPoints )
 	local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
@@ -527,7 +617,7 @@ end
 function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	self:T( Zone )
 	
-	local GroupPoint = self:GetPoint()
+	local GroupPoint = self:GetPointVec2()
 	
 	local PointFrom = {}
 	PointFrom.x = GroupPoint.x
@@ -543,7 +633,7 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	if Randomize then
 		ZonePoint = Zone:GetRandomPoint()
 	else
-		ZonePoint = Zone:GetPoint()
+		ZonePoint = Zone:GetPointVec2()
 	end
 
 	PointTo.x = ZonePoint.x
@@ -621,6 +711,9 @@ self:T( { Begin, End } )
 end
 
 --- Get the controller for the GROUP.
+-- @function _GetController
+-- @param #GROUP self
+-- @return Controller#Controller
 function GROUP:_GetController()
 
 	return self.DCSGroup:getController()

@@ -30,7 +30,7 @@ trace.f( self.ClassName, ZoneName )
 	return self
 end
 
-function ZONE:GetPoint()
+function ZONE:GetPointVec2()
 	self:T( self.ZoneName )
 
 	local Zone = trigger.misc.getZone( self.ZoneName )

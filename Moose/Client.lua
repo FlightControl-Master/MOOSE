@@ -202,11 +202,32 @@ function CLIENT:GetUnit()
 	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
 
+--- Returns the Point of the @{CLIENT}.
+-- @return DCSTypes#Vec2
+function CLIENT:GetPointVec2()
+  self:T()
+
+  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      local PointVec2 = {} --DCSTypes#Vec2
+      PointVec2.x = PointVec3.x
+      PointVec2.y = PointVec3.z
+      self:T( { PointVec2 } )
+      return PointVec2
+    end
+  end
+  
+  return nil
+end 
+
 
 --- Returns the Position of the @{CLIENT}.
--- @return Position
+-- @return DCSTypes#Position
 function CLIENT:ClientPosition()
---self:T()
+  self:T()
 
 	ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
@@ -218,6 +239,24 @@ function CLIENT:ClientPosition()
 	
 	return nil
 end 
+
+--- Returns the altitude of the @{CLIENT}.
+-- @return DCSTypes#Distance
+function CLIENT:GetAltitude()
+  self:T()
+
+  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      return PointVec3.y
+    end
+  end
+  
+  return nil
+end 
+
 
 --- Transport defines that the Client is a Transport.
 -- @return CLIENT

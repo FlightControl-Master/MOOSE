@@ -32,8 +32,8 @@ Group_Plane:Route( Route_Plane )
 
 --Route_Helicopter[#Route_Helicopter].linkUnit = Group_Ship1:GetDCSUnit(1)
 --Route_Helicopter[#Route_Helicopter].helipadId = Group_Ship1:GetDCSUnit(1)
---Route_Helicopter[#Route_Helicopter].x = Group_Ship1:GetUnit(1):GetPoint().x
---Route_Helicopter[#Route_Helicopter].y = Group_Ship1:GetUnit(1):GetPoint().y
+--Route_Helicopter[#Route_Helicopter].x = Group_Ship1:GetUnit(1):GetPointVec2().x
+--Route_Helicopter[#Route_Helicopter].y = Group_Ship1:GetUnit(1):GetPointVec2().y
 --env.info( Route_Helicopter[#Route_Helicopter].type .. " on " .. Group_Ship1:GetUnit(1):GetID() )
 --Group_Helicopter:Route( Route_Helicopter )
 
