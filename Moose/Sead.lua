@@ -1,5 +1,5 @@
 --- Provides defensive behaviour to a set of SAM sites within a running Mission.
--- @module SEAD
+-- @module Sead
 -- @author to be searched on the forum
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
@@ -10,7 +10,8 @@ Include.File( "Client" )
 Include.File( "Task" )
 
 --- The SEAD class
--- @type
+-- @type SEAD
+-- @extends Base#BASE
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {

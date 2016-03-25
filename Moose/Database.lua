@@ -1,6 +1,6 @@
 --- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).
--- @module DATABASE
+-- @module Database
 -- @author FlightControl
 
 Include.File( "Routines" )

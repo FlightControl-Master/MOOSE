@@ -2857,7 +2857,7 @@ end
 env.info(( 'Init: Scripts Loaded v1.1' ))
 
 --- BASE The base class for all the classes defined within MOOSE.
--- @module BASE
+-- @module Base
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -2880,8 +2880,8 @@ _TraceClass = {
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
-	--MENU_SUB_GROUP = true,
-	--MENU_COMMAND_GROUP = true,
+	--MENU_CLIENT = true,
+	--MENU_CLIENT_COMMAND = true,
 	--ESCORT = true,
 	}
 
@@ -3135,13 +3135,14 @@ end
 
 
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
--- @module MENU
+-- @module Menu
 
 Include.File( "Routines" )
 Include.File( "Base" )
 
 --- The MENU class
--- @type
+-- @type MENU
+-- @extends Base#BASE
 MENU = {
   ClassName = "MENU",
   MenuPath = nil,
@@ -3162,7 +3163,8 @@ function MENU:New( MenuText, MenuParentPath )
 end
 
 --- The COMMANDMENU class
--- @type
+-- @type COMMANDMENU
+-- @extends Menu#MENU
 COMMANDMENU = {
   ClassName = "COMMANDMENU",
   CommandMenuFunction = nil,
@@ -3187,7 +3189,8 @@ function COMMANDMENU:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenu
 end
 
 --- The SUBMENU class
--- @type
+-- @type SUBMENU
+-- @extends Menu#MENU
 SUBMENU = {
   ClassName = "SUBMENU"
 }
@@ -3206,78 +3209,128 @@ function SUBMENU:New( MenuText, ParentMenu )
 	return Child
 end
 
---- The MENU_SUB_GROUP class
--- @type
-MENU_SUB_GROUP = {
-  ClassName = "MENU_SUB_GROUP"
+-- This local variable is used to cache the menus registered under clients.
+-- Menus don't dissapear when clients are destroyed and restarted.
+-- So every menu for a client created must be tracked so that program logic accidentally does not create
+-- the same menus twice during initialization logic.
+-- These menu classes are handling this logic with this variable.
+local _MENUCLIENTS = {}
+
+--- The MENU_CLIENT class
+-- @type MENU_CLIENT
+-- @extends Menu#MENU
+MENU_CLIENT = {
+  ClassName = "MENU_CLIENT"
 }
 
 --- Creates a new menu item for a group
 -- @param self
--- @param CLIENT#CLIENT MenuClient The Client owning the menu.
--- @param MenuText The text for the menu.
--- @param ParentMenu The parent menu.
--- @return #MENU_SUB_GROUP self
-function MENU_SUB_GROUP:New( MenuClient, MenuText, ParentMenu )
+-- @param Client#CLIENT MenuClient The Client owning the menu.
+-- @param #string MenuText The text for the menu.
+-- @param #table ParentMenu The parent menu.
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
 
 	-- Arrange meta tables
-	local MenuParentPath = nil
+	local MenuParentPath = {}
 	if ParentMenu ~= nil then
-		MenuParentPath = ParentMenu.MenuPath
+	  MenuParentPath = ParentMenu.MenuPath
 	end
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
 
-  self:T( { MenuClient, MenuText, ParentMenu } )
-
   self.MenuClient = MenuClient
-	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+  self.MenuClientGroupID = MenuClient:GetClientGroupID()
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
+
+  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
+  	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+  	MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
+  else
+    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] 
+  end
+
 	return self
 end
 
---- The MENU_COMMAND_GROUP class
--- @type
-MENU_COMMAND_GROUP = {
-  ClassName = "MENU_COMMAND_GROUP"
+
+--- The MENU_CLIENT_COMMAND class
+-- @type MENU_CLIENT_COMMAND
+-- @extends Menu#MENU
+MENU_CLIENT_COMMAND = {
+  ClassName = "MENU_CLIENT_COMMAND"
 }
 
 --- Creates a new radio command item for a group
 -- @param self
--- @param CLIENT#CLIENT MenuClient The Client owning the menu.
+-- @param Client#CLIENT MenuClient The Client owning the menu.
 -- @param MenuText The text for the menu.
 -- @param ParentMenu The parent menu.
 -- @param CommandMenuFunction A function that is called when the menu key is pressed.
 -- @param CommandMenuArgument An argument for the function.
--- @return #MENU_COMMAND_GROUP self
-function MENU_COMMAND_GROUP:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+-- @return Menu#MENU_CLIENT_COMMAND self
+function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
 
 	-- Arrange meta tables
 	
-	local MenuParentPath = nil
+	local MenuParentPath = {}
 	if ParentMenu ~= nil then
 		MenuParentPath = ParentMenu.MenuPath
 	end
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
 	
-	self:T( { MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument } )
-
   self.MenuClient = MenuClient
-	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+  self.MenuClientGroupID = MenuClient:GetClientGroupID()
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+
+  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
+  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+    MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
+  else
+    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText]
+  end
+
 	self.CommandMenuFunction = CommandMenuFunction
 	self.CommandMenuArgument = CommandMenuArgument
 	return self
 end
 
-function MENU_COMMAND_GROUP:Remove()
+function MENU_CLIENT_COMMAND:Remove()
 
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+  end
   missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
   return nil
 end
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
--- @module GROUP
--- @extends BASE#BASE
+-- @module Group
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -3286,6 +3339,7 @@ Include.File( "Unit" )
 
 --- The GROUP class
 -- @type GROUP
+-- @extends Base#BASE
 -- @field #Group DCSGroup The DCS group class.
 -- @field #string GroupName The name of the group.
 -- @field #number GroupID the ID of the group.
@@ -3924,7 +3978,8 @@ Include.File( "Base" )
 Include.File( "Message" )
 
 --- The UNIT class
--- @type
+-- @type UNIT
+-- @Extends Base#BASE
 UNIT = {
 	ClassName="UNIT",
 	CategoryName = { 
@@ -4042,14 +4097,15 @@ function UNIT:GetCategoryName()
 end
 
 --- ZONE Classes
--- @module ZONE
+-- @module Zone
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
 --- The ZONE class
--- @type
+-- @type ZONE
+-- @Extends Base#BASE
 ZONE = {
 	ClassName="ZONE",
 	}
@@ -4111,7 +4167,7 @@ end
 
 --- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).
--- @module DATABASE
+-- @module Database
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -6061,7 +6117,8 @@ self:T()
 	return Cargo
 end
 --- CLIENT Classes
--- @module CLIENT
+-- @module Client
+-- @author FlightControl
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -6073,6 +6130,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
+-- @extends Base#BASE
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -6233,18 +6291,13 @@ end
 function CLIENT:GetClientGroupUnit()
   self:T()
 
-  if not self.ClientGroupUnit then
-  	local ClientGroup = self:GetDCSGroup()
-  	
-  	if ClientGroup and ClientGroup:isExist() then
-			self.ClientGroupUnit = UNIT:New( ClientGroup:getUnit(1) )
-		else
-			self.ClientGroupUnit = UNIT:New( self.ClientGroupUnit )
-  	end
-  end
+	local ClientGroup = self:GetDCSGroup()
 	
-  self:T( { self.ClientGroupUnit } )
-  return self.ClientGroupUnit
+	if ClientGroup and ClientGroup:isExist() then
+		return UNIT:New( ClientGroup:getUnit(1) )
+	else
+		return UNIT:New( self.ClientGroupUnit )
+	end
 end
 
 --- Returns the DCSUnit of the @{CLIENT}.
@@ -6252,18 +6305,13 @@ end
 function CLIENT:GetClientGroupDCSUnit()
   self:T()
 
-  if not self.ClientGroupDCSUnit then
-    local ClientGroup = self:GetDCSGroup()
-    
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupDCSUnit = ClientGroup:getUnit(1)
-    else
-      self.ClientGroupDCSUnit = self.ClientGroupUnit
-    end
+  local ClientGroup = self:GetDCSGroup()
+  
+  if ClientGroup and ClientGroup:isExist() then
+    return ClientGroup:getUnit(1)
+  else
+    return self.ClientGroupUnit
   end
-	
-	self:T( { self.ClientGroupDCSUnit } )
-	return self.ClientGroupDCSUnit
 end
 
 function CLIENT:GetUnit()
@@ -6352,9 +6400,9 @@ self:T()
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
+			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 
@@ -7432,7 +7480,8 @@ Include.File( "Client" )
 Include.File( "Stage" )
 
 --- The TASK class
--- @type
+-- @type TASK
+-- @extends Base#BASE
 TASK = {
 
 	-- Defines the different signal types with a Task.
@@ -9632,7 +9681,7 @@ end
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- @module SPAWN
+-- @module Spawn
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -9643,6 +9692,7 @@ Include.File( "Zone" )
 
 --- SPAWN Class
 -- @type SPAWN
+-- @extends Base#BASE
 -- @field ClassName
 SPAWN = {
   ClassName = "SPAWN",
@@ -10914,7 +10964,7 @@ self:T( { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MovementGro
 	end
 end
 --- Provides defensive behaviour to a set of SAM sites within a running Mission.
--- @module SEAD
+-- @module Sead
 -- @author to be searched on the forum
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
@@ -10925,7 +10975,8 @@ Include.File( "Client" )
 Include.File( "Task" )
 
 --- The SEAD class
--- @type
+-- @type SEAD
+-- @extends Base#BASE
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {
@@ -11093,32 +11144,32 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.ReportTargets = true
  
    -- Escort Navigation  
-  self.EscortMenu = MENU_SUB_GROUP:New( self.EscortClient, "Escort" .. self.EscortName )
-  self.EscortMenuHoldPosition = MENU_COMMAND_GROUP:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
+  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
+  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
 
   -- Report Targets
-  self.EscortMenuReportNearbyTargets = MENU_SUB_GROUP:New( self.EscortClient, "Report Targets", self.EscortMenu )
-  self.EscortMenuReportNearbyTargetsOn = MENU_COMMAND_GROUP:New( self.EscortClient, "Report Targets On", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
-  self.EscortMenuReportNearbyTargetsOff = MENU_COMMAND_GROUP:New( self.EscortClient, "Report Targets Off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report Targets", self.EscortMenu )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets On", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
+  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets Off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
 
   -- Attack Targets
-  self.EscortMenuAttackNearbyTargets = MENU_SUB_GROUP:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
+  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
   self.EscortMenuAttackTargets =  {} 
   self.Targets = {}
 
   -- Rules of Engagement
-  self.EscortMenuROE = MENU_SUB_GROUP:New( self.EscortClient, "ROE", self.EscortMenu )
-  self.EscortMenuROEHoldFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROEHoldFire, { ParamSelf = self, } )
-  self.EscortMenuROEReturnFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROEReturnFire, { ParamSelf = self, } )
-  self.EscortMenuROEOpenFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROEOpenFire, { ParamSelf = self, } )
-  self.EscortMenuROEWeaponFree = MENU_COMMAND_GROUP:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROEWeaponFree, { ParamSelf = self, } )
+  self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
+  self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROEHoldFire, { ParamSelf = self, } )
+  self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROEReturnFire, { ParamSelf = self, } )
+  self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROEOpenFire, { ParamSelf = self, } )
+  self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROEWeaponFree, { ParamSelf = self, } )
   
   -- Reaction to Threats
-  self.EscortMenuEvasion = MENU_SUB_GROUP:New( self.EscortClient, "Evasion", self.EscortMenu )
-  self.EscortMenuEvasionNoReaction = MENU_COMMAND_GROUP:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
-  self.EscortMenuEvasionPassiveDefense = MENU_COMMAND_GROUP:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
-  self.EscortMenuEvasionEvadeFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuEvasionVertical = MENU_COMMAND_GROUP:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
+  self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
+  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
+  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
+  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
+  self.EscortMenuEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
   
   
   self.ScanForTargetsFunction = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
@@ -11284,7 +11335,7 @@ function ESCORT:_ScanForTargets()
       self:T( { "Adding menu:", TargetID, "for Unit", self.Targets[TargetID].AttackUnit } )
       if MenuIndex <= 10 then
         self.EscortMenuAttackTargets[MenuIndex] = 
-          MENU_COMMAND_GROUP:New( self.EscortClient,
+          MENU_CLIENT_COMMAND:New( self.EscortClient,
                                   self.Targets[TargetID].AttackMessage,
                                   self.EscortMenuAttackNearbyTargets,
                                   ESCORT._AttackTarget,

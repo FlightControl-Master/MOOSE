@@ -1,7 +1,6 @@
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
--- @module GROUP
--- @extends BASE#BASE
+-- @module Group
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -10,6 +9,7 @@ Include.File( "Unit" )
 
 --- The GROUP class
 -- @type GROUP
+-- @extends Base#BASE
 -- @field #Group DCSGroup The DCS group class.
 -- @field #string GroupName The name of the group.
 -- @field #number GroupID the ID of the group.

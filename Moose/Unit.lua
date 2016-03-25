@@ -6,7 +6,8 @@ Include.File( "Base" )
 Include.File( "Message" )
 
 --- The UNIT class
--- @type
+-- @type UNIT
+-- @Extends Base#BASE
 UNIT = {
 	ClassName="UNIT",
 	CategoryName = { 

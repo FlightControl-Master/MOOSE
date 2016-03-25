@@ -67,7 +67,7 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- @module SPAWN
+-- @module Spawn
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -78,6 +78,7 @@ Include.File( "Zone" )
 
 --- SPAWN Class
 -- @type SPAWN
+-- @extends Base#BASE
 -- @field ClassName
 SPAWN = {
   ClassName = "SPAWN",

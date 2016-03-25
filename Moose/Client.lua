@@ -1,5 +1,6 @@
 --- CLIENT Classes
--- @module CLIENT
+-- @module Client
+-- @author FlightControl
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -11,6 +12,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
+-- @extends Base#BASE
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -171,18 +173,13 @@ end
 function CLIENT:GetClientGroupUnit()
   self:T()
 
-  if not self.ClientGroupUnit then
-  	local ClientGroup = self:GetDCSGroup()
-  	
-  	if ClientGroup and ClientGroup:isExist() then
-			self.ClientGroupUnit = UNIT:New( ClientGroup:getUnit(1) )
-		else
-			self.ClientGroupUnit = UNIT:New( self.ClientGroupUnit )
-  	end
-  end
+	local ClientGroup = self:GetDCSGroup()
 	
-  self:T( { self.ClientGroupUnit } )
-  return self.ClientGroupUnit
+	if ClientGroup and ClientGroup:isExist() then
+		return UNIT:New( ClientGroup:getUnit(1) )
+	else
+		return UNIT:New( self.ClientGroupUnit )
+	end
 end
 
 --- Returns the DCSUnit of the @{CLIENT}.
@@ -190,18 +187,13 @@ end
 function CLIENT:GetClientGroupDCSUnit()
   self:T()
 
-  if not self.ClientGroupDCSUnit then
-    local ClientGroup = self:GetDCSGroup()
-    
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupDCSUnit = ClientGroup:getUnit(1)
-    else
-      self.ClientGroupDCSUnit = self.ClientGroupUnit
-    end
+  local ClientGroup = self:GetDCSGroup()
+  
+  if ClientGroup and ClientGroup:isExist() then
+    return ClientGroup:getUnit(1)
+  else
+    return self.ClientGroupUnit
   end
-	
-	self:T( { self.ClientGroupDCSUnit } )
-	return self.ClientGroupDCSUnit
 end
 
 function CLIENT:GetUnit()
@@ -290,9 +282,9 @@ self:T()
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_SUB_GROUP:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_COMMAND_GROUP:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_COMMAND_GROUP:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
+			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
 		end
 	end
 

@@ -42,32 +42,32 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.ReportTargets = true
  
    -- Escort Navigation  
-  self.EscortMenu = MENU_SUB_GROUP:New( self.EscortClient, "Escort" .. self.EscortName )
-  self.EscortMenuHoldPosition = MENU_COMMAND_GROUP:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
+  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
+  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
 
   -- Report Targets
-  self.EscortMenuReportNearbyTargets = MENU_SUB_GROUP:New( self.EscortClient, "Report Targets", self.EscortMenu )
-  self.EscortMenuReportNearbyTargetsOn = MENU_COMMAND_GROUP:New( self.EscortClient, "Report Targets On", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
-  self.EscortMenuReportNearbyTargetsOff = MENU_COMMAND_GROUP:New( self.EscortClient, "Report Targets Off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report Targets", self.EscortMenu )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets On", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
+  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets Off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
 
   -- Attack Targets
-  self.EscortMenuAttackNearbyTargets = MENU_SUB_GROUP:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
+  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
   self.EscortMenuAttackTargets =  {} 
   self.Targets = {}
 
   -- Rules of Engagement
-  self.EscortMenuROE = MENU_SUB_GROUP:New( self.EscortClient, "ROE", self.EscortMenu )
-  self.EscortMenuROEHoldFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROEHoldFire, { ParamSelf = self, } )
-  self.EscortMenuROEReturnFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROEReturnFire, { ParamSelf = self, } )
-  self.EscortMenuROEOpenFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROEOpenFire, { ParamSelf = self, } )
-  self.EscortMenuROEWeaponFree = MENU_COMMAND_GROUP:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROEWeaponFree, { ParamSelf = self, } )
+  self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
+  self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROEHoldFire, { ParamSelf = self, } )
+  self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROEReturnFire, { ParamSelf = self, } )
+  self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROEOpenFire, { ParamSelf = self, } )
+  self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROEWeaponFree, { ParamSelf = self, } )
   
   -- Reaction to Threats
-  self.EscortMenuEvasion = MENU_SUB_GROUP:New( self.EscortClient, "Evasion", self.EscortMenu )
-  self.EscortMenuEvasionNoReaction = MENU_COMMAND_GROUP:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
-  self.EscortMenuEvasionPassiveDefense = MENU_COMMAND_GROUP:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
-  self.EscortMenuEvasionEvadeFire = MENU_COMMAND_GROUP:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuEvasionVertical = MENU_COMMAND_GROUP:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
+  self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
+  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
+  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
+  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
+  self.EscortMenuEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
   
   
   self.ScanForTargetsFunction = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
@@ -233,7 +233,7 @@ function ESCORT:_ScanForTargets()
       self:T( { "Adding menu:", TargetID, "for Unit", self.Targets[TargetID].AttackUnit } )
       if MenuIndex <= 10 then
         self.EscortMenuAttackTargets[MenuIndex] = 
-          MENU_COMMAND_GROUP:New( self.EscortClient,
+          MENU_CLIENT_COMMAND:New( self.EscortClient,
                                   self.Targets[TargetID].AttackMessage,
                                   self.EscortMenuAttackNearbyTargets,
                                   ESCORT._AttackTarget,

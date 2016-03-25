@@ -8,7 +8,8 @@ Include.File( "Client" )
 Include.File( "Stage" )
 
 --- The TASK class
--- @type
+-- @type TASK
+-- @extends Base#BASE
 TASK = {
 
 	-- Defines the different signal types with a Task.

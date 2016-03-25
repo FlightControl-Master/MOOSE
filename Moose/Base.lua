@@ -1,5 +1,5 @@
 --- BASE The base class for all the classes defined within MOOSE.
--- @module BASE
+-- @module Base
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -22,8 +22,8 @@ _TraceClass = {
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
-	--MENU_SUB_GROUP = true,
-	--MENU_COMMAND_GROUP = true,
+	--MENU_CLIENT = true,
+	--MENU_CLIENT_COMMAND = true,
 	--ESCORT = true,
 	}
 

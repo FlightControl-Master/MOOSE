@@ -1,12 +1,13 @@
 --- ZONE Classes
--- @module ZONE
+-- @module Zone
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
 --- The ZONE class
--- @type
+-- @type ZONE
+-- @Extends Base#BASE
 ZONE = {
 	ClassName="ZONE",
 	}
