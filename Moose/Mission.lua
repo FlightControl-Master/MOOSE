@@ -33,7 +33,7 @@ MISSION = {
 function MISSION:Meta()
 
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T()
+	self:F()
 	
 	return self
 end
@@ -79,13 +79,13 @@ end
 --- Returns if a Mission has completed.
 -- @return bool
 function MISSION:IsCompleted()
-	self:T()
+	self:F()
 	return self.MissionStatus == "ACCOMPLISHED"
 end
 
 --- Set a Mission to completed.
 function MISSION:Completed()
-	self:T()
+	self:F()
 	self.MissionStatus = "ACCOMPLISHED"
 	self:StatusToClients()
 end
@@ -93,13 +93,13 @@ end
 --- Returns if a Mission is ongoing.
 -- treturn bool
 function MISSION:IsOngoing()
-	self:T()
+	self:F()
 	return self.MissionStatus == "ONGOING"
 end
 
 --- Set a Mission to ongoing.
 function MISSION:Ongoing()
-	self:T()
+	self:F()
 	self.MissionStatus = "ONGOING"
 	--self:StatusToClients()
 end
@@ -107,13 +107,13 @@ end
 --- Returns if a Mission is pending.
 -- treturn bool
 function MISSION:IsPending()
-	self:T()
+	self:F()
 	return self.MissionStatus == "PENDING"
 end
 
 --- Set a Mission to pending.
 function MISSION:Pending()
-	self:T()
+	self:F()
 	self.MissionStatus = "PENDING"
 	self:StatusToClients()
 end
@@ -121,20 +121,20 @@ end
 --- Returns if a Mission has failed.
 -- treturn bool
 function MISSION:IsFailed() 
-	self:T()
+	self:F()
 	return self.MissionStatus == "FAILED"
 end
 
 --- Set a Mission to failed.
 function MISSION:Failed()
-	self:T()
+	self:F()
 	self.MissionStatus = "FAILED"
 	self:StatusToClients()
 end
 
 --- Send the status of the MISSION to all Clients.
 function MISSION:StatusToClients()
-	self:T()
+	self:F()
 	if self.MissionReportFlash then
 		for ClientID, Client in pairs( self._Clients ) do
 			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10,  self.Name .. '/Status', "Mission Command: Mission Status")
@@ -144,33 +144,28 @@ end
 
 --- Handles the reporting. After certain time intervals, a MISSION report MESSAGE will be shown to All Players.
 function MISSION:ReportTrigger()
-	self:T()
+	self:F()
 
 	if self.MissionReportShow == true then
 		self.MissionReportShow = false
-trace.r( "MISSION", "1", { true } )
 		return true
 	else
 		if self.MissionReportFlash == true then
 			if timer.getTime() >= self.MissionReportTrigger then
 				self.MissionReportTrigger = timer.getTime() + self.MissionTimeInterval
-trace.r( "MISSION", "2", { true } )
 				return true
 			else
-trace.r( "MISSION", "3", { false } )
 				return false
 			end
 		else
-trace.r( "MISSION", "4", { false } )
 			return false 
 		end
 	end
-trace.e()
 end
 
 --- Report the status of all MISSIONs to all active Clients.
 function MISSION:ReportToAll()
-	self:T()
+	self:F()
 
 	local AlivePlayers = ''
 	for ClientID, Client in pairs( self._Clients ) do
@@ -232,7 +227,7 @@ end
 --	local Mission = MISSIONSCHEDULER.AddMission( 'NATO Transport Troops', 'Operational', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.', 'NATO' )
 --	Mission:AddGoalFunction( DeployPatriotTroopsGoal )
 function MISSION:AddGoalFunction( GoalFunction )
-	self:T()
+	self:F()
 	self.GoalFunction = GoalFunction 
 end
 
@@ -240,7 +235,7 @@ end
 -- @param CLIENT Client to show briefing to.
 -- @return CLIENT
 function MISSION:ShowBriefing( Client )
-	self:T( { Client.ClientName } )
+	self:F( { Client.ClientName } )
 
 	if not Client.ClientBriefingShown then
 		Client.ClientBriefingShown = true
@@ -265,7 +260,7 @@ end
 --	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
 function MISSION:AddClient( Client )
-	self:T( { Client } )
+	self:F( { Client } )
 
 	local Valid = true
  
@@ -273,7 +268,6 @@ function MISSION:AddClient( Client )
 		self._Clients[Client.ClientName] = Client
 	end
 
-trace.r( self.ClassName, "" )
 	return Client
 end
 
@@ -284,7 +278,7 @@ end
 -- -- Seach for Client "Bomber" within the Mission.
 -- local BomberClient = Mission:FindClient( "Bomber" )
 function MISSION:FindClient( ClientName )
-	self:T( { self._Clients[ClientName] } )
+	self:F( { self._Clients[ClientName] } )
 	return self._Clients[ClientName]
 end
 
@@ -315,7 +309,7 @@ end
 --	Mission:AddTask( DeployTask, 2 )
 	
 function MISSION:AddTask( Task, TaskNumber )
-	self:T()
+	self:F()
 
 	self._Tasks[TaskNumber] = Task
 	self._Tasks[TaskNumber]:EnableEvents()
@@ -332,7 +326,7 @@ function MISSION:AddTask( Task, TaskNumber )
 -- Task2 = Mission:GetTask( 2 )
 
 function MISSION:GetTask( TaskNumber )
-	self:T()
+	self:F()
 
 	local Valid = true
 
@@ -356,7 +350,7 @@ end
 -- Tasks = Mission:GetTasks()
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
-	self:T()
+	self:F()
 
 	return self._Tasks
 end
@@ -391,13 +385,10 @@ MISSIONSCHEDULER = {
 
 --- This is the main MISSIONSCHEDULER Scheduler function. It is considered internal and is automatically created when the Mission.lua file is included.
 function MISSIONSCHEDULER.Scheduler()
-trace.scheduled("MISSIONSCHEDULER","Scheduler")
 
 	-- loop through the missions in the TransportTasks
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 	
-		trace.i( "MISSIONSCHEDULER", MissionName )
-		
 		if not Mission:IsCompleted() then
 		
 			-- This flag will monitor if for this mission, there are clients alive. If this flag is still false at the end of the loop, the mission status will be set to Pending (if not Failed or Completed).
@@ -405,8 +396,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			
 			for ClientID, Client in pairs( Mission._Clients ) do
 			
-				trace.i( "MISSIONSCHEDULER", "Client: " .. Client.ClientName )
-
 				if Client:GetDCSGroup() then
 
 					-- There is at least one Client that is alive... So the Mission status is set to Ongoing.
@@ -470,7 +459,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							end
 							 
 							if Task:IsDone() then
-								trace.i( "MISSIONSCHEDULER", "Task " .. Task.Name .. " is Done." )
 								--env.info( 'Scheduler: Mission '.. Mission.Name .. ' Task ' .. Task.Name .. ' Stage ' .. Task.Stage.Name .. ' done. TaskComplete = ' .. string.format ( "%s", TaskComplete and "true" or "false" ) )
 								TaskComplete = true -- when a task is not yet completed, a mission cannot be completed
 								
@@ -546,29 +534,22 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 		if Mission:ReportTrigger() then
 			Mission:ReportToAll()
 		end
-		
 	end
-
-trace.e()
 end
 
 --- Start the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Start()
-trace.f("MISSIONSCHEDULER")
   if MISSIONSCHEDULER ~= nil then
     MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
   end
-trace.e()
 end
 
 --- Stop the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Stop()
-trace.f("MISSIONSCHEDULER")
 	if MISSIONSCHEDULER.SchedulerId then
 		routines.removeFunction(MISSIONSCHEDULER.SchedulerId)
 		MISSIONSCHEDULER.SchedulerId = nil
 	end
-trace.e()
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
@@ -582,13 +563,11 @@ end
 --                        'Russia' )
 -- MISSIONSCHEDULER:AddMission( Mission )
 function MISSIONSCHEDULER.AddMission( Mission )
-trace.f("MISSIONSCHEDULER")
 	MISSIONSCHEDULER.Missions[Mission.Name] = Mission
 	MISSIONSCHEDULER.MissionCount = MISSIONSCHEDULER.MissionCount + 1
 	-- Add an overall AI Client for the AI tasks... This AI Client will facilitate the Events in the background for each Task. 
 	--MissionAdd:AddClient( CLIENT:New( 'AI' ) )
 	
-trace.r( "MISSIONSCHEDULER", "" )
 	return Mission
 end
 
@@ -605,10 +584,8 @@ end
 -- -- Now remove the Mission.
 -- MISSIONSCHEDULER:RemoveMission( 'Russia Transport Troops SA-6' )
 function MISSIONSCHEDULER.RemoveMission( MissionName )
-trace.f("MISSIONSCHEDULER")
 	MISSIONSCHEDULER.Missions[MissionName] = nil
 	MISSIONSCHEDULER.MissionCount = MISSIONSCHEDULER.MissionCount - 1
-trace.e()
 end
 
 --- Find a MISSION within the MISSIONSCHEDULER.
@@ -625,24 +602,19 @@ end
 -- -- Now find the Mission.
 -- MissionFind = MISSIONSCHEDULER:FindMission( 'Russia Transport Troops SA-6' )
 function MISSIONSCHEDULER.FindMission( MissionName )
-trace.f("MISSIONSCHEDULER")
-trace.r( "MISSIONSCHEDULER", "" )
 	return MISSIONSCHEDULER.Missions[MissionName]
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsShow( )
-trace.menu("MISSIONSCHEDULER","ReportMissionsShow")
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = true
 		Mission.MissionReportFlash = false 
 	end
-trace.e()
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsFlash( TimeInterval )
-trace.menu("MISSIONSCHEDULER","ReportMissionsFlash")
 	local Count = 0
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = false 
@@ -652,49 +624,40 @@ trace.menu("MISSIONSCHEDULER","ReportMissionsFlash")
 		env.info( "TimeInterval = "  .. Mission.MissionTimeInterval )
 		Count = Count + 1
 	end
-trace.e()
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsHide( Prm )
-trace.menu("MISSIONSCHEDULER","ReportMissionsHide")
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = false
 		Mission.MissionReportFlash = false
 	end
-trace.e()
 end
 
 --- Enables a MENU option in the communications menu under F10 to control the status of the active missions.
 -- This function should be called only once when starting the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.ReportMenu()
-trace.f("MISSIONSCHEDULER")
 	local ReportMenu = SUBMENU:New( 'Status' )
 	local ReportMenuShow = COMMANDMENU:New( 'Show Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsShow, 0 )
 	local ReportMenuFlash = COMMANDMENU:New('Flash Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsFlash, 120 )
 	local ReportMenuHide = COMMANDMENU:New( 'Hide Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsHide, 0 )
-trace.e()
 end
 
 --- Show the remaining mission time.
 function MISSIONSCHEDULER:TimeShow()
-trace.f("MISSIONSCHEDULER")
 	self.TimeIntervalCount = self.TimeIntervalCount + 1
 	if self.TimeIntervalCount >= self.TimeTriggerShow then
 		local TimeMsg = string.format("%00d", ( self.TimeSeconds / 60 ) - ( timer.getTime() / 60 )) .. ' minutes left until mission reload.'
 		MESSAGE:New( TimeMsg, "Mission time", self.TimeShow, '/TimeMsg' ):ToAll()
 		self.TimeIntervalCount = 0
 	end
-trace.e()
 end
 
 function MISSIONSCHEDULER:Time( TimeSeconds, TimeIntervalShow, TimeShow )
-trace.f("MISSIONSCHEDULER")
 
 	self.TimeIntervalCount = 0
 	self.TimeSeconds = TimeSeconds
 	self.TimeIntervalShow = TimeIntervalShow
 	self.TimeShow = TimeShow
-trace.e()
 end
 

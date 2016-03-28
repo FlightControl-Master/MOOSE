@@ -48,7 +48,7 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:New( ClientName, ClientBriefing )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( ClientName, ClientBriefing )
+	self:F( ClientName, ClientBriefing )
 
 	self.ClientName = ClientName
 	self:AddBriefing( ClientBriefing )
@@ -60,7 +60,7 @@ end
 --- Resets a CLIENT.
 -- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
-self:T()
+	self:F()
 	self._Menus = {}
 end
 
@@ -68,7 +68,7 @@ end
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @return Group#Group
 function CLIENT:GetDCSGroup()
---self:T()
+  self:F3()
 
 --  local ClientData = Group.getByName( self.ClientName )
 --	if ClientData and ClientData:isExist() then
@@ -80,33 +80,33 @@ function CLIENT:GetDCSGroup()
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		--self:T( { "CoalitionData:", CoalitionData } )
+		self:T3( { "CoalitionData:", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
-			--self:T( { "UnitData:", UnitData } )
+			self:T3( { "UnitData:", UnitData } )
 			if UnitData and UnitData:isExist() then
 
 				local ClientGroup = Group.getByName( self.ClientName )
 				if ClientGroup then
-					self:T( "ClientGroup = " .. self.ClientName )
+					self:T3( "ClientGroup = " .. self.ClientName )
 					if ClientGroup:isExist() then 
 						if ClientGroup:getID() == UnitData:getGroup():getID() then
-							self:T( "Normal logic" )
-							self:T( self.ClientName .. " : group found!" )
+							self:T3( "Normal logic" )
+							self:T3( self.ClientName .. " : group found!" )
 							return ClientGroup
 						end
 					else
 						-- Now we need to resolve the bugs in DCS 1.5 ...
 						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
-						self:T( "Bug 1.5 logic" )
+						self:T3( "Bug 1.5 logic" )
 						local ClientUnits = _Database.Groups[self.ClientName].Units
-						self:T( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
+						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
 						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
-							self:T( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
+							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
 							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
 								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
 								self.ClientID = ClientGroupTemplate.groupId
 								self.ClientGroupUnit = UnitData
-								self:T( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
 								return ClientGroup
 							end
 						end
@@ -121,10 +121,10 @@ function CLIENT:GetDCSGroup()
 	-- For non player clients
 	local ClientGroup = Group.getByName( self.ClientName )
 	if ClientGroup then
-		self:T( "ClientGroup = " .. self.ClientName )
+		self:T3( "ClientGroup = " .. self.ClientName )
 		if ClientGroup:isExist() then 
-			self:T( "Normal logic" )
-			self:T( self.ClientName .. " : group found!" )
+			self:T3( "Normal logic" )
+			self:T3( self.ClientName .. " : group found!" )
 			return ClientGroup
 		end
 	end
@@ -171,7 +171,7 @@ end
 --- Returns the Unit of the @{CLIENT}.
 -- @return Unit
 function CLIENT:GetClientGroupUnit()
-  self:T()
+	self:F()
 
 	local ClientGroup = self:GetDCSGroup()
 	
@@ -185,7 +185,7 @@ end
 --- Returns the DCSUnit of the @{CLIENT}.
 -- @return DCSUnit
 function CLIENT:GetClientGroupDCSUnit()
-  self:T()
+	self:F2()
 
   local ClientGroup = self:GetDCSGroup()
   
@@ -197,7 +197,7 @@ function CLIENT:GetClientGroupDCSUnit()
 end
 
 function CLIENT:GetUnit()
-	self:T()
+	self:F()
 	
 	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
@@ -205,7 +205,7 @@ end
 --- Returns the Point of the @{CLIENT}.
 -- @return DCSTypes#Vec2
 function CLIENT:GetPointVec2()
-  self:T()
+	self:F()
 
   ClientGroupUnit = self:GetClientGroupDCSUnit()
   
@@ -227,7 +227,7 @@ end
 --- Returns the Position of the @{CLIENT}.
 -- @return DCSTypes#Position
 function CLIENT:ClientPosition()
-  self:T()
+	self:F()
 
 	ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
@@ -243,7 +243,7 @@ end
 --- Returns the altitude of the @{CLIENT}.
 -- @return DCSTypes#Distance
 function CLIENT:GetAltitude()
-  self:T()
+	self:F()
 
   ClientGroupUnit = self:GetClientGroupDCSUnit()
   
@@ -261,7 +261,7 @@ end
 --- Transport defines that the Client is a Transport.
 -- @return CLIENT
 function CLIENT:Transport()
-self:T()
+	self:F()
 
 	self.ClientTransport = true
 	return self
@@ -271,7 +271,7 @@ end
 -- @param string ClientBriefing is the text defining the Mission briefing.
 -- @return CLIENT
 function CLIENT:AddBriefing( ClientBriefing )
-self:T()
+	self:F()
 	self.ClientBriefing = ClientBriefing
 	return self
 end
@@ -279,14 +279,14 @@ end
 --- IsTransport returns if a Client is a transport.
 -- @return bool
 function CLIENT:IsTransport()
-self:T()
+	self:F()
 	return self.ClientTransport
 end
 
 --- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
 -- The @{CARGO} is shown throught the MESSAGE system of DCS World.
 function CLIENT:ShowCargo()
-self:T()
+	self:F()
 
 	local CargoMsg = ""
   
@@ -317,7 +317,7 @@ end
 -- @param string MessageCategory is the category of the message (the title).
 -- @param number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-self:T()
+	self:F()
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then

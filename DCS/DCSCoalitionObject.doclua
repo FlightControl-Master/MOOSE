@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- @module CoalitionObject
--- @extends Object#Object
+-- @module DCSCoalitionObject
 
 --- @type CoalitionObject
+-- @extends DCSObject#Object
 
 --- Returns coalition of the object.
 -- @function [parent=#CoalitionObject] getCoalition

@@ -1,8 +1,8 @@
 -------------------------------------------------------------------------------
--- @module Unit
--- @extends CoalitionObject#CoalitionObject
+-- @module DCSUnit
 
 --- @type Unit
+-- @extends DCSCoalitionObject#CoalitionObject
 -- @field ID Identifier of an unit. It assigned to an unit by the Mission Editor automatically. 
 -- @field #Unit.Category Category
 -- @field #Unit.RefuelingSystem RefuelingSystem
@@ -151,68 +151,68 @@
 
 --- Returns if the unit is activated.
 -- @function [parent=#Unit] isActive
--- @param self
+-- @param #Unit self
 -- @return #boolean
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @function [parent=#Unit] getPlayerName
--- @param self
+-- @param #Unit self
 -- @return #string
 
 --- returns the unit's unique identifier.
 -- @function [parent=#Unit] getID
--- @param self
+-- @param #Unit self
 -- @return #Unit.ID
 
 
 --- Returns the unit's number in the group. The number is the same number the unit has in ME. It may not be changed during the mission. If any unit in the group is destroyed, the numbers of another units will not be changed.
 -- @function [parent=#Unit] getNumber
--- @param self
+-- @param #Unit self
 -- @return #number
 
 --- Returns controller of the unit if it exist and nil otherwise
 -- @function [parent=#Unit] getController
--- @param self
+-- @param #Unit self
 -- @return #Controller
 
 --- Returns the unit's group if it exist and nil otherwise
 -- @function [parent=#Unit] getGroup
--- @param self
--- @return Group#Group
+-- @param #Unit self
+-- @return DCSGroup#Group
 
 --- Returns the unit's callsign - the localized string.
 -- @function [parent=#Unit] getCallsign
--- @param self
+-- @param #Unit self
 -- @return #string
 
 --- Returns the unit's health. Dead units has health <= 1.0
 -- @function [parent=#Unit] getLife
--- @param self
+-- @param #Unit self
 -- @return #number
 
 --- returns the unit's initial health.
 -- @function [parent=#Unit] getLife0
--- @param self
+-- @param #Unit self
 -- @return #number
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @function [parent=#Unit] getFuel
--- @param self
+-- @param #Unit self
 -- @return #number
 
 --- Returns the unit ammunition.
 -- @function [parent=#Unit] getAmmo
--- @param self
+-- @param #Unit self
 -- @return #Unit.Ammo
 
 --- Returns the unit sensors. 
 -- @function [parent=#Unit] getSensors
--- @param self
+-- @param #Unit self
 -- @return #Unit.Sensors
 
 --- Returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors.
 -- @function [parent=#Unit] hasSensors
--- @param self
+-- @param #Unit self
 -- @param #Unit.SensorType sensorType (= nil) Sensor type.
 -- @param ... Additional parameters.
 -- @return #boolean
@@ -229,13 +229,13 @@
 -- First value indicates if at least one of the unit's radar(s) is on.
 -- Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target. 
 -- @function [parent=#Unit] getRadar
--- @param self
+-- @param #Unit self
 -- @return #boolean, Object#Object
 
 --- Returns unit descriptor. Descriptor type depends on unit category. 
 -- @function [parent=#Unit] getDesc
--- @param self
--- @return Unit#Unit.Desc
+-- @param #Unit self
+-- @return #Unit.Desc
 
 
 Unit = {} --#Unit

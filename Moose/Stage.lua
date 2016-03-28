@@ -29,7 +29,7 @@ STAGE = {
 
 function STAGE:New()
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T()
+	self:F()
 	return self
 end
 
@@ -61,14 +61,14 @@ STAGEBRIEF = {
 
 function STAGEBRIEF:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-	self:T()
+	self:F()
 	Mission:ShowBriefing( Client )
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
@@ -98,13 +98,13 @@ STAGESTART = {
 
 function STAGESTART:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGESTART:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	if Task.TaskBriefing then
 		Client:Message( Task.TaskBriefing, 30,  Mission.Name .. "/Stage", "Mission Command: Tasking" )
@@ -116,7 +116,7 @@ self:T()
 end
 
 function STAGESTART:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	if timer.getTime() - self.StageStartTime <= self.StageStartDuration then
@@ -136,13 +136,13 @@ STAGE_CARGO_LOAD = {
 
 function STAGE_CARGO_LOAD:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGE_CARGO_LOAD:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	for LoadCargoID, LoadCargo in pairs( Task.Cargos.LoadCargos ) do
@@ -157,7 +157,7 @@ self:T()
 end
 
 function STAGE_CARGO_LOAD:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	return 1
@@ -170,13 +170,13 @@ STAGE_CARGO_INIT = {
 
 function STAGE_CARGO_INIT:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGE_CARGO_INIT:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	for InitLandingZoneID, InitLandingZone in pairs( Task.LandingZones.LandingZones ) do
@@ -196,7 +196,7 @@ end
 
 
 function STAGE_CARGO_INIT:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 
 	return 1
@@ -213,7 +213,7 @@ STAGEROUTE = {
 
 function STAGEROUTE:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	self.MessageSwitch = true
 	return self
@@ -221,7 +221,7 @@ end
 
 
 function STAGEROUTE:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
 	local RouteMessage = "Fly to "
@@ -239,7 +239,7 @@ self:T()
 end
 
 function STAGEROUTE:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 	local Valid = STAGE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
@@ -274,13 +274,13 @@ STAGELANDING = {
 
 function STAGELANDING:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGELANDING:Execute( Mission, Client, Task )
-self:T()
+	self:F()
  
 	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot: Arrived", 10 )
 
@@ -332,7 +332,7 @@ self:T()
 end
 
 function STAGELANDING:Validate( Mission, Client, Task )
-self:T()
+	self:F()
   
 	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
 	if Task.CurrentLandingZoneName then
@@ -376,13 +376,13 @@ STAGELANDED = {
 
 function STAGELANDED:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGELANDED:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 
 	if Task.IsLandingRequired then
 		Client:Message( 'We have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
@@ -398,7 +398,7 @@ end
 
 
 function STAGELANDED:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 
 	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
@@ -431,20 +431,20 @@ STAGEUNLOAD = {
 
 function STAGEUNLOAD:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGEUNLOAD:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
                     self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Co-Pilot: Unload" )
 	Task:RemoveCargoMenus( Client )
 end
 
 function STAGEUNLOAD:Executing( Mission, Client, Task )
-self:T()
+	self:F()
 	env.info( 'STAGEUNLOAD:Executing() Task.Cargo.CargoName = ' .. Task.Cargo.CargoName )
 	
 	local TargetZoneName
@@ -464,7 +464,7 @@ self:T()
 end
 
 function STAGEUNLOAD:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
   if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
@@ -503,13 +503,13 @@ STAGELOAD = {
 
 function STAGELOAD:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGELOAD:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	
 	if not Task.IsSlingLoad then
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
@@ -524,13 +524,13 @@ self:T()
 end
 
 function STAGELOAD:Executing( Mission, Client, Task )
-self:T()
+	self:F()
 
 	-- If the Cargo is ready to be loaded, load it into the Client.
 
 		
 	if not Task.IsSlingLoad then
-		trace.i(self.ClassName, Task.Cargo.CargoName)
+		self:T( Task.Cargo.CargoName)
 		
 		if Task.Cargo:OnBoarded( Client, Task.CurrentCargoZone ) then
 
@@ -553,12 +553,12 @@ self:T()
 			if Cargo:IsSlingLoad() then
 				local CargoStatic = StaticObject.getByName( Cargo.CargoStaticName )
 				if CargoStatic then
-					trace.i(self.ClassName, "Cargo is found in the DCS simulator.")
+					self:T( "Cargo is found in the DCS simulator.")
 					local CargoStaticPosition = CargoStatic:getPosition().p
-					trace.i(self.ClassName, "Cargo Position x = " .. CargoStaticPosition.x .. ", y = " ..  CargoStaticPosition.y .. ", z = " ..  CargoStaticPosition.z )
+					self:T( "Cargo Position x = " .. CargoStaticPosition.x .. ", y = " ..  CargoStaticPosition.y .. ", z = " ..  CargoStaticPosition.z )
 					local CargoStaticHeight = routines.GetUnitHeight( CargoStatic )
 					if CargoStaticHeight > 5 then
-						trace.i(self.ClassName, "Cargo is airborne.")
+						self:T( "Cargo is airborne.")
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
@@ -576,7 +576,7 @@ self:T()
 end
 
 function STAGELOAD:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
@@ -635,18 +635,18 @@ STAGEDONE = {
 
 function STAGEDONE:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'AI'
 	return self
 end
 
 function STAGEDONE:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 
 end
 
 function STAGEDONE:Validate( Mission, Client, Task )
-self:T()
+	self:F()
 
 	Task:Done()
   
@@ -661,20 +661,20 @@ STAGEARRIVE = {
 
 function STAGEARRIVE:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'CLIENT'
 	return self
 end
 
 function STAGEARRIVE:Execute( Mission, Client, Task )
-self:T()
+	self:F()
  
   Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot: Arrived" )
 
   end
 
 function STAGEARRIVE:Validate( Mission, Client, Task )
-self:T()
+	self:F()
   
   Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones )
   if  ( Task.CurrentLandingZoneID ) then
@@ -695,7 +695,7 @@ STAGEGROUPSDESTROYED = {
 
 function STAGEGROUPSDESTROYED:New()
 	local self = BASE:Inherit( self, STAGE:New() )
-	self:T()
+	self:F()
 	self.StageType = 'AI'
 	return self
 end
@@ -707,7 +707,7 @@ end
 --end
 
 function STAGEGROUPSDESTROYED:Validate( Mission, Client, Task )
-self:T()
+	self:F()
  
 	if Task.MissionTask:IsGoalReached() then
 		return 1
@@ -717,7 +717,7 @@ self:T()
 end
 
 function STAGEGROUPSDESTROYED:Execute( Mission, Client, Task )
-self:T()
+	self:F()
 	self:T( { Task.ClassName, Task.Destroyed } )
 	--env.info( 'Event Table Task = ' .. tostring(Task) )
 

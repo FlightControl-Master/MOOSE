@@ -19,7 +19,7 @@ PICKUPTASK = {
 -- @param number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
 function PICKUPTASK:New( CargoType, OnBoardSide )
     local self = BASE:Inherit( self, TASK:New() )
-	self:T()
+	self:F()
 
     -- self holds the inherited instance of the PICKUPTASK Class to the BASE class.
 
@@ -41,7 +41,7 @@ function PICKUPTASK:New( CargoType, OnBoardSide )
 end
 
 function PICKUPTASK:FromZone( LandingZone )
-self:T()
+	self:F()
 
 	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
 	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
@@ -50,7 +50,7 @@ self:T()
 end
 
 function PICKUPTASK:InitCargo( InitCargos )
-self:T( { InitCargos } )
+	self:F( { InitCargos } )
 
 	if type( InitCargos ) == "table" then
 		self.Cargos.InitCargos = InitCargos
@@ -62,7 +62,7 @@ self:T( { InitCargos } )
 end
 
 function PICKUPTASK:LoadCargo( LoadCargos )
-self:T( { LoadCargos } )
+	self:F( { LoadCargos } )
 
 	if type( LoadCargos ) == "table" then
 		self.Cargos.LoadCargos = LoadCargos
@@ -74,7 +74,7 @@ self:T( { LoadCargos } )
 end
 
 function PICKUPTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-self:T()
+	self:F()
   
 	for CargoID, Cargo in pairs( Cargos ) do
 
@@ -121,7 +121,7 @@ self:T()
 end
 
 function PICKUPTASK:RemoveCargoMenus( Client )
-self:T()
+	self:F()
 
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		for SubMenuID, SubMenuData in pairs( MenuData.PickupSubMenus ) do
@@ -148,7 +148,7 @@ end
 
 
 function PICKUPTASK:HasFailed( ClientDead )
-self:T()
+	self:F()
 
 	local TaskHasFailed = self.TaskFailed
 	return TaskHasFailed

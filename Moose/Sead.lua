@@ -34,7 +34,7 @@ SEAD = {
 -- SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )
 function SEAD:New( SEADGroupPrefixes )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( SEADGroupPrefixes )	
+	self:F( SEADGroupPrefixes )	
 	if type( SEADGroupPrefixes ) == 'table' then
 		for SEADGroupPrefixID, SEADGroupPrefix in pairs( SEADGroupPrefixes ) do
 			self.SEADGroupPrefixes[SEADGroupPrefix] = SEADGroupPrefix
@@ -42,8 +42,8 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	self.AddEvent( self, world.event.S_EVENT_SHOT, self.EventShot )
-	self.EnableEvents( self )
+	self:AddEvent( world.event.S_EVENT_SHOT, self.EventShot )
+	self:EnableEvents()
 	
 	return self
 end
@@ -51,7 +51,7 @@ end
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
 function SEAD:EventShot( event )
-self:T( { event } )
+	self:F( { event } )
 
 	local SEADUnit = event.initiator
 	local SEADUnitName = SEADUnit:getName()

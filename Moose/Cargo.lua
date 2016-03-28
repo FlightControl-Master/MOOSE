@@ -32,7 +32,7 @@ CARGO_ZONE = {
 }
 
 function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, BASE:New() )
-self:T( { CargoZoneName, CargoHostName } )
+	self:F( { CargoZoneName, CargoHostName } )
 
 	self.CargoZoneName = CargoZoneName
 	self.CargoZone = trigger.misc.getZone( CargoZoneName )
@@ -48,7 +48,7 @@ self:T( { CargoZoneName, CargoHostName } )
 end
 
 function CARGO_ZONE:Spawn()
-	self:T( self.CargoHostName )
+	self:F( self.CargoHostName )
 
 	if self.CargoHostSpawn then
 		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
@@ -66,7 +66,7 @@ function CARGO_ZONE:Spawn()
 end
 
 function CARGO_ZONE:GetHostUnit()
-	self:T( self )
+	self:F( self )
 
 	if self.CargoHostName then
 		
@@ -86,7 +86,7 @@ function CARGO_ZONE:GetHostUnit()
 end
 
 function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
-self:T()
+	self:F()
 
 	local SignalUnit = self:GetHostUnit()
 
@@ -115,7 +115,7 @@ self:T()
 end
 
 function CARGO_ZONE:Signal()
-self:T()
+	self:F()
 
 	local Signalled = false
 
@@ -169,7 +169,7 @@ self:T()
 end
 
 function CARGO_ZONE:WhiteSmoke()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
@@ -178,7 +178,7 @@ self:T()
 end
 
 function CARGO_ZONE:BlueSmoke()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
@@ -187,7 +187,7 @@ self:T()
 end
 
 function CARGO_ZONE:RedSmoke()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
@@ -196,7 +196,7 @@ self:T()
 end
 
 function CARGO_ZONE:OrangeSmoke()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
@@ -205,7 +205,7 @@ self:T()
 end
 
 function CARGO_ZONE:GreenSmoke()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
@@ -215,7 +215,7 @@ end
 
 
 function CARGO_ZONE:WhiteFlare()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
@@ -224,7 +224,7 @@ self:T()
 end
 
 function CARGO_ZONE:RedFlare()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
@@ -233,7 +233,7 @@ self:T()
 end
 
 function CARGO_ZONE:GreenFlare()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
@@ -242,7 +242,7 @@ self:T()
 end
 
 function CARGO_ZONE:YellowFlare()
-self:T()
+	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
@@ -252,7 +252,7 @@ end
 
 
 function CARGO_ZONE:GetCargoHostUnit()
-	self:T( self )
+	self:F( self )
 
 	if self.CargoHostSpawn then 
 		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex(1)
@@ -268,7 +268,7 @@ function CARGO_ZONE:GetCargoHostUnit()
 end
 
 function CARGO_ZONE:GetCargoZoneName()
-self:T()
+	self:F()
 
 	return self.CargoZoneName
 end
@@ -286,7 +286,7 @@ CARGO = {
 
 --- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
 function CARGO:New( CargoType, CargoName, CargoWeight ) local self = BASE:Inherit( self, BASE:New() )
-self:T( { CargoType, CargoName, CargoWeight } )
+	self:F( { CargoType, CargoName, CargoWeight } )
 
 
 	self.CargoType = CargoType
@@ -299,14 +299,14 @@ self:T( { CargoType, CargoName, CargoWeight } )
 end
 
 function CARGO:Spawn( Client )
-	self:T()
+	self:F()
 
 	return self
 
 end
 
 function CARGO:IsNear( Client, LandingZone )
-self:T()
+	self:F()
 
 	local Near = true
 	
@@ -316,7 +316,7 @@ end
 
 
 function CARGO:IsLoadingToClient()
-self:T()
+	self:F()
 
 	if self:IsStatusLoading() then
 		return self.CargoClient
@@ -328,7 +328,7 @@ end
 
 
 function CARGO:IsLoadedInClient()
-self:T()
+	self:F()
 
 	if self:IsStatusLoaded() then
 		return self.CargoClient
@@ -340,7 +340,7 @@ end
 
 
 function CARGO:UnLoad( Client, TargetZoneName )
-self:T()
+	self:F()
 
 	self:StatusUnLoaded()
 
@@ -348,7 +348,7 @@ self:T()
 end
 
 function CARGO:OnBoard( Client, LandingZone )
-self:T()
+	self:F()
   
 	local Valid = true
   
@@ -359,7 +359,7 @@ self:T()
 end
 
 function CARGO:OnBoarded( Client, LandingZone )
-self:T()
+	self:F()
 
 	local OnBoarded = true
   
@@ -367,7 +367,7 @@ self:T()
 end
 
 function CARGO:Load( Client )
-self:T()
+	self:F()
 
 	self:StatusLoaded( Client )
 
@@ -375,18 +375,18 @@ self:T()
 end
 
 function CARGO:IsLandingRequired()
-self:T()
+	self:F()
 	return true
 end
 
 function CARGO:IsSlingLoad()
-self:T()
+	self:F()
 	return false
 end
 
 
 function CARGO:StatusNone()
-self:T()
+	self:F()
 
 	self.CargoClient = nil
 	self.CargoStatus = CARGO.STATUS.NONE
@@ -395,7 +395,7 @@ self:T()
 end
 
 function CARGO:StatusLoading( Client )
-self:T()
+	self:F()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADING
@@ -405,7 +405,7 @@ self:T()
 end
 
 function CARGO:StatusLoaded( Client )
-self:T()
+	self:F()
 
 	self.CargoClient = Client
 	self.CargoStatus = CARGO.STATUS.LOADED
@@ -415,7 +415,7 @@ self:T()
 end
 
 function CARGO:StatusUnLoaded()
-self:T()
+	self:F()
 
 	self.CargoClient = nil
 	self.CargoStatus = CARGO.STATUS.UNLOADED
@@ -425,25 +425,25 @@ end
 
 
 function CARGO:IsStatusNone()
-self:T()
+	self:F()
 
 	return self.CargoStatus == CARGO.STATUS.NONE
 end
 
 function CARGO:IsStatusLoading()
-self:T()
+	self:F()
 
 	return self.CargoStatus == CARGO.STATUS.LOADING
 end
 
 function CARGO:IsStatusLoaded()
-self:T()
+	self:F()
 
 	return self.CargoStatus == CARGO.STATUS.LOADED
 end
 
 function CARGO:IsStatusUnLoaded()
-self:T()
+	self:F()
 
 	return self.CargoStatus == CARGO.STATUS.UNLOADED
 end
@@ -455,7 +455,7 @@ CARGO_GROUP = {
 
 
 function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-	self:T( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
+	self:F( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
 
 	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
 	self.CargoZone = CargoZone
@@ -467,7 +467,7 @@ function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate,
 end
 
 function CARGO_GROUP:Spawn( Client )
-	self:T( { Client } )
+	self:F( { Client } )
 
 	local SpawnCargo = true
 	
@@ -528,7 +528,7 @@ function CARGO_GROUP:Spawn( Client )
 end
 
 function CARGO_GROUP:IsNear( Client, LandingZone )
-self:T()
+	self:F()
 
 	local Near = false
 
@@ -545,7 +545,7 @@ end
 
 
 function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
-self:T()
+	self:F()
   
 	local Valid = true
   
@@ -624,7 +624,7 @@ end
 
 
 function CARGO_GROUP:OnBoarded( Client, LandingZone )
-self:T()
+	self:F()
 
 	local OnBoarded = false
   
@@ -640,7 +640,7 @@ end
 
 
 function CARGO_GROUP:UnLoad( Client, TargetZoneName )
-self:T()
+	self:F()
 
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
 
@@ -663,8 +663,7 @@ CARGO_PACKAGE = {
 
 
 function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-
-	self:T( { CargoType, CargoName, CargoWeight, CargoClient } )
+	self:F( { CargoType, CargoName, CargoWeight, CargoClient } )
 
 	self.CargoClient = CargoClient
 	
@@ -676,7 +675,7 @@ end
 
 
 function CARGO_PACKAGE:Spawn( Client )
-	self:T( { self, Client } )
+	self:F( { self, Client } )
 
 	-- this needs to be checked thoroughly
 
@@ -716,7 +715,7 @@ end
 
 
 function CARGO_PACKAGE:IsNear( Client, LandingZone )
-self:T()
+	self:F()
 
 	local Near = false
 
@@ -735,7 +734,7 @@ end
 
 
 function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
-self:T()
+	self:F()
   
 	local Valid = true
   
@@ -826,7 +825,7 @@ end
 
 
 function CARGO_PACKAGE:OnBoarded( Client, LandingZone )
-self:T()
+	self:F()
 
 	local OnBoarded = false
   
@@ -846,7 +845,7 @@ end
 
 
 function CARGO_PACKAGE:UnLoad( Client, TargetZoneName )
-self:T()
+	self:F()
 
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
 	--self:T( 'self.CargoHostName = ' .. self.CargoHostName ) 
@@ -865,8 +864,7 @@ CARGO_SLINGLOAD = {
 
 function CARGO_SLINGLOAD:New( CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID )
 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-
-	self:T( { CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID } )
+	self:F( { CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID } )
 
 	self.CargoHostName = CargoHostName
 
@@ -887,19 +885,19 @@ end
 
 
 function CARGO_SLINGLOAD:IsLandingRequired()
-self:T()
+	self:F()
 	return false
 end
 
 
 function CARGO_SLINGLOAD:IsSlingLoad()
-self:T()
+	self:F()
 	return true
 end
 
 
 function CARGO_SLINGLOAD:Spawn( Client )
-	self:T( { self, Client } )
+	self:F( { self, Client } )
 
 	local Zone = trigger.misc.getZone( self.CargoZone )
 
@@ -949,7 +947,7 @@ end
 
 
 function CARGO_SLINGLOAD:IsNear( Client, LandingZone )
-self:T()
+	self:F()
 
 	local Near = false
 
@@ -958,7 +956,7 @@ end
 
 
 function CARGO_SLINGLOAD:IsInLandingZone( Client, LandingZone )
-self:T()
+	self:F()
 
 	local Near = false
 
@@ -974,7 +972,7 @@ end
 
 
 function CARGO_SLINGLOAD:OnBoard( Client, LandingZone, OnBoardSide )
-self:T()
+	self:F()
   
 	local Valid = true
   
@@ -984,7 +982,7 @@ end
 
 
 function CARGO_SLINGLOAD:OnBoarded( Client, LandingZone )
-self:T()
+	self:F()
 
 	local OnBoarded = false
   
@@ -1000,7 +998,7 @@ end
 
 
 function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
-self:T()
+	self:F()
 
 	self:T( 'self.CargoName = ' .. self.CargoName ) 
 	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 

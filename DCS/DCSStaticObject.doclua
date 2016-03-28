@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module StaticObject
+-- @module DCSStaticObject
 
 
 -------------------------------------------------------------------------------
@@ -22,12 +22,12 @@
 
 --- returns identifier of the static object.
 -- @function [parent=#StaticObject] getID
--- @param self
+-- @param #StaticObject self
 -- @return #StaticObject.ID
 
 --- Returns descriptor of the StaticObject. 
 -- @function [parent=#StaticObject] getDesc
--- @param self
+-- @param #StaticObject self
 -- @return #StaticObject.Desc
 
 

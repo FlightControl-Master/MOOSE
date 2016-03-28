@@ -13,31 +13,29 @@ ROUTETASK = {
 -- @param string TaskBriefing (optional) Defines a text describing the briefing of the task.
 -- @return ROUTETASK
 function ROUTETASK:New( LandingZones, TaskBriefing )
-trace.f(self.ClassName, { LandingZones, TaskBriefing } )
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F( { LandingZones, TaskBriefing } )
 
   local Valid = true
   
   Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
     
   if  Valid then
-    Child.Name = 'Route To Zone'
+    self.Name = 'Route To Zone'
 	if TaskBriefing then
-		Child.TaskBriefing = TaskBriefing .. " Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
+		self.TaskBriefing = TaskBriefing .. " Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
 	else
-		Child.TaskBriefing = "Task: Fly to specified zone(s). Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
+		self.TaskBriefing = "Task: Fly to specified zone(s). Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
 	end
 	if type( LandingZones ) == "table" then
-		Child.LandingZones = LandingZones
+		self.LandingZones = LandingZones
 	else
-		Child.LandingZones = { LandingZones }
+		self.LandingZones = { LandingZones }
 	end
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-	Child.SetStage( Child, 1 )
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
+	self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end
 

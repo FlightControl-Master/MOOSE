@@ -17,27 +17,25 @@ DESTROYGROUPSTASK = {
 -- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
 ---@return DESTROYGROUPSTASK
 function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
-trace.f(self.ClassName)
-
-	-- Inheritance
-	local Child = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
-
-	Child.Name = 'Destroy Groups'
-	Child.GoalVerb = "Destroy " .. DestroyGroupType
+	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
+	self:F()
+  
+	self.Name = 'Destroy Groups'
+	self.GoalVerb = "Destroy " .. DestroyGroupType
 	
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.EventDead )
-	Child.AddEvent( Child, world.event.S_EVENT_CRASH, Child.EventDead )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+	self:AddEvent( world.event.S_EVENT_CRASH, self.EventDead )
 	--Child.AddEvent( Child, world.event.S_EVENT_PILOT_DEAD, Child.EventDead )
 
-	return Child
+	return self
 end
 
 --- Report Goal Progress.
 -- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-trace.f(self.ClassName)
-	trace.i( self.ClassName, DestroyGroup:getSize() )
+	self:F( { DestroyGroup, DestroyUnit } )
+	self:T( DestroyGroup:getSize() )
 
 	local DestroyCount = 0
 	if DestroyGroup then

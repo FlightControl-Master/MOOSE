@@ -23,7 +23,7 @@ MOVEMENT = {
 
 function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( { MovePrefixes, MoveMaximum } )
+	self:F( { MovePrefixes, MoveMaximum } )
   
 	if type( MovePrefixes ) == 'table' then
 		self.MovePrefixes = MovePrefixes
@@ -35,34 +35,34 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self.OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
 	
-	self.EnableEvents( self )
+	self:EnableEvents()
 	
-	self.ScheduleStart( self )
+	self:ScheduleStart()
 
 	return self
 end
 
 --- Call this function to start the MOVEMENT scheduling.
 function MOVEMENT:ScheduleStart()
-self:T()
+	self:F()
 	self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
 end
 
 --- Call this function to stop the MOVEMENT scheduling.
 -- @todo need to implement it ... Forgot.
 function MOVEMENT:ScheduleStop()
-self:T()
+	self:F()
 
 end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
 function MOVEMENT:OnBirth( event )
-self:T( { event } )
+	self:F( { event } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
 		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
@@ -88,7 +88,7 @@ end
 --- Captures the Dead or Crash events when Units crash or are destroyed.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
 function MOVEMENT:OnDeadOrCrash( event )
-self:T( { event } )
+	self:F( { event } )
 
 	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
 		local MovementUnit = event.initiator
@@ -106,7 +106,7 @@ end
 
 --- This function is called automatically by the MOVEMENT scheduler. A new function is scheduled when MoveScheduled is true.
 function MOVEMENT:_Scheduler()
-self:T( { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MovementGroups } )
+	self:F( { self.MovePrefixes, self.MoveMaximum, self.AliveUnits, self.MovementGroups } )
 	
 	if self.AliveUnits > 0 then
 		local MoveProbability = ( self.MoveMaximum * 100 ) / self.AliveUnits

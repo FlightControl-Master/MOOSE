@@ -43,7 +43,7 @@ ESCORT = {
 -- @return #ESCORT self
 function ESCORT:New( EscortClient, EscortGroup, EscortName )
   local self = BASE:Inherit( self, BASE:New() )
-  self:T( { EscortClient, EscortGroup, EscortName } )
+	self:F( { EscortClient, EscortGroup, EscortName } )
   
   self.EscortClient = EscortClient
   self.EscortGroup = EscortGroup
@@ -99,8 +99,8 @@ function ESCORT._HoldPosition( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
   
-  EscortGroup:PushTask( EscortGroup:HoldPosition( 300 ) )
-  MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPosition" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:PushTask( EscortGroup:TaskHoldPosition( 300 ) )
+  MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/TaskHoldPosition" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -109,7 +109,7 @@ function ESCORT._HoldPositionNearBy( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
   
-  --MenuParam.ParamSelf.EscortGroup:OrbitCircleAtVec2( MenuParam.ParamSelf.EscortClient:GetPointVec2(), 300, 30, 0 )
+  --MenuParam.ParamSelf.EscortGroup:TaskOrbitCircleAtVec2( MenuParam.ParamSelf.EscortClient:GetPointVec2(), 300, 30, 0 )
   
   local PointFrom = {}
   local GroupPoint = EscortGroup:GetPointVec2()
@@ -129,13 +129,13 @@ function ESCORT._HoldPositionNearBy( MenuParam )
   PointTo.type = AI.Task.WaypointType.TURNING_POINT
   PointTo.alt = EscortClient:GetAltitude()
   PointTo.alt_type = AI.Task.AltitudeType.BARO
-  PointTo.task = EscortGroup:OrbitCircleAtVec2( EscortClient:GetPointVec2(), 300, 30, 0 )
+  PointTo.task = EscortGroup:TaskOrbitCircleAtVec2( EscortClient:GetPointVec2(), 300, 30, 0 )
   
   local Points = { PointFrom, PointTo }
   
   
   EscortGroup:PushTask( EscortGroup:TaskMission( Points ) )
-  MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( EscortClient )
 end
 
 function ESCORT._ReportNearbyTargets( MenuParam )
@@ -152,8 +152,13 @@ function ESCORT._ScanTargets30Seconds( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  EscortGroup:PushTask( EscortGroup:OrbitCircle( 30, 200, 20 ) )
-  MESSAGE:New( "Scanning targets for 30 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets30Seconds" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:PushTask( 
+    EscortGroup:TaskControlled( 
+      EscortGroup:TaskOrbitCircle( 200, 20 ), 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, 30, nil ) 
+      ) 
+  )
+  MESSAGE:New( "Scanning targets for 30 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets30Seconds" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -163,8 +168,13 @@ function ESCORT._ScanTargets60Seconds( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  EscortGroup:PushTask(  EscortGroup:OrbitCircle( 60, 200, 20 ) )
-  MESSAGE:New( "Scanning targets for 60 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets60Seconds" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:PushTask( 
+    EscortGroup:TaskControlled( 
+      EscortGroup:TaskOrbitCircle( 200, 20 ), 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, 60, nil ) 
+      ) 
+  )
+  MESSAGE:New( "Scanning targets for 60 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets60Seconds" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -172,9 +182,12 @@ function ESCORT._AttackTarget( MenuParam )
 
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
-
-  MenuParam.ParamSelf.EscortGroup:AttackUnit( MenuParam.ParamUnit )
-  MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackTarget" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local AttackUnit = MenuParam.ParamUnit 
+  
+  EscortGroup:OpenFire()
+  EscortGroup:EvasionVertical()
+  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackTarget" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -183,8 +196,8 @@ function ESCORT._ROEHoldFire( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:HoldFire()
-  MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEHoldFire" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:HoldFire()
+  MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEHoldFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -193,8 +206,8 @@ function ESCORT._ROEReturnFire( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:ReturnFire()
-  MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEReturnFire" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:ReturnFire()
+  MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEReturnFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -203,8 +216,8 @@ function ESCORT._ROEOpenFire( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:OpenFire()
-  MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEOpenFire" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:OpenFire()
+  MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEOpenFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -213,8 +226,8 @@ function ESCORT._ROEWeaponFree( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:WeaponFree()
-  MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEWeaponFree" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:WeaponFree()
+  MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEWeaponFree" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -223,8 +236,8 @@ function ESCORT._EvasionNoReaction( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:EvasionNoReaction()
-  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionNoReaction" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:EvasionNoReaction()
+  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionNoReaction" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -233,8 +246,8 @@ function ESCORT._EvasionPassiveDefense( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:EvasionPassiveDefense()
-  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionPassiveDefense" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:EvasionPassiveDefense()
+  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionPassiveDefense" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -243,8 +256,8 @@ function ESCORT._EvasionEvadeFire( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:EvasionEvadeFire()
-  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionEvadeFire" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:EvasionEvadeFire()
+  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionEvadeFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -253,8 +266,8 @@ function ESCORT._EvasionVertical( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
-  MenuParam.ParamSelf.EscortGroup:EvasionVertical()
-  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionVertical" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  EscortGroup:EvasionVertical()
+  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionVertical" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -264,12 +277,12 @@ function ESCORT._CancelCurrentTask( MenuParam )
   local EscortClient = MenuParam.ParamSelf.EscortClient
 
   EscortGroup:PopCurrentTask()
-  MESSAGE:New( "Cancelling with current orders, continuing our mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/CancelCurrentTask" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  MESSAGE:New( "Cancelling with current orders, continuing our mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/CancelCurrentTask" ):ToClient( EscortClient )
 end
 
 
 function ESCORT:_ScanForTargets()
-  self:T()
+	self:F()
 
   self.Targets = {}
   

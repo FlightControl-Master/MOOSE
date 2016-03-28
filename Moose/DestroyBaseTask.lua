@@ -23,7 +23,7 @@ DESTROYBASETASK = {
 -- @return DESTROYBASETASK
 function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
 	local self = BASE:Inherit( self, TASK:New() )
-	self:T()
+	self:F()
 	
 	self.Name = 'Destroy'
 	self.Destroyed = 0
@@ -45,7 +45,7 @@ end
 --- Handle the S_EVENT_DEAD events to validate the destruction of units for the task monitoring.
 -- @param 	event 		Event structure of DCS world.
 function DESTROYBASETASK:EventDead( event )
-	self:T( { 'EventDead', event } )
+	self:F( { 'EventDead', event } )
 	
 	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
 		local DestroyUnit = event.initiator
@@ -76,7 +76,7 @@ end
 -- @param 	DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYBASETASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-self:T()
+	self:F()
 
 	return 0
 end

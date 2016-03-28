@@ -1,6 +1,5 @@
 -------------------------------------------------------------------------------
--- @module Group
-
+-- @module DCSGroup
 
 --- Represents group of Units.
 -- @type Group
@@ -17,66 +16,67 @@
 -- Static Functions
 
 --- Returns group by the name assigned to the group in Mission Editor. 
--- @function [parent=#Airbase] getByName
+-- @function [parent=#Group] getByName
 -- @param #string name
 -- @return #Group
 
 -- Member Functions
 
 --- returns true if the group exist or false otherwise. 
--- @function [parent=#Airbase] isExist
--- @param self 
+-- @function [parent=#Group] isExist
+-- @param #Group self 
 -- @return #boolean
 
 --- Destroys the group and all of its units.
--- @function [parent=#Airbase] destroy
--- @param self 
+-- @function [parent=#Group] destroy
+-- @param #Group self 
 
 --- Returns category of the group.
--- @function [parent=#Airbase] getCategory
--- @param self 
+-- @function [parent=#Group] getCategory
+-- @param #Group self 
 -- @return #Group.Category
 
 --TODO check coalition.side
 --- Returns coalition of the group.
--- @function [parent=#Airbase] getCoalition
--- @param self 
+-- @function [parent=#Group] getCoalition
+-- @param #Group self 
 -- @return #coalition.side
 
 --- Returns the group's name. This is the same name assigned to the group in Mission Editor.
--- @function [parent=#Airbase] getName
--- @param self 
+-- @function [parent=#Group] getName
+-- @param #Group self 
 -- @return #string
 
 --- Returns the group identifier.
--- @function [parent=#Airbase] getID
--- @param self 
+-- @function [parent=#Group] getID
+-- @param #Group self 
 -- @return #ID
 
 --- Returns the unit with number unitNumber. If the unit is not exists the function will return nil.
--- @function [parent=#Airbase] getUnit
--- @param self 
+-- @function [parent=#Group] getUnit
+-- @param #Group self 
 -- @param #number unitNumber
--- @return Unit#Unit
+-- @return DCSUnit#Unit
 
 --- Returns current size of the group. If some of the units will be destroyed, As units are destroyed the size of the group will be changed.
--- @function [parent=#Airbase] getSize
--- @param self 
+-- @function [parent=#Group] getSize
+-- @param #Group self 
 -- @return #number
 
 --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed. Initial size limits the unitNumber parameter for Group.getUnit() function.
--- @function [parent=#Airbase] getInitialSize
--- @param self 
+-- @function [parent=#Group] getInitialSize
+-- @param #Group self 
 -- @return #number
 
 --- Returns array of the units present in the group now. Destroyed units will not be enlisted at all.
--- @function [parent=#Airbase] getUnits
--- @param self 
--- @return #list<Unit#Unit> array of Units
+-- @function [parent=#Group] getUnits
+-- @param #Group self 
+-- @return #list<DCSUnit#Unit> array of Units
 
 --- Returns controller of the group. 
--- @function [parent=#Airbase] getController
--- @param self 
+-- @function [parent=#Group] getController
+-- @param #Group self 
 -- @return Controller#Controller
 
 Group = {} --#Group
+

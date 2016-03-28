@@ -10,7 +10,7 @@ Include.File( "Unit" )
 --- The GROUP class
 -- @type GROUP
 -- @extends Base#BASE
--- @field #Group DCSGroup The DCS group class.
+-- @field DCSGroup#Group DCSGroup The DCS group class.
 -- @field #string GroupName The name of the group.
 -- @field #number GroupID the ID of the group.
 -- @field #table Controller The controller of the group.
@@ -19,21 +19,22 @@ GROUP = {
 	GroupName = "",
 	GroupID = 0,
 	Controller = nil,
+	DCSGroup = nil,
 	}
 	
 --- A DCSGroup
--- @type Group
+-- @type DCSGroup
 -- @field id_ The ID of the group in DCS
 
 GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
 -- @param self
--- @param #Group DCSGroup The DCS Group
+-- @param DCSGroup#Group DCSGroup The DCS Group
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( DCSGroup )
+	self:F( DCSGroup )
 
 	self.DCSGroup = DCSGroup
 	if self.DCSGroup and self.DCSGroup:isExist() then
@@ -54,7 +55,7 @@ end
 -- @return #GROUP self
 function GROUP:NewFromName( GroupName )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:T( GroupName )
+	self:F( GroupName )
 
 	self.DCSGroup = Group.getByName( GroupName )
 	if self.DCSGroup then
@@ -72,7 +73,7 @@ end
 -- @return #GROUP self
 function GROUP:NewFromDCSUnit( DCSUnit )
   local self = BASE:Inherit( self, BASE:New() )
-  self:T( DCSUnit )
+	self:F( DCSUnit )
 
   self.DCSGroup = DCSUnit:getGroup()
   if self.DCSGroup then
@@ -88,7 +89,7 @@ end
 -- @param self
 -- @return #Group The DCSGroup.
 function GROUP:GetDCSGroup()
-	self:T( { self.GroupName } )
+	self:F( { self.GroupName } )
 	self.DCSGroup = Group.getByName( self.GroupName )
 	return self.DCSGroup
 end
@@ -100,7 +101,7 @@ end
 -- @param #number UnitNumber The unit index to be returned from the GROUP.
 -- @return #Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-	self:T( { self.GroupName, UnitNumber } )
+	self:F( { self.GroupName, UnitNumber } )
 	return self.DCSGroup:getUnit( UnitNumber )
 
 end
@@ -108,7 +109,7 @@ end
 --- Activates a GROUP.
 -- @param self
 function GROUP:Activate()
-	self:T( { self.GroupName } )
+	self:F( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
 	return self:GetDCSGroup()
 end
@@ -117,7 +118,7 @@ end
 -- @param self
 -- @return #number The ID of the GROUP.
 function GROUP:GetID()
-  self:T( self.GroupName )
+	self:F( self.GroupName )
   
   return self.GroupID
 end
@@ -126,15 +127,35 @@ end
 -- @param self
 -- @return #string The name of the GROUP.
 function GROUP:GetName()
-	self:T( self.GroupName )
+	self:F( self.GroupName )
 	
 	return self.GroupName
 end
 
+--- Gets the type name of the group.
+-- @param #GROUP self
+-- @return #string The type name of the group.
+function GROUP:GetTypeName()
+  self:F( self.GroupName )
+  
+  return self.DCSGroup:getUnit(1):getTypeName()
+end
+
+--- Gets the callsign of the fist unit of the group.
+-- @param #GROUP self
+-- @return #string The callsign of the first unit of the group.
+function GROUP:GetCallsign()
+  self:F( self.GroupName )
+  
+  return self.DCSGroup:getUnit(1):getCallsign()
+end
+
+
+
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current x,y and z position of the group.
 function GROUP:GetPointVec2()
-	self:T( self.GroupName )
+	self:F( self.GroupName )
 	
 	local GroupPoint = self:GetUnit(1):GetPointVec2()
 	self:T( GroupPoint )
@@ -144,7 +165,7 @@ end
 --- Gets the current Point of the GROUP in VEC2 format.
 -- @return #Vec2 Current x and y position of the group in the 2D plane.
 function GROUP:GetPointVec2()
-  self:T( self.GroupName )
+	self:F( self.GroupName )
   
   local GroupPoint = self:GetUnit(1):GetPointVec2()
   self:T( GroupPoint )
@@ -154,7 +175,7 @@ end
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current Vec3 position of the group.
 function GROUP:GetPositionVec3()
-  self:T( self.GroupName )
+	self:F( self.GroupName )
   
   local GroupPoint = self:GetUnit(1):GetPositionVec3()
   self:T( GroupPoint )
@@ -166,7 +187,7 @@ end
 -- So all event listeners will catch the destroy event of this GROUP.
 -- @param self
 function GROUP:Destroy()
-	self:T( self.GroupName )
+	self:F( self.GroupName )
 	
 	for Index, UnitData in pairs( self.DCSGroup:getUnits() ) do
 		self:CreateEventCrash( timer.getTime(), UnitData )
@@ -182,7 +203,7 @@ end
 -- @param #number UnitNumber The number of the Unit to be returned.
 -- @return #Unit The DCS Unit.
 function GROUP:GetUnit( UnitNumber )
-	self:T( { self.GroupName, UnitNumber } )
+	self:F( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
 end
 
@@ -191,7 +212,7 @@ end
 -- @param self
 -- @return #boolean Air category evaluation result.
 function GROUP:IsAir()
-self:T()
+	self:F()
 	
 	local IsAirResult = self.DCSGroup:getCategory() == Group.Category.AIRPLANE or self.DCSGroup:getCategory() == Group.Category.HELICOPTER
 
@@ -204,7 +225,7 @@ end
 -- @param self
 -- @return #boolean Alive result.
 function GROUP:IsAlive()
-self:T()
+	self:F()
 	
 	local IsAliveResult = self.DCSGroup and self.DCSGroup:isExist()
 
@@ -217,7 +238,7 @@ end
 -- @param self
 -- @return #boolean All units on the ground result.
 function GROUP:AllOnGround()
-self:T()
+	self:F()
 
 	local AllOnGroundResult = true
 
@@ -233,10 +254,10 @@ end
 
 --- Returns the current maximum velocity of the group.
 -- Each unit within the group gets evaluated, and the maximum velocity (= the unit which is going the fastest) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Maximum velocity found.
 function GROUP:GetMaxVelocity()
-  self:T()
+	self:F()
 
 	local MaxVelocity = 0
 	
@@ -259,7 +280,7 @@ end
 -- @param self
 -- @return #number Minimum height found.
 function GROUP:GetMinHeight()
-  self:T()
+	self:F()
 
 end
 
@@ -269,16 +290,17 @@ end
 -- @param self
 -- @return #number Maximum height found.
 function GROUP:GetMaxHeight()
-  self:T()
+	self:F()
 
 end
 
+-- Tasks
 
 --- Popping current Task from the group.
 -- @param #GROUP self
 -- @return Group#GROUP self
 function GROUP:PopCurrentTask()
-  self:T()
+	self:F()
 
   local Controller = self:_GetController()
   
@@ -292,7 +314,7 @@ end
 -- @param #GROUP self
 -- @return Group#GROUP self
 function GROUP:PushTask( DCSTask )
-  self:T()
+	self:F()
 
   local Controller = self:_GetController()
   
@@ -301,15 +323,60 @@ function GROUP:PushTask( DCSTask )
   return self
 end
 
+--- Return a condition section for a controlled task
+-- @param #GROUP self
+-- @param #Time time
+-- @param #string userFlag 
+-- @param #boolean userFlagValue 
+-- @param #string condition
+-- @param #Time duration 
+-- @param #number lastWayPoint 
+-- return #DCSTask
+function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
+	self:F( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
+  
+  local DCSStopCondition = {}
+  DCSStopCondition.time = time
+  DCSStopCondition.userFlag = userFlag
+  DCSStopCondition.userFlagValue = userFlagValue
+  DCSStopCondition.condition = condition
+  DCSStopCondition.duration = duration
+  DCSStopCondition.lastWayPoint = lastWayPoint
+  
+  self:T( { DCSStopCondition } )
+  return DCSStopCondition 
+end
+
+--- Return a Controlled Task taking a Task and a TaskCondition
+-- @param #GROUP self
+-- @param #DCSTask DCSTask
+-- @param #DCSStopCondition DCSStopCondition
+-- @return #DCSTask
+function GROUP:TaskControlled( DCSTask, DCSStopCondition )
+	self:F( { DCSTask, DCSStopCondition } )
+
+  local DCSTaskControlled
+  
+  DCSTaskControlled = { 
+    id = 'ControlledTask', 
+    params = { 
+      task = DCSTask, 
+      stopCondition = DCSStopCondition, 
+    } 
+  }
+  
+  self:T( { DCSTaskControlled } )
+  return DCSTaskControlled
+end
+
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #GROUP self
 -- @param #Vec2 Point The point to hold the position.
--- @param #number Duration The maximum duration in seconds to hold the position.
 -- @param #number Altitude The altitude to hold the position.
 -- @param #number Speed The speed flying when holding the position.
 -- @return #GROUP self
-function GROUP:OrbitCircleAtVec2( Point, Duration, Altitude, Speed )
-  self:T( { self.GroupName, Point, Duration, Altitude, Speed  } )
+function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
+	self:F( { self.GroupName, Point, Altitude, Speed  } )
 
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,
@@ -321,7 +388,7 @@ function GROUP:OrbitCircleAtVec2( Point, Duration, Altitude, Speed )
   
   self:T( { LandHeight } )
 
-  local AITask = { id = 'Orbit', 
+  local DCSTask = { id = 'Orbit', 
                    params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
                               point = Point, 
                               speed = Speed, 
@@ -344,21 +411,20 @@ function GROUP:OrbitCircleAtVec2( Point, Duration, Altitude, Speed )
 --                 }
 --               )
                
-  return AITask
+  return DCSTask
 end
 
---- Orbit at the current position of the first unit of the group at a specified alititude during a specified duration
+--- Orbit at the current position of the first unit of the group at a specified alititude
 -- @param #GROUP self
--- @param #number Duration The maximum duration in seconds to hold the position.
 -- @param #number Altitude The altitude to hold the position.
 -- @param #number Speed The speed flying when holding the position.
 -- @return #GROUP self
-function GROUP:OrbitCircle( Duration, Altitude, Speed )
-  self:T( { self.GroupName, Duration, Altitude, Speed } )
+function GROUP:TaskOrbitCircle( Altitude, Speed )
+	self:F( { self.GroupName, Altitude, Speed } )
 
   local GroupPoint = self:GetPointVec2()
   
-  return self:OrbitCircleAtVec2( GroupPoint, Duration, Altitude, Speed )
+  return self:TaskOrbitCircleAtVec2( GroupPoint, Altitude, Speed )
 end
 
 
@@ -367,41 +433,57 @@ end
 -- @param #GROUP self
 -- @param #number Duration The maximum duration in seconds to hold the position.
 -- @return #GROUP self
-function GROUP:HoldPosition( Duration )
-  self:T( { self.GroupName, Duration } )
+function GROUP:TaskHoldPosition()
+	self:F( { self.GroupName } )
 
-  return self:OrbitCircle( Duration, 30, 0 )
+  return self:TaskOrbitCircle( 30, 10 )
 end
 
 
 --- Land the group at a Vec2Point.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
-function GROUP:Land( Point, Duration )
-  self:T( { self.GroupName, Point, Duration } )
+function GROUP:TaskLandAtVec2( Point, Duration )
+	self:F( { self.GroupName, Point, Duration } )
 
-	local Controller = self:_GetController()
-	
+  local DCSTask
+  
 	if Duration and Duration > 0 then
-		Controller:pushTask( { id = 'Land', params = { point = Point, durationFlag = true, duration = Duration } } )
+		DCSTask = { id = 'Land', params = { point = Point, durationFlag = true, duration = Duration } }
 	else
-		Controller:pushTask( { id = 'Land', params = { point = Point, durationFlag = false } } )
+		DCSTask = { id = 'Land', params = { point = Point, durationFlag = false } }
 	end
 
-	return self
+  self:T( DCSTask )
+	return DCSTask
 end
 
---- Attack the Unit.
--- @param self
--- @param #UNIT The unit.
+--- Land the group at a @{Zone#ZONE).
+-- @param #GROUP self
+-- @param Zone#ZONE Zone The zone where to land.
+-- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
-function GROUP:AttackUnit( AttackUnit )
-  self:T( { self.GroupName, AttackUnit } )
+function GROUP:TaskLandAtZone( Zone, Duration )
+  self:F( { self.GroupName, Zone, Duration } )
 
-  local Controller = self:_GetController()
+  local Point = Zone:GetPointVec2()
   
+  local DCSTask = self:TaskLandAtVec2( Point, Duration )
+
+  self:T( DCSTask )
+  return DCSTask
+end
+
+
+--- Attack the Unit.
+-- @param #GROUP self
+-- @param Unit#UNIT The unit.
+-- @return #DCSTask The DCS task structure.
+function GROUP:TaskAttackUnit( AttackUnit )
+	self:F( { self.GroupName, AttackUnit } )
+
 --  AttackUnit = { 
 --    id = 'AttackUnit', 
 --    params = { 
@@ -413,187 +495,88 @@ function GROUP:AttackUnit( AttackUnit )
 --      attackQtyLimit = boolean, 
 --      groupAttack = boolean, 
 --    } 
---  }     
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
-
-  Controller:pushTask( { id = 'AttackUnit', 
-                         params = { unitId = AttackUnit:GetID(), 
-                                    expend = AI.Task.WeaponExpend.TWO,
-                                    groupAttack = true, 
-                                  } 
+--  }
+  
+  local DCSTask    
+  DCSTask = { id = 'AttackUnit', 
+              params = { unitId = AttackUnit:GetID(), 
+                         expend = AI.Task.WeaponExpend.TWO,
+                         groupAttack = true, 
                        } 
-                     )
-  return self
-end
-
---- Holding weapons.
--- @param self
--- @return #GROUP self
-function GROUP:HoldFire()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
+            } 
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  self:T( { DCSTask } )
   return self
 end
 
---- Return fire.
--- @param self
--- @return #GROUP self
-function GROUP:ReturnFire()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
-  return self
-end
-
---- Openfire.
--- @param self
--- @return #GROUP self
-function GROUP:OpenFire()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
-  return self
-end
-
---- Weapon free.
--- @param self
--- @return #GROUP self
-function GROUP:WeaponFree()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
-  return self
-end
-
---- No evasion on enemy threats.
--- @param self
--- @return #GROUP self
-function GROUP:EvasionNoReaction()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
-  return self
-end
-
---- Evasion passive defense.
--- @param self
--- @return #GROUP self
-function GROUP:EvasionPassiveDefense()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
-  return self
-end
-
---- Evade fire.
--- @param self
--- @return #GROUP self
-function GROUP:EvasionEvadeFire()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
-  return self
-end
-
---- Vertical manoeuvres.
--- @param self
--- @return #GROUP self
-function GROUP:EvasionVertical()
-  self:T( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
-  return self
-end
 
 
 --- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
--- @param EmbarkingGroup The group to be embarked.
--- @return #GROUP self
-function GROUP:Embarking( Point, Duration, EmbarkingGroup )
-trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
+-- @param #GROUP EmbarkingGroup The group to be embarked.
+-- @return #DCSTask The DCS task structure
+function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
+	self:F( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
-	local Controller = self:_GetController()
+	local DCSTask 
+	DCSTask =  { id = 'Embarking', 
+	             params = { x = Point.x, 
+    	                    y = Point.y, 
+    		  							  duration = Duration, 
+    			  						  groupsForEmbarking = { EmbarkingGroup.GroupID },
+    				  					  durationFlag = true,
+    					  				  distributionFlag = false,
+    						  			  distribution = {},
+    						  			} 
+    				 }
 	
-	trace.i( self.ClassName, EmbarkingGroup.GroupID )
-	trace.i( self.ClassName, EmbarkingGroup.DCSGroup:getID() )
-	trace.i( self.ClassName, EmbarkingGroup.DCSGroup.id )
-	
-	Controller:pushTask( { id = 'Embarking', 
-	                       params = { x = Point.x, 
-	                                  y = Point.y, 
-									  duration = Duration, 
-									  groupsForEmbarking = { EmbarkingGroup.GroupID },
-									  durationFlag = true,
-									  distributionFlag = false,
-									  distribution = {},
-									} 
-						  } 
-						)
-	
-	return self
+	self:T( { DCSTask } )
+	return DCSTask
 end
 
 --- Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
--- @return #GROUP self
-function GROUP:EmbarkToTransport( Point, Radius )
-trace.f( self.ClassName, { self.GroupName, Point, Radius } )
+-- @return #DCSTask The DCS task structure.
+function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
+	self:F( { self.GroupName, Point, Radius } )
 
-	local Controller = self:_GetController()
-	
-	Controller:pushTask( { id = 'EmbarkToTransport', 
-	                       params = { x = Point.x, 
-						              y = Point.y, 
-									  zoneRadius = Radius,
-									} 
-						  } 
-						)
+  local DCSTask --#DCSTask
+	DCSTask = { id = 'EmbarkToTransport', 
+	            params = { x = Point.x, 
+				  	             y = Point.y, 
+		    							   zoneRadius = Radius,
+						           } 
+						} 
 
-	return self
+  self:T( { DCSTask } )
+	return DCSTask
 end
 
 --- Return a Misson task to follow a given route.
--- @param self
+-- @param #GROUP self
 -- @param #table GoPoints A table of Route Points.
 -- @return #DCSTask 
 function GROUP:TaskMission( Points )
-  self:T( Points )
+	self:F( Points )
   
-  local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
+  local DCSTask
+  DCSTask = { id = 'Mission', params = { route = { points = Points, }, }, }
   
-  return MissionTask
+  self:T( { DCSTask } )
+  return DCSTask
 end
 
 
 --- Make the group to follow a given route.
--- @param self
+-- @param #GROUP self
 -- @param #table GoPoints A table of Route Points.
 -- @return #GROUP self 
 function GROUP:Route( GoPoints )
-  self:T( GoPoints )
+	self:F( GoPoints )
 
 	local Points = routines.utils.deepCopy( GoPoints )
 	local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
@@ -609,13 +592,13 @@ end
 -- The group final destination point can be randomized.
 -- A speed can be given in km/h.
 -- A given formation can be given.
--- @param self
--- @param ZONE#ZONE Zone The zone where to route to.
+-- @param #GROUP self
+-- @param Zone#ZONE Zone The zone where to route to.
 -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
 -- @param #number Speed The speed.
--- @param BASE#FORMATION Formation The formation string.
-function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
-	self:T( Zone )
+-- @param Base#FORMATION Formation The formation string.
+function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
+	self:F( Zone )
 	
 	local GroupPoint = self:GetPointVec2()
 	
@@ -661,14 +644,14 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	return self
 end
 
---- Return the route of a group.
--- @param self
+--- Return the route of a group by using the @{Database#DATABASE} class.
+-- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
 -- @param #boolean Randomize Randomization of the route, when true.
 -- @param #number Radius When randomization is on, the randomization is within the radius. 
 function GROUP:CopyRoute( Begin, End, Randomize, Radius )
-self:T( { Begin, End } )
+	self:F( { Begin, End } )
 
 	local Points = {}
 	
@@ -734,3 +717,160 @@ function GROUP:IsTargetDetected( DCSObject )
   return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
 
 end
+
+-- Options
+
+--- Holding weapons.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:HoldFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  return self
+end
+
+--- Return fire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:ReturnFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  return self
+end
+
+--- Openfire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OpenFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  return self
+end
+
+--- Weapon free.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:WeaponFree()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  return self
+end
+
+--- No evasion on enemy threats.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:EvasionNoReaction()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  return self
+end
+
+--- Evasion passive defense.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:EvasionPassiveDefense()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  return self
+end
+
+--- Evade fire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:EvasionEvadeFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  return self
+end
+
+--- Vertical manoeuvres.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:EvasionVertical()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  return self
+end
+
+-- Message APIs
+
+--- Returns a message for a coalition or a client.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+-- @return Message#MESSAGE
+function GROUP:Message( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  return MESSAGE:New( Message, self:GetCallsign() .. "(" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
+end
+
+--- Send a message to all coalitions.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToAll( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToAll()
+end
+
+--- Send a message to the red coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToRed( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToRed()
+end
+
+--- Send a message to the blue coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToBlue( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToBlue()
+end
+
+--- Send a message to a client.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+-- @param Client#CLIENT Client The client object receiving the message.
+function GROUP:MessageToClient( Message, Duration, Client )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToClient( Client )
+end
+
