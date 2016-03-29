@@ -25,7 +25,7 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	--ESCORT = true,
+	ESCORT = true,
 	}
 
 --- The BASE Class

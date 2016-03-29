@@ -55,7 +55,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
    -- Escort Navigation  
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
   self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenuReportNavigation, ESCORT._HoldPosition, { ParamSelf = self } )
-  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
+  self.EscortMenuJoinUpAndHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
+  self.EscortMenuJoinUpAndFollow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self } )  
 
   -- Report Targets
   self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
@@ -65,6 +66,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   -- Scanning Targets
   self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
   self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
 
   -- Attack Targets
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
@@ -137,6 +139,20 @@ function ESCORT._HoldPositionNearBy( MenuParam )
   EscortGroup:PushTask( EscortGroup:TaskMission( Points ) )
   MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( EscortClient )
 end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._JoinUpAndFollow( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = MenuParam.ParamSelf.EscortGroup
+  local EscortClient = MenuParam.ParamSelf.EscortClient
+  
+  self.CT1 = 0
+  self.GT1 = 0
+  self.FollowFunction = routines.scheduleFunction( self._Follower, { self }, timer.getTime() + 1, 1 )
+  EscortGroup:MessageToClient( "Rejoining and following orders ...", 10, EscortClient )
+end
+
 
 function ESCORT._ReportNearbyTargets( MenuParam )
   MenuParam.ParamSelf:T()
@@ -278,6 +294,63 @@ function ESCORT._CancelCurrentTask( MenuParam )
 
   EscortGroup:PopCurrentTask()
   MESSAGE:New( "Cancelling with current orders, continuing our mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/CancelCurrentTask" ):ToClient( EscortClient )
+end
+
+--- @param Escort#ESCORT self
+function ESCORT:_Follower()
+  self:F()
+
+  local ClientUnit = self.EscortClient:GetClientGroupUnit()
+  local GroupUnit = self.EscortGroup:GetUnit( 1 )
+
+  if self.EscortGroup:IsAlive() and ClientUnit:IsAlive() then
+    if self.CT1 == 0 and self.GT1 == 0 then
+      self.CV1 = ClientUnit:GetPositionVec3()
+      self.CT1 = timer.getTime()
+      self.GV1 = GroupUnit:GetPositionVec3()
+      self.GT1 = timer.getTime()
+      
+    else
+      local CT1 = self.CT1
+      local CT2 = timer.getTime()
+      local CV1 = self.CV1
+      local CV2 = ClientUnit:GetPositionVec3()
+      
+      local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
+      local CT = CT2 - CT1
+      
+      local CS = ( 3600 / CT ) * ( CD / 1000 )
+      
+      self:T( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
+      
+      local GT1 = self.GT1
+      local GT2 = timer.getTime()
+      local GV1 = self.GV1
+      local GV2 = GroupUnit:GetPositionVec3()
+      
+      local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
+      local GT = GT2 - GT1
+      
+      local GS = ( 3600 / GT ) * ( GD / 1000 )
+      
+      self:T( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
+      
+      -- Measure distance between client and group
+      local D = ( ( CV2.x - GV2.x )^2 + ( CV2.y - GV2.y )^2 + ( CV2.z - GV2.z )^2 ) ^ 0.5 - 200
+      
+      local S = ( 3600 / 30 ) * ( D / 1000 ) -- We use a 2 second buffer to adjust the speed
+      local A = ( CS - GS ) + S -- Accelleration required = Client Speed - Group Speed + Speed to overcome distance (with 10 second time buffer)
+      local Speed = A -- Final speed is the current Group speed + Accelleration
+
+      self:T( { "Speed:", S, A, Speed } )
+
+      -- Now route the escort to the desired point with the desired speed.
+      self.EscortGroup:TaskRouteToVec3( CV2, Speed )
+    end
+  else
+    routines.removeFunction( self.FollowFunction )
+  end
+
 end
 
 

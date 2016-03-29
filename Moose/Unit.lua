@@ -1,5 +1,5 @@
 --- UNIT Classes
--- @module UNIT
+-- @module Unit
 
 Include.File( "Routines" )
 Include.File( "Base" )

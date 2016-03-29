@@ -199,9 +199,9 @@ end
 
 
 --- Gets the DCS Unit.
--- @param self
+-- @param #GROUP self
 -- @param #number UnitNumber The number of the Unit to be returned.
--- @return #Unit The DCS Unit.
+-- @return Unit#UNIT The DCS Unit.
 function GROUP:GetUnit( UnitNumber )
 	self:F( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
@@ -558,7 +558,7 @@ end
 
 --- Return a Misson task to follow a given route.
 -- @param #GROUP self
--- @param #table GoPoints A table of Route Points.
+-- @param #table Points A table of Route Points.
 -- @return #DCSTask 
 function GROUP:TaskMission( Points )
 	self:F( Points )
@@ -569,6 +569,39 @@ function GROUP:TaskMission( Points )
   self:T( { DCSTask } )
   return DCSTask
 end
+
+--- Make the group to fly to a given point and hover.
+-- @param #GROUP self
+-- @param #Vec3 Point The destination point.
+-- @param #number Speed The speed to travel.
+-- @return #GROUP self
+function GROUP:TaskRouteToVec3( Point, Speed )
+  self:F( { Point, Speed } )
+
+  local GroupPoint = self:GetUnit( 1 ):GetPositionVec3()
+  
+  local PointFrom = {}
+  PointFrom.x = GroupPoint.x
+  PointFrom.y = GroupPoint.z
+  PointFrom.alt = GroupPoint.y
+  PointFrom.type = "Turning Point"
+
+  local PointTo = {}
+  PointTo.x = Point.x
+  PointTo.y = Point.z
+  PointTo.alt = Point.y
+  PointTo.type = "Turning Point"
+  PointTo.speed = Speed
+  
+  local Points = { PointFrom, PointTo }
+  
+  self:T( Points )
+  
+  self:Route( Points )
+
+  return self
+end
+
 
 
 --- Make the group to follow a given route.

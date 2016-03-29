@@ -34,9 +34,10 @@ CLIENT = {
 
 
 --- Use this method to register new Clients within the MOF.
--- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @param string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @return CLIENT
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return #CLIENT
 -- @usage
 -- -- Create new Clients.
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -169,7 +170,7 @@ function CLIENT:GetClientGroupName()
 end
 
 --- Returns the Unit of the @{CLIENT}.
--- @return Unit
+-- @return Unit#UNIT
 function CLIENT:GetClientGroupUnit()
 	self:F()
 
