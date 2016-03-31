@@ -592,6 +592,7 @@ function GROUP:TaskRouteToVec3( Point, Speed )
   PointTo.alt = Point.y
   PointTo.type = "Turning Point"
   PointTo.speed = Speed
+  PointTo.speed_locked = true
   
   local Points = { PointFrom, PointTo }
   

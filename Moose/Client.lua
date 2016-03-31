@@ -65,9 +65,48 @@ function CLIENT:Reset( ClientName )
 	self._Menus = {}
 end
 
+--- Checks for a client alive event and calls a function on a continuous basis.
+-- @param #CLIENT self
+-- @param #function CallBack Function.
+function CLIENT:Alive( CallBack )
+  self:F()
+  
+  self.ClientAlive = false
+  self.ClientCallBack = CallBack
+  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 1 )
+end
+
+--- Checks if client is alive and returns true or false.
+-- @param #CLIENT self
+-- @param #boolean Returns true if client is alive.
+function CLIENT:IsAlive()
+  self:F()
+  
+  local ClientDCSGroup = self:GetDCSGroup()
+  
+  if ClientDCSGroup then
+    return true
+  end
+  
+  return false
+end
+
+
+--- @param #CLIENT self
+function CLIENT:_AliveCheckCallBack()
+
+  if self:IsAlive() then
+    if self.ClientAlive == false then
+      self.ClientCallBack( self )
+      self.ClientAlive = true
+      routines.removeFunction( self.AliveCheckFunction )
+    end
+  end
+end
+
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @return Group#Group
+-- @return DCSGroup#Group
 function CLIENT:GetDCSGroup()
   self:F3()
 

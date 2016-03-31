@@ -102,6 +102,7 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
 	end
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+	self:F( { MenuClient, MenuText, ParentMenu } )
 
   self.MenuClient = MenuClient
   self.MenuClientGroupID = MenuClient:GetClientGroupID()

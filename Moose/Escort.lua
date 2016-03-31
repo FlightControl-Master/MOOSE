@@ -23,17 +23,20 @@ Include.File( "Zone" )
 -- @field Client#CLIENT EscortClient
 -- @field Group#GROUP EscortGroup
 -- @field #string EscortName
+-- @field #number FollowScheduler The id of the _FollowScheduler function.
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
   EscortClient = nil,
   EscortGroup = nil,
   Targets = {}, -- The identified targets
+  FollowScheduler = nil,
 }
 
 --- MENUPARAM type
 -- @type MENUPARAM
 -- @field #ESCORT ParamSelf
+-- @field #Distance ParamDistance
 
 --- ESCORT class constructor for an AI group
 -- @param self
@@ -56,7 +59,10 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
   self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenuReportNavigation, ESCORT._HoldPosition, { ParamSelf = self } )
   self.EscortMenuJoinUpAndHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
-  self.EscortMenuJoinUpAndFollow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self } )  
+  self.EscortMenuJoinUpAndFollow50Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 100", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 100 } )  
+  self.EscortMenuJoinUpAndFollow100Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 200", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 200 } )  
+  self.EscortMenuJoinUpAndFollow150Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 400", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 400 } )  
+  self.EscortMenuJoinUpAndFollow200Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 800", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 800 } )  
 
   -- Report Targets
   self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
@@ -91,7 +97,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortMenuCancelTask = MENU_CLIENT_COMMAND:New( self.EscortClient, "Cancel current task", self.EscortMenu, ESCORT._CancelCurrentTask, { ParamSelf = self, } )
   
   
-  self.ScanForTargetsFunction = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
+  self.ScanForTargetsScheduler = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
 end
 
 
@@ -147,10 +153,16 @@ function ESCORT._JoinUpAndFollow( MenuParam )
   local EscortGroup = MenuParam.ParamSelf.EscortGroup
   local EscortClient = MenuParam.ParamSelf.EscortClient
   
+  local Distance = MenuParam.ParamDistance
+  
+  if self.FollowScheduler then
+    routines.removeFunction( self.FollowScheduler )
+  end
+  
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowFunction = routines.scheduleFunction( self._Follower, { self }, timer.getTime() + 1, 1 )
-  EscortGroup:MessageToClient( "Rejoining and following orders ...", 10, EscortClient )
+  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, 1 )
+  EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
 
@@ -297,58 +309,79 @@ function ESCORT._CancelCurrentTask( MenuParam )
 end
 
 --- @param Escort#ESCORT self
-function ESCORT:_Follower()
-  self:F()
+function ESCORT:_FollowScheduler( FollowDistance )
+  self:F( { FollowDistance })
 
-  local ClientUnit = self.EscortClient:GetClientGroupUnit()
-  local GroupUnit = self.EscortGroup:GetUnit( 1 )
+  if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
+  
+    local ClientUnit = self.EscortClient:GetClientGroupUnit()
+    local GroupUnit = self.EscortGroup:GetUnit( 1 )
 
-  if self.EscortGroup:IsAlive() and ClientUnit:IsAlive() then
     if self.CT1 == 0 and self.GT1 == 0 then
       self.CV1 = ClientUnit:GetPositionVec3()
       self.CT1 = timer.getTime()
       self.GV1 = GroupUnit:GetPositionVec3()
       self.GT1 = timer.getTime()
-      
     else
       local CT1 = self.CT1
       local CT2 = timer.getTime()
       local CV1 = self.CV1
       local CV2 = ClientUnit:GetPositionVec3()
+      self.CT1 = CT2
+      self.CV1 = CV2
       
       local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
       local CT = CT2 - CT1
       
       local CS = ( 3600 / CT ) * ( CD / 1000 )
       
-      self:T( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
+      self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
       
       local GT1 = self.GT1
       local GT2 = timer.getTime()
       local GV1 = self.GV1
       local GV2 = GroupUnit:GetPositionVec3()
+      self.GT1 = GT2
+      self.GV1 = GV2
       
       local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
       local GT = GT2 - GT1
       
       local GS = ( 3600 / GT ) * ( GD / 1000 )
       
-      self:T( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
+      self:T2( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
       
       -- Measure distance between client and group
-      local D = ( ( CV2.x - GV2.x )^2 + ( CV2.y - GV2.y )^2 + ( CV2.z - GV2.z )^2 ) ^ 0.5 - 200
+      local CatchUpDistance = ( ( CV2.x - GV2.x )^2 + ( CV2.y - GV2.y )^2 + ( CV2.z - GV2.z )^2 ) ^ 0.5
+      local Distance = CatchUpDistance - FollowDistance
       
-      local S = ( 3600 / 30 ) * ( D / 1000 ) -- We use a 2 second buffer to adjust the speed
-      local A = ( CS - GS ) + S -- Accelleration required = Client Speed - Group Speed + Speed to overcome distance (with 10 second time buffer)
-      local Speed = A -- Final speed is the current Group speed + Accelleration
+      -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
+      -- the requested Distance).
+      local Time = 1600 / FollowDistance
+      local CatchUpSpeed = ( Distance / Time ) * ( CatchUpDistance / 1000 ) 
 
-      self:T( { "Speed:", S, A, Speed } )
+      -- Follow speed required = Client Speed - Group Speed + Speed to overcome distance.
+      local BreakSpeed = ( GS * ( ( 1 ) / Distance ) )
+      if BreakSpeed < 0 then 
+        BreakSpeed = 0
+      end
+      
+      if BreakSpeed > CS then
+        BreakSpeed = CS
+      end
+      
+      local Speed = CS + CatchUpSpeed --- - BreakSpeed
+      if Speed < 0 then 
+        Speed = 0
+      end 
+
+      self:T( { "Client Speed, Client Time, Escort Speed, Speed, CatchUpSpeed, BreakSpeed, Distance, Time:", CS, CT, GS, Speed, CatchUpSpeed, BreakSpeed, Distance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
-      self.EscortGroup:TaskRouteToVec3( CV2, Speed )
+      self.EscortGroup:TaskRouteToVec3( CV2, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
   else
-    routines.removeFunction( self.FollowFunction )
+    routines.removeFunction( self.FollowScheduler )
   end
 
 end
@@ -462,6 +495,6 @@ function ESCORT:_ScanForTargets()
     end
 
   else
-    routines.removeFunction( self.ScanForTargetsFunction )
+    routines.removeFunction( self.ScanForTargetsScheduler )
   end
 end
