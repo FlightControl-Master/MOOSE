@@ -351,8 +351,24 @@ function ESCORT:_FollowScheduler( FollowDistance )
       
       self:T2( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
       
+      -- Calculate the group direction vector
+      local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z }
+      
+      -- Calculate GH2, GH2 with the same height as CV2.
+      local GH2 = { x = GV2.x, y = GV2.y, z = CV2.z }
+      
+      -- Calculate the angle of GV to the orthonormal plane
+      local alpha = math.atan2( GV.y, GV.x )
+      
+      -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
+      -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(CV2) + FollowDistance sin(alpha), z(GH2))
+      local CVI = { x = CV2.x + FollowDistance * math.cos(alpha), 
+                    y = CV2.y + FollowDistance * math.sin(alpha),
+                    z = GH2.z   
+                  }   
+      
       -- Measure distance between client and group
-      local CatchUpDistance = ( ( CV2.x - GV2.x )^2 + ( CV2.y - GV2.y )^2 + ( CV2.z - GV2.z )^2 ) ^ 0.5
+      local CatchUpDistance = ( ( CVI.x - GV2.x )^2 + ( CVI.y - GV2.y )^2 + ( CVI.z - GV2.z )^2 ) ^ 0.5
       local Distance = CatchUpDistance - FollowDistance
       
       -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
@@ -378,7 +394,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       self:T( { "Client Speed, Client Time, Escort Speed, Speed, CatchUpSpeed, BreakSpeed, Distance, Time:", CS, CT, GS, Speed, CatchUpSpeed, BreakSpeed, Distance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
-      self.EscortGroup:TaskRouteToVec3( CV2, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+      self.EscortGroup:TaskRouteToVec3( CVI, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
   else
     routines.removeFunction( self.FollowScheduler )
