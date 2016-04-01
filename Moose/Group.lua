@@ -26,7 +26,8 @@ GROUP = {
 -- @type DCSGroup
 -- @field id_ The ID of the group in DCS
 
-GROUPS = {}
+--- The GROUPS structure contains references to all the created GROUP instances.
+local GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
 -- @param self
@@ -44,6 +45,8 @@ function GROUP:New( DCSGroup )
   else
     self:E( { "DCSGroup is nil or does not exist, cannot initialize GROUP!", self.DCSGroup } )
   end
+  
+  GROUPS[self.GroupID] = self
 
 	return self
 end
@@ -64,6 +67,8 @@ function GROUP:NewFromName( GroupName )
     self.Controller = self.DCSGroup:getController()
 	end
 
+  GROUPS[self.GroupID] = self
+
 	return self
 end
 
@@ -81,6 +86,8 @@ function GROUP:NewFromDCSUnit( DCSUnit )
     self.GroupID = self.DCSGroup:getID()
     self.Controller = self.DCSGroup:getController()
   end
+
+  GROUPS[self.GroupID] = self
 
   return self
 end
@@ -556,12 +563,26 @@ function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
 	return DCSTask
 end
 
---- Return a Misson task to follow a given route.
+--- Return a Misson task from a mission template.
 -- @param #GROUP self
--- @param #table Points A table of Route Points.
+-- @param #table TaskMission A table containing the mission task.
 -- @return #DCSTask 
-function GROUP:TaskMission( Points )
+function GROUP:TaskMission( TaskMission )
 	self:F( Points )
+  
+  local DCSTask
+  DCSTask = { id = 'Mission', params = { TaskMission, }, }
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Return a Misson task to follow a given route defined by Points.
+-- @param #GROUP self
+-- @param #table Points A table of route points.
+-- @return #DCSTask 
+function GROUP:TaskRoute( Points )
+  self:F( Points )
   
   local DCSTask
   DCSTask = { id = 'Mission', params = { route = { points = Points, }, }, }
@@ -622,6 +643,33 @@ function GROUP:Route( GoPoints )
 	return self
 end
 
+function GROUP:TaskRegisterWayPoint( WayPoint )
+
+  local DCSTask
+  
+  DCSTask = { id = "WrappedAction",
+              enabled = true,
+              auto = false,
+              number = 1,
+              params = 
+              {
+                  action = 
+                  {
+                      id = "Script",
+                      params = 
+                      {
+                          command = "local MissionGroup = GROUP.FindGroup( ... ) " ..
+                                    "env.info( MissionGroup:GetName() ) " ..
+                                    "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )",
+                      }, -- end of ["params"]
+                  }, -- end of ["action"]
+              }, -- end of ["params"]
+          }
+  self:T( DCSTask )
+  
+  return DCSTask
+end
+
 --- Route the group to a given zone.
 -- The group final destination point can be randomized.
 -- A speed can be given in km/h.
@@ -676,6 +724,24 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 	self:Route( Points )
 	
 	return self
+end
+
+--- Return the mission template of the group.
+-- @param #GROUP self
+-- @return #table The MissionTemplate
+function GROUP:GetTaskMission()
+  self:F( self.GroupName )
+
+  return _Database.Groups[self.GroupName].Template
+end
+
+--- Return the mission route of the group.
+-- @param #GROUP self
+-- @return #table The mission route defined by points.
+function GROUP:GetTaskRoute()
+  self:F( self.GroupName )
+
+  return _Database.Groups[self.GroupName].Template.route.points
 end
 
 --- Return the route of a group by using the @{Database#DATABASE} class.
@@ -757,7 +823,7 @@ end
 --- Holding weapons.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:HoldFire()
+function GROUP:OptionROEHoldFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -769,7 +835,7 @@ end
 --- Return fire.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:ReturnFire()
+function GROUP:OptionROEReturnFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -781,7 +847,7 @@ end
 --- Openfire.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:OpenFire()
+function GROUP:OptionROEOpenFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -793,7 +859,7 @@ end
 --- Weapon free.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:WeaponFree()
+function GROUP:OptionROEWeaponFree()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -805,7 +871,7 @@ end
 --- No evasion on enemy threats.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:EvasionNoReaction()
+function GROUP:OptionEvasionNoReaction()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -817,7 +883,7 @@ end
 --- Evasion passive defense.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:EvasionPassiveDefense()
+function GROUP:OptionROTPassiveDefense()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -829,7 +895,7 @@ end
 --- Evade fire.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:EvasionEvadeFire()
+function GROUP:OptionROTEvadeFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -841,7 +907,7 @@ end
 --- Vertical manoeuvres.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:EvasionVertical()
+function GROUP:OptionROTVertical()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -907,4 +973,26 @@ function GROUP:MessageToClient( Message, Duration, Client )
   
   self:Message( Message, Duration ):ToClient( Client )
 end
+
+function GROUP:RegisterWayPoint( WayPoint )
+
+  self:Message( "Moving over wayPoint " .. WayPoint, 20 ):ToAll()
+  self.WayPoint = WayPoint
+end
+
+
+
+
+--- Find the created GROUP using the DCSGroup ID. If a GROUP was created with the DCSGroupID, the the GROUP instance will be returned.
+-- Otherwise nil will be returned.
+-- @param DCSGroup#Group Group
+-- @return #GROUP
+function GROUP.FindGroup( DCSGroup )
+
+  local self = GROUPS[DCSGroup:getID()] -- Group#GROUP
+  self:T( self:GetClassNameAndID() )
+  return self
+
+end
+
 

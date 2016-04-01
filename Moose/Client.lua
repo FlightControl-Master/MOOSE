@@ -71,35 +71,44 @@ end
 function CLIENT:Alive( CallBack )
   self:F()
   
-  self.ClientAlive = false
+  self.ClientAlive2 = false
   self.ClientCallBack = CallBack
-  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 1 )
+  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 5 )
+
+  return self
 end
 
 --- Checks if client is alive and returns true or false.
 -- @param #CLIENT self
 -- @param #boolean Returns true if client is alive.
 function CLIENT:IsAlive()
-  self:F()
+  self:F( self.ClientName )
   
   local ClientDCSGroup = self:GetDCSGroup()
   
   if ClientDCSGroup then
+    self:T("true")
     return true
   end
   
+  self:T( "false" )
   return false
 end
 
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckCallBack()
+  self:F( { self.ClientName, self.ClientAlive2 } )
 
   if self:IsAlive() then
-    if self.ClientAlive == false then
+    if self.ClientAlive2 == false then
+      self:T("Calling Callback function")
       self.ClientCallBack( self )
-      self.ClientAlive = true
-      routines.removeFunction( self.AliveCheckFunction )
+      self.ClientAlive2 = true
+    end
+  else
+    if self.ClientAlive2 == true then
+      self.ClientAlive2 = false
     end
   end
 end

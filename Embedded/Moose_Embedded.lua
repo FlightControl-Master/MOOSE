@@ -3683,7 +3683,7 @@ end
 --- Holding weapons.
 -- @param self
 -- @return #GROUP self
-function GROUP:HoldFire()
+function GROUP:OptionROEHoldFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3695,7 +3695,7 @@ end
 --- Return fire.
 -- @param self
 -- @return #GROUP self
-function GROUP:ReturnFire()
+function GROUP:OptionROEReturnFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3707,7 +3707,7 @@ end
 --- Openfire.
 -- @param self
 -- @return #GROUP self
-function GROUP:OpenFire()
+function GROUP:OptionROEOpenFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3719,7 +3719,7 @@ end
 --- Weapon free.
 -- @param self
 -- @return #GROUP self
-function GROUP:WeaponFree()
+function GROUP:OptionROEWeaponFree()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3731,7 +3731,7 @@ end
 --- No evasion on enemy threats.
 -- @param self
 -- @return #GROUP self
-function GROUP:EvasionNoReaction()
+function GROUP:OptionEvasionNoReaction()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3743,7 +3743,7 @@ end
 --- Evasion passive defense.
 -- @param self
 -- @return #GROUP self
-function GROUP:EvasionPassiveDefense()
+function GROUP:OptionROTPassiveDefense()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3755,7 +3755,7 @@ end
 --- Evade fire.
 -- @param self
 -- @return #GROUP self
-function GROUP:EvasionEvadeFire()
+function GROUP:OptionROTEvadeFire()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -3767,7 +3767,7 @@ end
 --- Vertical manoeuvres.
 -- @param self
 -- @return #GROUP self
-function GROUP:EvasionVertical()
+function GROUP:OptionROTVertical()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -11167,7 +11167,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
   self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
   self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
+  self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._OptionEvasionVertical, { ParamSelf = self, } )
   
   
   self.ScanForTargetsFunction = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
@@ -11194,49 +11194,49 @@ end
 
 function ESCORT._ROEHoldFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:HoldFire()
+  MenuParam.ParamSelf.EscortGroup:OptionROEHoldFire()
   MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._ROEReturnFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:ReturnFire()
+  MenuParam.ParamSelf.EscortGroup:OptionROEReturnFire()
   MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._ROEOpenFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OpenFire()
+  MenuParam.ParamSelf.EscortGroup:OptionROEOpenFire()
   MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._ROEWeaponFree( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:WeaponFree()
+  MenuParam.ParamSelf.EscortGroup:OptionROEWeaponFree()
   MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._EvasionNoReaction( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:EvasionNoReaction()
+  MenuParam.ParamSelf.EscortGroup:OptionEvasionNoReaction()
   MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._EvasionPassiveDefense( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:EvasionPassiveDefense()
+  MenuParam.ParamSelf.EscortGroup:OptionROTPassiveDefense()
   MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
 function ESCORT._EvasionEvadeFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:EvasionEvadeFire()
+  MenuParam.ParamSelf.EscortGroup:OptionROTEvadeFire()
   MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 
-function ESCORT._EvasionVertical( MenuParam )
+function ESCORT._OptionEvasionVertical( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:EvasionVertical()
+  MenuParam.ParamSelf.EscortGroup:OptionROTVertical()
   MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
 end
 

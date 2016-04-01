@@ -16,7 +16,7 @@ local _TraceClass = {
 	--ZONE = true,
 	--GROUP = true,
 	--UNIT = true,
-	--CLIENT = true,
+  --CLIENT = true,
 	--CARGO = true,
 	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
@@ -25,7 +25,7 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	ESCORT = true,
+	--ESCORT = true,
 	}
 
 --- The BASE Class
@@ -256,6 +256,7 @@ end
 -- Trace section
 
 -- Log a trace (only shown when trace is on)
+-- TODO: Make trace function using variable parameters.
 
 function BASE:F( Arguments )
 

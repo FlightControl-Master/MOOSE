@@ -8,7 +8,7 @@
 -- * Report identified targets
 -- * Perform tasks per identified target: Report vector to target, paint target, kill target
 -- 
--- @module ESCORT
+-- @module Escort
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -24,6 +24,9 @@ Include.File( "Zone" )
 -- @field Group#GROUP EscortGroup
 -- @field #string EscortName
 -- @field #number FollowScheduler The id of the _FollowScheduler function.
+-- @field #boolean ReportTargets If true, nearby targets are reported.
+-- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
+-- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
@@ -31,6 +34,9 @@ ESCORT = {
   EscortGroup = nil,
   Targets = {}, -- The identified targets
   FollowScheduler = nil,
+  ReportTargets = true,
+  OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
+  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION
 }
 
 --- MENUPARAM type
@@ -48,10 +54,9 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   local self = BASE:Inherit( self, BASE:New() )
 	self:F( { EscortClient, EscortGroup, EscortName } )
   
-  self.EscortClient = EscortClient
-  self.EscortGroup = EscortGroup
+  self.EscortClient = EscortClient -- Client#CLIENT
+  self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
-  self.ReportTargets = true
 
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
  
@@ -88,25 +93,39 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   
   -- Reaction to Threats
   self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
-  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
-  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
-  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._EvasionVertical, { ParamSelf = self, } )
+  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._OptionROTNoReaction, { ParamSelf = self, } )
+  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._OptionROTPassiveDefense, { ParamSelf = self, } )
+  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._OptionROTEvadeFire, { ParamSelf = self, } )
+  self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._OptionROTVertical, { ParamSelf = self, } )
   
   -- Cancel current Task
-  self.EscortMenuCancelTask = MENU_CLIENT_COMMAND:New( self.EscortClient, "Cancel current task", self.EscortMenu, ESCORT._CancelCurrentTask, { ParamSelf = self, } )
+  self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume Mission", self.EscortMenu )
+  self.EscortMenuResumeWayPoints = {}
+  local TaskPoints = self:RegisterRoute()
+  for WayPointID, WayPoint in pairs( TaskPoints ) do
+    self.EscortMenuResumeWayPoints[WayPointID] = MENU_CLIENT_COMMAND:New( self.EscortClient, "Resume from waypoint " .. WayPointID, self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
+  end
   
+  -- Initialize the EscortGroup
   
-  self.ScanForTargetsScheduler = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
+  self.EscortGroup:OptionROTVertical()
+  self.EscortGroup:OptionROEOpenFire()
+  
+  self.EscortGroup:PushTask( EscortGroup:TaskRoute( TaskPoints ) )
+  
+  self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
 end
 
 
 --- @param #MENUPARAM MenuParam
 function ESCORT._HoldPosition( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
   
+  routines.removeFunction( self.FollowScheduler )
+
   EscortGroup:PushTask( EscortGroup:TaskHoldPosition( 300 ) )
   MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/TaskHoldPosition" ):ToClient( EscortClient )
 end
@@ -114,10 +133,13 @@ end
 --- @param #MENUPARAM MenuParam
 function ESCORT._HoldPositionNearBy( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
   
   --MenuParam.ParamSelf.EscortGroup:TaskOrbitCircleAtVec2( MenuParam.ParamSelf.EscortClient:GetPointVec2(), 300, 30, 0 )
+
+  routines.removeFunction( self.FollowScheduler )
   
   local PointFrom = {}
   local GroupPoint = EscortGroup:GetPointVec2()
@@ -141,8 +163,7 @@ function ESCORT._HoldPositionNearBy( MenuParam )
   
   local Points = { PointFrom, PointTo }
   
-  
-  EscortGroup:PushTask( EscortGroup:TaskMission( Points ) )
+  EscortGroup:PushTask( EscortGroup:TaskRoute( Points ) )
   MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( EscortClient )
 end
 
@@ -150,8 +171,8 @@ end
 function ESCORT._JoinUpAndFollow( MenuParam )
 
   local self = MenuParam.ParamSelf
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
   
   local Distance = MenuParam.ParamDistance
   
@@ -167,18 +188,32 @@ end
 
 
 function ESCORT._ReportNearbyTargets( MenuParam )
-  MenuParam.ParamSelf:T()
-  
-  MenuParam.ParamSelf.ReportTargets = MenuParam.ParamReportTargets
 
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  self.ReportTargets = MenuParam.ParamReportTargets
+  
+  if self.ReportTargets then
+    if not self.ReportTargetsScheduler then
+      self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+    end
+  else
+    routines.removeFunction( self.ReportTargetsScheduler )
+    self.ReportTargetsScheduler = nil
+  end
 end
 
 --- @param #MENUPARAM MenuParam
 function ESCORT._ScanTargets30Seconds( MenuParam )
   MenuParam.ParamSelf:T()
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  routines.removeFunction( self.FollowScheduler )
 
   EscortGroup:PushTask( 
     EscortGroup:TaskControlled( 
@@ -193,8 +228,11 @@ end
 function ESCORT._ScanTargets60Seconds( MenuParam )
   MenuParam.ParamSelf:T()
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  routines.removeFunction( self.FollowScheduler )
 
   EscortGroup:PushTask( 
     EscortGroup:TaskControlled( 
@@ -208,12 +246,16 @@ end
 --- @param #MENUPARAM MenuParam
 function ESCORT._AttackTarget( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
   local AttackUnit = MenuParam.ParamUnit 
-  
-  EscortGroup:OpenFire()
-  EscortGroup:EvasionVertical()
+
+  routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
+
+  EscortGroup:OptionROEOpenFire()
+  EscortGroup:OptionROTVertical()
   EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
   MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackTarget" ):ToClient( EscortClient )
 end
@@ -221,91 +263,131 @@ end
 --- @param #MENUPARAM MenuParam
 function ESCORT._ROEHoldFire( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:HoldFire()
+  EscortGroup:OptionROEHoldFire()
   MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEHoldFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
 function ESCORT._ROEReturnFire( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:ReturnFire()
+  EscortGroup:OptionROEReturnFire()
   MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEReturnFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
 function ESCORT._ROEOpenFire( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:OpenFire()
+  EscortGroup:OptionROEOpenFire()
   MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEOpenFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
 function ESCORT._ROEWeaponFree( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:WeaponFree()
+  EscortGroup:OptionROEWeaponFree()
   MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEWeaponFree" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._EvasionNoReaction( MenuParam )
+function ESCORT._OptionROTNoReaction( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:EvasionNoReaction()
-  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionNoReaction" ):ToClient( EscortClient )
+  EscortGroup:OptionEvasionNoReaction()
+  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionEvasionNoReaction" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._EvasionPassiveDefense( MenuParam )
+function ESCORT._OptionROTPassiveDefense( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:EvasionPassiveDefense()
-  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionPassiveDefense" ):ToClient( EscortClient )
+  EscortGroup:OptionROTPassiveDefense()
+  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTPassiveDefense" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._EvasionEvadeFire( MenuParam )
+function ESCORT._OptionROTEvadeFire( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:EvasionEvadeFire()
-  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionEvadeFire" ):ToClient( EscortClient )
+  EscortGroup:OptionROTEvadeFire()
+  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTEvadeFire" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._EvasionVertical( MenuParam )
+function ESCORT._OptionROTVertical( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
 
-  EscortGroup:EvasionVertical()
-  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/EvasionVertical" ):ToClient( EscortClient )
+  EscortGroup:OptionROTVertical()
+  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTVertical" ):ToClient( EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._CancelCurrentTask( MenuParam )
+function ESCORT._ResumeMission( MenuParam )
 
-  local EscortGroup = MenuParam.ParamSelf.EscortGroup
-  local EscortClient = MenuParam.ParamSelf.EscortClient
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  local WayPoint = MenuParam.ParamWayPoint
+  
+  routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
 
+  local WayPoints = EscortGroup:GetTaskRoute()
+  self:T( WayPoint, WayPoints )
+  
+  for WayPointIgnore = 1, WayPoint do
+    table.remove( WayPoints, 1 )
+  end
+  
   EscortGroup:PopCurrentTask()
-  MESSAGE:New( "Cancelling with current orders, continuing our mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/CancelCurrentTask" ):ToClient( EscortClient )
+  EscortGroup:PushTask( EscortGroup:TaskRoute( WayPoints ) )
+  MESSAGE:New( "Resuming mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ResumeMission" ):ToClient( EscortClient )
+end
+
+function ESCORT:RegisterRoute()
+
+  local EscortGroup = self.EscortGroup -- Group#GROUP
+  
+  local TaskPoints = EscortGroup:GetTaskRoute()
+  self:T( TaskPoints )
+
+  for TaskPointID, TaskPoint in pairs( TaskPoints ) do
+    self:T( TaskPointID )
+    TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+    self:T( TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks] )
+  end
+  
+  self:T( TaskPoints )
+
+  return TaskPoints
 end
 
 --- @param Escort#ESCORT self
@@ -355,46 +437,49 @@ function ESCORT:_FollowScheduler( FollowDistance )
       local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z }
       
       -- Calculate GH2, GH2 with the same height as CV2.
-      local GH2 = { x = GV2.x, y = GV2.y, z = CV2.z }
+      local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
       
       -- Calculate the angle of GV to the orthonormal plane
-      local alpha = math.atan2( GV.y, GV.x )
+      local alpha = math.atan2( GV.z, GV.x )
       
       -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
-      -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(CV2) + FollowDistance sin(alpha), z(GH2))
+      -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
       local CVI = { x = CV2.x + FollowDistance * math.cos(alpha), 
-                    y = CV2.y + FollowDistance * math.sin(alpha),
-                    z = GH2.z   
-                  }   
+                    y = GH2.y,
+                    z = CV2.z + FollowDistance * math.sin(alpha),   
+                  }
+                  
+      -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
+      local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
+      
+      -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
+      -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
+      -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
+      local DVu = { x = DV.x / FollowDistance, y = DV.y / FollowDistance, z = DV.z / FollowDistance }
+      
+      -- Now we can calculate the group destination vector GDV.
+      local GDV = { x = DVu.x * CS * 2 + CVI.x, y = CVI.y, z = DVu.z * CS * 2 + CVI.z }
+      self:T2( { "CV2:", CV2 } )
+      self:T2( { "CVI:", CVI } )
+      self:T2( { "GDV:", GDV } )
       
       -- Measure distance between client and group
-      local CatchUpDistance = ( ( CVI.x - GV2.x )^2 + ( CVI.y - GV2.y )^2 + ( CVI.z - GV2.z )^2 ) ^ 0.5
-      local Distance = CatchUpDistance - FollowDistance
+      local CatchUpDistance = ( ( GDV.x - GV2.x )^2 + ( GDV.y - GV2.y )^2 + ( GDV.z - GV2.z )^2 ) ^ 0.5
       
       -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
       -- the requested Distance).
-      local Time = 1600 / FollowDistance
-      local CatchUpSpeed = ( Distance / Time ) * ( CatchUpDistance / 1000 ) 
-
-      -- Follow speed required = Client Speed - Group Speed + Speed to overcome distance.
-      local BreakSpeed = ( GS * ( ( 1 ) / Distance ) )
-      if BreakSpeed < 0 then 
-        BreakSpeed = 0
-      end
+      local Time = 30
+      local CatchUpSpeed = ( CatchUpDistance - ( CS * 2 ) ) / Time 
       
-      if BreakSpeed > CS then
-        BreakSpeed = CS
-      end
-      
-      local Speed = CS + CatchUpSpeed --- - BreakSpeed
+      local Speed = CS + CatchUpSpeed
       if Speed < 0 then 
         Speed = 0
       end 
 
-      self:T( { "Client Speed, Client Time, Escort Speed, Speed, CatchUpSpeed, BreakSpeed, Distance, Time:", CS, CT, GS, Speed, CatchUpSpeed, BreakSpeed, Distance, Time } )
+      self:T( { "Client Speed, Escort Speed, Speed, FlyDistance, Time:", CS, GS, Speed, Distance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
-      self.EscortGroup:TaskRouteToVec3( CVI, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+      self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
   else
     routines.removeFunction( self.FollowScheduler )
@@ -403,7 +488,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
 end
 
 
-function ESCORT:_ScanForTargets()
+function ESCORT:_ReportTargetsScheduler()
 	self:F()
 
   self.Targets = {}
@@ -511,6 +596,7 @@ function ESCORT:_ScanForTargets()
     end
 
   else
-    routines.removeFunction( self.ScanForTargetsScheduler )
+    routines.removeFunction( self.ReportTargetsScheduler )
+    self.ReportTargetsScheduler = nil
   end
 end
