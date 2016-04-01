@@ -11,19 +11,17 @@ NOTASK = {
 
 --- Creates a new NOTASK.
 function NOTASK:New()
-trace.f(self.ClassName)
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
-
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F()
+  
   local Valid = true
 
   if  Valid then
-    Child.Name = 'Nothing'
-    Child.TaskBriefing = "Task: Execute your mission."
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEDONE:New() }
-	Child.SetStage( Child, 1 )
+    self.Name = 'Nothing'
+    self.TaskBriefing = "Task: Execute your mission."
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEDONE:New() }
+	self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end

@@ -1,6 +1,7 @@
 --- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).
--- @module DATABASE
+-- @module Database
+-- @author FlightControl
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -158,7 +159,7 @@ end
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
-	self:T( Status )
+	self:F( Status )
 
 	self.Groups[GroupName].Status = Status
 end
@@ -166,7 +167,7 @@ end
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
-	self:T( Status )
+	self:F( Status )
 
 	if self.Groups[GroupName] then
 		return self.Groups[GroupName].Status
@@ -319,7 +320,7 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-	self:T( "_FollowPlayers" )
+	self:F( "_FollowPlayers" )
 
 	local ClientUnit = 0
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
@@ -342,7 +343,7 @@ end
 
 --- Add a new player entering a Unit.
 function DATABASE:_AddPlayerFromUnit( UnitData )
-	self:T( UnitData )
+	self:F( UnitData )
 
 	if UnitData:isExist() then
 		local UnitName = UnitData:getName()
@@ -420,7 +421,7 @@ end
 
 --- Registers Scores the players completing a Mission Task.
 function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
-	self:T( { PlayerUnit, MissionName, Score } )
+	self:F( { PlayerUnit, MissionName, Score } )
 
 	local PlayerName = PlayerUnit:getPlayerName()
 	
@@ -446,7 +447,7 @@ end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 function DATABASE:_AddMissionScore( MissionName, Score )
-	self:T( { PlayerUnit, MissionName, Score } )
+	self:F( { PlayerUnit, MissionName, Score } )
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
 	
@@ -467,7 +468,7 @@ end
 
 
 function DATABASE:OnHit( event )
-	self:T( { event } )
+	self:F( { event } )
 
 	local InitUnit = nil
 	local InitUnitName = ""

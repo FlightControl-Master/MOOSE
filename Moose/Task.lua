@@ -8,7 +8,8 @@ Include.File( "Client" )
 Include.File( "Stage" )
 
 --- The TASK class
--- @type
+-- @type TASK
+-- @extends Base#BASE
 TASK = {
 
 	-- Defines the different signal types with a Task.
@@ -47,10 +48,9 @@ TASK = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @return TASK
 function TASK:New()
-trace.f(self.ClassName)
-
   local self = BASE:Inherit( self, BASE:New() )
-
+	self:F()
+  
   -- assign Task default values during construction
   self.TaskBriefing = "Task: No Task."
   self.Time = timer.getTime()
@@ -60,14 +60,14 @@ trace.f(self.ClassName)
 end
 
 function TASK:SetStage( StageSequenceIncrement )
-trace.f(self.ClassName, { StageSequenceIncrement } )
+	self:F( { StageSequenceIncrement } )
 
 	local Valid = false
 	if StageSequenceIncrement ~= 0 then
 		self.ActiveStage = self.ActiveStage + StageSequenceIncrement
 		if 1 <= self.ActiveStage and self.ActiveStage <= #self.Stages then
 			self.Stage = self.Stages[self.ActiveStage]
-			trace.i( self.ClassName, { self.Stage.Name } )
+			self:T( { self.Stage.Name } )
 			self.Frequency = self.Stage.Frequency
 			Valid = true
 		else
@@ -80,7 +80,7 @@ trace.f(self.ClassName, { StageSequenceIncrement } )
 end
 
 function TASK:Init()
-trace.f(self.ClassName)
+	self:F()
 	self.ActiveStage = 0
 	self:SetStage(1)
 	self.TaskDone = false
@@ -91,7 +91,7 @@ end
 --- Get progress of a TASK.
 -- @return string GoalsText
 function TASK:GetGoalProgress()
-trace.f(self.ClassName)
+	self:F()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -115,7 +115,7 @@ end
 -- @param MISSION 	Mission 		Group structure describing the Mission.
 -- @param CLIENT	Client	 		Group structure describing the Client.
 function TASK:ShowGoalProgress( Mission, Client )
-trace.f(self.ClassName)
+	self:F()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -137,32 +137,32 @@ end
 
 --- Sets a TASK to status Done.
 function TASK:Done()
-trace.f(self.ClassName)
+	self:F()
 	self.TaskDone = true
 end
 
 --- Returns if a TASK is done.
 -- @return bool
 function TASK:IsDone()
-	trace.i( self.ClassName, self.TaskDone )
+	self:F( self.TaskDone )
 	return self.TaskDone
 end
 
 --- Sets a TASK to status failed.
 function TASK:Failed()
-trace.f(self.ClassName)
+	self:F()
 	self.TaskFailed = true
 end
 
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-	trace.i( self.ClassName, self.TaskFailed )
+	self:F( self.TaskFailed )
 	return self.TaskFailed
 end
 
 function TASK:Reset( Mission, Client )
-trace.f(self.ClassName)
+	self:F()
 	self.ExecuteStage = _TransportExecuteStage.NONE
 end
 
@@ -176,7 +176,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK.
 -- @return bool
 function TASK:Goal( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -191,7 +191,7 @@ end
 -- @param number GoalTotal is the number of times the GoalVerb needs to be achieved.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:SetGoalTotal( GoalTotal, GoalVerb )
-trace.f(self.ClassName, { GoalTotal, GoalVerb } )
+	self:F( { GoalTotal, GoalVerb } )
 	
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
@@ -206,7 +206,7 @@ end
 --- Gets the total of Goals to be achieved within the TASK of the GoalVerb.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:GetGoalTotal( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -222,7 +222,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:SetGoalCount( GoalCount, GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -237,7 +237,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:IncreaseGoalCount( GoalCountIncrease, GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -251,7 +251,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalCount( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -266,7 +266,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalPercentage( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -284,10 +284,10 @@ function TASK:IsGoalReached( )
 	local GoalReached = true
 
 	for GoalVerb, Goals in pairs( self.GoalTasks ) do
-		trace.i( self.ClassName, { "GoalVerb", GoalVerb } )
+		self:T( { "GoalVerb", GoalVerb } )
 		if self:Goal( GoalVerb ) then
 			local GoalToDo = self:GetGoalTotal( GoalVerb ) - self:GetGoalCount( GoalVerb )
-			trace.i( self.ClassName, "GoalToDo = " .. GoalToDo )
+			self:T( "GoalToDo = " .. GoalToDo )
 			if GoalToDo <= 0 then
 			else
 				GoalReached = false
@@ -298,7 +298,7 @@ function TASK:IsGoalReached( )
 		end
 	end
 	
-	trace.i( self.ClassName, GoalReached )
+	self:T( GoalReached )
 	return GoalReached
 end
 
@@ -307,7 +307,7 @@ end
 -- @param string GoalTask is a text describing the Goal of the TASK to be achieved.
 -- @param number GoalIncrease is a number by which the Goal achievement is increasing.
 function TASK:AddGoalCompletion( GoalVerb, GoalTask, GoalIncrease )
-trace.f( self.ClassName, { GoalVerb, GoalTask, GoalIncrease } )
+	self:F( { GoalVerb, GoalTask, GoalIncrease } )
 
 	if self:Goal( GoalVerb ) then
 		self.GoalTasks[GoalVerb].Goals[#self.GoalTasks[GoalVerb].Goals+1] = GoalTask
@@ -320,7 +320,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return string Goals
 function TASK:GetGoalCompletion( GoalVerb )
-trace.f( self.ClassName, { GoalVerb } )
+	self:F( { GoalVerb } )
 	
 	if self:Goal( GoalVerb ) then
 		local Goals = ""
@@ -330,14 +330,12 @@ trace.f( self.ClassName, { GoalVerb } )
 end
 
 function TASK.MenuAction( Parameter )
-trace.menu("TASK","MenuAction")
-  trace.l( "TASK", "MenuAction" )
   Parameter.ReferenceTask.ExecuteStage = _TransportExecuteStage.EXECUTING
   Parameter.ReferenceTask.Cargo = Parameter.CargoTask
 end
 
 function TASK:StageExecute()
-trace.f(self.ClassName)
+	self:F()
 
   local Execute = false
 
@@ -356,7 +354,7 @@ end
 
 --- Work function to set signal events within a TASK.
 function TASK:AddSignal( SignalUnitNames, SignalType, SignalColor, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   
 	local Valid = true
 	
@@ -387,7 +385,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeRed( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
@@ -395,7 +393,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeGreen( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
@@ -403,7 +401,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeBlue( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
@@ -411,7 +409,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeWhite( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
@@ -419,7 +417,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeOrange( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end
 
@@ -427,7 +425,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareRed( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
@@ -435,7 +433,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareGreen( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
@@ -443,7 +441,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareBlue( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
@@ -451,7 +449,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareWhite( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
@@ -459,6 +457,6 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareOrange( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end

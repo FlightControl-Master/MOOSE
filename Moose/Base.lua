@@ -1,11 +1,12 @@
 --- BASE The base class for all the classes defined within MOOSE.
--- @module BASE
+-- @module Base
 -- @author Flightcontrol
 
 Include.File( "Routines" )
 
-_TraceOn = true
-_TraceClass = {
+local _TraceOn = true
+local _TraceLevel = 1
+local _TraceClass = {
 	--DATABASE = true,
 	--SEAD = true,
 	--DESTROYBASETASK = true,
@@ -15,13 +16,16 @@ _TraceClass = {
 	--ZONE = true,
 	--GROUP = true,
 	--UNIT = true,
-	--CLIENT = true,
+  --CLIENT = true,
 	--CARGO = true,
 	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
 	--CARGO_SLINGLOAD = true,
 	--CARGO_ZONE = true,
 	--CLEANUP = true,
+	--MENU_CLIENT = true,
+	--MENU_CLIENT_COMMAND = true,
+	--ESCORT = true,
 	}
 
 --- The BASE Class
@@ -48,7 +52,6 @@ FORMATION = {
 -- @return #BASE
 -- @usage
 -- function TASK:New()
--- trace.f(self.ClassName)
 --
 --     local self = BASE:Inherit( self, BASE:New() )
 -- 
@@ -97,8 +100,31 @@ function BASE:Inherited( Child )
 	return Parent
 end
 
+--- Get the ClassName + ClassID of the class instance.
+-- The ClassName + ClassID is formatted as '%s#%09d'. 
+-- @param #BASE self
+-- @return #string The ClassName + ClassID of the class instance.
+function BASE:GetClassNameAndID()
+  return string.format( '%s#%09d', self:GetClassName(), self:GetClassID() )
+end
+
+--- Get the ClassName of the class instance.
+-- @param #BASE self
+-- @return #string The ClassName of the class instance.
+function BASE:GetClassName()
+  return self.ClassName
+end
+
+--- Get the ClassID of the class instance.
+-- @param #BASE self
+-- @return #string The ClassID of the class instance.
+function BASE:GetClassID()
+  return self.ClassID
+end
+
+
 function BASE:AddEvent( Event, EventFunction )
-trace.f( self.ClassName, Event )
+	self:F( Event )
 
 	self.Events[#self.Events+1] = {}
 	self.Events[#self.Events].Event = Event
@@ -110,22 +136,20 @@ end
 
 
 function BASE:EnableEvents()
-trace.f( self.ClassName )
+	self:F( #self.Events )
 
-	trace.i( self.ClassName, #self.Events )
 	for EventID, Event in pairs( self.Events ) do
 		Event.Self = self
 		Event.EventEnabled = true
 	end
-	--env.info( 'EnableEvent Table Task = ' .. tostring(self) )
 	self.Events.Handler = world.addEventHandler( self )
 
 	return self
 end
 
 function BASE:DisableEvents()
-trace.f( self.ClassName )
-
+	self:F()
+  
 	world.removeEventHandler( self )
 	for EventID, Event in pairs( self.Events ) do
 		Event.Self = nil
@@ -136,7 +160,7 @@ trace.f( self.ClassName )
 end
 
 
-BaseEventCodes = {
+local BaseEventCodes = {
    "S_EVENT_SHOT",
    "S_EVENT_HIT",
    "S_EVENT_TAKEOFF",
@@ -176,7 +200,7 @@ BaseEventCodes = {
 
 
 function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
-trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } )
+	self:F( { EventTime, Initiator, IniUnitName, place, subplace } )
 
 	local Event = {
 		id = world.event.S_EVENT_BIRTH,
@@ -191,7 +215,7 @@ trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } 
 end
 
 function BASE:CreateEventCrash( EventTime, Initiator )
-trace.f( self.ClassName, { EventTime, Initiator } )
+	self:F( { EventTime, Initiator } )
 
 	local Event = {
 		id = world.event.S_EVENT_CRASH,
@@ -203,7 +227,6 @@ trace.f( self.ClassName, { EventTime, Initiator } )
 end
 												
 function BASE:onEvent(event)
---trace.f(self.ClassName, event )
 
 	--env.info( 'onEvent Table self = ' .. tostring(self) )
 	if self then
@@ -220,7 +243,7 @@ function BASE:onEvent(event)
 						if event.target and event.target:isExist() then
 							event.TgtUnitName = event.target:getName()
 						end
-						trace.i( self.ClassName, { BaseEventCodes[event.id], event } )
+						self:T( { BaseEventCodes[event.id], event } )
 						EventObject.EventFunction( self, event )
 					end
 				end
@@ -233,6 +256,45 @@ end
 -- Trace section
 
 -- Log a trace (only shown when trace is on)
+-- TODO: Make trace function using variable parameters.
+
+function BASE:F( Arguments )
+
+  if _TraceOn and _TraceClass[self.ClassName] then
+
+    local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = debug.getinfo( 3, "l" )
+    
+    local Function = "function"
+    if DebugInfoCurrent.name then
+      Function = DebugInfoCurrent.name
+    end
+
+    local LineCurrent = DebugInfoCurrent.currentline
+    local LineFrom = 0
+    if DebugInfoFrom then
+      LineFrom = DebugInfoFrom.currentline
+    end
+    env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  end
+end
+
+function BASE:F2( Arguments )
+
+  if _TraceLevel >= 2 then
+    self:F( Arguments )
+  end
+  
+end
+
+function BASE:F3( Arguments )
+
+  if _TraceLevel >= 3 then
+    self:F( Arguments )
+  end
+  
+end
+
 function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
@@ -246,11 +308,30 @@ function BASE:T( Arguments )
 		end
 
 		local LineCurrent = DebugInfoCurrent.currentline
-		local LineFrom = DebugInfoFrom.currentline
-	
-		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+		local LineFrom = 0
+		if DebugInfoFrom then
+		  LineFrom = DebugInfoFrom.currentline
+	  end
+		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end
+
+function BASE:T2( Arguments )
+
+  if _TraceLevel >= 2 then
+    self:T( Arguments )
+  end
+  
+end
+
+function BASE:T3( Arguments )
+
+  if _TraceLevel >= 3 then
+    self:T( Arguments )
+  end
+  
+end
+
 
 
 -- Log an exception
@@ -269,3 +350,6 @@ function BASE:E( Arguments )
 
 	env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 end
+
+
+

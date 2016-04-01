@@ -17,33 +17,28 @@ DESTROYUNITTYPESTASK = {
 -- @param string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
 -- @return DESTROYUNITTYPESTASK
 function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes )
-trace.f(self.ClassName)
-
-	-- Inheritance
-	local Child = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames ) )
-	
+	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames ) )
+	self:F( { DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes } )
+  	
 	if type(DestroyUnitTypes) == 'table' then
-		Child.DestroyUnitTypes = DestroyUnitTypes
+		self.DestroyUnitTypes = DestroyUnitTypes
 	else
-		Child.DestroyUnitTypes = { DestroyUnitTypes }
+		self.DestroyUnitTypes = { DestroyUnitTypes }
 	end
 	
-	Child.Name = 'Destroy Unit Types'
-	Child.GoalVerb = "Destroy " .. DestroyGroupType
+	self.Name = 'Destroy Unit Types'
+	self.GoalVerb = "Destroy " .. DestroyGroupType
 
-	--env.info( 'New Types Child = ' .. tostring(Child) )
-	--env.info( 'New Types self = ' .. tostring(self) )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
 
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.EventDead )
-
-	return Child
+	return self
 end
 
 --- Report Goal Progress.
 -- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYUNITTYPESTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-trace.f(self.ClassName)
+	self:F( { DestroyGroup, DestroyUnit } )
 
 	local DestroyCount = 0
 	for UnitTypeID, UnitType in pairs( self.DestroyUnitTypes ) do

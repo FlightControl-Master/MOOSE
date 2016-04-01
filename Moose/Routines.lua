@@ -2,7 +2,7 @@
 -- @module routines
 -- @author Flightcontrol
 
-Include.File( "Trace" )
+--Include.File( "Trace" )
 --Include.File( "Message" )
 
 
@@ -422,7 +422,7 @@ routines.tostringBR = function(az, dist, alt, metric)
 		dist = routines.utils.round(routines.utils.metersToNM(dist), 2)
 	end
 
-	local s = string.format('%03d°', az) .. ' for ' .. dist
+	local s = string.format('%03d', az) .. ' for ' .. dist
 
 	if alt then
 		if metric then
@@ -1455,7 +1455,7 @@ end
 
 
 function routines.IsPartOfGroupInZones( CargoGroup, LandingZones )
-trace.f()
+--trace.f()
 
 	local CurrentZoneID = nil
 
@@ -1471,14 +1471,14 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { CurrentZoneID } )
+--trace.r( "", "", { CurrentZoneID } )
 	return CurrentZoneID
 end
 
 
 
 function routines.IsUnitInZones( TransportUnit, LandingZones )
-trace.f("", "routines.IsUnitInZones" )
+--trace.f("", "routines.IsUnitInZones" )
 
     local TransportZoneResult = nil
 	local TransportZonePos = nil
@@ -1506,19 +1506,19 @@ trace.f("", "routines.IsUnitInZones" )
 			end
 		end
 		if TransportZoneResult then
-			trace.i( "routines", "TransportZone:" .. TransportZoneResult )
+			--trace.i( "routines", "TransportZone:" .. TransportZoneResult )
 		else
-			trace.i( "routines", "TransportZone:nil logic" )
+			--trace.i( "routines", "TransportZone:nil logic" )
 		end
 		return TransportZoneResult
 	else
-		trace.i( "routines", "TransportZone:nil hard" )
+		--trace.i( "routines", "TransportZone:nil hard" )
 		return nil
 	end
 end
 
 function routines.IsStaticInZones( TransportStatic, LandingZones )
-trace.f()
+--trace.f()
 
     local TransportZoneResult = nil
 	local TransportZonePos = nil
@@ -1545,13 +1545,13 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { TransportZoneResult } )
+--trace.r( "", "", { TransportZoneResult } )
     return TransportZoneResult
 end
 
 
 function routines.IsUnitInRadius( CargoUnit, ReferencePosition, Radius )
-trace.f()
+--trace.f()
 
   local Valid = true
 
@@ -1568,7 +1568,7 @@ trace.f()
 end
 
 function routines.IsPartOfGroupInRadius( CargoGroup, ReferencePosition, Radius )
-trace.f()
+--trace.f()
 
   local Valid = true
 
@@ -1594,7 +1594,7 @@ end
 
 
 function routines.ValidateString( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
   if  type( Variable ) == "string" then
     if Variable == "" then
@@ -1606,12 +1606,12 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 end
 
 function routines.ValidateNumber( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
   if  type( Variable ) == "number" then
   else
@@ -1619,25 +1619,25 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 
 end
 
 function routines.ValidateGroup( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
 	if Variable == nil then
 		error( "routines.ValidateGroup: error: " .. VariableName .. " is a nil value!" )
 		Valid = false
 	end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
 	return Valid
 end
 
 function routines.ValidateZone( LandingZones, VariableName, Valid )
-trace.f()
+--trace.f()
 
 	if LandingZones == nil then
 		error( "routines.ValidateGroup: error: " .. VariableName .. " is a nil value!" )
@@ -1659,12 +1659,12 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
 	return Valid
 end
 
 function routines.ValidateEnumeration( Variable, VariableName, Enum, Valid )
-trace.f()
+--trace.f()
 
   local ValidVariable = false
 
@@ -1681,7 +1681,7 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 end
 
@@ -1859,7 +1859,7 @@ routines.ground.patrol = function(gpData, pType, form, speed)
 end
 
 function routines.GetUnitHeight( CheckUnit )
-trace.f( "routines" )
+--trace.f( "routines" )
 
 	local UnitPoint = CheckUnit:getPoint()
 	local UnitPosition = { x = UnitPoint.x, y = UnitPoint.z }
@@ -1869,7 +1869,7 @@ trace.f( "routines" )
 
 	--env.info(( 'CarrierHeight: LandHeight = ' .. LandHeight .. ' CarrierHeight = ' .. CarrierHeight ))
 
-	trace.f( "routines", "Unit Height = " .. UnitHeight - LandHeight )
+	--trace.f( "routines", "Unit Height = " .. UnitHeight - LandHeight )
 	
 	return UnitHeight - LandHeight
 
@@ -1886,7 +1886,7 @@ Su34Menus = 0
 
 
 function Su34AttackCarlVinson(groupName)
-trace.menu("", "Su34AttackCarlVinson")
+--trace.menu("", "Su34AttackCarlVinson")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupCarlVinson = Group.getByName("US Carl Vinson #001")
@@ -1900,7 +1900,7 @@ trace.menu("", "Su34AttackCarlVinson")
 end
 
 function Su34AttackWest(groupName)
-trace.f("","Su34AttackWest")
+--trace.f("","Su34AttackWest")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupShipWest1 = Group.getByName("US Ship West #001")
@@ -1918,7 +1918,7 @@ trace.f("","Su34AttackWest")
 end
 
 function Su34AttackNorth(groupName)
-trace.menu("","Su34AttackNorth")
+--trace.menu("","Su34AttackNorth")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupShipNorth1 = Group.getByName("US Ship North #001")
@@ -1940,7 +1940,7 @@ trace.menu("","Su34AttackNorth")
 end
 
 function Su34Orbit(groupName)
-trace.menu("","Su34Orbit")
+--trace.menu("","Su34Orbit")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -1951,7 +1951,7 @@ trace.menu("","Su34Orbit")
 end
 
 function Su34TakeOff(groupName)
-trace.menu("","Su34TakeOff")
+--trace.menu("","Su34TakeOff")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -1961,7 +1961,7 @@ trace.menu("","Su34TakeOff")
 end
 
 function Su34Hold(groupName)
-trace.menu("","Su34Hold")
+--trace.menu("","Su34Hold")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -1971,19 +1971,19 @@ trace.menu("","Su34Hold")
 end
 
 function Su34RTB(groupName)
-trace.menu("","Su34RTB")
+--trace.menu("","Su34RTB")
 	Su34Status.status[groupName] = 6
 	MessageToRed( string.format('%s: ',groupName) .. 'Return to Krasnodar. ', 10, 'RedStatus' .. groupName )
 end
 
 function Su34Destroyed(groupName)
-trace.menu("","Su34Destroyed")
+--trace.menu("","Su34Destroyed")
 	Su34Status.status[groupName] = 7
 	MessageToRed( string.format('%s: ',groupName) .. 'Destroyed. ', 30, 'RedStatus' .. groupName )
 end
 
 function GroupAlive( groupName )
-trace.menu("","GroupAlive")
+--trace.menu("","GroupAlive")
 	local groupTest = Group.getByName( groupName )
 
 	local groupExists = false
@@ -1992,17 +1992,17 @@ trace.menu("","GroupAlive")
 		groupExists = groupTest:isExist()
 	end
 
-	trace.r( "", "", { groupExists } )
+	--trace.r( "", "", { groupExists } )
 	return groupExists
 end
 
 function Su34IsDead()
-trace.f()
+--trace.f()
 
 end
 
 function Su34OverviewStatus()
-trace.menu("","Su34OverviewStatus")
+--trace.menu("","Su34OverviewStatus")
 	local msg = ""
 	local currentStatus = 0
 	local Exists = false
@@ -2053,25 +2053,25 @@ end
 
 
 function UpdateBoardMsg()
-trace.f()
+--trace.f()
 	Su34OverviewStatus()
 	MessageToRed( boardMsgRed.statusMsg, 15, 'RedStatus' )
 end
 
 function MusicReset( flg )
-trace.f()
+--trace.f()
 	trigger.action.setUserFlag(95,flg)
 end
 
 function PlaneActivate(groupNameFormat, flg)
-trace.f()
+--trace.f()
 	local groupName = groupNameFormat .. string.format("#%03d", trigger.misc.getUserFlag(flg))
 	--trigger.action.outText(groupName,10)
 	trigger.action.activateGroup(Group.getByName(groupName))
 end
 
 function Su34Menu(groupName)
-trace.f()
+--trace.f()
 
 	--env.info(( 'Su34Menu(' .. groupName .. ')' ))
 	local groupSu34 = Group.getByName( groupName )
@@ -2144,7 +2144,7 @@ end
 --- Obsolete function, but kept to rework in framework.
 
 function ChooseInfantry ( TeleportPrefixTable, TeleportMax )
-trace.f("Spawn")
+--trace.f("Spawn")
 	--env.info(( 'ChooseInfantry: ' ))
 
 	TeleportPrefixTableCount = #TeleportPrefixTable
@@ -2229,7 +2229,7 @@ end
 SpawnedInfantry = 0
 
 function LandCarrier ( CarrierGroup, LandingZonePrefix )
-trace.f()
+--trace.f()
 	--env.info(( 'LandCarrier: ' ))
 	--env.info(( 'LandCarrier: CarrierGroup = ' .. CarrierGroup:getName() ))
 	--env.info(( 'LandCarrier: LandingZone = ' .. LandingZonePrefix ))
@@ -2248,7 +2248,7 @@ end
 
 EscortCount = 0
 function EscortCarrier ( CarrierGroup, EscortPrefix, EscortLastWayPoint, EscortEngagementDistanceMax, EscortTargetTypes )
-trace.f()
+--trace.f()
 	--env.info(( 'EscortCarrier: ' ))
 	--env.info(( 'EscortCarrier: CarrierGroup = ' .. CarrierGroup:getName() ))
 	--env.info(( 'EscortCarrier: EscortPrefix = ' .. EscortPrefix ))
@@ -2314,7 +2314,7 @@ trace.f()
 end
 
 function SendMessageToCarrier( CarrierGroup, CarrierMessage )
-trace.f()
+--trace.f()
 
 	if CarrierGroup ~= nil then
 		MessageToGroup( CarrierGroup, CarrierMessage, 30, 'Carrier/' .. CarrierGroup:getName() )
@@ -2323,7 +2323,7 @@ trace.f()
 end
 
 function MessageToGroup( MsgGroup, MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	if type(MsgGroup) == 'string' then
 		--env.info( 'MessageToGroup: Converted MsgGroup string "' .. MsgGroup .. '" into a Group structure.' )
@@ -2342,7 +2342,7 @@ trace.f()
 end
 
 function MessageToUnit( UnitName, MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	if UnitName ~= nil then
 		local MsgTable = {}
@@ -2355,25 +2355,25 @@ trace.f()
 end
 
 function MessageToAll( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "Message", MsgTime, MsgName ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
 end
 
 function MessageToRed( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "To Red Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
 end
 
 function MessageToBlue( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "To Blue Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
 end
 
 function getCarrierHeight( CarrierGroup )
-trace.f()
+--trace.f()
 
 	if CarrierGroup ~= nil then
 		if table.getn(CarrierGroup:getUnits()) == 1 then
@@ -2398,7 +2398,7 @@ trace.f()
 end
 
 function GetUnitHeight( CheckUnit )
-trace.f()
+--trace.f()
 
 	local UnitPoint = CheckUnit:getPoint()
 	local UnitPosition = { x = CurrentPoint.x, y = CurrentPoint.z }
@@ -2420,7 +2420,7 @@ _MusicTable.FileCnt = 0
 
 
 function MusicRegister( SndRef, SndFile, SndTime )
-trace.f()
+--trace.f()
 
 	env.info(( 'MusicRegister: SndRef = ' .. SndRef ))
 	env.info(( 'MusicRegister: SndFile = ' .. SndFile ))
@@ -2441,7 +2441,7 @@ trace.f()
 end
 
 function MusicToPlayer( SndRef, PlayerName, SndContinue )
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicToPlayer: SndRef = ' .. SndRef  ))
 
@@ -2464,7 +2464,7 @@ trace.f()
 end
 
 function MusicToGroup( SndRef, SndGroup, SndContinue )
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicToGroup: SndRef = ' .. SndRef  ))
 
@@ -2507,7 +2507,7 @@ trace.f()
 end
 
 function MusicCanStart(PlayerName)
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicCanStart:' ))
 
@@ -2549,7 +2549,7 @@ trace.f()
 end
 
 function MusicScheduler()
-trace.scheduled("", "MusicScheduler")
+--trace.scheduled("", "MusicScheduler")
 
 	--env.info(( 'MusicScheduler:' ))
 	if _MusicTable['Queue'] ~= nil and _MusicTable.FileCnt > 0  then

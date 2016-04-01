@@ -1,20 +1,20 @@
 --- ZONE Classes
--- @module ZONE
+-- @module Zone
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
 
 --- The ZONE class
--- @type
+-- @type ZONE
+-- @Extends Base#BASE
 ZONE = {
 	ClassName="ZONE",
 	}
 	
 function ZONE:New( ZoneName )
-trace.f( self.ClassName, ZoneName )
-
 	local self = BASE:Inherit( self, BASE:New() )
+	self:F( ZoneName )
 
 	local Zone = trigger.misc.getZone( ZoneName )
 	
@@ -29,8 +29,8 @@ trace.f( self.ClassName, ZoneName )
 	return self
 end
 
-function ZONE:GetPoint()
-	self:T( self.ZoneName )
+function ZONE:GetPointVec2()
+	self:F( self.ZoneName )
 
 	local Zone = trigger.misc.getZone( self.ZoneName )
 	local Point = { x = Zone.point.x, y = Zone.point.z }
@@ -41,7 +41,7 @@ function ZONE:GetPoint()
 end
 
 function ZONE:GetRandomPoint()
-trace.f( self.ClassName, self.ZoneName )
+	self:F( self.ZoneName )
 
 	local Point = {}
 
@@ -50,18 +50,17 @@ trace.f( self.ClassName, self.ZoneName )
 	Point.x = Zone.point.x + math.random( Zone.radius * -1, Zone.radius )
 	Point.y = Zone.point.z + math.random( Zone.radius * -1, Zone.radius )
 	
-	trace.i( self.ClassName, { Zone } )
-	trace.i( self.ClassName, { Point } )
+	self:T( { Zone, Point } )
 	
 	return Point
 end
 
 function ZONE:GetRadius()
-trace.f( self.ClassName, self.ZoneName )
+	self:F( self.ZoneName )
 
 	local Zone = trigger.misc.getZone( self.ZoneName )
 
-	trace.i( self.ClassName, { Zone } )
+	self:T( { Zone } )
 
 	return Zone.radius
 end

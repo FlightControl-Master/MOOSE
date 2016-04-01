@@ -28,7 +28,7 @@ CLEANUP = {
 -- CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
 -- CleanUpKutaisi = CLEANUP:New( 'CLEAN Kutaisi', 600 )
 function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self, BASE:New() )
-	self:T( { ZoneNames, TimeInterval } )
+	self:F( { ZoneNames, TimeInterval } )
 	
 	if type( ZoneNames ) == 'table' then
 		self.ZoneNames = ZoneNames
@@ -57,7 +57,7 @@ end
 --- Destroys a group from the simulator, but checks first if it is still existing!
 -- @see CLEANUP
 function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
-	self:T( { GroupObject, CleanUpGroupName } )
+	self:F( { GroupObject, CleanUpGroupName } )
 
 	if GroupObject then -- and GroupObject:isExist() then
 		--MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
@@ -69,7 +69,7 @@ end
 --- Destroys a unit from the simulator, but checks first if it is still existing!
 -- @see CLEANUP
 function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
-	self:T( { CleanUpUnit, CleanUpUnitName } )
+	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	if CleanUpUnit then
 		--MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
@@ -96,7 +96,7 @@ end
 --- Destroys a missile from the simulator, but checks first if it is still existing!
 -- @see CLEANUP
 function CLEANUP:_DestroyMissile( MissileObject )
-	self:T( { MissileObject } )
+	self:F( { MissileObject } )
 
 	if MissileObject and MissileObject:isExist() then
 		MissileObject:destroy()
@@ -107,7 +107,7 @@ end
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see CLEANUP
 function CLEANUP:_EventCrash( event )
-	self:T( { event } )
+	self:F( { event } )
 
 	--MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
 	-- self:T("before getGroup")
@@ -137,7 +137,7 @@ end
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see CLEANUP
 function CLEANUP:_EventShot( event )
-	self:T( { event } )
+	self:F( { event } )
 
 	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
 	local _groupname = _grp:getName() -- return the name of the group
@@ -161,7 +161,7 @@ end
 
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
 function CLEANUP:_EventHitCleanUp( event )
-	self:T( { event } )
+	self:F( { event } )
 
 	local CleanUpUnit = event.initiator -- the Unit
 	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
@@ -195,7 +195,7 @@ function CLEANUP:_EventHitCleanUp( event )
 end
 
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
-	self:T( { CleanUpUnit, CleanUpUnitName } )
+	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	self.CleanUpList[CleanUpUnitName] = {}
 	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
@@ -244,7 +244,7 @@ CleanUpSurfaceTypeText = {
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 function CLEANUP:_Scheduler()
-	self:T( "CleanUp Scheduler" )
+	self:F( "CleanUp Scheduler" )
 
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
 	

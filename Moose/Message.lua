@@ -6,13 +6,12 @@
 -- Messages are sent to Clients with MESSAGE:@{ToClient}().
 -- Messages are sent to Coalitions with MESSAGE:@{ToCoalition}().
 -- Messages are sent to All Players with MESSAGE:@{ToAll}().
--- @module MESSAGE
+-- @module Message
 
-Include.File( "Trace" )
 Include.File( "Base" )
 
 --- The MESSAGE class
--- @type
+-- @type MESSAGE
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -21,11 +20,12 @@ MESSAGE = {
 
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
--- @param string MessageText is the text of the Message.
--- @param string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
--- @param number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @param string MessageID is a string expressing the ID of the Message.
--- @return MESSAGE
+-- @param self
+-- @param #string MessageText is the text of the Message.
+-- @param #string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
+-- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
+-- @param #string MessageID is a string expressing the ID of the Message.
+-- @return #MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
 -- -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
@@ -38,7 +38,7 @@ MESSAGE = {
 -- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
 function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
 	local self = BASE:Inherit( self, BASE:New() )
-  self:T( { MessageText, MessageCategory, MessageDuration, MessageID } )
+	self:F( { MessageText, MessageCategory, MessageDuration, MessageID } )
 
   -- When no messagecategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
@@ -60,8 +60,9 @@ function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
 end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
--- @param CLIENT Client is the Group of the Client.
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @param Client#CLIENT Client is the Group of the Client.
+-- @return #MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
 -- -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
@@ -78,20 +79,21 @@ end
 -- MessageClient1:ToClient( ClientGroup )
 -- MessageClient2:ToClient( ClientGroup )
 function MESSAGE:ToClient( Client )
-  self:T( Client )
+	self:F( Client )
 
 	if Client and Client:GetClientGroupID() then
 
 		local ClientGroupID = Client:GetClientGroupID()
-		trace.i( self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
 		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
 end
 
---- Sends a MESSAGE to the Blue coalition. 
--- @return MESSAGE
+--- Sends a MESSAGE to the Blue coalition.
+-- @param #MESSAGE self 
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the BLUE coalition.
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
@@ -101,7 +103,7 @@ end
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageBLUE:ToBlue()
 function MESSAGE:ToBlue()
-  self:T()
+	self:F()
 
 	self:ToCoalition( coalition.side.BLUE )
 	
@@ -109,7 +111,8 @@ function MESSAGE:ToBlue()
 end
 
 --- Sends a MESSAGE to the Red Coalition. 
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
@@ -119,7 +122,7 @@ end
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageRED:ToRed()
 function MESSAGE:ToRed( )
-  self:T()
+	self:F()
 
 	self:ToCoalition( coalition.side.RED )
 	
@@ -127,8 +130,9 @@ function MESSAGE:ToRed( )
 end
 
 --- Sends a MESSAGE to a Coalition. 
+-- @param #MESSAGE self
 -- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @return MESSAGE
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
@@ -138,10 +142,10 @@ end
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageRED:ToCoalition( coalition.side.RED )
 function MESSAGE:ToCoalition( CoalitionSide )
-  self:T( CoalitionSide )
+	self:F( CoalitionSide )
 
 	if CoalitionSide then
-		trace.i(self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
 		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
@@ -149,7 +153,8 @@ function MESSAGE:ToCoalition( CoalitionSide )
 end
 
 --- Sends a MESSAGE to all players. 
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created to all players.
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
@@ -159,7 +164,7 @@ end
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
 -- MessageAll:ToAll()
 function MESSAGE:ToAll()
-  self:T()
+	self:F()
 
 	self:ToCoalition( coalition.side.RED )
 	self:ToCoalition( coalition.side.BLUE )
@@ -178,7 +183,7 @@ MESSAGEQUEUE = {
 
 function MESSAGEQUEUE:New( RefreshInterval )
 	local self = BASE:Inherit( self, BASE:New() )
-  self:T( { RefreshInterval } )
+	self:F( { RefreshInterval } )
 	
 	self.RefreshInterval = RefreshInterval
 

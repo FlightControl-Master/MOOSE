@@ -13,26 +13,23 @@ GOHOMETASK = {
 -- @param table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
 -- @return GOHOMETASK
 function GOHOMETASK:New( LandingZones )
-trace.f(self.ClassName)
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
-
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F( { LandingZones } )
   local Valid = true
   
   Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
     
   if  Valid then
-    Child.Name = 'Fly Home'
-    Child.TaskBriefing = "Task: Fly back to your home base. Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to your home base."
+    self.Name = 'Fly Home'
+    self.TaskBriefing = "Task: Fly back to your home base. Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to your home base."
 	if type( LandingZones ) == "table" then
-		Child.LandingZones = LandingZones
+		self.LandingZones = LandingZones
 	else
-		Child.LandingZones = { LandingZones }
+		self.LandingZones = { LandingZones }
 	end
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-		Child.SetStage( Child, 1 )
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
+		self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end
