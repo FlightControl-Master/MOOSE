@@ -885,7 +885,7 @@ end
 --- No evasion on enemy threats.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:OptionEvasionNoReaction()
+function GROUP:OptionROTNoReaction()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -902,7 +902,7 @@ function GROUP:OptionROTPassiveDefense()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
   return self
 end
 

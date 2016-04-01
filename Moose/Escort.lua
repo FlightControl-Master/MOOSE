@@ -58,7 +58,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
 
-  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
+  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
  
    -- Escort Navigation  
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
@@ -259,7 +259,7 @@ function ESCORT._AttackTarget( MenuParam )
   
   self:T( AttackUnit )
   
-  EscortGroup:SetTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
 end
 
@@ -314,7 +314,7 @@ function ESCORT._OptionROTNoReaction( MenuParam )
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  EscortGroup:OptionEvasionNoReaction()
+  EscortGroup:OptionROTNoReaction()
   EscortGroup:MessageToClient( "We'll fight until death.", 10, EscortClient )
 end
 

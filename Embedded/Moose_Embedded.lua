@@ -2585,7 +2585,7 @@ local _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	--GROUP = true,
+	GROUP = true,
 	--UNIT = true,
   --CLIENT = true,
 	--CARGO = true,
@@ -4006,7 +4006,7 @@ end
 --- No evasion on enemy threats.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:OptionEvasionNoReaction()
+function GROUP:OptionROTNoReaction()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -4023,7 +4023,7 @@ function GROUP:OptionROTPassiveDefense()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
   return self
 end
 
@@ -11353,7 +11353,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
 
-  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
+  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
  
    -- Escort Navigation  
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
@@ -11554,7 +11554,7 @@ function ESCORT._AttackTarget( MenuParam )
   
   self:T( AttackUnit )
   
-  EscortGroup:SetTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
 end
 
@@ -11609,7 +11609,7 @@ function ESCORT._OptionROTNoReaction( MenuParam )
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  EscortGroup:OptionEvasionNoReaction()
+  EscortGroup:OptionROTNoReaction()
   EscortGroup:MessageToClient( "We'll fight until death.", 10, EscortClient )
 end
 
