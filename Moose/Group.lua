@@ -330,6 +330,20 @@ function GROUP:PushTask( DCSTask )
   return self
 end
 
+--- Clearing the Task Queue and Setting the Task on the queue from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:SetTask( DCSTask )
+  self:F()
+
+  local Controller = self:_GetController()
+  
+  Controller:setTask( DCSTask )
+
+  return self
+end
+
+
 --- Return a condition section for a controlled task
 -- @param #GROUP self
 -- @param #Time time
@@ -513,7 +527,7 @@ function GROUP:TaskAttackUnit( AttackUnit )
             } 
   
   self:T( { DCSTask } )
-  return self
+  return DCSTask
 end
 
 
@@ -871,7 +885,7 @@ end
 --- No evasion on enemy threats.
 -- @param #GROUP self
 -- @return #GROUP self
-function GROUP:OptionEvasionNoReaction()
+function GROUP:OptionROTNoReaction()
 	self:F( { self.GroupName } )
 
   local Controller = self:_GetController()
@@ -888,7 +902,7 @@ function GROUP:OptionROTPassiveDefense()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
   return self
 end
 

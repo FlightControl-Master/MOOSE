@@ -424,6 +424,7 @@ end
 
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
+-- @param #SPAWN self
 -- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
@@ -443,7 +444,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
-		env.info( "No more Groups to Spawn" )
+		self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
 	end
 
 	return nil

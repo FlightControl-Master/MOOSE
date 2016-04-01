@@ -14,7 +14,7 @@ local _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	--GROUP = true,
+	GROUP = true,
 	--UNIT = true,
   --CLIENT = true,
 	--CARGO = true,
@@ -25,7 +25,7 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	--ESCORT = true,
+	ESCORT = true,
 	}
 
 --- The BASE Class
