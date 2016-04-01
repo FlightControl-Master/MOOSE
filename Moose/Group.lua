@@ -330,6 +330,20 @@ function GROUP:PushTask( DCSTask )
   return self
 end
 
+--- Clearing the Task Queue and Setting the Task on the queue from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:SetTask( DCSTask )
+  self:F()
+
+  local Controller = self:_GetController()
+  
+  Controller:setTask( DCSTask )
+
+  return self
+end
+
+
 --- Return a condition section for a controlled task
 -- @param #GROUP self
 -- @param #Time time

@@ -2596,7 +2596,7 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	--ESCORT = true,
+	ESCORT = true,
 	}
 
 --- The BASE Class
@@ -3450,6 +3450,20 @@ function GROUP:PushTask( DCSTask )
 
   return self
 end
+
+--- Clearing the Task Queue and Setting the Task on the queue from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:SetTask( DCSTask )
+  self:F()
+
+  local Controller = self:_GetController()
+  
+  Controller:setTask( DCSTask )
+
+  return self
+end
+
 
 --- Return a condition section for a controlled task
 -- @param #GROUP self
@@ -10216,6 +10230,7 @@ end
 
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
+-- @param #SPAWN self
 -- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
@@ -10235,7 +10250,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
-		env.info( "No more Groups to Spawn" )
+		self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
 	end
 
 	return nil
@@ -11406,8 +11421,8 @@ function ESCORT._HoldPosition( MenuParam )
   
   routines.removeFunction( self.FollowScheduler )
 
-  EscortGroup:PushTask( EscortGroup:TaskHoldPosition( 300 ) )
-  MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/TaskHoldPosition" ):ToClient( EscortClient )
+  EscortGroup:SetTask( EscortGroup:TaskHoldPosition( 300 ) )
+  EscortGroup:MessageToClient( "Holding Position.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11443,8 +11458,8 @@ function ESCORT._HoldPositionNearBy( MenuParam )
   
   local Points = { PointFrom, PointTo }
   
-  EscortGroup:PushTask( EscortGroup:TaskRoute( Points ) )
-  MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( EscortClient )
+  EscortGroup:SetTask( EscortGroup:TaskRoute( Points ) )
+  EscortGroup:MessageToClient( "Rejoining to your location. Please hold at your location.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11501,7 +11516,7 @@ function ESCORT._ScanTargets30Seconds( MenuParam )
       EscortGroup:TaskCondition( nil, nil, nil, nil, 30, nil ) 
       ) 
   )
-  MESSAGE:New( "Scanning targets for 30 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets30Seconds" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Scanning targets for 30 seconds.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11520,7 +11535,7 @@ function ESCORT._ScanTargets60Seconds( MenuParam )
       EscortGroup:TaskCondition( nil, nil, nil, nil, 60, nil ) 
       ) 
   )
-  MESSAGE:New( "Scanning targets for 60 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets60Seconds" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Scanning targets for 60 seconds.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11536,8 +11551,9 @@ function ESCORT._AttackTarget( MenuParam )
 
   EscortGroup:OptionROEOpenFire()
   EscortGroup:OptionROTVertical()
-  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
-  MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackTarget" ):ToClient( EscortClient )
+  
+  EscortGroup:SetTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11548,7 +11564,7 @@ function ESCORT._ROEHoldFire( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROEHoldFire()
-  MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEHoldFire" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Holding weapons.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11559,7 +11575,7 @@ function ESCORT._ROEReturnFire( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROEReturnFire()
-  MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEReturnFire" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Returning enemy fire.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11570,7 +11586,7 @@ function ESCORT._ROEOpenFire( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROEOpenFire()
-  MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEOpenFire" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Open fire on ordered targets.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11581,7 +11597,7 @@ function ESCORT._ROEWeaponFree( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROEWeaponFree()
-  MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEWeaponFree" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "Engaging nearby targets.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11592,7 +11608,7 @@ function ESCORT._OptionROTNoReaction( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionEvasionNoReaction()
-  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionEvasionNoReaction" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "We'll fight until death.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11603,7 +11619,7 @@ function ESCORT._OptionROTPassiveDefense( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROTPassiveDefense()
-  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTPassiveDefense" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "We will use flares, chaff and jammers.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11614,7 +11630,7 @@ function ESCORT._OptionROTEvadeFire( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROTEvadeFire()
-  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTEvadeFire" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "We'll evade enemy fire.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11625,7 +11641,7 @@ function ESCORT._OptionROTVertical( MenuParam )
   local EscortClient = self.EscortClient
 
   EscortGroup:OptionROTVertical()
-  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTVertical" ):ToClient( EscortClient )
+  EscortGroup:MessageToClient( "We'll perform vertical evasive manoeuvres.", 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11647,9 +11663,8 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
   
-  EscortGroup:PopCurrentTask()
-  EscortGroup:PushTask( EscortGroup:TaskRoute( WayPoints ) )
-  MESSAGE:New( "Resuming mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ResumeMission" ):ToClient( EscortClient )
+  EscortGroup:SetTask( EscortGroup:TaskRoute( WayPoints ) )
+  EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )
 end
 
 function ESCORT:RegisterRoute()
