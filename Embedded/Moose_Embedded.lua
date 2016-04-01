@@ -1,295 +1,8 @@
---- Tracing functions...
--- @module trace
--- @author Flightcontrol
-
-trace = {}
-trace.names = {}
-trace.classes = {}
-trace.scheduledfunction = ""
-
-trace.names.all = false
-trace.names.New = false
-trace.names.Inherit = false
---trace.names.ClientGroup = true
-trace.names.Scheduler = false
-trace.names.ToCoalition = false
-trace.names.ToClient = false
-trace.names.do_scheduled_functions = false
-trace.names.main = false 
-trace.names.Meta = false 
-trace.names.mistdisplayV3 = false 
-trace.names.f = false 
-trace.names.Spawn = false
-trace.names.SpawnTrack = false
-trace.names.SpawnGroupAdd = false
-trace.names.SpawnInfantry = false
-trace.names.SpawnPrepare = false
-trace.names.SpawnInit = false
-trace.names.SpawnInitSchedule = false
-trace.names.SpawnFromCarrier = false
-trace.names.SpawnGroup = false
-trace.names.SpawnMissionGroup = false
-trace.names.SpawnScheduled = false
-trace.names.SpawnInZone = false
-trace.names.Spawn = false
-trace.names.ShowCargo = false 
-trace.names.AddCargo = false
-trace.names.RemoveCargo = false 
-trace.names.MenuAction = false
-trace.names.DeploySA6TroopsGoal = false
-trace.names.AddEvent = false
-trace.names.onEvent = false
-trace.names.EventShot = false
-trace.names.EventDead = false
-trace.names.EventFunction = false
-trace.names.ShowGoalProgress = false
-trace.names.ReportGoalProgress = false
-trace.names.ProgressTrigger = false
-trace.names.IsGoalReached = false
-trace.names.Validate = false
-trace.names.Execute = false
-trace.names.EnableEvents = false
-trace.names.DisableEvents = false
-trace.names.IsCompleted = false
-trace.names.GetGoalCount = false
-trace.names.GetGoalTotal = false
-trace.names.SetGoalTotal = false
-trace.names.GetGoalPercentage = false
-trace.names.deepCopy = false
-trace.names._Scheduler = false
-trace.names._GetTemplate = false
-trace.names.FollowPlayers = false
-trace.names.AddPlayerFromUnit = false
-trace.names.FromCarrier = false
-trace.names.OnDeadOrCrash = false
-
-trace.classes.CLEANUP = false
-trace.cache = {}
-
-trace.tracefunction = function( functionname )
-
-	if functionname then
-		if trace.names[functionname] then
-			return true
-		else
-			return false
-		end
-	else
-		return false
-	end
-
-end
-
-trace.f = function(object, parameters)
-
-	local info = debug.getinfo( 2, "nl" )
-	if trace.names.all or trace.tracefunction( info.name ) or trace.classes[object] then
-
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		trace.nametrace = ""
-		if info.name then
-			trace.nametrace = info.name
-		end
-		local parameterstrace = "()"
-		if parameters then
-			parameterstrace = "( " .. routines.utils.oneLineSerialize( parameters ) .. " )"
-		end
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "F", objecttrace, "function " .. trace.nametrace .. parameterstrace ) )
-	end
-
-end
-
-trace.scheduled = function(object, func, parameters)
-
-	local info = debug.getinfo( 2, "l" )
-	if trace.names.all or trace.tracefunction( func ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		trace.nametrace = ""
-		if func then
-			trace.nametrace = func
-		end
-		trace.scheduledfunction = trace.nametrace
-		local parameterstrace = "()"
-		if parameters then
-			parameterstrace = "( " .. routines.utils.oneLineSerialize( parameters ) .. " )"
-		end
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "S", objecttrace, "function " .. trace.nametrace .. parameterstrace ) )
-	end
-
-end
-
-trace.s = function(object, parameters)
-
-	local info = debug.getinfo( 3, "nl" )
-	if trace.names.all or trace.tracefunction( info.name ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		trace.nametrace = ""
-		if info.name then
-			trace.nametrace = info.name
-		end
-		trace.scheduledfunction = trace.nametrace
-		local parameterstrace = "()"
-		if parameters then
-			parameterstrace = "( " .. routines.utils.oneLineSerialize( parameters ) .. " )"
-		end
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "S", objecttrace, "scheduled " .. trace.nametrace .. parameterstrace ) )
-	end
-
-end
-
-trace.si = function(object, variable)
-
-	local info = debug.getinfo( 3, "nl" )
-	if info.name ~= trace.nametrace then
-		trace.nametrace = info.name
-	end
-	if trace.names.all or trace.tracefunction( trace.nametrace ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		local variabletrace = ""
-		if variable then
-			variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
-		end
-		
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "S", objecttrace, trace.nametrace .. variabletrace) )
-	end
-
-end
-
-
-trace.l = function(object, func, variable)
-
-	local info = debug.getinfo( 2, "l" )
-	if trace.names.all or trace.tracefunction( func ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		trace.nametrace = ""
-		if func then
-			trace.nametrace = func
-		end
-		local variabletrace = ""
-		if variable then
-			variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
-		end
-		
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "L", objecttrace, trace.nametrace .. variabletrace) )
-	end
-
-end
-
-trace.menu = function(object, func)
-
-	if trace.names.all then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		trace.nametrace = ""
-		if func then
-			trace.nametrace = func
-		end
-		env.info( string.format( "%6d/%1s:%20s.%s" , 0, "M", objecttrace, trace.nametrace .. "()" ) )
-	end
-
-end
-
-trace.r = function(object, step, variable)
-
-	local info = debug.getinfo( 2, "nl" )
-	if info.name ~= trace.nametrace then
-		trace.nametrace = info.name
-	end
-	if trace.names.all or trace.tracefunction( trace.nametrace ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		local steptrace = ""
-		if step then
-			steptrace = "< " .. step .. " >"
-		end
-		local variabletrace = ""
-		if variable then
-			variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
-		end
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "R", objecttrace, "return " .. trace.nametrace .. variabletrace ) )
-	end
-
-end
-
-trace.e = function(object)
-
-	local info = debug.getinfo( 2, "nl" )
-	if info.name ~= trace.nametrace then
-		trace.nametrace = info.name
-	end
-	if trace.names.all or trace.tracefunction( trace.nametrace ) then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "E", objecttrace, "end " .. trace.nametrace ) )
-	end
-
-end
-
-trace.i = function(object, variable)
-
-	local info = debug.getinfo( 2, "nl" )
-	trace.nametrace = info.name
-	if trace.nametrace == nil then
-		trace.nametrace = "function"
-	end
-	if trace.names.all or trace.tracefunction( trace.nametrace ) or trace.classes[ object ] then
-		local objecttrace = ""
-		if object then
-			objecttrace = object
-		end
-		local variabletrace = ""
-		if variable then
-			variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
-		end
-		
-		env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "I", objecttrace, trace.nametrace .. variabletrace) )
-	end
-
-end
-
-trace.x = function( object, variable )
-
-	local info = debug.getinfo( 2, "nl" )
-	trace.nametrace = info.name
-	local objecttrace = ""
-	if object then
-		objecttrace = object
-	end
-	local variabletrace = ""
-	if variable then
-		variabletrace = "( " .. routines.utils.oneLineSerialize( variable ) .. " )"
-	end
-	
-	env.info( string.format( "%6d/%1s:%20s.%s" , info.currentline, "I", objecttrace, trace.nametrace .. variabletrace) )
-
-end
 --- Various routines
 -- @module routines
 -- @author Flightcontrol
 
-Include.File( "Trace" )
+--Include.File( "Trace" )
 --Include.File( "Message" )
 
 
@@ -1742,7 +1455,7 @@ end
 
 
 function routines.IsPartOfGroupInZones( CargoGroup, LandingZones )
-trace.f()
+--trace.f()
 
 	local CurrentZoneID = nil
 
@@ -1758,14 +1471,14 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { CurrentZoneID } )
+--trace.r( "", "", { CurrentZoneID } )
 	return CurrentZoneID
 end
 
 
 
 function routines.IsUnitInZones( TransportUnit, LandingZones )
-trace.f("", "routines.IsUnitInZones" )
+--trace.f("", "routines.IsUnitInZones" )
 
     local TransportZoneResult = nil
 	local TransportZonePos = nil
@@ -1793,19 +1506,19 @@ trace.f("", "routines.IsUnitInZones" )
 			end
 		end
 		if TransportZoneResult then
-			trace.i( "routines", "TransportZone:" .. TransportZoneResult )
+			--trace.i( "routines", "TransportZone:" .. TransportZoneResult )
 		else
-			trace.i( "routines", "TransportZone:nil logic" )
+			--trace.i( "routines", "TransportZone:nil logic" )
 		end
 		return TransportZoneResult
 	else
-		trace.i( "routines", "TransportZone:nil hard" )
+		--trace.i( "routines", "TransportZone:nil hard" )
 		return nil
 	end
 end
 
 function routines.IsStaticInZones( TransportStatic, LandingZones )
-trace.f()
+--trace.f()
 
     local TransportZoneResult = nil
 	local TransportZonePos = nil
@@ -1832,13 +1545,13 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { TransportZoneResult } )
+--trace.r( "", "", { TransportZoneResult } )
     return TransportZoneResult
 end
 
 
 function routines.IsUnitInRadius( CargoUnit, ReferencePosition, Radius )
-trace.f()
+--trace.f()
 
   local Valid = true
 
@@ -1855,7 +1568,7 @@ trace.f()
 end
 
 function routines.IsPartOfGroupInRadius( CargoGroup, ReferencePosition, Radius )
-trace.f()
+--trace.f()
 
   local Valid = true
 
@@ -1881,7 +1594,7 @@ end
 
 
 function routines.ValidateString( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
   if  type( Variable ) == "string" then
     if Variable == "" then
@@ -1893,12 +1606,12 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 end
 
 function routines.ValidateNumber( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
   if  type( Variable ) == "number" then
   else
@@ -1906,25 +1619,25 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 
 end
 
 function routines.ValidateGroup( Variable, VariableName, Valid )
-trace.f()
+--trace.f()
 
 	if Variable == nil then
 		error( "routines.ValidateGroup: error: " .. VariableName .. " is a nil value!" )
 		Valid = false
 	end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
 	return Valid
 end
 
 function routines.ValidateZone( LandingZones, VariableName, Valid )
-trace.f()
+--trace.f()
 
 	if LandingZones == nil then
 		error( "routines.ValidateGroup: error: " .. VariableName .. " is a nil value!" )
@@ -1946,12 +1659,12 @@ trace.f()
 		end
 	end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
 	return Valid
 end
 
 function routines.ValidateEnumeration( Variable, VariableName, Enum, Valid )
-trace.f()
+--trace.f()
 
   local ValidVariable = false
 
@@ -1968,7 +1681,7 @@ trace.f()
     Valid = false
   end
 
-trace.r( "", "", { Valid } )
+--trace.r( "", "", { Valid } )
   return Valid
 end
 
@@ -2146,7 +1859,7 @@ routines.ground.patrol = function(gpData, pType, form, speed)
 end
 
 function routines.GetUnitHeight( CheckUnit )
-trace.f( "routines" )
+--trace.f( "routines" )
 
 	local UnitPoint = CheckUnit:getPoint()
 	local UnitPosition = { x = UnitPoint.x, y = UnitPoint.z }
@@ -2156,7 +1869,7 @@ trace.f( "routines" )
 
 	--env.info(( 'CarrierHeight: LandHeight = ' .. LandHeight .. ' CarrierHeight = ' .. CarrierHeight ))
 
-	trace.f( "routines", "Unit Height = " .. UnitHeight - LandHeight )
+	--trace.f( "routines", "Unit Height = " .. UnitHeight - LandHeight )
 	
 	return UnitHeight - LandHeight
 
@@ -2173,7 +1886,7 @@ Su34Menus = 0
 
 
 function Su34AttackCarlVinson(groupName)
-trace.menu("", "Su34AttackCarlVinson")
+--trace.menu("", "Su34AttackCarlVinson")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupCarlVinson = Group.getByName("US Carl Vinson #001")
@@ -2187,7 +1900,7 @@ trace.menu("", "Su34AttackCarlVinson")
 end
 
 function Su34AttackWest(groupName)
-trace.f("","Su34AttackWest")
+--trace.f("","Su34AttackWest")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupShipWest1 = Group.getByName("US Ship West #001")
@@ -2205,7 +1918,7 @@ trace.f("","Su34AttackWest")
 end
 
 function Su34AttackNorth(groupName)
-trace.menu("","Su34AttackNorth")
+--trace.menu("","Su34AttackNorth")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34.getController(groupSu34)
 	local groupShipNorth1 = Group.getByName("US Ship North #001")
@@ -2227,7 +1940,7 @@ trace.menu("","Su34AttackNorth")
 end
 
 function Su34Orbit(groupName)
-trace.menu("","Su34Orbit")
+--trace.menu("","Su34Orbit")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -2238,7 +1951,7 @@ trace.menu("","Su34Orbit")
 end
 
 function Su34TakeOff(groupName)
-trace.menu("","Su34TakeOff")
+--trace.menu("","Su34TakeOff")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -2248,7 +1961,7 @@ trace.menu("","Su34TakeOff")
 end
 
 function Su34Hold(groupName)
-trace.menu("","Su34Hold")
+--trace.menu("","Su34Hold")
 	local groupSu34 = Group.getByName( groupName )
 	local controllerSu34 = groupSu34:getController()
 	controllerSu34.setOption( controllerSu34, AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
@@ -2258,19 +1971,19 @@ trace.menu("","Su34Hold")
 end
 
 function Su34RTB(groupName)
-trace.menu("","Su34RTB")
+--trace.menu("","Su34RTB")
 	Su34Status.status[groupName] = 6
 	MessageToRed( string.format('%s: ',groupName) .. 'Return to Krasnodar. ', 10, 'RedStatus' .. groupName )
 end
 
 function Su34Destroyed(groupName)
-trace.menu("","Su34Destroyed")
+--trace.menu("","Su34Destroyed")
 	Su34Status.status[groupName] = 7
 	MessageToRed( string.format('%s: ',groupName) .. 'Destroyed. ', 30, 'RedStatus' .. groupName )
 end
 
 function GroupAlive( groupName )
-trace.menu("","GroupAlive")
+--trace.menu("","GroupAlive")
 	local groupTest = Group.getByName( groupName )
 
 	local groupExists = false
@@ -2279,17 +1992,17 @@ trace.menu("","GroupAlive")
 		groupExists = groupTest:isExist()
 	end
 
-	trace.r( "", "", { groupExists } )
+	--trace.r( "", "", { groupExists } )
 	return groupExists
 end
 
 function Su34IsDead()
-trace.f()
+--trace.f()
 
 end
 
 function Su34OverviewStatus()
-trace.menu("","Su34OverviewStatus")
+--trace.menu("","Su34OverviewStatus")
 	local msg = ""
 	local currentStatus = 0
 	local Exists = false
@@ -2340,25 +2053,25 @@ end
 
 
 function UpdateBoardMsg()
-trace.f()
+--trace.f()
 	Su34OverviewStatus()
 	MessageToRed( boardMsgRed.statusMsg, 15, 'RedStatus' )
 end
 
 function MusicReset( flg )
-trace.f()
+--trace.f()
 	trigger.action.setUserFlag(95,flg)
 end
 
 function PlaneActivate(groupNameFormat, flg)
-trace.f()
+--trace.f()
 	local groupName = groupNameFormat .. string.format("#%03d", trigger.misc.getUserFlag(flg))
 	--trigger.action.outText(groupName,10)
 	trigger.action.activateGroup(Group.getByName(groupName))
 end
 
 function Su34Menu(groupName)
-trace.f()
+--trace.f()
 
 	--env.info(( 'Su34Menu(' .. groupName .. ')' ))
 	local groupSu34 = Group.getByName( groupName )
@@ -2431,7 +2144,7 @@ end
 --- Obsolete function, but kept to rework in framework.
 
 function ChooseInfantry ( TeleportPrefixTable, TeleportMax )
-trace.f("Spawn")
+--trace.f("Spawn")
 	--env.info(( 'ChooseInfantry: ' ))
 
 	TeleportPrefixTableCount = #TeleportPrefixTable
@@ -2516,7 +2229,7 @@ end
 SpawnedInfantry = 0
 
 function LandCarrier ( CarrierGroup, LandingZonePrefix )
-trace.f()
+--trace.f()
 	--env.info(( 'LandCarrier: ' ))
 	--env.info(( 'LandCarrier: CarrierGroup = ' .. CarrierGroup:getName() ))
 	--env.info(( 'LandCarrier: LandingZone = ' .. LandingZonePrefix ))
@@ -2535,7 +2248,7 @@ end
 
 EscortCount = 0
 function EscortCarrier ( CarrierGroup, EscortPrefix, EscortLastWayPoint, EscortEngagementDistanceMax, EscortTargetTypes )
-trace.f()
+--trace.f()
 	--env.info(( 'EscortCarrier: ' ))
 	--env.info(( 'EscortCarrier: CarrierGroup = ' .. CarrierGroup:getName() ))
 	--env.info(( 'EscortCarrier: EscortPrefix = ' .. EscortPrefix ))
@@ -2601,7 +2314,7 @@ trace.f()
 end
 
 function SendMessageToCarrier( CarrierGroup, CarrierMessage )
-trace.f()
+--trace.f()
 
 	if CarrierGroup ~= nil then
 		MessageToGroup( CarrierGroup, CarrierMessage, 30, 'Carrier/' .. CarrierGroup:getName() )
@@ -2610,7 +2323,7 @@ trace.f()
 end
 
 function MessageToGroup( MsgGroup, MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	if type(MsgGroup) == 'string' then
 		--env.info( 'MessageToGroup: Converted MsgGroup string "' .. MsgGroup .. '" into a Group structure.' )
@@ -2629,7 +2342,7 @@ trace.f()
 end
 
 function MessageToUnit( UnitName, MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	if UnitName ~= nil then
 		local MsgTable = {}
@@ -2642,25 +2355,25 @@ trace.f()
 end
 
 function MessageToAll( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "Message", MsgTime, MsgName ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
 end
 
 function MessageToRed( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "To Red Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
 end
 
 function MessageToBlue( MsgText, MsgTime, MsgName )
-trace.f()
+--trace.f()
 
 	MESSAGE:New( MsgText, "To Blue Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
 end
 
 function getCarrierHeight( CarrierGroup )
-trace.f()
+--trace.f()
 
 	if CarrierGroup ~= nil then
 		if table.getn(CarrierGroup:getUnits()) == 1 then
@@ -2685,7 +2398,7 @@ trace.f()
 end
 
 function GetUnitHeight( CheckUnit )
-trace.f()
+--trace.f()
 
 	local UnitPoint = CheckUnit:getPoint()
 	local UnitPosition = { x = CurrentPoint.x, y = CurrentPoint.z }
@@ -2707,7 +2420,7 @@ _MusicTable.FileCnt = 0
 
 
 function MusicRegister( SndRef, SndFile, SndTime )
-trace.f()
+--trace.f()
 
 	env.info(( 'MusicRegister: SndRef = ' .. SndRef ))
 	env.info(( 'MusicRegister: SndFile = ' .. SndFile ))
@@ -2728,7 +2441,7 @@ trace.f()
 end
 
 function MusicToPlayer( SndRef, PlayerName, SndContinue )
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicToPlayer: SndRef = ' .. SndRef  ))
 
@@ -2751,7 +2464,7 @@ trace.f()
 end
 
 function MusicToGroup( SndRef, SndGroup, SndContinue )
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicToGroup: SndRef = ' .. SndRef  ))
 
@@ -2794,7 +2507,7 @@ trace.f()
 end
 
 function MusicCanStart(PlayerName)
-trace.f()
+--trace.f()
 
 	--env.info(( 'MusicCanStart:' ))
 
@@ -2836,7 +2549,7 @@ trace.f()
 end
 
 function MusicScheduler()
-trace.scheduled("", "MusicScheduler")
+--trace.scheduled("", "MusicScheduler")
 
 	--env.info(( 'MusicScheduler:' ))
 	if _MusicTable['Queue'] ~= nil and _MusicTable.FileCnt > 0  then
@@ -2862,8 +2575,9 @@ env.info(( 'Init: Scripts Loaded v1.1' ))
 
 Include.File( "Routines" )
 
-_TraceOn = true
-_TraceClass = {
+local _TraceOn = true
+local _TraceLevel = 1
+local _TraceClass = {
 	--DATABASE = true,
 	--SEAD = true,
 	--DESTROYBASETASK = true,
@@ -2873,7 +2587,7 @@ _TraceClass = {
 	--ZONE = true,
 	--GROUP = true,
 	--UNIT = true,
-	--CLIENT = true,
+  --CLIENT = true,
 	--CARGO = true,
 	--CARGO_GROUP = true,
 	--CARGO_PACKAGE = true,
@@ -2909,7 +2623,6 @@ FORMATION = {
 -- @return #BASE
 -- @usage
 -- function TASK:New()
--- trace.f(self.ClassName)
 --
 --     local self = BASE:Inherit( self, BASE:New() )
 -- 
@@ -2958,8 +2671,31 @@ function BASE:Inherited( Child )
 	return Parent
 end
 
+--- Get the ClassName + ClassID of the class instance.
+-- The ClassName + ClassID is formatted as '%s#%09d'. 
+-- @param #BASE self
+-- @return #string The ClassName + ClassID of the class instance.
+function BASE:GetClassNameAndID()
+  return string.format( '%s#%09d', self:GetClassName(), self:GetClassID() )
+end
+
+--- Get the ClassName of the class instance.
+-- @param #BASE self
+-- @return #string The ClassName of the class instance.
+function BASE:GetClassName()
+  return self.ClassName
+end
+
+--- Get the ClassID of the class instance.
+-- @param #BASE self
+-- @return #string The ClassID of the class instance.
+function BASE:GetClassID()
+  return self.ClassID
+end
+
+
 function BASE:AddEvent( Event, EventFunction )
-trace.f( self.ClassName, Event )
+	self:F( Event )
 
 	self.Events[#self.Events+1] = {}
 	self.Events[#self.Events].Event = Event
@@ -2971,22 +2707,20 @@ end
 
 
 function BASE:EnableEvents()
-trace.f( self.ClassName )
+	self:F( #self.Events )
 
-	trace.i( self.ClassName, #self.Events )
 	for EventID, Event in pairs( self.Events ) do
 		Event.Self = self
 		Event.EventEnabled = true
 	end
-	--env.info( 'EnableEvent Table Task = ' .. tostring(self) )
 	self.Events.Handler = world.addEventHandler( self )
 
 	return self
 end
 
 function BASE:DisableEvents()
-trace.f( self.ClassName )
-
+	self:F()
+  
 	world.removeEventHandler( self )
 	for EventID, Event in pairs( self.Events ) do
 		Event.Self = nil
@@ -2997,7 +2731,7 @@ trace.f( self.ClassName )
 end
 
 
-BaseEventCodes = {
+local BaseEventCodes = {
    "S_EVENT_SHOT",
    "S_EVENT_HIT",
    "S_EVENT_TAKEOFF",
@@ -3037,7 +2771,7 @@ BaseEventCodes = {
 
 
 function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
-trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } )
+	self:F( { EventTime, Initiator, IniUnitName, place, subplace } )
 
 	local Event = {
 		id = world.event.S_EVENT_BIRTH,
@@ -3052,7 +2786,7 @@ trace.f( self.ClassName, { EventTime, Initiator, IniUnitName, place, subplace } 
 end
 
 function BASE:CreateEventCrash( EventTime, Initiator )
-trace.f( self.ClassName, { EventTime, Initiator } )
+	self:F( { EventTime, Initiator } )
 
 	local Event = {
 		id = world.event.S_EVENT_CRASH,
@@ -3064,7 +2798,6 @@ trace.f( self.ClassName, { EventTime, Initiator } )
 end
 												
 function BASE:onEvent(event)
---trace.f(self.ClassName, event )
 
 	--env.info( 'onEvent Table self = ' .. tostring(self) )
 	if self then
@@ -3081,7 +2814,7 @@ function BASE:onEvent(event)
 						if event.target and event.target:isExist() then
 							event.TgtUnitName = event.target:getName()
 						end
-						trace.i( self.ClassName, { BaseEventCodes[event.id], event } )
+						self:T( { BaseEventCodes[event.id], event } )
 						EventObject.EventFunction( self, event )
 					end
 				end
@@ -3094,6 +2827,45 @@ end
 -- Trace section
 
 -- Log a trace (only shown when trace is on)
+-- TODO: Make trace function using variable parameters.
+
+function BASE:F( Arguments )
+
+  if _TraceOn and _TraceClass[self.ClassName] then
+
+    local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = debug.getinfo( 3, "l" )
+    
+    local Function = "function"
+    if DebugInfoCurrent.name then
+      Function = DebugInfoCurrent.name
+    end
+
+    local LineCurrent = DebugInfoCurrent.currentline
+    local LineFrom = 0
+    if DebugInfoFrom then
+      LineFrom = DebugInfoFrom.currentline
+    end
+    env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  end
+end
+
+function BASE:F2( Arguments )
+
+  if _TraceLevel >= 2 then
+    self:F( Arguments )
+  end
+  
+end
+
+function BASE:F3( Arguments )
+
+  if _TraceLevel >= 3 then
+    self:F( Arguments )
+  end
+  
+end
+
 function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
@@ -3111,9 +2883,27 @@ function BASE:T( Arguments )
 		if DebugInfoFrom then
 		  LineFrom = DebugInfoFrom.currentline
 	  end
-		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
 	end
 end
+
+function BASE:T2( Arguments )
+
+  if _TraceLevel >= 2 then
+    self:T( Arguments )
+  end
+  
+end
+
+function BASE:T3( Arguments )
+
+  if _TraceLevel >= 3 then
+    self:T( Arguments )
+  end
+  
+end
+
+
 
 -- Log an exception
 function BASE:E( Arguments )
@@ -3238,6 +3028,7 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
 	end
 
 	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+	self:F( { MenuClient, MenuText, ParentMenu } )
 
   self.MenuClient = MenuClient
   self.MenuClientGroupID = MenuClient:GetClientGroupID()
@@ -3340,7 +3131,7 @@ Include.File( "Unit" )
 --- The GROUP class
 -- @type GROUP
 -- @extends Base#BASE
--- @field #Group DCSGroup The DCS group class.
+-- @field DCSGroup#Group DCSGroup The DCS group class.
 -- @field #string GroupName The name of the group.
 -- @field #number GroupID the ID of the group.
 -- @field #table Controller The controller of the group.
@@ -3349,17 +3140,19 @@ GROUP = {
 	GroupName = "",
 	GroupID = 0,
 	Controller = nil,
+	DCSGroup = nil,
 	}
 	
 --- A DCSGroup
--- @type Group
+-- @type DCSGroup
 -- @field id_ The ID of the group in DCS
 
-GROUPS = {}
+--- The GROUPS structure contains references to all the created GROUP instances.
+local GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
 -- @param self
--- @param #Group DCSGroup The DCS Group
+-- @param DCSGroup#Group DCSGroup The DCS Group
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
 	local self = BASE:Inherit( self, BASE:New() )
@@ -3373,6 +3166,8 @@ function GROUP:New( DCSGroup )
   else
     self:E( { "DCSGroup is nil or does not exist, cannot initialize GROUP!", self.DCSGroup } )
   end
+  
+  GROUPS[self.GroupID] = self
 
 	return self
 end
@@ -3393,6 +3188,8 @@ function GROUP:NewFromName( GroupName )
     self.Controller = self.DCSGroup:getController()
 	end
 
+  GROUPS[self.GroupID] = self
+
 	return self
 end
 
@@ -3410,6 +3207,8 @@ function GROUP:NewFromDCSUnit( DCSUnit )
     self.GroupID = self.DCSGroup:getID()
     self.Controller = self.DCSGroup:getController()
   end
+
+  GROUPS[self.GroupID] = self
 
   return self
 end
@@ -3461,14 +3260,44 @@ function GROUP:GetName()
 	return self.GroupName
 end
 
---- Gets the current Point of the GROUP in VEC2 format.
--- @return #Vec2 Current x and Y position of the group.
+--- Gets the type name of the group.
+-- @param #GROUP self
+-- @return #string The type name of the group.
+function GROUP:GetTypeName()
+  self:F( self.GroupName )
+  
+  return self.DCSGroup:getUnit(1):getTypeName()
+end
+
+--- Gets the callsign of the fist unit of the group.
+-- @param #GROUP self
+-- @return #string The callsign of the first unit of the group.
+function GROUP:GetCallsign()
+  self:F( self.GroupName )
+  
+  return self.DCSGroup:getUnit(1):getCallsign()
+end
+
+
+
+--- Gets the current Point of the GROUP in VEC3 format.
+-- @return #Vec3 Current x,y and z position of the group.
 function GROUP:GetPointVec2()
 	self:F( self.GroupName )
 	
 	local GroupPoint = self:GetUnit(1):GetPointVec2()
 	self:T( GroupPoint )
 	return GroupPoint
+end
+
+--- Gets the current Point of the GROUP in VEC2 format.
+-- @return #Vec2 Current x and y position of the group in the 2D plane.
+function GROUP:GetPointVec2()
+	self:F( self.GroupName )
+  
+  local GroupPoint = self:GetUnit(1):GetPointVec2()
+  self:T( GroupPoint )
+  return GroupPoint
 end
 
 --- Gets the current Point of the GROUP in VEC3 format.
@@ -3498,9 +3327,9 @@ end
 
 
 --- Gets the DCS Unit.
--- @param self
+-- @param #GROUP self
 -- @param #number UnitNumber The number of the Unit to be returned.
--- @return #Unit The DCS Unit.
+-- @return Unit#UNIT The DCS Unit.
 function GROUP:GetUnit( UnitNumber )
 	self:F( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
@@ -3553,7 +3382,7 @@ end
 
 --- Returns the current maximum velocity of the group.
 -- Each unit within the group gets evaluated, and the maximum velocity (= the unit which is going the fastest) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Maximum velocity found.
 function GROUP:GetMaxVelocity()
 	self:F()
@@ -3593,68 +3422,196 @@ function GROUP:GetMaxHeight()
 
 end
 
+-- Tasks
 
---- Hold position at the current position of the first unit of the group.
--- @param self
--- @param #number Duration The maximum duration in seconds to hold the position.
--- @return #GROUP self
-function GROUP:TaskHoldPosition( Duration )
-trace.f( self.ClassName, { self.GroupName, Duration } )
+--- Popping current Task from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:PopCurrentTask()
+	self:F()
 
   local Controller = self:_GetController()
   
+  Controller:popTask()
+
+  return self
+end
+
+
+--- Pushing Task on the queue from the group.
+-- @param #GROUP self
+-- @return Group#GROUP self
+function GROUP:PushTask( DCSTask )
+	self:F()
+
+  local Controller = self:_GetController()
+  
+  Controller:pushTask( DCSTask )
+
+  return self
+end
+
+--- Return a condition section for a controlled task
+-- @param #GROUP self
+-- @param #Time time
+-- @param #string userFlag 
+-- @param #boolean userFlagValue 
+-- @param #string condition
+-- @param #Time duration 
+-- @param #number lastWayPoint 
+-- return #DCSTask
+function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
+	self:F( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
+  
+  local DCSStopCondition = {}
+  DCSStopCondition.time = time
+  DCSStopCondition.userFlag = userFlag
+  DCSStopCondition.userFlagValue = userFlagValue
+  DCSStopCondition.condition = condition
+  DCSStopCondition.duration = duration
+  DCSStopCondition.lastWayPoint = lastWayPoint
+  
+  self:T( { DCSStopCondition } )
+  return DCSStopCondition 
+end
+
+--- Return a Controlled Task taking a Task and a TaskCondition
+-- @param #GROUP self
+-- @param #DCSTask DCSTask
+-- @param #DCSStopCondition DCSStopCondition
+-- @return #DCSTask
+function GROUP:TaskControlled( DCSTask, DCSStopCondition )
+	self:F( { DCSTask, DCSStopCondition } )
+
+  local DCSTaskControlled
+  
+  DCSTaskControlled = { 
+    id = 'ControlledTask', 
+    params = { 
+      task = DCSTask, 
+      stopCondition = DCSStopCondition, 
+    } 
+  }
+  
+  self:T( { DCSTaskControlled } )
+  return DCSTaskControlled
+end
+
+--- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+-- @param #GROUP self
+-- @param #Vec2 Point The point to hold the position.
+-- @param #number Altitude The altitude to hold the position.
+-- @param #number Speed The speed flying when holding the position.
+-- @return #GROUP self
+function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
+	self:F( { self.GroupName, Point, Altitude, Speed  } )
+
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,
 --    point2 = Vec2,
 --    speed = Distance,
 --    altitude = Distance
     
-  local GroupPoint = self:GetPointVec2()
-  --id = 'Orbit', params = { pattern = AI.Task.OrbitPattern.RACE_TRACK } }, stopCondition = { duration = 600 } }
-  Controller:pushTask( { id = 'ControlledTask', 
-                         params = { task = { id = 'Orbit', 
-                                             params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
-                                                        point = GroupPoint, 
-                                                        speed = 0, 
-                                                        altitude = 30 
-                                                      } 
-                                           }, 
-                                    stopCondition = { duration = Duration 
-                                                    } 
-                                  } 
-                       }
-                     )
-  return self
+  local LandHeight = land.getHeight( Point )
+  
+  self:T( { LandHeight } )
+
+  local DCSTask = { id = 'Orbit', 
+                   params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
+                              point = Point, 
+                              speed = Speed, 
+                              altitude = Altitude + LandHeight
+                            } 
+                 } 
+
+  
+--  local AITask = { id = 'ControlledTask', 
+--                   params = { task = { id = 'Orbit', 
+--                                       params = { pattern = AI.Task.OrbitPattern.CIRCLE, 
+--                                                  point = Point, 
+--                                                  speed = Speed, 
+--                                                  altitude = Altitude + LandHeight
+--                                                } 
+--                                     }, 
+--                              stopCondition = { duration = Duration 
+--                                              } 
+--                            } 
+--                 }
+--               )
+               
+  return DCSTask
 end
 
+--- Orbit at the current position of the first unit of the group at a specified alititude
+-- @param #GROUP self
+-- @param #number Altitude The altitude to hold the position.
+-- @param #number Speed The speed flying when holding the position.
+-- @return #GROUP self
+function GROUP:TaskOrbitCircle( Altitude, Speed )
+	self:F( { self.GroupName, Altitude, Speed } )
+
+  local GroupPoint = self:GetPointVec2()
+  
+  return self:TaskOrbitCircleAtVec2( GroupPoint, Altitude, Speed )
+end
+
+
+
+--- Hold position at the current position of the first unit of the group.
+-- @param #GROUP self
+-- @param #number Duration The maximum duration in seconds to hold the position.
+-- @return #GROUP self
+function GROUP:TaskHoldPosition()
+	self:F( { self.GroupName } )
+
+  return self:TaskOrbitCircle( 30, 10 )
+end
+
+
 --- Land the group at a Vec2Point.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
-function GROUP:Land( Point, Duration )
-trace.f( self.ClassName, { self.GroupName, Point, Duration } )
+function GROUP:TaskLandAtVec2( Point, Duration )
+	self:F( { self.GroupName, Point, Duration } )
 
-	local Controller = self:_GetController()
-	
+  local DCSTask
+  
 	if Duration and Duration > 0 then
-		Controller:pushTask( { id = 'Land', params = { point = Point, durationFlag = true, duration = Duration } } )
+		DCSTask = { id = 'Land', params = { point = Point, durationFlag = true, duration = Duration } }
 	else
-		Controller:pushTask( { id = 'Land', params = { point = Point, durationFlag = false } } )
+		DCSTask = { id = 'Land', params = { point = Point, durationFlag = false } }
 	end
 
-	return self
+  self:T( DCSTask )
+	return DCSTask
 end
 
---- Attack the Unit.
--- @param self
--- @param #UNIT The unit.
+--- Land the group at a @{Zone#ZONE).
+-- @param #GROUP self
+-- @param Zone#ZONE Zone The zone where to land.
+-- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
-function GROUP:AttackUnit( AttackUnit )
+function GROUP:TaskLandAtZone( Zone, Duration )
+  self:F( { self.GroupName, Zone, Duration } )
+
+  local Point = Zone:GetPointVec2()
+  
+  local DCSTask = self:TaskLandAtVec2( Point, Duration )
+
+  self:T( DCSTask )
+  return DCSTask
+end
+
+
+--- Attack the Unit.
+-- @param #GROUP self
+-- @param Unit#UNIT The unit.
+-- @return #DCSTask The DCS task structure.
+function GROUP:TaskAttackUnit( AttackUnit )
 	self:F( { self.GroupName, AttackUnit } )
 
-  local Controller = self:_GetController()
-  
 --  AttackUnit = { 
 --    id = 'AttackUnit', 
 --    params = { 
@@ -3666,170 +3623,132 @@ function GROUP:AttackUnit( AttackUnit )
 --      attackQtyLimit = boolean, 
 --      groupAttack = boolean, 
 --    } 
---  }     
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
-
-  Controller:pushTask( { id = 'AttackUnit', 
-                         params = { unitId = AttackUnit:GetID(), 
-                                    expend = AI.Task.WeaponExpend.TWO,
-                                    groupAttack = true, 
-                                  } 
+--  }
+  
+  local DCSTask    
+  DCSTask = { id = 'AttackUnit', 
+              params = { unitId = AttackUnit:GetID(), 
+                         expend = AI.Task.WeaponExpend.TWO,
+                         groupAttack = true, 
                        } 
-                     )
-  return self
-end
-
---- Holding weapons.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROEHoldFire()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
+            } 
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  self:T( { DCSTask } )
   return self
 end
 
---- Return fire.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROEReturnFire()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
-  return self
-end
-
---- Openfire.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROEOpenFire()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
-  return self
-end
-
---- Weapon free.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROEWeaponFree()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
-  return self
-end
-
---- No evasion on enemy threats.
--- @param self
--- @return #GROUP self
-function GROUP:OptionEvasionNoReaction()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
-  return self
-end
-
---- Evasion passive defense.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROTPassiveDefense()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
-  return self
-end
-
---- Evade fire.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROTEvadeFire()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
-  return self
-end
-
---- Vertical manoeuvres.
--- @param self
--- @return #GROUP self
-function GROUP:OptionROTVertical()
-	self:F( { self.GroupName } )
-
-  local Controller = self:_GetController()
-  
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
-  return self
-end
 
 
 --- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
--- @param EmbarkingGroup The group to be embarked.
--- @return #GROUP self
-function GROUP:Embarking( Point, Duration, EmbarkingGroup )
-trace.f( self.ClassName, { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
+-- @param #GROUP EmbarkingGroup The group to be embarked.
+-- @return #DCSTask The DCS task structure
+function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
+	self:F( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
-	local Controller = self:_GetController()
+	local DCSTask 
+	DCSTask =  { id = 'Embarking', 
+	             params = { x = Point.x, 
+    	                    y = Point.y, 
+    		  							  duration = Duration, 
+    			  						  groupsForEmbarking = { EmbarkingGroup.GroupID },
+    				  					  durationFlag = true,
+    					  				  distributionFlag = false,
+    						  			  distribution = {},
+    						  			} 
+    				 }
 	
-	trace.i( self.ClassName, EmbarkingGroup.GroupID )
-	trace.i( self.ClassName, EmbarkingGroup.DCSGroup:getID() )
-	trace.i( self.ClassName, EmbarkingGroup.DCSGroup.id )
-	
-	Controller:pushTask( { id = 'Embarking', 
-	                       params = { x = Point.x, 
-	                                  y = Point.y, 
-									  duration = Duration, 
-									  groupsForEmbarking = { EmbarkingGroup.GroupID },
-									  durationFlag = true,
-									  distributionFlag = false,
-									  distribution = {},
-									} 
-						  } 
-						)
-	
-	return self
+	self:T( { DCSTask } )
+	return DCSTask
 end
 
 --- Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.
--- @param self
+-- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
--- @return #GROUP self
-function GROUP:EmbarkToTransport( Point, Radius )
-trace.f( self.ClassName, { self.GroupName, Point, Radius } )
+-- @return #DCSTask The DCS task structure.
+function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
+	self:F( { self.GroupName, Point, Radius } )
 
-	local Controller = self:_GetController()
-	
-	Controller:pushTask( { id = 'EmbarkToTransport', 
-	                       params = { x = Point.x, 
-						              y = Point.y, 
-									  zoneRadius = Radius,
-									} 
-						  } 
-						)
+  local DCSTask --#DCSTask
+	DCSTask = { id = 'EmbarkToTransport', 
+	            params = { x = Point.x, 
+				  	             y = Point.y, 
+		    							   zoneRadius = Radius,
+						           } 
+						} 
 
-	return self
+  self:T( { DCSTask } )
+	return DCSTask
 end
 
+--- Return a Misson task from a mission template.
+-- @param #GROUP self
+-- @param #table TaskMission A table containing the mission task.
+-- @return #DCSTask 
+function GROUP:TaskMission( TaskMission )
+	self:F( Points )
+  
+  local DCSTask
+  DCSTask = { id = 'Mission', params = { TaskMission, }, }
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Return a Misson task to follow a given route defined by Points.
+-- @param #GROUP self
+-- @param #table Points A table of route points.
+-- @return #DCSTask 
+function GROUP:TaskRoute( Points )
+  self:F( Points )
+  
+  local DCSTask
+  DCSTask = { id = 'Mission', params = { route = { points = Points, }, }, }
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Make the group to fly to a given point and hover.
+-- @param #GROUP self
+-- @param #Vec3 Point The destination point.
+-- @param #number Speed The speed to travel.
+-- @return #GROUP self
+function GROUP:TaskRouteToVec3( Point, Speed )
+  self:F( { Point, Speed } )
+
+  local GroupPoint = self:GetUnit( 1 ):GetPositionVec3()
+  
+  local PointFrom = {}
+  PointFrom.x = GroupPoint.x
+  PointFrom.y = GroupPoint.z
+  PointFrom.alt = GroupPoint.y
+  PointFrom.type = "Turning Point"
+
+  local PointTo = {}
+  PointTo.x = Point.x
+  PointTo.y = Point.z
+  PointTo.alt = Point.y
+  PointTo.type = "Turning Point"
+  PointTo.speed = Speed
+  PointTo.speed_locked = true
+  
+  local Points = { PointFrom, PointTo }
+  
+  self:T( Points )
+  
+  self:Route( Points )
+
+  return self
+end
+
+
+
 --- Make the group to follow a given route.
--- @param self
+-- @param #GROUP self
 -- @param #table GoPoints A table of Route Points.
 -- @return #GROUP self 
 function GROUP:Route( GoPoints )
@@ -3845,16 +3764,43 @@ function GROUP:Route( GoPoints )
 	return self
 end
 
+function GROUP:TaskRegisterWayPoint( WayPoint )
+
+  local DCSTask
+  
+  DCSTask = { id = "WrappedAction",
+              enabled = true,
+              auto = false,
+              number = 1,
+              params = 
+              {
+                  action = 
+                  {
+                      id = "Script",
+                      params = 
+                      {
+                          command = "local MissionGroup = GROUP.FindGroup( ... ) " ..
+                                    "env.info( MissionGroup:GetName() ) " ..
+                                    "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )",
+                      }, -- end of ["params"]
+                  }, -- end of ["action"]
+              }, -- end of ["params"]
+          }
+  self:T( DCSTask )
+  
+  return DCSTask
+end
+
 --- Route the group to a given zone.
 -- The group final destination point can be randomized.
 -- A speed can be given in km/h.
 -- A given formation can be given.
--- @param self
--- @param ZONE#ZONE Zone The zone where to route to.
+-- @param #GROUP self
+-- @param Zone#ZONE Zone The zone where to route to.
 -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
 -- @param #number Speed The speed.
--- @param BASE#FORMATION Formation The formation string.
-function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
+-- @param Base#FORMATION Formation The formation string.
+function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 	self:F( Zone )
 	
 	local GroupPoint = self:GetPointVec2()
@@ -3901,8 +3847,26 @@ function GROUP:RouteToZone( Zone, Randomize, Speed, Formation )
 	return self
 end
 
---- Return the route of a group.
--- @param self
+--- Return the mission template of the group.
+-- @param #GROUP self
+-- @return #table The MissionTemplate
+function GROUP:GetTaskMission()
+  self:F( self.GroupName )
+
+  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template )
+end
+
+--- Return the mission route of the group.
+-- @param #GROUP self
+-- @return #table The mission route defined by points.
+function GROUP:GetTaskRoute()
+  self:F( self.GroupName )
+
+  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template.route.points )
+end
+
+--- Return the route of a group by using the @{Database#DATABASE} class.
+-- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
 -- @param #boolean Randomize Randomization of the route, when true.
@@ -3951,6 +3915,9 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 end
 
 --- Get the controller for the GROUP.
+-- @function _GetController
+-- @param #GROUP self
+-- @return Controller#Controller
 function GROUP:_GetController()
 
 	return self.DCSGroup:getController()
@@ -3970,8 +3937,188 @@ function GROUP:IsTargetDetected( DCSObject )
 
   return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
 
-end--- UNIT Classes
--- @module UNIT
+end
+
+-- Options
+
+--- Holding weapons.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROEHoldFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  return self
+end
+
+--- Return fire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROEReturnFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  return self
+end
+
+--- Openfire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROEOpenFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  return self
+end
+
+--- Weapon free.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROEWeaponFree()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  return self
+end
+
+--- No evasion on enemy threats.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionEvasionNoReaction()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  return self
+end
+
+--- Evasion passive defense.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROTPassiveDefense()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENSE )
+  return self
+end
+
+--- Evade fire.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROTEvadeFire()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  return self
+end
+
+--- Vertical manoeuvres.
+-- @param #GROUP self
+-- @return #GROUP self
+function GROUP:OptionROTVertical()
+	self:F( { self.GroupName } )
+
+  local Controller = self:_GetController()
+  
+  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  return self
+end
+
+-- Message APIs
+
+--- Returns a message for a coalition or a client.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+-- @return Message#MESSAGE
+function GROUP:Message( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  return MESSAGE:New( Message, self:GetCallsign() .. "(" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
+end
+
+--- Send a message to all coalitions.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToAll( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToAll()
+end
+
+--- Send a message to the red coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToRed( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToRed()
+end
+
+--- Send a message to the blue coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+function GROUP:MessageToBlue( Message, Duration )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToBlue()
+end
+
+--- Send a message to a client.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param #Duration Duration The duration of the message.
+-- @param Client#CLIENT Client The client object receiving the message.
+function GROUP:MessageToClient( Message, Duration, Client )
+  self:F( { Message, Duration } )
+  
+  self:Message( Message, Duration ):ToClient( Client )
+end
+
+function GROUP:RegisterWayPoint( WayPoint )
+
+  self:Message( "Moving over wayPoint " .. WayPoint, 20 ):ToAll()
+  self.WayPoint = WayPoint
+end
+
+
+
+
+--- Find the created GROUP using the DCSGroup ID. If a GROUP was created with the DCSGroupID, the the GROUP instance will be returned.
+-- Otherwise nil will be returned.
+-- @param DCSGroup#Group Group
+-- @return #GROUP
+function GROUP.FindGroup( DCSGroup )
+
+  local self = GROUPS[DCSGroup:getID()] -- Group#GROUP
+  self:T( self:GetClassNameAndID() )
+  return self
+
+end
+
+
+--- UNIT Classes
+-- @module Unit
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -4111,9 +4258,8 @@ ZONE = {
 	}
 	
 function ZONE:New( ZoneName )
-trace.f( self.ClassName, ZoneName )
-
 	local self = BASE:Inherit( self, BASE:New() )
+	self:F( ZoneName )
 
 	local Zone = trigger.misc.getZone( ZoneName )
 	
@@ -4140,7 +4286,7 @@ function ZONE:GetPointVec2()
 end
 
 function ZONE:GetRandomPoint()
-trace.f( self.ClassName, self.ZoneName )
+	self:F( self.ZoneName )
 
 	local Point = {}
 
@@ -4149,18 +4295,17 @@ trace.f( self.ClassName, self.ZoneName )
 	Point.x = Zone.point.x + math.random( Zone.radius * -1, Zone.radius )
 	Point.y = Zone.point.z + math.random( Zone.radius * -1, Zone.radius )
 	
-	trace.i( self.ClassName, { Zone } )
-	trace.i( self.ClassName, { Point } )
+	self:T( { Zone, Point } )
 	
 	return Point
 end
 
 function ZONE:GetRadius()
-trace.f( self.ClassName, self.ZoneName )
+	self:F( self.ZoneName )
 
 	local Zone = trigger.misc.getZone( self.ZoneName )
 
-	trace.i( self.ClassName, { Zone } )
+	self:T( { Zone } )
 
 	return Zone.radius
 end
@@ -6150,9 +6295,10 @@ CLIENT = {
 
 
 --- Use this method to register new Clients within the MOF.
--- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @param string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @return CLIENT
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return #CLIENT
 -- @usage
 -- -- Create new Clients.
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -6180,11 +6326,59 @@ function CLIENT:Reset( ClientName )
 	self._Menus = {}
 end
 
+--- Checks for a client alive event and calls a function on a continuous basis.
+-- @param #CLIENT self
+-- @param #function CallBack Function.
+function CLIENT:Alive( CallBack )
+  self:F()
+  
+  self.ClientAlive2 = false
+  self.ClientCallBack = CallBack
+  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 5 )
+
+  return self
+end
+
+--- Checks if client is alive and returns true or false.
+-- @param #CLIENT self
+-- @param #boolean Returns true if client is alive.
+function CLIENT:IsAlive()
+  self:F( self.ClientName )
+  
+  local ClientDCSGroup = self:GetDCSGroup()
+  
+  if ClientDCSGroup then
+    self:T("true")
+    return true
+  end
+  
+  self:T( "false" )
+  return false
+end
+
+
+--- @param #CLIENT self
+function CLIENT:_AliveCheckCallBack()
+  self:F( { self.ClientName, self.ClientAlive2 } )
+
+  if self:IsAlive() then
+    if self.ClientAlive2 == false then
+      self:T("Calling Callback function")
+      self.ClientCallBack( self )
+      self.ClientAlive2 = true
+    end
+  else
+    if self.ClientAlive2 == true then
+      self.ClientAlive2 = false
+    end
+  end
+end
+
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @return Group#Group
+-- @return DCSGroup#Group
 function CLIENT:GetDCSGroup()
---self:T()
+  self:F3()
 
 --  local ClientData = Group.getByName( self.ClientName )
 --	if ClientData and ClientData:isExist() then
@@ -6196,33 +6390,33 @@ function CLIENT:GetDCSGroup()
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		--self:T( { "CoalitionData:", CoalitionData } )
+		self:T3( { "CoalitionData:", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
-			--self:T( { "UnitData:", UnitData } )
+			self:T3( { "UnitData:", UnitData } )
 			if UnitData and UnitData:isExist() then
 
 				local ClientGroup = Group.getByName( self.ClientName )
 				if ClientGroup then
-					self:T( "ClientGroup = " .. self.ClientName )
+					self:T3( "ClientGroup = " .. self.ClientName )
 					if ClientGroup:isExist() then 
 						if ClientGroup:getID() == UnitData:getGroup():getID() then
-							self:T( "Normal logic" )
-							self:T( self.ClientName .. " : group found!" )
+							self:T3( "Normal logic" )
+							self:T3( self.ClientName .. " : group found!" )
 							return ClientGroup
 						end
 					else
 						-- Now we need to resolve the bugs in DCS 1.5 ...
 						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
-						self:T( "Bug 1.5 logic" )
+						self:T3( "Bug 1.5 logic" )
 						local ClientUnits = _Database.Groups[self.ClientName].Units
-						self:T( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
+						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
 						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
-							self:T( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
+							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
 							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
 								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
 								self.ClientID = ClientGroupTemplate.groupId
 								self.ClientGroupUnit = UnitData
-								self:T( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
 								return ClientGroup
 							end
 						end
@@ -6237,10 +6431,10 @@ function CLIENT:GetDCSGroup()
 	-- For non player clients
 	local ClientGroup = Group.getByName( self.ClientName )
 	if ClientGroup then
-		self:T( "ClientGroup = " .. self.ClientName )
+		self:T3( "ClientGroup = " .. self.ClientName )
 		if ClientGroup:isExist() then 
-			self:T( "Normal logic" )
-			self:T( self.ClientName .. " : group found!" )
+			self:T3( "Normal logic" )
+			self:T3( self.ClientName .. " : group found!" )
 			return ClientGroup
 		end
 	end
@@ -6285,7 +6479,7 @@ function CLIENT:GetClientGroupName()
 end
 
 --- Returns the Unit of the @{CLIENT}.
--- @return Unit
+-- @return Unit#UNIT
 function CLIENT:GetClientGroupUnit()
 	self:F()
 
@@ -6301,7 +6495,7 @@ end
 --- Returns the DCSUnit of the @{CLIENT}.
 -- @return DCSUnit
 function CLIENT:GetClientGroupDCSUnit()
-	self:F()
+	self:F2()
 
   local ClientGroup = self:GetDCSGroup()
   
@@ -6318,11 +6512,32 @@ function CLIENT:GetUnit()
 	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
 
+--- Returns the Point of the @{CLIENT}.
+-- @return DCSTypes#Vec2
+function CLIENT:GetPointVec2()
+	self:F()
+
+  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      local PointVec2 = {} --DCSTypes#Vec2
+      PointVec2.x = PointVec3.x
+      PointVec2.y = PointVec3.z
+      self:T( { PointVec2 } )
+      return PointVec2
+    end
+  end
+  
+  return nil
+end 
+
 
 --- Returns the Position of the @{CLIENT}.
--- @return Position
+-- @return DCSTypes#Position
 function CLIENT:ClientPosition()
---self:T()
+	self:F()
 
 	ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
@@ -6334,6 +6549,24 @@ function CLIENT:ClientPosition()
 	
 	return nil
 end 
+
+--- Returns the altitude of the @{CLIENT}.
+-- @return DCSTypes#Distance
+function CLIENT:GetAltitude()
+	self:F()
+
+  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      return PointVec3.y
+    end
+  end
+  
+  return nil
+end 
+
 
 --- Transport defines that the Client is a Transport.
 -- @return CLIENT
@@ -6442,13 +6675,12 @@ end
 -- Messages are sent to Clients with MESSAGE:@{ToClient}().
 -- Messages are sent to Coalitions with MESSAGE:@{ToCoalition}().
 -- Messages are sent to All Players with MESSAGE:@{ToAll}().
--- @module MESSAGE
+-- @module Message
 
-Include.File( "Trace" )
 Include.File( "Base" )
 
 --- The MESSAGE class
--- @type
+-- @type MESSAGE
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -6497,8 +6729,9 @@ function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
 end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
--- @param CLIENT Client is the Group of the Client.
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @param Client#CLIENT Client is the Group of the Client.
+-- @return #MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
 -- -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
@@ -6520,15 +6753,16 @@ function MESSAGE:ToClient( Client )
 	if Client and Client:GetClientGroupID() then
 
 		local ClientGroupID = Client:GetClientGroupID()
-		trace.i( self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
 		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
 	return self
 end
 
---- Sends a MESSAGE to the Blue coalition. 
--- @return MESSAGE
+--- Sends a MESSAGE to the Blue coalition.
+-- @param #MESSAGE self 
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the BLUE coalition.
 -- MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToBlue()
@@ -6546,7 +6780,8 @@ function MESSAGE:ToBlue()
 end
 
 --- Sends a MESSAGE to the Red Coalition. 
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToRed()
@@ -6564,8 +6799,9 @@ function MESSAGE:ToRed( )
 end
 
 --- Sends a MESSAGE to a Coalition. 
+-- @param #MESSAGE self
 -- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
--- @return MESSAGE
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created with the @{New} method to the RED coalition.
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" ):ToCoalition( coalition.side.RED )
@@ -6578,7 +6814,7 @@ function MESSAGE:ToCoalition( CoalitionSide )
 	self:F( CoalitionSide )
 
 	if CoalitionSide then
-		trace.i(self.ClassName, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
 		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
 	end
 	
@@ -6586,7 +6822,8 @@ function MESSAGE:ToCoalition( CoalitionSide )
 end
 
 --- Sends a MESSAGE to all players. 
--- @return MESSAGE
+-- @param #MESSAGE self
+-- @return #MESSAGE
 -- @usage
 -- -- Send a message created to all players.
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" ):ToAll()
@@ -7209,7 +7446,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 
 		
 	if not Task.IsSlingLoad then
-		trace.i(self.ClassName, Task.Cargo.CargoName)
+		self:T( Task.Cargo.CargoName)
 		
 		if Task.Cargo:OnBoarded( Client, Task.CurrentCargoZone ) then
 
@@ -7232,12 +7469,12 @@ function STAGELOAD:Executing( Mission, Client, Task )
 			if Cargo:IsSlingLoad() then
 				local CargoStatic = StaticObject.getByName( Cargo.CargoStaticName )
 				if CargoStatic then
-					trace.i(self.ClassName, "Cargo is found in the DCS simulator.")
+					self:T( "Cargo is found in the DCS simulator.")
 					local CargoStaticPosition = CargoStatic:getPosition().p
-					trace.i(self.ClassName, "Cargo Position x = " .. CargoStaticPosition.x .. ", y = " ..  CargoStaticPosition.y .. ", z = " ..  CargoStaticPosition.z )
+					self:T( "Cargo Position x = " .. CargoStaticPosition.x .. ", y = " ..  CargoStaticPosition.y .. ", z = " ..  CargoStaticPosition.z )
 					local CargoStaticHeight = routines.GetUnitHeight( CargoStatic )
 					if CargoStaticHeight > 5 then
-						trace.i(self.ClassName, "Cargo is airborne.")
+						self:T( "Cargo is airborne.")
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
@@ -7518,10 +7755,9 @@ TASK = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @return TASK
 function TASK:New()
-trace.f(self.ClassName)
-
   local self = BASE:Inherit( self, BASE:New() )
-
+	self:F()
+  
   -- assign Task default values during construction
   self.TaskBriefing = "Task: No Task."
   self.Time = timer.getTime()
@@ -7531,14 +7767,14 @@ trace.f(self.ClassName)
 end
 
 function TASK:SetStage( StageSequenceIncrement )
-trace.f(self.ClassName, { StageSequenceIncrement } )
+	self:F( { StageSequenceIncrement } )
 
 	local Valid = false
 	if StageSequenceIncrement ~= 0 then
 		self.ActiveStage = self.ActiveStage + StageSequenceIncrement
 		if 1 <= self.ActiveStage and self.ActiveStage <= #self.Stages then
 			self.Stage = self.Stages[self.ActiveStage]
-			trace.i( self.ClassName, { self.Stage.Name } )
+			self:T( { self.Stage.Name } )
 			self.Frequency = self.Stage.Frequency
 			Valid = true
 		else
@@ -7551,7 +7787,7 @@ trace.f(self.ClassName, { StageSequenceIncrement } )
 end
 
 function TASK:Init()
-trace.f(self.ClassName)
+	self:F()
 	self.ActiveStage = 0
 	self:SetStage(1)
 	self.TaskDone = false
@@ -7562,7 +7798,7 @@ end
 --- Get progress of a TASK.
 -- @return string GoalsText
 function TASK:GetGoalProgress()
-trace.f(self.ClassName)
+	self:F()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -7586,7 +7822,7 @@ end
 -- @param MISSION 	Mission 		Group structure describing the Mission.
 -- @param CLIENT	Client	 		Group structure describing the Client.
 function TASK:ShowGoalProgress( Mission, Client )
-trace.f(self.ClassName)
+	self:F()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -7608,32 +7844,32 @@ end
 
 --- Sets a TASK to status Done.
 function TASK:Done()
-trace.f(self.ClassName)
+	self:F()
 	self.TaskDone = true
 end
 
 --- Returns if a TASK is done.
 -- @return bool
 function TASK:IsDone()
-	trace.i( self.ClassName, self.TaskDone )
+	self:F( self.TaskDone )
 	return self.TaskDone
 end
 
 --- Sets a TASK to status failed.
 function TASK:Failed()
-trace.f(self.ClassName)
+	self:F()
 	self.TaskFailed = true
 end
 
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-	trace.i( self.ClassName, self.TaskFailed )
+	self:F( self.TaskFailed )
 	return self.TaskFailed
 end
 
 function TASK:Reset( Mission, Client )
-trace.f(self.ClassName)
+	self:F()
 	self.ExecuteStage = _TransportExecuteStage.NONE
 end
 
@@ -7647,7 +7883,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK.
 -- @return bool
 function TASK:Goal( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7662,7 +7898,7 @@ end
 -- @param number GoalTotal is the number of times the GoalVerb needs to be achieved.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:SetGoalTotal( GoalTotal, GoalVerb )
-trace.f(self.ClassName, { GoalTotal, GoalVerb } )
+	self:F( { GoalTotal, GoalVerb } )
 	
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
@@ -7677,7 +7913,7 @@ end
 --- Gets the total of Goals to be achieved within the TASK of the GoalVerb.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:GetGoalTotal( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7693,7 +7929,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:SetGoalCount( GoalCount, GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7708,7 +7944,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:IncreaseGoalCount( GoalCountIncrease, GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7722,7 +7958,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalCount( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7737,7 +7973,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalPercentage( GoalVerb )
-trace.f(self.ClassName)
+	self:F()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -7755,10 +7991,10 @@ function TASK:IsGoalReached( )
 	local GoalReached = true
 
 	for GoalVerb, Goals in pairs( self.GoalTasks ) do
-		trace.i( self.ClassName, { "GoalVerb", GoalVerb } )
+		self:T( { "GoalVerb", GoalVerb } )
 		if self:Goal( GoalVerb ) then
 			local GoalToDo = self:GetGoalTotal( GoalVerb ) - self:GetGoalCount( GoalVerb )
-			trace.i( self.ClassName, "GoalToDo = " .. GoalToDo )
+			self:T( "GoalToDo = " .. GoalToDo )
 			if GoalToDo <= 0 then
 			else
 				GoalReached = false
@@ -7769,7 +8005,7 @@ function TASK:IsGoalReached( )
 		end
 	end
 	
-	trace.i( self.ClassName, GoalReached )
+	self:T( GoalReached )
 	return GoalReached
 end
 
@@ -7778,7 +8014,7 @@ end
 -- @param string GoalTask is a text describing the Goal of the TASK to be achieved.
 -- @param number GoalIncrease is a number by which the Goal achievement is increasing.
 function TASK:AddGoalCompletion( GoalVerb, GoalTask, GoalIncrease )
-trace.f( self.ClassName, { GoalVerb, GoalTask, GoalIncrease } )
+	self:F( { GoalVerb, GoalTask, GoalIncrease } )
 
 	if self:Goal( GoalVerb ) then
 		self.GoalTasks[GoalVerb].Goals[#self.GoalTasks[GoalVerb].Goals+1] = GoalTask
@@ -7791,7 +8027,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return string Goals
 function TASK:GetGoalCompletion( GoalVerb )
-trace.f( self.ClassName, { GoalVerb } )
+	self:F( { GoalVerb } )
 	
 	if self:Goal( GoalVerb ) then
 		local Goals = ""
@@ -7801,14 +8037,12 @@ trace.f( self.ClassName, { GoalVerb } )
 end
 
 function TASK.MenuAction( Parameter )
-trace.menu("TASK","MenuAction")
-  trace.l( "TASK", "MenuAction" )
   Parameter.ReferenceTask.ExecuteStage = _TransportExecuteStage.EXECUTING
   Parameter.ReferenceTask.Cargo = Parameter.CargoTask
 end
 
 function TASK:StageExecute()
-trace.f(self.ClassName)
+	self:F()
 
   local Execute = false
 
@@ -7827,7 +8061,7 @@ end
 
 --- Work function to set signal events within a TASK.
 function TASK:AddSignal( SignalUnitNames, SignalType, SignalColor, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   
 	local Valid = true
 	
@@ -7858,7 +8092,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeRed( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
@@ -7866,7 +8100,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeGreen( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
@@ -7874,7 +8108,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeBlue( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
@@ -7882,7 +8116,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeWhite( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
@@ -7890,7 +8124,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddSmokeOrange( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.SMOKE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end
 
@@ -7898,7 +8132,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareRed( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.RED, SignalHeight )
 end
 
@@ -7906,7 +8140,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareGreen( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.GREEN, SignalHeight )
 end
         
@@ -7914,7 +8148,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareBlue( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.BLUE, SignalHeight )
 end
 
@@ -7922,7 +8156,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareWhite( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.WHITE, SignalHeight )
 end
 
@@ -7930,7 +8164,7 @@ end
 -- @param table|string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.
 -- @param number SignalHeight Altitude that the Signal should be fired...
 function TASK:AddFlareOrange( SignalUnitNames, SignalHeight )
-trace.f(self.ClassName)
+	self:F()
   self:AddSignal( SignalUnitNames, TASK.SIGNAL.TYPE.FLARE, TASK.SIGNAL.COLOR.ORANGE, SignalHeight )
 end
 --- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
@@ -7948,28 +8182,25 @@ GOHOMETASK = {
 -- @param table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
 -- @return GOHOMETASK
 function GOHOMETASK:New( LandingZones )
-trace.f(self.ClassName)
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
-
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F( { LandingZones } )
   local Valid = true
   
   Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
     
   if  Valid then
-    Child.Name = 'Fly Home'
-    Child.TaskBriefing = "Task: Fly back to your home base. Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to your home base."
+    self.Name = 'Fly Home'
+    self.TaskBriefing = "Task: Fly back to your home base. Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to your home base."
 	if type( LandingZones ) == "table" then
-		Child.LandingZones = LandingZones
+		self.LandingZones = LandingZones
 	else
-		Child.LandingZones = { LandingZones }
+		self.LandingZones = { LandingZones }
 	end
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-		Child.SetStage( Child, 1 )
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
+		self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end
 --- A DESTROYBASETASK will monitor the destruction of Groups and Units. This is a BASE class, other classes are derived from this class.
 -- @module DESTROYBASETASK
@@ -8072,27 +8303,25 @@ DESTROYGROUPSTASK = {
 -- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
 ---@return DESTROYGROUPSTASK
 function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
-trace.f(self.ClassName)
-
-	-- Inheritance
-	local Child = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
-
-	Child.Name = 'Destroy Groups'
-	Child.GoalVerb = "Destroy " .. DestroyGroupType
+	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
+	self:F()
+  
+	self.Name = 'Destroy Groups'
+	self.GoalVerb = "Destroy " .. DestroyGroupType
 	
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.EventDead )
-	Child.AddEvent( Child, world.event.S_EVENT_CRASH, Child.EventDead )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+	self:AddEvent( world.event.S_EVENT_CRASH, self.EventDead )
 	--Child.AddEvent( Child, world.event.S_EVENT_PILOT_DEAD, Child.EventDead )
 
-	return Child
+	return self
 end
 
 --- Report Goal Progress.
 -- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-trace.f(self.ClassName)
-	trace.i( self.ClassName, DestroyGroup:getSize() )
+	self:F( { DestroyGroup, DestroyUnit } )
+	self:T( DestroyGroup:getSize() )
 
 	local DestroyCount = 0
 	if DestroyGroup then
@@ -8127,29 +8356,26 @@ DESTROYRADARSTASK = {
 -- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
 -- @return DESTROYRADARSTASK
 function DESTROYRADARSTASK:New( DestroyGroupNames )
-trace.f(self.ClassName)
+	local self = BASE:Inherit( self, DESTROYGROUPSTASK:New( 'radar installations', 'radars', DestroyGroupNames ) )
+	self:F()
 
-	-- Inheritance
-	local Child = BASE:Inherit( self, DESTROYGROUPSTASK:New( 'radar installations', 'radars', DestroyGroupNames ) )
-
-	Child.Name = 'Destroy Radars'
-
+	self.Name = 'Destroy Radars'
 	
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.EventDead )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
 
-	return Child
+	return self
 end
 
 --- Report Goal Progress.
 -- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYRADARSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-trace.f(self.ClassName)
+	self:F( { DestroyGroup, DestroyUnit } )
 
 	local DestroyCount = 0
 	if DestroyUnit and DestroyUnit:hasSensors( Unit.SensorType.RADAR, Unit.RadarType.AS ) then
 		if DestroyUnit and DestroyUnit:getLife() <= 1.0 then
-			trace.i( self.ClassName, 'Destroyed a radar' )
+			self:T( 'Destroyed a radar' )
 			DestroyCount = 1
 		end
 	end
@@ -8174,33 +8400,28 @@ DESTROYUNITTYPESTASK = {
 -- @param string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
 -- @return DESTROYUNITTYPESTASK
 function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes )
-trace.f(self.ClassName)
-
-	-- Inheritance
-	local Child = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames ) )
-	
+	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames ) )
+	self:F( { DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes } )
+  	
 	if type(DestroyUnitTypes) == 'table' then
-		Child.DestroyUnitTypes = DestroyUnitTypes
+		self.DestroyUnitTypes = DestroyUnitTypes
 	else
-		Child.DestroyUnitTypes = { DestroyUnitTypes }
+		self.DestroyUnitTypes = { DestroyUnitTypes }
 	end
 	
-	Child.Name = 'Destroy Unit Types'
-	Child.GoalVerb = "Destroy " .. DestroyGroupType
+	self.Name = 'Destroy Unit Types'
+	self.GoalVerb = "Destroy " .. DestroyGroupType
 
-	--env.info( 'New Types Child = ' .. tostring(Child) )
-	--env.info( 'New Types self = ' .. tostring(self) )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
 
-	Child.AddEvent( Child, world.event.S_EVENT_DEAD, Child.EventDead )
-
-	return Child
+	return self
 end
 
 --- Report Goal Progress.
 -- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
 -- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
 function DESTROYUNITTYPESTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-trace.f(self.ClassName)
+	self:F( { DestroyGroup, DestroyUnit } )
 
 	local DestroyCount = 0
 	for UnitTypeID, UnitType in pairs( self.DestroyUnitTypes ) do
@@ -8462,11 +8683,11 @@ function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
 
 	local ClientGroupID = Client:GetClientGroupID()
 	
-	trace.i( self.ClassName, ClientGroupID )
+	self:T( ClientGroupID )
 	
 	for CargoID, Cargo in pairs( Cargos ) do
 
-		trace.i( self.ClassName, { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo.CargoWeight } )
+		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo.CargoWeight } )
 		
 		if Cargo:IsStatusLoaded() and Client == Cargo:IsLoadedInClient() then
 
@@ -8480,7 +8701,7 @@ function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
 					self.TEXT[1] .. " " .. Cargo.CargoType, 
 					nil
 				)
-				trace.i( self.ClassName, 'Added DeployMenu ' .. self.TEXT[1] )
+				self:T( 'Added DeployMenu ' .. self.TEXT[1] )
 			end
 			
 			if Client._Menus[Cargo.CargoType].DeploySubMenus == nil then
@@ -8488,7 +8709,7 @@ function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
 			end
 			
 			if Client._Menus[Cargo.CargoType].DeployMenu == nil then
-				trace.i( self.ClassName, 'deploymenu is nil' )
+				self:T( 'deploymenu is nil' )
 			end
 
 			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ] = missionCommands.addCommandForGroup(
@@ -8498,7 +8719,7 @@ function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
 				self.MenuAction,
 				{ ReferenceTask = self, CargoTask = Cargo }
 			)
-			trace.i( self.ClassName, 'Added DeploySubMenu ' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
+			self:T( 'Added DeploySubMenu ' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
 		end
 	end
 
@@ -8508,19 +8729,19 @@ function DEPLOYTASK:RemoveCargoMenus( Client )
 	self:F()
 
 	local ClientGroupID = Client:GetClientGroupID()
-	trace.i( self.ClassName, ClientGroupID )
+	self:T( ClientGroupID )
 
 	for MenuID, MenuData in pairs( Client._Menus ) do
 		if MenuData.DeploySubMenus ~= nil then
 			for SubMenuID, SubMenuData in pairs( MenuData.DeploySubMenus ) do
 				missionCommands.removeItemForGroup( ClientGroupID, SubMenuData )
-				trace.i( self.ClassName, "Removed DeploySubMenu " )
+				self:T( "Removed DeploySubMenu " )
 				SubMenuData = nil
 			end
 		end
 		if MenuData.DeployMenu then
 			missionCommands.removeItemForGroup( ClientGroupID, MenuData.DeployMenu )
-			trace.i( self.ClassName, "Removed DeployMenu " )
+			self:T( "Removed DeployMenu " )
 			MenuData.DeployMenu = nil
 		end
 	end
@@ -8539,21 +8760,19 @@ NOTASK = {
 
 --- Creates a new NOTASK.
 function NOTASK:New()
-trace.f(self.ClassName)
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
-
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F()
+  
   local Valid = true
 
   if  Valid then
-    Child.Name = 'Nothing'
-    Child.TaskBriefing = "Task: Execute your mission."
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEDONE:New() }
-	Child.SetStage( Child, 1 )
+    self.Name = 'Nothing'
+    self.TaskBriefing = "Task: Execute your mission."
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEDONE:New() }
+	self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end
 --- A ROUTETASK orchestrates the travel to a specific zone defined within the ME.
 -- @module ROUTETASK
@@ -8570,32 +8789,30 @@ ROUTETASK = {
 -- @param string TaskBriefing (optional) Defines a text describing the briefing of the task.
 -- @return ROUTETASK
 function ROUTETASK:New( LandingZones, TaskBriefing )
-trace.f(self.ClassName, { LandingZones, TaskBriefing } )
-
-  -- Child holds the inherited instance of the PICKUPTASK Class to the BASE class.
-  local Child = BASE:Inherit( self, TASK:New() )
+  local self = BASE:Inherit( self, TASK:New() )
+	self:F( { LandingZones, TaskBriefing } )
 
   local Valid = true
   
   Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
     
   if  Valid then
-    Child.Name = 'Route To Zone'
+    self.Name = 'Route To Zone'
 	if TaskBriefing then
-		Child.TaskBriefing = TaskBriefing .. " Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
+		self.TaskBriefing = TaskBriefing .. " Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
 	else
-		Child.TaskBriefing = "Task: Fly to specified zone(s). Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
+		self.TaskBriefing = "Task: Fly to specified zone(s). Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
 	end
 	if type( LandingZones ) == "table" then
-		Child.LandingZones = LandingZones
+		self.LandingZones = LandingZones
 	else
-		Child.LandingZones = { LandingZones }
+		self.LandingZones = { LandingZones }
 	end
-    Child.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-	Child.SetStage( Child, 1 )
+    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
+	self.SetStage( self, 1 )
   end
   
-  return Child
+  return self
 end
 
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
@@ -8748,24 +8965,19 @@ function MISSION:ReportTrigger()
 
 	if self.MissionReportShow == true then
 		self.MissionReportShow = false
-trace.r( "MISSION", "1", { true } )
 		return true
 	else
 		if self.MissionReportFlash == true then
 			if timer.getTime() >= self.MissionReportTrigger then
 				self.MissionReportTrigger = timer.getTime() + self.MissionTimeInterval
-trace.r( "MISSION", "2", { true } )
 				return true
 			else
-trace.r( "MISSION", "3", { false } )
 				return false
 			end
 		else
-trace.r( "MISSION", "4", { false } )
 			return false 
 		end
 	end
-trace.e()
 end
 
 --- Report the status of all MISSIONs to all active Clients.
@@ -8873,7 +9085,6 @@ function MISSION:AddClient( Client )
 		self._Clients[Client.ClientName] = Client
 	end
 
-trace.r( self.ClassName, "" )
 	return Client
 end
 
@@ -8991,13 +9202,10 @@ MISSIONSCHEDULER = {
 
 --- This is the main MISSIONSCHEDULER Scheduler function. It is considered internal and is automatically created when the Mission.lua file is included.
 function MISSIONSCHEDULER.Scheduler()
-trace.scheduled("MISSIONSCHEDULER","Scheduler")
 
 	-- loop through the missions in the TransportTasks
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 	
-		trace.i( "MISSIONSCHEDULER", MissionName )
-		
 		if not Mission:IsCompleted() then
 		
 			-- This flag will monitor if for this mission, there are clients alive. If this flag is still false at the end of the loop, the mission status will be set to Pending (if not Failed or Completed).
@@ -9005,8 +9213,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 			
 			for ClientID, Client in pairs( Mission._Clients ) do
 			
-				trace.i( "MISSIONSCHEDULER", "Client: " .. Client.ClientName )
-
 				if Client:GetDCSGroup() then
 
 					-- There is at least one Client that is alive... So the Mission status is set to Ongoing.
@@ -9070,7 +9276,6 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 							end
 							 
 							if Task:IsDone() then
-								trace.i( "MISSIONSCHEDULER", "Task " .. Task.Name .. " is Done." )
 								--env.info( 'Scheduler: Mission '.. Mission.Name .. ' Task ' .. Task.Name .. ' Stage ' .. Task.Stage.Name .. ' done. TaskComplete = ' .. string.format ( "%s", TaskComplete and "true" or "false" ) )
 								TaskComplete = true -- when a task is not yet completed, a mission cannot be completed
 								
@@ -9146,29 +9351,22 @@ trace.scheduled("MISSIONSCHEDULER","Scheduler")
 		if Mission:ReportTrigger() then
 			Mission:ReportToAll()
 		end
-		
 	end
-
-trace.e()
 end
 
 --- Start the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Start()
-trace.f("MISSIONSCHEDULER")
   if MISSIONSCHEDULER ~= nil then
     MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
   end
-trace.e()
 end
 
 --- Stop the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Stop()
-trace.f("MISSIONSCHEDULER")
 	if MISSIONSCHEDULER.SchedulerId then
 		routines.removeFunction(MISSIONSCHEDULER.SchedulerId)
 		MISSIONSCHEDULER.SchedulerId = nil
 	end
-trace.e()
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
@@ -9182,13 +9380,11 @@ end
 --                        'Russia' )
 -- MISSIONSCHEDULER:AddMission( Mission )
 function MISSIONSCHEDULER.AddMission( Mission )
-trace.f("MISSIONSCHEDULER")
 	MISSIONSCHEDULER.Missions[Mission.Name] = Mission
 	MISSIONSCHEDULER.MissionCount = MISSIONSCHEDULER.MissionCount + 1
 	-- Add an overall AI Client for the AI tasks... This AI Client will facilitate the Events in the background for each Task. 
 	--MissionAdd:AddClient( CLIENT:New( 'AI' ) )
 	
-trace.r( "MISSIONSCHEDULER", "" )
 	return Mission
 end
 
@@ -9205,10 +9401,8 @@ end
 -- -- Now remove the Mission.
 -- MISSIONSCHEDULER:RemoveMission( 'Russia Transport Troops SA-6' )
 function MISSIONSCHEDULER.RemoveMission( MissionName )
-trace.f("MISSIONSCHEDULER")
 	MISSIONSCHEDULER.Missions[MissionName] = nil
 	MISSIONSCHEDULER.MissionCount = MISSIONSCHEDULER.MissionCount - 1
-trace.e()
 end
 
 --- Find a MISSION within the MISSIONSCHEDULER.
@@ -9225,24 +9419,19 @@ end
 -- -- Now find the Mission.
 -- MissionFind = MISSIONSCHEDULER:FindMission( 'Russia Transport Troops SA-6' )
 function MISSIONSCHEDULER.FindMission( MissionName )
-trace.f("MISSIONSCHEDULER")
-trace.r( "MISSIONSCHEDULER", "" )
 	return MISSIONSCHEDULER.Missions[MissionName]
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsShow( )
-trace.menu("MISSIONSCHEDULER","ReportMissionsShow")
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = true
 		Mission.MissionReportFlash = false 
 	end
-trace.e()
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsFlash( TimeInterval )
-trace.menu("MISSIONSCHEDULER","ReportMissionsFlash")
 	local Count = 0
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = false 
@@ -9252,50 +9441,41 @@ trace.menu("MISSIONSCHEDULER","ReportMissionsFlash")
 		env.info( "TimeInterval = "  .. Mission.MissionTimeInterval )
 		Count = Count + 1
 	end
-trace.e()
 end
 
 -- Internal function used by the MISSIONSCHEDULER menu.
 function MISSIONSCHEDULER.ReportMissionsHide( Prm )
-trace.menu("MISSIONSCHEDULER","ReportMissionsHide")
 	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
 		Mission.MissionReportShow = false
 		Mission.MissionReportFlash = false
 	end
-trace.e()
 end
 
 --- Enables a MENU option in the communications menu under F10 to control the status of the active missions.
 -- This function should be called only once when starting the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.ReportMenu()
-trace.f("MISSIONSCHEDULER")
 	local ReportMenu = SUBMENU:New( 'Status' )
 	local ReportMenuShow = COMMANDMENU:New( 'Show Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsShow, 0 )
 	local ReportMenuFlash = COMMANDMENU:New('Flash Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsFlash, 120 )
 	local ReportMenuHide = COMMANDMENU:New( 'Hide Report Missions', ReportMenu, MISSIONSCHEDULER.ReportMissionsHide, 0 )
-trace.e()
 end
 
 --- Show the remaining mission time.
 function MISSIONSCHEDULER:TimeShow()
-trace.f("MISSIONSCHEDULER")
 	self.TimeIntervalCount = self.TimeIntervalCount + 1
 	if self.TimeIntervalCount >= self.TimeTriggerShow then
 		local TimeMsg = string.format("%00d", ( self.TimeSeconds / 60 ) - ( timer.getTime() / 60 )) .. ' minutes left until mission reload.'
 		MESSAGE:New( TimeMsg, "Mission time", self.TimeShow, '/TimeMsg' ):ToAll()
 		self.TimeIntervalCount = 0
 	end
-trace.e()
 end
 
 function MISSIONSCHEDULER:Time( TimeSeconds, TimeIntervalShow, TimeShow )
-trace.f("MISSIONSCHEDULER")
 
 	self.TimeIntervalCount = 0
 	self.TimeSeconds = TimeSeconds
 	self.TimeIntervalShow = TimeIntervalShow
 	self.TimeShow = TimeShow
-trace.e()
 end
 
 --- CLEANUP Classes
@@ -9730,11 +9910,11 @@ function SPAWN:New( SpawnTemplatePrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self._OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
+	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
-	self.EnableEvents( self )
+	self:EnableEvents()
 
 	return self
 end
@@ -9773,11 +9953,11 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self._OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
+	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
-	self.EnableEvents( self )
+	self:EnableEvents()
 
 	return self
 end
@@ -10128,11 +10308,11 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param self
--- @param #UNIT HostUnit The air or ground unit dropping or unloading the group.
+-- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
 -- @param #number OuterRadius The outer radius in meters where the new group will be spawned.
 -- @param #number InnerRadius The inner radius in meters where the new group will NOT be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
--- @return GROUP#GROUP that was spawned.
+-- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
 function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
@@ -10178,14 +10358,14 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
             SpawnTemplate.units[UnitID].x = UnitPoint.x
             SpawnTemplate.units[UnitID].y = UnitPoint.y
           else
-            local CirclePos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
+            local CirclePos = routines.getRandPointInCircle( UnitPoint, OuterRadius, InnerRadius )
             SpawnTemplate.units[UnitID].x = CirclePos.x
             SpawnTemplate.units[UnitID].y = CirclePos.y
           end
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
         
-        local SpawnPos = routines.getRandPointInCircle( UnitPoint, InnerRadius+1, InnerRadius )
+        local SpawnPos = routines.getRandPointInCircle( UnitPoint, OuterRadius, InnerRadius )
         local Point = {}
         Point.type = "Turning Point"
         Point.x = SpawnPos.x
@@ -10866,13 +11046,13 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	self.AddEvent( self, world.event.S_EVENT_BIRTH, self.OnBirth )
-	self.AddEvent( self, world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self.AddEvent( self, world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
+	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
+	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
 	
-	self.EnableEvents( self )
+	self:EnableEvents()
 	
-	self.ScheduleStart( self )
+	self:ScheduleStart()
 
 	return self
 end
@@ -11005,8 +11185,8 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	self.AddEvent( self, world.event.S_EVENT_SHOT, self.EventShot )
-	self.EnableEvents( self )
+	self:AddEvent( world.event.S_EVENT_SHOT, self.EventShot )
+	self:EnableEvents()
 	
 	return self
 end
@@ -11108,7 +11288,7 @@ end
 -- * Report identified targets
 -- * Perform tasks per identified target: Report vector to target, paint target, kill target
 -- 
--- @module ESCORT
+-- @module Escort
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -11118,37 +11298,66 @@ Include.File( "Group" )
 Include.File( "Zone" )
 
 --- ESCORT class
--- @type
---
+-- @type ESCORT
+-- @extends Base#BASE
+-- @field Client#CLIENT EscortClient
+-- @field Group#GROUP EscortGroup
+-- @field #string EscortName
+-- @field #number FollowScheduler The id of the _FollowScheduler function.
+-- @field #boolean ReportTargets If true, nearby targets are reported.
+-- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
+-- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
+  EscortClient = nil,
+  EscortGroup = nil,
   Targets = {}, -- The identified targets
+  FollowScheduler = nil,
+  ReportTargets = true,
+  OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
+  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION
 }
+
+--- MENUPARAM type
+-- @type MENUPARAM
+-- @field #ESCORT ParamSelf
+-- @field #Distance ParamDistance
 
 --- ESCORT class constructor for an AI group
 -- @param self
--- @param #CLIENT EscortClient The client escorted by the EscortGroup.
--- @param #GROUP EscortGroup The group AI escorting the EscortClient.
+-- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
+-- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
 -- @return #ESCORT self
 function ESCORT:New( EscortClient, EscortGroup, EscortName )
   local self = BASE:Inherit( self, BASE:New() )
 	self:F( { EscortClient, EscortGroup, EscortName } )
   
-  self.EscortClient = EscortClient
-  self.EscortGroup = EscortGroup
+  self.EscortClient = EscortClient -- Client#CLIENT
+  self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
-  self.ReportTargets = true
+
+  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
  
    -- Escort Navigation  
-  self.EscortMenu = MENU_CLIENT:New( self.EscortClient, "Escort" .. self.EscortName )
-  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenu, ESCORT._HoldPosition, { ParamSelf = self } )
+  self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
+  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenuReportNavigation, ESCORT._HoldPosition, { ParamSelf = self } )
+  self.EscortMenuJoinUpAndHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
+  self.EscortMenuJoinUpAndFollow50Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 100", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 100 } )  
+  self.EscortMenuJoinUpAndFollow100Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 200", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 200 } )  
+  self.EscortMenuJoinUpAndFollow150Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 400", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 400 } )  
+  self.EscortMenuJoinUpAndFollow200Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 800", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 800 } )  
 
   -- Report Targets
-  self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report Targets", self.EscortMenu )
-  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets On", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
-  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report Targets Off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
+  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+
+  -- Scanning Targets
+  self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
 
   -- Attack Targets
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
@@ -11164,84 +11373,402 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   
   -- Reaction to Threats
   self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
-  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._EvasionNoReaction, { ParamSelf = self, } )
-  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._EvasionPassiveDefense, { ParamSelf = self, } )
-  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._EvasionEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._OptionEvasionVertical, { ParamSelf = self, } )
+  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._OptionROTNoReaction, { ParamSelf = self, } )
+  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._OptionROTPassiveDefense, { ParamSelf = self, } )
+  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._OptionROTEvadeFire, { ParamSelf = self, } )
+  self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._OptionROTVertical, { ParamSelf = self, } )
   
+  -- Cancel current Task
+  self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume Mission", self.EscortMenu )
+  self.EscortMenuResumeWayPoints = {}
+  local TaskPoints = self:RegisterRoute()
+  for WayPointID, WayPoint in pairs( TaskPoints ) do
+    self.EscortMenuResumeWayPoints[WayPointID] = MENU_CLIENT_COMMAND:New( self.EscortClient, "Resume from waypoint " .. WayPointID, self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
+  end
   
-  self.ScanForTargetsFunction = routines.scheduleFunction( self._ScanForTargets, { self }, timer.getTime() + 1, 30 )
+  -- Initialize the EscortGroup
+  
+  self.EscortGroup:OptionROTVertical()
+  self.EscortGroup:OptionROEOpenFire()
+  
+  self.EscortGroup:PushTask( EscortGroup:TaskRoute( TaskPoints ) )
+  
+  self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
 end
 
+
+--- @param #MENUPARAM MenuParam
 function ESCORT._HoldPosition( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:TaskHoldPosition( 300 )
-  MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/TaskHoldPosition" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  routines.removeFunction( self.FollowScheduler )
+
+  EscortGroup:PushTask( EscortGroup:TaskHoldPosition( 300 ) )
+  MESSAGE:New( "Holding Position at ... for 5 minutes.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/TaskHoldPosition" ):ToClient( EscortClient )
 end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._HoldPositionNearBy( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  --MenuParam.ParamSelf.EscortGroup:TaskOrbitCircleAtVec2( MenuParam.ParamSelf.EscortClient:GetPointVec2(), 300, 30, 0 )
+
+  routines.removeFunction( self.FollowScheduler )
+  
+  local PointFrom = {}
+  local GroupPoint = EscortGroup:GetPointVec2()
+  PointFrom = {}
+  PointFrom.x = GroupPoint.x
+  PointFrom.y = GroupPoint.y
+  PointFrom.speed = 250
+  PointFrom.type = AI.Task.WaypointType.TURNING_POINT
+  PointFrom.alt = EscortClient:GetAltitude()
+  PointFrom.alt_type = AI.Task.AltitudeType.BARO
+
+  local ClientPoint = MenuParam.ParamSelf.EscortClient:GetPointVec2()
+  local PointTo = {}
+  PointTo.x = ClientPoint.x
+  PointTo.y = ClientPoint.y
+  PointTo.speed = 250
+  PointTo.type = AI.Task.WaypointType.TURNING_POINT
+  PointTo.alt = EscortClient:GetAltitude()
+  PointTo.alt_type = AI.Task.AltitudeType.BARO
+  PointTo.task = EscortGroup:TaskOrbitCircleAtVec2( EscortClient:GetPointVec2(), 300, 30, 0 )
+  
+  local Points = { PointFrom, PointTo }
+  
+  EscortGroup:PushTask( EscortGroup:TaskRoute( Points ) )
+  MESSAGE:New( "Rejoining to your location. Please hold at your location.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/HoldPositionNearBy" ):ToClient( EscortClient )
+end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._JoinUpAndFollow( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  local Distance = MenuParam.ParamDistance
+  
+  if self.FollowScheduler then
+    routines.removeFunction( self.FollowScheduler )
+  end
+  
+  self.CT1 = 0
+  self.GT1 = 0
+  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, 1 )
+  EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
+end
+
 
 function ESCORT._ReportNearbyTargets( MenuParam )
-  MenuParam.ParamSelf:T()
-  
-  MenuParam.ParamSelf.ReportTargets = MenuParam.ParamReportTargets
 
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  self.ReportTargets = MenuParam.ParamReportTargets
+  
+  if self.ReportTargets then
+    if not self.ReportTargetsScheduler then
+      self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+    end
+  else
+    routines.removeFunction( self.ReportTargetsScheduler )
+    self.ReportTargetsScheduler = nil
+  end
 end
 
+--- @param #MENUPARAM MenuParam
+function ESCORT._ScanTargets30Seconds( MenuParam )
+  MenuParam.ParamSelf:T()
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  routines.removeFunction( self.FollowScheduler )
+
+  EscortGroup:PushTask( 
+    EscortGroup:TaskControlled( 
+      EscortGroup:TaskOrbitCircle( 200, 20 ), 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, 30, nil ) 
+      ) 
+  )
+  MESSAGE:New( "Scanning targets for 30 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets30Seconds" ):ToClient( EscortClient )
+end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._ScanTargets60Seconds( MenuParam )
+  MenuParam.ParamSelf:T()
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  routines.removeFunction( self.FollowScheduler )
+
+  EscortGroup:PushTask( 
+    EscortGroup:TaskControlled( 
+      EscortGroup:TaskOrbitCircle( 200, 20 ), 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, 60, nil ) 
+      ) 
+  )
+  MESSAGE:New( "Scanning targets for 60 seconds.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ScanTargets60Seconds" ):ToClient( EscortClient )
+end
+
+--- @param #MENUPARAM MenuParam
 function ESCORT._AttackTarget( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:AttackUnit( MenuParam.ParamUnit )
-  MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  local AttackUnit = MenuParam.ParamUnit 
+
+  routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
+
+  EscortGroup:OptionROEOpenFire()
+  EscortGroup:OptionROTVertical()
+  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  MESSAGE:New( "Attacking Unit", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackTarget" ):ToClient( EscortClient )
 end
 
+--- @param #MENUPARAM MenuParam
 function ESCORT._ROEHoldFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROEHoldFire()
-  MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROEHoldFire()
+  MESSAGE:New( "Holding weapons.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEHoldFire" ):ToClient( EscortClient )
 end
 
+--- @param #MENUPARAM MenuParam
 function ESCORT._ROEReturnFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROEReturnFire()
-  MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROEReturnFire()
+  MESSAGE:New( "Returning enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEReturnFire" ):ToClient( EscortClient )
 end
 
+--- @param #MENUPARAM MenuParam
 function ESCORT._ROEOpenFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROEOpenFire()
-  MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROEOpenFire()
+  MESSAGE:New( "Open fire on ordered targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEOpenFire" ):ToClient( EscortClient )
 end
 
+--- @param #MENUPARAM MenuParam
 function ESCORT._ROEWeaponFree( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROEWeaponFree()
-  MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROEWeaponFree()
+  MESSAGE:New( "Engaging targets.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ROEWeaponFree" ):ToClient( EscortClient )
 end
 
-function ESCORT._EvasionNoReaction( MenuParam )
+--- @param #MENUPARAM MenuParam
+function ESCORT._OptionROTNoReaction( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionEvasionNoReaction()
-  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionEvasionNoReaction()
+  MESSAGE:New( "We'll fight until death.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionEvasionNoReaction" ):ToClient( EscortClient )
 end
 
-function ESCORT._EvasionPassiveDefense( MenuParam )
+--- @param #MENUPARAM MenuParam
+function ESCORT._OptionROTPassiveDefense( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROTPassiveDefense()
-  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROTPassiveDefense()
+  MESSAGE:New( "We will use flares, chaff and jammers.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTPassiveDefense" ):ToClient( EscortClient )
 end
 
-function ESCORT._EvasionEvadeFire( MenuParam )
+--- @param #MENUPARAM MenuParam
+function ESCORT._OptionROTEvadeFire( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROTEvadeFire()
-  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROTEvadeFire()
+  MESSAGE:New( "We'll evade enemy fire.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTEvadeFire" ):ToClient( EscortClient )
 end
 
-function ESCORT._OptionEvasionVertical( MenuParam )
+--- @param #MENUPARAM MenuParam
+function ESCORT._OptionROTVertical( MenuParam )
 
-  MenuParam.ParamSelf.EscortGroup:OptionROTVertical()
-  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/AttackUnit" ):ToClient( MenuParam.ParamSelf.EscortClient )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  EscortGroup:OptionROTVertical()
+  MESSAGE:New( "We'll perform vertical evasive manoeuvres.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/OptionROTVertical" ):ToClient( EscortClient )
+end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._ResumeMission( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  local WayPoint = MenuParam.ParamWayPoint
+  
+  routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
+
+  local WayPoints = EscortGroup:GetTaskRoute()
+  self:T( WayPoint, WayPoints )
+  
+  for WayPointIgnore = 1, WayPoint do
+    table.remove( WayPoints, 1 )
+  end
+  
+  EscortGroup:PopCurrentTask()
+  EscortGroup:PushTask( EscortGroup:TaskRoute( WayPoints ) )
+  MESSAGE:New( "Resuming mission.", MenuParam.ParamSelf.EscortName, 10, "ESCORT/ResumeMission" ):ToClient( EscortClient )
+end
+
+function ESCORT:RegisterRoute()
+
+  local EscortGroup = self.EscortGroup -- Group#GROUP
+  
+  local TaskPoints = EscortGroup:GetTaskRoute()
+  self:T( TaskPoints )
+
+  for TaskPointID, TaskPoint in pairs( TaskPoints ) do
+    self:T( TaskPointID )
+    TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+    self:T( TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks] )
+  end
+  
+  self:T( TaskPoints )
+
+  return TaskPoints
+end
+
+--- @param Escort#ESCORT self
+function ESCORT:_FollowScheduler( FollowDistance )
+  self:F( { FollowDistance })
+
+  if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
+  
+    local ClientUnit = self.EscortClient:GetClientGroupUnit()
+    local GroupUnit = self.EscortGroup:GetUnit( 1 )
+
+    if self.CT1 == 0 and self.GT1 == 0 then
+      self.CV1 = ClientUnit:GetPositionVec3()
+      self.CT1 = timer.getTime()
+      self.GV1 = GroupUnit:GetPositionVec3()
+      self.GT1 = timer.getTime()
+    else
+      local CT1 = self.CT1
+      local CT2 = timer.getTime()
+      local CV1 = self.CV1
+      local CV2 = ClientUnit:GetPositionVec3()
+      self.CT1 = CT2
+      self.CV1 = CV2
+      
+      local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
+      local CT = CT2 - CT1
+      
+      local CS = ( 3600 / CT ) * ( CD / 1000 )
+      
+      self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
+      
+      local GT1 = self.GT1
+      local GT2 = timer.getTime()
+      local GV1 = self.GV1
+      local GV2 = GroupUnit:GetPositionVec3()
+      self.GT1 = GT2
+      self.GV1 = GV2
+      
+      local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
+      local GT = GT2 - GT1
+      
+      local GS = ( 3600 / GT ) * ( GD / 1000 )
+      
+      self:T2( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
+      
+      -- Calculate the group direction vector
+      local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z }
+      
+      -- Calculate GH2, GH2 with the same height as CV2.
+      local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
+      
+      -- Calculate the angle of GV to the orthonormal plane
+      local alpha = math.atan2( GV.z, GV.x )
+      
+      -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
+      -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
+      local CVI = { x = CV2.x + FollowDistance * math.cos(alpha), 
+                    y = GH2.y,
+                    z = CV2.z + FollowDistance * math.sin(alpha),   
+                  }
+                  
+      -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
+      local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
+      
+      -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
+      -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
+      -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
+      local DVu = { x = DV.x / FollowDistance, y = DV.y / FollowDistance, z = DV.z / FollowDistance }
+      
+      -- Now we can calculate the group destination vector GDV.
+      local GDV = { x = DVu.x * CS * 2 + CVI.x, y = CVI.y, z = DVu.z * CS * 2 + CVI.z }
+      self:T2( { "CV2:", CV2 } )
+      self:T2( { "CVI:", CVI } )
+      self:T2( { "GDV:", GDV } )
+      
+      -- Measure distance between client and group
+      local CatchUpDistance = ( ( GDV.x - GV2.x )^2 + ( GDV.y - GV2.y )^2 + ( GDV.z - GV2.z )^2 ) ^ 0.5
+      
+      -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
+      -- the requested Distance).
+      local Time = 30
+      local CatchUpSpeed = ( CatchUpDistance - ( CS * 2 ) ) / Time 
+      
+      local Speed = CS + CatchUpSpeed
+      if Speed < 0 then 
+        Speed = 0
+      end 
+
+      self:T( { "Client Speed, Escort Speed, Speed, FlyDistance, Time:", CS, GS, Speed, Distance, Time } )
+
+      -- Now route the escort to the desired point with the desired speed.
+      self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+    end
+  else
+    routines.removeFunction( self.FollowScheduler )
+  end
+
 end
 
 
-function ESCORT:_ScanForTargets()
+function ESCORT:_ReportTargetsScheduler()
 	self:F()
 
   self.Targets = {}
@@ -11349,6 +11876,7 @@ function ESCORT:_ScanForTargets()
     end
 
   else
-    routines.removeFunction( self.ScanForTargetsFunction )
+    routines.removeFunction( self.ReportTargetsScheduler )
+    self.ReportTargetsScheduler = nil
   end
 end
