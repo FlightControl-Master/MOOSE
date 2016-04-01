@@ -527,7 +527,7 @@ function GROUP:TaskAttackUnit( AttackUnit )
             } 
   
   self:T( { DCSTask } )
-  return self
+  return DCSTask
 end
 
 

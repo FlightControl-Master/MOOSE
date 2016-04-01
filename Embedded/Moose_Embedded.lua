@@ -3648,7 +3648,7 @@ function GROUP:TaskAttackUnit( AttackUnit )
             } 
   
   self:T( { DCSTask } )
-  return self
+  return DCSTask
 end
 
 
@@ -11551,6 +11551,8 @@ function ESCORT._AttackTarget( MenuParam )
 
   EscortGroup:OptionROEOpenFire()
   EscortGroup:OptionROTVertical()
+  
+  self:T( AttackUnit )
   
   EscortGroup:SetTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
