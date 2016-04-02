@@ -1,12 +1,9 @@
 --- Taking the lead of AI escorting your flight.
 -- The ESCORT class allows you to interact with escoring AI on your flight and take the lead.
--- The following commands will be available:
--- 
--- * Pop-up and Scan Area
--- * Re-Join Formation
--- * Hold Position in x km
--- * Report identified targets
--- * Perform tasks per identified target: Report vector to target, paint target, kill target
+-- @module Escort
+--
+--
+
 -- 
 -- @module Escort
 -- @author FlightControl

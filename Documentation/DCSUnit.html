@@ -1,0 +1,2040 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CLEANUP.html">CLEANUP</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li>DCSUnit</li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>DCSUnit</code></h1>
+   
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#Unit">Unit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(Unit)">Type <code>Unit</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).<">Unit.<</a></td>
+		<td class="summary">
+<p>Unit.AmmoItem> Ammo</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).AmmoItem">Unit.AmmoItem</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).Category">Unit.Category</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).Desc">Unit.Desc</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).DescAircraft">Unit.DescAircraft</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).DescAirplane">Unit.DescAirplane</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).DescHelicopter">Unit.DescHelicopter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).DescShip">Unit.DescShip</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).DescVehicle">Unit.DescVehicle</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).ID">Unit.ID</a></td>
+		<td class="summary">
+<p>Identifier of an unit. It assigned to an unit by the Mission Editor automatically. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).IRST">Unit.IRST</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).Optic">Unit.Optic</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).OpticType">Unit.OpticType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).Radar">Unit.Radar</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).RadarType">Unit.RadarType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).RefuelingSystem">Unit.RefuelingSystem</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).Sensor">Unit.Sensor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).SensorType">Unit.SensorType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).detectionDistanceAfterburner">Unit.detectionDistanceAfterburner</a></td>
+		<td class="summary">
+<p>..., engines are in afterburner mode</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).detectionDistanceIdle">Unit.detectionDistanceIdle</a></td>
+		<td class="summary">
+<p>detection of tail-on target with heat signature = 1 in upper hemisphere, engines are in idle</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).detectionDistanceMaximal">Unit.detectionDistanceMaximal</a></td>
+		<td class="summary">
+<p>..., engines are in maximal mode</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getAmmo">Unit:getAmmo()</a></td>
+		<td class="summary">
+<p>Returns the unit ammunition.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getByName">Unit.getByName(name)</a></td>
+		<td class="summary">
+<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getCallsign">Unit:getCallsign()</a></td>
+		<td class="summary">
+<p>Returns the unit's callsign - the localized string.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getController">Unit:getController()</a></td>
+		<td class="summary">
+<p>Returns controller of the unit if it exist and nil otherwise</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getDesc">Unit:getDesc()</a></td>
+		<td class="summary">
+<p>Returns unit descriptor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getFuel">Unit:getFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getGroup">Unit:getGroup()</a></td>
+		<td class="summary">
+<p>Returns the unit's group if it exist and nil otherwise</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getID">Unit:getID()</a></td>
+		<td class="summary">
+<p>returns the unit's unique identifier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getLife">Unit:getLife()</a></td>
+		<td class="summary">
+<p>Returns the unit's health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getLife0">Unit:getLife0()</a></td>
+		<td class="summary">
+<p>returns the unit's initial health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getNumber">Unit:getNumber()</a></td>
+		<td class="summary">
+<p>Returns the unit's number in the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getPlayerName">Unit:getPlayerName()</a></td>
+		<td class="summary">
+<p>Returns name of the player that control the unit or nil if the unit is controlled by A.I.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getRadar">Unit:getRadar()</a></td>
+		<td class="summary">
+<p>returns two values:
+First value indicates if at least one of the unit's radar(s) is on.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).getSensors">Unit:getSensors()</a></td>
+		<td class="summary">
+<p>Returns the unit sensors. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).hasSensors">Unit:hasSensors(sensorType, ...)</a></td>
+		<td class="summary">
+<p>Returns true if the unit has specified types of sensors.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit).isActive">Unit:isActive()</a></td>
+		<td class="summary">
+<p>Returns if the unit is activated.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.AmmoItem)">Type <code>Unit.AmmoItem</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.AmmoItem).count">Unit.AmmoItem.count</a></td>
+		<td class="summary">
+<p>ammunition count</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.AmmoItem).desc">Unit.AmmoItem.desc</a></td>
+		<td class="summary">
+<p>ammunition descriptor</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Category)">Type <code>Unit.Category</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Category).AIRPLANE">Unit.Category.AIRPLANE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Category).GROUND_UNIT">Unit.Category.GROUND_UNIT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Category).HELICOPTER">Unit.Category.HELICOPTER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Category).SHIP">Unit.Category.SHIP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Category).STRUCTURE">Unit.Category.STRUCTURE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Desc)">Type <code>Unit.Desc</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Desc).category">Unit.Desc.category</a></td>
+		<td class="summary">
+<p>Unit Category</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Desc).massEmpty">Unit.Desc.massEmpty</a></td>
+		<td class="summary">
+<p>mass of empty unit</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Desc).speedMax">Unit.Desc.speedMax</a></td>
+		<td class="summary">
+<p>istance / Time, --maximal velocity</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.DescAircraft)">Type <code>Unit.DescAircraft</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).Hmax">Unit.DescAircraft.Hmax</a></td>
+		<td class="summary">
+<p>Ceiling</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).NyMax">Unit.DescAircraft.NyMax</a></td>
+		<td class="summary">
+<p>maximal safe acceleration</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).NyMin">Unit.DescAircraft.NyMin</a></td>
+		<td class="summary">
+<p>minimal safe acceleration</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).VyMax">Unit.DescAircraft.VyMax</a></td>
+		<td class="summary">
+<p> #Distance / #Time, --maximal climb rate</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).fuelMassMax">Unit.DescAircraft.fuelMassMax</a></td>
+		<td class="summary">
+<p>maximal inner fuel mass</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).range">Unit.DescAircraft.range</a></td>
+		<td class="summary">
+<p>Operational range</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAircraft).tankerType">Unit.DescAircraft.tankerType</a></td>
+		<td class="summary">
+<p>refueling system type</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.DescAirplane)">Type <code>Unit.DescAirplane</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAirplane).speedMax0">Unit.DescAirplane.speedMax0</a></td>
+		<td class="summary">
+<p>Distance / Time maximal TAS at ground level</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescAirplane).speedMax10K">Unit.DescAirplane.speedMax10K</a></td>
+		<td class="summary">
+<p>Distance / Time maximal TAS at altitude of 10 km</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.DescHelicopter)">Type <code>Unit.DescHelicopter</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescHelicopter).HmaxStat">Unit.DescHelicopter.HmaxStat</a></td>
+		<td class="summary">
+<p>static ceiling</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.DescVehicle)">Type <code>Unit.DescVehicle</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescVehicle).maxSlopeAngle">Unit.DescVehicle.maxSlopeAngle</a></td>
+		<td class="summary">
+<p>maximal slope angle</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.DescVehicle).riverCrossing">Unit.DescVehicle.riverCrossing</a></td>
+		<td class="summary">
+<p>can the vehicle cross a rivers</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Optic)">Type <code>Unit.Optic</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Optic).opticType">Unit.Optic.opticType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.OpticType)">Type <code>Unit.OpticType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.OpticType).IR">Unit.OpticType.IR</a></td>
+		<td class="summary">
+<p>Infra-Red optic sensor</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.OpticType).LLTV">Unit.OpticType.LLTV</a></td>
+		<td class="summary">
+<p>Low-level TV-sensor</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.OpticType).TV">Unit.OpticType.TV</a></td>
+		<td class="summary">
+<p>TV-sensor</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Radar)">Type <code>Unit.Radar</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar).detectionDistanceAir">Unit.Radar.detectionDistanceAir</a></td>
+		<td class="summary">
+<p>detection distance for RCS=1m^2 airborne target, nil if radar doesn't support air search</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar).detectionDistanceHRM">Unit.Radar.detectionDistanceHRM</a></td>
+		<td class="summary">
+<p>detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar).detectionDistanceRBM">Unit.Radar.detectionDistanceRBM</a></td>
+		<td class="summary">
+<p>detection distance for RCS=1m^2 in real-beam mapping mode, nil if radar doesn't support surface/land search</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir)">Type <code>Unit.Radar.detectionDistanceAir</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir).lowerHemisphere">Unit.Radar.detectionDistanceAir.lowerHemisphere</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir).upperHemisphere">Unit.Radar.detectionDistanceAir.upperHemisphere</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir.lowerHemisphere)">Type <code>Unit.Radar.detectionDistanceAir.lowerHemisphere</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir.lowerHemisphere).headOn">Unit.Radar.detectionDistanceAir.lowerHemisphere.headOn</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir.lowerHemisphere).tailOn">Unit.Radar.detectionDistanceAir.lowerHemisphere.tailOn</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir.upperHemisphere)">Type <code>Unit.Radar.detectionDistanceAir.upperHemisphere</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir.upperHemisphere).headOn">Unit.Radar.detectionDistanceAir.upperHemisphere.headOn</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Radar.detectionDistanceAir.upperHemisphere).tailOn">Unit.Radar.detectionDistanceAir.upperHemisphere.tailOn</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.RadarType)">Type <code>Unit.RadarType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.RadarType).AS">Unit.RadarType.AS</a></td>
+		<td class="summary">
+<p>air search radar</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.RadarType).SS">Unit.RadarType.SS</a></td>
+		<td class="summary">
+<p>surface/land search radar</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.RefuelingSystem)">Type <code>Unit.RefuelingSystem</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.RefuelingSystem).BOOM_AND_RECEPTACLE">Unit.RefuelingSystem.BOOM_AND_RECEPTACLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.RefuelingSystem).PROBE_AND_DROGUE">Unit.RefuelingSystem.PROBE_AND_DROGUE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.Sensor)">Type <code>Unit.Sensor</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Sensor).type">Unit.Sensor.type</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.Sensor).typeName">Unit.Sensor.typeName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Unit.SensorType)">Type <code>Unit.SensorType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).IRST">Unit.SensorType.IRST</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).OPTIC">Unit.SensorType.OPTIC</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).RADAR">Unit.SensorType.RADAR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).RWR">Unit.SensorType.RWR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit)">#Unit</a></em>
+<a id="Unit" >
+<strong>Unit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(DCSUnit)" >Type <code>DCSUnit</code></a></h2>
+	
+			<h2><a id="#(Angle)" >Type <code>Angle</code></a></h2>
+			
+			<h2><a id="#(Controller)" >Type <code>Controller</code></a></h2>
+			
+			<h2><a id="#(Distance)" >Type <code>Distance</code></a></h2>
+			
+			<h2><a id="#(Mass)" >Type <code>Mass</code></a></h2>
+			
+			<h2><a id="#(TypeName)" >Type <code>TypeName</code></a></h2>
+			
+			<h2><a id="#(Unit)" >Type <code>Unit</code></a></h2>
+				
+<p>An IRST.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(list)">#list</a></em>
+<a id="#(Unit).<" >
+<strong>Unit.<</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Unit.AmmoItem> Ammo</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.AmmoItem)">#Unit.AmmoItem</a></em>
+<a id="#(Unit).AmmoItem" >
+<strong>Unit.AmmoItem</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Category)">#Unit.Category</a></em>
+<a id="#(Unit).Category" >
+<strong>Unit.Category</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Desc)">#Unit.Desc</a></em>
+<a id="#(Unit).Desc" >
+<strong>Unit.Desc</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.DescAircraft)">#Unit.DescAircraft</a></em>
+<a id="#(Unit).DescAircraft" >
+<strong>Unit.DescAircraft</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.DescAirplane)">#Unit.DescAirplane</a></em>
+<a id="#(Unit).DescAirplane" >
+<strong>Unit.DescAirplane</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.DescHelicopter)">#Unit.DescHelicopter</a></em>
+<a id="#(Unit).DescHelicopter" >
+<strong>Unit.DescHelicopter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.DescShip)">#Unit.DescShip</a></em>
+<a id="#(Unit).DescShip" >
+<strong>Unit.DescShip</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.DescVehicle)">#Unit.DescVehicle</a></em>
+<a id="#(Unit).DescVehicle" >
+<strong>Unit.DescVehicle</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).ID" >
+<strong>Unit.ID</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Identifier of an unit. It assigned to an unit by the Mission Editor automatically. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.IRST)">#Unit.IRST</a></em>
+<a id="#(Unit).IRST" >
+<strong>Unit.IRST</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Optic)">#Unit.Optic</a></em>
+<a id="#(Unit).Optic" >
+<strong>Unit.Optic</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.OpticType)">#Unit.OpticType</a></em>
+<a id="#(Unit).OpticType" >
+<strong>Unit.OpticType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Radar)">#Unit.Radar</a></em>
+<a id="#(Unit).Radar" >
+<strong>Unit.Radar</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.RadarType)">#Unit.RadarType</a></em>
+<a id="#(Unit).RadarType" >
+<strong>Unit.RadarType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.RefuelingSystem)">#Unit.RefuelingSystem</a></em>
+<a id="#(Unit).RefuelingSystem" >
+<strong>Unit.RefuelingSystem</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Sensor)">#Unit.Sensor</a></em>
+<a id="#(Unit).Sensor" >
+<strong>Unit.Sensor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.SensorType)">#Unit.SensorType</a></em>
+<a id="#(Unit).SensorType" >
+<strong>Unit.SensorType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit).detectionDistanceAfterburner" >
+<strong>Unit.detectionDistanceAfterburner</strong>
+</a>
+</dt>
+<dd>
+	
+<p>..., engines are in afterburner mode</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit).detectionDistanceIdle" >
+<strong>Unit.detectionDistanceIdle</strong>
+</a>
+</dt>
+<dd>
+	
+<p>detection of tail-on target with heat signature = 1 in upper hemisphere, engines are in idle</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit).detectionDistanceMaximal" >
+<strong>Unit.detectionDistanceMaximal</strong>
+</a>
+</dt>
+<dd>
+	
+<p>..., engines are in maximal mode</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getAmmo" >
+<strong>Unit:getAmmo()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit ammunition.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Unit.Ammo)">#Unit.Ammo</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getByName" >
+<strong>Unit.getByName(name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
+
+	
+<p>If there is unit with such name or the unit is destroyed the function will return nil. The function provides access to non-activated units too. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string name </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Unit)">#Unit</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getCallsign" >
+<strong>Unit:getCallsign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's callsign - the localized string.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getController" >
+<strong>Unit:getController()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns controller of the unit if it exist and nil otherwise</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Controller)">#Controller</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getDesc" >
+<strong>Unit:getDesc()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns unit descriptor.</p>
+
+	
+<p>Descriptor type depends on unit category. </p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Unit.Desc)">#Unit.Desc</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getFuel" >
+<strong>Unit:getFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+
+	
+<p>If there are additional fuel tanks the value may be greater than 1.0.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getGroup" >
+<strong>Unit:getGroup()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's group if it exist and nil otherwise</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getID" >
+<strong>Unit:getID()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>returns the unit's unique identifier.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Unit.ID)">#Unit.ID</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getLife" >
+<strong>Unit:getLife()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's health.</p>
+
+	
+<p>Dead units has health &lt;= 1.0</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getLife0" >
+<strong>Unit:getLife0()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>returns the unit's initial health.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getNumber" >
+<strong>Unit:getNumber()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's number in the group.</p>
+
+	
+<p>The number is the same number the unit has in ME. It may not be changed during the mission. If any unit in the group is destroyed, the numbers of another units will not be changed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getPlayerName" >
+<strong>Unit:getPlayerName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns name of the player that control the unit or nil if the unit is controlled by A.I.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getRadar" >
+<strong>Unit:getRadar()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>returns two values:
+First value indicates if at least one of the unit's radar(s) is on.</p>
+
+	
+<p>Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target. </p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean, <a href="Object.html##(Object)">Object#Object</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).getSensors" >
+<strong>Unit:getSensors()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit sensors. </p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Unit.Sensors)">#Unit.Sensors</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).hasSensors" >
+<strong>Unit:hasSensors(sensorType, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if the unit has specified types of sensors.</p>
+
+	
+<p>This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Unit.SensorType)">#Unit.SensorType</a> sensorType </em></code>: 
+(= nil) Sensor type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: 
+Additional parameters.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>If sensorType is Unit.SensorType.OPTIC, additional parameters are optic sensor types. Following example checks if the unit has LLTV or IR optics:
+unit:hasSensors(Unit.SensorType.OPTIC, Unit.OpticType.LLTV, Unit.OpticType.IR)
+If sensorType is Unit.SensorType.RADAR, additional parameters are radar types. Following example checks if the unit has air search radars:
+unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
+If no additional parameters are specified the function returns true if the unit has at least one sensor of specified type.
+If sensor type is not specified the function returns true if the unit has at least one sensor of any type.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit).isActive" >
+<strong>Unit:isActive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is activated.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Ammo)" >Type <code>Unit.Ammo</code></a></h2>
+			
+			<h2><a id="#(Unit.AmmoItem)" >Type <code>Unit.AmmoItem</code></a></h2>
+				
+<p>ammunition item: "type-count" pair.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.AmmoItem).count" >
+<strong>Unit.AmmoItem.count</strong>
+</a>
+</dt>
+<dd>
+	
+<p>ammunition count</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Weapon.Desc)">#Weapon.Desc</a></em>
+<a id="#(Unit.AmmoItem).desc" >
+<strong>Unit.AmmoItem.desc</strong>
+</a>
+</dt>
+<dd>
+	
+<p>ammunition descriptor</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Category)" >Type <code>Unit.Category</code></a></h2>
+				
+<p>Enum that stores unit categories.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.Category).AIRPLANE" >
+<strong>Unit.Category.AIRPLANE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.Category).GROUND_UNIT" >
+<strong>Unit.Category.GROUND_UNIT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.Category).HELICOPTER" >
+<strong>Unit.Category.HELICOPTER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.Category).SHIP" >
+<strong>Unit.Category.SHIP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.Category).STRUCTURE" >
+<strong>Unit.Category.STRUCTURE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Desc)" >Type <code>Unit.Desc</code></a></h2>
+				
+<p>A unit descriptor. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Category)">#Unit.Category</a></em>
+<a id="#(Unit.Desc).category" >
+<strong>Unit.Desc.category</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Unit Category</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Mass)">#Mass</a></em>
+<a id="#(Unit.Desc).massEmpty" >
+<strong>Unit.Desc.massEmpty</strong>
+</a>
+</dt>
+<dd>
+	
+<p>mass of empty unit</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.Desc).speedMax" >
+<strong>Unit.Desc.speedMax</strong>
+</a>
+</dt>
+<dd>
+	
+<p>istance / Time, --maximal velocity</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.DescAircraft)" >Type <code>Unit.DescAircraft</code></a></h2>
+				
+<p>An aircraft descriptor. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.DescAircraft).Hmax" >
+<strong>Unit.DescAircraft.Hmax</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Ceiling</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.DescAircraft).NyMax" >
+<strong>Unit.DescAircraft.NyMax</strong>
+</a>
+</dt>
+<dd>
+	
+<p>maximal safe acceleration</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.DescAircraft).NyMin" >
+<strong>Unit.DescAircraft.NyMin</strong>
+</a>
+</dt>
+<dd>
+	
+<p>minimal safe acceleration</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.DescAircraft).VyMax" >
+<strong>Unit.DescAircraft.VyMax</strong>
+</a>
+</dt>
+<dd>
+	
+<p> #Distance / #Time, --maximal climb rate</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Mass)">#Mass</a></em>
+<a id="#(Unit.DescAircraft).fuelMassMax" >
+<strong>Unit.DescAircraft.fuelMassMax</strong>
+</a>
+</dt>
+<dd>
+	
+<p>maximal inner fuel mass</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.DescAircraft).range" >
+<strong>Unit.DescAircraft.range</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Operational range</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.RefuelingSystem)">#Unit.RefuelingSystem</a></em>
+<a id="#(Unit.DescAircraft).tankerType" >
+<strong>Unit.DescAircraft.tankerType</strong>
+</a>
+</dt>
+<dd>
+	
+<p>refueling system type</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.DescAirplane)" >Type <code>Unit.DescAirplane</code></a></h2>
+				
+<p>An airplane descriptor.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.DescAirplane).speedMax0" >
+<strong>Unit.DescAirplane.speedMax0</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Distance / Time maximal TAS at ground level</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(Unit.DescAirplane).speedMax10K" >
+<strong>Unit.DescAirplane.speedMax10K</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Distance / Time maximal TAS at altitude of 10 km</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.DescHelicopter)" >Type <code>Unit.DescHelicopter</code></a></h2>
+				
+<p>A helicopter descriptor.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.DescHelicopter).HmaxStat" >
+<strong>Unit.DescHelicopter.HmaxStat</strong>
+</a>
+</dt>
+<dd>
+	
+<p>static ceiling</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.DescShip)" >Type <code>Unit.DescShip</code></a></h2>
+				
+<p>A ship descriptor.</p>
+
+
+			<h2><a id="#(Unit.DescVehicle)" >Type <code>Unit.DescVehicle</code></a></h2>
+				
+<p>A vehicle descriptor.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Angle)">#Angle</a></em>
+<a id="#(Unit.DescVehicle).maxSlopeAngle" >
+<strong>Unit.DescVehicle.maxSlopeAngle</strong>
+</a>
+</dt>
+<dd>
+	
+<p>maximal slope angle</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(Unit.DescVehicle).riverCrossing" >
+<strong>Unit.DescVehicle.riverCrossing</strong>
+</a>
+</dt>
+<dd>
+	
+<p>can the vehicle cross a rivers</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.ID)" >Type <code>Unit.ID</code></a></h2>
+			
+			<h2><a id="#(Unit.IRST)" >Type <code>Unit.IRST</code></a></h2>
+			
+			<h2><a id="#(Unit.Optic)" >Type <code>Unit.Optic</code></a></h2>
+				
+<p>An optic sensor.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.OpticType)">#Unit.OpticType</a></em>
+<a id="#(Unit.Optic).opticType" >
+<strong>Unit.Optic.opticType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.OpticType)" >Type <code>Unit.OpticType</code></a></h2>
+				
+<p>Enum that stores types of optic sensors.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.OpticType).IR" >
+<strong>Unit.OpticType.IR</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Infra-Red optic sensor</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.OpticType).LLTV" >
+<strong>Unit.OpticType.LLTV</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Low-level TV-sensor</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.OpticType).TV" >
+<strong>Unit.OpticType.TV</strong>
+</a>
+</dt>
+<dd>
+	
+<p>TV-sensor</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.RWR)" >Type <code>Unit.RWR</code></a></h2>
+				
+<p>An RWR.</p>
+
+
+			<h2><a id="#(Unit.Radar)" >Type <code>Unit.Radar</code></a></h2>
+				
+<p>A radar.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Radar.detectionDistanceAir)">#Unit.Radar.detectionDistanceAir</a></em>
+<a id="#(Unit.Radar).detectionDistanceAir" >
+<strong>Unit.Radar.detectionDistanceAir</strong>
+</a>
+</dt>
+<dd>
+	
+<p>detection distance for RCS=1m^2 airborne target, nil if radar doesn't support air search</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar).detectionDistanceHRM" >
+<strong>Unit.Radar.detectionDistanceHRM</strong>
+</a>
+</dt>
+<dd>
+	
+<p>detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar).detectionDistanceRBM" >
+<strong>Unit.Radar.detectionDistanceRBM</strong>
+</a>
+</dt>
+<dd>
+	
+<p>detection distance for RCS=1m^2 in real-beam mapping mode, nil if radar doesn't support surface/land search</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir)" >Type <code>Unit.Radar.detectionDistanceAir</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Radar.detectionDistanceAir.lowerHemisphere)">#Unit.Radar.detectionDistanceAir.lowerHemisphere</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir).lowerHemisphere" >
+<strong>Unit.Radar.detectionDistanceAir.lowerHemisphere</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.Radar.detectionDistanceAir.upperHemisphere)">#Unit.Radar.detectionDistanceAir.upperHemisphere</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir).upperHemisphere" >
+<strong>Unit.Radar.detectionDistanceAir.upperHemisphere</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir.lowerHemisphere)" >Type <code>Unit.Radar.detectionDistanceAir.lowerHemisphere</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir.lowerHemisphere).headOn" >
+<strong>Unit.Radar.detectionDistanceAir.lowerHemisphere.headOn</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir.lowerHemisphere).tailOn" >
+<strong>Unit.Radar.detectionDistanceAir.lowerHemisphere.tailOn</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Radar.detectionDistanceAir.upperHemisphere)" >Type <code>Unit.Radar.detectionDistanceAir.upperHemisphere</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir.upperHemisphere).headOn" >
+<strong>Unit.Radar.detectionDistanceAir.upperHemisphere.headOn</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Unit.Radar.detectionDistanceAir.upperHemisphere).tailOn" >
+<strong>Unit.Radar.detectionDistanceAir.upperHemisphere.tailOn</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.RadarType)" >Type <code>Unit.RadarType</code></a></h2>
+				
+<p>Enum that stores radar types.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.RadarType).AS" >
+<strong>Unit.RadarType.AS</strong>
+</a>
+</dt>
+<dd>
+	
+<p>air search radar</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.RadarType).SS" >
+<strong>Unit.RadarType.SS</strong>
+</a>
+</dt>
+<dd>
+	
+<p>surface/land search radar</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.RefuelingSystem)" >Type <code>Unit.RefuelingSystem</code></a></h2>
+				
+<p>Enum that stores aircraft refueling system types.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.RefuelingSystem).BOOM_AND_RECEPTACLE" >
+<strong>Unit.RefuelingSystem.BOOM_AND_RECEPTACLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.RefuelingSystem).PROBE_AND_DROGUE" >
+<strong>Unit.RefuelingSystem.PROBE_AND_DROGUE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Sensor)" >Type <code>Unit.Sensor</code></a></h2>
+				
+<p>A unit sensor.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Unit.SensorType)">#Unit.SensorType</a></em>
+<a id="#(Unit.Sensor).type" >
+<strong>Unit.Sensor.type</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TypeName)">#TypeName</a></em>
+<a id="#(Unit.Sensor).typeName" >
+<strong>Unit.Sensor.typeName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.SensorType)" >Type <code>Unit.SensorType</code></a></h2>
+				
+<p>Enum that stores sensor types.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).IRST" >
+<strong>Unit.SensorType.IRST</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).OPTIC" >
+<strong>Unit.SensorType.OPTIC</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).RADAR" >
+<strong>Unit.SensorType.RADAR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).RWR" >
+<strong>Unit.SensorType.RWR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.Sensors)" >Type <code>Unit.Sensors</code></a></h2>
+			
+			<h2><a id="#(Weapon.Desc)" >Type <code>Weapon.Desc</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>

@@ -92,8 +92,8 @@ function BASE:Inherit( Child, Parent )
 end
 
 --- This is the worker method to retrieve the Parent class.
--- @param BASE Child is the Child class from which the Parent class needs to be retrieved.
--- @return Parent
+-- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
+-- @return #BASE
 function BASE:Inherited( Child )
 	local Parent = getmetatable( Child )
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
