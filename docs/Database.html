@@ -1,0 +1,996 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CLEANUP.html">CLEANUP</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li>Database</li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Database</code></h1>
+   
+<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
+
+   
+<p>Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).</p>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ClientGroup">ClientGroup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DATABASE">DATABASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DATABASECategory">DATABASECategory</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DATABASECoalition">DATABASECoalition</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#InitGroup">InitGroup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#InitUnitDesc">InitUnitDesc</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#LogClose">LogClose()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TargetGroup">TargetGroup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TargetUnitDesc">TargetUnitDesc</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nHours">nHours</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nMins">nMins</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nSecs">nSecs</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(DATABASE)">Type <code>DATABASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ActivePlayers">DATABASE.ActivePlayers</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClassName">DATABASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClientsByID">DATABASE.ClientsByID</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClientsByName">DATABASE.ClientsByName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStatusGroup">DATABASE:GetStatusGroup(GroupName)</a></td>
+		<td class="summary">
+<p>Get a status to a Group within the Database, this to check crossing events for example.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Groups">DATABASE.Groups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).NavPoints">DATABASE.NavPoints</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).New">DATABASE:New()</a></td>
+		<td class="summary">
+<p>Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).OnDeadOrCrash">DATABASE:OnDeadOrCrash(event)</a></td>
+		<td class="summary">
+<p>Track DCSRTE DEAD or CRASH events for the internal scoring.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).OnHit">DATABASE:OnHit(event)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Players">DATABASE.Players</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ReportScoreAll">DATABASE:ReportScoreAll()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ReportScorePlayer">DATABASE:ReportScorePlayer()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ScoreAdd">DATABASE:ScoreAdd(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ScoreMenu">DATABASE:ScoreMenu()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ScoreOpen">DATABASE:ScoreOpen()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).SecondsToClock">DATABASE:SecondsToClock(sSeconds)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).SetStatusGroup">DATABASE:SetStatusGroup(GroupName, Status)</a></td>
+		<td class="summary">
+<p>Set a status to a Group within the Database, this to check crossing events for example.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Spawn">DATABASE:Spawn(SpawnTemplate)</a></td>
+		<td class="summary">
+<p>Instantiate new Groups within the DCSRTE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Statics">DATABASE.Statics</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Units">DATABASE.Units</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._AddMissionScore">DATABASE:_AddMissionScore(MissionName, Score)</a></td>
+		<td class="summary">
+<p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._AddMissionTaskScore">DATABASE:_AddMissionTaskScore(PlayerUnit, MissionName, Score)</a></td>
+		<td class="summary">
+<p>Registers Scores the players completing a Mission Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._AddPlayerFromUnit">DATABASE:_AddPlayerFromUnit(UnitData)</a></td>
+		<td class="summary">
+<p>Add a new player entering a Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._FollowPlayers">DATABASE:_FollowPlayers()</a></td>
+		<td class="summary">
+<p>Follows new players entering Clients within the DCSRTE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterGroup">DATABASE:_RegisterGroup(GroupTemplate)</a></td>
+		<td class="summary">
+<p>Registers new Group Templates within the DATABASE Object.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="ClientGroup" >
+<strong>ClientGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DATABASE)">#DATABASE</a></em>
+<a id="DATABASE" >
+<strong>DATABASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="DATABASECategory" >
+<strong>DATABASECategory</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="DATABASECoalition" >
+<strong>DATABASECoalition</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="InitGroup" >
+<strong>InitGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="InitUnitDesc" >
+<strong>InitUnitDesc</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="LogClose" >
+<strong>LogClose()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="TargetGroup" >
+<strong>TargetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="TargetUnitDesc" >
+<strong>TargetUnitDesc</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nHours" >
+<strong>nHours</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nMins" >
+<strong>nMins</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nSecs" >
+<strong>nSecs</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Database)" >Type <code>Database</code></a></h2>
+	
+			<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
+				
+<p>The DATABASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).ActivePlayers" >
+<strong>DATABASE.ActivePlayers</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(DATABASE).ClassName" >
+<strong>DATABASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).ClientsByID" >
+<strong>DATABASE.ClientsByID</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).ClientsByName" >
+<strong>DATABASE.ClientsByName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).GetStatusGroup" >
+<strong>DATABASE:GetStatusGroup(GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a status to a Group within the Database, this to check crossing events for example.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> GroupName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Groups" >
+<strong>DATABASE.Groups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).NavPoints" >
+<strong>DATABASE.NavPoints</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).New" >
+<strong>DATABASE:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>DATABASE</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
+DBObject = DATABASE:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).OnDeadOrCrash" >
+<strong>DATABASE:OnDeadOrCrash(event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Track DCSRTE DEAD or CRASH events for the internal scoring.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).OnHit" >
+<strong>DATABASE:OnHit(event)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Players" >
+<strong>DATABASE.Players</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ReportScoreAll" >
+<strong>DATABASE:ReportScoreAll()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ReportScorePlayer" >
+<strong>DATABASE:ReportScorePlayer()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ScoreAdd" >
+<strong>DATABASE:ScoreAdd(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ScoreType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ScoreTimes </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ScoreAmount </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerUnitCoalition </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerUnitCategory </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerUnitType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetUnitCoalition </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetUnitCategory </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetUnitType </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ScoreMenu" >
+<strong>DATABASE:ScoreMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ScoreOpen" >
+<strong>DATABASE:ScoreOpen()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).SecondsToClock" >
+<strong>DATABASE:SecondsToClock(sSeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> sSeconds </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).SetStatusGroup" >
+<strong>DATABASE:SetStatusGroup(GroupName, Status)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a status to a Group within the Database, this to check crossing events for example.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> GroupName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Status </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).Spawn" >
+<strong>DATABASE:Spawn(SpawnTemplate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiate new Groups within the DCSRTE.</p>
+
+	
+<p>This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
+SpawnCountryID, SpawnCategoryID
+This method is used by the SPAWN class.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnTemplate </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Statics" >
+<strong>DATABASE.Statics</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Units" >
+<strong>DATABASE.Units</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._AddMissionScore" >
+<strong>DATABASE:_AddMissionScore(MissionName, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MissionName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Score </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._AddMissionTaskScore" >
+<strong>DATABASE:_AddMissionTaskScore(PlayerUnit, MissionName, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers Scores the players completing a Mission Task.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MissionName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Score </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._AddPlayerFromUnit" >
+<strong>DATABASE:_AddPlayerFromUnit(UnitData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a new player entering a Unit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> UnitData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._FollowPlayers" >
+<strong>DATABASE:_FollowPlayers()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Follows new players entering Clients within the DCSRTE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._RegisterGroup" >
+<strong>DATABASE:_RegisterGroup(GroupTemplate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers new Group Templates within the DATABASE Object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> GroupTemplate </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

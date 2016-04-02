@@ -1,3 +1,5 @@
+--- @module DCSTask
+
 
 --- @type DCSTask
 -- @field #string id

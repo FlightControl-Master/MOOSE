@@ -1,6 +1,6 @@
 --- Taking the lead of AI escorting your flight.
 -- The ESCORT class allows you to interact with escoring AI on your flight and take the lead.
---
+-- @module Escort
 --
 --
 

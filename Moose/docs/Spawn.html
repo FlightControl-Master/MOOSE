@@ -1,0 +1,1761 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CLEANUP.html">CLEANUP</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li>Spawn</li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Spawn</code></h1>
+   
+<p>Dynamic spawning of groups (and units).</p>
+
+   
+<p>The SPAWN class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
+For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
+A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
+
+<p>Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
+When new groups get spawned by using the SPAWN functions (see below), it will be validated whether the Limits (<a href="##(SPAWN).Limit">SPAWN.Limit</a>) of the SPAWN object are not reached.
+When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.</p>
+
+<p>Regarding the name of new spawned groups, a <em>SpawnPrefix</em> will be assigned for each new group created. 
+If you want to have the Spawn Template name to be used as the <em>SpawnPrefix</em> name, use the <a href="##(SPAWN).New">SPAWN.New</a> constructor.
+However, when the <a href="##(SPAWN).NewWithAlias">SPAWN.NewWithAlias</a> constructor was used, the Alias name will define the <em>SpawnPrefix</em> name.
+Groups will follow the following naming structure when spawned at run-time:</p>
+
+<ol>
+    <li>Spawned groups will have the name <em>SpawnPrefix</em>#ggg, where ggg is a counter from 0 to 999.</li>
+    <li>Spawned units will have the name <em>SpawnPrefix</em>#ggg-uu, where uu is a counter from 0 to 99 for each new spawned unit belonging to the group.</li>
+</ol>
+
+<p>Some additional notes that need to be remembered:</p>
+
+<ul>
+    <li><p>Templates are actually groups defined within the mission editor, with the flag "Late Activation" set. As such, these groups are never used within the mission, but are used by the <a href="##(SPAWN)">#SPAWN</a> module.</p></li>
+    <li><p>It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.</p></li>
+    <li><p>When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.</p></li>
+    <li><h2>SPAWN object construction methods:</h2>
+    <p>Create a new SPAWN object with the <a href="##(SPAWN).New">SPAWN.New</a> or the <a href="##(SPAWN).NewWithAlias">SPAWN.NewWithAlias</a> methods:</p></li>
+    <li><p><a href="##(SPAWN).New">SPAWN.New</a>: Creates a new SPAWN object taking the name of the group that functions as the Template.</p></li>
+</ul>
+
+<p>It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
+The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.</p>
+
+<ol>
+    <li><h2>SPAWN object initialization methods: </h2>
+    <p>A spawn object will behave differently based on the usage of initialization methods:  </p></li>
+    <li><p><a href="##(SPAWN).Limit">SPAWN.Limit</a>: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.</p></li>
+    <li><p><a href="##(SPAWN).RandomizeRoute">SPAWN.RandomizeRoute</a>: Randomize the routes of spawned groups.</p></li>
+    <li><p><a href="##(SPAWN).RandomizeTemplate">SPAWN.RandomizeTemplate</a>: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. </p></li>
+    <li><p><a href="##(SPAWN).Uncontrolled">SPAWN.Uncontrolled</a>: Spawn plane groups uncontrolled.</p></li>
+    <li><p><a href="##(SPAWN).Array">SPAWN.Array</a>: Make groups visible before they are actually activated, and order these groups like a batallion in an array.</p></li>
+    <li><p><a href="##(SPAWN).Repeat">SPAWN.Repeat</a>: Re-spawn groups when they land at the home base. Similar functions are <a href="##(SPAWN).RepeatOnLanding">SPAWN.RepeatOnLanding</a> and <a href="##(SPAWN).RepeatOnEngineShutDown">SPAWN.RepeatOnEngineShutDown</a>.</p></li>
+    <li><h2>SPAWN object spawning methods:</h2>
+    <p>Groups can be spawned at different times and methods:</p></li>
+    <li><p><a href="##(SPAWN).Spawn">SPAWN.Spawn</a>: Spawn one new group based on the last spawned index.</p></li>
+    <li><p><a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a>: Re-spawn a group based on a given index.</p></li>
+    <li><p><a href="##(SPAWN).SpawnScheduled">SPAWN.SpawnScheduled</a>: Spawn groups at scheduled but randomized intervals. You can use <a href="##(SPAWN).SpawnScheduleStart">SPAWN.SpawnScheduleStart</a> and <a href="##(SPAWN).SpawnScheduleStop">SPAWN.SpawnScheduleStop</a> to start and stop the schedule respectively.</p></li>
+    <li><p><a href="##(SPAWN).SpawnFromUnit">SPAWN.SpawnFromUnit</a>: Spawn a new group taking the position of a <a href="UNIT.html">UNIT</a>.</p></li>
+    <li><p><a href="##(SPAWN).SpawnInZone">SPAWN.SpawnInZone</a>: Spawn a new group in a <a href="ZONE.html">ZONE</a>.</p></li>
+</ol>
+
+<p>Note that <a href="##(SPAWN).Spawn">SPAWN.Spawn</a> and <a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a> return a <a href="GROUP.html##(GROUP).New">GROUP#GROUP.New</a> object, that contains a reference to the DCSGroup object. 
+You can use the <a href="GROUP.html">GROUP</a> object to do further actions with the DCSGroup.</p>
+
+<ol>
+    <li>SPAWN object cleaning:
+    <hr/>
+    Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
+    In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
+    and it may occur that no new groups are or can be spawned as limits are reached.
+    To prevent this, a <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> initialization method has been defined that will silently monitor the status of each spawned group.
+    Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
+    There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
+    In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
+    This models AI that has succesfully returned to their airbase, to restart their combat activities.
+    Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</li>
+</ol>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SPAWN">SPAWN</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(SPAWN)">Type <code>SPAWN</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Array">SPAWN:Array(SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY)</a></td>
+		<td class="summary">
+<p>Makes the groups visible before start (like a batallion).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).ClassName">SPAWN.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).CleanUp">SPAWN:CleanUp(SpawnCleanUpInterval)</a></td>
+		<td class="summary">
+<p>CleanUp groups when they are still alive, but inactive.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetFirstAliveGroup">SPAWN:GetFirstAliveGroup(SpawnCursor)</a></td>
+		<td class="summary">
+<p>Find the first alive group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetGroupFromIndex">SPAWN:GetGroupFromIndex(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Get the group from an index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetLastAliveGroup">SPAWN:GetLastAliveGroup()</a></td>
+		<td class="summary">
+<p>Find the last alive group during runtime.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetNextAliveGroup">SPAWN:GetNextAliveGroup(SpawnCursor)</a></td>
+		<td class="summary">
+<p>Find the next alive group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetSpawnIndexFromGroup">SPAWN:GetSpawnIndexFromGroup(SpawnGroup)</a></td>
+		<td class="summary">
+<p>Get the index from a given group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Limit">SPAWN:Limit(SpawnMaxUnitsAlive, SpawnMaxGroups)</a></td>
+		<td class="summary">
+<p>Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).New">SPAWN:New(SpawnTemplatePrefix)</a></td>
+		<td class="summary">
+<p>Creates the main object to spawn a GROUP defined in the DCS ME.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).NewWithAlias">SPAWN:NewWithAlias(SpawnTemplatePrefix, SpawnAliasPrefix)</a></td>
+		<td class="summary">
+<p>Creates a new SPAWN instance to create new groups based on the defined template and using a new alias for each new group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RandomizeRoute">SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius)</a></td>
+		<td class="summary">
+<p>Randomizes the defined route of the SpawnTemplatePrefix group in the ME.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RandomizeTemplate">SPAWN:RandomizeTemplate(SpawnTemplatePrefixTable)</a></td>
+		<td class="summary">
+<p>This function is rather complicated to understand.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).ReSpawn">SPAWN:ReSpawn(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will re-spawn a group based on a given index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Repeat">SPAWN:Repeat()</a></td>
+		<td class="summary">
+<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RepeatOnEngineShutDown">SPAWN:RepeatOnEngineShutDown()</a></td>
+		<td class="summary">
+<p>Same as the @{#SPAWN.Repeat) method, but now the Group will respawn after its engines have shut down.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RepeatOnLanding">SPAWN:RepeatOnLanding()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Spawn">SPAWN:Spawn()</a></td>
+		<td class="summary">
+<p>Will re-spawn a group based on a given index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, OuterRadius, InnerRadius, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a group from a hosting unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnGroupName">SPAWN:SpawnGroupName(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will return the SpawnGroupName either with with a specific count number or without any count.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a Group within a given <a href="ZONE.html">ZONE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnScheduleStart">SPAWN:SpawnScheduleStart()</a></td>
+		<td class="summary">
+<p>Will start the spawning scheduler.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnScheduleStop">SPAWN:SpawnScheduleStop()</a></td>
+		<td class="summary">
+<p>Will stop the scheduled spawning scheduler.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnScheduled">SPAWN:SpawnScheduled(SpawnTime, SpawnTimeVariation)</a></td>
+		<td class="summary">
+<p>Spawns new groups at varying time intervals.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnWithIndex">SPAWN:SpawnWithIndex(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a group with a specified index number.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).UnControlled">SPAWN:UnControlled()</a></td>
+		<td class="summary">
+<p>Will spawn a plane group in uncontrolled mode...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupCategoryID">SPAWN:_GetGroupCategoryID(SpawnPrefix)</a></td>
+		<td class="summary">
+<p>Gets the CategoryID of the Group with the given SpawnPrefix</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupCoalitionID">SPAWN:_GetGroupCoalitionID(SpawnPrefix)</a></td>
+		<td class="summary">
+<p>Gets the CoalitionID of the Group with the given SpawnPrefix</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupCountryID">SPAWN:_GetGroupCountryID(SpawnPrefix)</a></td>
+		<td class="summary">
+<p>Gets the CountryID of the Group with the given SpawnPrefix</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupFromDCSUnit">SPAWN:_GetGroupFromDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+<p>Return the group within the SpawnGroups collection with input a DCSUnit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupIndexFromDCSUnit">SPAWN:_GetGroupIndexFromDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+<p>Get the group index from a DCSUnit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetLastIndex">SPAWN:_GetLastIndex()</a></td>
+		<td class="summary">
+<p>Return the last maximum index that can be used.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetPrefixFromDCSUnit">SPAWN:_GetPrefixFromDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+<p>Return the prefix of a DCSUnit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetSpawnIndex">SPAWN:_GetSpawnIndex(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Get the next index of the groups to be spawned.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetTemplate">SPAWN:_GetTemplate(SpawnTemplatePrefix)</a></td>
+		<td class="summary">
+<p>Gets the Group Template from the ME environment definition.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._InitializeSpawnGroups">SPAWN:_InitializeSpawnGroups(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Initalize the SpawnGroups collection.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnBirth">SPAWN:_OnBirth(event)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnDeadOrCrash">SPAWN:_OnDeadOrCrash(event)</a></td>
+		<td class="summary">
+<p>Obscolete</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnLand">SPAWN:_OnLand(event)</a></td>
+		<td class="summary">
+<p>Will detect AIR Units landing...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnTakeOff">SPAWN:_OnTakeOff(event)</a></td>
+		<td class="summary">
+<p>Will detect AIR Units taking off...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._Prepare">SPAWN:_Prepare(SpawnTemplatePrefix, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Prepares the new Group Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._RandomizeRoute">SPAWN:_RandomizeRoute(SpawnIndex)</a></td>
+		<td class="summary">
+<p>Internal function randomizing the routes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._RandomizeTemplate">SPAWN:_RandomizeTemplate(SpawnIndex)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._Scheduler">SPAWN:_Scheduler()</a></td>
+		<td class="summary">
+<p>This function is called automatically by the Spawning scheduler.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._SpawnCleanUpScheduler">SPAWN:_SpawnCleanUpScheduler()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._TranslateRotate">SPAWN:_TranslateRotate(SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SPAWN)">#SPAWN</a></em>
+<a id="SPAWN" >
+<strong>SPAWN</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Spawn)" >Type <code>Spawn</code></a></h2>
+	
+			<h2><a id="#(SPAWN)" >Type <code>SPAWN</code></a></h2>
+				
+<p>SPAWN Class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).Array" >
+<strong>SPAWN:Array(SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Makes the groups visible before start (like a batallion).</p>
+
+	
+<p>The method will take the position of the group as the first position in the array.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnAngle </em></code>: </p>
+<pre><code>    The angle in degrees how the groups and each unit of the group will be positioned.
+</code></pre>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnWidth </em></code>: </p>
+<pre><code>     The amount of Groups that will be positioned on the X axis.
+</code></pre>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnDeltaX </em></code>: </p>
+<pre><code>   The space between each Group on the X-axis.
+</code></pre>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnDeltaY </em></code>: </p>
+<pre><code>     The space between each Group on the Y-axis.
+</code></pre>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define an array of Groups.
+Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( 90, "Diamond", 10, 100, 50 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).ClassName" >
+<strong>SPAWN.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).CleanUp" >
+<strong>SPAWN:CleanUp(SpawnCleanUpInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CleanUp groups when they are still alive, but inactive.</p>
+
+	
+<p>When groups are still alive and have become inactive due to damage and are unable to contribute anything, then this group will be removed at defined intervals in seconds.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnCleanUpInterval </em></code>: 
+The interval to check for inactive groups within seconds.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).GetFirstAliveGroup" >
+<strong>SPAWN:GetFirstAliveGroup(SpawnCursor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the first alive group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnCursor </em></code>: 
+A number holding the index from where to find the first group from.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>, #number:</em>
+The group found, the new index where the group was found.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil, #nil:</em>
+When no group is found, #nil is returned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).GetGroupFromIndex" >
+<strong>SPAWN:GetGroupFromIndex(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the group from an index.</p>
+
+	
+<p>Returns the group from the SpawnGroups list.
+If no index is given, it will return the first group in the list.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+The index of the group to return.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).GetLastAliveGroup" >
+<strong>SPAWN:GetLastAliveGroup()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the last alive group during runtime.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).GetNextAliveGroup" >
+<strong>SPAWN:GetNextAliveGroup(SpawnCursor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the next alive group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnCursor </em></code>: 
+A number holding the last found previous index.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>, #number:</em>
+The group found, the new index where the group was found.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil, #nil:</em>
+When no group is found, #nil is returned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).GetSpawnIndexFromGroup" >
+<strong>SPAWN:GetSpawnIndexFromGroup(SpawnGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the index from a given group.</p>
+
+	
+<p>The function will search the name of the group for a #, and will return the number behind the #-mark.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).Limit" >
+<strong>SPAWN:Limit(SpawnMaxUnitsAlive, SpawnMaxGroups)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.</p>
+
+	
+<p>Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
+If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+When a <a href="##(SPAWN).New">SPAWN.New</a> is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnMaxUnitsAlive </em></code>: 
+The maximum amount of units that can be alive at runtime.    </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnMaxGroups </em></code>: 
+The maximum amount of groups that can be spawned. When the limit is reached, then no more actual spawns will happen of the group. 
+This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
+This parameter accepts the value 0, which defines that there are no maximum group limits, but there are limits on the maximum of units that can be alive at the same time.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO helicopters engaging in the battle field.
+-- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
+-- There will be maximum 24 groups spawned during the whole mission lifetime. 
+Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).New" >
+<strong>SPAWN:New(SpawnTemplatePrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates the main object to spawn a GROUP defined in the DCS ME.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefix </em></code>: 
+is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usages:</h3>
+		<ul>
+			<li><pre class="example"><code>-- NATO helicopters engaging in the battle field.
+Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )</code></pre></li>
+			<li><pre class="example"><code>local Plane = SPAWN:New( "Plane" ) -- Creates a new local variable that can initiate new planes with the name "Plane#ddd" using the template "Plane" as defined within the ME.</code></pre></li>
+		</ul>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).NewWithAlias" >
+<strong>SPAWN:NewWithAlias(SpawnTemplatePrefix, SpawnAliasPrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SPAWN instance to create new groups based on the defined template and using a new alias for each new group.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefix </em></code>: 
+is the name of the Group in the ME that defines the Template.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string SpawnAliasPrefix </em></code>: 
+is the name that will be given to the Group at runtime.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usages:</h3>
+		<ul>
+			<li><pre class="example"><code>-- NATO helicopters engaging in the battle field.
+Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter Attacking a City' )</code></pre></li>
+			<li><pre class="example"><code>local PlaneWithAlias = SPAWN:NewWithAlias( "Plane", "Bomber" ) -- Creates a new local variable that can instantiate new planes with the name "Bomber#ddd" using the template "Plane" as defined within the ME.</code></pre></li>
+		</ul>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).RandomizeRoute" >
+<strong>SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Randomizes the defined route of the SpawnTemplatePrefix group in the ME.</p>
+
+	
+<p>This is very useful to define extra variation of the behaviour of groups.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnStartPoint </em></code>: 
+is the waypoint where the randomization begins. 
+Note that the StartPoint = 0 equaling the point where the group is spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnEndPoint </em></code>: 
+is the waypoint where the randomization ends counting backwards. 
+This parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnRadius </em></code>: 
+is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO helicopters engaging in the battle field. 
+-- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
+-- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
+-- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
+Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).RandomizeTemplate" >
+<strong>SPAWN:RandomizeTemplate(SpawnTemplatePrefixTable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This function is rather complicated to understand.</p>
+
+	
+<p>But I'll try to explain.
+This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+but they will all follow the same Template route and have the same prefix name.
+In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefixTable </em></code>: 
+A table with the names of the groups defined within the mission editor, from which one will be choosen when a new group will be spawned. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO Tank Platoons invading Gori.
+-- Choose between 13 different 'US Tank Platoon' configurations for each new SPAWN the Group to be spawned for the 
+-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SpawnTemplatePrefixes.
+-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 3', 'US Tank Platoon 4', 'US Tank Platoon 5', 
+                     'US Tank Platoon 6', 'US Tank Platoon 7', 'US Tank Platoon 8', 'US Tank Platoon 9', 'US Tank Platoon 10', 
+                     'US Tank Platoon 11', 'US Tank Platoon 12', 'US Tank Platoon 13' }
+Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).ReSpawn" >
+<strong>SPAWN:ReSpawn(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will re-spawn a group based on a given index.</p>
+
+	
+<p>Note: Uses <a href="DATABASE.html">DATABASE</a> module defined in MOOSE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnIndex </em></code>: 
+The index of the group to be spawned.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>:</em>
+The group that was spawned. You can use this group for further actions.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).Repeat" >
+<strong>SPAWN:Repeat()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
+
+	
+<p>This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
+Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
+So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- RU Su-34 - AI Ship Attack
+-- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
+SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).RepeatOnEngineShutDown" >
+<strong>SPAWN:RepeatOnEngineShutDown()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Same as the @{#SPAWN.Repeat) method, but now the Group will respawn after its engines have shut down.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>SPAWN</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).RepeatOnLanding" >
+<strong>SPAWN:RepeatOnLanding()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).Spawn" >
+<strong>SPAWN:Spawn()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will re-spawn a group based on a given index.</p>
+
+	
+<p>Note: Uses <a href="DATABASE.html">DATABASE</a> module defined in MOOSE.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>:</em>
+The group that was spawned. You can use this group for further actions.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnFromUnit" >
+<strong>SPAWN:SpawnFromUnit(HostUnit, OuterRadius, InnerRadius, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a group from a hosting unit.</p>
+
+	
+<p>This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+You can use the returned group to further define the route to be followed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> HostUnit </em></code>: 
+The air or ground unit dropping or unloading the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number OuterRadius </em></code>: 
+The outer radius in meters where the new group will be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number InnerRadius </em></code>: 
+The inner radius in meters where the new group will NOT be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+(Optional) The index which group to spawn within the given zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+that was spawned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing was spawned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnGroupName" >
+<strong>SPAWN:SpawnGroupName(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will return the SpawnGroupName either with with a specific count number or without any count.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+Is the number of the Group that is to be spawned.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>string SpawnGroupName</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnInZone" >
+<strong>SPAWN:SpawnInZone(Zone, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a Group within a given <a href="ZONE.html">ZONE</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(ZONE)">#ZONE</a> Zone </em></code>: 
+The zone where the group is to be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+(Optional) The index which group to spawn within the given zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>:</em>
+that was spawned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+when nothing was spawned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnScheduleStart" >
+<strong>SPAWN:SpawnScheduleStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will start the spawning scheduler.</p>
+
+	
+<p>Note: This function is called automatically when <a href="##(SPAWN).Scheduled">SPAWN.Scheduled</a> is called.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnScheduleStop" >
+<strong>SPAWN:SpawnScheduleStop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will stop the scheduled spawning scheduler.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnScheduled" >
+<strong>SPAWN:SpawnScheduled(SpawnTime, SpawnTimeVariation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Spawns new groups at varying time intervals.</p>
+
+	
+<p>This is useful if you want to have continuity within your missions of certain (AI) groups to be present (alive) within your missions.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnTime </em></code>: 
+The time interval defined in seconds between each new spawn of new groups.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnTimeVariation </em></code>: 
+The variation to be applied on the defined time interval between each new spawn.
+The variation is a number between 0 and 1, representing the %-tage of variation to be applied on the time interval.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO helicopters engaging in the battle field.
+-- The time interval is set to SPAWN new helicopters between each 600 seconds, with a time variation of 50%.
+-- The time variation in this case will be between 450 seconds and 750 seconds. 
+-- This is calculated as follows: 
+--      Low limit:   600 * ( 1 - 0.5 / 2 ) = 450 
+--      High limit:  600 * ( 1 + 0.5 / 2 ) = 750
+-- Between these two values, a random amount of seconds will be choosen for each new spawn of the helicopters.
+Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnWithIndex" >
+<strong>SPAWN:SpawnWithIndex(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a group with a specified index number.</p>
+
+	
+<p>Uses <a href="DATABASE.html">DATABASE</a> global object defined in MOOSE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="GROUP.html##(GROUP)">GROUP#GROUP</a>:</em>
+The group that was spawned. You can use this group for further actions.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).UnControlled" >
+<strong>SPAWN:UnControlled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a plane group in uncontrolled mode...</p>
+
+	
+<p>This will be similar to the uncontrolled flag setting in the ME.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetGroupCategoryID" >
+<strong>SPAWN:_GetGroupCategoryID(SpawnPrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CategoryID of the Group with the given SpawnPrefix</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnPrefix </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetGroupCoalitionID" >
+<strong>SPAWN:_GetGroupCoalitionID(SpawnPrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CoalitionID of the Group with the given SpawnPrefix</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnPrefix </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetGroupCountryID" >
+<strong>SPAWN:_GetGroupCountryID(SpawnPrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CountryID of the Group with the given SpawnPrefix</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnPrefix </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetGroupFromDCSUnit" >
+<strong>SPAWN:_GetGroupFromDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the group within the SpawnGroups collection with input a DCSUnit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetGroupIndexFromDCSUnit" >
+<strong>SPAWN:_GetGroupIndexFromDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the group index from a DCSUnit.</p>
+
+	
+<p>The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
+It will return nil of no prefix was found.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSUnit </em></code>: 
+The DCS unit to be searched.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The prefix</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing found</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetLastIndex" >
+<strong>SPAWN:_GetLastIndex()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the last maximum index that can be used.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetPrefixFromDCSUnit" >
+<strong>SPAWN:_GetPrefixFromDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the prefix of a DCSUnit.</p>
+
+	
+<p>The method will search for a #-mark, and will return the text before the #-mark.
+It will return nil of no prefix was found.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSUnit </em></code>: 
+The DCS unit to be searched.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The prefix</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing found</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetSpawnIndex" >
+<strong>SPAWN:_GetSpawnIndex(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the next index of the groups to be spawned.</p>
+
+	
+<p>This function is complicated, as it is used at several spaces.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._GetTemplate" >
+<strong>SPAWN:_GetTemplate(SpawnTemplatePrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the Group Template from the ME environment definition.</p>
+
+	
+<p>This method used the <a href="DATABASE.html">DATABASE</a> object, which contains ALL initial and new spawned object in MOOSE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnTemplatePrefix </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._InitializeSpawnGroups" >
+<strong>SPAWN:_InitializeSpawnGroups(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Initalize the SpawnGroups collection.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._OnBirth" >
+<strong>SPAWN:_OnBirth(event)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> TODO Need to delete this... _Database does this now ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._OnDeadOrCrash" >
+<strong>SPAWN:_OnDeadOrCrash(event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Obscolete</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._OnLand" >
+<strong>SPAWN:_OnLand(event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will detect AIR Units landing...</p>
+
+	
+<p>When the event takes place, the spawned Group is registered as landed.
+This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._OnTakeOff" >
+<strong>SPAWN:_OnTakeOff(event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will detect AIR Units taking off...</p>
+
+	
+<p>When the event takes place, the spawned Group is registered as airborne...
+This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._Prepare" >
+<strong>SPAWN:_Prepare(SpawnTemplatePrefix, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Prepares the new Group Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnTemplatePrefix </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._RandomizeRoute" >
+<strong>SPAWN:_RandomizeRoute(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Internal function randomizing the routes.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+The index of the group to be spawned.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._RandomizeTemplate" >
+<strong>SPAWN:_RandomizeTemplate(SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._Scheduler" >
+<strong>SPAWN:_Scheduler()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This function is called automatically by the Spawning scheduler.</p>
+
+	
+<p>It is the internal worker method SPAWNing new Groups on the defined time intervals.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._SpawnCleanUpScheduler" >
+<strong>SPAWN:_SpawnCleanUpScheduler()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN)._TranslateRotate" >
+<strong>SPAWN:_TranslateRotate(SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SpawnIndex </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnRootX </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnRootY </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnX </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnY </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnAngle </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE)" >Type <code>ZONE</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>
