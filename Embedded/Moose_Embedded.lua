@@ -2663,8 +2663,8 @@ function BASE:Inherit( Child, Parent )
 end
 
 --- This is the worker method to retrieve the Parent class.
--- @param BASE Child is the Child class from which the Parent class needs to be retrieved.
--- @return Parent
+-- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
+-- @return #BASE
 function BASE:Inherited( Child )
 	local Parent = getmetatable( Child )
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
@@ -5915,7 +5915,7 @@ function CARGO_GROUP:UnLoad( Client, TargetZoneName )
 	self.CargoGroupName = CargoGroup:GetName()
 	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
-	CargoGroup:RouteToZone( ZONE:New( TargetZoneName ), true )
+	CargoGroup:TaskRouteToZone( ZONE:New( TargetZoneName ), true )
 	
 	self:StatusUnLoaded()
 
@@ -11295,16 +11295,8 @@ function SEAD:EventShot( event )
 end
 --- Taking the lead of AI escorting your flight.
 -- The ESCORT class allows you to interact with escoring AI on your flight and take the lead.
--- The following commands will be available:
--- 
--- * Pop-up and Scan Area
--- * Re-Join Formation
--- * Hold Position in x km
--- * Report identified targets
--- * Perform tasks per identified target: Report vector to target, paint target, kill target
--- 
 -- @module Escort
--- @author FlightControl
+-- @author Flightcontrol
 
 Include.File( "Routines" )
 Include.File( "Base" )
