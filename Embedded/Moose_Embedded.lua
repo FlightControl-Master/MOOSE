@@ -2569,9 +2569,9 @@ end
 
 env.info(( 'Init: Scripts Loaded v1.1' ))
 
---- BASE The base class for all the classes defined within MOOSE.
+--- The BASE class for all the classes defined within MOOSE.
 -- @module Base
--- @author Flightcontrol
+-- @author FlightControl
 
 Include.File( "Routines" )
 
@@ -2604,7 +2604,6 @@ local _TraceClass = {
 -- @field ClassName The name of the class.
 -- @field ClassID The ID number of the class.
 BASE = {
-
   ClassName = "BASE",
   ClassID = 0,
   Events = {}
@@ -2619,8 +2618,8 @@ FORMATION = {
 
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
--- @param self
--- @return #BASE
+-- @param #BASE self
+-- @return #BASE The new instance of the BASE class.
 -- @usage
 -- function TASK:New()
 --
@@ -2647,9 +2646,10 @@ function BASE:New()
 end
 
 --- This is the worker method to inherit from a parent class.
+-- @param #BASE self
 -- @param Child is the Child class that inherits.
--- @param Parent is the Parent class that the Child inherits from.
--- @return Child
+-- @param #BASE Parent is the Parent class that the Child inherits from.
+-- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
 	local Parent = routines.utils.deepCopy( Parent )
@@ -2663,6 +2663,7 @@ function BASE:Inherit( Child, Parent )
 end
 
 --- This is the worker method to retrieve the Parent class.
+-- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:Inherited( Child )
@@ -2693,7 +2694,11 @@ function BASE:GetClassID()
   return self.ClassID
 end
 
-
+--- Set a new listener for the class.
+-- @param self
+-- @param DCSTypes#Event Event
+-- @param #function EventFunction
+-- @return #BASE
 function BASE:AddEvent( Event, EventFunction )
 	self:F( Event )
 
@@ -2705,7 +2710,9 @@ function BASE:AddEvent( Event, EventFunction )
 	return self
 end
 
-
+--- Enable the event listeners for the class.
+-- @param #BASE self
+-- @return #BASE
 function BASE:EnableEvents()
 	self:F( #self.Events )
 
@@ -2718,6 +2725,10 @@ function BASE:EnableEvents()
 	return self
 end
 
+
+--- Disable the event listeners for the class.
+-- @param #BASE self
+-- @return #BASE
 function BASE:DisableEvents()
 	self:F()
   
@@ -2769,7 +2780,13 @@ local BaseEventCodes = {
 --   weapon = Weapon
 -- }
 
-
+--- Creation of a Birth Event.
+-- @param #BASE self
+-- @param DCSTypes#Time EventTime The time stamp of the event.
+-- @param DCSObject#Object Initiator The initiating object of the event.
+-- @param #string IniUnitName The initiating unit name.
+-- @param place
+-- @param subplace
 function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
 	self:F( { EventTime, Initiator, IniUnitName, place, subplace } )
 
@@ -2785,6 +2802,10 @@ function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subpla
 	world.onEvent( Event )
 end
 
+--- Creation of a Crash Event.
+-- @param #BASE self
+-- @param DCSTypes#Time EventTime The time stamp of the event.
+-- @param DCSObject#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator )
 	self:F( { EventTime, Initiator } )
 
@@ -2796,7 +2817,11 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 
 	world.onEvent( Event )
 end
-												
+
+-- TODO: Complete DCSTypes#Event structure.                       
+--- The main event handling function... This function captures all events generated for the class.
+-- @param #BASE self
+-- @param DCSTypes#Event event
 function BASE:onEvent(event)
 
 	--env.info( 'onEvent Table self = ' .. tostring(self) )
@@ -2821,7 +2846,6 @@ function BASE:onEvent(event)
 			end
 		end
 	end
-
 end
 
 -- Trace section
@@ -2829,6 +2853,9 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Trace a function call. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
   if _TraceOn and _TraceClass[self.ClassName] then
@@ -2850,6 +2877,9 @@ function BASE:F( Arguments )
   end
 end
 
+--- Trace a function call level 2. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
   if _TraceLevel >= 2 then
@@ -2858,6 +2888,9 @@ function BASE:F2( Arguments )
   
 end
 
+--- Trace a function call level 3. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
   if _TraceLevel >= 3 then
@@ -2866,6 +2899,9 @@ function BASE:F3( Arguments )
   
 end
 
+--- Trace a function logic. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
@@ -2887,6 +2923,9 @@ function BASE:T( Arguments )
 	end
 end
 
+--- Trace a function logic level 2. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
   if _TraceLevel >= 2 then
@@ -2895,6 +2934,9 @@ function BASE:T2( Arguments )
   
 end
 
+--- Trace a function logic level 3. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
   if _TraceLevel >= 3 then
@@ -2903,9 +2945,9 @@ function BASE:T3( Arguments )
   
 end
 
-
-
--- Log an exception
+--- Log an exception which will be traced always. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
 	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
@@ -4336,6 +4378,7 @@ Include.File( "Group" )
 
 --- The DATABASE class
 -- @type DATABASE
+-- @extends Base#BASE
 DATABASE = {
 	ClassName = "DATABASE",
 	Units = {},
@@ -6273,7 +6316,9 @@ function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
 
 	return Cargo
 end
---- CLIENT Classes
+--- The CLIENT models client units in multi player missions.
+-- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
+-- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
 -- @module Client
 -- @author FlightControl
 
@@ -6282,8 +6327,6 @@ Include.File( "Base" )
 Include.File( "Cargo" )
 Include.File( "Message" )
 
---- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- These clients are defined within the Mission Orchestration Framework (MOF)
 
 --- The CLIENT class
 -- @type CLIENT
@@ -6333,8 +6376,30 @@ function CLIENT:New( ClientName, ClientBriefing )
 	return self
 end
 
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @return #CLIENT
+function CLIENT:Transport()
+  self:F()
+
+  self.ClientTransport = true
+  return self
+end
+
+--- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+-- @param #CLIENT self
+-- @param #string ClientBriefing is the text defining the Mission briefing.
+-- @return #CLIENT
+function CLIENT:AddBriefing( ClientBriefing )
+  self:F()
+  self.ClientBriefing = ClientBriefing
+  return self
+end
+
+
 --- Resets a CLIENT.
--- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
 	self:F()
 	self._Menus = {}
@@ -6343,12 +6408,13 @@ end
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
 -- @param #function CallBack Function.
+-- @return #CLIENT
 function CLIENT:Alive( CallBack )
   self:F()
   
   self.ClientAlive2 = false
   self.ClientCallBack = CallBack
-  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 5 )
+  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
 
   return self
 end
@@ -6372,7 +6438,7 @@ end
 
 
 --- @param #CLIENT self
-function CLIENT:_AliveCheckCallBack()
+function CLIENT:_AliveCheckScheduler()
   self:F( { self.ClientName, self.ClientAlive2 } )
 
   if self:IsAlive() then
@@ -6390,6 +6456,7 @@ end
 
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
+-- @param #CLIENT self
 -- @return DCSGroup#Group
 function CLIENT:GetDCSGroup()
   self:F3()
@@ -6460,9 +6527,12 @@ function CLIENT:GetDCSGroup()
 end 
 
 
+-- TODO: Check DCSTypes#Group.ID
+--- Get the group ID of the client.
+-- @param #CLIENT self
+-- @return DCSTypes#Group.ID
 function CLIENT:GetClientGroupID()
 
-  
   if not self.ClientGroupID then
     local ClientGroup = self:GetDCSGroup()
     if ClientGroup and ClientGroup:isExist() then
@@ -6477,6 +6547,9 @@ function CLIENT:GetClientGroupID()
 end
 
 
+--- Get the name of the group of the client.
+-- @param #CLIENT self
+-- @return #string
 function CLIENT:GetClientGroupName()
 
   if not self.ClientGroupName then
@@ -6492,7 +6565,8 @@ function CLIENT:GetClientGroupName()
 	return self.ClientGroupName
 end
 
---- Returns the Unit of the @{CLIENT}.
+--- Returns the UNIT of the CLIENT.
+-- @param #CLIENT self
 -- @return Unit#UNIT
 function CLIENT:GetClientGroupUnit()
 	self:F()
@@ -6506,8 +6580,9 @@ function CLIENT:GetClientGroupUnit()
 	end
 end
 
---- Returns the DCSUnit of the @{CLIENT}.
--- @return DCSUnit
+--- Returns the DCSUnit of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
@@ -6520,13 +6595,15 @@ function CLIENT:GetClientGroupDCSUnit()
   end
 end
 
+-- TODO what is this??? check. possible double function.
 function CLIENT:GetUnit()
 	self:F()
 	
 	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
 
---- Returns the Point of the @{CLIENT}.
+--- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
+-- @param #CLIENT self
 -- @return DCSTypes#Vec2
 function CLIENT:GetPointVec2()
 	self:F()
@@ -6548,8 +6625,9 @@ function CLIENT:GetPointVec2()
 end 
 
 
---- Returns the Position of the @{CLIENT}.
--- @return DCSTypes#Position
+--- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
+-- @param #CLIENT self
+-- @return DCSTypes#Vec3
 function CLIENT:ClientPosition()
 	self:F()
 
@@ -6564,7 +6642,8 @@ function CLIENT:ClientPosition()
 	return nil
 end 
 
---- Returns the altitude of the @{CLIENT}.
+--- Returns the altitude of the CLIENT.
+-- @param #CLIENT self
 -- @return DCSTypes#Distance
 function CLIENT:GetAltitude()
 	self:F()
@@ -6582,33 +6661,17 @@ function CLIENT:GetAltitude()
 end 
 
 
---- Transport defines that the Client is a Transport.
--- @return CLIENT
-function CLIENT:Transport()
-	self:F()
-
-	self.ClientTransport = true
-	return self
-end
-
---- AddBriefing adds a briefing to a Client when a Player joins a Mission.
--- @param string ClientBriefing is the text defining the Mission briefing.
--- @return CLIENT
-function CLIENT:AddBriefing( ClientBriefing )
-	self:F()
-	self.ClientBriefing = ClientBriefing
-	return self
-end
-
---- IsTransport returns if a Client is a transport.
--- @return bool
+--- Evaluates if the CLIENT is a transport.
+-- @param #CLIENT self
+-- @return #boolean true is a transport.
 function CLIENT:IsTransport()
 	self:F()
 	return self.ClientTransport
 end
 
---- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
--- The @{CARGO} is shown throught the MESSAGE system of DCS World.
+--- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+-- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
 
@@ -6628,18 +6691,20 @@ function CLIENT:ShowCargo()
 
 end
 
---- SwitchMessages is a local function called by the DCS World Menu system to switch off messages.
+-- TODO (1) I urgently need to revise this.
+--- A local function called by the DCS World Menu system to switch off messages.
 function CLIENT.SwitchMessages( PrmTable )
 	PrmTable[1].MessageSwitch = PrmTable[2]
 end
 
---- Message is the key Message driver for the CLIENT class.
+--- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @param string Message is the text describing the message.
--- @param number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @param string MessageCategory is the category of the message (the title).
--- @param number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
+-- @param #CLIENT self
+-- @param #string Message is the text describing the message.
+-- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param #string MessageCategory is the category of the message (the title).
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
 	self:F()
 
@@ -9492,8 +9557,8 @@ function MISSIONSCHEDULER:Time( TimeSeconds, TimeIntervalShow, TimeShow )
 	self.TimeShow = TimeShow
 end
 
---- CLEANUP Classes
--- @module CLEANUP
+--- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+-- @module CleanUp
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -9512,11 +9577,12 @@ CLEANUP = {
 }
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
--- @param table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
--- @param ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
--- @return CLEANUP
+-- @param #CLEANUP self
+-- @param #table ZoneNames Is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
+-- @param #number TimeInterval The interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
+-- @return #CLEANUP
 -- @usage
--- -- Clean these Zones.
+--  -- Clean these Zones.
 -- CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
 -- or
 -- CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
@@ -9542,14 +9608,16 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 	
 	self:EnableEvents()
 
-	self.CleanUpFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, TimeInterval )
+	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
 	return self
 end
 
 
 --- Destroys a group from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+-- @param #CLEANUP self
+-- @param DCSGroup#Group GroupObject The object to be destroyed.
+-- @param #string CleanUpGroupName The groupname...
 function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:F( { GroupObject, CleanUpGroupName } )
 
@@ -9560,8 +9628,10 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	end
 end
 
---- Destroys a unit from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+--- Destroys a @{DCSUnit#Unit} from the simulator, but checks first if it is still existing!
+-- @param #CLEANUP self
+-- @param DCSUnit#Unit CleanUpUnit The object to be destroyed.
+-- @param #string CleanUpUnitName The Unit name ...
 function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -9587,8 +9657,10 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	end
 end
 
+-- TODO check DCSTypes#Weapon
 --- Destroys a missile from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+-- @param #CLEANUP self
+-- @param DCSTypes#Weapon MissileObject
 function CLEANUP:_DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
 
@@ -9598,8 +9670,10 @@ function CLEANUP:_DestroyMissile( MissileObject )
 	end
 end
 
---- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see CLEANUP
+--- Detects if a crash event occurs.
+-- Crashed units go into a CleanUpList for removal.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventCrash( event )
 	self:F( { event } )
 
@@ -9624,12 +9698,12 @@ function CLEANUP:_EventCrash( event )
 	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
 	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroupName
 	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
-
-	
-
 end
---- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see CLEANUP
+
+--- Detects if a unit shoots a missile.
+-- If this occurs within one of the zones, then the weapon used must be destroyed.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventShot( event )
 	self:F( { event } )
 
@@ -9654,6 +9728,8 @@ end
 
 
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventHitCleanUp( event )
 	self:F( { event } )
 
@@ -9688,6 +9764,7 @@ function CLEANUP:_EventHitCleanUp( event )
 	
 end
 
+--- Add the @{DCSUnit#Unit} to the CleanUpList for CleanUp.
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -9704,6 +9781,8 @@ function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 end
 
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventAddForCleanUp( event )
 
 	local CleanUpUnit = event.initiator -- the Unit
@@ -9728,7 +9807,7 @@ function CLEANUP:_EventAddForCleanUp( event )
 	
 end
 
-CleanUpSurfaceTypeText = {
+local CleanUpSurfaceTypeText = {
    "LAND",
    "SHALLOW_WATER",
    "WATER",
@@ -9737,7 +9816,8 @@ CleanUpSurfaceTypeText = {
  }
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
-function CLEANUP:_Scheduler()
+-- @param #CLEANUP self
+function CLEANUP:_CleanUpScheduler()
 	self:F( "CleanUp Scheduler" )
 
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
