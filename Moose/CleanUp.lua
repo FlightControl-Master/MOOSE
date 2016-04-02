@@ -1,5 +1,5 @@
---- CLEANUP Classes
--- @module CLEANUP
+--- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+-- @module CleanUp
 -- @author Flightcontrol
 
 Include.File( "Routines" )
@@ -18,11 +18,12 @@ CLEANUP = {
 }
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
--- @param table{string,...}|string ZoneNames which is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
--- @param ?number TimeInterval is the interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
--- @return CLEANUP
+-- @param #CLEANUP self
+-- @param #table ZoneNames Is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.
+-- @param #number TimeInterval The interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.
+-- @return #CLEANUP
 -- @usage
--- -- Clean these Zones.
+--  -- Clean these Zones.
 -- CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
 -- or
 -- CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
@@ -48,14 +49,16 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 	
 	self:EnableEvents()
 
-	self.CleanUpFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, TimeInterval )
+	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
 	return self
 end
 
 
 --- Destroys a group from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+-- @param #CLEANUP self
+-- @param DCSGroup#Group GroupObject The object to be destroyed.
+-- @param #string CleanUpGroupName The groupname...
 function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:F( { GroupObject, CleanUpGroupName } )
 
@@ -66,8 +69,10 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	end
 end
 
---- Destroys a unit from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+--- Destroys a @{DCSUnit#Unit} from the simulator, but checks first if it is still existing!
+-- @param #CLEANUP self
+-- @param DCSUnit#Unit CleanUpUnit The object to be destroyed.
+-- @param #string CleanUpUnitName The Unit name ...
 function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -93,8 +98,10 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	end
 end
 
+-- TODO check DCSTypes#Weapon
 --- Destroys a missile from the simulator, but checks first if it is still existing!
--- @see CLEANUP
+-- @param #CLEANUP self
+-- @param DCSTypes#Weapon MissileObject
 function CLEANUP:_DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
 
@@ -104,8 +111,10 @@ function CLEANUP:_DestroyMissile( MissileObject )
 	end
 end
 
---- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see CLEANUP
+--- Detects if a crash event occurs.
+-- Crashed units go into a CleanUpList for removal.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventCrash( event )
 	self:F( { event } )
 
@@ -130,12 +139,12 @@ function CLEANUP:_EventCrash( event )
 	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
 	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroupName
 	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
-
-	
-
 end
---- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see CLEANUP
+
+--- Detects if a unit shoots a missile.
+-- If this occurs within one of the zones, then the weapon used must be destroyed.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventShot( event )
 	self:F( { event } )
 
@@ -160,6 +169,8 @@ end
 
 
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventHitCleanUp( event )
 	self:F( { event } )
 
@@ -194,6 +205,7 @@ function CLEANUP:_EventHitCleanUp( event )
 	
 end
 
+--- Add the @{DCSUnit#Unit} to the CleanUpList for CleanUp.
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -210,6 +222,8 @@ function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 end
 
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
+-- @param #CLEANUP self
+-- @param DCSTypes#Event event
 function CLEANUP:_EventAddForCleanUp( event )
 
 	local CleanUpUnit = event.initiator -- the Unit
@@ -234,7 +248,7 @@ function CLEANUP:_EventAddForCleanUp( event )
 	
 end
 
-CleanUpSurfaceTypeText = {
+local CleanUpSurfaceTypeText = {
    "LAND",
    "SHALLOW_WATER",
    "WATER",
@@ -243,7 +257,8 @@ CleanUpSurfaceTypeText = {
  }
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
-function CLEANUP:_Scheduler()
+-- @param #CLEANUP self
+function CLEANUP:_CleanUpScheduler()
 	self:F( "CleanUp Scheduler" )
 
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do

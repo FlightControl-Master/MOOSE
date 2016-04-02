@@ -19,13 +19,14 @@
 		<ul>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
-					<li><a href="CLEANUP.html">CLEANUP</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li>Client</li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
@@ -60,7 +61,11 @@
 	<div id="content">
    <h1>Module <code>Client</code></h1>
    
-<p>CLIENT Classes</p>
+<p>The CLIENT models client units in multi player missions.</p>
+
+   
+<p>Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
+Note that clients are NOT the same as groups, they are NOT necessarily alive. </p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -80,9 +85,9 @@
 			<h2><a id="#(CLIENT)">Type <code>CLIENT</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).AddBriefing">CLIENT.AddBriefing(string, self, ClientBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).AddBriefing">CLIENT:AddBriefing(ClientBriefing)</a></td>
 		<td class="summary">
-<p>AddBriefing adds a briefing to a Client when a Player joins a Mission.</p>
+<p>AddBriefing adds a briefing to a CLIENT when a player joins a mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -92,7 +97,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).AliveCheckFunction">CLIENT.AliveCheckFunction</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).AliveCheckScheduler">CLIENT.AliveCheckScheduler</a></td>
 		<td class="summary">
 
 </td>
@@ -116,6 +121,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientBriefing">CLIENT.ClientBriefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientBriefingShown">CLIENT.ClientBriefingShown</a></td>
 		<td class="summary">
 
@@ -123,6 +134,30 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientCallBack">CLIENT.ClientCallBack</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientGroupID">CLIENT.ClientGroupID</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientGroupName">CLIENT.ClientGroupName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientGroupUnit">CLIENT.ClientGroupUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientID">CLIENT.ClientID</a></td>
 		<td class="summary">
 
 </td>
@@ -136,7 +171,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientPosition">CLIENT:ClientPosition()</a></td>
 		<td class="summary">
-<p>Returns the Position of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
 </td>
 		</tr>
 		<tr>
@@ -148,13 +183,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetAltitude">CLIENT:GetAltitude()</a></td>
 		<td class="summary">
-<p>Returns the altitude of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the altitude of the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetClientGroupDCSUnit">CLIENT:GetClientGroupDCSUnit()</a></td>
 		<td class="summary">
-<p>Returns the DCSUnit of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the DCSUnit of the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
@@ -166,13 +201,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetClientGroupName">CLIENT:GetClientGroupName()</a></td>
 		<td class="summary">
-
+<p>Get the name of the group of the client.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetClientGroupUnit">CLIENT:GetClientGroupUnit()</a></td>
 		<td class="summary">
-<p>Returns the Unit of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the UNIT of the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
@@ -184,7 +219,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetPointVec2">CLIENT:GetPointVec2()</a></td>
 		<td class="summary">
-<p>Returns the Point of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
 </td>
 		</tr>
 		<tr>
@@ -202,13 +237,31 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsTransport">CLIENT:IsTransport()</a></td>
 		<td class="summary">
-<p>IsTransport returns if a Client is a transport.</p>
+<p>Evaluates if the CLIENT is a transport.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Message">CLIENT.Message(string, number, string, string, number, self, Message, MessageDuration, MessageId, MessageCategory, MessageInterval)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).MenuMessages">CLIENT.MenuMessages</a></td>
 		<td class="summary">
-<p>Message is the key Message driver for the CLIENT class.</p>
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).MenuRouteMessageOff">CLIENT.MenuRouteMessageOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).MenuRouteMessageOn">CLIENT.MenuRouteMessageOn</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Message">CLIENT:Message(Message, MessageDuration, MessageId, MessageCategory, MessageInterval)</a></td>
+		<td class="summary">
+<p>The main message driver for the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
@@ -230,7 +283,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Reset">CLIENT.Reset(string, self, ClientName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Reset">CLIENT:Reset(ClientName)</a></td>
 		<td class="summary">
 <p>Resets a CLIENT.</p>
 </td>
@@ -238,13 +291,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ShowCargo">CLIENT:ShowCargo()</a></td>
 		<td class="summary">
-<p>ShowCargo shows the <a href="CARGO.html">CARGO</a> within the CLIENT to the Player.</p>
+<p>Shows the <a href="Cargo.html##(CARGO)">Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).SwitchMessages">CLIENT.SwitchMessages(PrmTable)</a></td>
 		<td class="summary">
-<p>SwitchMessages is a local function called by the DCS World Menu system to switch off messages.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -254,7 +307,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT)._AliveCheckCallBack">CLIENT:_AliveCheckCallBack()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT)._AliveCheckScheduler">CLIENT:_AliveCheckScheduler()</a></td>
 		<td class="summary">
 
 </td>
@@ -313,36 +366,26 @@
 <dt>
 
 <a id="#(CLIENT).AddBriefing" >
-<strong>CLIENT.AddBriefing(string, self, ClientBriefing)</strong>
+<strong>CLIENT:AddBriefing(ClientBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>AddBriefing adds a briefing to a Client when a Player joins a Mission.</p>
+<p>AddBriefing adds a briefing to a CLIENT when a player joins a mission.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> string </em></code>: 
-ClientBriefing is the text defining the Mission briefing.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ClientBriefing </em></code>: </p>
+<p><code><em>#string ClientBriefing </em></code>: 
+is the text defining the Mission briefing.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
 
-<p>CLIENT</p>
 
 </dd>
 </dl>
@@ -366,14 +409,19 @@ Function.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 		<em></em>
-<a id="#(CLIENT).AliveCheckFunction" >
-<strong>CLIENT.AliveCheckFunction</strong>
+<a id="#(CLIENT).AliveCheckScheduler" >
+<strong>CLIENT.AliveCheckScheduler</strong>
 </a>
 </dt>
 <dd>
@@ -427,6 +475,20 @@ Function.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(CLIENT).ClientBriefing" >
+<strong>CLIENT.ClientBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#boolean</em>
 <a id="#(CLIENT).ClientBriefingShown" >
 <strong>CLIENT.ClientBriefingShown</strong>
@@ -444,6 +506,61 @@ Function.</p>
 		<em></em>
 <a id="#(CLIENT).ClientCallBack" >
 <strong>CLIENT.ClientCallBack</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLIENT).ClientGroupID" >
+<strong>CLIENT.ClientGroupID</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).ClientGroupName" >
+<strong>CLIENT.ClientGroupName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).ClientGroupUnit" >
+<strong>CLIENT.ClientGroupUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).ClientID" >
+<strong>CLIENT.ClientID</strong>
 </a>
 </dt>
 <dd>
@@ -474,11 +591,11 @@ Function.</p>
 </dt>
 <dd>
 	
-<p>Returns the Position of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTypes.html##(Position)">DCSTypes#Position</a>:</em></p>
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em></p>
 
 
 </dd>
@@ -506,7 +623,7 @@ Function.</p>
 </dt>
 <dd>
 	
-<p>Returns the altitude of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the altitude of the CLIENT.</p>
 
 		<h3>Return value</h3>
 				
@@ -524,12 +641,12 @@ Function.</p>
 </dt>
 <dd>
 	
-<p>Returns the DCSUnit of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the DCSUnit of the CLIENT.</p>
 
 		<h3>Return value</h3>
 				
+<p><em><a href="DCSTypes.html##(Unit)">DCSTypes#Unit</a>:</em></p>
 
-<p>DCSUnit</p>
 
 </dd>
 </dl>
@@ -544,6 +661,12 @@ Function.</p>
 	
 
 
+	
+<p> TODO: Check DCSTypes#Group.ID
+- Get the group ID of the client.
+ @param #CLIENT self
+ @return DCSTypes#Group.ID</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -555,6 +678,11 @@ Function.</p>
 </dt>
 <dd>
 	
+<p>Get the name of the group of the client.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
 
 
 </dd>
@@ -568,7 +696,7 @@ Function.</p>
 </dt>
 <dd>
 	
-<p>Returns the Unit of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the UNIT of the CLIENT.</p>
 
 		<h3>Return value</h3>
 				
@@ -607,7 +735,7 @@ Function.</p>
 </dt>
 <dd>
 	
-<p>Returns the Point of the <a href="CLIENT.html">CLIENT</a>.</p>
+<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
 
 		<h3>Return value</h3>
 				
@@ -626,6 +754,9 @@ Function.</p>
 <dd>
 	
 
+
+	
+<p> TODO what is this??? check. possible double function.</p>
 
 </dd>
 </dl>
@@ -660,12 +791,54 @@ true if client is alive.</p>
 </dt>
 <dd>
 	
-<p>IsTransport returns if a Client is a transport.</p>
+<p>Evaluates if the CLIENT is a transport.</p>
 
 		<h3>Return value</h3>
 				
+<p><em>#boolean:</em>
+true is a transport.</p>
 
-<p>bool</p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).MenuMessages" >
+<strong>CLIENT.MenuMessages</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).MenuRouteMessageOff" >
+<strong>CLIENT.MenuRouteMessageOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).MenuRouteMessageOn" >
+<strong>CLIENT.MenuRouteMessageOn</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -673,12 +846,12 @@ true if client is alive.</p>
 <dt>
 
 <a id="#(CLIENT).Message" >
-<strong>CLIENT.Message(string, number, string, string, number, self, Message, MessageDuration, MessageId, MessageCategory, MessageInterval)</strong>
+<strong>CLIENT:Message(Message, MessageDuration, MessageId, MessageCategory, MessageInterval)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Message is the key Message driver for the CLIENT class.</p>
+<p>The main message driver for the CLIENT.</p>
 
 	
 <p>This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.</p>
@@ -687,62 +860,32 @@ true if client is alive.</p>
 		<ul>
 				<li>
 				
-<p><code><em> string </em></code>: 
-Message is the text describing the message.</p>
+<p><code><em>#string Message </em></code>: 
+is the text describing the message.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> number </em></code>: 
-MessageDuration is the duration in seconds that the Message should be displayed.</p>
+<p><code><em>#number MessageDuration </em></code>: 
+is the duration in seconds that the Message should be displayed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> string </em></code>: 
-MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId</p>
+<p><code><em>#string MessageId </em></code>: 
+is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId</p>
 
 				</li>
 				<li>
 				
-<p><code><em> string </em></code>: 
-MessageCategory is the category of the message (the title).</p>
+<p><code><em>#string MessageCategory </em></code>: 
+is the category of the message (the title).</p>
 
 				</li>
 				<li>
 				
-<p><code><em> number </em></code>: 
-MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Message </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MessageDuration </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MessageId </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MessageCategory </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MessageInterval </em></code>: </p>
+<p><code><em>#number MessageInterval </em></code>: 
+is the interval in seconds between the display of the <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> when the CLIENT is in the air.</p>
 
 				</li>
 		</ul>
@@ -823,29 +966,19 @@ Text that describes the briefing of the mission when a Player logs into the Clie
 <dt>
 
 <a id="#(CLIENT).Reset" >
-<strong>CLIENT.Reset(string, self, ClientName)</strong>
+<strong>CLIENT:Reset(ClientName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Resets a CLIENT.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> string </em></code>: 
-ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ClientName </em></code>: </p>
+<p><code><em>#string ClientName </em></code>: 
+Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.</p>
 
 				</li>
 		</ul>
@@ -860,10 +993,10 @@ ClientName Name of the Group as defined within the Mission Editor. The Group mus
 </dt>
 <dd>
 	
-<p>ShowCargo shows the <a href="CARGO.html">CARGO</a> within the CLIENT to the Player.</p>
+<p>Shows the <a href="Cargo.html##(CARGO)">Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
 
 	
-<p>The <a href="CARGO.html">CARGO</a> is shown throught the MESSAGE system of DCS World.</p>
+<p>The <a href="Cargo.html##(CARGO)">Cargo#CARGO</a> is shown using the <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> distribution system.</p>
 
 </dd>
 </dl>
@@ -876,7 +1009,11 @@ ClientName Name of the Group as defined within the Mission Editor. The Group mus
 </dt>
 <dd>
 	
-<p>SwitchMessages is a local function called by the DCS World Menu system to switch off messages.</p>
+
+
+	
+<p> TODO (1) I urgently need to revise this.
+- A local function called by the DCS World Menu system to switch off messages.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -899,18 +1036,21 @@ ClientName Name of the Group as defined within the Mission Editor. The Group mus
 	
 <p>Transport defines that the Client is a Transport.</p>
 
+	
+<p>Transports show cargo.</p>
+
 		<h3>Return value</h3>
 				
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
 
-<p>CLIENT</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(CLIENT)._AliveCheckCallBack" >
-<strong>CLIENT:_AliveCheckCallBack()</strong>
+<a id="#(CLIENT)._AliveCheckScheduler" >
+<strong>CLIENT:_AliveCheckScheduler()</strong>
 </a>
 </dt>
 <dd>

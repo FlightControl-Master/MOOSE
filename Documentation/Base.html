@@ -19,13 +19,14 @@
 		<ul>
 					<li>Base</li>
 					<li><a href="CARGO.html">CARGO</a></li>
-					<li><a href="CLEANUP.html">CLEANUP</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
@@ -60,7 +61,7 @@
 	<div id="content">
    <h1>Module <code>Base</code></h1>
    
-<p>BASE The base class for all the classes defined within MOOSE.</p>
+<p>The BASE class for all the classes defined within MOOSE.</p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -82,7 +83,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).AddEvent">BASE:AddEvent(Event, EventFunction)</a></td>
 		<td class="summary">
-
+<p>Set a new listener for the class.</p>
 </td>
 		</tr>
 		<tr>
@@ -100,31 +101,31 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).CreateEventBirth">BASE:CreateEventBirth(EventTime, Initiator, IniUnitName, place, subplace)</a></td>
 		<td class="summary">
-
+<p>Creation of a Birth Event.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).CreateEventCrash">BASE:CreateEventCrash(EventTime, Initiator)</a></td>
 		<td class="summary">
-
+<p>Creation of a Crash Event.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).DisableEvents">BASE:DisableEvents()</a></td>
 		<td class="summary">
-
+<p>Disable the event listeners for the class.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).E">BASE:E(Arguments)</a></td>
 		<td class="summary">
-
+<p>Log an exception which will be traced always.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).EnableEvents">BASE:EnableEvents()</a></td>
 		<td class="summary">
-
+<p>Enable the event listeners for the class.</p>
 </td>
 		</tr>
 		<tr>
@@ -136,19 +137,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).F">BASE:F(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function call.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).F2">BASE:F2(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function call level 2.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).F3">BASE:F3(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function call level 3.</p>
 </td>
 		</tr>
 		<tr>
@@ -170,13 +171,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherit">BASE.Inherit(Child, Parent, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherit">BASE:Inherit(Child, Parent)</a></td>
 		<td class="summary">
 <p>This is the worker method to inherit from a parent class.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherited">BASE.Inherited(Child, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherited">BASE:Inherited(Child)</a></td>
 		<td class="summary">
 <p>This is the worker method to retrieve the Parent class.</p>
 </td>
@@ -190,19 +191,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).T">BASE:T(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function logic.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).T2">BASE:T2(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function logic level 2.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).T3">BASE:T3(Arguments)</a></td>
 		<td class="summary">
-
+<p>Trace a function logic level 3.</p>
 </td>
 		</tr>
 		<tr>
@@ -268,21 +269,26 @@
 </dt>
 <dd>
 	
-
+<p>Set a new listener for the class.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Event </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> Event </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> EventFunction </em></code>: </p>
+<p><code><em>#function EventFunction </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -320,23 +326,26 @@
 </dt>
 <dd>
 	
-
+<p>Creation of a Birth Event.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> EventTime </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Time)">DCSTypes#Time</a> EventTime </em></code>: 
+The time stamp of the event.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Initiator </em></code>: </p>
+<p><code><em><a href="DCSObject.html##(Object)">DCSObject#Object</a> Initiator </em></code>: 
+The initiating object of the event.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> IniUnitName </em></code>: </p>
+<p><code><em>#string IniUnitName </em></code>: 
+The initiating unit name.</p>
 
 				</li>
 				<li>
@@ -361,18 +370,20 @@
 </dt>
 <dd>
 	
-
+<p>Creation of a Crash Event.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> EventTime </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Time)">DCSTypes#Time</a> EventTime </em></code>: 
+The time stamp of the event.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Initiator </em></code>: </p>
+<p><code><em><a href="DCSObject.html##(Object)">DCSObject#Object</a> Initiator </em></code>: 
+The initiating object of the event.</p>
 
 				</li>
 		</ul>
@@ -387,6 +398,11 @@
 </dt>
 <dd>
 	
+<p>Disable the event listeners for the class.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
 
 
 </dd>
@@ -400,16 +416,17 @@
 </dt>
 <dd>
 	
-
+<p>Log an exception which will be traced always.</p>
 
 	
-<p> Log an exception</p>
+<p>Can be anywhere within the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -424,6 +441,11 @@
 </dt>
 <dd>
 	
+<p>Enable the event listeners for the class.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
 
 
 </dd>
@@ -451,13 +473,17 @@
 </dt>
 <dd>
 	
+<p>Trace a function call.</p>
 
+	
+<p>Must be at the beginning of the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -472,13 +498,17 @@
 </dt>
 <dd>
 	
+<p>Trace a function call level 2.</p>
 
+	
+<p>Must be at the beginning of the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -493,13 +523,17 @@
 </dt>
 <dd>
 	
+<p>Trace a function call level 3.</p>
 
+	
+<p>Must be at the beginning of the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -566,7 +600,7 @@ The ClassName + ClassID of the class instance.</p>
 <dt>
 
 <a id="#(BASE).Inherit" >
-<strong>BASE.Inherit(Child, Parent, self)</strong>
+<strong>BASE:Inherit(Child, Parent)</strong>
 </a>
 </dt>
 <dd>
@@ -583,20 +617,15 @@ is the Child class that inherits.</p>
 				</li>
 				<li>
 				
-<p><code><em> Parent </em></code>: 
+<p><code><em><a href="##(BASE)">#BASE</a> Parent </em></code>: 
 is the Parent class that the Child inherits from.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-
-<p>Child</p>
+<p><em><a href="##(BASE)">#BASE</a>:</em>
+Child</p>
 
 </dd>
 </dl>
@@ -604,24 +633,19 @@ is the Parent class that the Child inherits from.</p>
 <dt>
 
 <a id="#(BASE).Inherited" >
-<strong>BASE.Inherited(Child, self)</strong>
+<strong>BASE:Inherited(Child)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>This is the worker method to retrieve the Parent class.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(BASE)">#BASE</a> Child </em></code>: 
 is the Child class from which the Parent class needs to be retrieved.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
 
 				</li>
 		</ul>
@@ -654,13 +678,17 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 </dt>
 <dd>
 	
+<p>Trace a function logic.</p>
 
+	
+<p>Can be anywhere within the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -675,13 +703,17 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 </dt>
 <dd>
 	
+<p>Trace a function logic level 2.</p>
 
+	
+<p>Can be anywhere within the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -696,13 +728,17 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 </dt>
 <dd>
 	
+<p>Trace a function logic level 3.</p>
 
+	
+<p>Can be anywhere within the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Arguments </em></code>: </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
 
 				</li>
 		</ul>
@@ -718,6 +754,12 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 <dd>
 	
 
+
+	
+<p> TODO: Complete DCSTypes#Event structure. <br/>
+- The main event handling function... This function captures all events generated for the class.
+ @param #BASE self
+ @param DCSTypes#Event event</p>
 
 		<h3>Parameter</h3>
 		<ul>

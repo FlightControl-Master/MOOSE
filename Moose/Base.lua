@@ -1,6 +1,6 @@
---- BASE The base class for all the classes defined within MOOSE.
+--- The BASE class for all the classes defined within MOOSE.
 -- @module Base
--- @author Flightcontrol
+-- @author FlightControl
 
 Include.File( "Routines" )
 
@@ -33,7 +33,6 @@ local _TraceClass = {
 -- @field ClassName The name of the class.
 -- @field ClassID The ID number of the class.
 BASE = {
-
   ClassName = "BASE",
   ClassID = 0,
   Events = {}
@@ -48,8 +47,8 @@ FORMATION = {
 
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
--- @param self
--- @return #BASE
+-- @param #BASE self
+-- @return #BASE The new instance of the BASE class.
 -- @usage
 -- function TASK:New()
 --
@@ -76,9 +75,10 @@ function BASE:New()
 end
 
 --- This is the worker method to inherit from a parent class.
+-- @param #BASE self
 -- @param Child is the Child class that inherits.
--- @param Parent is the Parent class that the Child inherits from.
--- @return Child
+-- @param #BASE Parent is the Parent class that the Child inherits from.
+-- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
 	local Parent = routines.utils.deepCopy( Parent )
@@ -92,6 +92,7 @@ function BASE:Inherit( Child, Parent )
 end
 
 --- This is the worker method to retrieve the Parent class.
+-- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:Inherited( Child )
@@ -122,7 +123,11 @@ function BASE:GetClassID()
   return self.ClassID
 end
 
-
+--- Set a new listener for the class.
+-- @param self
+-- @param DCSTypes#Event Event
+-- @param #function EventFunction
+-- @return #BASE
 function BASE:AddEvent( Event, EventFunction )
 	self:F( Event )
 
@@ -134,7 +139,9 @@ function BASE:AddEvent( Event, EventFunction )
 	return self
 end
 
-
+--- Enable the event listeners for the class.
+-- @param #BASE self
+-- @return #BASE
 function BASE:EnableEvents()
 	self:F( #self.Events )
 
@@ -147,6 +154,10 @@ function BASE:EnableEvents()
 	return self
 end
 
+
+--- Disable the event listeners for the class.
+-- @param #BASE self
+-- @return #BASE
 function BASE:DisableEvents()
 	self:F()
   
@@ -198,7 +209,13 @@ local BaseEventCodes = {
 --   weapon = Weapon
 -- }
 
-
+--- Creation of a Birth Event.
+-- @param #BASE self
+-- @param DCSTypes#Time EventTime The time stamp of the event.
+-- @param DCSObject#Object Initiator The initiating object of the event.
+-- @param #string IniUnitName The initiating unit name.
+-- @param place
+-- @param subplace
 function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subplace )
 	self:F( { EventTime, Initiator, IniUnitName, place, subplace } )
 
@@ -214,6 +231,10 @@ function BASE:CreateEventBirth( EventTime, Initiator, IniUnitName, place, subpla
 	world.onEvent( Event )
 end
 
+--- Creation of a Crash Event.
+-- @param #BASE self
+-- @param DCSTypes#Time EventTime The time stamp of the event.
+-- @param DCSObject#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator )
 	self:F( { EventTime, Initiator } )
 
@@ -225,7 +246,11 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 
 	world.onEvent( Event )
 end
-												
+
+-- TODO: Complete DCSTypes#Event structure.                       
+--- The main event handling function... This function captures all events generated for the class.
+-- @param #BASE self
+-- @param DCSTypes#Event event
 function BASE:onEvent(event)
 
 	--env.info( 'onEvent Table self = ' .. tostring(self) )
@@ -250,7 +275,6 @@ function BASE:onEvent(event)
 			end
 		end
 	end
-
 end
 
 -- Trace section
@@ -258,6 +282,9 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Trace a function call. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
   if _TraceOn and _TraceClass[self.ClassName] then
@@ -279,6 +306,9 @@ function BASE:F( Arguments )
   end
 end
 
+--- Trace a function call level 2. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
   if _TraceLevel >= 2 then
@@ -287,6 +317,9 @@ function BASE:F2( Arguments )
   
 end
 
+--- Trace a function call level 3. Must be at the beginning of the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
   if _TraceLevel >= 3 then
@@ -295,6 +328,9 @@ function BASE:F3( Arguments )
   
 end
 
+--- Trace a function logic. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
 	if _TraceOn and _TraceClass[self.ClassName] then
@@ -316,6 +352,9 @@ function BASE:T( Arguments )
 	end
 end
 
+--- Trace a function logic level 2. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
   if _TraceLevel >= 2 then
@@ -324,6 +363,9 @@ function BASE:T2( Arguments )
   
 end
 
+--- Trace a function logic level 3. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
   if _TraceLevel >= 3 then
@@ -332,9 +374,9 @@ function BASE:T3( Arguments )
   
 end
 
-
-
--- Log an exception
+--- Log an exception which will be traced always. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
 	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
