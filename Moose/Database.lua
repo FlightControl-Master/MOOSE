@@ -10,6 +10,7 @@ Include.File( "Group" )
 
 --- The DATABASE class
 -- @type DATABASE
+-- @extends Base#BASE
 DATABASE = {
 	ClassName = "DATABASE",
 	Units = {},
