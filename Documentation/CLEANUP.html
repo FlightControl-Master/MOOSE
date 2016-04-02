@@ -19,13 +19,14 @@
 		<ul>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
-					<li>CLEANUP</li>
+					<li>CleanUp</li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
@@ -58,9 +59,12 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>CLEANUP</code></h1>
+   <h1>Module <code>CleanUp</code></h1>
    
-<p>CLEANUP Classes</p>
+<p>The CLEANUP class keeps an area clean of crashing or colliding airplanes.</p>
+
+   
+<p>It also prevents airplanes from firing within this area.</p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -70,15 +74,9 @@
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#CleanUpSurfaceTypeText">CleanUpSurfaceTypeText</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
-	<h2><a id="#(CLEANUP)" >Type <code>CLEANUP</code></a></h2>
-		<table class="function_list">
+			<h2><a id="#(CLEANUP)">Type <code>CLEANUP</code></a></h2>
+				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).ClassName">CLEANUP.ClassName</a></td>
 		<td class="summary">
@@ -112,7 +110,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._AddForCleanUp">CLEANUP:_AddForCleanUp(CleanUpUnit, CleanUpUnitName)</a></td>
 		<td class="summary">
-
+<p>Add the <a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> to the CleanUpList for CleanUp.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._CleanUpScheduler">CLEANUP:_CleanUpScheduler()</a></td>
+		<td class="summary">
+<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
 </td>
 		</tr>
 		<tr>
@@ -124,13 +128,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._DestroyMissile">CLEANUP:_DestroyMissile(MissileObject)</a></td>
 		<td class="summary">
-<p>Destroys a missile from the simulator, but checks first if it is still existing!</p>
+
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._DestroyUnit">CLEANUP:_DestroyUnit(CleanUpUnit, CleanUpUnitName)</a></td>
 		<td class="summary">
-<p>Destroys a unit from the simulator, but checks first if it is still existing!</p>
+<p>Destroys a <a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> from the simulator, but checks first if it is still existing!</p>
 </td>
 		</tr>
 		<tr>
@@ -142,7 +146,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventCrash">CLEANUP:_EventCrash(event)</a></td>
 		<td class="summary">
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
+<p>Detects if a crash event occurs.</p>
 </td>
 		</tr>
 		<tr>
@@ -154,13 +158,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventShot">CLEANUP:_EventShot(event)</a></td>
 		<td class="summary">
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._Scheduler">CLEANUP:_Scheduler()</a></td>
-		<td class="summary">
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
+<p>Detects if a unit shoots a missile.</p>
 </td>
 		</tr>
 	</table>
@@ -180,22 +178,10 @@
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="CleanUpSurfaceTypeText" >
-<strong>CleanUpSurfaceTypeText</strong>
-</a>
-</dt>
-<dd>
+	<h2><a id="#(CleanUp)" >Type <code>CleanUp</code></a></h2>
 	
-
-
-</dd>
-</dl>
-	<h2><a id="#(CLEANUP)" >Type <code>CLEANUP</code></a></h2>
-		
+			<h2><a id="#(CLEANUP)" >Type <code>CLEANUP</code></a></h2>
+				
 <p>The CLEANUP class.</p>
 
 	<h3>Field(s)</h3>
@@ -290,7 +276,7 @@
 </dt>
 <dd>
 	
-
+<p>Add the <a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> to the CleanUpList for CleanUp.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -310,6 +296,19 @@
 		<dl class="function">
 <dt>
 
+<a id="#(CLEANUP)._CleanUpScheduler" >
+<strong>CLEANUP:_CleanUpScheduler()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CLEANUP)._DestroyGroup" >
 <strong>CLEANUP:_DestroyGroup(GroupObject, CleanUpGroupName)</strong>
 </a>
@@ -322,12 +321,14 @@
 		<ul>
 				<li>
 				
-<p><code><em> GroupObject </em></code>: </p>
+<p><code><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a> GroupObject </em></code>: 
+The object to be destroyed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> CleanUpGroupName </em></code>: </p>
+<p><code><em>#string CleanUpGroupName </em></code>: 
+The groupname...</p>
 
 				</li>
 		</ul>
@@ -342,7 +343,13 @@
 </dt>
 <dd>
 	
-<p>Destroys a missile from the simulator, but checks first if it is still existing!</p>
+
+
+	
+<p> TODO check DCSTypes#Weapon
+- Destroys a missile from the simulator, but checks first if it is still existing!
+ @param #CLEANUP self
+ @param DCSTypes#Weapon MissileObject</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -363,18 +370,20 @@
 </dt>
 <dd>
 	
-<p>Destroys a unit from the simulator, but checks first if it is still existing!</p>
+<p>Destroys a <a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> from the simulator, but checks first if it is still existing!</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> CleanUpUnit </em></code>: </p>
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> CleanUpUnit </em></code>: 
+The object to be destroyed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> CleanUpUnitName </em></code>: </p>
+<p><code><em>#string CleanUpUnitName </em></code>: 
+The Unit name ...</p>
 
 				</li>
 		</ul>
@@ -398,7 +407,7 @@
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -413,16 +422,16 @@
 </dt>
 <dd>
 	
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
+<p>Detects if a crash event occurs.</p>
 
 	
-<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+<p>Crashed units go into a CleanUpList for removal.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -446,7 +455,7 @@
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -461,32 +470,19 @@
 </dt>
 <dd>
 	
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
+<p>Detects if a unit shoots a missile.</p>
 
 	
-<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+<p>If this occurs within one of the zones, then the weapon used must be destroyed.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._Scheduler" >
-<strong>CLEANUP:_Scheduler()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
-
 </dd>
 </dl>
 
