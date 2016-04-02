@@ -649,7 +649,7 @@ function CARGO_GROUP:UnLoad( Client, TargetZoneName )
 	self.CargoGroupName = CargoGroup:GetName()
 	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
 	
-	CargoGroup:RouteToZone( ZONE:New( TargetZoneName ), true )
+	CargoGroup:TaskRouteToZone( ZONE:New( TargetZoneName ), true )
 	
 	self:StatusUnLoaded()
 

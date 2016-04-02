@@ -23,7 +23,7 @@ Group_Vehicle4 = Spawn_Vehicle:Spawn()
 Group_Vehicle5 = Spawn_Vehicle:Spawn()
 Group_Vehicle6 = Spawn_Vehicle:Spawn()
 
-Group_Vehicle1:RouteToZone( ZONE:New( "Landing Zone" ), true, 40, "Cone" )
+Group_Vehicle1:TaskRouteToZone( ZONE:New( "Landing Zone" ), true, 40, "Cone" )
 
 -- Now land the spawned plane on to the Vinson, by copying the route of another object.
 Route_Plane = GROUP:NewFromName( "Spawn Helicopter Route Copy" ):CopyRoute( 1, 0 )
@@ -85,7 +85,7 @@ Spawn_Vehicle_Scheduled_CleanUp = SPAWN:New( "Spawn Vehicle Scheduled CleanUp" )
 -- Creates arrays of groups ready to be spawned and dynamic spawning of groups from another group.
 
 -- SpawnTestVisible creates an array of 200 groups, every 20 groups with 20 meters space in between, and will activate a group of the array every 10 seconds with a 0.2 time randomization.
-SpawnTestVisible = SPAWN:New( "Spawn Vehicle Visible Scheduled" ):Limit( 200, 200 ):SpawnArray( 59, 20, 20, 10 ):SpawnScheduled( 10, 0.2 )
+SpawnTestVisible = SPAWN:New( "Spawn Vehicle Visible Scheduled" ):Limit( 200, 200 ):Array( 59, 20, 20, 10 ):SpawnScheduled( 10, 0.2 )
 
 -- Spawn_Templates_Visible contains different templates...
 Spawn_Templates_Visible = { "Spawn Vehicle Visible Template A",
@@ -104,10 +104,10 @@ Spawn_Templates_Visible = { "Spawn Vehicle Visible Template A",
 --   and chooses for each group from the templates specified in Spawn_Templates_Visible.
 					
 Spawn_Vehicle_Visible_RandomizeTemplate_Scheduled = SPAWN:New( "Spawn Vehicle Visible RandomizeTemplate Scheduled" )
-                                                           :Limit( 80, 80 )
-													       :RandomizeTemplate( Spawn_Templates_Visible )
-													       :SpawnArray( 49, 20, 8, 8 )
-													       :SpawnScheduled( 10, 0.2 )
+                                                         :Limit( 80, 80 )
+													                               :RandomizeTemplate( Spawn_Templates_Visible )
+													                               :Array( 49, 20, 8, 8 )
+													                               :SpawnScheduled( 10, 0.2 )
 
 -- Spawn_Infantry allows to spawn 10 Infantry groups.														   
 Spawn_Infantry = SPAWN:New( "Spawn Infantry" )
@@ -116,12 +116,12 @@ Spawn_Infantry = SPAWN:New( "Spawn Infantry" )
 -- Spawn_Vehicle_Host reserves 10 vehicle groups, shown within an array arranged by 5 vehicles in a row with a distance of 8 meters, and schedules a vehicle each 10 seconds with a 20% variation.					  
 Spawn_Vehicle_Host = SPAWN:New( "Spawn Vehicle Host" )
                           :Limit( 10, 10 )
-						  :SpawnArray( 0, 5, 8, 8 )
-						  :SpawnScheduled( 10, 0.2 )
+						              :Array( 0, 5, 8, 8 )
+						              :SpawnScheduled( 10, 0.2 )
 
 -- Spawn_Vehicle_SpawnToZone allows to spawn 10 vehicle groups.									
 Spawn_Vehicle_SpawnToZone = SPAWN:New( "Spawn Vehicle SpawnToZone" )
-								 :Limit( 10, 10 )
+								                 :Limit( 10, 10 )
 
 -- Spawn_Helicopter_SpawnToZone will fly to a location, hover, and spawn one vehicle on the ground, the helicopter will land
 -- and the vehicle will drive to a random location within the defined zone.
@@ -134,6 +134,6 @@ Spawn_Vehicle_SpawnToZone = SPAWN:New( "Spawn Vehicle SpawnToZone" )
 
 Spawn_Helicopter_SpawnToZone = SPAWN:New( "Spawn Helicopter SpawnToZone" )
                                     :Limit( 10, 10 )
-						            :SpawnScheduled( 60, 0.2 )
+						                        :SpawnScheduled( 60, 0.2 )
 						  
 
