@@ -1,4 +1,6 @@
---- CLIENT Classes
+--- The CLIENT models client units in multi player missions.
+-- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
+-- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
 -- @module Client
 -- @author FlightControl
 
@@ -7,8 +9,6 @@ Include.File( "Base" )
 Include.File( "Cargo" )
 Include.File( "Message" )
 
---- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- These clients are defined within the Mission Orchestration Framework (MOF)
 
 --- The CLIENT class
 -- @type CLIENT
@@ -58,8 +58,30 @@ function CLIENT:New( ClientName, ClientBriefing )
 	return self
 end
 
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @return #CLIENT
+function CLIENT:Transport()
+  self:F()
+
+  self.ClientTransport = true
+  return self
+end
+
+--- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+-- @param #CLIENT self
+-- @param #string ClientBriefing is the text defining the Mission briefing.
+-- @return #CLIENT
+function CLIENT:AddBriefing( ClientBriefing )
+  self:F()
+  self.ClientBriefing = ClientBriefing
+  return self
+end
+
+
 --- Resets a CLIENT.
--- @param string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
 function CLIENT:Reset( ClientName )
 	self:F()
 	self._Menus = {}
@@ -68,12 +90,13 @@ end
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
 -- @param #function CallBack Function.
+-- @return #CLIENT
 function CLIENT:Alive( CallBack )
   self:F()
   
   self.ClientAlive2 = false
   self.ClientCallBack = CallBack
-  self.AliveCheckFunction = routines.scheduleFunction( self._AliveCheckCallBack, { self }, timer.getTime() + 1, 5 )
+  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
 
   return self
 end
@@ -97,7 +120,7 @@ end
 
 
 --- @param #CLIENT self
-function CLIENT:_AliveCheckCallBack()
+function CLIENT:_AliveCheckScheduler()
   self:F( { self.ClientName, self.ClientAlive2 } )
 
   if self:IsAlive() then
@@ -115,6 +138,7 @@ end
 
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
+-- @param #CLIENT self
 -- @return DCSGroup#Group
 function CLIENT:GetDCSGroup()
   self:F3()
@@ -185,9 +209,12 @@ function CLIENT:GetDCSGroup()
 end 
 
 
+-- TODO: Check DCSTypes#Group.ID
+--- Get the group ID of the client.
+-- @param #CLIENT self
+-- @return DCSTypes#Group.ID
 function CLIENT:GetClientGroupID()
 
-  
   if not self.ClientGroupID then
     local ClientGroup = self:GetDCSGroup()
     if ClientGroup and ClientGroup:isExist() then
@@ -202,6 +229,9 @@ function CLIENT:GetClientGroupID()
 end
 
 
+--- Get the name of the group of the client.
+-- @param #CLIENT self
+-- @return #string
 function CLIENT:GetClientGroupName()
 
   if not self.ClientGroupName then
@@ -217,7 +247,8 @@ function CLIENT:GetClientGroupName()
 	return self.ClientGroupName
 end
 
---- Returns the Unit of the @{CLIENT}.
+--- Returns the UNIT of the CLIENT.
+-- @param #CLIENT self
 -- @return Unit#UNIT
 function CLIENT:GetClientGroupUnit()
 	self:F()
@@ -231,8 +262,9 @@ function CLIENT:GetClientGroupUnit()
 	end
 end
 
---- Returns the DCSUnit of the @{CLIENT}.
--- @return DCSUnit
+--- Returns the DCSUnit of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
@@ -245,13 +277,15 @@ function CLIENT:GetClientGroupDCSUnit()
   end
 end
 
+-- TODO what is this??? check. possible double function.
 function CLIENT:GetUnit()
 	self:F()
 	
 	return UNIT:New( self:GetClientGroupDCSUnit() )
 end
 
---- Returns the Point of the @{CLIENT}.
+--- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
+-- @param #CLIENT self
 -- @return DCSTypes#Vec2
 function CLIENT:GetPointVec2()
 	self:F()
@@ -273,8 +307,9 @@ function CLIENT:GetPointVec2()
 end 
 
 
---- Returns the Position of the @{CLIENT}.
--- @return DCSTypes#Position
+--- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
+-- @param #CLIENT self
+-- @return DCSTypes#Vec3
 function CLIENT:ClientPosition()
 	self:F()
 
@@ -289,7 +324,8 @@ function CLIENT:ClientPosition()
 	return nil
 end 
 
---- Returns the altitude of the @{CLIENT}.
+--- Returns the altitude of the CLIENT.
+-- @param #CLIENT self
 -- @return DCSTypes#Distance
 function CLIENT:GetAltitude()
 	self:F()
@@ -307,33 +343,17 @@ function CLIENT:GetAltitude()
 end 
 
 
---- Transport defines that the Client is a Transport.
--- @return CLIENT
-function CLIENT:Transport()
-	self:F()
-
-	self.ClientTransport = true
-	return self
-end
-
---- AddBriefing adds a briefing to a Client when a Player joins a Mission.
--- @param string ClientBriefing is the text defining the Mission briefing.
--- @return CLIENT
-function CLIENT:AddBriefing( ClientBriefing )
-	self:F()
-	self.ClientBriefing = ClientBriefing
-	return self
-end
-
---- IsTransport returns if a Client is a transport.
--- @return bool
+--- Evaluates if the CLIENT is a transport.
+-- @param #CLIENT self
+-- @return #boolean true is a transport.
 function CLIENT:IsTransport()
 	self:F()
 	return self.ClientTransport
 end
 
---- ShowCargo shows the @{CARGO} within the CLIENT to the Player.
--- The @{CARGO} is shown throught the MESSAGE system of DCS World.
+--- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+-- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
 
@@ -353,18 +373,20 @@ function CLIENT:ShowCargo()
 
 end
 
---- SwitchMessages is a local function called by the DCS World Menu system to switch off messages.
+-- TODO (1) I urgently need to revise this.
+--- A local function called by the DCS World Menu system to switch off messages.
 function CLIENT.SwitchMessages( PrmTable )
 	PrmTable[1].MessageSwitch = PrmTable[2]
 end
 
---- Message is the key Message driver for the CLIENT class.
+--- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @param string Message is the text describing the message.
--- @param number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @param string MessageCategory is the category of the message (the title).
--- @param number MessageInterval is the interval in seconds between the display of the Message when the CLIENT is in the air.
+-- @param #CLIENT self
+-- @param #string Message is the text describing the message.
+-- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param #string MessageCategory is the category of the message (the title).
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
 	self:F()
 
