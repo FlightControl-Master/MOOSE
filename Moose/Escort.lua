@@ -44,13 +44,14 @@ ESCORT = {
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
 -- @return #ESCORT self
-function ESCORT:New( EscortClient, EscortGroup, EscortName )
+function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, BASE:New() )
 	self:F( { EscortClient, EscortGroup, EscortName } )
   
   self.EscortClient = EscortClient -- Client#CLIENT
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
+  self.EscortBriefing = EscortBriefing
 
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
   
@@ -80,9 +81,9 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   if EscortGroup:IsHelicopter() or EscortGroup:IsAirPlane() or EscortGroup:IsGround() or EscortGroup:IsShip() then
     -- Report Targets
     self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
+    self.EscortMenuReportNearbyTargetsNow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets now!", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargetsNow, { ParamSelf = self } )
     self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
     self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
-    self.EscortMenuReportNearbyTargetsNow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets now", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargetsNow, { ParamSelf = self } )
   end
 
   if EscortGroup:IsHelicopter() then
@@ -143,6 +144,14 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   EscortGroup:SetTask( EscortGroup:TaskRoute( TaskPoints ) )
   
   self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+  
+  EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
+                               "We're escorting your flight. " .. 
+                               "You can communicate with us through the radio menu. " .. 
+                               "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n" ..
+                               "We are continuing our way, but you can request to join-up your flight under the Navigation menu\n", 
+                               60, EscortClient 
+                             )
 end
 
 

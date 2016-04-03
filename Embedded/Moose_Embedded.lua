@@ -3214,7 +3214,6 @@ function GROUP:New( DCSGroup )
 	return self
 end
 
-
 --- Create a new GROUP from an existing group name.
 -- @param self
 -- @param GroupName The name of the DCS Group.
@@ -3263,8 +3262,6 @@ function GROUP:GetDCSGroup()
 	self.DCSGroup = Group.getByName( self.GroupName )
 	return self.DCSGroup
 end
-
-
 
 --- Gets the DCS Unit of the GROUP.
 -- @param self
@@ -3320,8 +3317,6 @@ function GROUP:GetCallsign()
   return self.DCSGroup:getUnit(1):getCallsign()
 end
 
-
-
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current x,y and z position of the group.
 function GROUP:GetPointVec2()
@@ -3366,8 +3361,6 @@ function GROUP:Destroy()
 	self.DCSGroup:destroy()
 end
 
-
-
 --- Gets the DCS Unit.
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the Unit to be returned.
@@ -3376,6 +3369,24 @@ function GROUP:GetUnit( UnitNumber )
 	self:F( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
 end
+
+--- Returns the category name of the group.
+-- @param #GROUP self
+-- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
+function GROUP:GetCategoryName()
+  self:F( self.GroupName )
+
+  local CategoryNames = {
+    [Group.Category.AIRPLANE] = "Airplane",
+    [Group.Category.HELICOPTER] = "Helicopter",
+    [Group.Category.GROUND] = "Ground Unit",
+    [Group.Category.SHIP] = "Ship",  
+  }
+  
+  return CategoryNames[self.DCSGroup:getCategory()]
+end
+
+-- Is Functions
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
@@ -3401,6 +3412,54 @@ function GROUP:IsAlive()
 
 	self:T( IsAliveResult )
 	return IsAliveResult
+end
+
+--- Returns if the GROUP is a Helicopter.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Helicopters.
+function GROUP:IsHelicopter()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.HELICOPTER
+end
+
+--- Returns if the GROUP are AirPlanes.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are AirPlanes.
+function GROUP:IsAirPlane()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.AIRPLANE
+end
+
+--- Returns if the GROUP are Ground troops.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Ground troops.
+function GROUP:IsGround()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.GROUND
+end
+
+--- Returns if the GROUP are Ships.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Ships.
+function GROUP:IsShip()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.SHIP
 end
 
 --- Returns if all units of the group are on the ground or landed.
@@ -3444,7 +3503,6 @@ function GROUP:GetMaxVelocity()
 	return MaxVelocity
 end
 
-
 --- Returns the current minimum height of the group.
 -- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
 -- @param self
@@ -3453,7 +3511,6 @@ function GROUP:GetMinHeight()
 	self:F()
 
 end
-
 
 --- Returns the current maximum height of the group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
@@ -3478,7 +3535,6 @@ function GROUP:PopCurrentTask()
 
   return self
 end
-
 
 --- Pushing Task on the queue from the group.
 -- @param #GROUP self
@@ -3997,6 +4053,19 @@ end
 
 -- Options
 
+--- Can the GROUP hold their weapons?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEHoldFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
+end
+
 --- Holding weapons.
 -- @param #GROUP self
 -- @return #GROUP self
@@ -4005,8 +4074,28 @@ function GROUP:OptionROEHoldFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.WEAPON_HOLD )
+  end
+  
   return self
+end
+
+--- Can the GROUP attack returning on enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEReturnFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
 end
 
 --- Return fire.
@@ -4017,8 +4106,28 @@ function GROUP:OptionROEReturnFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.RETURN_FIRE )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.RETURN_FIRE )
+  end
+   
   return self
+end
+
+--- Can the GROUP attack designated targets?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEOpenFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
 end
 
 --- Openfire.
@@ -4029,8 +4138,28 @@ function GROUP:OptionROEOpenFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.OPEN_FIRE )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.OPEN_FIRE )
+  end
+
   return self
+end
+
+--- Can the GROUP attack targets of opportunity?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEWeaponFreePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
 end
 
 --- Weapon free.
@@ -4041,9 +4170,26 @@ function GROUP:OptionROEWeaponFree()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  end
+  
   return self
 end
+
+--- Can the GROUP ignore enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTNoReactionPossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
 
 --- No evasion on enemy threats.
 -- @param #GROUP self
@@ -4053,8 +4199,24 @@ function GROUP:OptionROTNoReaction()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  end
+  
   return self
+end
+
+--- Can the GROUP evade using passive defenses?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTPassiveDefensePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
 end
 
 --- Evasion passive defense.
@@ -4065,11 +4227,28 @@ function GROUP:OptionROTPassiveDefense()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
+  end
+  
   return self
 end
 
---- Evade fire.
+--- Can the GROUP evade on enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTEvadeFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
+
+--- Evade on fire.
 -- @param #GROUP self
 -- @return #GROUP self
 function GROUP:OptionROTEvadeFire()
@@ -4077,11 +4256,28 @@ function GROUP:OptionROTEvadeFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  end
+  
   return self
 end
 
---- Vertical manoeuvres.
+--- Can the GROUP evade on fire using vertical manoeuvres?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTVerticalPossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
+
+--- Evade on fire using vertical manoeuvres.
 -- @param #GROUP self
 -- @return #GROUP self
 function GROUP:OptionROTVertical()
@@ -4089,7 +4285,10 @@ function GROUP:OptionROTVertical()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  end
+  
   return self
 end
 
@@ -4183,6 +4382,8 @@ Include.File( "Message" )
 --- The UNIT class
 -- @type UNIT
 -- @Extends Base#BASE
+-- @field #UNIT.FlareColor FlareColor
+-- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
 	ClassName="UNIT",
 	CategoryName = { 
@@ -4191,8 +4392,36 @@ UNIT = {
     [Unit.Category.GROUND_UNIT]   = "Ground Unit",
     [Unit.Category.SHIP]          = "Ship",
     [Unit.Category.STRUCTURE]     = "Structure",
-    }
+    },
+  FlareColor = {
+    Green = trigger.flareColor.Green,
+    Red = trigger.flareColor.Red,
+    White = trigger.flareColor.White,
+    Yellow = trigger.flareColor.Yellow
+    },
+  SmokeColor = {
+    Green = trigger.smokeColor.Green,
+    Red = trigger.smokeColor.Red,
+    White = trigger.smokeColor.White,
+    Orange = trigger.smokeColor.Orange,
+    Blue = trigger.smokeColor.Blue
+    },
 	}
+
+--- FlareColor
+-- @type UNIT.FlareColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Yellow
+
+--- SmokeColor
+-- @type UNIT.SmokeColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Orange
+-- @field Blue
 	
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
@@ -4298,6 +4527,84 @@ end
 function UNIT:GetCategoryName()
   return self.CategoryName[ self.DCSUnit:getDesc().category ]
 end
+
+--- Signal a flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:Flare( FlareColor )
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), FlareColor , 0 )
+end
+
+--- Signal a white flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareWhite()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.White , 0 )
+end
+
+--- Signal a yellow flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareYellow()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Yellow , 0 )
+end
+
+--- Signal a green flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareGreen()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Green , 0 )
+end
+
+--- Signal a red flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareRed()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Red, 0 )
+end
+
+--- Smoke the UNIT.
+-- @param #UNIT self
+function UNIT:Smoke( SmokeColor )
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), SmokeColor )
+end
+
+--- Smoke the UNIT Green.
+-- @param #UNIT self
+function UNIT:SmokeGreen()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Green )
+end
+
+--- Smoke the UNIT Red.
+-- @param #UNIT self
+function UNIT:SmokeRed()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Red )
+end
+
+--- Smoke the UNIT White.
+-- @param #UNIT self
+function UNIT:SmokeWhite()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.White )
+end
+
+--- Smoke the UNIT Orange.
+-- @param #UNIT self
+function UNIT:SmokeOrange()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Orange )
+end
+
+--- Smoke the UNIT Blue.
+-- @param #UNIT self
+function UNIT:SmokeBlue()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
+end
+
 
 --- ZONE Classes
 -- @module Zone
@@ -6790,7 +7097,7 @@ function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
 
   -- When no messagecategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
-    self.MessageCategory = MessageCategory .. "\n"
+    self.MessageCategory = MessageCategory .. ":"
   else
     self.MessageCategory = ""
   end
@@ -11374,9 +11681,9 @@ function SEAD:EventShot( event )
 	end
 end
 --- Taking the lead of AI escorting your flight.
--- The ESCORT class allows you to interact with escoring AI on your flight and take the lead.
+-- The ESCORT class allows you to interact with escorting AI on your flight and take the lead.
 -- @module Escort
--- @author Flightcontrol
+-- @author FlightControl
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -11410,6 +11717,8 @@ ESCORT = {
 -- @type MENUPARAM
 -- @field #ESCORT ParamSelf
 -- @field #Distance ParamDistance
+-- @field #function ParamFunction
+-- @field #string ParamMessage
 
 --- ESCORT class constructor for an AI group
 -- @param self
@@ -11417,35 +11726,55 @@ ESCORT = {
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
 -- @return #ESCORT self
-function ESCORT:New( EscortClient, EscortGroup, EscortName )
+function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, BASE:New() )
 	self:F( { EscortClient, EscortGroup, EscortName } )
   
   self.EscortClient = EscortClient -- Client#CLIENT
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
+  self.EscortBriefing = EscortBriefing
 
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
- 
-   -- Escort Navigation  
+  
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
-  self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenuReportNavigation, ESCORT._HoldPosition, { ParamSelf = self } )
-  self.EscortMenuJoinUpAndHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
-  self.EscortMenuJoinUpAndFollow50Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 100", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 100 } )  
-  self.EscortMenuJoinUpAndFollow100Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 200", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 200 } )  
-  self.EscortMenuJoinUpAndFollow150Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 400", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 400 } )  
-  self.EscortMenuJoinUpAndFollow200Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 800", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 800 } )  
+  if EscortGroup:IsHelicopter() or EscortGroup:IsAirPlane() then
+     -- Escort Navigation  
+    self.EscortMenuHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Position and Stay Low", self.EscortMenuReportNavigation, ESCORT._HoldPosition, { ParamSelf = self } )
+    self.EscortMenuJoinUpAndHoldPosition = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Hold Position NearBy", self.EscortMenuReportNavigation, ESCORT._HoldPositionNearBy, { ParamSelf = self } )  
+    self.EscortMenuJoinUpAndFollow50Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 100", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 100 } )  
+    self.EscortMenuJoinUpAndFollow100Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 200", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 200 } )  
+    self.EscortMenuJoinUpAndFollow150Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 400", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 400 } )  
+    self.EscortMenuJoinUpAndFollow200Meters = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at 800", self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = 800 } )  
+  end
+  self.EscortMenuFlare = MENU_CLIENT:New( self.EscortClient, "Flare", self.EscortMenuReportNavigation, ESCORT._Flare, { ParamSelf = self } )  
+  self.EscortMenuFlareGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.Green,  ParamMessage = "Released a green flare!"   } )  
+  self.EscortMenuFlareRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red flare",    self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.Red,    ParamMessage = "Released a red flare!"     } )  
+  self.EscortMenuFlareWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.White,  ParamMessage = "Released a white flare!"   } )  
+  self.EscortMenuFlareYellow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release yellow flare", self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.Yellow, ParamMessage = "Released a yellow flare!"  } )  
 
-  -- Report Targets
-  self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
-  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
-  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )  
+  self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )  
+  self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )  
+  self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )  
+  self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )  
+  self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )  
+  
+  if EscortGroup:IsHelicopter() or EscortGroup:IsAirPlane() or EscortGroup:IsGround() or EscortGroup:IsShip() then
+    -- Report Targets
+    self.EscortMenuReportNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Report targets", self.EscortMenu )
+    self.EscortMenuReportNearbyTargetsNow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets now!", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargetsNow, { ParamSelf = self } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
+    self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  end
 
-  -- Scanning Targets
-  self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
-  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
-  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
-
+  if EscortGroup:IsHelicopter() then
+    -- Scanning Targets
+    self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 60 } )
+  end
+  
   -- Attack Targets
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
   self.EscortMenuAttackTargets =  {} 
@@ -11453,17 +11782,33 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
 
   -- Rules of Engagement
   self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
-  self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROEHoldFire, { ParamSelf = self, } )
-  self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROEReturnFire, { ParamSelf = self, } )
-  self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROEOpenFire, { ParamSelf = self, } )
-  self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROEWeaponFree, { ParamSelf = self, } )
-  
+  if EscortGroup:OptionROEHoldFirePossible() then
+    self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = EscortGroup:OptionROEHoldFire(), ParamMessage = "Holding weapons!" } )
+  end
+  if EscortGroup:OptionROEReturnFirePossible() then
+    self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = EscortGroup:OptionROEReturnFire(), ParamMessage = "Returning fire!" } )
+  end
+  if EscortGroup:OptionROEOpenFirePossible() then
+    self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = EscortGroup:OptionROEOpenFire(), ParamMessage = "Opening fire on designated targets!!" } )
+  end
+  if EscortGroup:OptionROEWeaponFreePossible() then
+    self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = EscortGroup:OptionROEWeaponFree(), ParamMessage = "Opening fire on targets of opportunity!" } )
+  end
+
   -- Reaction to Threats
   self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
-  self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._OptionROTNoReaction, { ParamSelf = self, } )
-  self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._OptionROTPassiveDefense, { ParamSelf = self, } )
-  self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._OptionROTEvadeFire, { ParamSelf = self, } )
-  self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._OptionROTVertical, { ParamSelf = self, } )
+  if EscortGroup:OptionROTNoReactionPossible() then
+    self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = EscortGroup:OptionROTNoReaction(), ParamMessage = "Fighting until death!" } )
+  end
+  if EscortGroup:OptionROTPassiveDefensePossible() then
+    self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = EscortGroup:OptionROTPassiveDefense(), ParamMessage = "Defending using jammers, chaff and flares!" } )
+  end
+  if EscortGroup:OptionROTEvadeFirePossible() then
+    self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = EscortGroup:OptionROTEvadeFire(), ParamMessage = "Evading on enemy fire!" } )
+  end
+  if EscortGroup:OptionROTVerticalPossible() then
+    self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = EscortGroup:OptionROTVertical(), ParamMessage = "Evading on enemy fire with vertical manoeuvres!" } )
+  end
   
   -- Cancel current Task
   self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume Mission", self.EscortMenu )
@@ -11475,12 +11820,20 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName )
   
   -- Initialize the EscortGroup
   
-  self.EscortGroup:OptionROTVertical()
-  self.EscortGroup:OptionROEOpenFire()
+  EscortGroup:OptionROTVertical()
+  EscortGroup:OptionROEOpenFire()
   
-  self.EscortGroup:PushTask( EscortGroup:TaskRoute( TaskPoints ) )
+  EscortGroup:SetTask( EscortGroup:TaskRoute( TaskPoints ) )
   
   self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+  
+  EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
+                               "We're escorting your flight. " .. 
+                               "You can communicate with us through the radio menu. " .. 
+                               "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n" ..
+                               "We are continuing our way, but you can request to join-up your flight under the Navigation menu\n", 
+                               60, EscortClient 
+                             )
 end
 
 
@@ -11553,8 +11906,47 @@ function ESCORT._JoinUpAndFollow( MenuParam )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
+--- @param #MENUPARAM MenuParam
+function ESCORT._Flare( MenuParam )
 
-function ESCORT._ReportNearbyTargets( MenuParam )
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  
+  local Color = MenuParam.ParamColor
+  local Message = MenuParam.ParamMessage
+
+  EscortGroup:GetUnit(1):Flare( Color )
+  EscortGroup:MessageToClient( Message, 10, EscortClient )
+end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._Smoke( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  local Color = MenuParam.ParamColor
+  local Message = MenuParam.ParamMessage
+  
+  EscortGroup:GetUnit(1):Smoke( Color )
+  EscortGroup:MessageToClient( Message, 10, EscortClient )
+end
+
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._ReportNearbyTargetsNow( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+
+  self:_ReportTargetsScheduler()
+  
+end
+
+function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
@@ -11631,91 +12023,31 @@ function ESCORT._AttackTarget( MenuParam )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ROEHoldFire( MenuParam )
+function ESCORT._ROE( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROEHoldFire()
-  EscortGroup:MessageToClient( "Holding weapons.", 10, EscortClient )
+  
+  local EscortROEFunction = MenuParam.ParamFunction
+  local EscortROEMessage = MenuParam.ParamMessage
+  
+  EscortROEFunction()
+  EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ROEReturnFire( MenuParam )
+function ESCORT._ROT( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  EscortGroup:OptionROEReturnFire()
-  EscortGroup:MessageToClient( "Returning enemy fire.", 10, EscortClient )
-end
+  local EscortROTFunction = MenuParam.ParamFunction
+  local EscortROTMessage = MenuParam.ParamMessage
 
---- @param #MENUPARAM MenuParam
-function ESCORT._ROEOpenFire( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROEOpenFire()
-  EscortGroup:MessageToClient( "Open fire on ordered targets.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._ROEWeaponFree( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROEWeaponFree()
-  EscortGroup:MessageToClient( "Engaging nearby targets.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._OptionROTNoReaction( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROTNoReaction()
-  EscortGroup:MessageToClient( "We'll fight until death.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._OptionROTPassiveDefense( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROTPassiveDefense()
-  EscortGroup:MessageToClient( "We will use flares, chaff and jammers.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._OptionROTEvadeFire( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROTEvadeFire()
-  EscortGroup:MessageToClient( "We'll evade enemy fire.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._OptionROTVertical( MenuParam )
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  EscortGroup:OptionROTVertical()
-  EscortGroup:MessageToClient( "We'll perform vertical evasive manoeuvres.", 10, EscortClient )
+  EscortROTFunction()
+  EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -11857,6 +12189,8 @@ function ESCORT:_FollowScheduler( FollowDistance )
 end
 
 
+--- Report Targets Scheduler.
+-- @param #ESCORT self
 function ESCORT:_ReportTargetsScheduler()
 	self:F()
 
@@ -11930,7 +12264,9 @@ function ESCORT:_ReportTargetsScheduler()
     end
     
     if EscortTargetMessages ~= "" and self.ReportTargets == true then
-      self.EscortClient:Message( EscortTargetMessages:gsub("\n$",""), 20, "/ESCORT.DetectedTargets", self.EscortName .. " reporting detected targets within 8 km range:", 0 )
+      self.EscortGroup:MessageToClient( EscortTargetMessages:gsub("\n$",""), 20, self.EscortClient )
+    else
+      self.EscortGroup:MessageToClient( "No targets detected!", 20, self.EscortClient )
     end
 
     self:T()

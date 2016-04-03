@@ -207,6 +207,22 @@ function GROUP:GetUnit( UnitNumber )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
 end
 
+--- Returns the category name of the group.
+-- @param #GROUP self
+-- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
+function GROUP:GetCategoryName()
+  self:F( self.GroupName )
+
+  local CategoryNames = {
+    [Group.Category.AIRPLANE] = "Airplane",
+    [Group.Category.HELICOPTER] = "Helicopter",
+    [Group.Category.GROUND] = "Ground Unit",
+    [Group.Category.SHIP] = "Ship",  
+  }
+  
+  return CategoryNames[self.DCSGroup:getCategory()]
+end
+
 -- Is Functions
 
 --- Returns if the group is of an air category.
