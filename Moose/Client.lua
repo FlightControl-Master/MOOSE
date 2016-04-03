@@ -101,9 +101,33 @@ function CLIENT:Alive( CallBack )
   return self
 end
 
+-- Is Functions
+
+--- Checks if the CLIENT is a multi-seated UNIT.
+-- @param #CLIENT self
+-- @return #boolean true if multi-seated.
+function CLIENT:IsMultiSeated()
+  self:F( self.ClientName )
+
+  local ClientMultiSeatedTypes = { 
+    ["Mi-8MT"]  = "Mi-8MT", 
+    ["UH-1H"]   = "UH-1H", 
+    ["P-51B"]   = "P-51B" 
+  }
+  
+  if self:IsAlive() then
+    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
+    if ClientMultiSeatedTypes[ClientTypeName] then
+      return true
+    end
+  end
+  
+  return false
+end
+
 --- Checks if client is alive and returns true or false.
 -- @param #CLIENT self
--- @param #boolean Returns true if client is alive.
+-- @returns #boolean Returns true if client is alive.
 function CLIENT:IsAlive()
   self:F( self.ClientName )
   
