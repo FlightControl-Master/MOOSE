@@ -8,6 +8,8 @@ Include.File( "Message" )
 --- The UNIT class
 -- @type UNIT
 -- @Extends Base#BASE
+-- @field #UNIT.FlareColor FlareColor
+-- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
 	ClassName="UNIT",
 	CategoryName = { 
@@ -16,8 +18,36 @@ UNIT = {
     [Unit.Category.GROUND_UNIT]   = "Ground Unit",
     [Unit.Category.SHIP]          = "Ship",
     [Unit.Category.STRUCTURE]     = "Structure",
-    }
+    },
+  FlareColor = {
+    Green = trigger.flareColor.Green,
+    Red = trigger.flareColor.Red,
+    White = trigger.flareColor.White,
+    Yellow = trigger.flareColor.Yellow
+    },
+  SmokeColor = {
+    Green = trigger.smokeColor.Green,
+    Red = trigger.smokeColor.Red,
+    White = trigger.smokeColor.White,
+    Orange = trigger.smokeColor.Orange,
+    Blue = trigger.smokeColor.Blue
+    },
 	}
+
+--- FlareColor
+-- @type UNIT.FlareColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Yellow
+
+--- SmokeColor
+-- @type UNIT.SmokeColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Orange
+-- @field Blue
 	
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
@@ -123,4 +153,82 @@ end
 function UNIT:GetCategoryName()
   return self.CategoryName[ self.DCSUnit:getDesc().category ]
 end
+
+--- Signal a flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:Flare( FlareColor )
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), FlareColor , 0 )
+end
+
+--- Signal a white flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareWhite()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.White , 0 )
+end
+
+--- Signal a yellow flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareYellow()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Yellow , 0 )
+end
+
+--- Signal a green flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareGreen()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Green , 0 )
+end
+
+--- Signal a red flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareRed()
+  self:F()
+  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Red, 0 )
+end
+
+--- Smoke the UNIT.
+-- @param #UNIT self
+function UNIT:Smoke( SmokeColor )
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), SmokeColor )
+end
+
+--- Smoke the UNIT Green.
+-- @param #UNIT self
+function UNIT:SmokeGreen()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Green )
+end
+
+--- Smoke the UNIT Red.
+-- @param #UNIT self
+function UNIT:SmokeRed()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Red )
+end
+
+--- Smoke the UNIT White.
+-- @param #UNIT self
+function UNIT:SmokeWhite()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.White )
+end
+
+--- Smoke the UNIT Orange.
+-- @param #UNIT self
+function UNIT:SmokeOrange()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Orange )
+end
+
+--- Smoke the UNIT Blue.
+-- @param #UNIT self
+function UNIT:SmokeBlue()
+  self:F()
+  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
+end
+
 
