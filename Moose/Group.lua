@@ -51,7 +51,6 @@ function GROUP:New( DCSGroup )
 	return self
 end
 
-
 --- Create a new GROUP from an existing group name.
 -- @param self
 -- @param GroupName The name of the DCS Group.
@@ -100,8 +99,6 @@ function GROUP:GetDCSGroup()
 	self.DCSGroup = Group.getByName( self.GroupName )
 	return self.DCSGroup
 end
-
-
 
 --- Gets the DCS Unit of the GROUP.
 -- @param self
@@ -157,8 +154,6 @@ function GROUP:GetCallsign()
   return self.DCSGroup:getUnit(1):getCallsign()
 end
 
-
-
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current x,y and z position of the group.
 function GROUP:GetPointVec2()
@@ -203,8 +198,6 @@ function GROUP:Destroy()
 	self.DCSGroup:destroy()
 end
 
-
-
 --- Gets the DCS Unit.
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the Unit to be returned.
@@ -213,6 +206,8 @@ function GROUP:GetUnit( UnitNumber )
 	self:F( { self.GroupName, UnitNumber } )
 	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
 end
+
+-- Is Functions
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
@@ -238,6 +233,54 @@ function GROUP:IsAlive()
 
 	self:T( IsAliveResult )
 	return IsAliveResult
+end
+
+--- Returns if the GROUP is a Helicopter.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Helicopters.
+function GROUP:IsHelicopter()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.HELICOPTER
+end
+
+--- Returns if the GROUP are AirPlanes.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are AirPlanes.
+function GROUP:IsAirPlane()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.AIRPLANE
+end
+
+--- Returns if the GROUP are Ground troops.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Ground troops.
+function GROUP:IsGround()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.GROUND
+end
+
+--- Returns if the GROUP are Ships.
+-- @param #GROUP self
+-- @return #boolean true if GROUP are Ships.
+function GROUP:IsShip()
+  self:F2()
+  
+  local GroupCategory = self.DCSGroup:getCategory()
+  self:T2( GroupCategory )
+  
+  return GroupCategory == Group.Category.SHIP
 end
 
 --- Returns if all units of the group are on the ground or landed.
@@ -281,7 +324,6 @@ function GROUP:GetMaxVelocity()
 	return MaxVelocity
 end
 
-
 --- Returns the current minimum height of the group.
 -- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
 -- @param self
@@ -290,7 +332,6 @@ function GROUP:GetMinHeight()
 	self:F()
 
 end
-
 
 --- Returns the current maximum height of the group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
@@ -315,7 +356,6 @@ function GROUP:PopCurrentTask()
 
   return self
 end
-
 
 --- Pushing Task on the queue from the group.
 -- @param #GROUP self
@@ -834,6 +874,19 @@ end
 
 -- Options
 
+--- Can the GROUP hold their weapons?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEHoldFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
+end
+
 --- Holding weapons.
 -- @param #GROUP self
 -- @return #GROUP self
@@ -842,8 +895,28 @@ function GROUP:OptionROEHoldFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.WEAPON_HOLD )
+  end
+  
   return self
+end
+
+--- Can the GROUP attack returning on enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEReturnFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
 end
 
 --- Return fire.
@@ -854,8 +927,28 @@ function GROUP:OptionROEReturnFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.RETURN_FIRE )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.RETURN_FIRE )
+  end
+   
   return self
+end
+
+--- Can the GROUP attack designated targets?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEOpenFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() or self:IsGround() or self:IsShip() then
+    return true
+  end
+  
+  return false
 end
 
 --- Openfire.
@@ -866,8 +959,28 @@ function GROUP:OptionROEOpenFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+  elseif self:IsGround() then
+    Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.OPEN_FIRE )
+  elseif self:IsShip() then
+    Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.OPEN_FIRE )
+  end
+
   return self
+end
+
+--- Can the GROUP attack targets of opportunity?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROEWeaponFreePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
 end
 
 --- Weapon free.
@@ -878,9 +991,26 @@ function GROUP:OptionROEWeaponFree()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+  end
+  
   return self
 end
+
+--- Can the GROUP ignore enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTNoReactionPossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
 
 --- No evasion on enemy threats.
 -- @param #GROUP self
@@ -890,8 +1020,24 @@ function GROUP:OptionROTNoReaction()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+  end
+  
   return self
+end
+
+--- Can the GROUP evade using passive defenses?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTPassiveDefensePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
 end
 
 --- Evasion passive defense.
@@ -902,11 +1048,28 @@ function GROUP:OptionROTPassiveDefense()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
+  end
+  
   return self
 end
 
---- Evade fire.
+--- Can the GROUP evade on enemy fire?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTEvadeFirePossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
+
+--- Evade on fire.
 -- @param #GROUP self
 -- @return #GROUP self
 function GROUP:OptionROTEvadeFire()
@@ -914,11 +1077,28 @@ function GROUP:OptionROTEvadeFire()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+  end
+  
   return self
 end
 
---- Vertical manoeuvres.
+--- Can the GROUP evade on fire using vertical manoeuvres?
+-- @param #GROUP self
+-- @return #boolean
+function GROUP:OptionROTVerticalPossible()
+  self:F( { self.GroupName } )
+  
+  if self:IsAir() then
+    return true
+  end
+  
+  return false
+end
+
+
+--- Evade on fire using vertical manoeuvres.
 -- @param #GROUP self
 -- @return #GROUP self
 function GROUP:OptionROTVertical()
@@ -926,7 +1106,10 @@ function GROUP:OptionROTVertical()
 
   local Controller = self:_GetController()
   
-  Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  if self:IsAir() then
+    Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+  end
+  
   return self
 end
 
