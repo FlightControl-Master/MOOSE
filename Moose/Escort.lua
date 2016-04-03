@@ -89,8 +89,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   if EscortGroup:IsHelicopter() then
     -- Scanning Targets
     self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
-    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
-    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 60 } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets, { ParamSelf = self, ParamScanDuration = 30 } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets, { ParamSelf = self, ParamScanDuration = 60 } )
   end
   
   -- Attack Targets
@@ -283,41 +283,24 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ScanTargets30Seconds( MenuParam )
-  MenuParam.ParamSelf:T()
+function ESCORT._ScanTargets( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
+  
+  local ScanDuration = MenuParam.ParamScanDuration
 
   routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
 
   EscortGroup:PushTask( 
     EscortGroup:TaskControlled( 
       EscortGroup:TaskOrbitCircle( 200, 20 ), 
-      EscortGroup:TaskCondition( nil, nil, nil, nil, 30, nil ) 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil ) 
       ) 
   )
-  EscortGroup:MessageToClient( "Scanning targets for 30 seconds.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._ScanTargets60Seconds( MenuParam )
-  MenuParam.ParamSelf:T()
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  routines.removeFunction( self.FollowScheduler )
-
-  EscortGroup:PushTask( 
-    EscortGroup:TaskControlled( 
-      EscortGroup:TaskOrbitCircle( 200, 20 ), 
-      EscortGroup:TaskCondition( nil, nil, nil, nil, 60, nil ) 
-      ) 
-  )
-  EscortGroup:MessageToClient( "Scanning targets for 60 seconds.", 10, EscortClient )
+  EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
