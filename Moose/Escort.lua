@@ -393,7 +393,7 @@ function ESCORT._ROE( MenuParam )
   local EscortROEFunction = MenuParam.ParamFunction
   local EscortROEMessage = MenuParam.ParamMessage
   
-  EscortROEFunction()
+  pcall( function() EscortROEFunction() end )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
@@ -407,7 +407,7 @@ function ESCORT._ROT( MenuParam )
   local EscortROTFunction = MenuParam.ParamFunction
   local EscortROTMessage = MenuParam.ParamMessage
 
-  EscortROTFunction()
+  pcall( function() EscortROTFunction() end )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
