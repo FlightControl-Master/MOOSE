@@ -30,7 +30,7 @@ Include.File = function( IncludeFile )
 	end
 end
 
-Include.ProgramPath = "Scripts/Moose/Moose/"
+Include.ProgramPath = "Scripts/Moose/"
 Include.MissionPath = Include.Path()
 
 env.info( "Include.ProgramPath = " .. Include.ProgramPath)
