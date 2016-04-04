@@ -392,10 +392,10 @@ end
 
 
 
---- Will re-spawn a group based on a given index.
+--- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
 -- @param self
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -406,7 +406,7 @@ end
 -- Note: Uses @{DATABASE} module defined in MOOSE.
 -- @param self
 -- @param #string SpawnIndex The index of the group to be spawned.
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:ReSpawn( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 	
@@ -425,7 +425,7 @@ end
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
 	
@@ -596,7 +596,7 @@ end
 -- @param self
 -- @param #ZONE Zone The zone where the group is to be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
--- @return GROUP#GROUP that was spawned.
+-- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
 function SPAWN:SpawnInZone( Zone, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
@@ -669,7 +669,7 @@ end
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
 -- @param self
 -- @param #number SpawnIndex Is the number of the Group that is to be spawned.
--- @return string SpawnGroupName
+-- @return #string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -692,7 +692,7 @@ end
 --- Find the first alive group.
 -- @param self
 -- @param #number SpawnCursor A number holding the index from where to find the first group from.
--- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 function SPAWN:GetFirstAliveGroup( SpawnCursor )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
@@ -712,7 +712,7 @@ end
 --- Find the next alive group.
 -- @param self
 -- @param #number SpawnCursor A number holding the last found previous index.
--- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 function SPAWN:GetNextAliveGroup( SpawnCursor )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
@@ -753,7 +753,7 @@ end
 -- If no index is given, it will return the first group in the list.
 -- @param self
 -- @param #number SpawnIndex The index of the group to return.
--- @return GROUP#GROUP
+-- @return Group#GROUP
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
