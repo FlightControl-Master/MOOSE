@@ -14,7 +14,7 @@ local _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	GROUP = true,
+	--GROUP = true,
 	--UNIT = true,
   --CLIENT = true,
 	--CARGO = true,
@@ -25,8 +25,9 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	ESCORT = true,
+	--ESCORT = true,
 	}
+local _TraceClassMethod = {}
 
 --- The BASE Class
 -- @type BASE
@@ -282,12 +283,35 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Set trace level
+-- @param #BASE self
+-- @param #number Level
+function BASE:TraceLevel( Level )
+  _TraceLevel = Level
+end
+
+--- Set tracing for a class
+-- @param #BASE self
+-- @param #string Class
+function BASE:TraceClass( Class )
+  _TraceClass[Class] = true
+  _TraceClassMethod[Class] = {}
+end
+
+--- Set tracing for a specific method of  class
+-- @param #BASE self
+-- @param #string Class
+-- @param #string Method
+function BASE:TraceClassMethod( Class, Method )
+  _TraceClassMethod[Class].Method[Method] = true
+end
+
 --- Trace a function call. Must be at the beginning of the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if _TraceOn and _TraceClass[self.ClassName] then
+  if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -296,13 +320,15 @@ function BASE:F( Arguments )
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
-
-    local LineCurrent = DebugInfoCurrent.currentline
-    local LineFrom = 0
-    if DebugInfoFrom then
-      LineFrom = DebugInfoFrom.currentline
+    
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+      local LineCurrent = DebugInfoCurrent.currentline
+      local LineFrom = 0
+      if DebugInfoFrom then
+        LineFrom = DebugInfoFrom.currentline
+      end
+      env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
     end
-    env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   end
 end
 
@@ -333,7 +359,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-	if _TraceOn and _TraceClass[self.ClassName] then
+	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
 		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
 		local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -343,12 +369,14 @@ function BASE:T( Arguments )
 			Function = DebugInfoCurrent.name
 		end
 
-		local LineCurrent = DebugInfoCurrent.currentline
-		local LineFrom = 0
-		if DebugInfoFrom then
-		  LineFrom = DebugInfoFrom.currentline
-	  end
-		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+  		local LineCurrent = DebugInfoCurrent.currentline
+  		local LineFrom = 0
+  		if DebugInfoFrom then
+  		  LineFrom = DebugInfoFrom.currentline
+  	  end
+  		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    end
 	end
 end
 

@@ -223,7 +223,7 @@ end
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
-	--self:T( { event } )
+	self:F( { event } )
 
 	local TargetUnit = nil
 	local TargetGroup = nil
@@ -258,7 +258,7 @@ function DATABASE:OnDeadOrCrash( event )
 		TargetUnitCategory = DATABASECategory[TargetCategory]
 		TargetUnitType = TargetType
 
-		--self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
 	end
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
@@ -321,7 +321,7 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-	self:F( "_FollowPlayers" )
+	self:F3( "_FollowPlayers" )
 
 	local ClientUnit = 0
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
@@ -330,7 +330,7 @@ function DATABASE:_FollowPlayers()
 	local AlivePlayerUnits = {}
 	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T( { "_FollowPlayers", CoalitionData } )
+		self:T3( { "_FollowPlayers", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
 			self:_AddPlayerFromUnit( UnitData )
 		end
@@ -438,11 +438,11 @@ function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score            
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
-	MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
-				  Score .. " Score points added.", 
-				  "", 20, "/SCORETASK" .. PlayerName ):ToAll()
-	
-	_Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
+    Score .. " Score points added.", 
+    "", 20, "/SCORETASK" .. PlayerName ):ToAll()
+
+  _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
 
 

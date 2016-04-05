@@ -2585,7 +2585,7 @@ local _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	GROUP = true,
+	--GROUP = true,
 	--UNIT = true,
   --CLIENT = true,
 	--CARGO = true,
@@ -2596,8 +2596,9 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	ESCORT = true,
+	--ESCORT = true,
 	}
+local _TraceClassMethod = {}
 
 --- The BASE Class
 -- @type BASE
@@ -2853,12 +2854,35 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Set trace level
+-- @param #BASE self
+-- @param #number Level
+function BASE:TraceLevel( Level )
+  _TraceLevel = Level
+end
+
+--- Set tracing for a class
+-- @param #BASE self
+-- @param #string Class
+function BASE:TraceClass( Class )
+  _TraceClass[Class] = true
+  _TraceClassMethod[Class] = {}
+end
+
+--- Set tracing for a specific method of  class
+-- @param #BASE self
+-- @param #string Class
+-- @param #string Method
+function BASE:TraceClassMethod( Class, Method )
+  _TraceClassMethod[Class].Method[Method] = true
+end
+
 --- Trace a function call. Must be at the beginning of the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if _TraceOn and _TraceClass[self.ClassName] then
+  if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -2867,13 +2891,15 @@ function BASE:F( Arguments )
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
-
-    local LineCurrent = DebugInfoCurrent.currentline
-    local LineFrom = 0
-    if DebugInfoFrom then
-      LineFrom = DebugInfoFrom.currentline
+    
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+      local LineCurrent = DebugInfoCurrent.currentline
+      local LineFrom = 0
+      if DebugInfoFrom then
+        LineFrom = DebugInfoFrom.currentline
+      end
+      env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
     end
-    env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   end
 end
 
@@ -2904,7 +2930,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-	if _TraceOn and _TraceClass[self.ClassName] then
+	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
 		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
 		local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -2914,12 +2940,14 @@ function BASE:T( Arguments )
 			Function = DebugInfoCurrent.name
 		end
 
-		local LineCurrent = DebugInfoCurrent.currentline
-		local LineFrom = 0
-		if DebugInfoFrom then
-		  LineFrom = DebugInfoFrom.currentline
-	  end
-		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+  		local LineCurrent = DebugInfoCurrent.currentline
+  		local LineFrom = 0
+  		if DebugInfoFrom then
+  		  LineFrom = DebugInfoFrom.currentline
+  	  end
+  		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    end
 	end
 end
 
@@ -3193,7 +3221,7 @@ GROUP = {
 local GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
--- @param self
+-- @param #GROUP self
 -- @param DCSGroup#Group DCSGroup The DCS Group
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
@@ -3215,7 +3243,7 @@ function GROUP:New( DCSGroup )
 end
 
 --- Create a new GROUP from an existing group name.
--- @param self
+-- @param #GROUP self
 -- @param GroupName The name of the DCS Group.
 -- @return #GROUP self
 function GROUP:NewFromName( GroupName )
@@ -3235,7 +3263,7 @@ function GROUP:NewFromName( GroupName )
 end
 
 --- Create a new GROUP from an existing DCSUnit in the mission.
--- @param self
+-- @param #GROUP self
 -- @param DCSUnit The DCSUnit.
 -- @return #GROUP self
 function GROUP:NewFromDCSUnit( DCSUnit )
@@ -3255,8 +3283,8 @@ function GROUP:NewFromDCSUnit( DCSUnit )
 end
 
 --- Gets the DCSGroup of the GROUP.
--- @param self
--- @return #Group The DCSGroup.
+-- @param #GROUP self
+-- @return DCSGroup#Group The DCSGroup.
 function GROUP:GetDCSGroup()
 	self:F( { self.GroupName } )
 	self.DCSGroup = Group.getByName( self.GroupName )
@@ -3264,7 +3292,7 @@ function GROUP:GetDCSGroup()
 end
 
 --- Gets the DCS Unit of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @param #number UnitNumber The unit index to be returned from the GROUP.
 -- @return #Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
@@ -3273,8 +3301,17 @@ function GROUP:GetDCSUnit( UnitNumber )
 
 end
 
+--- Gets the DCSUnits of the GROUP.
+-- @param #GROUP self
+-- @return #table The DCSUnits.
+function GROUP:GetDCSUnits()
+  self:F( { self.GroupName } )
+  return self.DCSGroup:getUnits()
+
+end
+
 --- Activates a GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Activate()
 	self:F( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
@@ -3282,7 +3319,7 @@ function GROUP:Activate()
 end
 
 --- Gets the ID of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #number The ID of the GROUP.
 function GROUP:GetID()
 	self:F( self.GroupName )
@@ -3291,7 +3328,7 @@ function GROUP:GetID()
 end
 
 --- Gets the name of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #string The name of the GROUP.
 function GROUP:GetName()
 	self:F( self.GroupName )
@@ -3350,7 +3387,7 @@ end
 --- Destroy a GROUP
 -- Note that this destroy method also raises a destroy event at run-time.
 -- So all event listeners will catch the destroy event of this GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Destroy()
 	self:F( self.GroupName )
 	
@@ -3390,7 +3427,7 @@ end
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Air category evaluation result.
 function GROUP:IsAir()
 	self:F()
@@ -3403,7 +3440,7 @@ end
 
 --- Returns if the group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Alive result.
 function GROUP:IsAlive()
 	self:F()
@@ -3464,7 +3501,7 @@ end
 
 --- Returns if all units of the group are on the ground or landed.
 -- If all units of this group are on the ground, this function will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean All units on the ground result.
 function GROUP:AllOnGround()
 	self:F()
@@ -3505,7 +3542,7 @@ end
 
 --- Returns the current minimum height of the group.
 -- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Minimum height found.
 function GROUP:GetMinHeight()
 	self:F()
@@ -3514,7 +3551,7 @@ end
 
 --- Returns the current maximum height of the group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Maximum height found.
 function GROUP:GetMaxHeight()
 	self:F()
@@ -4898,7 +4935,7 @@ end
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
-	--self:T( { event } )
+	self:F( { event } )
 
 	local TargetUnit = nil
 	local TargetGroup = nil
@@ -4933,7 +4970,7 @@ function DATABASE:OnDeadOrCrash( event )
 		TargetUnitCategory = DATABASECategory[TargetCategory]
 		TargetUnitType = TargetType
 
-		--self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
 	end
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
@@ -4996,7 +5033,7 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-	self:F( "_FollowPlayers" )
+	self:F3( "_FollowPlayers" )
 
 	local ClientUnit = 0
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
@@ -5005,7 +5042,7 @@ function DATABASE:_FollowPlayers()
 	local AlivePlayerUnits = {}
 	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T( { "_FollowPlayers", CoalitionData } )
+		self:T3( { "_FollowPlayers", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
 			self:_AddPlayerFromUnit( UnitData )
 		end
@@ -5113,11 +5150,11 @@ function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score            
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
-	MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
-				  Score .. " Score points added.", 
-				  "", 20, "/SCORETASK" .. PlayerName ):ToAll()
-	
-	_Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
+    Score .. " Score points added.", 
+    "", 20, "/SCORETASK" .. PlayerName ):ToAll()
+
+  _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
 
 
@@ -10357,14 +10394,18 @@ Include.File( "Zone" )
 -- @type SPAWN
 -- @extends Base#BASE
 -- @field ClassName
+-- @field #string SpawnTemplatePrefix
+-- @field #string SpawnAliasPrefix
 SPAWN = {
   ClassName = "SPAWN",
+  SpawnTemplatePrefix = nil,
+  SpawnAliasPrefix = nil,
 }
 
 
 
 --- Creates the main object to spawn a GROUP defined in the DCS ME.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWN
 -- @usage
@@ -10405,7 +10446,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 end
 
 --- Creates a new SPAWN instance to create new groups based on the defined template and using a new alias for each new group.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.
 -- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
 -- @return #SPAWN
@@ -10452,7 +10493,7 @@ end
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
 -- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
 -- @param #number SpawnMaxGroups The maximum amount of groups that can be spawned. When the limit is reached, then no more actual spawns will happen of the group. 
 -- This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
@@ -10478,7 +10519,7 @@ end
 
 
 --- Randomizes the defined route of the SpawnTemplatePrefix group in the ME. This is very useful to define extra variation of the behaviour of groups.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnStartPoint is the waypoint where the randomization begins. 
 -- Note that the StartPoint = 0 equaling the point where the group is spawned.
 -- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
@@ -10511,7 +10552,7 @@ end
 -- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefixTable A table with the names of the groups defined within the mission editor, from which one will be choosen when a new group will be spawned. 
 -- @return #SPAWN
 -- @usage
@@ -10548,7 +10589,7 @@ end
 -- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
 -- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
 -- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
--- @param self
+-- @param #SPAWN self
 -- @return #SPAWN self
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
@@ -10598,7 +10639,7 @@ end
 
 --- CleanUp groups when they are still alive, but inactive.
 -- When groups are still alive and have become inactive due to damage and are unable to contribute anything, then this group will be removed at defined intervals in seconds.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
 -- @return #SPAWN self
 -- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
@@ -10616,7 +10657,7 @@ end
 
 --- Makes the groups visible before start (like a batallion).
 -- The method will take the position of the group as the first position in the array.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnAngle         The angle in degrees how the groups and each unit of the group will be positioned.
 -- @param #number SpawnWidth		     The amount of Groups that will be positioned on the X axis.
 -- @param #number SpawnDeltaX        The space between each Group on the X-axis.
@@ -10671,7 +10712,7 @@ end
 
 --- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
--- @param self
+-- @param #SPAWN self
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
@@ -10681,7 +10722,7 @@ end
 
 --- Will re-spawn a group based on a given index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:ReSpawn( SpawnIndex )
@@ -10691,10 +10732,11 @@ function SPAWN:ReSpawn( SpawnIndex )
 		SpawnIndex = 1
 	end
 
-	--local SpawnGroup = self:GetGroupFromIndex( SpawnIndex ):GetDCSGroup()
-	--if SpawnGroup then
-		--DCSGroup:destroy()
-	--end
+	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+  local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+	if SpawnDCSGroup then
+    SpawnGroup:Destroy()
+	end
 	
 	return self:SpawnWithIndex( SpawnIndex )
 end
@@ -10729,7 +10771,7 @@ end
 
 --- Spawns new groups at varying time intervals.
 -- This is useful if you want to have continuity within your missions of certain (AI) groups to be present (alive) within your missions.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
 -- The variation is a number between 0 and 1, representing the %-tage of variation to be applied on the time interval.
@@ -10793,7 +10835,7 @@ end
 --- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
--- @param self
+-- @param #SPAWN self
 -- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
 -- @param #number OuterRadius The outer radius in meters where the new group will be spawned.
 -- @param #number InnerRadius The inner radius in meters where the new group will NOT be spawned.
@@ -10870,7 +10912,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{ZONE}.
--- @param self
+-- @param #SPAWN self
 -- @param #ZONE Zone The zone where the group is to be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
@@ -10944,7 +10986,7 @@ end
 
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex Is the number of the Group that is to be spawned.
 -- @return #string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
@@ -10967,7 +11009,7 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 end
 
 --- Find the first alive group.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnCursor A number holding the index from where to find the first group from.
 -- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
@@ -10987,7 +11029,7 @@ end
 
 
 --- Find the next alive group.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnCursor A number holding the last found previous index.
 -- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
@@ -11028,7 +11070,7 @@ end
 --- Get the group from an index.
 -- Returns the group from the SpawnGroups list.
 -- If no index is given, it will return the first group in the list.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to return.
 -- @return Group#GROUP
 function SPAWN:GetGroupFromIndex( SpawnIndex )
@@ -11046,7 +11088,7 @@ end
 --- Get the group index from a DCSUnit.
 -- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
 -- It will return nil of no prefix was found.
--- @param self
+-- @param #SPAWN self
 -- @param DCSUnit The DCS unit to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
@@ -11070,7 +11112,7 @@ end
 --- Return the prefix of a DCSUnit.
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
--- @param self
+-- @param #SPAWN self
 -- @param DCSUnit The DCS unit to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
@@ -11241,7 +11283,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 end
 
 --- Internal function randomizing the routes.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
 function SPAWN:_RandomizeRoute( SpawnIndex )
@@ -11373,7 +11415,7 @@ end
 --- Obscolete
 -- @todo Need to delete this... _Database does this now ...
 function SPAWN:_OnDeadOrCrash( event )
-
+  self:F( self.SpawnTemplatePrefix,  event )
 
 	if event.initiator and event.initiator:getName() then
 		local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
@@ -11393,6 +11435,7 @@ end
 -- This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:_OnTakeOff( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
 	if event.initiator and event.initiator:getName() then
 		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
@@ -11408,11 +11451,13 @@ end
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:_OnLand( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
-	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
+  local SpawnUnit = event.initiator
+	if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
+		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
 		if SpawnGroup then
-			self:T( { "Landed event:" .. event.initiator:getName(), event } )
+			self:T( { "Landed event:" .. SpawnUnit:getName(), event } )
 			self.Landed = true
 			self:T( "self.Landed = true" )
 			if self.Landed and self.RepeatOnLanding then
@@ -11427,15 +11472,18 @@ end
 --- Will detect AIR Units shutting down their engines ...
 -- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
 -- But only when the Unit was registered to have landed.
+-- @param #SPAWN self
 -- @see _OnTakeOff
 -- @see _OnLand
 -- @todo Need to test for AIR Groups only...
-function SPAWN:_OnLand( event )
+function SPAWN:_OnEngineShutDown( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
-	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
+  local SpawnUnit = event.initiator
+  if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
+		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
 		if SpawnGroup then
-			self:T( { "EngineShutDown event: " .. event.initiator:getName(), event } )
+			self:T( { "EngineShutDown event: " .. SpawnUnit:getName(), event } )
 			if self.Landed and self.RepeatOnEngineShutDown then
 				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
@@ -11476,8 +11524,8 @@ function SPAWN:_SpawnCleanUpScheduler()
 	while SpawnGroup do
 		
 		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
+			if not self.SpanUwnCleanUpTimeStamps[SpawnGroup:GetName()] then
+				self.SpawnCleapTimeStamps[SpawnGroup:GetName()] = timer.getTime()
 			else
 				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
 					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )

@@ -30,7 +30,7 @@ GROUP = {
 local GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
--- @param self
+-- @param #GROUP self
 -- @param DCSGroup#Group DCSGroup The DCS Group
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
@@ -52,7 +52,7 @@ function GROUP:New( DCSGroup )
 end
 
 --- Create a new GROUP from an existing group name.
--- @param self
+-- @param #GROUP self
 -- @param GroupName The name of the DCS Group.
 -- @return #GROUP self
 function GROUP:NewFromName( GroupName )
@@ -72,7 +72,7 @@ function GROUP:NewFromName( GroupName )
 end
 
 --- Create a new GROUP from an existing DCSUnit in the mission.
--- @param self
+-- @param #GROUP self
 -- @param DCSUnit The DCSUnit.
 -- @return #GROUP self
 function GROUP:NewFromDCSUnit( DCSUnit )
@@ -92,8 +92,8 @@ function GROUP:NewFromDCSUnit( DCSUnit )
 end
 
 --- Gets the DCSGroup of the GROUP.
--- @param self
--- @return #Group The DCSGroup.
+-- @param #GROUP self
+-- @return DCSGroup#Group The DCSGroup.
 function GROUP:GetDCSGroup()
 	self:F( { self.GroupName } )
 	self.DCSGroup = Group.getByName( self.GroupName )
@@ -101,7 +101,7 @@ function GROUP:GetDCSGroup()
 end
 
 --- Gets the DCS Unit of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @param #number UnitNumber The unit index to be returned from the GROUP.
 -- @return #Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
@@ -110,8 +110,17 @@ function GROUP:GetDCSUnit( UnitNumber )
 
 end
 
+--- Gets the DCSUnits of the GROUP.
+-- @param #GROUP self
+-- @return #table The DCSUnits.
+function GROUP:GetDCSUnits()
+  self:F( { self.GroupName } )
+  return self.DCSGroup:getUnits()
+
+end
+
 --- Activates a GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Activate()
 	self:F( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
@@ -119,7 +128,7 @@ function GROUP:Activate()
 end
 
 --- Gets the ID of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #number The ID of the GROUP.
 function GROUP:GetID()
 	self:F( self.GroupName )
@@ -128,7 +137,7 @@ function GROUP:GetID()
 end
 
 --- Gets the name of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #string The name of the GROUP.
 function GROUP:GetName()
 	self:F( self.GroupName )
@@ -187,7 +196,7 @@ end
 --- Destroy a GROUP
 -- Note that this destroy method also raises a destroy event at run-time.
 -- So all event listeners will catch the destroy event of this GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Destroy()
 	self:F( self.GroupName )
 	
@@ -227,7 +236,7 @@ end
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Air category evaluation result.
 function GROUP:IsAir()
 	self:F()
@@ -240,7 +249,7 @@ end
 
 --- Returns if the group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Alive result.
 function GROUP:IsAlive()
 	self:F()
@@ -301,7 +310,7 @@ end
 
 --- Returns if all units of the group are on the ground or landed.
 -- If all units of this group are on the ground, this function will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean All units on the ground result.
 function GROUP:AllOnGround()
 	self:F()
@@ -342,7 +351,7 @@ end
 
 --- Returns the current minimum height of the group.
 -- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Minimum height found.
 function GROUP:GetMinHeight()
 	self:F()
@@ -351,7 +360,7 @@ end
 
 --- Returns the current maximum height of the group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Maximum height found.
 function GROUP:GetMaxHeight()
 	self:F()
