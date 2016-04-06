@@ -2585,7 +2585,7 @@ local _TraceClass = {
 	--SPAWN = true,
 	--STAGE = true,
 	--ZONE = true,
-	GROUP = true,
+	--GROUP = true,
 	--UNIT = true,
   --CLIENT = true,
 	--CARGO = true,
@@ -2596,8 +2596,9 @@ local _TraceClass = {
 	--CLEANUP = true,
 	--MENU_CLIENT = true,
 	--MENU_CLIENT_COMMAND = true,
-	ESCORT = true,
+	--ESCORT = true,
 	}
+local _TraceClassMethod = {}
 
 --- The BASE Class
 -- @type BASE
@@ -2853,12 +2854,35 @@ end
 -- Log a trace (only shown when trace is on)
 -- TODO: Make trace function using variable parameters.
 
+--- Set trace level
+-- @param #BASE self
+-- @param #number Level
+function BASE:TraceLevel( Level )
+  _TraceLevel = Level
+end
+
+--- Set tracing for a class
+-- @param #BASE self
+-- @param #string Class
+function BASE:TraceClass( Class )
+  _TraceClass[Class] = true
+  _TraceClassMethod[Class] = {}
+end
+
+--- Set tracing for a specific method of  class
+-- @param #BASE self
+-- @param #string Class
+-- @param #string Method
+function BASE:TraceClassMethod( Class, Method )
+  _TraceClassMethod[Class].Method[Method] = true
+end
+
 --- Trace a function call. Must be at the beginning of the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if _TraceOn and _TraceClass[self.ClassName] then
+  if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -2867,13 +2891,15 @@ function BASE:F( Arguments )
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
-
-    local LineCurrent = DebugInfoCurrent.currentline
-    local LineFrom = 0
-    if DebugInfoFrom then
-      LineFrom = DebugInfoFrom.currentline
+    
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+      local LineCurrent = DebugInfoCurrent.currentline
+      local LineFrom = 0
+      if DebugInfoFrom then
+        LineFrom = DebugInfoFrom.currentline
+      end
+      env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
     end
-    env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s\(%s\)" , LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   end
 end
 
@@ -2904,7 +2930,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-	if _TraceOn and _TraceClass[self.ClassName] then
+	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
 		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
 		local DebugInfoFrom = debug.getinfo( 3, "l" )
@@ -2914,12 +2940,14 @@ function BASE:T( Arguments )
 			Function = DebugInfoCurrent.name
 		end
 
-		local LineCurrent = DebugInfoCurrent.currentline
-		local LineFrom = 0
-		if DebugInfoFrom then
-		  LineFrom = DebugInfoFrom.currentline
-	  end
-		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+  		local LineCurrent = DebugInfoCurrent.currentline
+  		local LineFrom = 0
+  		if DebugInfoFrom then
+  		  LineFrom = DebugInfoFrom.currentline
+  	  end
+  		env.info( string.format( "%6d\(%6d\)/%1s:%20s%05d.%s" , LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+    end
 	end
 end
 
@@ -3193,7 +3221,7 @@ GROUP = {
 local GROUPS = {}
 	
 --- Create a new GROUP from a DCSGroup
--- @param self
+-- @param #GROUP self
 -- @param DCSGroup#Group DCSGroup The DCS Group
 -- @return #GROUP self
 function GROUP:New( DCSGroup )
@@ -3215,7 +3243,7 @@ function GROUP:New( DCSGroup )
 end
 
 --- Create a new GROUP from an existing group name.
--- @param self
+-- @param #GROUP self
 -- @param GroupName The name of the DCS Group.
 -- @return #GROUP self
 function GROUP:NewFromName( GroupName )
@@ -3235,7 +3263,7 @@ function GROUP:NewFromName( GroupName )
 end
 
 --- Create a new GROUP from an existing DCSUnit in the mission.
--- @param self
+-- @param #GROUP self
 -- @param DCSUnit The DCSUnit.
 -- @return #GROUP self
 function GROUP:NewFromDCSUnit( DCSUnit )
@@ -3255,8 +3283,8 @@ function GROUP:NewFromDCSUnit( DCSUnit )
 end
 
 --- Gets the DCSGroup of the GROUP.
--- @param self
--- @return #Group The DCSGroup.
+-- @param #GROUP self
+-- @return DCSGroup#Group The DCSGroup.
 function GROUP:GetDCSGroup()
 	self:F( { self.GroupName } )
 	self.DCSGroup = Group.getByName( self.GroupName )
@@ -3264,7 +3292,7 @@ function GROUP:GetDCSGroup()
 end
 
 --- Gets the DCS Unit of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @param #number UnitNumber The unit index to be returned from the GROUP.
 -- @return #Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
@@ -3273,8 +3301,17 @@ function GROUP:GetDCSUnit( UnitNumber )
 
 end
 
+--- Gets the DCSUnits of the GROUP.
+-- @param #GROUP self
+-- @return #table The DCSUnits.
+function GROUP:GetDCSUnits()
+  self:F( { self.GroupName } )
+  return self.DCSGroup:getUnits()
+
+end
+
 --- Activates a GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Activate()
 	self:F( { self.GroupName } )
 	trigger.action.activateGroup( self:GetDCSGroup() )
@@ -3282,7 +3319,7 @@ function GROUP:Activate()
 end
 
 --- Gets the ID of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #number The ID of the GROUP.
 function GROUP:GetID()
 	self:F( self.GroupName )
@@ -3291,7 +3328,7 @@ function GROUP:GetID()
 end
 
 --- Gets the name of the GROUP.
--- @param self
+-- @param #GROUP self
 -- @return #string The name of the GROUP.
 function GROUP:GetName()
 	self:F( self.GroupName )
@@ -3350,7 +3387,7 @@ end
 --- Destroy a GROUP
 -- Note that this destroy method also raises a destroy event at run-time.
 -- So all event listeners will catch the destroy event of this GROUP.
--- @param self
+-- @param #GROUP self
 function GROUP:Destroy()
 	self:F( self.GroupName )
 	
@@ -3390,7 +3427,7 @@ end
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Air category evaluation result.
 function GROUP:IsAir()
 	self:F()
@@ -3403,7 +3440,7 @@ end
 
 --- Returns if the group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean Alive result.
 function GROUP:IsAlive()
 	self:F()
@@ -3464,7 +3501,7 @@ end
 
 --- Returns if all units of the group are on the ground or landed.
 -- If all units of this group are on the ground, this function will return true, otherwise false.
--- @param self
+-- @param #GROUP self
 -- @return #boolean All units on the ground result.
 function GROUP:AllOnGround()
 	self:F()
@@ -3505,7 +3542,7 @@ end
 
 --- Returns the current minimum height of the group.
 -- Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Minimum height found.
 function GROUP:GetMinHeight()
 	self:F()
@@ -3514,7 +3551,7 @@ end
 
 --- Returns the current maximum height of the group.
 -- Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.
--- @param self
+-- @param #GROUP self
 -- @return #number Maximum height found.
 function GROUP:GetMaxHeight()
 	self:F()
@@ -4898,7 +4935,7 @@ end
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
 function DATABASE:OnDeadOrCrash( event )
-	--self:T( { event } )
+	self:F( { event } )
 
 	local TargetUnit = nil
 	local TargetGroup = nil
@@ -4933,7 +4970,7 @@ function DATABASE:OnDeadOrCrash( event )
 		TargetUnitCategory = DATABASECategory[TargetCategory]
 		TargetUnitType = TargetType
 
-		--self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
 	end
 
 	for PlayerName, PlayerData in pairs( self.Players ) do
@@ -4996,7 +5033,7 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-	self:F( "_FollowPlayers" )
+	self:F3( "_FollowPlayers" )
 
 	local ClientUnit = 0
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
@@ -5005,7 +5042,7 @@ function DATABASE:_FollowPlayers()
 	local AlivePlayerUnits = {}
 	
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T( { "_FollowPlayers", CoalitionData } )
+		self:T3( { "_FollowPlayers", CoalitionData } )
 		for UnitId, UnitData in pairs( CoalitionData ) do
 			self:_AddPlayerFromUnit( UnitData )
 		end
@@ -5113,11 +5150,11 @@ function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score            
 	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
-	MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
-				  Score .. " Score points added.", 
-				  "", 20, "/SCORETASK" .. PlayerName ):ToAll()
-	
-	_Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
+    Score .. " Score points added.", 
+    "", 20, "/SCORETASK" .. PlayerName ):ToAll()
+
+  _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
 
 
@@ -6726,9 +6763,33 @@ function CLIENT:Alive( CallBack )
   return self
 end
 
+-- Is Functions
+
+--- Checks if the CLIENT is a multi-seated UNIT.
+-- @param #CLIENT self
+-- @return #boolean true if multi-seated.
+function CLIENT:IsMultiSeated()
+  self:F( self.ClientName )
+
+  local ClientMultiSeatedTypes = { 
+    ["Mi-8MT"]  = "Mi-8MT", 
+    ["UH-1H"]   = "UH-1H", 
+    ["P-51B"]   = "P-51B" 
+  }
+  
+  if self:IsAlive() then
+    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
+    if ClientMultiSeatedTypes[ClientTypeName] then
+      return true
+    end
+  end
+  
+  return false
+end
+
 --- Checks if client is alive and returns true or false.
 -- @param #CLIENT self
--- @param #boolean Returns true if client is alive.
+-- @returns #boolean Returns true if client is alive.
 function CLIENT:IsAlive()
   self:F( self.ClientName )
   
@@ -7097,7 +7158,7 @@ function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
 
   -- When no messagecategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
-    self.MessageCategory = MessageCategory .. ":"
+    self.MessageCategory = MessageCategory .. ": "
   else
     self.MessageCategory = ""
   end
@@ -7409,9 +7470,9 @@ function STAGESTART:Execute( Mission, Client, Task )
 	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	if Task.TaskBriefing then
-		Client:Message( Task.TaskBriefing, 30,  Mission.Name .. "/Stage", "Mission Command: Tasking" )
+		Client:Message( Task.TaskBriefing, 30,  Mission.Name .. "/Stage", "Command" )
 	else
-		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, Mission.Name .. "/Stage", "Mission Command: Tasking" )
+		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, Mission.Name .. "/Stage", "Command" )
 	end
 	self.StageStartTime = timer.getTime()
 	return Valid 
@@ -7522,16 +7583,27 @@ function STAGEROUTE:New()
 end
 
 
+--- Execute the routing.
+-- @param #STAGEROUTE self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
 function STAGEROUTE:Execute( Mission, Client, Task )
 	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 
-	local RouteMessage = "Fly to "
+	local RouteMessage = "Fly to: "
 	self:T( Task.LandingZones )
 	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
-		RouteMessage = RouteMessage .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupDCSUnit():getPoint(), true, true } ) .. ' km. '
+		RouteMessage = RouteMessage .. "\n     " .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupDCSUnit():getPoint(), true, true } ) .. ' km.'
 	end
-	Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot: Route", 20 )
+	
+	if Client:IsMultiSeated() then
+    Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot", 20 )
+	else
+    Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Command", 20 )
+  end	
+	
 
 	if Mission.MissionReportFlash and Client:IsTransport() then
 		Client:ShowCargo()
@@ -7581,10 +7653,19 @@ function STAGELANDING:New()
 	return self
 end
 
+--- Execute the landing coordination.
+-- @param #STAGELANDING self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
 function STAGELANDING:Execute( Mission, Client, Task )
 	self:F()
  
-	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot: Arrived", 10 )
+  if Client:IsMultiSeated() then
+  	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot", 10 )
+  else
+    Client:Message( "You have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Command", 10 )
+  end
 
  	Task.HostUnit = Task.CurrentCargoZone:GetHostUnit()
 	
@@ -7628,7 +7709,7 @@ function STAGELANDING:Execute( Mission, Client, Task )
 			HostMessage = "Use the Radio menu and F6 to find the cargo, then fly or land near the cargo and " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
 		end
 		
-		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":", 10 )
+		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
 		
 	end
 end
@@ -7687,8 +7768,8 @@ function STAGELANDED:Execute( Mission, Client, Task )
 	self:F()
 
 	if Task.IsLandingRequired then
-		Client:Message( 'We have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-		                self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+		Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
+		                self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 		if not self.MenusAdded then
 			Task.Cargo = nil
 			Task:RemoveCargoMenus( Client )
@@ -7738,10 +7819,21 @@ function STAGEUNLOAD:New()
 	return self
 end
 
+--- Coordinate UnLoading
+-- @param #STAGEUNLOAD self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
 function STAGEUNLOAD:Execute( Mission, Client, Task )
 	self:F()
-	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-                    self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Co-Pilot: Unload" )
+	
+	if Client:IsMultiSeated() then
+  	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
+                    self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Co-Pilot" )
+  else
+    Client:Message( 'You are unloading the ' .. Task.CargoType .. ' ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
+                    self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Command" )
+  end
 	Task:RemoveCargoMenus( Client )
 end
 
@@ -7765,6 +7857,11 @@ function STAGEUNLOAD:Executing( Mission, Client, Task )
 	end
 end
 
+--- Validate UnLoading
+-- @param #STAGEUNLOAD self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
 function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
@@ -7772,25 +7869,39 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
   if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
-	Task:RemoveCargoMenus( Client )
-    Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot: Unload" )
+    Task:RemoveCargoMenus( Client )
+    if Client:IsMultiSeated() then
+      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
+  	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot" )
+  	else
+      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
+                    _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Command" )
+  	end
     return 1
   end
   
   if not Client:GetClientGroupDCSUnit():inAir() then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
-	Task:RemoveCargoMenus( Client )
-    Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot: Unload" )
+    Task:RemoveCargoMenus( Client )
+    if Client:IsMultiSeated() then
+      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
+  	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot" )
+	  else
+      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
+                    _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Command" )
+	  end
     return 1
   end
   
   if  Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
-    Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Co-Pilot: Unload" )
-	Task:RemoveCargoMenus( Client )
-	Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 ) -- We set the cargo as one more goal completed in the mission.
+    if Client:IsMultiSeated() then
+      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Co-Pilot" )
+    else
+      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Command" )
+    end
+    Task:RemoveCargoMenus( Client )
+    Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 ) -- We set the cargo as one more goal completed in the mission.
     return 1
   end
   
@@ -7815,7 +7926,7 @@ function STAGELOAD:Execute( Mission, Client, Task )
 	
 	if not Task.IsSlingLoad then
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 
 		-- Route the cargo to the Carrier
 		Task.Cargo:OnBoard( Client, Task.CurrentCargoZone, Task.OnBoardSide )
@@ -7841,14 +7952,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 		
 			-- Message to the pilot that cargo has been loaded.
 			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
 			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":", 10 )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
 		for CargoID, Cargo in pairs( CARGOS ) do
 			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
@@ -7864,7 +7975,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 						break
 					end
@@ -7888,7 +7999,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 			return -1
 		end
 
@@ -7899,14 +8010,14 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			Task.ExecuteStage = _TransportExecuteStage.NONE
 			Task.CargoName = nil
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 			return -1
 		end
 
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
 			return 1
 		end
@@ -7916,7 +8027,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
 			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
 				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" .. ":" )
+								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
 				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
 				return 1
 			end
@@ -7968,12 +8079,22 @@ function STAGEARRIVE:New()
 	return self
 end
 
+
+--- Execute Arrival
+-- @param #STAGEARRIVE self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
 function STAGEARRIVE:Execute( Mission, Client, Task )
 	self:F()
  
-  Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot: Arrived" )
+  if Client:IsMultiSeated() then
+    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot" )
+  else
+    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Command" )
+  end  
 
-  end
+end
 
 function STAGEARRIVE:Validate( Mission, Client, Task )
 	self:F()
@@ -10273,14 +10394,18 @@ Include.File( "Zone" )
 -- @type SPAWN
 -- @extends Base#BASE
 -- @field ClassName
+-- @field #string SpawnTemplatePrefix
+-- @field #string SpawnAliasPrefix
 SPAWN = {
   ClassName = "SPAWN",
+  SpawnTemplatePrefix = nil,
+  SpawnAliasPrefix = nil,
 }
 
 
 
 --- Creates the main object to spawn a GROUP defined in the DCS ME.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWN
 -- @usage
@@ -10321,7 +10446,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 end
 
 --- Creates a new SPAWN instance to create new groups based on the defined template and using a new alias for each new group.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.
 -- @param #string SpawnAliasPrefix is the name that will be given to the Group at runtime.
 -- @return #SPAWN
@@ -10368,7 +10493,7 @@ end
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
 -- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
 -- @param #number SpawnMaxGroups The maximum amount of groups that can be spawned. When the limit is reached, then no more actual spawns will happen of the group. 
 -- This parameter is useful to define a maximum amount of airplanes, ground troops, helicopters, ships etc within a supply area. 
@@ -10394,7 +10519,7 @@ end
 
 
 --- Randomizes the defined route of the SpawnTemplatePrefix group in the ME. This is very useful to define extra variation of the behaviour of groups.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnStartPoint is the waypoint where the randomization begins. 
 -- Note that the StartPoint = 0 equaling the point where the group is spawned.
 -- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
@@ -10427,7 +10552,7 @@ end
 -- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnTemplatePrefixTable A table with the names of the groups defined within the mission editor, from which one will be choosen when a new group will be spawned. 
 -- @return #SPAWN
 -- @usage
@@ -10464,7 +10589,7 @@ end
 -- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
 -- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
 -- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
--- @param self
+-- @param #SPAWN self
 -- @return #SPAWN self
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
@@ -10514,7 +10639,7 @@ end
 
 --- CleanUp groups when they are still alive, but inactive.
 -- When groups are still alive and have become inactive due to damage and are unable to contribute anything, then this group will be removed at defined intervals in seconds.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
 -- @return #SPAWN self
 -- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
@@ -10532,7 +10657,7 @@ end
 
 --- Makes the groups visible before start (like a batallion).
 -- The method will take the position of the group as the first position in the array.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnAngle         The angle in degrees how the groups and each unit of the group will be positioned.
 -- @param #number SpawnWidth		     The amount of Groups that will be positioned on the X axis.
 -- @param #number SpawnDeltaX        The space between each Group on the X-axis.
@@ -10585,10 +10710,10 @@ end
 
 
 
---- Will re-spawn a group based on a given index.
+--- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
--- @param self
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @param #SPAWN self
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -10597,9 +10722,9 @@ end
 
 --- Will re-spawn a group based on a given index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
--- @param self
+-- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:ReSpawn( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 	
@@ -10607,10 +10732,11 @@ function SPAWN:ReSpawn( SpawnIndex )
 		SpawnIndex = 1
 	end
 
-	--local SpawnGroup = self:GetGroupFromIndex( SpawnIndex ):GetDCSGroup()
-	--if SpawnGroup then
-		--DCSGroup:destroy()
-	--end
+	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+  local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+	if SpawnDCSGroup then
+    SpawnGroup:Destroy()
+	end
 	
 	return self:SpawnWithIndex( SpawnIndex )
 end
@@ -10618,7 +10744,7 @@ end
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
--- @return GROUP#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
 	
@@ -10645,7 +10771,7 @@ end
 
 --- Spawns new groups at varying time intervals.
 -- This is useful if you want to have continuity within your missions of certain (AI) groups to be present (alive) within your missions.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
 -- The variation is a number between 0 and 1, representing the %-tage of variation to be applied on the time interval.
@@ -10709,7 +10835,7 @@ end
 --- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
--- @param self
+-- @param #SPAWN self
 -- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
 -- @param #number OuterRadius The outer radius in meters where the new group will be spawned.
 -- @param #number InnerRadius The inner radius in meters where the new group will NOT be spawned.
@@ -10786,10 +10912,10 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{ZONE}.
--- @param self
+-- @param #SPAWN self
 -- @param #ZONE Zone The zone where the group is to be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
--- @return GROUP#GROUP that was spawned.
+-- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
 function SPAWN:SpawnInZone( Zone, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
@@ -10860,9 +10986,9 @@ end
 
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex Is the number of the Group that is to be spawned.
--- @return string SpawnGroupName
+-- @return #string SpawnGroupName
 function SPAWN:SpawnGroupName( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -10883,9 +11009,9 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 end
 
 --- Find the first alive group.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnCursor A number holding the index from where to find the first group from.
--- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 function SPAWN:GetFirstAliveGroup( SpawnCursor )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
@@ -10903,9 +11029,9 @@ end
 
 
 --- Find the next alive group.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnCursor A number holding the last found previous index.
--- @return GROUP#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The group found, the new index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 function SPAWN:GetNextAliveGroup( SpawnCursor )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
@@ -10944,9 +11070,9 @@ end
 --- Get the group from an index.
 -- Returns the group from the SpawnGroups list.
 -- If no index is given, it will return the first group in the list.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to return.
--- @return GROUP#GROUP
+-- @return Group#GROUP
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
@@ -10962,7 +11088,7 @@ end
 --- Get the group index from a DCSUnit.
 -- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
 -- It will return nil of no prefix was found.
--- @param self
+-- @param #SPAWN self
 -- @param DCSUnit The DCS unit to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
@@ -10986,7 +11112,7 @@ end
 --- Return the prefix of a DCSUnit.
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
--- @param self
+-- @param #SPAWN self
 -- @param DCSUnit The DCS unit to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
@@ -11157,7 +11283,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 end
 
 --- Internal function randomizing the routes.
--- @param self
+-- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
 function SPAWN:_RandomizeRoute( SpawnIndex )
@@ -11289,7 +11415,7 @@ end
 --- Obscolete
 -- @todo Need to delete this... _Database does this now ...
 function SPAWN:_OnDeadOrCrash( event )
-
+  self:F( self.SpawnTemplatePrefix,  event )
 
 	if event.initiator and event.initiator:getName() then
 		local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
@@ -11309,6 +11435,7 @@ end
 -- This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:_OnTakeOff( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
 	if event.initiator and event.initiator:getName() then
 		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
@@ -11324,11 +11451,13 @@ end
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
 -- @todo Need to test for AIR Groups only...
 function SPAWN:_OnLand( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
-	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
+  local SpawnUnit = event.initiator
+	if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
+		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
 		if SpawnGroup then
-			self:T( { "Landed event:" .. event.initiator:getName(), event } )
+			self:T( { "Landed event:" .. SpawnUnit:getName(), event } )
 			self.Landed = true
 			self:T( "self.Landed = true" )
 			if self.Landed and self.RepeatOnLanding then
@@ -11343,15 +11472,18 @@ end
 --- Will detect AIR Units shutting down their engines ...
 -- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
 -- But only when the Unit was registered to have landed.
+-- @param #SPAWN self
 -- @see _OnTakeOff
 -- @see _OnLand
 -- @todo Need to test for AIR Groups only...
-function SPAWN:_OnLand( event )
+function SPAWN:_OnEngineShutDown( event )
+  self:F( self.SpawnTemplatePrefix,  event )
 
-	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
+  local SpawnUnit = event.initiator
+  if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
+		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
 		if SpawnGroup then
-			self:T( { "EngineShutDown event: " .. event.initiator:getName(), event } )
+			self:T( { "EngineShutDown event: " .. SpawnUnit:getName(), event } )
 			if self.Landed and self.RepeatOnEngineShutDown then
 				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
@@ -11392,8 +11524,8 @@ function SPAWN:_SpawnCleanUpScheduler()
 	while SpawnGroup do
 		
 		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
+			if not self.SpanUwnCleanUpTimeStamps[SpawnGroup:GetName()] then
+				self.SpawnCleapTimeStamps[SpawnGroup:GetName()] = timer.getTime()
 			else
 				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
 					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
@@ -11682,6 +11814,64 @@ function SEAD:EventShot( event )
 end
 --- Taking the lead of AI escorting your flight.
 -- The ESCORT class allows you to interact with escorting AI on your flight and take the lead.
+-- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
+-- 
+-- The radio commands will vary according the category of the group. The richest set of commands are with Helicopters and AirPlanes.
+-- Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.
+-- 
+-- Find a summary below of the current available commands:
+-- 
+-- **1. Navigation ...:** Escort group navigation functions:
+-- 
+-- * **"Hold Position and Stay Low":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
+-- * **"Join-Up and Hold Position NearBy":** The escort group will stop nearby you, and then the group will hover.
+-- * **"Join-Up and Follow at 100":** The escort group fill follow you at about 100 meters, and they will follow you.
+-- * **"Join-Up and Follow at 200":** The escort group fill follow you at about 200 meters, and they will follow you.
+-- * **"Join-Up and Follow at 400":** The escort group fill follow you at about 400 meters, and they will follow you.
+-- * **"Join-Up and Follow at 800":** The escort group fill follow you at about 800 meters, and they will follow you.
+-- * **"Flare":** Provides menu commands to let the escort group shoot a flare in the air in a color.
+-- * **"Smoke":** Provides menu commands to let the escort group smoke the air in a color. Note that smoking is only available for ground and naval troops.
+-- 
+-- **2. Report targets ...:** Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).
+-- 
+-- * **"Report now":** Will report the current detected targets.
+-- * **"Report targets on":** Will make the escort group to report detected targets and will fill the "Attack nearby targets" menu list.
+-- * **"Report targets off":** Will stop detecting targets.
+-- 
+-- **3. Scan targets ...:** Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.
+-- 
+-- * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
+-- * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
+-- 
+-- **4. Attack nearby targets ...:** This menu item will list all detected targets within an 8km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
+-- 
+-- **5. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
+-- 
+-- * **"Hold Fire":** The escort group will hold fire.
+-- * **"Return Fire":** The escort group will return fire.
+-- * **"Open Fire":** The escort group will open fire on designated targets.
+-- * **"Weapon Free":** The escort group will engage with any target.
+-- 
+-- **6. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
+-- 
+-- * **"Fight until death":** The escort group will have no reaction to threats.
+-- * **"Use flares, chaff and jammers":** The escort group will use passive defense using flares and jammers. No evasive manoeuvres are executed.
+-- * **"Evade enemy fire":** The rescort group will evade enemy fire before firing.
+-- * **"Go below radar and evade fire":** The escort group will perform evasive vertical manoeuvres.
+-- 
+-- **7. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- 
+-- 1. ESCORT object construction methods.
+-- --------------------------------------
+-- Create a new SPAWN object with the @{#ESCORT.New} method:
+-- 
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
+--  
+-- 2. ESCORT object initialization methods.
+-- ----------------------------------------
+-- None.
+-- 
+-- 
 -- @module Escort
 -- @author FlightControl
 
@@ -11753,12 +11943,14 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.EscortMenuFlareWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.White,  ParamMessage = "Released a white flare!"   } )  
   self.EscortMenuFlareYellow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release yellow flare", self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.Yellow, ParamMessage = "Released a yellow flare!"  } )  
 
-  self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )  
-  self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )  
-  self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )  
-  self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )  
-  self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )  
-  self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )  
+  if EscortGroup:IsGround() or EscortGroup:IsShip() then
+    self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )  
+    self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )  
+    self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )  
+    self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )  
+    self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )  
+    self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )  
+  end
   
   if EscortGroup:IsHelicopter() or EscortGroup:IsAirPlane() or EscortGroup:IsGround() or EscortGroup:IsShip() then
     -- Report Targets
@@ -11771,8 +11963,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   if EscortGroup:IsHelicopter() then
     -- Scanning Targets
     self.EscortMenuScanForTargets = MENU_CLIENT:New( self.EscortClient, "Scan targets", self.EscortMenu )
-    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets30Seconds, { ParamSelf = self, ParamScanDuration = 30 } )
-    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets60Seconds, { ParamSelf = self, ParamScanDuration = 60 } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 30 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets, { ParamSelf = self, ParamScanDuration = 30 } )
+    self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Scan targets 60 seconds", self.EscortMenuScanForTargets, ESCORT._ScanTargets, { ParamSelf = self, ParamScanDuration = 60 } )
   end
   
   -- Attack Targets
@@ -11965,41 +12157,24 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ScanTargets30Seconds( MenuParam )
-  MenuParam.ParamSelf:T()
+function ESCORT._ScanTargets( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
+  
+  local ScanDuration = MenuParam.ParamScanDuration
 
   routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler = nil
 
   EscortGroup:PushTask( 
     EscortGroup:TaskControlled( 
       EscortGroup:TaskOrbitCircle( 200, 20 ), 
-      EscortGroup:TaskCondition( nil, nil, nil, nil, 30, nil ) 
+      EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil ) 
       ) 
   )
-  EscortGroup:MessageToClient( "Scanning targets for 30 seconds.", 10, EscortClient )
-end
-
---- @param #MENUPARAM MenuParam
-function ESCORT._ScanTargets60Seconds( MenuParam )
-  MenuParam.ParamSelf:T()
-
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
-  local EscortClient = self.EscortClient
-
-  routines.removeFunction( self.FollowScheduler )
-
-  EscortGroup:PushTask( 
-    EscortGroup:TaskControlled( 
-      EscortGroup:TaskOrbitCircle( 200, 20 ), 
-      EscortGroup:TaskCondition( nil, nil, nil, nil, 60, nil ) 
-      ) 
-  )
-  EscortGroup:MessageToClient( "Scanning targets for 60 seconds.", 10, EscortClient )
+  EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
@@ -12032,7 +12207,7 @@ function ESCORT._ROE( MenuParam )
   local EscortROEFunction = MenuParam.ParamFunction
   local EscortROEMessage = MenuParam.ParamMessage
   
-  EscortROEFunction()
+  pcall( function() EscortROEFunction() end )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
@@ -12046,7 +12221,7 @@ function ESCORT._ROT( MenuParam )
   local EscortROTFunction = MenuParam.ParamFunction
   local EscortROTMessage = MenuParam.ParamMessage
 
-  EscortROTFunction()
+  pcall( function() EscortROTFunction() end )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 

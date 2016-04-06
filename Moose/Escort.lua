@@ -1,5 +1,63 @@
 --- Taking the lead of AI escorting your flight.
 -- The ESCORT class allows you to interact with escorting AI on your flight and take the lead.
+-- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
+-- 
+-- The radio commands will vary according the category of the group. The richest set of commands are with Helicopters and AirPlanes.
+-- Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.
+-- 
+-- Find a summary below of the current available commands:
+-- 
+-- **1. Navigation ...:** Escort group navigation functions:
+-- 
+-- * **"Hold Position and Stay Low":** Stops the escort group and they will hover 30 meters above the ground at the position they stopped.
+-- * **"Join-Up and Hold Position NearBy":** The escort group will stop nearby you, and then the group will hover.
+-- * **"Join-Up and Follow at 100":** The escort group fill follow you at about 100 meters, and they will follow you.
+-- * **"Join-Up and Follow at 200":** The escort group fill follow you at about 200 meters, and they will follow you.
+-- * **"Join-Up and Follow at 400":** The escort group fill follow you at about 400 meters, and they will follow you.
+-- * **"Join-Up and Follow at 800":** The escort group fill follow you at about 800 meters, and they will follow you.
+-- * **"Flare":** Provides menu commands to let the escort group shoot a flare in the air in a color.
+-- * **"Smoke":** Provides menu commands to let the escort group smoke the air in a color. Note that smoking is only available for ground and naval troops.
+-- 
+-- **2. Report targets ...:** Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).
+-- 
+-- * **"Report now":** Will report the current detected targets.
+-- * **"Report targets on":** Will make the escort group to report detected targets and will fill the "Attack nearby targets" menu list.
+-- * **"Report targets off":** Will stop detecting targets.
+-- 
+-- **3. Scan targets ...:** Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.
+-- 
+-- * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
+-- * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
+-- 
+-- **4. Attack nearby targets ...:** This menu item will list all detected targets within an 8km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
+-- 
+-- **5. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
+-- 
+-- * **"Hold Fire":** The escort group will hold fire.
+-- * **"Return Fire":** The escort group will return fire.
+-- * **"Open Fire":** The escort group will open fire on designated targets.
+-- * **"Weapon Free":** The escort group will engage with any target.
+-- 
+-- **6. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
+-- 
+-- * **"Fight until death":** The escort group will have no reaction to threats.
+-- * **"Use flares, chaff and jammers":** The escort group will use passive defense using flares and jammers. No evasive manoeuvres are executed.
+-- * **"Evade enemy fire":** The rescort group will evade enemy fire before firing.
+-- * **"Go below radar and evade fire":** The escort group will perform evasive vertical manoeuvres.
+-- 
+-- **7. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- 
+-- 1. ESCORT object construction methods.
+-- --------------------------------------
+-- Create a new SPAWN object with the @{#ESCORT.New} method:
+-- 
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
+--  
+-- 2. ESCORT object initialization methods.
+-- ----------------------------------------
+-- None.
+-- 
+-- 
 -- @module Escort
 -- @author FlightControl
 
@@ -71,12 +129,14 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.EscortMenuFlareWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.White,  ParamMessage = "Released a white flare!"   } )  
   self.EscortMenuFlareYellow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release yellow flare", self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = UNIT.FlareColor.Yellow, ParamMessage = "Released a yellow flare!"  } )  
 
-  self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )  
-  self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )  
-  self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )  
-  self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )  
-  self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )  
-  self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )  
+  if EscortGroup:IsGround() or EscortGroup:IsShip() then
+    self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )  
+    self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )  
+    self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )  
+    self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )  
+    self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )  
+    self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )  
+  end
   
   if EscortGroup:IsHelicopter() or EscortGroup:IsAirPlane() or EscortGroup:IsGround() or EscortGroup:IsShip() then
     -- Report Targets
@@ -333,7 +393,7 @@ function ESCORT._ROE( MenuParam )
   local EscortROEFunction = MenuParam.ParamFunction
   local EscortROEMessage = MenuParam.ParamMessage
   
-  EscortROEFunction()
+  pcall( function() EscortROEFunction() end )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
@@ -347,7 +407,7 @@ function ESCORT._ROT( MenuParam )
   local EscortROTFunction = MenuParam.ParamFunction
   local EscortROTMessage = MenuParam.ParamMessage
 
-  EscortROTFunction()
+  pcall( function() EscortROTFunction() end )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
