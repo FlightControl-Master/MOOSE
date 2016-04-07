@@ -49,6 +49,11 @@ UNIT = {
 -- @field Orange
 -- @field Blue
 	
+
+--- Create a new UNIT from DCSUnit.
+-- @param #UNIT self
+-- @param DCSUnit#Unit DCSUnit
+-- @return Unit#UNIT
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( DCSUnit:getName() )
@@ -231,4 +236,21 @@ function UNIT:SmokeBlue()
   trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
 end
 
+-- Is methods
+
+--- Returns if the unit is of an air category.
+-- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
+-- @param #UNIT self
+-- @return #boolean Air category evaluation result.
+function UNIT:IsAir()
+  self:F()
+  
+  local UnitDescriptor = self.DCSUnit:getDesc()
+  self:T( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+  
+  local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
+
+  self:T( IsAirResult )
+  return IsAirResult
+end
 

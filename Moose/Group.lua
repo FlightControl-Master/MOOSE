@@ -399,7 +399,7 @@ end
 -- @param #GROUP self
 -- @return Group#GROUP self
 function GROUP:SetTask( DCSTask )
-  self:F()
+  self:F( { DCSTask } )
 
   local Controller = self:_GetController()
   
@@ -417,7 +417,7 @@ end
 -- @param #string condition
 -- @param #Time duration 
 -- @param #number lastWayPoint 
--- return #DCSTask
+-- return DCSTask#Task
 function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
 	self:F( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
   
@@ -435,9 +435,9 @@ end
 
 --- Return a Controlled Task taking a Task and a TaskCondition
 -- @param #GROUP self
--- @param #DCSTask DCSTask
+-- @param DCSTask#Task DCSTask
 -- @param #DCSStopCondition DCSStopCondition
--- @return #DCSTask
+-- @return DCSTask#Task
 function GROUP:TaskControlled( DCSTask, DCSStopCondition )
 	self:F( { DCSTask, DCSStopCondition } )
 
@@ -447,12 +447,53 @@ function GROUP:TaskControlled( DCSTask, DCSStopCondition )
     id = 'ControlledTask', 
     params = { 
       task = DCSTask, 
-      stopCondition = DCSStopCondition, 
+      stopCondition = DCSStopCondition 
     } 
   }
   
   self:T( { DCSTaskControlled } )
   return DCSTaskControlled
+end
+
+--- Return a Combo Task taking an array of Tasks
+-- @param #GROUP self
+-- @param #list<DCSTask#Task> DCSTasks
+-- @return DCSTask#Task
+function GROUP:TaskCombo( DCSTasks )
+  self:F( { DCSTasks } )
+
+  local DCSTaskCombo
+  
+  DCSTaskCombo = { 
+    id = 'ComboTask', 
+    params = { 
+      tasks = DCSTasks
+    } 
+  }
+  
+  self:T( { DCSTaskCombo } )
+  return DCSTaskCombo
+end
+
+--- Return a WrappedAction Task taking a Command 
+-- @param #GROUP self
+-- @param DCSCommand#Command DCSCommand
+-- @return DCSTask#Task
+function GROUP:TaskWrappedAction( DCSCommand )
+  self:F( { DCSCommand } )
+
+  local DCSTaskWrappedAction
+  
+  DCSTaskWrappedAction = { 
+    id = "WrappedAction",
+    enabled = true,
+    params = {
+      action = DCSCommand
+    }
+  }
+
+  self:T( { DCSTaskWrappedAction } )
+  return DCSTaskWrappedAction
 end
 
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
@@ -566,7 +607,7 @@ end
 --- Attack the Unit.
 -- @param #GROUP self
 -- @param Unit#UNIT The unit.
--- @return #DCSTask The DCS task structure.
+-- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskAttackUnit( AttackUnit )
 	self:F( { self.GroupName, AttackUnit } )
 
@@ -595,6 +636,33 @@ function GROUP:TaskAttackUnit( AttackUnit )
   return DCSTask
 end
 
+--- Fires at a VEC2 point.
+-- @param #GROUP self
+-- @param DCSTypes#Vec2 The point to fire at.
+-- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
+-- @return DCSTask#Task The DCS task structure.
+function GROUP:TaskFireAtPoint( PointVec2, Radius )
+  self:F( { self.GroupName, PointVec2, Radius } )
+
+-- FireAtPoint = { 
+--   id = 'FireAtPoint', 
+--   params = { 
+--     point = Vec2,
+--     radius = Distance, 
+--   } 
+-- }
+   
+  local DCSTask    
+  DCSTask = { id = 'FireAtPoint', 
+              params = { point = PointVec2, 
+                         radius = Radius, 
+                       } 
+            } 
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
 
 
 --- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
@@ -602,7 +670,7 @@ end
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
 -- @param #GROUP EmbarkingGroup The group to be embarked.
--- @return #DCSTask The DCS task structure
+-- @return DCSTask#Task The DCS task structure
 function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
 	self:F( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
@@ -626,11 +694,11 @@ end
 -- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
--- @return #DCSTask The DCS task structure.
+-- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
 	self:F( { self.GroupName, Point, Radius } )
 
-  local DCSTask --#DCSTask
+  local DCSTask --DCSTask#Task
 	DCSTask = { id = 'EmbarkToTransport', 
 	            params = { x = Point.x, 
 				  	             y = Point.y, 
@@ -645,7 +713,7 @@ end
 --- Return a Misson task from a mission template.
 -- @param #GROUP self
 -- @param #table TaskMission A table containing the mission task.
--- @return #DCSTask 
+-- @return DCSTask#Task 
 function GROUP:TaskMission( TaskMission )
 	self:F( Points )
   
@@ -659,7 +727,7 @@ end
 --- Return a Misson task to follow a given route defined by Points.
 -- @param #GROUP self
 -- @param #table Points A table of route points.
--- @return #DCSTask 
+-- @return DCSTask#Task 
 function GROUP:TaskRoute( Points )
   self:F( Points )
   
@@ -722,28 +790,22 @@ function GROUP:Route( GoPoints )
 	return self
 end
 
+--- Registers a Task to be executed at a waypoint.
+-- @param #GROUP self
+-- @param #number WayPoint The waypoint where to execute the task.
+-- @return #string The task.
 function GROUP:TaskRegisterWayPoint( WayPoint )
 
   local DCSTask
   
-  DCSTask = { id = "WrappedAction",
-              enabled = true,
-              auto = false,
-              number = 1,
-              params = 
-              {
-                  action = 
-                  {
-                      id = "Script",
-                      params = 
-                      {
-                          command = "local MissionGroup = GROUP.FindGroup( ... ) " ..
-                                    "env.info( MissionGroup:GetName() ) " ..
-                                    "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )",
-                      }, -- end of ["params"]
-                  }, -- end of ["action"]
-              }, -- end of ["params"]
-          }
+  DCSTask = self:TaskWrappedAction( 
+    self:CommandDoScript(
+      "local MissionGroup = GROUP:New( ... ) " ..
+      "env.info( MissionGroup:GetName() ) " ..
+      "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )"
+    ) 
+  )
+  
   self:T( DCSTask )
   
   return DCSTask
@@ -804,6 +866,26 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 	
 	return self
 end
+
+-- Commands
+
+--- Do Script command
+-- @param #GROUP self
+-- @param #string DoScript
+-- @return #DCSCommand
+function GROUP:CommandDoScript( DoScript )
+
+  local DCSDoScript = {
+    id = "Script",
+    params = {
+      command = DoScript
+    }
+  }
+
+  self:T( DCSDoScript )
+  return DCSDoScript
+end
+
 
 --- Return the mission template of the group.
 -- @param #GROUP self
@@ -891,7 +973,14 @@ end
 function GROUP:IsTargetDetected( DCSObject )
 
   local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
-        = self:_GetController():isTargetDetected( DCSObject )
+        = self:_GetController().isTargetDetected( self:_GetController(), DCSObject, 
+                                                  Controller.Detection.VISUAL,
+                                                  Controller.Detection.OPTIC,
+                                                  Controller.Detection.RADAR,
+                                                  Controller.Detection.IRST,
+                                                  Controller.Detection.RWR,
+                                                  Controller.Detection.DLINK
+                                                )
 
   return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
 

@@ -473,6 +473,13 @@ do
 	rep - time between repetitions of this function (OPTIONAL)
 	st - time when repetitions of this function will stop automatically (OPTIONAL)
 	]]
+	
+	--- Schedule a function
+	-- @param #function f
+	-- @param #table parameters
+	-- @param #Time t
+	-- @param #Time rep seconds
+	-- @param #Time st
 	routines.scheduleFunction = function(f, vars, t, rep, st)
 	--verify correct types
 		assert(type(f) == 'function', 'variable 1, expected function, got ' .. type(f))
