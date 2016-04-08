@@ -11728,7 +11728,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 		
 		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
 			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleapTimeStamps[SpawnGroup:GetName()] = timer.getTime()
+				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
 			else
 				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
 					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
