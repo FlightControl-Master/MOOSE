@@ -1,10 +1,10 @@
 --- @module DCSTask
 
 
---- @type DCSTask
+--- @type Task
 -- @field #string id
--- @field #DCSTask.param param
+-- @field #Task.param param
 
---- @type DCSTask.param
+--- @type Task.param
 
-env.info( "DCSTask defined" )
+env.info( "Task defined" )

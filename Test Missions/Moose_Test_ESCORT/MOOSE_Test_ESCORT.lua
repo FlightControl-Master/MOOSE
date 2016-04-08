@@ -7,33 +7,32 @@ Include.File( "Escort" )
 do
 
   local function EventAliveHelicopter( Client )
-    local SpawnEscortHeli = SPAWN:New( "Escort Helicopter" )
-    local SpawnEscortPlane = SPAWN:New( "Escort Plane" )
-    local SpawnEscortGround = SPAWN:New( "Escort Ground" )
-    local EscortGroupHeli1 = SpawnEscortHeli:Spawn()
+    local EscortGroupHeli1 = SpawnEscortHeli:ReSpawn(1)
     local EscortHeli1 = ESCORT:New( Client, EscortGroupHeli1, "Escort Alpha" )
-    local EscortGroupPlane = SpawnEscortPlane:Spawn()
+    local EscortGroupPlane = SpawnEscortPlane:ReSpawn(1)
     local EscortPlane = ESCORT:New( Client, EscortGroupPlane, "Escort Test Plane" )
-    local EscortGroupGround = SpawnEscortGround:Spawn()
+    local EscortGroupGround = SpawnEscortGround:ReSpawn(1)
     local EscortGround = ESCORT:New( Client, EscortGroupGround, "Test Ground" )
   end
   
   local function EventAlivePlane( Client )
-    local SpawnEscortPlane = SPAWN:New( "Escort Plane" )
-    local EscortGroupPlane = SpawnEscortPlane:Spawn()
+    local EscortGroupPlane = SpawnEscortPlane:ReSpawn(1)
     local EscortPlane = ESCORT:New( Client, EscortGroupPlane, "Escort Test Plane" )
     
-    local SpawnEscortGround = SPAWN:New( "Escort Ground" )
-    local EscortGroupGround = SpawnEscortGround:Spawn()
+    local EscortGroupGround = SpawnEscortGround:ReSpawn(1)
     local EscortGround = ESCORT:New( Client, EscortGroupGround, "Test Ground" )
 
-    local SpawnEscortShip = SPAWN:New( "Escort Ship" )
-    local EscortGroupShip = SpawnEscortShip:Spawn()
+    local EscortGroupShip = SpawnEscortShip:ReSpawn(1)
     local EscortShip = ESCORT:New( Client, EscortGroupShip, "Test Ship" )
   end
 
-  local EscortClientHeli = CLIENT:New( "Lead Helicopter", "Fly around and observe the behaviour of the escort helicopter" ):Alive( EventAliveHelicopter )  
-  local EscortClientPlane = CLIENT:New( "Lead Plane", "Fly around and observe the behaviour of the escort airplane. Select Navigate->Joun-Up and airplane should follow you. Change speed and directions." )
+  SpawnEscortHeli = SPAWN:New( "Escort Helicopter" )
+  SpawnEscortPlane = SPAWN:New( "Escort Plane" )
+  SpawnEscortGround = SPAWN:New( "Escort Ground" )
+  SpawnEscortShip = SPAWN:New( "Escort Ship" )
+
+  EscortClientHeli = CLIENT:New( "Lead Helicopter", "Fly around and observe the behaviour of the escort helicopter" ):Alive( EventAliveHelicopter )  
+  EscortClientPlane = CLIENT:New( "Lead Plane", "Fly around and observe the behaviour of the escort airplane. Select Navigate->Joun-Up and airplane should follow you. Change speed and directions." )
                                   :Alive( EventAlivePlane )                                    
 
 end

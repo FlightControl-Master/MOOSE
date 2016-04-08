@@ -108,6 +108,9 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
   self.MenuClientGroupID = MenuClient:GetClientGroupID()
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+  
+  self.Menus = {}
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -117,14 +120,55 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
 
   self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
 
-  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
-  	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
-  	MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
-  else
-    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] 
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
   end
 
+	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+	MenuPath[MenuPathID] = self.MenuPath
+
+  self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
+
+  if ParentMenu and ParentMenu.Menus then
+    ParentMenu.Menus[self.MenuPath] = self
+  end
 	return self
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:RemoveSubMenus()
+  self:F( self.MenuPath )
+
+  for MenuID, Menu in pairs( self.Menus ) do
+    Menu:Remove()
+  end
+
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:Remove()
+  self:F( self.MenuPath )
+
+  self:RemoveSubMenus()
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+  end
+  
+  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
 end
 
 
@@ -158,6 +202,7 @@ function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuF
   self.MenuClientGroupID = MenuClient:GetClientGroupID()
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -167,19 +212,24 @@ function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuF
 
   self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
 
-  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
-  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
-    MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
-  else
-    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText]
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
   end
-
+  
+	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+  MenuPath[MenuPathID] = self.MenuPath
+ 
 	self.CommandMenuFunction = CommandMenuFunction
 	self.CommandMenuArgument = CommandMenuArgument
+	
+	ParentMenu.Menus[self.MenuPath] = self
+	
 	return self
 end
 
 function MENU_CLIENT_COMMAND:Remove()
+  self:F( self.MenuPath )
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -190,6 +240,8 @@ function MENU_CLIENT_COMMAND:Remove()
   if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
     MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
   end
+  
   missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
   return nil
 end
