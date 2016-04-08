@@ -11727,7 +11727,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 	while SpawnGroup do
 		
 		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpanUwnCleanUpTimeStamps[SpawnGroup:GetName()] then
+			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
 				self.SpawnCleapTimeStamps[SpawnGroup:GetName()] = timer.getTime()
 			else
 				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
