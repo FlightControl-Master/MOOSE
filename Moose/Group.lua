@@ -201,10 +201,11 @@ function GROUP:Destroy()
 	self:F( self.GroupName )
 	
 	for Index, UnitData in pairs( self.DCSGroup:getUnits() ) do
-		self:CreateEventCrash( timer.getTime(), UnitData )
+		self:CreateEventDead( timer.getTime(), UnitData )
 	end
 	
 	self.DCSGroup:destroy()
+	self.DCSGroup = nil
 end
 
 --- Gets the DCS Unit.
@@ -752,15 +753,37 @@ function GROUP:TaskRouteToVec3( Point, Speed )
   PointFrom.x = GroupPoint.x
   PointFrom.y = GroupPoint.z
   PointFrom.alt = GroupPoint.y
+  PointFrom.alt_type = "BARO"
   PointFrom.type = "Turning Point"
+  PointFrom.action = "Turning Point"
+  PointFrom.speed = Speed  
+  PointFrom.speed_locked = true
+  PointFrom.properties = {
+        ["vnav"] = 1,
+        ["scale"] = 0,
+        ["angle"] = 0,
+        ["vangle"] = 0,
+        ["steer"] = 2,
+  }
+  
 
   local PointTo = {}
   PointTo.x = Point.x
   PointTo.y = Point.z
-  PointTo.alt = Point.y
+  PointTo.alt = Point.y  
+  PointTo.alt_type = "BARO"
   PointTo.type = "Turning Point"
+  PointTo.action = "Fly Over Point"
   PointTo.speed = Speed
   PointTo.speed_locked = true
+  PointTo.properties = {
+        ["vnav"] = 1,
+        ["scale"] = 0,
+        ["angle"] = 0,
+        ["vangle"] = 0,
+        ["steer"] = 2,
+  }
+
   
   local Points = { PointFrom, PointTo }
   
@@ -1002,8 +1025,8 @@ function GROUP:OptionROEHoldFirePossible()
 end
 
 --- Holding weapons.
--- @param #GROUP self
--- @return #GROUP self
+-- @param Group#GROUP self
+-- @return Group#GROUP self
 function GROUP:OptionROEHoldFire()
 	self:F( { self.GroupName } )
 

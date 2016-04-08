@@ -936,6 +936,6 @@ function LogClose()
 	end
 end
 
-_Database = DATABASE:New()
+_Database = DATABASE:New() -- Database#DATABASE
 _Database:ScoreOpen()
 

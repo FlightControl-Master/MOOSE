@@ -303,6 +303,10 @@ end
 -- @param #string Class
 -- @param #string Method
 function BASE:TraceClassMethod( Class, Method )
+  if not _TraceClassMethod[Class] then
+    _TraceClassMethod[Class] = {}
+    _TraceClassMethod[Class].Method = {}
+  end
   _TraceClassMethod[Class].Method[Method] = true
 end
 

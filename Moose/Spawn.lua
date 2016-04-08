@@ -418,12 +418,15 @@ function SPAWN:ReSpawn( SpawnIndex )
 		SpawnIndex = 1
 	end
 
-	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
-  local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
-	if SpawnDCSGroup then
-    SpawnGroup:Destroy()
-	end
-	
+-- TODO: This logic makes DCS crash and i don't know why (yet).
+--	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+--	if SpawnGroup then
+--    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+--  	if SpawnDCSGroup then
+--      SpawnGroup:Destroy()
+--  	end
+--  end
+
 	return self:SpawnWithIndex( SpawnIndex )
 end
 
@@ -762,12 +765,15 @@ end
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
-	if SpawnIndex then
+	if not SpawnIndex then
+    SpawnIndex = 1
+	end
+	
+	if self.SpawnGroups and self.SpawnGroups[SpawnIndex] then
 		local SpawnGroup = self.SpawnGroups[SpawnIndex].Group
 		return SpawnGroup
 	else
-		local SpawnGroup = self.SpawnGroups[1].Group
-		return SpawnGroup
+    return nil
 	end
 end
 

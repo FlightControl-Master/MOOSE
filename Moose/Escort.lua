@@ -29,23 +29,31 @@
 -- * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
 -- * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
 -- 
--- **4. Attack nearby targets ...:** This menu item will list all detected targets within an 8km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
+-- **4. Attack targets ...:** This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
 -- 
--- **5. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
+-- **5. Request assistance from ...:** This menu item will list all detected targets within a 15km range, as with the menu item **Attack Targets**.
+-- This menu item allows to request attack support from other escorts supporting the current client group.
+-- eg. the function allows a player to request support from the Ship escort to attack a target identified by the Plane escort with its Tomahawk missiles.
+-- eg. the function allows a player to request support from other Planes escorting to bomb the unit with illumination missiles or bombs, so that the main plane escort can attack the area.
+-- 
+-- **6. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
 -- 
 -- * **"Hold Fire":** The escort group will hold fire.
 -- * **"Return Fire":** The escort group will return fire.
 -- * **"Open Fire":** The escort group will open fire on designated targets.
 -- * **"Weapon Free":** The escort group will engage with any target.
 -- 
--- **6. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
+-- **7. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
 -- 
 -- * **"Fight until death":** The escort group will have no reaction to threats.
 -- * **"Use flares, chaff and jammers":** The escort group will use passive defense using flares and jammers. No evasive manoeuvres are executed.
 -- * **"Evade enemy fire":** The rescort group will evade enemy fire before firing.
 -- * **"Go below radar and evade fire":** The escort group will perform evasive vertical manoeuvres.
 -- 
--- **7. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- **8. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. 
+-- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- 
+-- **9. Abort Current Task:** Cancel the current task and rejoin formation.
 -- 
 -- 1. ESCORT object construction methods.
 -- --------------------------------------
@@ -112,6 +120,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
   self.EscortBriefing = EscortBriefing
+  
+  self:T( EscortGroup:GetClassNameAndID() )
  
   -- Set EscortGroup known at EscortClient.
   if not self.EscortClient._EscortGroups then
@@ -170,7 +180,12 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   end
   
   -- Attack Targets
-  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
+  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
+
+  -- Request assistance from other escorts. 
+  -- This is very useful to let f.e. an escorting ship attack a target detected by an escorting plane...
+  self.EscortMenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, "Request assistance from", self.EscortMenu )
+ 
 
   -- Rules of Engagement
   self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
@@ -205,9 +220,6 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   -- Mission Resume Menu Root
   self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume the escort mission", self.EscortMenu )
 
-  -- Exchange targets with other escorts of the CLIENT. This is very useful to let f.e. an escorting ship attack a target detected by an escorting plane...
-  self.EscortMenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, "Target assistance from other escorts", self.EscortMenu )
-  
   -- Initialize the EscortGroup
   
   EscortGroup:OptionROTVertical()
@@ -284,13 +296,27 @@ function ESCORT._JoinUpAndFollow( MenuParam )
   
   local Distance = MenuParam.ParamDistance
   
+  self:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
+end
+
+--- JoinsUp and Follows a CLIENT.
+-- @param Escort#ESCORT self
+-- @param Group#GROUP EscortGroup
+-- @param Client#CLIENT EscortClient
+-- @param DCSTypes#Distance Distance
+function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
+  self:F( { EscortGroup, EscortClient, Distance } )
+
   if self.FollowScheduler then
     routines.removeFunction( self.FollowScheduler )
   end
   
+  EscortGroup:OptionROEHoldFire()
+  EscortGroup:OptionROTVertical()
+  
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, 1 )
+  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
@@ -631,7 +657,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       local DVu = { x = DV.x / FollowDistance, y = DV.y / FollowDistance, z = DV.z / FollowDistance }
       
       -- Now we can calculate the group destination vector GDV.
-      local GDV = { x = DVu.x * CS * 2 + CVI.x, y = CVI.y, z = DVu.z * CS * 2 + CVI.z }
+      local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
       self:T2( { "CV2:", CV2 } )
       self:T2( { "CVI:", CVI } )
       self:T2( { "GDV:", GDV } )
@@ -642,7 +668,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
       -- the requested Distance).
       local Time = 10
-      local CatchUpSpeed = ( CatchUpDistance - ( CS * 2 ) ) / Time 
+      local CatchUpSpeed = ( CatchUpDistance - ( CS * 8.4 ) ) / Time 
       
       local Speed = CS + CatchUpSpeed
       if Speed < 0 then 
@@ -664,10 +690,9 @@ end
 --- Report Targets Scheduler.
 -- @param #ESCORT self
 function ESCORT:_ReportTargetsScheduler()
-	self:F()
+	self:F( self.EscortGroup:GetName() )
 
-  
-  if self.EscortGroup:IsAlive() then
+  if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
     local EscortGroupName = self.EscortGroup:GetName()
     local EscortTargets = self.EscortGroup:GetDetectedTargets()
     
@@ -720,7 +745,10 @@ function ESCORT:_ReportTargetsScheduler()
             ClientEscortTargets[EscortTargetUnitName].visible = EscortTarget.visible
             ClientEscortTargets[EscortTargetUnitName].type = EscortTarget.type
             ClientEscortTargets[EscortTargetUnitName].distance = EscortTarget.distance
-
+          else
+             if ClientEscortTargets[EscortTargetUnitName] then
+               ClientEscortTargets[EscortTargetUnitName] = nil
+             end
           end
       end
     end
