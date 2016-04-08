@@ -473,6 +473,13 @@ do
 	rep - time between repetitions of this function (OPTIONAL)
 	st - time when repetitions of this function will stop automatically (OPTIONAL)
 	]]
+	
+	--- Schedule a function
+	-- @param #function f
+	-- @param #table parameters
+	-- @param #Time t
+	-- @param #Time rep seconds
+	-- @param #Time st
 	routines.scheduleFunction = function(f, vars, t, rep, st)
 	--verify correct types
 		assert(type(f) == 'function', 'variable 1, expected function, got ' .. type(f))
@@ -2874,6 +2881,10 @@ end
 -- @param #string Class
 -- @param #string Method
 function BASE:TraceClassMethod( Class, Method )
+  if not _TraceClassMethod[Class] then
+    _TraceClassMethod[Class] = {}
+    _TraceClassMethod[Class].Method = {}
+  end
   _TraceClassMethod[Class].Method[Method] = true
 end
 
@@ -3104,6 +3115,9 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
   self.MenuClientGroupID = MenuClient:GetClientGroupID()
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+  
+  self.Menus = {}
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -3113,14 +3127,55 @@ function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
 
   self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
 
-  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
-  	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
-  	MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
-  else
-    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] 
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
   end
 
+	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+	MenuPath[MenuPathID] = self.MenuPath
+
+  self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
+
+  if ParentMenu and ParentMenu.Menus then
+    ParentMenu.Menus[self.MenuPath] = self
+  end
 	return self
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:RemoveSubMenus()
+  self:F( self.MenuPath )
+
+  for MenuID, Menu in pairs( self.Menus ) do
+    Menu:Remove()
+  end
+
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:Remove()
+  self:F( self.MenuPath )
+
+  self:RemoveSubMenus()
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+  end
+  
+  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
 end
 
 
@@ -3154,6 +3209,7 @@ function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuF
   self.MenuClientGroupID = MenuClient:GetClientGroupID()
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -3163,19 +3219,24 @@ function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuF
 
   self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
 
-  if not MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] then
-  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
-    MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText] = self.MenuPath
-  else
-    self.MenuPath = MenuPath[table.concat(MenuParentPath) .. "/" .. MenuText]
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
   end
-
+  
+	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+  MenuPath[MenuPathID] = self.MenuPath
+ 
 	self.CommandMenuFunction = CommandMenuFunction
 	self.CommandMenuArgument = CommandMenuArgument
+	
+	ParentMenu.Menus[self.MenuPath] = self
+	
 	return self
 end
 
 function MENU_CLIENT_COMMAND:Remove()
+  self:F( self.MenuPath )
 
   if not _MENUCLIENTS[self.MenuClientGroupID] then
     _MENUCLIENTS[self.MenuClientGroupID] = {}
@@ -3186,7 +3247,9 @@ function MENU_CLIENT_COMMAND:Remove()
   if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
     MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
   end
+  
   missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
   return nil
 end
 --- A GROUP class abstraction of a DCSGroup class. 
@@ -3392,10 +3455,11 @@ function GROUP:Destroy()
 	self:F( self.GroupName )
 	
 	for Index, UnitData in pairs( self.DCSGroup:getUnits() ) do
-		self:CreateEventCrash( timer.getTime(), UnitData )
+		self:CreateEventDead( timer.getTime(), UnitData )
 	end
 	
 	self.DCSGroup:destroy()
+	self.DCSGroup = nil
 end
 
 --- Gets the DCS Unit.
@@ -3590,7 +3654,7 @@ end
 -- @param #GROUP self
 -- @return Group#GROUP self
 function GROUP:SetTask( DCSTask )
-  self:F()
+  self:F( { DCSTask } )
 
   local Controller = self:_GetController()
   
@@ -3608,7 +3672,7 @@ end
 -- @param #string condition
 -- @param #Time duration 
 -- @param #number lastWayPoint 
--- return #DCSTask
+-- return DCSTask#Task
 function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration, lastWayPoint )
 	self:F( { time, userFlag, userFlagValue, condition, duration, lastWayPoint } )
   
@@ -3626,9 +3690,9 @@ end
 
 --- Return a Controlled Task taking a Task and a TaskCondition
 -- @param #GROUP self
--- @param #DCSTask DCSTask
+-- @param DCSTask#Task DCSTask
 -- @param #DCSStopCondition DCSStopCondition
--- @return #DCSTask
+-- @return DCSTask#Task
 function GROUP:TaskControlled( DCSTask, DCSStopCondition )
 	self:F( { DCSTask, DCSStopCondition } )
 
@@ -3638,12 +3702,53 @@ function GROUP:TaskControlled( DCSTask, DCSStopCondition )
     id = 'ControlledTask', 
     params = { 
       task = DCSTask, 
-      stopCondition = DCSStopCondition, 
+      stopCondition = DCSStopCondition 
     } 
   }
   
   self:T( { DCSTaskControlled } )
   return DCSTaskControlled
+end
+
+--- Return a Combo Task taking an array of Tasks
+-- @param #GROUP self
+-- @param #list<DCSTask#Task> DCSTasks
+-- @return DCSTask#Task
+function GROUP:TaskCombo( DCSTasks )
+  self:F( { DCSTasks } )
+
+  local DCSTaskCombo
+  
+  DCSTaskCombo = { 
+    id = 'ComboTask', 
+    params = { 
+      tasks = DCSTasks
+    } 
+  }
+  
+  self:T( { DCSTaskCombo } )
+  return DCSTaskCombo
+end
+
+--- Return a WrappedAction Task taking a Command 
+-- @param #GROUP self
+-- @param DCSCommand#Command DCSCommand
+-- @return DCSTask#Task
+function GROUP:TaskWrappedAction( DCSCommand )
+  self:F( { DCSCommand } )
+
+  local DCSTaskWrappedAction
+  
+  DCSTaskWrappedAction = { 
+    id = "WrappedAction",
+    enabled = true,
+    params = {
+      action = DCSCommand
+    }
+  }
+
+  self:T( { DCSTaskWrappedAction } )
+  return DCSTaskWrappedAction
 end
 
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
@@ -3757,7 +3862,7 @@ end
 --- Attack the Unit.
 -- @param #GROUP self
 -- @param Unit#UNIT The unit.
--- @return #DCSTask The DCS task structure.
+-- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskAttackUnit( AttackUnit )
 	self:F( { self.GroupName, AttackUnit } )
 
@@ -3786,6 +3891,33 @@ function GROUP:TaskAttackUnit( AttackUnit )
   return DCSTask
 end
 
+--- Fires at a VEC2 point.
+-- @param #GROUP self
+-- @param DCSTypes#Vec2 The point to fire at.
+-- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
+-- @return DCSTask#Task The DCS task structure.
+function GROUP:TaskFireAtPoint( PointVec2, Radius )
+  self:F( { self.GroupName, PointVec2, Radius } )
+
+-- FireAtPoint = { 
+--   id = 'FireAtPoint', 
+--   params = { 
+--     point = Vec2,
+--     radius = Distance, 
+--   } 
+-- }
+   
+  local DCSTask    
+  DCSTask = { id = 'FireAtPoint', 
+              params = { point = PointVec2, 
+                         radius = Radius, 
+                       } 
+            } 
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
 
 
 --- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
@@ -3793,7 +3925,7 @@ end
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
 -- @param #GROUP EmbarkingGroup The group to be embarked.
--- @return #DCSTask The DCS task structure
+-- @return DCSTask#Task The DCS task structure
 function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
 	self:F( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
@@ -3817,11 +3949,11 @@ end
 -- @param #GROUP self
 -- @param #Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
--- @return #DCSTask The DCS task structure.
+-- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
 	self:F( { self.GroupName, Point, Radius } )
 
-  local DCSTask --#DCSTask
+  local DCSTask --DCSTask#Task
 	DCSTask = { id = 'EmbarkToTransport', 
 	            params = { x = Point.x, 
 				  	             y = Point.y, 
@@ -3836,7 +3968,7 @@ end
 --- Return a Misson task from a mission template.
 -- @param #GROUP self
 -- @param #table TaskMission A table containing the mission task.
--- @return #DCSTask 
+-- @return DCSTask#Task 
 function GROUP:TaskMission( TaskMission )
 	self:F( Points )
   
@@ -3850,7 +3982,7 @@ end
 --- Return a Misson task to follow a given route defined by Points.
 -- @param #GROUP self
 -- @param #table Points A table of route points.
--- @return #DCSTask 
+-- @return DCSTask#Task 
 function GROUP:TaskRoute( Points )
   self:F( Points )
   
@@ -3875,15 +4007,37 @@ function GROUP:TaskRouteToVec3( Point, Speed )
   PointFrom.x = GroupPoint.x
   PointFrom.y = GroupPoint.z
   PointFrom.alt = GroupPoint.y
+  PointFrom.alt_type = "BARO"
   PointFrom.type = "Turning Point"
+  PointFrom.action = "Turning Point"
+  PointFrom.speed = Speed  
+  PointFrom.speed_locked = true
+  PointFrom.properties = {
+        ["vnav"] = 1,
+        ["scale"] = 0,
+        ["angle"] = 0,
+        ["vangle"] = 0,
+        ["steer"] = 2,
+  }
+  
 
   local PointTo = {}
   PointTo.x = Point.x
   PointTo.y = Point.z
-  PointTo.alt = Point.y
+  PointTo.alt = Point.y  
+  PointTo.alt_type = "BARO"
   PointTo.type = "Turning Point"
+  PointTo.action = "Fly Over Point"
   PointTo.speed = Speed
   PointTo.speed_locked = true
+  PointTo.properties = {
+        ["vnav"] = 1,
+        ["scale"] = 0,
+        ["angle"] = 0,
+        ["vangle"] = 0,
+        ["steer"] = 2,
+  }
+
   
   local Points = { PointFrom, PointTo }
   
@@ -3913,28 +4067,22 @@ function GROUP:Route( GoPoints )
 	return self
 end
 
+--- Registers a Task to be executed at a waypoint.
+-- @param #GROUP self
+-- @param #number WayPoint The waypoint where to execute the task.
+-- @return #string The task.
 function GROUP:TaskRegisterWayPoint( WayPoint )
 
   local DCSTask
   
-  DCSTask = { id = "WrappedAction",
-              enabled = true,
-              auto = false,
-              number = 1,
-              params = 
-              {
-                  action = 
-                  {
-                      id = "Script",
-                      params = 
-                      {
-                          command = "local MissionGroup = GROUP.FindGroup( ... ) " ..
-                                    "env.info( MissionGroup:GetName() ) " ..
-                                    "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )",
-                      }, -- end of ["params"]
-                  }, -- end of ["action"]
-              }, -- end of ["params"]
-          }
+  DCSTask = self:TaskWrappedAction( 
+    self:CommandDoScript(
+      "local MissionGroup = GROUP:New( ... ) " ..
+      "env.info( MissionGroup:GetName() ) " ..
+      "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )"
+    ) 
+  )
+  
   self:T( DCSTask )
   
   return DCSTask
@@ -3995,6 +4143,26 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 	
 	return self
 end
+
+-- Commands
+
+--- Do Script command
+-- @param #GROUP self
+-- @param #string DoScript
+-- @return #DCSCommand
+function GROUP:CommandDoScript( DoScript )
+
+  local DCSDoScript = {
+    id = "Script",
+    params = {
+      command = DoScript
+    }
+  }
+
+  self:T( DCSDoScript )
+  return DCSDoScript
+end
+
 
 --- Return the mission template of the group.
 -- @param #GROUP self
@@ -4082,7 +4250,14 @@ end
 function GROUP:IsTargetDetected( DCSObject )
 
   local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
-        = self:_GetController():isTargetDetected( DCSObject )
+        = self:_GetController().isTargetDetected( self:_GetController(), DCSObject, 
+                                                  Controller.Detection.VISUAL,
+                                                  Controller.Detection.OPTIC,
+                                                  Controller.Detection.RADAR,
+                                                  Controller.Detection.IRST,
+                                                  Controller.Detection.RWR,
+                                                  Controller.Detection.DLINK
+                                                )
 
   return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
 
@@ -4104,8 +4279,8 @@ function GROUP:OptionROEHoldFirePossible()
 end
 
 --- Holding weapons.
--- @param #GROUP self
--- @return #GROUP self
+-- @param Group#GROUP self
+-- @return Group#GROUP self
 function GROUP:OptionROEHoldFire()
 	self:F( { self.GroupName } )
 
@@ -4460,6 +4635,11 @@ UNIT = {
 -- @field Orange
 -- @field Blue
 	
+
+--- Create a new UNIT from DCSUnit.
+-- @param #UNIT self
+-- @param DCSUnit#Unit DCSUnit
+-- @return Unit#UNIT
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( DCSUnit:getName() )
@@ -4642,6 +4822,23 @@ function UNIT:SmokeBlue()
   trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
 end
 
+-- Is methods
+
+--- Returns if the unit is of an air category.
+-- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
+-- @param #UNIT self
+-- @return #boolean Air category evaluation result.
+function UNIT:IsAir()
+  self:F()
+  
+  local UnitDescriptor = self.DCSUnit:getDesc()
+  self:T( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+  
+  local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
+
+  self:T( IsAirResult )
+  return IsAirResult
+end
 
 --- ZONE Classes
 -- @module Zone
@@ -5648,7 +5845,7 @@ function LogClose()
 	end
 end
 
-_Database = DATABASE:New()
+_Database = DATABASE:New() -- Database#DATABASE
 _Database:ScoreOpen()
 
 --- CARGO Classes
@@ -10732,12 +10929,15 @@ function SPAWN:ReSpawn( SpawnIndex )
 		SpawnIndex = 1
 	end
 
-	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
-  local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
-	if SpawnDCSGroup then
-    SpawnGroup:Destroy()
-	end
-	
+-- TODO: This logic makes DCS crash and i don't know why (yet).
+--	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+--	if SpawnGroup then
+--    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+--  	if SpawnDCSGroup then
+--      SpawnGroup:Destroy()
+--  	end
+--  end
+
 	return self:SpawnWithIndex( SpawnIndex )
 end
 
@@ -11076,12 +11276,15 @@ end
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
-	if SpawnIndex then
+	if not SpawnIndex then
+    SpawnIndex = 1
+	end
+	
+	if self.SpawnGroups and self.SpawnGroups[SpawnIndex] then
 		local SpawnGroup = self.SpawnGroups[SpawnIndex].Group
 		return SpawnGroup
 	else
-		local SpawnGroup = self.SpawnGroups[1].Group
-		return SpawnGroup
+    return nil
 	end
 end
 
@@ -11843,23 +12046,31 @@ end
 -- * **"Scan targets 30 seconds":** Scan 30 seconds for targets.
 -- * **"Scan targets 60 seconds":** Scan 60 seconds for targets.
 -- 
--- **4. Attack nearby targets ...:** This menu item will list all detected targets within an 8km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
+-- **4. Attack targets ...:** This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.
 -- 
--- **5. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
+-- **5. Request assistance from ...:** This menu item will list all detected targets within a 15km range, as with the menu item **Attack Targets**.
+-- This menu item allows to request attack support from other escorts supporting the current client group.
+-- eg. the function allows a player to request support from the Ship escort to attack a target identified by the Plane escort with its Tomahawk missiles.
+-- eg. the function allows a player to request support from other Planes escorting to bomb the unit with illumination missiles or bombs, so that the main plane escort can attack the area.
+-- 
+-- **6. ROE ...:** Defines the Rules of Engagement of the escort group when in flight.
 -- 
 -- * **"Hold Fire":** The escort group will hold fire.
 -- * **"Return Fire":** The escort group will return fire.
 -- * **"Open Fire":** The escort group will open fire on designated targets.
 -- * **"Weapon Free":** The escort group will engage with any target.
 -- 
--- **6. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
+-- **7. Evasion ...:** Will define the evasion techniques that the escort group will perform during flight or combat.
 -- 
 -- * **"Fight until death":** The escort group will have no reaction to threats.
 -- * **"Use flares, chaff and jammers":** The escort group will use passive defense using flares and jammers. No evasive manoeuvres are executed.
 -- * **"Evade enemy fire":** The rescort group will evade enemy fire before firing.
 -- * **"Go below radar and evade fire":** The escort group will perform evasive vertical manoeuvres.
 -- 
--- **7. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- **8. Resume Mission ...:** Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint. 
+-- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
+-- 
+-- **9. Abort Current Task:** Cancel the current task and rejoin formation.
 -- 
 -- 1. ESCORT object construction methods.
 -- --------------------------------------
@@ -11881,6 +12092,7 @@ Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
 
+
 --- ESCORT class
 -- @type ESCORT
 -- @extends Base#BASE
@@ -11891,6 +12103,7 @@ Include.File( "Zone" )
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
+-- @field Menu#MENU_CLIENT EscortMenuResumeMission
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
@@ -11911,7 +12124,7 @@ ESCORT = {
 -- @field #string ParamMessage
 
 --- ESCORT class constructor for an AI group
--- @param self
+-- @param #ESCORT self
 -- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
@@ -11924,7 +12137,23 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
   self.EscortBriefing = EscortBriefing
+  
+  self:T( EscortGroup:GetClassNameAndID() )
+ 
+  -- Set EscortGroup known at EscortClient.
+  if not self.EscortClient._EscortGroups then
+     self.EscortClient._EscortGroups = {}
+  end
 
+  if not self.EscortClient._EscortGroups[EscortGroup:GetName()] then
+     self.EscortClient._EscortGroups[EscortGroup:GetName()] = {}
+     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortGroup = self.EscortGroup
+     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
+     self.EscortClient._EscortGroups[EscortGroup:GetName()].Targets = {}
+     
+  end
+  
+  
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
   
   self.EscortMenuReportNavigation = MENU_CLIENT:New( self.EscortClient, "Navigation", self.EscortMenu )
@@ -11968,9 +12197,12 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   end
   
   -- Attack Targets
-  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack nearby targets", self.EscortMenu )
-  self.EscortMenuAttackTargets =  {} 
-  self.Targets = {}
+  self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
+
+  -- Request assistance from other escorts. 
+  -- This is very useful to let f.e. an escorting ship attack a target detected by an escorting plane...
+  self.EscortMenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, "Request assistance from", self.EscortMenu )
+ 
 
   -- Rules of Engagement
   self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
@@ -12002,14 +12234,9 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
     self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = EscortGroup:OptionROTVertical(), ParamMessage = "Evading on enemy fire with vertical manoeuvres!" } )
   end
   
-  -- Cancel current Task
-  self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume Mission", self.EscortMenu )
-  self.EscortMenuResumeWayPoints = {}
-  local TaskPoints = self:RegisterRoute()
-  for WayPointID, WayPoint in pairs( TaskPoints ) do
-    self.EscortMenuResumeWayPoints[WayPointID] = MENU_CLIENT_COMMAND:New( self.EscortClient, "Resume from waypoint " .. WayPointID, self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
-  end
-  
+  -- Mission Resume Menu Root
+  self.EscortMenuResumeMission = MENU_CLIENT:New( self.EscortClient, "Resume the escort mission", self.EscortMenu )
+
   -- Initialize the EscortGroup
   
   EscortGroup:OptionROTVertical()
@@ -12021,9 +12248,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   
   EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
                                "We're escorting your flight. " .. 
-                               "You can communicate with us through the radio menu. " .. 
-                               "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n" ..
-                               "We are continuing our way, but you can request to join-up your flight under the Navigation menu\n", 
+                               "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
                                60, EscortClient 
                              )
 end
@@ -12088,13 +12313,27 @@ function ESCORT._JoinUpAndFollow( MenuParam )
   
   local Distance = MenuParam.ParamDistance
   
+  self:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
+end
+
+--- JoinsUp and Follows a CLIENT.
+-- @param Escort#ESCORT self
+-- @param Group#GROUP EscortGroup
+-- @param Client#CLIENT EscortClient
+-- @param DCSTypes#Distance Distance
+function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
+  self:F( { EscortGroup, EscortClient, Distance } )
+
   if self.FollowScheduler then
     routines.removeFunction( self.FollowScheduler )
   end
   
+  EscortGroup:OptionROEHoldFire()
+  EscortGroup:OptionROTVertical()
+  
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, 1 )
+  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
@@ -12165,16 +12404,40 @@ function ESCORT._ScanTargets( MenuParam )
   
   local ScanDuration = MenuParam.ParamScanDuration
 
-  routines.removeFunction( self.FollowScheduler )
-  self.FollowScheduler = nil
-
-  EscortGroup:PushTask( 
-    EscortGroup:TaskControlled( 
-      EscortGroup:TaskOrbitCircle( 200, 20 ), 
-      EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil ) 
-      ) 
-  )
+  if self.FollowScheduler then
+    routines.removeFunction( self.FollowScheduler )
+  end
+  
+  self:T( { "FollowScheduler after removefunction: ", self.FollowScheduler } )
+  
+  if EscortGroup:IsHelicopter() then
+    routines.scheduleFunction( EscortGroup.PushTask,
+                               { EscortGroup,
+                                 EscortGroup:TaskControlled( 
+                                   EscortGroup:TaskOrbitCircle( 200, 20 ), 
+                                   EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
+                                 ) 
+                               },
+                               timer.getTime() + 1
+                             )
+  elseif EscortGroup:IsAirPlane() then
+    routines.scheduleFunction( EscortGroup.PushTask,
+                               { EscortGroup,
+                                 EscortGroup:TaskControlled( 
+                                   EscortGroup:TaskOrbitCircle( 1000, 500 ), 
+                                   EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
+                                 ) 
+                               },
+                               timer.getTime() + 1
+                             )
+  end  
+  
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
+
+  if self.FollowScheduler then
+    self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+  end
+
 end
 
 --- @param #MENUPARAM MenuParam
@@ -12183,18 +12446,89 @@ function ESCORT._AttackTarget( MenuParam )
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-  local AttackUnit = MenuParam.ParamUnit 
+  local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
 
-  routines.removeFunction( self.FollowScheduler )
-  self.FollowScheduler = nil
-
-  EscortGroup:OptionROEOpenFire()
-  EscortGroup:OptionROTVertical()
+  if self.FollowScheduler then
+    routines.removeFunction( self.FollowScheduler )
+  end
   
   self:T( AttackUnit )
   
-  EscortGroup:PushTask( EscortGroup:TaskAttackUnit( AttackUnit ) )
+  if EscortGroup:IsAir() then
+    EscortGroup:OptionROEOpenFire()
+    EscortGroup:OptionROTVertical()
+    routines.scheduleFunction( 
+      EscortGroup.PushTask, 
+      { EscortGroup, 
+        EscortGroup:TaskCombo(
+          { EscortGroup:TaskAttackUnit( AttackUnit ),
+            EscortGroup:TaskOrbitCircle( 500, 350 )
+          }
+        )
+      }, timer.getTime() + 10
+    )
+  else
+    routines.scheduleFunction( 
+      EscortGroup.PushTask, 
+      { EscortGroup, 
+        EscortGroup:TaskCombo(
+          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+          }
+        )
+      }, timer.getTime() + 10 
+    )
+  end  
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
+
+
+  if self.FollowScheduler then
+    self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+  end
+
+end
+
+--- @param #MENUPARAM MenuParam
+function ESCORT._AssistTarget( MenuParam )
+
+  local self = MenuParam.ParamSelf
+  local EscortGroup = self.EscortGroup
+  local EscortClient = self.EscortClient
+  local EscortGroupAttack = MenuParam.ParamEscortGroup
+  local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
+
+  if self.FollowScheduler then
+    routines.removeFunction( self.FollowScheduler )
+  end
+  
+  
+  self:T( AttackUnit )
+  
+  if EscortGroupAttack:IsAir() then
+    EscortGroupAttack:OptionROEOpenFire()
+    EscortGroupAttack:OptionROTVertical()
+    routines.scheduleFunction( 
+      EscortGroupAttack.PushTask, 
+      { EscortGroupAttack, 
+        EscortGroupAttack:TaskCombo(
+          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
+            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
+          }
+        )
+      }, timer.getTime() + 10 
+    )
+  else
+    routines.scheduleFunction( 
+      EscortGroupAttack.PushTask, 
+      { EscortGroupAttack, 
+        EscortGroupAttack:TaskCombo(
+          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+          }
+        )
+      }, timer.getTime() + 10 
+    )
+  end  
+  EscortGroupAttack:MessageToClient( "Assisting with the destroying the enemy unit!", 10, EscortClient )
+
 end
 
 --- @param #MENUPARAM MenuParam
@@ -12244,11 +12578,15 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
   
-  EscortGroup:SetTask( EscortGroup:TaskRoute( WayPoints ) )
+  routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
+  
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )
 end
 
+--- Registers the waypoints
+-- @param #ESCORT self
 function ESCORT:RegisterRoute()
+  self:F()
 
   local EscortGroup = self.EscortGroup -- Group#GROUP
   
@@ -12256,9 +12594,11 @@ function ESCORT:RegisterRoute()
   self:T( TaskPoints )
 
   for TaskPointID, TaskPoint in pairs( TaskPoints ) do
-    self:T( TaskPointID )
-    TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
-    self:T( TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks] )
+    self:T( { "TaskPoint:", TaskPointID, #TaskPoint.task.params.tasks+1, TaskPoint } )
+    if TaskPointID > 1 then
+      TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+    end
+    self:T( TaskPoint )
   end
   
   self:T( TaskPoints )
@@ -12334,7 +12674,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       local DVu = { x = DV.x / FollowDistance, y = DV.y / FollowDistance, z = DV.z / FollowDistance }
       
       -- Now we can calculate the group destination vector GDV.
-      local GDV = { x = DVu.x * CS * 2 + CVI.x, y = CVI.y, z = DVu.z * CS * 2 + CVI.z }
+      local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
       self:T2( { "CV2:", CV2 } )
       self:T2( { "CVI:", CVI } )
       self:T2( { "GDV:", GDV } )
@@ -12344,8 +12684,8 @@ function ESCORT:_FollowScheduler( FollowDistance )
       
       -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome 
       -- the requested Distance).
-      local Time = 30
-      local CatchUpSpeed = ( CatchUpDistance - ( CS * 2 ) ) / Time 
+      local Time = 10
+      local CatchUpSpeed = ( CatchUpDistance - ( CS * 8.4 ) ) / Time 
       
       local Speed = CS + CatchUpSpeed
       if Speed < 0 then 
@@ -12367,12 +12707,13 @@ end
 --- Report Targets Scheduler.
 -- @param #ESCORT self
 function ESCORT:_ReportTargetsScheduler()
-	self:F()
+	self:F( self.EscortGroup:GetName() )
 
-  self.Targets = {}
-  
-  if self.EscortGroup:IsAlive() then
+  if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
+    local EscortGroupName = self.EscortGroup:GetName()
     local EscortTargets = self.EscortGroup:GetDetectedTargets()
+    
+    local ClientEscortTargets = self.EscortClient._EscortGroups[EscortGroupName].Targets
     
     local EscortTargetMessages = ""
     for EscortTargetID, EscortTarget in pairs( EscortTargets ) do
@@ -12380,99 +12721,155 @@ function ESCORT:_ReportTargetsScheduler()
       self:T( EscortObject )
       if EscortObject and EscortObject:isExist() and EscortObject.id_ < 50000000 then
         
-          local EscortTargetMessage = ""
-        
           local EscortTargetUnit = UNIT:New( EscortObject )
-        
-          local EscortTargetCategoryName = EscortTargetUnit:GetCategoryName()
-          local EscortTargetCategoryType = EscortTargetUnit:GetTypeName()
+          local EscortTargetUnitName = EscortTargetUnit:GetName()
         
         
-  --        local EscortTargetIsDetected, 
-  --              EscortTargetIsVisible, 
-  --              EscortTargetLastTime, 
-  --              EscortTargetKnowType, 
-  --              EscortTargetKnowDistance, 
-  --              EscortTargetLastPos, 
-  --              EscortTargetLastVelocity
-  --              = self.EscortGroup:IsTargetDetected( EscortObject )
-  --      
-  --        self:T( { EscortTargetIsDetected, 
-  --              EscortTargetIsVisible, 
-  --              EscortTargetLastTime, 
-  --              EscortTargetKnowType, 
-  --              EscortTargetKnowDistance, 
-  --              EscortTargetLastPos, 
-  --              EscortTargetLastVelocity } )
         
-          if EscortTarget.distance then
-            local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec3()
-            local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
-            local Distance = routines.utils.get3DDist( EscortTargetUnitPositionVec3, EscortPositionVec3 ) / 1000
-            self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget.visible } )
+--          local EscortTargetIsDetected, 
+--                EscortTargetIsVisible, 
+--                EscortTargetLastTime, 
+--                EscortTargetKnowType, 
+--                EscortTargetKnowDistance, 
+--                EscortTargetLastPos, 
+--                EscortTargetLastVelocity
+--                = self.EscortGroup:IsTargetDetected( EscortObject )
+--        
+--          self:T( { EscortTargetIsDetected, 
+--                EscortTargetIsVisible, 
+--                EscortTargetLastTime, 
+--                EscortTargetKnowType, 
+--                EscortTargetKnowDistance, 
+--                EscortTargetLastPos, 
+--                EscortTargetLastVelocity } )
+        
 
-            if Distance <= 8 then
+          local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec3()
+          local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+          local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 + 
+                             ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 + 
+                             ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2 
+                           ) ^ 0.5 / 1000
 
-              if EscortTarget.type then
-                EscortTargetMessage = EscortTargetMessage .. " - " .. EscortTargetCategoryName .. " (" .. EscortTargetCategoryType .. ") at "
-              else
-                EscortTargetMessage = EscortTargetMessage .. " - Unknown target at "
-              end
+          self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget } )
 
-              EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " km"
+          if Distance <= 15 then
 
-              if EscortTarget.visible then
-                EscortTargetMessage = EscortTargetMessage .. ", visual"
-              end
+            if not ClientEscortTargets[EscortTargetUnitName] then
+              ClientEscortTargets[EscortTargetUnitName] = {}
+            end 
+            ClientEscortTargets[EscortTargetUnitName].AttackUnit = EscortTargetUnit        
+            ClientEscortTargets[EscortTargetUnitName].visible = EscortTarget.visible
+            ClientEscortTargets[EscortTargetUnitName].type = EscortTarget.type
+            ClientEscortTargets[EscortTargetUnitName].distance = EscortTarget.distance
+          else
+             if ClientEscortTargets[EscortTargetUnitName] then
+               ClientEscortTargets[EscortTargetUnitName] = nil
+             end
+          end
+      end
+    end
+    
+    self:T( { "Sorting Targets Table:", ClientEscortTargets } )
+    table.sort( ClientEscortTargets, function( a, b ) return a.Distance < b.Distance end )
+    self:T( { "Sorted Targets Table:", ClientEscortTargets } )
 
-              local TargetIndex = Distance*1000
-              self.Targets[TargetIndex] = {}           
-              self.Targets[TargetIndex].AttackMessage = EscortTargetMessage
-              self.Targets[TargetIndex].AttackUnit = EscortTargetUnit        
+    -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
+    self.EscortMenuAttackNearbyTargets:RemoveSubMenus()
+    self.EscortMenuTargetAssistance:RemoveSubMenus()
+    
+    --for MenuIndex = 1, #self.EscortMenuAttackTargets do
+    --  self:T( { "Remove Menu:", self.EscortMenuAttackTargets[MenuIndex] } )
+    --  self.EscortMenuAttackTargets[MenuIndex] = self.EscortMenuAttackTargets[MenuIndex]:Remove()
+    --end
+
+  
+    if ClientEscortTargets then
+      for ClientEscortTargetUnitName, ClientEscortTargetData in pairs( ClientEscortTargets ) do
+  
+        for ClientEscortGroupName, EscortGroupData in pairs( self.EscortClient._EscortGroups ) do
+  
+          if ClientEscortTargetData and ClientEscortTargetData.AttackUnit:IsAlive() then
+  
+            local EscortTargetMessage = ""
+            local EscortTargetCategoryName = ClientEscortTargetData.AttackUnit:GetCategoryName()
+            local EscortTargetCategoryType = ClientEscortTargetData.AttackUnit:GetTypeName()
+            if ClientEscortTargetData.type then
+              EscortTargetMessage = EscortTargetMessage .. EscortTargetCategoryName .. " (" .. EscortTargetCategoryType .. ") at "
+            else
+              EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
             end
-          end
+              
+            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPositionVec3()
+            local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+            local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 + 
+                               ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 + 
+                               ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2 
+                             ) ^ 0.5 / 1000
   
-          if EscortTargetMessage ~= "" then
-            EscortTargetMessages = EscortTargetMessages .. EscortTargetMessage .. "\n"
+            self:T( { self.EscortGroup:GetName(), ClientEscortTargetData.AttackUnit:GetName(), Distance, ClientEscortTargetData.AttackUnit } )
+            if ClientEscortTargetData.visible == false then
+              EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " estimated km"
+            else
+              EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " km"
+            end
+  
+            if ClientEscortTargetData.visible then
+              EscortTargetMessage = EscortTargetMessage .. ", visual"
+            end
+            
+            if ClientEscortGroupName == EscortGroupName then
+  
+              MENU_CLIENT_COMMAND:New( self.EscortClient,
+                                       EscortTargetMessage,
+                                       self.EscortMenuAttackNearbyTargets,
+                                       ESCORT._AttackTarget,
+                                       { ParamSelf = self,
+                                         ParamUnit = ClientEscortTargetData.AttackUnit 
+                                       }
+                                     )
+              EscortTargetMessages = EscortTargetMessages .. "\n - " .. EscortTargetMessage 
+            else
+              local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
+              MENU_CLIENT_COMMAND:New( self.EscortClient,
+                                       EscortTargetMessage,
+                                       MenuTargetAssistance,
+                                       ESCORT._AssistTarget,
+                                       { ParamSelf = self,
+                                         ParamEscortGroup = EscortGroupData.EscortGroup,
+                                         ParamUnit = ClientEscortTargetData.AttackUnit 
+                                       }
+                                     )
+            end
+          else
+            ClientEscortTargetData = nil
           end
+        end
       end
-    end
-    
-    if EscortTargetMessages ~= "" and self.ReportTargets == true then
-      self.EscortGroup:MessageToClient( EscortTargetMessages:gsub("\n$",""), 20, self.EscortClient )
-    else
-      self.EscortGroup:MessageToClient( "No targets detected!", 20, self.EscortClient )
+  
+      if EscortTargetMessages ~= "" and self.ReportTargets == true then
+        self.EscortGroup:MessageToClient( "Detected targets within 15 km range:" .. EscortTargetMessages:gsub("\n$",""), 20, self.EscortClient )
+      else
+        self.EscortGroup:MessageToClient( "No targets detected!", 20, self.EscortClient )
+      end
     end
 
-    self:T()
-  
-    self:T( { "Sorting Targets Table:", self.Targets } )
-    table.sort( self.Targets )
-    self:T( { "Sorted Targets Table:", self.Targets } )
+    self.EscortMenuResumeMission:RemoveSubMenus()
     
-    for MenuIndex = 1, #self.EscortMenuAttackTargets do
-      self:T( { "Remove Menu:", self.EscortMenuAttackTargets[MenuIndex] } )
-      self.EscortMenuAttackTargets[MenuIndex] = self.EscortMenuAttackTargets[MenuIndex]:Remove()
-    end
-    
-    local MenuIndex = 1
-    for TargetID, TargetData in pairs( self.Targets ) do
-      self:T( { "Adding menu:", TargetID, "for Unit", self.Targets[TargetID].AttackUnit } )
-      if MenuIndex <= 10 then
-        self.EscortMenuAttackTargets[MenuIndex] = 
-          MENU_CLIENT_COMMAND:New( self.EscortClient,
-                                  self.Targets[TargetID].AttackMessage,
-                                  self.EscortMenuAttackNearbyTargets,
-                                  ESCORT._AttackTarget,
-                                  { ParamSelf = self,
-                                    ParamUnit = self.Targets[TargetID].AttackUnit 
-                                  }
-                                )
-          self:T( { "New Menu:", self.EscortMenuAttackTargets[TargetID] } )
-          MenuIndex = MenuIndex + 1
-      else
-        break
-      end
+--    if self.EscortMenuResumeWayPoints then
+--      for MenuIndex = 1, #self.EscortMenuResumeWayPoints do
+--        self:T( { "Remove Menu:", self.EscortMenuResumeWayPoints[MenuIndex] } )
+--        self.EscortMenuResumeWayPoints[MenuIndex] = self.EscortMenuResumeWayPoints[MenuIndex]:Remove()
+--      end
+--    end
+
+    local TaskPoints = self:RegisterRoute()
+    for WayPointID, WayPoint in pairs( TaskPoints ) do
+      local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+      local Distance = ( ( WayPoint.x - EscortPositionVec3.x )^2 + 
+                         ( WayPoint.y - EscortPositionVec3.z )^2
+                       ) ^ 0.5 / 1000
+      MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
     end
 
   else
