@@ -12329,7 +12329,7 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   end
   
   EscortGroup:OptionROEHoldFire()
-  EscortGroup:OptionROTVertical()
+  EscortGroup:OptionROTPassiveDefense()
   
   self.CT1 = 0
   self.GT1 = 0
