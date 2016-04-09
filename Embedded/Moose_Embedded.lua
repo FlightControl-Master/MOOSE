@@ -3455,7 +3455,7 @@ function GROUP:Destroy()
 	self:F( self.GroupName )
 	
 	for Index, UnitData in pairs( self.DCSGroup:getUnits() ) do
-		self:CreateEventDead( timer.getTime(), UnitData )
+		self:CreateEventCrash( timer.getTime(), UnitData )
 	end
 	
 	self.DCSGroup:destroy()
