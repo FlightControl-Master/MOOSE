@@ -3274,6 +3274,7 @@ GROUP = {
 	GroupID = 0,
 	Controller = nil,
 	DCSGroup = nil,
+	WayPointFunctions = {},
 	}
 	
 --- A DCSGroup
@@ -3344,6 +3345,85 @@ function GROUP:NewFromDCSUnit( DCSUnit )
 
   return self
 end
+
+--- Retrieve the group mission and allow to place function hooks within the mission waypoint plan.
+-- Use the method @{Group#GROUP:WayPointFunction} to define the hook functions for specific waypoints.
+-- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
+-- Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!
+-- @param #GROUP self
+-- @param #number WayPoint
+-- @return #GROUP
+function GROUP:WayPointInitialize()
+
+  self.WayPoints = self:GetTaskRoute()
+  
+  return self
+end
+
+
+--- Registers a waypoint function that will be executed when the group moves over the WayPoint.
+-- @param #GROUP self
+-- @param #number WayPoint The waypoint number. Note that the start waypoint on the route is WayPoint 1!
+-- @param #number WayPointIndex When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.
+-- @param #function WayPointFunction The waypoint function to be called when the group moves over the waypoint. The waypoint function takes variable parameters.
+-- @return #GROUP
+function GROUP:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
+  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
+  
+  table.insert( self.WayPoints[WayPoint].task.params.tasks, WayPointIndex )
+  self.WayPoints[WayPoint].task.params.tasks[WayPointIndex] = self:TaskFunction( WayPoint, WayPointIndex, WayPointFunction, arg )
+  return self
+end
+
+
+function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionArguments )
+
+  local DCSTask
+  
+  local DCSScript = {}
+  DCSScript[#DCSScript+1] = "local MissionGroup = GROUP.FindGroup( ... ) "
+  DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+  
+  DCSTask = self:TaskWrappedAction( 
+    self:CommandDoScript(
+      table.concat( DCSScript )
+    ), WayPointIndex
+  )
+  
+  self:T( DCSTask )
+  
+  return DCSTask
+
+end
+
+
+
+--- Executes the WayPoint plan.
+-- The function gets a WayPoint parameter, that you can use to restart the mission at a specific WayPoint.
+-- Note that when the WayPoint parameter is used, the new start mission waypoint of the group will be 1!
+-- @param #GROUP self
+-- @param #number WayPoint The WayPoint from where to execute the mission.
+-- @param #WaitTime The amount seconds to wait before initiating the mission.
+-- @return #GROUP
+function GROUP:WayPointExecute( WayPoint, WaitTime )
+
+  if not WayPoint then
+    WayPoint = 1
+  end
+  
+  -- When starting the mission from a certain point, the TaskPoints need to be deleted before the given WayPoint.
+  for TaskPointID = 1, WayPoint - 1 do
+    table.remove( self.WayPoints, 1 )
+  end
+
+  self:T( self.WayPoints )
+  
+  self:SetTask( self:TaskRoute( self.WayPoints ), WaitTime )
+
+  return self
+end
+
+
 
 --- Gets the DCSGroup of the GROUP.
 -- @param #GROUP self
@@ -3640,12 +3720,20 @@ end
 --- Pushing Task on the queue from the group.
 -- @param #GROUP self
 -- @return Group#GROUP self
-function GROUP:PushTask( DCSTask )
+function GROUP:PushTask( DCSTask, WaitTime )
 	self:F()
 
   local Controller = self:_GetController()
   
-  Controller:pushTask( DCSTask )
+  -- When a group SPAWNs, it takes about a second to get the group in the simulator. Setting tasks to unspawned groups provides unexpected results.
+  -- Therefore we schedule the functions to set the mission and options for the Group.
+  -- Controller:pushTask( DCSTask )
+
+  if not WaitTime then
+    Controller:pushTask( DCSTask )
+  else
+    routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+  end
 
   return self
 end
@@ -3653,13 +3741,20 @@ end
 --- Clearing the Task Queue and Setting the Task on the queue from the group.
 -- @param #GROUP self
 -- @return Group#GROUP self
-function GROUP:SetTask( DCSTask )
+function GROUP:SetTask( DCSTask, WaitTime )
   self:F( { DCSTask } )
 
   local Controller = self:_GetController()
   
-  Controller:setTask( DCSTask )
+  -- When a group SPAWNs, it takes about a second to get the group in the simulator. Setting tasks to unspawned groups provides unexpected results.
+  -- Therefore we schedule the functions to set the mission and options for the Group.
+  -- Controller.setTask( Controller, DCSTask )
 
+  if not WaitTime then
+    WaitTime = 1
+  end
+  routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+  
   return self
 end
 
@@ -3734,7 +3829,7 @@ end
 -- @param #GROUP self
 -- @param DCSCommand#Command DCSCommand
 -- @return DCSTask#Task
-function GROUP:TaskWrappedAction( DCSCommand )
+function GROUP:TaskWrappedAction( DCSCommand, Index )
   self:F( { DCSCommand } )
 
   local DCSTaskWrappedAction
@@ -3742,9 +3837,11 @@ function GROUP:TaskWrappedAction( DCSCommand )
   DCSTaskWrappedAction = { 
     id = "WrappedAction",
     enabled = true,
+    number = Index,
+    auto = false,
     params = {
-      action = DCSCommand
-    }
+      action = DCSCommand,
+    },
   }
 
   self:T( { DCSTaskWrappedAction } )
@@ -3847,10 +3944,15 @@ end
 -- @param Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
 -- @return #GROUP self
-function GROUP:TaskLandAtZone( Zone, Duration )
-  self:F( { self.GroupName, Zone, Duration } )
+function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
+  self:F( { self.GroupName, Zone, Duration, RandomPoint } )
 
-  local Point = Zone:GetPointVec2()
+  local Point
+  if RandomPoint then
+    Point = Zone:GetRandomPointVec2()
+  else
+    Point = Zone:GetPointVec2()
+  end
   
   local DCSTask = self:TaskLandAtVec2( Point, Duration )
 
@@ -4067,26 +4169,7 @@ function GROUP:Route( GoPoints )
 	return self
 end
 
---- Registers a Task to be executed at a waypoint.
--- @param #GROUP self
--- @param #number WayPoint The waypoint where to execute the task.
--- @return #string The task.
-function GROUP:TaskRegisterWayPoint( WayPoint )
 
-  local DCSTask
-  
-  DCSTask = self:TaskWrappedAction( 
-    self:CommandDoScript(
-      "local MissionGroup = GROUP:New( ... ) " ..
-      "env.info( MissionGroup:GetName() ) " ..
-      "MissionGroup:RegisterWayPoint ( " .. WayPoint .. " )"
-    ) 
-  )
-  
-  self:T( DCSTask )
-  
-  return DCSTask
-end
 
 --- Route the group to a given zone.
 -- The group final destination point can be randomized.
@@ -4114,7 +4197,7 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 	local ZonePoint 
 	
 	if Randomize then
-		ZonePoint = Zone:GetRandomPoint()
+		ZonePoint = Zone:GetRandomPointVec2()
 	else
 		ZonePoint = Zone:GetPointVec2()
 	end
@@ -4155,8 +4238,8 @@ function GROUP:CommandDoScript( DoScript )
   local DCSDoScript = {
     id = "Script",
     params = {
-      command = DoScript
-    }
+      command = DoScript,
+    },
   }
 
   self:T( DCSDoScript )
@@ -4514,7 +4597,7 @@ end
 function GROUP:Message( Message, Duration )
   self:F( { Message, Duration } )
   
-  return MESSAGE:New( Message, self:GetCallsign() .. "(" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
+  return MESSAGE:New( Message, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
 end
 
 --- Send a message to all coalitions.
@@ -4560,12 +4643,6 @@ function GROUP:MessageToClient( Message, Duration, Client )
   self:F( { Message, Duration } )
   
   self:Message( Message, Duration ):ToClient( Client )
-end
-
-function GROUP:RegisterWayPoint( WayPoint )
-
-  self:Message( "Moving over wayPoint " .. WayPoint, 20 ):ToAll()
-  self.WayPoint = WayPoint
 end
 
 
@@ -4882,7 +4959,7 @@ function ZONE:GetPointVec2()
 	return Point	
 end
 
-function ZONE:GetRandomPoint()
+function ZONE:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
@@ -10955,6 +11032,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		else
 			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			
+			-- If there is a SpawnFunction hook defined, call it.
+			if self.SpawnFunctionHook then
+			  self.SpawnFunctionHook( self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) )
+			end
+			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
 			--if self.SpawnRepeat then
 			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
@@ -10993,7 +11076,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self.AliveFactor = 1									--
 	self.SpawnLowTimer = 0
 	self.SpawnHighTimer = 0
-	
+		
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
 		self.SpawnLowTimer = SpawnTime - SpawnTime / 2 * SpawnTimeVariation
 		self.SpawnHighTimer = SpawnTime + SpawnTime / 2 * SpawnTimeVariation
@@ -11003,6 +11086,25 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
 	
 	return self
+end
+
+--- Allows to place a CallFunction hook when a new group spawns.
+-- The provided function will be called when a new group is spawned, including its given parameters.
+-- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
+-- @param #SPAWN self
+-- @param #function SpawnFunctionHook The function to be called when a group spawns.
+-- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
+-- @return #SPAWN
+function SPAWN:SpawnFunction( SpawnFunctionHook, ... )
+  self:F( SpawnFunction )
+
+  self.SpawnFunctionHook = SpawnFunctionHook
+  self.SpawnFunctionArguments = {}
+  if arg then
+    self.SpawnFunctionArguments = arg
+  end  
+
+  return self
 end
 
 
@@ -11148,7 +11250,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
         
-        local SpawnPos = Zone:GetRandomPoint()
+        local SpawnPos = Zone:GetRandomPointVec2()
         local Point = {}
         Point.type = "Turning Point"
         Point.x = SpawnPos.x
@@ -12113,7 +12215,8 @@ ESCORT = {
   FollowScheduler = nil,
   ReportTargets = true,
   OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
-  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION
+  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION,
+  TaskPoints = {}
 }
 
 --- MENUPARAM type
@@ -12239,10 +12342,11 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
 
   -- Initialize the EscortGroup
   
-  EscortGroup:OptionROTVertical()
-  EscortGroup:OptionROEOpenFire()
+  self.EscortGroup:WayPointInitialize(1)
   
-  EscortGroup:SetTask( EscortGroup:TaskRoute( TaskPoints ) )
+  self.EscortGroup:OptionROTVertical()
+  self.EscortGroup:OptionROEOpenFire()
+  
   
   self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
   
@@ -12585,20 +12689,19 @@ end
 
 --- Registers the waypoints
 -- @param #ESCORT self
+-- @return #table
 function ESCORT:RegisterRoute()
   self:F()
 
   local EscortGroup = self.EscortGroup -- Group#GROUP
   
   local TaskPoints = EscortGroup:GetTaskRoute()
-  self:T( TaskPoints )
 
-  for TaskPointID, TaskPoint in pairs( TaskPoints ) do
-    self:T( { "TaskPoint:", TaskPointID, #TaskPoint.task.params.tasks+1, TaskPoint } )
-    if TaskPointID > 1 then
-      TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+  for TaskPointID = 1, #TaskPoints do
+    if TaskPointID > 0 then
+      --TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+      TaskPoints[TaskPointID].task = EscortGroup:TaskRegisterWayPoint( TaskPointID )
     end
-    self:T( TaskPoint )
   end
   
   self:T( TaskPoints )

@@ -23,6 +23,7 @@
 					<li>Client</li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
@@ -229,9 +230,15 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsAlive">CLIENT:IsAlive(Returns)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsAlive">CLIENT:IsAlive()</a></td>
 		<td class="summary">
 <p>Checks if client is alive and returns true or false.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsMultiSeated">CLIENT:IsMultiSeated()</a></td>
+		<td class="summary">
+<p>Checks if the CLIENT is a multi-seated UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -764,22 +771,31 @@ Function.</p>
 <dt>
 
 <a id="#(CLIENT).IsAlive" >
-<strong>CLIENT:IsAlive(Returns)</strong>
+<strong>CLIENT:IsAlive()</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Checks if client is alive and returns true or false.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#boolean Returns </em></code>: 
-true if client is alive.</p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
 
-				</li>
-		</ul>
+<a id="#(CLIENT).IsMultiSeated" >
+<strong>CLIENT:IsMultiSeated()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checks if the CLIENT is a multi-seated UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if multi-seated.</p>
+
 </dd>
 </dl>
 		<dl class="function">

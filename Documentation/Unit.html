@@ -23,6 +23,7 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
@@ -87,6 +88,42 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Flare">UNIT:Flare(FlareColor)</a></td>
+		<td class="summary">
+<p>Signal a flare at the position of the UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareColor">UNIT.FlareColor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareGreen">UNIT:FlareGreen()</a></td>
+		<td class="summary">
+<p>Signal a green flare at the position of the UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareRed">UNIT:FlareRed()</a></td>
+		<td class="summary">
+<p>Signal a red flare at the position of the UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareWhite">UNIT:FlareWhite()</a></td>
+		<td class="summary">
+<p>Signal a white flare at the position of the UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareYellow">UNIT:FlareYellow()</a></td>
+		<td class="summary">
+<p>Signal a yellow flare at the position of the UNIT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCallSign">UNIT:GetCallSign()</a></td>
 		<td class="summary">
 
@@ -141,6 +178,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsAir">UNIT:IsAir()</a></td>
+		<td class="summary">
+<p>Returns if the unit is of an air category.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsAlive">UNIT:IsAlive()</a></td>
 		<td class="summary">
 
@@ -149,11 +192,115 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).New">UNIT:New(DCSUnit)</a></td>
 		<td class="summary">
-
+<p>Create a new UNIT from DCSUnit.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).OtherUnitInRadius">UNIT:OtherUnitInRadius(AwaitUnit, Radius)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Smoke">UNIT:Smoke(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smoke the UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeBlue">UNIT:SmokeBlue()</a></td>
+		<td class="summary">
+<p>Smoke the UNIT Blue.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeColor">UNIT.SmokeColor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeGreen">UNIT:SmokeGreen()</a></td>
+		<td class="summary">
+<p>Smoke the UNIT Green.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeOrange">UNIT:SmokeOrange()</a></td>
+		<td class="summary">
+<p>Smoke the UNIT Orange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeRed">UNIT:SmokeRed()</a></td>
+		<td class="summary">
+<p>Smoke the UNIT Red.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeWhite">UNIT:SmokeWhite()</a></td>
+		<td class="summary">
+<p>Smoke the UNIT White.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(UNIT.FlareColor)">Type <code>UNIT.FlareColor</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.FlareColor).Green">UNIT.FlareColor.Green</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.FlareColor).Red">UNIT.FlareColor.Red</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.FlareColor).White">UNIT.FlareColor.White</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.FlareColor).Yellow">UNIT.FlareColor.Yellow</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(UNIT.SmokeColor)">Type <code>UNIT.SmokeColor</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.SmokeColor).Blue">UNIT.SmokeColor.Blue</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.SmokeColor).Green">UNIT.SmokeColor.Green</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.SmokeColor).Orange">UNIT.SmokeColor.Orange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.SmokeColor).Red">UNIT.SmokeColor.Red</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT.SmokeColor).White">UNIT.SmokeColor.White</a></td>
 		<td class="summary">
 
 </td>
@@ -207,6 +354,93 @@
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).Flare" >
+<strong>UNIT:Flare(FlareColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a flare at the position of the UNIT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FlareColor </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(UNIT.FlareColor)">#UNIT.FlareColor</a></em>
+<a id="#(UNIT).FlareColor" >
+<strong>UNIT.FlareColor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).FlareGreen" >
+<strong>UNIT:FlareGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a green flare at the position of the UNIT.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).FlareRed" >
+<strong>UNIT:FlareRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a red flare at the position of the UNIT.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).FlareWhite" >
+<strong>UNIT:FlareWhite()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a white flare at the position of the UNIT.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).FlareYellow" >
+<strong>UNIT:FlareYellow()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a yellow flare at the position of the UNIT.</p>
 
 </dd>
 </dl>
@@ -330,6 +564,27 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).IsAir" >
+<strong>UNIT:IsAir()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is of an air category.</p>
+
+	
+<p>If the unit is a helicopter or a plane, then this method will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Air category evaluation result.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).IsAlive" >
 <strong>UNIT:IsAlive()</strong>
 </a>
@@ -349,16 +604,21 @@
 </dt>
 <dd>
 	
-
+<p>Create a new UNIT from DCSUnit.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> DCSUnit </em></code>: </p>
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -385,6 +645,235 @@
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).Smoke" >
+<strong>UNIT:Smoke(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SmokeColor </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).SmokeBlue" >
+<strong>UNIT:SmokeBlue()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT Blue.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(UNIT.SmokeColor)">#UNIT.SmokeColor</a></em>
+<a id="#(UNIT).SmokeColor" >
+<strong>UNIT.SmokeColor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).SmokeGreen" >
+<strong>UNIT:SmokeGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT Green.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).SmokeOrange" >
+<strong>UNIT:SmokeOrange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT Orange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).SmokeRed" >
+<strong>UNIT:SmokeRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT Red.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).SmokeWhite" >
+<strong>UNIT:SmokeWhite()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the UNIT White.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(UNIT.FlareColor)" >Type <code>UNIT.FlareColor</code></a></h2>
+				
+<p>FlareColor</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.FlareColor).Green" >
+<strong>UNIT.FlareColor.Green</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.FlareColor).Red" >
+<strong>UNIT.FlareColor.Red</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.FlareColor).White" >
+<strong>UNIT.FlareColor.White</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.FlareColor).Yellow" >
+<strong>UNIT.FlareColor.Yellow</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(UNIT.SmokeColor)" >Type <code>UNIT.SmokeColor</code></a></h2>
+				
+<p>SmokeColor</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.SmokeColor).Blue" >
+<strong>UNIT.SmokeColor.Blue</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.SmokeColor).Green" >
+<strong>UNIT.SmokeColor.Green</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.SmokeColor).Orange" >
+<strong>UNIT.SmokeColor.Orange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.SmokeColor).Red" >
+<strong>UNIT.SmokeColor.Red</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT.SmokeColor).White" >
+<strong>UNIT.SmokeColor.White</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 

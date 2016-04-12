@@ -96,7 +96,8 @@ ESCORT = {
   FollowScheduler = nil,
   ReportTargets = true,
   OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
-  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION
+  OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION,
+  TaskPoints = {}
 }
 
 --- MENUPARAM type
@@ -222,10 +223,11 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
 
   -- Initialize the EscortGroup
   
-  EscortGroup:OptionROTVertical()
-  EscortGroup:OptionROEOpenFire()
+  self.EscortGroup:WayPointInitialize(1)
   
-  EscortGroup:SetTask( EscortGroup:TaskRoute( TaskPoints ) )
+  self.EscortGroup:OptionROTVertical()
+  self.EscortGroup:OptionROEOpenFire()
+  
   
   self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
   
@@ -568,20 +570,19 @@ end
 
 --- Registers the waypoints
 -- @param #ESCORT self
+-- @return #table
 function ESCORT:RegisterRoute()
   self:F()
 
   local EscortGroup = self.EscortGroup -- Group#GROUP
   
   local TaskPoints = EscortGroup:GetTaskRoute()
-  self:T( TaskPoints )
 
-  for TaskPointID, TaskPoint in pairs( TaskPoints ) do
-    self:T( { "TaskPoint:", TaskPointID, #TaskPoint.task.params.tasks+1, TaskPoint } )
-    if TaskPointID > 1 then
-      TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+  for TaskPointID = 1, #TaskPoints do
+    if TaskPointID > 0 then
+      --TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
+      TaskPoints[TaskPointID].task = EscortGroup:TaskRegisterWayPoint( TaskPointID )
     end
-    self:T( TaskPoint )
   end
   
   self:T( TaskPoints )
