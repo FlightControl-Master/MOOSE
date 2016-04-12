@@ -444,6 +444,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		else
 			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			
+			-- If there is a SpawnFunction hook defined, call it.
+			if self.SpawnFunctionHook then
+			  self.SpawnFunctionHook( self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) )
+			end
+			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
 			--if self.SpawnRepeat then
 			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
@@ -482,7 +488,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self.AliveFactor = 1									--
 	self.SpawnLowTimer = 0
 	self.SpawnHighTimer = 0
-	
+		
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
 		self.SpawnLowTimer = SpawnTime - SpawnTime / 2 * SpawnTimeVariation
 		self.SpawnHighTimer = SpawnTime + SpawnTime / 2 * SpawnTimeVariation
@@ -492,6 +498,25 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
 	
 	return self
+end
+
+--- Allows to place a CallFunction hook when a new group spawns.
+-- The provided function will be called when a new group is spawned, including its given parameters.
+-- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
+-- @param #SPAWN self
+-- @param #function SpawnFunctionHook The function to be called when a group spawns.
+-- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
+-- @return #SPAWN
+function SPAWN:SpawnFunction( SpawnFunctionHook, ... )
+  self:F( SpawnFunction )
+
+  self.SpawnFunctionHook = SpawnFunctionHook
+  self.SpawnFunctionArguments = {}
+  if arg then
+    self.SpawnFunctionArguments = arg
+  end  
+
+  return self
 end
 
 
@@ -637,7 +662,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
         
-        local SpawnPos = Zone:GetRandomPoint()
+        local SpawnPos = Zone:GetRandomPointVec2()
         local Point = {}
         Point.type = "Turning Point"
         Point.x = SpawnPos.x

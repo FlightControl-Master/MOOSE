@@ -23,6 +23,7 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
@@ -204,6 +205,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(BASE).T3">BASE:T3(Arguments)</a></td>
 		<td class="summary">
 <p>Trace a function logic level 3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceClass">BASE:TraceClass(Class)</a></td>
+		<td class="summary">
+<p>Set tracing for a class</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceClassMethod">BASE:TraceClassMethod(Class, Method)</a></td>
+		<td class="summary">
+<p>Set tracing for a specific method of  class</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceLevel">BASE:TraceLevel(Level)</a></td>
+		<td class="summary">
+<p>Set trace level</p>
 </td>
 		</tr>
 		<tr>
@@ -739,6 +758,74 @@ A #table or any field.</p>
 				
 <p><code><em> Arguments </em></code>: 
 A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceClass" >
+<strong>BASE:TraceClass(Class)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set tracing for a class</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Class </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceClassMethod" >
+<strong>BASE:TraceClassMethod(Class, Method)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set tracing for a specific method of  class</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Class </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Method </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceLevel" >
+<strong>BASE:TraceLevel(Level)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set trace level</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Level </em></code>: </p>
 
 				</li>
 		</ul>
