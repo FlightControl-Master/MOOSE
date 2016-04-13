@@ -9,10 +9,6 @@ do
   local function EventAliveHelicopter( Client )
     local EscortGroupHeli1 = SpawnEscortHeli:ReSpawn(1)
     local EscortHeli1 = ESCORT:New( Client, EscortGroupHeli1, "Escort Alpha" )
-    local EscortGroupPlane1 = SpawnEscortPlane:ReSpawn(1)
-    local EscortPlane1 = ESCORT:New( Client, EscortGroupPlane1, "Escort Test Plane" )
-    local EscortGroupGround1 = SpawnEscortGround:ReSpawn(1)
-    local EscortGround1 = ESCORT:New( Client, EscortGroupGround1, "Test Ground" )
   end
   
   local function EventAlivePlane( Client )
