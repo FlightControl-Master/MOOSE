@@ -577,13 +577,6 @@ function ESCORT:RegisterRoute()
   local EscortGroup = self.EscortGroup -- Group#GROUP
   
   local TaskPoints = EscortGroup:GetTaskRoute()
-
-  for TaskPointID = 1, #TaskPoints do
-    if TaskPointID > 0 then
-      --TaskPoint.task.params.tasks[#TaskPoint.task.params.tasks+1] = EscortGroup:TaskRegisterWayPoint( TaskPointID )
-      TaskPoints[TaskPointID].task = EscortGroup:TaskRegisterWayPoint( TaskPointID )
-    end
-  end
   
   self:T( TaskPoints )
 

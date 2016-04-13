@@ -1,6 +1,0 @@
-mapResource = 
-{
-    ["ResKey_Action_5"] = "Moose_Load_Dynamic.lua",
-    ["ResKey_Action_6"] = "Moose_Load_Embedded.lua",
-    ["ResKey_Action_8"] = "MOOSE_Test_ESCORT.lua",
-} -- end of mapResource
