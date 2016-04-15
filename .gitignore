@@ -220,3 +220,7 @@ pip-log.txt
 
 #Goodsync
 _gsdata_/
+
+#GITHUB
+.gitattributes
+.gitignore

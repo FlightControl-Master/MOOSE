@@ -863,7 +863,7 @@ function DATABASE:ScoreOpen()
 		if not self.StatFile then
 			error( "Error: Cannot open 'Player Scores.csv' file in " .. lfs.writedir() )
 		end
-		self.StatFile:write( '"RunID";"Time";"PlayerName";"ScoreType";"PlayerUnitCoaltion";"PlayerUnitCategory";"PlayerUnitType";"PlayerUnitName";"TargetUnitCoalition";"TargetUnitCategory";"TargetUnitType";"TargetUnitName";"Times";"Score"\n' )
+		self.StatFile:write( '"RunID","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
 		
 		self.RunID = os.date("%y-%m-%d_%H-%M-%S")
 	end
@@ -921,10 +921,23 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 	end
 
 	if lfs then
-		self.StatFile:write( '"' .. self.RunID .. '";' .. ScoreTime .. ';"' .. PlayerName .. '";"' .. ScoreType .. '";"' .. 
-									PlayerUnitCoalition .. '";"' .. PlayerUnitCategory .. '";"' .. PlayerUnitType .. '";"' .. PlayerUnitName .. '";"' .. 
-									TargetUnitCoalition .. '";"' .. TargetUnitCategory .. '";"' .. TargetUnitType .. '";"' .. TargetUnitName .. '";' .. 
-									ScoreTimes .. ';' .. ScoreAmount )
+		self.StatFile:write( 
+		  '"' .. self.RunID           .. '"' .. ',' .. 
+		  ''  .. ScoreTime            .. ''  .. ',' .. 
+		  '"' .. PlayerName           .. '"' .. ',' ..
+		  '"' .. ScoreType            .. '"' .. ',' ..
+		  '"' .. PlayerUnitCoalition  .. '"' .. ',' ..
+		  '"' .. PlayerUnitCategory   .. '"' .. ',' .. 
+		  '"' .. PlayerUnitType       .. '"' .. ',' ..
+		  '"' .. PlayerUnitName       .. '"' .. ',' ..
+		  '"' .. TargetUnitCoalition  .. '"' .. ',' ..
+		  '"' .. TargetUnitCategory   .. '"' .. ',' ..
+		  '"' .. TargetUnitType       .. '"' .. ',' ..
+		  '"' .. TargetUnitName       .. '"' .. ',' .. 
+			''  .. ScoreTimes           .. ''  .. ',' .. 
+			''  .. ScoreAmount 
+		)
+		
 		self.StatFile:write( "\n" )
 	end
 end

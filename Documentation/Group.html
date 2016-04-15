@@ -23,6 +23,7 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
 					<li><a href="DCSController.html">DCSController</a></li>
 					<li><a href="DCSGroup.html">DCSGroup</a></li>
 					<li><a href="DCSObject.html">DCSObject</a></li>
@@ -106,6 +107,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).CommandDoScript">GROUP:CommandDoScript(DoScript)</a></td>
+		<td class="summary">
+<p>Do Script command</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Controller">GROUP.Controller</a></td>
 		<td class="summary">
 <p>The controller of the group.</p>
@@ -143,6 +150,12 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCategoryName">GROUP:GetCategoryName()</a></td>
+		<td class="summary">
+<p>Returns the category name of the group.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSGroup">GROUP:GetDCSGroup()</a></td>
 		<td class="summary">
 <p>Gets the DCSGroup of the GROUP.</p>
@@ -152,6 +165,12 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSUnit">GROUP:GetDCSUnit(UnitNumber)</a></td>
 		<td class="summary">
 <p>Gets the DCS Unit of the GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSUnits">GROUP:GetDCSUnits()</a></td>
+		<td class="summary">
+<p>Gets the DCSUnits of the GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -245,9 +264,33 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAirPlane">GROUP:IsAirPlane()</a></td>
+		<td class="summary">
+<p>Returns if the GROUP are AirPlanes.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAlive">GROUP:IsAlive()</a></td>
 		<td class="summary">
 <p>Returns if the group is alive.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsGround">GROUP:IsGround()</a></td>
+		<td class="summary">
+<p>Returns if the GROUP are Ground troops.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsHelicopter">GROUP:IsHelicopter()</a></td>
+		<td class="summary">
+<p>Returns if the GROUP is a Helicopter.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsShip">GROUP:IsShip()</a></td>
+		<td class="summary">
+<p>Returns if the GROUP are Ships.</p>
 </td>
 		</tr>
 		<tr>
@@ -311,9 +354,21 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEHoldFirePossible">GROUP:OptionROEHoldFirePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP hold their weapons?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEOpenFire">GROUP:OptionROEOpenFire()</a></td>
 		<td class="summary">
 <p>Openfire.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEOpenFirePossible">GROUP:OptionROEOpenFirePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP attack designated targets?</p>
 </td>
 		</tr>
 		<tr>
@@ -323,15 +378,33 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEReturnFirePossible">GROUP:OptionROEReturnFirePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP attack returning on enemy fire?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEWeaponFree">GROUP:OptionROEWeaponFree()</a></td>
 		<td class="summary">
 <p>Weapon free.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROEWeaponFreePossible">GROUP:OptionROEWeaponFreePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP attack targets of opportunity?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTEvadeFire">GROUP:OptionROTEvadeFire()</a></td>
 		<td class="summary">
-<p>Evade fire.</p>
+<p>Evade on fire.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTEvadeFirePossible">GROUP:OptionROTEvadeFirePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP evade on enemy fire?</p>
 </td>
 		</tr>
 		<tr>
@@ -341,15 +414,33 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTNoReactionPossible">GROUP:OptionROTNoReactionPossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP ignore enemy fire?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTPassiveDefense">GROUP:OptionROTPassiveDefense()</a></td>
 		<td class="summary">
 <p>Evasion passive defense.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTPassiveDefensePossible">GROUP:OptionROTPassiveDefensePossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP evade using passive defenses?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTVertical">GROUP:OptionROTVertical()</a></td>
 		<td class="summary">
-<p>Vertical manoeuvres.</p>
+<p>Evade on fire using vertical manoeuvres.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OptionROTVerticalPossible">GROUP:OptionROTVerticalPossible()</a></td>
+		<td class="summary">
+<p>Can the GROUP evade on fire using vertical manoeuvres?</p>
 </td>
 		</tr>
 		<tr>
@@ -359,15 +450,9 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).PushTask">GROUP:PushTask(DCSTask)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).PushTask">GROUP:PushTask(DCSTask, WaitTime)</a></td>
 		<td class="summary">
 <p>Pushing Task on the queue from the group.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).RegisterWayPoint">GROUP:RegisterWayPoint(WayPoint)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -377,7 +462,7 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTask">GROUP:SetTask(DCSTask)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTask">GROUP:SetTask(DCSTask, WaitTime)</a></td>
 		<td class="summary">
 <p>Clearing the Task Queue and Setting the Task on the queue from the group.</p>
 </td>
@@ -386,6 +471,12 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackUnit">GROUP:TaskAttackUnit(The, AttackUnit)</a></td>
 		<td class="summary">
 <p>Attack the Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCombo">GROUP:TaskCombo(<, DCSTasks)</a></td>
+		<td class="summary">
+<p>Return a Combo Task taking an array of Tasks</p>
 </td>
 		</tr>
 		<tr>
@@ -413,6 +504,18 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFireAtPoint">GROUP:TaskFireAtPoint(The, Radius, PointVec2)</a></td>
+		<td class="summary">
+<p>Fires at a VEC2 point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFunction">GROUP:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskHoldPosition">GROUP:TaskHoldPosition(Duration)</a></td>
 		<td class="summary">
 <p>Hold position at the current position of the first unit of the group.</p>
@@ -425,7 +528,7 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskLandAtZone">GROUP:TaskLandAtZone(Zone, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskLandAtZone">GROUP:TaskLandAtZone(Zone, Duration, RandomPoint)</a></td>
 		<td class="summary">
 <p>Land the group at a @{Zone#ZONE).</p>
 </td>
@@ -449,12 +552,6 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRegisterWayPoint">GROUP:TaskRegisterWayPoint(WayPoint)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRoute">GROUP:TaskRoute(Points)</a></td>
 		<td class="summary">
 <p>Return a Misson task to follow a given route defined by Points.</p>
@@ -470,6 +567,42 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRouteToZone">GROUP:TaskRouteToZone(Zone, Randomize, Speed, Formation)</a></td>
 		<td class="summary">
 <p>Route the group to a given zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskWrappedAction">GROUP:TaskWrappedAction(DCSCommand, Index)</a></td>
+		<td class="summary">
+<p>Return a WrappedAction Task taking a Command </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointExecute">GROUP:WayPointExecute(WayPoint, The, WaitTime)</a></td>
+		<td class="summary">
+<p>Executes the WayPoint plan.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointFunction">GROUP:WayPointFunction(WayPoint, WayPointIndex, WayPointFunction, ...)</a></td>
+		<td class="summary">
+<p>Registers a waypoint function that will be executed when the group moves over the WayPoint.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointFunctions">GROUP.WayPointFunctions</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointInitialize">GROUP:WayPointInitialize(WayPoint)</a></td>
+		<td class="summary">
+<p> Retrieve the group mission and allow to place function hooks within the mission waypoint plan.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPoints">GROUP.WayPoints</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -513,6 +646,8 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </dl>
 	<h2><a id="#(Group)" >Type <code>Group</code></a></h2>
 	
+			<h2><a id="#(DCSCommand)" >Type <code>DCSCommand</code></a></h2>
+			
 			<h2><a id="#(DCSGroup)" >Type <code>DCSGroup</code></a></h2>
 				
 <p>A DCSGroup</p>
@@ -533,8 +668,6 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </dl>
 
 			<h2><a id="#(DCSStopCondition)" >Type <code>DCSStopCondition</code></a></h2>
-			
-			<h2><a id="#(DCSTask)" >Type <code>DCSTask</code></a></h2>
 			
 			<h2><a id="#(Duration)" >Type <code>Duration</code></a></h2>
 			
@@ -587,6 +720,32 @@ All units on the ground result.</p>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).CommandDoScript" >
+<strong>GROUP:CommandDoScript(DoScript)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Do Script command</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DoScript </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DCSCommand)">#DCSCommand</a>:</em></p>
 
 
 </dd>
@@ -732,6 +891,24 @@ The callsign of the first unit of the group.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetCategoryName" >
+<strong>GROUP:GetCategoryName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the category name of the group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Category name = Helicopter, Airplane, Ground Unit, Ship</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetDCSGroup" >
 <strong>GROUP:GetDCSGroup()</strong>
 </a>
@@ -742,7 +919,7 @@ The callsign of the first unit of the group.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(Group)">#Group</a>:</em>
+<p><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a>:</em>
 The DCSGroup.</p>
 
 </dd>
@@ -771,6 +948,24 @@ The unit index to be returned from the GROUP.</p>
 				
 <p><em><a href="##(Unit)">#Unit</a>:</em>
 The DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetDCSUnits" >
+<strong>GROUP:GetDCSUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the DCSUnits of the GROUP.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The DCSUnits.</p>
 
 </dd>
 </dl>
@@ -1055,6 +1250,24 @@ Air category evaluation result.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).IsAirPlane" >
+<strong>GROUP:IsAirPlane()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the GROUP are AirPlanes.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if GROUP are AirPlanes.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).IsAlive" >
 <strong>GROUP:IsAlive()</strong>
 </a>
@@ -1070,6 +1283,60 @@ Air category evaluation result.</p>
 				
 <p><em>#boolean:</em>
 Alive result.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsGround" >
+<strong>GROUP:IsGround()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the GROUP are Ground troops.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if GROUP are Ground troops.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsHelicopter" >
+<strong>GROUP:IsHelicopter()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the GROUP is a Helicopter.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if GROUP are Helicopters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsShip" >
+<strong>GROUP:IsShip()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the GROUP are Ships.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if GROUP are Ships.</p>
 
 </dd>
 </dl>
@@ -1351,8 +1618,26 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).OptionROEHoldFirePossible" >
+<strong>GROUP:OptionROEHoldFirePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP hold their weapons?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -1377,6 +1662,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).OptionROEOpenFirePossible" >
+<strong>GROUP:OptionROEOpenFirePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP attack designated targets?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OptionROEReturnFire" >
 <strong>GROUP:OptionROEReturnFire()</strong>
 </a>
@@ -1389,6 +1692,24 @@ self</p>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).OptionROEReturnFirePossible" >
+<strong>GROUP:OptionROEReturnFirePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP attack returning on enemy fire?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -1413,18 +1734,54 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).OptionROEWeaponFreePossible" >
+<strong>GROUP:OptionROEWeaponFreePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP attack targets of opportunity?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OptionROTEvadeFire" >
 <strong>GROUP:OptionROTEvadeFire()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Evade fire.</p>
+<p>Evade on fire.</p>
 
 		<h3>Return value</h3>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).OptionROTEvadeFirePossible" >
+<strong>GROUP:OptionROTEvadeFirePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP evade on enemy fire?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -1449,6 +1806,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).OptionROTNoReactionPossible" >
+<strong>GROUP:OptionROTNoReactionPossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP ignore enemy fire?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OptionROTPassiveDefense" >
 <strong>GROUP:OptionROTPassiveDefense()</strong>
 </a>
@@ -1467,18 +1842,54 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).OptionROTPassiveDefensePossible" >
+<strong>GROUP:OptionROTPassiveDefensePossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP evade using passive defenses?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OptionROTVertical" >
 <strong>GROUP:OptionROTVertical()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Vertical manoeuvres.</p>
+<p>Evade on fire using vertical manoeuvres.</p>
 
 		<h3>Return value</h3>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).OptionROTVerticalPossible" >
+<strong>GROUP:OptionROTVerticalPossible()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Can the GROUP evade on fire using vertical manoeuvres?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -1504,18 +1915,23 @@ self</p>
 <dt>
 
 <a id="#(GROUP).PushTask" >
-<strong>GROUP:PushTask(DCSTask)</strong>
+<strong>GROUP:PushTask(DCSTask, WaitTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Pushing Task on the queue from the group.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> DCSTask </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> WaitTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1524,27 +1940,6 @@ self</p>
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
 self</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(GROUP).RegisterWayPoint" >
-<strong>GROUP:RegisterWayPoint(WayPoint)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> WayPoint </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1578,18 +1973,23 @@ self </p>
 <dt>
 
 <a id="#(GROUP).SetTask" >
-<strong>GROUP:SetTask(DCSTask)</strong>
+<strong>GROUP:SetTask(DCSTask, WaitTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Clearing the Task Queue and Setting the Task on the queue from the group.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> DCSTask </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> WaitTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1627,8 +2027,40 @@ unit.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
 The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskCombo" >
+<strong>GROUP:TaskCombo(<, DCSTasks)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a Combo Task taking an array of Tasks</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
+CSTask#Task> DCSTasks</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DCSTasks </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1674,7 +2106,7 @@ The DCS task structure.</p>
 				
 <p><code><em>#number lastWayPoint </em></code>: </p>
 
-<p>return #DCSTask</p>
+<p>return DCSTask#Task</p>
 
 				</li>
 		</ul>
@@ -1695,7 +2127,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(DCSTask)">#DCSTask</a> DCSTask </em></code>: </p>
+<p><code><em><a href="DCSTask.html##(Task)">DCSTask#Task</a> DCSTask </em></code>: </p>
 
 				</li>
 				<li>
@@ -1706,7 +2138,7 @@ The DCS task structure.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em></p>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
 
 
 </dd>
@@ -1739,7 +2171,7 @@ The radius of the embarking zone around the Point.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1778,9 +2210,83 @@ The group to be embarked.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
 The DCS task structure</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskFireAtPoint" >
+<strong>GROUP:TaskFireAtPoint(The, Radius, PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Fires at a VEC2 point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> The </em></code>: 
+point to fire at.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone to deploy the fire at.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> PointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskFunction" >
+<strong>GROUP:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> WayPoint </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> WayPointIndex </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FunctionString </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FunctionArguments </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1847,7 +2353,7 @@ self</p>
 <dt>
 
 <a id="#(GROUP).TaskLandAtZone" >
-<strong>GROUP:TaskLandAtZone(Zone, Duration)</strong>
+<strong>GROUP:TaskLandAtZone(Zone, Duration, RandomPoint)</strong>
 </a>
 </dt>
 <dd>
@@ -1866,6 +2372,11 @@ The zone where to land.</p>
 				
 <p><code><em>#number Duration </em></code>: 
 The duration in seconds to stay on the ground.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> RandomPoint </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1898,7 +2409,7 @@ A table containing the mission task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em></p>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
 
 
 </dd>
@@ -1978,27 +2489,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).TaskRegisterWayPoint" >
-<strong>GROUP:TaskRegisterWayPoint(WayPoint)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> WayPoint </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(GROUP).TaskRoute" >
 <strong>GROUP:TaskRoute(Points)</strong>
 </a>
@@ -2018,7 +2508,7 @@ A table of route points.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DCSTask)">#DCSTask</a>:</em></p>
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
 
 
 </dd>
@@ -2104,6 +2594,182 @@ The formation string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).TaskWrappedAction" >
+<strong>GROUP:TaskWrappedAction(DCSCommand, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a WrappedAction Task taking a Command </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCommand.html##(Command)">DCSCommand#Command</a> DCSCommand </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).WayPointExecute" >
+<strong>GROUP:WayPointExecute(WayPoint, The, WaitTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Executes the WayPoint plan.</p>
+
+	
+<p>The function gets a WayPoint parameter, that you can use to restart the mission at a specific WayPoint.
+Note that when the WayPoint parameter is used, the new start mission waypoint of the group will be 1!</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number WayPoint </em></code>: 
+The WayPoint from where to execute the mission.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(WaitTime)">#WaitTime</a> The </em></code>: 
+amount seconds to wait before initiating the mission.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> WaitTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).WayPointFunction" >
+<strong>GROUP:WayPointFunction(WayPoint, WayPointIndex, WayPointFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers a waypoint function that will be executed when the group moves over the WayPoint.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number WayPoint </em></code>: 
+The waypoint number. Note that the start waypoint on the route is WayPoint 1!</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WayPointIndex </em></code>: 
+When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function WayPointFunction </em></code>: 
+The waypoint function to be called when the group moves over the waypoint. The waypoint function takes variable parameters.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(GROUP).WayPointFunctions" >
+<strong>GROUP.WayPointFunctions</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).WayPointInitialize" >
+<strong>GROUP:WayPointInitialize(WayPoint)</strong>
+</a>
+</dt>
+<dd>
+	
+<p> Retrieve the group mission and allow to place function hooks within the mission waypoint plan.</p>
+
+	
+<p> Use the method <a href="Group.html##(GROUP)">Group#GROUP</a> to define the hook functions for specific waypoints.
+ Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
+ Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number WayPoint </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(GROUP).WayPoints" >
+<strong>GROUP.WayPoints</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP)._GetController" >
 <strong>GROUP:_GetController()</strong>
 </a>
@@ -2157,6 +2823,10 @@ The formation string.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(WaitTime)" >Type <code>WaitTime</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
 </div>
 
 </div>

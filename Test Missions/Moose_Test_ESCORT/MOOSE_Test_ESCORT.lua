@@ -4,26 +4,22 @@ Include.File( "Spawn" )
 Include.File( "Escort" )
 
 
-do
 
+do
   local function EventAliveHelicopter( Client )
     local EscortGroupHeli1 = SpawnEscortHeli:ReSpawn(1)
     local EscortHeli1 = ESCORT:New( Client, EscortGroupHeli1, "Escort Alpha" )
-    local EscortGroupPlane = SpawnEscortPlane:ReSpawn(1)
-    local EscortPlane = ESCORT:New( Client, EscortGroupPlane, "Escort Test Plane" )
-    local EscortGroupGround = SpawnEscortGround:ReSpawn(1)
-    local EscortGround = ESCORT:New( Client, EscortGroupGround, "Test Ground" )
   end
   
   local function EventAlivePlane( Client )
-    local EscortGroupPlane = SpawnEscortPlane:ReSpawn(1)
-    local EscortPlane = ESCORT:New( Client, EscortGroupPlane, "Escort Test Plane" )
+    local EscortGroupPlane2 = SpawnEscortPlane:ReSpawn(1)
+    local EscortPlane2 = ESCORT:New( Client, EscortGroupPlane2, "Escort Test Plane" )
     
-    local EscortGroupGround = SpawnEscortGround:ReSpawn(1)
-    local EscortGround = ESCORT:New( Client, EscortGroupGround, "Test Ground" )
+    local EscortGroupGround2 = SpawnEscortGround:ReSpawn(1)
+    local EscortGround2 = ESCORT:New( Client, EscortGroupGround2, "Test Ground" )
 
-    local EscortGroupShip = SpawnEscortShip:ReSpawn(1)
-    local EscortShip = ESCORT:New( Client, EscortGroupShip, "Test Ship" )
+    local EscortGroupShip2 = SpawnEscortShip:ReSpawn(1)
+    local EscortShip2 = ESCORT:New( Client, EscortGroupShip2, "Test Ship" )
   end
 
   SpawnEscortHeli = SPAWN:New( "Escort Helicopter" )

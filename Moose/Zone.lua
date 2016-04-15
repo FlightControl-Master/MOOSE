@@ -40,7 +40,7 @@ function ZONE:GetPointVec2()
 	return Point	
 end
 
-function ZONE:GetRandomPoint()
+function ZONE:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
