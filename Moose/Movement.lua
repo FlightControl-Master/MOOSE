@@ -35,11 +35,11 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	_EventDispatcher:OnBirth( self.OnBirth, self )
 	
-	self:EnableEvents()
+--	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
+--	
+--	self:EnableEvents()
 	
 	self:ScheduleStart()
 
@@ -61,43 +61,39 @@ end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
-function MOVEMENT:OnBirth( event )
-	self:F( { event } )
+function MOVEMENT:OnBirth( Event )
+	self:F( { Event } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
-		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-			local MovementUnit = event.initiator
-			local MovementUnitName = MovementUnit:getName()
-			self:T( "Birth object : " .. MovementUnitName )
-			local MovementGroup = MovementUnit:getGroup()
-			if MovementGroup and MovementGroup:isExist() then
-				local MovementGroupName = MovementGroup:getName()
+		if Event.IniDCSUnit then
+			self:T( "Birth object : " .. Event.IniDCSUnitName )
+			if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
 				for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-					if string.find( MovementUnitName, MovePrefix, 1, true ) then
+					if string.find( Event.IniDCSUnitName, MovePrefix, 1, true ) then
 						self.AliveUnits = self.AliveUnits + 1
-						self.MoveUnits[MovementUnitName] = MovementGroupName
+						self.MoveUnits[Event.IniDCSUnitName] = Event.IniDCSGroupName
 						self:T( self.AliveUnits )
 					end
 				end
 			end
 		end
+		_EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+    _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
 	end
 
 end
 
 --- Captures the Dead or Crash events when Units crash or are destroyed.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
-function MOVEMENT:OnDeadOrCrash( event )
-	self:F( { event } )
+function MOVEMENT:OnDeadOrCrash( Event )
+	self:F( { Event } )
 
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		local MovementUnit = event.initiator
-		local MovementUnitName = MovementUnit:getName()
-		self:T( "Dead object : " .. MovementUnitName )
+	if Event.IniDCSUnit then
+		self:T( "Dead object : " .. Event.IniDCSUnitName )
 		for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-			if string.find( MovementUnitName, MovePrefix, 1, true ) then
+			if string.find( Event.IniDCSUnitName, MovePrefix, 1, true ) then
 				self.AliveUnits = self.AliveUnits - 1
-				self.MoveUnits[MovementUnitName] = nil
+				self.MoveUnits[Event.IniDCSUnitName] = nil
 				self:T( self.AliveUnits )
 			end
 		end

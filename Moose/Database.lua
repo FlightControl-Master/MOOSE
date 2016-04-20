@@ -7,6 +7,7 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Event" )
 
 --- The DATABASE class
 -- @type DATABASE
@@ -110,13 +111,10 @@ function DATABASE:New()
 	end --for coa_name, coa_data in pairs(mission.coalition) do
 
 	--self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	_EventDispatcher:OnDead( self.OnDeadOrCrash, self )
+  _EventDispatcher:OnCrash( self.OnDeadOrCrash, self )
+  _EventDispatcher:OnHit( self.OnHit, self )
 	
-	self:AddEvent( world.event.S_EVENT_HIT, self.OnHit)
-
-	self:EnableEvents()
-
 	self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
 	
 	self:ScoreMenu()

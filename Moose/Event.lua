@@ -40,6 +40,23 @@ local EVENTCODES = {
    "S_EVENT_MAX",
 }
 
+--- The Event structure
+-- @type EVENTDATA
+-- @field id
+-- @field initiator
+-- @field target
+-- @field weapon
+-- @field IniDCSUnit
+-- @field IniDCSUnitName
+-- @field IniDCSGroup
+-- @field IniDCSGroupName
+-- @field TgtDCSUnit
+-- @field TgtDCSUnitName
+-- @field TgtDCSGroup
+-- @field TgtDCSGroupName
+-- @field Weapon
+-- @field WeaponName
+-- @field WeaponTgtDCSUnit
 
 --- The Events structure
 -- @type EVENT.Events
@@ -59,7 +76,7 @@ end
 -- @param #string EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F( EventID, EventClass )
+  self:F( { EventID, EventClass } )
   if not self.Events[EventID] then
     self.Events[EventID] = {}
   end
@@ -86,6 +103,21 @@ function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, OnEv
   for EventUnitID, EventUnit in pairs( EventTemplate.units ) do
     OnEventFunction( self, EventUnit.name, EventFunction, EventSelf )
   end
+  return self
+end
+
+--- Set a new listener for an S_EVENT_X event independent from a unit or a weapon.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @param EventID
+-- @return #EVENT
+function EVENT:OnEventGeneric( EventFunction, EventSelf, EventID )
+  self:F( { EventID } )
+
+  local Event = self:Init( EventID, EventSelf:GetClassNameAndID() )
+  Event.EventFunction = EventFunction
+  Event.EventSelf = EventSelf
   return self
 end
 
@@ -117,7 +149,18 @@ end
 function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( { EventTemplate } )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnBirth )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnBirthForUnit )
+end
+
+--- Set a new listener for an S_EVENT_BIRTH event, and registers the unit born.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnBirth( EventFunction, EventSelf )
+  self:F()
+  
+  return self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
 end
 
 --- Set a new listener for an S_EVENT_BIRTH event.
@@ -126,7 +169,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf
 -- @return #EVENT
-function EVENT:OnBirth( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnBirthForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
   
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
@@ -141,7 +184,18 @@ end
 function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( EventTemplate )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnCrash )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnCrashForUnit )
+end
+
+--- Set a new listener for an S_EVENT_CRASH event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnCrash( EventFunction, EventSelf )
+  self:F()
+  
+  return self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_CRASH )
 end
 
 --- Set a new listener for an S_EVENT_CRASH event.
@@ -150,7 +204,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
-function EVENT:OnCrash( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnCrashForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
 
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_CRASH )
@@ -165,8 +219,20 @@ end
 function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( EventTemplate )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnDead )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnDeadForUnit )
 end
+
+--- Set a new listener for an S_EVENT_DEAD event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnDead( EventFunction, EventSelf )
+  self:F()
+  
+  return self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_DEAD )
+end
+
 
 --- Set a new listener for an S_EVENT_DEAD event.
 -- @param #EVENT self
@@ -174,7 +240,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
-function EVENT:OnDead( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
 
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_DEAD )
@@ -189,7 +255,7 @@ end
 function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( EventTemplate )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnLand )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnLandForUnit )
 end
 
 --- Set a new listener for an S_EVENT_LAND event.
@@ -198,7 +264,7 @@ end
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
-function EVENT:OnLand( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnLandForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
 
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_LAND )
@@ -213,16 +279,16 @@ end
 function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( EventTemplate )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnTakeOff )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnTakeOffForUnit )
 end
 
---- Set a new listener for an S_EVENT_LAND event.
+--- Set a new listener for an S_EVENT_TAKEOFF event.
 -- @param #EVENT self
 -- @param #string EventDCSUnitName
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
-function EVENT:OnTakeOff( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnTakeOffForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
 
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_TAKEOFF )
@@ -237,19 +303,77 @@ end
 function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventSelf )
   self:F( EventTemplate )
 
-  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnEngineShutDown )
+  return self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnEngineShutDownForUnit )
 end
 
---- Set a new listener for an S_EVENT_LAND event.
+--- Set a new listener for an S_EVENT_ENGINE_SHUTDOWN event.
 -- @param #EVENT self
 -- @param #string EventDCSUnitName
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
-function EVENT:OnEngineShutDown( EventDCSUnitName, EventFunction, EventSelf )
+function EVENT:OnEngineShutDownForUnit( EventDCSUnitName, EventFunction, EventSelf )
   self:F( EventDCSUnitName )
 
   return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_SHUTDOWN )
+end
+
+--- Set a new listener for an S_EVENT_ENGINE_STARTUP event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnEngineStartUpForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_STARTUP )
+end
+
+--- Set a new listener for an S_EVENT_SHOT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnShot( EventFunction, EventSelf )
+  self:F()
+
+  return self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_SHOT )
+end
+
+--- Set a new listener for an S_EVENT_SHOT event for a unit.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnShotForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_SHOT )
+end
+
+--- Set a new listener for an S_EVENT_HIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnHit( EventFunction, EventSelf )
+  self:F()
+
+  return self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_HIT )
+end
+
+--- Set a new listener for an S_EVENT_HIT event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  return self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_HIT )
 end
 
 
@@ -258,18 +382,40 @@ function EVENT:onEvent( Event )
   self:F( { EVENTCODES[Event.id], Event } )
 
   if self and self.Events and self.Events[Event.id] then
-    local IniDCSUnit = Event.initiator
-    if IniDCSUnit and IniDCSUnit:getCategory() == Object.Category.UNIT then
-      Event.IniUnitName = IniDCSUnit:getName()
+    if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
+      Event.IniDCSUnit = Event.initiator
+      Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
+      Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+      Event.IniDCSGroupName = ""
+      if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
+        Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+      end
     end
-    local TgtDCSUnit = Event.target
-    if TgtDCSUnit and TgtDCSUnit:isExist() and TgtDCSUnit:getCategory() == Object.Category.UNIT then
-      Event.TgtUnitName = TgtDCSUnit:getName()
+    if Event.target then
+      if Event.target and Event.target:getCategory() == Object.Category.UNIT then
+        Event.TgtDCSUnit = Event.target
+        Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
+        Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtDCSGroupName = ""
+        if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
+          Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
+        end
+      end
+    end
+    if Event.weapon then
+      Event.Weapon = Event.weapon
+      Event.WeaponName = Event.Weapon:getTypeName()
+      Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
-      if Event.IniUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniUnitName] then 
-        self:T( { "Calling event function for class ", ClassName, " unit ", Event.IniUnitName } )
-        EventData.IniUnit[Event.IniUnitName].EventFunction( EventData.IniUnit[Event.IniUnitName].EventSelf, Event )
+      if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+        self:T( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
+        EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
+      else
+        if Event.IniDCSUnit and not EventData.IniUnit then
+          self:T( { "Calling event function for class ", ClassName } )
+          EventData.EventFunction( EventData.EventSelf, Event )
+        end
       end
     end
   end

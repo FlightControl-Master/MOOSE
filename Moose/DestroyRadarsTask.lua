@@ -18,8 +18,8 @@ function DESTROYRADARSTASK:New( DestroyGroupNames )
 	self:F()
 
 	self.Name = 'Destroy Radars'
-	
-	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+
+  _EventDispatcher:OnDead( self.EventDead , self )
 
 	return self
 end

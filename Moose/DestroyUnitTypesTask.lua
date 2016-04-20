@@ -29,7 +29,7 @@ function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGro
 	self.Name = 'Destroy Unit Types'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 
-	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+  _EventDispatcher:OnDead( self.EventDead , self )
 
 	return self
 end

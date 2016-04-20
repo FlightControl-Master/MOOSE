@@ -122,12 +122,6 @@ function SPAWN:New( SpawnTemplatePrefix )
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
-	
-	--self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	--self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	--self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
-	
-	self:EnableEvents()
 
 	return self
 end
@@ -166,12 +160,6 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	--self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	--self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	--self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
-	
-	--self:EnableEvents()
-
 	return self
 end
 
@@ -289,11 +277,6 @@ function SPAWN:Repeat()
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 
-	--self:AddEvent( world.event.S_EVENT_LAND, self._OnLand )
-	--self:AddEvent( world.event.S_EVENT_TAKEOFF, self._OnTakeOff )
-	--self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._OnEngineShutDown )
-	--self:EnableEvents()
-
 	return self
 end
 
@@ -386,10 +369,22 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 		self.SpawnGroups[SpawnGroupID].SpawnTemplate.visible = true
 		
 		self.SpawnGroups[SpawnGroupID].Visible = true
+
+    _EventDispatcher:OnBirthForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnBirth, self )
+    _EventDispatcher:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+    _EventDispatcher:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+
+    if self.SpawnRepeat then
+      _EventDispatcher:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
+    end
+    if self.RepeatOnLanding then
+      _EventDispatcher:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
+    end
+    if self.RepeatOnEngineShutDown then
+      _EventDispatcher:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
+    end
+		
 		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
-		self:Event():OnBirthForGroup( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
-		self:Event():OnCrashForGroup( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
-    self:Event():OnDeadForGroup ( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
 		SpawnY = SpawnYIndex * SpawnDeltaY

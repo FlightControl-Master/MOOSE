@@ -91,7 +91,7 @@ end
 --- Get progress of a TASK.
 -- @return string GoalsText
 function TASK:GetGoalProgress()
-	self:F()
+	self:F2()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -115,7 +115,7 @@ end
 -- @param MISSION 	Mission 		Group structure describing the Mission.
 -- @param CLIENT	Client	 		Group structure describing the Client.
 function TASK:ShowGoalProgress( Mission, Client )
-	self:F()
+	self:F2()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -137,14 +137,14 @@ end
 
 --- Sets a TASK to status Done.
 function TASK:Done()
-	self:F()
+	self:F2()
 	self.TaskDone = true
 end
 
 --- Returns if a TASK is done.
 -- @return bool
 function TASK:IsDone()
-	self:F( self.TaskDone )
+	self:F2( self.TaskDone )
 	return self.TaskDone
 end
 
@@ -157,12 +157,12 @@ end
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-	self:F( self.TaskFailed )
+	self:F2( self.TaskFailed )
 	return self.TaskFailed
 end
 
 function TASK:Reset( Mission, Client )
-	self:F()
+	self:F2()
 	self.ExecuteStage = _TransportExecuteStage.NONE
 end
 
@@ -173,13 +173,15 @@ function TASK:GetGoals()
 end
 
 --- Returns if a TASK has Goal(s).
--- @param ?string GoalVerb is the name of the Goal of the TASK.
+-- @param #TASK self
+-- @param #string GoalVerb is the name of the Goal of the TASK.
 -- @return bool
 function TASK:Goal( GoalVerb )
-	self:F()
+	self:F2( { GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
+	self:T2( {self.GoalTasks[GoalVerb] } )
 	if self.GoalTasks[GoalVerb] and self.GoalTasks[GoalVerb].GoalTotal > 0 then
 		return true
 	else
@@ -191,7 +193,7 @@ end
 -- @param number GoalTotal is the number of times the GoalVerb needs to be achieved.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:SetGoalTotal( GoalTotal, GoalVerb )
-	self:F( { GoalTotal, GoalVerb } )
+	self:F2( { GoalTotal, GoalVerb } )
 	
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
@@ -206,7 +208,7 @@ end
 --- Gets the total of Goals to be achieved within the TASK of the GoalVerb.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:GetGoalTotal( GoalVerb )
-	self:F()
+	self:F2( { GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -222,7 +224,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:SetGoalCount( GoalCount, GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -237,7 +239,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:IncreaseGoalCount( GoalCountIncrease, GoalVerb )
-	self:F()
+	self:F2( { GoalCountIncrease, GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -251,7 +253,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalCount( GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -266,7 +268,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalPercentage( GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -279,15 +281,16 @@ end
 
 --- Returns if all the Goals of the TASK were achieved.
 -- @return bool
-function TASK:IsGoalReached( )
+function TASK:IsGoalReached()
+  self:F2()
 
 	local GoalReached = true
 
 	for GoalVerb, Goals in pairs( self.GoalTasks ) do
-		self:T( { "GoalVerb", GoalVerb } )
+		self:T2( { "GoalVerb", GoalVerb } )
 		if self:Goal( GoalVerb ) then
 			local GoalToDo = self:GetGoalTotal( GoalVerb ) - self:GetGoalCount( GoalVerb )
-			self:T( "GoalToDo = " .. GoalToDo )
+			self:T2( "GoalToDo = " .. GoalToDo )
 			if GoalToDo <= 0 then
 			else
 				GoalReached = false
@@ -298,7 +301,7 @@ function TASK:IsGoalReached( )
 		end
 	end
 	
-	self:T( GoalReached )
+	self:T( { GoalReached, self.GoalTasks } )
 	return GoalReached
 end
 
@@ -307,7 +310,7 @@ end
 -- @param string GoalTask is a text describing the Goal of the TASK to be achieved.
 -- @param number GoalIncrease is a number by which the Goal achievement is increasing.
 function TASK:AddGoalCompletion( GoalVerb, GoalTask, GoalIncrease )
-	self:F( { GoalVerb, GoalTask, GoalIncrease } )
+	self:F2( { GoalVerb, GoalTask, GoalIncrease } )
 
 	if self:Goal( GoalVerb ) then
 		self.GoalTasks[GoalVerb].Goals[#self.GoalTasks[GoalVerb].Goals+1] = GoalTask
@@ -320,7 +323,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return string Goals
 function TASK:GetGoalCompletion( GoalVerb )
-	self:F( { GoalVerb } )
+	self:F2( { GoalVerb } )
 	
 	if self:Goal( GoalVerb ) then
 		local Goals = ""

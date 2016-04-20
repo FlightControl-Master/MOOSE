@@ -40,15 +40,8 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 		self.TimeInterval = TimeInterval
 	end
 	
-	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
-	--self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
-	self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
+	_EventDispatcher:OnBirth( self._OnEventBirth, self )
 	
-	self:EnableEvents()
-
 	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
 	return self
@@ -111,6 +104,33 @@ function CLEANUP:_DestroyMissile( MissileObject )
 	end
 end
 
+function CLEANUP:_OnEventBirth( Event )
+  self:F( { Event } )
+  
+  self.CleanUpList[Event.IniDCSUnitName] = {}
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
+
+  _EventDispatcher:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EventDispatcher:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EventDispatcher:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EventDispatcher:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
+
+  --self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
+  --self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
+--  self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
+--  self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
+--  --self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
+--  self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
+--  
+--  self:EnableEvents()
+
+
+end
+
 --- Detects if a crash event occurs.
 -- Crashed units go into a CleanUpList for removal.
 -- @param #CLEANUP self
@@ -126,44 +146,27 @@ function CLEANUP:_EventCrash( event )
 	-- self:T("after deactivateGroup")
 	-- event.initiator:destroy()
 
-	local CleanUpUnit = event.initiator -- the Unit
-	local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
-	local CleanUpGroup = Unit.getGroup(CleanUpUnit)-- Identify the Group 
-	local CleanUpGroupName = ""
-	if CleanUpGroup and CleanUpGroup:isExist() then
-    CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
-  end
-
-	self.CleanUpList[CleanUpUnitName] = {}
-	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
-	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
-	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroupName
-	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
+  self.CleanUpList[Event.IniDCSUnitName] = {}
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
 end
 
 --- Detects if a unit shoots a missile.
 -- If this occurs within one of the zones, then the weapon used must be destroyed.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventShot( event )
-	self:F( { event } )
+function CLEANUP:_EventShot( Event )
+	self:F( { Event } )
 
-	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
-	local _groupname = _grp:getName() -- return the name of the group
-	local _unittable = {event.initiator:getName()} -- return the name of the units in the group
-	local _SEADmissile = event.weapon -- Identify the weapon fired					
-	--local _SEADmissileName = _SEADmissile:getTypeName()	-- return weapon type
-	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(_SEADmissileName)), 20) --debug message
-	-- Start of the 2nd loop
-	--self:T( "Missile Launched = " .. _SEADmissileName )
-	
 	-- Test if the missile was fired within one of the CLEANUP.ZoneNames.
 	local CurrentLandingZoneID = 0
-	CurrentLandingZoneID  = routines.IsUnitInZones( event.initiator, self.ZoneNames )
+	CurrentLandingZoneID  = routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames )
 	if  ( CurrentLandingZoneID ) then
 		-- Okay, the missile was fired within the CLEANUP.ZoneNames, destroy the fired weapon.
 		--_SEADmissile:destroy()
-		routines.scheduleFunction( CLEANUP._DestroyMissile, {self, _SEADmissile}, timer.getTime() + 0.1)
+		routines.scheduleFunction( CLEANUP._DestroyMissile, { self, Event.Weapon }, timer.getTime() + 0.1)
 	end
 end
 
@@ -171,38 +174,28 @@ end
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventHitCleanUp( event )
-	self:F( { event } )
+function CLEANUP:_EventHitCleanUp( Event )
+	self:F( { Event } )
 
-	local CleanUpUnit = event.initiator -- the Unit
-	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
-		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
-		
-		if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
-			self:T( "Life: " .. CleanUpUnitName .. ' = ' .. CleanUpUnit:getLife() .. "/" .. CleanUpUnit:getLife0() )
-			if CleanUpUnit:getLife() < CleanUpUnit:getLife0() then
-				self:T( "CleanUp: Destroy: " .. CleanUpUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpUnit}, timer.getTime() + 0.1)
+	if Event.IniDCSUnit then
+		if routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames ) ~= nil then
+			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniDCSUnit:getLife(), "/", Event.IniDCSUnit:getLife0() } )
+			if Event.IniDCSUnit:getLife() < Event.IniDCSUnit:getLife0() then
+				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.IniDCSUnit }, timer.getTime() + 0.1)
 			end
 		end
 	end
 
-	local CleanUpTgtUnit = event.target -- the target Unit
-	if CleanUpTgtUnit and CleanUpTgtUnit:isExist() and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
-		local CleanUpTgtUnitName = event.target:getName() -- return the name of the target Unit
-		local CleanUpTgtGroup = Unit.getGroup(event.target)-- Identify the target Group 
-		local CleanUpTgtGroupName = CleanUpTgtGroup:getName() -- return the name of the target Group
-		
-		
-		if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
-			self:T( "Life: " .. CleanUpTgtUnitName .. ' = ' .. CleanUpTgtUnit:getLife() .. "/" .. CleanUpTgtUnit:getLife0() )
-			if CleanUpTgtUnit:getLife() < CleanUpTgtUnit:getLife0() then
-				self:T( "CleanUp: Destroy: " .. CleanUpTgtUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpTgtUnit}, timer.getTime() + 0.1)
+	if Event.TgtDCSUnit then
+		if routines.IsUnitInZones( Event.TgtDCSUnit, self.ZoneNames ) ~= nil then
+			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtDCSUnit:getLife(), "/", Event.TgtDCSUnit:getLife0() } )
+			if Event.TgtDCSUnit:getLife() < Event.TgtDCSUnit:getLife0() then
+				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.TgtDCSUnit }, timer.getTime() + 0.1 )
 			end
 		end
 	end
-	
 end
 
 --- Add the @{DCSUnit#Unit} to the CleanUpList for CleanUp.
@@ -224,24 +217,20 @@ end
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventAddForCleanUp( event )
+function CLEANUP:_EventAddForCleanUp( Event )
 
-	local CleanUpUnit = event.initiator -- the Unit
-	if CleanUpUnit and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
-		local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
-		if self.CleanUpList[CleanUpUnitName] == nil then
-			if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
-				self:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
+	if Event.IniDCSUnit then
+		if self.CleanUpList[Event.IniDCSUnitName] == nil then
+			if routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames ) ~= nil then
+				self:_AddForCleanUp( Event.IniDCSUnit, Event.IniDCSUnitName )
 			end
 		end
 	end
 
-	local CleanUpTgtUnit = event.target -- the target Unit
-	if CleanUpTgtUnit and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
-		local CleanUpTgtUnitName = CleanUpTgtUnit:getName() -- return the name of the target Unit
-		if self.CleanUpList[CleanUpTgtUnitName] == nil then
-			if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
-				self:_AddForCleanUp( CleanUpTgtUnit, CleanUpTgtUnitName )
+	if Event.TgtDCSUnit then
+		if self.CleanUpList[Event.TgtDCSUnitName] == nil then
+			if routines.IsUnitInZones( Event.TgtDCSUnit, self.ZoneNames ) ~= nil then
+				self:_AddForCleanUp( Event.TgtDCSUnit, Event.TgtDCSUnitName )
 			end
 		end
 	end
