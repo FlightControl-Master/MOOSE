@@ -75,6 +75,7 @@ Include.File( "Base" )
 Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
+Include.File( "Event" )
 
 --- SPAWN Class
 -- @type SPAWN
@@ -122,9 +123,9 @@ function SPAWN:New( SpawnTemplatePrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
+	--self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
+	--self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	--self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
 	self:EnableEvents()
 
@@ -165,11 +166,11 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
+	--self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
+	--self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
+	--self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
 	
-	self:EnableEvents()
+	--self:EnableEvents()
 
 	return self
 end
@@ -282,16 +283,16 @@ end
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
 function SPAWN:Repeat()
-	self:F( { self.SpawnTemplatePrefix } )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
 	self.SpawnRepeat = true
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 
-	self:AddEvent( world.event.S_EVENT_LAND, self._OnLand )
-	self:AddEvent( world.event.S_EVENT_TAKEOFF, self._OnTakeOff )
-	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._OnEngineShutDown )
-	self:EnableEvents()
+	--self:AddEvent( world.event.S_EVENT_LAND, self._OnLand )
+	--self:AddEvent( world.event.S_EVENT_TAKEOFF, self._OnTakeOff )
+	--self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._OnEngineShutDown )
+	--self:EnableEvents()
 
 	return self
 end
@@ -386,6 +387,9 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 		
 		self.SpawnGroups[SpawnGroupID].Visible = true
 		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
+		self:Event():OnBirthForGroup( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
+		self:Event():OnCrashForGroup( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
+    self:Event():OnDeadForGroup ( self.SpawnGroups[SpawnGroupID].Group, self._OnBirth, self )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
 		SpawnY = SpawnYIndex * SpawnDeltaY
@@ -443,6 +447,20 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
 			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+      _EventDispatcher:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
+      _EventDispatcher:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+      _EventDispatcher:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+
+      if self.SpawnRepeat then
+        _EventDispatcher:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
+      end
+      if self.RepeatOnLanding then
+        _EventDispatcher:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
+      end
+      if self.RepeatOnEngineShutDown then
+        _EventDispatcher:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
+      end
+
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.

@@ -46,6 +46,8 @@ FORMATION = {
   Cone = "Cone" 
 }
 
+
+
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
 -- @param #BASE self
@@ -139,6 +141,18 @@ function BASE:AddEvent( Event, EventFunction )
 
 	return self
 end
+
+--- Returns the event dispatcher
+-- @param #BASE self
+-- @return Event#EVENT
+function BASE:Event()
+
+  return _EventDispatcher
+end
+
+
+
+
 
 --- Enable the event listeners for the class.
 -- @param #BASE self
@@ -253,8 +267,8 @@ end
 -- @param #BASE self
 -- @param DCSTypes#Event event
 function BASE:onEvent(event)
+  --self:F( { BaseEventCodes[event.id], event } )
 
-	--env.info( 'onEvent Table self = ' .. tostring(self) )
 	if self then
 		for EventID, EventObject in pairs( self.Events ) do
 			if EventObject.EventEnabled then
@@ -269,8 +283,8 @@ function BASE:onEvent(event)
 						if event.target and event.target:isExist() then
 							event.TgtUnitName = event.target:getName()
 						end
-						self:T( { BaseEventCodes[event.id], event } )
-						EventObject.EventFunction( self, event )
+						--self:T( { BaseEventCodes[event.id], event } )
+						--EventObject.EventFunction( self, event )
 					end
 				end
 			end
