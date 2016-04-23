@@ -62,7 +62,7 @@ function SEAD:EventShot( Event )
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
 		local _evade = math.random (1,100) -- random number for chance of evading action
-		local _targetMim = Event.WeaponTgtDCSUnit -- Identify target
+		local _targetMim = Event.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim)
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()

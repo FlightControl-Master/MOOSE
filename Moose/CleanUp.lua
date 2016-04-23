@@ -10,6 +10,7 @@ Include.File( "Task" )
 
 --- The CLEANUP class.
 -- @type CLEANUP
+-- @extends Base#BASE
 CLEANUP = {
 	ClassName = "CLEANUP",
 	ZoneNames = {},
@@ -77,9 +78,8 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 			local CleanUpGroupUnits = CleanUpGroup:getUnits()
 			if #CleanUpGroupUnits == 1 then
 				local CleanUpGroupName = CleanUpGroup:getName()
-				local Event = {["initiator"]=CleanUpUnit,["id"]=8}
-				world.onEvent( Event )
-				trigger.action.deactivateGroup( CleanUpGroup )
+				--self:CreateEventCrash( timer.getTime(), CleanUpUnit )
+				CleanUpGroup:destroy()
 				self:T( { "Destroyed Group:", CleanUpGroupName } )
 			else
 				CleanUpUnit:destroy()
@@ -116,6 +116,8 @@ function CLEANUP:_OnEventBirth( Event )
   _EventDispatcher:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
   _EventDispatcher:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
   _EventDispatcher:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EventDispatcher:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
+  _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
   _EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
   _EventDispatcher:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
 
@@ -135,9 +137,10 @@ end
 -- Crashed units go into a CleanUpList for removal.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventCrash( event )
-	self:F( { event } )
+function CLEANUP:_EventCrash( Event )
+	self:F( { Event } )
 
+  --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
 	--MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
 	-- self:T("before getGroup")
 	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
@@ -151,6 +154,7 @@ function CLEANUP:_EventCrash( event )
   self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
   self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
   self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
+  
 end
 
 --- Detects if a unit shoots a missile.
@@ -248,9 +252,11 @@ local CleanUpSurfaceTypeText = {
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 -- @param #CLEANUP self
 function CLEANUP:_CleanUpScheduler()
-	self:F( "CleanUp Scheduler" )
+	self:F( { "CleanUp Scheduler" } )
 
+  local CleanUpCount = 0
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
+	  CleanUpCount = CleanUpCount + 1
 	
 		self:T( { CleanUpUnitName, UnitData } )
 		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
@@ -312,5 +318,6 @@ function CLEANUP:_CleanUpScheduler()
 			self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
 		end
 	end
+	self:T(CleanUpCount)
 end
 
