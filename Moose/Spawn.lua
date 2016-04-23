@@ -418,13 +418,13 @@ function SPAWN:ReSpawn( SpawnIndex )
 	end
 
 -- TODO: This logic makes DCS crash and i don't know why (yet).
---	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
---	if SpawnGroup then
---    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
---  	if SpawnDCSGroup then
---      SpawnGroup:Destroy()
---  	end
---  end
+	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+	if SpawnGroup then
+    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+  	if SpawnDCSGroup then
+      SpawnGroup:Destroy()
+  	end
+  end
 
 	return self:SpawnWithIndex( SpawnIndex )
 end
