@@ -7533,11 +7533,12 @@ end
 -- @param #CLIENT self
 -- @param #function CallBack Function.
 -- @return #CLIENT
-function CLIENT:Alive( CallBack )
+function CLIENT:Alive( CallBack, ... )
   self:F()
   
   self.ClientAlive2 = false
   self.ClientCallBack = CallBack
+  self.ClientParameters = arg
   self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
 
   return self
@@ -7592,7 +7593,7 @@ function CLIENT:_AliveCheckScheduler()
   if self:IsAlive() then
     if self.ClientAlive2 == false then
       self:T("Calling Callback function")
-      self.ClientCallBack( self )
+      self.ClientCallBack( self, unpack( self.ClientParameters ) )
       self.ClientAlive2 = true
     end
   else
