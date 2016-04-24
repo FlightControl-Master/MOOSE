@@ -4,6 +4,7 @@
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
 Include.File( "Routines" )
+Include.File( "Event" )
 Include.File( "Base" )
 Include.File( "Mission" )
 Include.File( "Client" )
@@ -42,27 +43,26 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	self:AddEvent( world.event.S_EVENT_SHOT, self.EventShot )
-	self:EnableEvents()
+	_EVENTDISPATCHER:OnShot( self.EventShot, self )
 	
 	return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
-function SEAD:EventShot( event )
-	self:F( { event } )
+function SEAD:EventShot( Event )
+	self:F( { Event } )
 
-	local SEADUnit = event.initiator
-	local SEADUnitName = SEADUnit:getName()
-	local SEADWeapon = event.weapon -- Identify the weapon fired						
-	local SEADWeaponName = SEADWeapon:getTypeName()	-- return weapon type
+	local SEADUnit = Event.IniDCSUnit
+	local SEADUnitName = Event.IniDCSUnitName
+	local SEADWeapon = Event.Weapon -- Identify the weapon fired						
+	local SEADWeaponName = Event.WeaponName	-- return weapon type
 	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(SEADWeaponName)), 20) --debug message
 	-- Start of the 2nd loop
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
 		local _evade = math.random (1,100) -- random number for chance of evading action
-		local _targetMim = Weapon.getTarget(SEADWeapon) -- Identify target
+		local _targetMim = Event.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim)
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()

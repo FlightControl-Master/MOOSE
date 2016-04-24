@@ -16,10 +16,11 @@ DESTROYBASETASK = {
 }
 
 --- Creates a new DESTROYBASETASK.
--- @param string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
--- @param string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
--- @param table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
--- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+-- @param #DESTROYBASETASK self
+-- @param #string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
+-- @param #string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
+-- @param #list<#string> DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
+-- @param #number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
 -- @return DESTROYBASETASK
 function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
 	local self = BASE:Inherit( self, TASK:New() )
@@ -30,34 +31,31 @@ function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPre
 	self.DestroyGroupPrefixes = DestroyGroupPrefixes
 	self.DestroyGroupType = DestroyGroupType
 	self.DestroyUnitType = DestroyUnitType
+	if DestroyPercentage then
+  	self.DestroyPercentage = DestroyPercentage
+  end
 	self.TaskBriefing = "Task: Destroy " .. DestroyGroupType .. "."
     self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEGROUPSDESTROYED:New(), STAGEDONE:New() }
 	self.SetStage( self, 1 )
 
-	--self.AddEvent( self, world.event.S_EVENT_DEAD, self.EventDead )
-
-	--env.info( 'New Table self = ' .. tostring(self) )
-	--env.info( 'New Table self = ' .. tostring(self) )
-	
 	return self
 end
 
 --- Handle the S_EVENT_DEAD events to validate the destruction of units for the task monitoring.
--- @param 	event 		Event structure of DCS world.
-function DESTROYBASETASK:EventDead( event )
-	self:F( { 'EventDead', event } )
+-- @param #DESTROYBASETASK self
+-- @param Event#EVENTDATA Event structure of MOOSE.
+function DESTROYBASETASK:EventDead( Event )
+	self:F( { Event } )
 	
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		local DestroyUnit = event.initiator
-		local DestroyUnitName = DestroyUnit:getName()
-		local DestroyGroup = Unit.getGroup( DestroyUnit )
-		local DestroyGroupName = ""
-		if DestroyGroup and DestroyGroup:isExist() then
-			local DestroyGroupName = DestroyGroup:getName()
-		end
+	if Event.IniDCSUnit then
+		local DestroyUnit = Event.IniDCSUnit
+		local DestroyUnitName = Event.IniDCSUnitName
+		local DestroyGroup = Event.IniDCSGroup
+		local DestroyGroupName = Event.IniDCSGroupName
+
+    --TODO: I need to fix here if 2 groups in the mission have a similar name with GroupPrefix equal, then i should differentiate for which group the goal was reached!
+    --I may need to test if for the goalverb that group goal was reached or something. Need to think about it a bit more ...
 		local UnitsDestroyed = 0
-		self:T( DestroyGroupName )
-		self:T( DestroyUnitName )
 		for DestroyGroupPrefixID, DestroyGroupPrefix in pairs( self.DestroyGroupPrefixes ) do
 			self:T( DestroyGroupPrefix )
 			if string.find( DestroyGroupName, DestroyGroupPrefix, 1, true ) then
@@ -70,6 +68,7 @@ function DESTROYBASETASK:EventDead( event )
 		self:T( { UnitsDestroyed } )
 		self:IncreaseGoalCount( UnitsDestroyed, self.GoalVerb )
 	end
+	
 end
 
 --- Validate task completeness of DESTROYBASETASK.

@@ -2624,6 +2624,8 @@ FORMATION = {
   Cone = "Cone" 
 }
 
+
+
 --- The base constructor. This is the top top class of all classed defined within the MOOSE.
 -- Any new class needs to be derived from this class for proper inheritance.
 -- @param #BASE self
@@ -2717,6 +2719,18 @@ function BASE:AddEvent( Event, EventFunction )
 
 	return self
 end
+
+--- Returns the event dispatcher
+-- @param #BASE self
+-- @return Event#EVENT
+function BASE:Event()
+
+  return _EVENTDISPATCHER
+end
+
+
+
+
 
 --- Enable the event listeners for the class.
 -- @param #BASE self
@@ -2831,8 +2845,8 @@ end
 -- @param #BASE self
 -- @param DCSTypes#Event event
 function BASE:onEvent(event)
+  --self:F( { BaseEventCodes[event.id], event } )
 
-	--env.info( 'onEvent Table self = ' .. tostring(self) )
 	if self then
 		for EventID, EventObject in pairs( self.Events ) do
 			if EventObject.EventEnabled then
@@ -2847,8 +2861,8 @@ function BASE:onEvent(event)
 						if event.target and event.target:isExist() then
 							event.TgtUnitName = event.target:getName()
 						end
-						self:T( { BaseEventCodes[event.id], event } )
-						EventObject.EventFunction( self, event )
+						--self:T( { BaseEventCodes[event.id], event } )
+						--EventObject.EventFunction( self, event )
 					end
 				end
 			end
@@ -3004,6 +3018,495 @@ function BASE:E( Arguments )
 end
 
 
+
+--- The EVENT class models an efficient event handling process between other classes and its units, weapons.
+-- @module Event
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+
+--- The EVENT structure
+-- @type EVENT
+-- @field #EVENT.Events Events
+EVENT = {
+  ClassName = "EVENT",
+  ClassID = 0,
+}
+
+local _EVENTCODES = {
+   "S_EVENT_SHOT",
+   "S_EVENT_HIT",
+   "S_EVENT_TAKEOFF",
+   "S_EVENT_LAND",
+   "S_EVENT_CRASH",
+   "S_EVENT_EJECTION",
+   "S_EVENT_REFUELING",
+   "S_EVENT_DEAD",
+   "S_EVENT_PILOT_DEAD",
+   "S_EVENT_BASE_CAPTURED",
+   "S_EVENT_MISSION_START",
+   "S_EVENT_MISSION_END",
+   "S_EVENT_TOOK_CONTROL",
+   "S_EVENT_REFUELING_STOP",
+   "S_EVENT_BIRTH",
+   "S_EVENT_HUMAN_FAILURE",
+   "S_EVENT_ENGINE_STARTUP",
+   "S_EVENT_ENGINE_SHUTDOWN",
+   "S_EVENT_PLAYER_ENTER_UNIT",
+   "S_EVENT_PLAYER_LEAVE_UNIT",
+   "S_EVENT_PLAYER_COMMENT",
+   "S_EVENT_SHOOTING_START",
+   "S_EVENT_SHOOTING_END",
+   "S_EVENT_MAX",
+}
+
+--- The Event structure
+-- @type EVENTDATA
+-- @field id
+-- @field initiator
+-- @field target
+-- @field weapon
+-- @field IniDCSUnit
+-- @field IniDCSUnitName
+-- @field IniDCSGroup
+-- @field IniDCSGroupName
+-- @field TgtDCSUnit
+-- @field TgtDCSUnitName
+-- @field TgtDCSGroup
+-- @field TgtDCSGroupName
+-- @field Weapon
+-- @field WeaponName
+-- @field WeaponTgtDCSUnit
+
+--- The Events structure
+-- @type EVENT.Events
+-- @field #number IniUnit
+
+function EVENT:New()
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F()
+  self.EventHandler = world.addEventHandler( self )
+  return self
+end
+
+function EVENT:EventText( EventID )
+
+  local EventText = _EVENTCODES[EventID]
+  
+  return EventText
+end
+
+
+--- Initializes the Events structure for the event
+-- @param #EVENT self
+-- @param DCSWorld#world.event EventID
+-- @param #string EventClass
+-- @return #EVENT.Events
+function EVENT:Init( EventID, EventClass )
+  self:F3( { _EVENTCODES[EventID], EventClass } )
+  if not self.Events[EventID] then
+    self.Events[EventID] = {}
+  end
+  if not self.Events[EventID][EventClass] then
+     self.Events[EventID][EventClass] = {}
+  end
+  return self.Events[EventID][EventClass]
+end
+
+
+--- Create an OnDead event handler for a group
+-- @param #EVENT self
+-- @param #table EventTemplate
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @param #function OnEventFunction
+-- @return #EVENT
+function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, OnEventFunction )
+  self:F2( EventTemplate.name )
+
+  for EventUnitID, EventUnit in pairs( EventTemplate.units ) do
+    OnEventFunction( self, EventUnit.name, EventFunction, EventSelf )
+  end
+  return self
+end
+
+--- Set a new listener for an S_EVENT_X event independent from a unit or a weapon.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @param EventID
+-- @return #EVENT
+function EVENT:OnEventGeneric( EventFunction, EventSelf, EventID )
+  self:F2( { EventID } )
+
+  local Event = self:Init( EventID, EventSelf:GetClassNameAndID() )
+  Event.EventFunction = EventFunction
+  Event.EventSelf = EventSelf
+  return self
+end
+
+
+--- Set a new listener for an S_EVENT_X event
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @param EventID
+-- @return #EVENT
+function EVENT:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, EventID )
+  self:F2( EventDCSUnitName )
+
+  local Event = self:Init( EventID, EventSelf:GetClassNameAndID() )
+  if not Event.IniUnit then
+    Event.IniUnit = {}
+  end
+  Event.IniUnit[EventDCSUnitName] = {}
+  Event.IniUnit[EventDCSUnitName].EventFunction = EventFunction
+  Event.IniUnit[EventDCSUnitName].EventSelf = EventSelf
+  return self
+end
+
+
+--- Create an OnBirth event handler for a group
+-- @param #EVENT self
+-- @param Group#GROUP EventGroup
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnBirthForUnit )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_BIRTH event, and registers the unit born.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnBirth( EventFunction, EventSelf )
+  self:F()
+  
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_BIRTH event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName The id of the unit for the event to be handled.
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnBirthForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+  
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
+  
+  return self
+end
+
+--- Create an OnCrash event handler for a group
+-- @param #EVENT self
+-- @param Group#GROUP EventGroup
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnCrashForUnit )
+
+  return self
+end
+
+--- Set a new listener for an S_EVENT_CRASH event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnCrash( EventFunction, EventSelf )
+  self:F()
+  
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_CRASH )
+  
+  return self 
+end
+
+--- Set a new listener for an S_EVENT_CRASH event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnCrashForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+  
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_CRASH )
+
+  return self
+end
+
+--- Create an OnDead event handler for a group
+-- @param #EVENT self
+-- @param Group#GROUP EventGroup
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+  
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnDeadForUnit )
+
+  return self
+end
+
+--- Set a new listener for an S_EVENT_DEAD event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnDead( EventFunction, EventSelf )
+  self:F()
+  
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_DEAD )
+  
+  return self
+end
+
+
+--- Set a new listener for an S_EVENT_DEAD event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_DEAD )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_PILOT_DEAD event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPilotDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_PILOT_DEAD )
+
+  return self
+end
+
+--- Create an OnDead event handler for a group
+-- @param #EVENT self
+-- @param #table EventTemplate
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnLandForUnit )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_LAND event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnLandForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_LAND )
+
+  return self
+end
+
+--- Create an OnDead event handler for a group
+-- @param #EVENT self
+-- @param #table EventTemplate
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnTakeOffForUnit )
+
+  return self
+end
+
+--- Set a new listener for an S_EVENT_TAKEOFF event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnTakeOffForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_TAKEOFF )
+
+  return self
+end
+
+--- Create an OnDead event handler for a group
+-- @param #EVENT self
+-- @param #table EventTemplate
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventSelf )
+  self:F( EventTemplate.name )
+
+  self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnEngineShutDownForUnit )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_ENGINE_SHUTDOWN event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnEngineShutDownForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_SHUTDOWN )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_ENGINE_STARTUP event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnEngineStartUpForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_STARTUP )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_SHOT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnShot( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_SHOT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_SHOT event for a unit.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnShotForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_SHOT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_HIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnHit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_HIT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_HIT event.
+-- @param #EVENT self
+-- @param #string EventDCSUnitName
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
+  self:F( EventDCSUnitName )
+
+  self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_HIT )
+  
+  return self
+end
+
+
+
+function EVENT:onEvent( Event )
+  self:F( { _EVENTCODES[Event.id], Event } )
+
+  if self and self.Events and self.Events[Event.id] then
+    if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
+      Event.IniDCSUnit = Event.initiator
+      Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
+      Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+      Event.IniDCSGroupName = ""
+      if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
+        Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+      end
+    end
+    if Event.target then
+      if Event.target and Event.target:getCategory() == Object.Category.UNIT then
+        Event.TgtDCSUnit = Event.target
+        Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
+        Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtDCSGroupName = ""
+        if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
+          Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
+        end
+      end
+    end
+    if Event.weapon then
+      Event.Weapon = Event.weapon
+      Event.WeaponName = Event.Weapon:getTypeName()
+      --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
+    end
+    for ClassName, EventData in pairs( self.Events[Event.id] ) do
+      if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+        self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
+        EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
+      else
+        if Event.IniDCSUnit and not EventData.IniUnit then
+          self:T2( { "Calling event function for class ", ClassName } )
+          EventData.EventFunction( EventData.EventSelf, Event )
+        end
+      end
+    end
+  end
+end
+
+
+
+--- Declare the event dispatcher based on the EVENT class
+_EVENTDISPATCHER = EVENT:New() -- #EVENT
 
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
 -- @module Menu
@@ -4993,36 +5496,37 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Event" )
 
 --- The DATABASE class
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
-	ClassName = "DATABASE",
-	Units = {},
-	Groups = {},
-	NavPoints = {},
-	Statics = {},
-	Players = {},
-	ActivePlayers = {},
-	ClientsByName = {},
-	ClientsByID = {},
+  ClassName = "DATABASE",
+  Units = {},
+  Groups = {},
+  NavPoints = {},
+  Statics = {},
+  Players = {},
+  ActivePlayers = {},
+  ClientsByName = {},
+  ClientsByID = {},
 }
 
-DATABASECoalition = 
-{
-	[1] = "Red",
-	[2] = "Blue",
-}
+local _DATABASECoalition =
+  {
+    [1] = "Red",
+    [2] = "Blue",
+  }
 
-DATABASECategory = 
-{
-	[Unit.Category.AIRPLANE] = "Plane",
-	[Unit.Category.HELICOPTER] = "Helicopter",
-	[Unit.Category.GROUND_UNIT] = "Vehicle",
-	[Unit.Category.SHIP] = "Ship",
-	[Unit.Category.STRUCTURE] = "Structure",	
-}
+local _DATABASECategory =
+  {
+    [Unit.Category.AIRPLANE] = "Plane",
+    [Unit.Category.HELICOPTER] = "Helicopter",
+    [Unit.Category.GROUND_UNIT] = "Vehicle",
+    [Unit.Category.SHIP] = "Ship",
+    [Unit.Category.STRUCTURE] = "Structure",
+  }
 
 
 --- Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.
@@ -5032,83 +5536,79 @@ DATABASECategory =
 -- DBObject = DATABASE:New()
 function DATABASE:New()
 
-	-- Inherits from BASE
-	local self = BASE:Inherit( self, BASE:New() )
-  
-	self.Navpoints = {}
-	self.Units = {}
-	 --Build routines.db.units and self.Navpoints
-	for coa_name, coa_data in pairs(env.mission.coalition) do
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
 
-		if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
-			self.Units[coa_name] = {}
-			
-			----------------------------------------------
-			-- build nav points DB
-			self.Navpoints[coa_name] = {}
-			if coa_data.nav_points then --navpoints
-				for nav_ind, nav_data in pairs(coa_data.nav_points) do
-					
-					if type(nav_data) == 'table' then
-						self.Navpoints[coa_name][nav_ind] = routines.utils.deepCopy(nav_data)
+  self.Navpoints = {}
+  self.Units = {}
+  --Build routines.db.units and self.Navpoints
+  for coa_name, coa_data in pairs(env.mission.coalition) do
 
-						self.Navpoints[coa_name][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
-						self.Navpoints[coa_name][nav_ind]['point'] = {}  -- point is used by SSE, support it.
-						self.Navpoints[coa_name][nav_ind]['point']['x'] = nav_data.x
-						self.Navpoints[coa_name][nav_ind]['point']['y'] = 0
-						self.Navpoints[coa_name][nav_ind]['point']['z'] = nav_data.y
-					end
-				end
-			end
-			-------------------------------------------------		
-			if coa_data.country then --there is a country table
-				for cntry_id, cntry_data in pairs(coa_data.country) do
-					
-					local countryName = string.lower(cntry_data.name)
-					self.Units[coa_name][countryName] = {}
-					self.Units[coa_name][countryName]["countryId"] = cntry_data.id
+    if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
+      self.Units[coa_name] = {}
 
-					if type(cntry_data) == 'table' then  --just making sure
-					
-						for obj_type_name, obj_type_data in pairs(cntry_data) do
-						
-							if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then --should be an unncessary check 
-								
-								local category = obj_type_name
-								
-								if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
-								
-									self.Units[coa_name][countryName][category] = {}
-									
-									for group_num, GroupTemplate in pairs(obj_type_data.group) do
-										
-										if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-											self:_RegisterGroup( GroupTemplate )
-										end --if GroupTemplate and GroupTemplate.units then
-									end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
-								end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then
-							end --if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then
-						end --for obj_type_name, obj_type_data in pairs(cntry_data) do
-					end --if type(cntry_data) == 'table' then
-				end --for cntry_id, cntry_data in pairs(coa_data.country) do
-			end --if coa_data.country then --there is a country table
-		end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
-	end --for coa_name, coa_data in pairs(mission.coalition) do
+      ----------------------------------------------
+      -- build nav points DB
+      self.Navpoints[coa_name] = {}
+      if coa_data.nav_points then --navpoints
+        for nav_ind, nav_data in pairs(coa_data.nav_points) do
 
-	--self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
-	
-	self:AddEvent( world.event.S_EVENT_HIT, self.OnHit)
+          if type(nav_data) == 'table' then
+            self.Navpoints[coa_name][nav_ind] = routines.utils.deepCopy(nav_data)
 
-	self:EnableEvents()
+            self.Navpoints[coa_name][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
+            self.Navpoints[coa_name][nav_ind]['point'] = {}  -- point is used by SSE, support it.
+            self.Navpoints[coa_name][nav_ind]['point']['x'] = nav_data.x
+            self.Navpoints[coa_name][nav_ind]['point']['y'] = 0
+            self.Navpoints[coa_name][nav_ind]['point']['z'] = nav_data.y
+          end
+      end
+      end
+      -------------------------------------------------
+      if coa_data.country then --there is a country table
+        for cntry_id, cntry_data in pairs(coa_data.country) do
 
-	self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
-	
-	self:ScoreMenu()
-	
-	
-	return self
+          local countryName = string.lower(cntry_data.name)
+          self.Units[coa_name][countryName] = {}
+          self.Units[coa_name][countryName]["countryId"] = cntry_data.id
+
+          if type(cntry_data) == 'table' then  --just making sure
+
+            for obj_type_name, obj_type_data in pairs(cntry_data) do
+
+              if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then --should be an unncessary check
+
+                local category = obj_type_name
+
+                if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
+
+                  self.Units[coa_name][countryName][category] = {}
+
+                  for group_num, GroupTemplate in pairs(obj_type_data.group) do
+
+                    if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
+                      self:_RegisterGroup( GroupTemplate )
+                    end --if GroupTemplate and GroupTemplate.units then
+                  end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
+                end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then
+              end --if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then
+          end --for obj_type_name, obj_type_data in pairs(cntry_data) do
+          end --if type(cntry_data) == 'table' then
+      end --for cntry_id, cntry_data in pairs(coa_data.country) do
+      end --if coa_data.country then --there is a country table
+    end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
+  end --for coa_name, coa_data in pairs(mission.coalition) do
+
+  --self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
+
+  self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
+
+  self:ScoreMenu()
+
+  return self
 end
 
 
@@ -5118,49 +5618,49 @@ end
 -- This method is used by the SPAWN class.
 function DATABASE:Spawn( SpawnTemplate )
 
-	self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
-	
-	-- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
-	local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
-	local SpawnCountryID = SpawnTemplate.SpawnCountryID
-	local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
-	
-	-- Nullify
-	SpawnTemplate.SpawnCoalitionID = nil
-	SpawnTemplate.SpawnCountryID = nil
-	SpawnTemplate.SpawnCategoryID = nil
-	
-	self:_RegisterGroup( SpawnTemplate )
-	coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
+  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
 
-	-- Restore
-	SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
-	SpawnTemplate.SpawnCountryID = SpawnCountryID
-	SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+  -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
+  local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
+  local SpawnCountryID = SpawnTemplate.SpawnCountryID
+  local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
 
-	
-	local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
-	return SpawnGroup
+  -- Nullify
+  SpawnTemplate.SpawnCoalitionID = nil
+  SpawnTemplate.SpawnCountryID = nil
+  SpawnTemplate.SpawnCategoryID = nil
+
+  self:_RegisterGroup( SpawnTemplate )
+  coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
+
+  -- Restore
+  SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
+  SpawnTemplate.SpawnCountryID = SpawnCountryID
+  SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+
+
+  local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
+  return SpawnGroup
 end
 
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
-	self:F( Status )
+  self:F( Status )
 
-	self.Groups[GroupName].Status = Status
+  self.Groups[GroupName].Status = Status
 end
 
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
-	self:F( Status )
+  self:F( Status )
 
-	if self.Groups[GroupName] then
-		return self.Groups[GroupName].Status
-	else
-		return ""
-	end
+  if self.Groups[GroupName] then
+    return self.Groups[GroupName].Status
+  else
+    return ""
+  end
 end
 
 
@@ -5171,35 +5671,35 @@ end
 --- Registers new Group Templates within the DATABASE Object.
 function DATABASE:_RegisterGroup( GroupTemplate )
 
-	local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
+  local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
-	if not self.Groups[GroupTemplateName] then
-		self.Groups[GroupTemplateName] = {}
-		self.Groups[GroupTemplateName].Status = nil
-	end
-	self.Groups[GroupTemplateName].GroupName = GroupTemplateName
-	self.Groups[GroupTemplateName].Template = GroupTemplate
-	self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-	self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-	self.Groups[GroupTemplateName].Units = GroupTemplate.units
-	
-	self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
-						
-	for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
-	
-		local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-		self.Units[UnitTemplateName] = {}
-		self.Units[UnitTemplateName].UnitName = UnitTemplateName
-		self.Units[UnitTemplateName].Template = UnitTemplate
-		self.Units[UnitTemplateName].GroupName = GroupTemplateName
-		self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-		self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
-		if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-			self.ClientsByName[UnitTemplateName] = UnitTemplate
-			self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
-		end
-		self:T( { "Unit", self.Units[UnitTemplateName].UnitName } )
-	end 
+  if not self.Groups[GroupTemplateName] then
+    self.Groups[GroupTemplateName] = {}
+    self.Groups[GroupTemplateName].Status = nil
+  end
+  self.Groups[GroupTemplateName].GroupName = GroupTemplateName
+  self.Groups[GroupTemplateName].Template = GroupTemplate
+  self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
+  self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+  self.Groups[GroupTemplateName].Units = GroupTemplate.units
+
+  self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+
+  for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
+
+    local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
+    self.Units[UnitTemplateName] = {}
+    self.Units[UnitTemplateName].UnitName = UnitTemplateName
+    self.Units[UnitTemplateName].Template = UnitTemplate
+    self.Units[UnitTemplateName].GroupName = GroupTemplateName
+    self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
+    self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
+      self.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+    end
+    self:T( { "Unit", self.Units[UnitTemplateName].UnitName } )
+  end
 end
 
 
@@ -5208,96 +5708,94 @@ end
 
 
 --- Track DCSRTE DEAD or CRASH events for the internal scoring.
-function DATABASE:OnDeadOrCrash( event )
-	self:F( { event } )
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnDeadOrCrash( Event )
+  self:F( { Event } )
 
-	local TargetUnit = nil
-	local TargetGroup = nil
-	local TargetUnitName = ""
-	local TargetGroupName = ""
-	local TargetPlayerName = ""
-	local TargetCoalition = nil
-	local TargetCategory = nil
-	local TargetType = nil
-	local TargetUnitCoalition = nil
-	local TargetUnitCategory = nil
-	local TargetUnitType = nil
+  local TargetUnit = nil
+  local TargetGroup = nil
+  local TargetUnitName = ""
+  local TargetGroupName = ""
+  local TargetPlayerName = ""
+  local TargetCoalition = nil
+  local TargetCategory = nil
+  local TargetType = nil
+  local TargetUnitCoalition = nil
+  local TargetUnitCategory = nil
+  local TargetUnitType = nil
 
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-	
-		TargetUnit = event.initiator
-		TargetGroup = Unit.getGroup( TargetUnit )
-		TargetUnitDesc = TargetUnit:getDesc()
-		
-		TargetUnitName = TargetUnit:getName()
-		if TargetGroup and TargetGroup:isExist() then
-			TargetGroupName = TargetGroup:getName()
-		end
-		TargetPlayerName = TargetUnit:getPlayerName()
+  if Event.IniDCSUnit then
 
-		TargetCoalition = TargetUnit:getCoalition()
-		--TargetCategory = TargetUnit:getCategory()
-		TargetCategory = TargetUnitDesc.category  -- Workaround
-		TargetType = TargetUnit:getTypeName()
+    TargetUnit = Event.IniDCSUnit
+    TargetUnitName = Event.IniDCSUnitName
+    TargetGroup = Event.IniDCSGroup
+    TargetGroupName = Event.IniDCSGroupName
+    TargetPlayerName = TargetUnit:getPlayerName()
 
-		TargetUnitCoalition = DATABASECoalition[TargetCoalition]
-		TargetUnitCategory = DATABASECategory[TargetCategory]
-		TargetUnitType = TargetType
+    TargetCoalition = TargetUnit:getCoalition()
+    --TargetCategory = TargetUnit:getCategory()
+    TargetCategory = TargetUnit:getDesc().category  -- Workaround
+    TargetType = TargetUnit:getTypeName()
 
-		self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
-	end
+    TargetUnitCoalition = _DATABASECoalition[TargetCoalition]
+    TargetUnitCategory = _DATABASECategory[T1argetCategory]
+    TargetUnitType = TargetType
 
-	for PlayerName, PlayerData in pairs( self.Players ) do
-		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			self:T( "Something got killed" )
+    self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+  end
 
-			-- Some variables
-			local InitUnitName = PlayerData.UnitName
-			local InitUnitType = PlayerData.UnitType
-			local InitCoalition = PlayerData.UnitCoalition
-			local InitCategory = PlayerData.UnitCategory
-			local InitUnitCoalition = DATABASECoalition[InitCoalition]
-			local InitUnitCategory = DATABASECategory[InitCategory]
-			
-			self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
+  for PlayerName, PlayerData in pairs( self.Players ) do
+    if PlayerData then -- This should normally not happen, but i'll test it anyway.
+      self:T( "Something got killed" )
 
-			-- What is he hitting?
-			if TargetCategory then
-				if PlayerData and PlayerData.Hit and PlayerData.Hit[TargetCategory] and PlayerData.Hit[TargetCategory][TargetUnitName] then -- Was there a hit for this unit for this player before registered???
-					if not PlayerData.Kill[TargetCategory] then
-						PlayerData.Kill[TargetCategory] = {}
-					end
-					if not PlayerData.Kill[TargetCategory][TargetType] then 
-						PlayerData.Kill[TargetCategory][TargetType] = {}
-						PlayerData.Kill[TargetCategory][TargetType].Score = 0
-						PlayerData.Kill[TargetCategory][TargetType].ScoreKill = 0
-						PlayerData.Kill[TargetCategory][TargetType].Penalty = 0
-						PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = 0
-					end
+      -- Some variables
+      local InitUnitName = PlayerData.UnitName
+      local InitUnitType = PlayerData.UnitType
+      local InitCoalition = PlayerData.UnitCoalition
+      local InitCategory = PlayerData.UnitCategory
+      local InitUnitCoalition = _DATABASECoalition[InitCoalition]
+      local InitUnitCategory = _DATABASECategory[InitCategory]
 
-					if InitCoalition == TargetCoalition then
-            PlayerData.Penalty = PlayerData.Penalty + 25            
-						PlayerData.Kill[TargetCategory][TargetType].Penalty = PlayerData.Kill[TargetCategory][TargetType].Penalty + 25						
-						PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = PlayerData.Kill[TargetCategory][TargetType].PenaltyKill + 1
-						MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-									         PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
-									         ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty, 
-									       "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-						self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-					else
-            PlayerData.Score = PlayerData.Score + 10            
-						PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10						
-						PlayerData.Kill[TargetCategory][TargetType].ScoreKill = PlayerData.Kill[TargetCategory][TargetType].ScoreKill + 1
-						MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-									         PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
-									         ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty, 
-									       "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-						self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-					end
-				end
-			end
-		end
-	end
+      self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
+
+      -- What is he hitting?
+      if TargetCategory then
+        if PlayerData and PlayerData.Hit and PlayerData.Hit[TargetCategory] and PlayerData.Hit[TargetCategory][TargetUnitName] then -- Was there a hit for this unit for this player before registered???
+          if not PlayerData.Kill[TargetCategory] then
+            PlayerData.Kill[TargetCategory] = {}
+        end
+        if not PlayerData.Kill[TargetCategory][TargetType] then
+          PlayerData.Kill[TargetCategory][TargetType] = {}
+          PlayerData.Kill[TargetCategory][TargetType].Score = 0
+          PlayerData.Kill[TargetCategory][TargetType].ScoreKill = 0
+          PlayerData.Kill[TargetCategory][TargetType].Penalty = 0
+          PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = 0
+        end
+
+        if InitCoalition == TargetCoalition then
+          PlayerData.Penalty = PlayerData.Penalty + 25
+          PlayerData.Kill[TargetCategory][TargetType].Penalty = PlayerData.Kill[TargetCategory][TargetType].Penalty + 25
+          PlayerData.Kill[TargetCategory][TargetType].PenaltyKill = PlayerData.Kill[TargetCategory][TargetType].PenaltyKill + 1
+          MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+            PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
+            ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
+            "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+          self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        else
+          PlayerData.Score = PlayerData.Score + 10
+          PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10
+          PlayerData.Kill[TargetCategory][TargetType].ScoreKill = PlayerData.Kill[TargetCategory][TargetType].ScoreKill + 1
+          MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+            PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
+            ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
+            "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+          self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        end
+        end
+      end
+    end
+  end
 end
 
 
@@ -5307,20 +5805,20 @@ end
 
 --- Follows new players entering Clients within the DCSRTE.
 function DATABASE:_FollowPlayers()
-	self:F3( "_FollowPlayers" )
+  self:F3( "_FollowPlayers" )
 
-	local ClientUnit = 0
-	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
-	local unitId
-	local unitData
-	local AlivePlayerUnits = {}
-	
-	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T3( { "_FollowPlayers", CoalitionData } )
-		for UnitId, UnitData in pairs( CoalitionData ) do
-			self:_AddPlayerFromUnit( UnitData )
-		end
-	end
+  local ClientUnit = 0
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
+  local unitId
+  local unitData
+  local AlivePlayerUnits = {}
+
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    self:T3( { "_FollowPlayers", CoalitionData } )
+    for UnitId, UnitData in pairs( CoalitionData ) do
+      self:_AddPlayerFromUnit( UnitData )
+    end
+  end
 end
 
 
@@ -5330,102 +5828,102 @@ end
 
 --- Add a new player entering a Unit.
 function DATABASE:_AddPlayerFromUnit( UnitData )
-	self:F( UnitData )
+  self:F( UnitData )
 
-	if UnitData:isExist() then
-		local UnitName = UnitData:getName()
-		local PlayerName = UnitData:getPlayerName()
-		local UnitDesc = UnitData:getDesc()
-		local UnitCategory = UnitDesc.category
-		local UnitCoalition = UnitData:getCoalition()
-		local UnitTypeName = UnitData:getTypeName()
+  if UnitData:isExist() then
+    local UnitName = UnitData:getName()
+    local PlayerName = UnitData:getPlayerName()
+    local UnitDesc = UnitData:getDesc()
+    local UnitCategory = UnitDesc.category
+    local UnitCoalition = UnitData:getCoalition()
+    local UnitTypeName = UnitData:getTypeName()
 
-		self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
+    self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
-		if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
-			self.Players[PlayerName] = {}
-			self.Players[PlayerName].Hit = {}
-			self.Players[PlayerName].Kill = {}
-			self.Players[PlayerName].Mission = {}
-			
-			-- for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				-- self.Players[PlayerName].Hit[CategoryID] = {}
-				-- self.Players[PlayerName].Kill[CategoryID] = {}
-			-- end
-			self.Players[PlayerName].HitPlayers = {}
-			self.Players[PlayerName].HitUnits = {}
+    if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
+      self.Players[PlayerName] = {}
+      self.Players[PlayerName].Hit = {}
+      self.Players[PlayerName].Kill = {}
+      self.Players[PlayerName].Mission = {}
+
+      -- for CategoryID, CategoryName in pairs( DATABASECategory ) do
+      -- self.Players[PlayerName].Hit[CategoryID] = {}
+      -- self.Players[PlayerName].Kill[CategoryID] = {}
+      -- end
+      self.Players[PlayerName].HitPlayers = {}
+      self.Players[PlayerName].HitUnits = {}
       self.Players[PlayerName].Score = 0
-			self.Players[PlayerName].Penalty = 0
-			self.Players[PlayerName].PenaltyCoalition = 0
-			self.Players[PlayerName].PenaltyWarning = 0
-		end
+      self.Players[PlayerName].Penalty = 0
+      self.Players[PlayerName].PenaltyCoalition = 0
+      self.Players[PlayerName].PenaltyWarning = 0
+    end
 
-		if not self.Players[PlayerName].UnitCoalition then
-			self.Players[PlayerName].UnitCoalition = UnitCoalition
-		else
-			if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
-				self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50						
-				self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-				MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. DATABASECoalition[UnitCoalition] ..  
-							         "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.", 
-							       "", 
-							       2, 
-							       "/PENALTYCOALITION" .. PlayerName 
-							     ):ToAll()
-				self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, DATABASECoalition[self.Players[PlayerName].UnitCoalition], DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,  
-							   UnitName, DATABASECoalition[UnitCoalition], DATABASECategory[UnitCategory], UnitData:getTypeName() )
-			end
-		end
-		self.Players[PlayerName].UnitName = UnitName
-		self.Players[PlayerName].UnitCoalition = UnitCoalition
-		self.Players[PlayerName].UnitCategory = UnitCategory
-		self.Players[PlayerName].UnitType = UnitTypeName
+    if not self.Players[PlayerName].UnitCoalition then
+      self.Players[PlayerName].UnitCoalition = UnitCoalition
+    else
+      if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
+        self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50
+        self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
+        MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. _DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _DATABASECoalition[UnitCoalition] ..
+          "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
+          "",
+          2,
+          "/PENALTYCOALITION" .. PlayerName
+        ):ToAll()
+        self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _DATABASECoalition[self.Players[PlayerName].UnitCoalition], _DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+          UnitName, _DATABASECoalition[UnitCoalition], _DATABASECategory[UnitCategory], UnitData:getTypeName() )
+      end
+    end
+    self.Players[PlayerName].UnitName = UnitName
+    self.Players[PlayerName].UnitCoalition = UnitCoalition
+    self.Players[PlayerName].UnitCategory = UnitCategory
+    self.Players[PlayerName].UnitType = UnitTypeName
 
     if self.Players[PlayerName].Penalty > 100 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
-        MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than 150, you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty, 
-                       "", 
-                       30, 
-                       "/PENALTYCOALITION" .. PlayerName 
-                     ):ToAll()
+        MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than 150, you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
+          "",
+          30,
+          "/PENALTYCOALITION" .. PlayerName
+        ):ToAll()
         self.Players[PlayerName].PenaltyWarning = self.Players[PlayerName].PenaltyWarning + 1
       end
     end
-    
+
     if self.Players[PlayerName].Penalty > 150 then
       ClientGroup = GROUP:NewFromDCSUnit( UnitData )
       ClientGroup:Destroy()
-      MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!", 
-                     "", 
-                     10, 
-                     "/PENALTYCOALITION" .. PlayerName 
-                   ):ToAll()
+      MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
+        "",
+        10,
+        "/PENALTYCOALITION" .. PlayerName
+      ):ToAll()
     end
-		
-	end
+
+  end
 end
 
 
 --- Registers Scores the players completing a Mission Task.
 function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
-	self:F( { PlayerUnit, MissionName, Score } )
+  self:F( { PlayerUnit, MissionName, Score } )
 
-	local PlayerName = PlayerUnit:getPlayerName()
-	
-	if not self.Players[PlayerName].Mission[MissionName] then
-		self.Players[PlayerName].Mission[MissionName] = {}
-		self.Players[PlayerName].Mission[MissionName].ScoreTask = 0
-		self.Players[PlayerName].Mission[MissionName].ScoreMission = 0
-	end
-	
-	self:T( PlayerName )
-	self:T( self.Players[PlayerName].Mission[MissionName] )
+  local PlayerName = PlayerUnit:getPlayerName()
 
-  self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score            
-	self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+  if not self.Players[PlayerName].Mission[MissionName] then
+    self.Players[PlayerName].Mission[MissionName] = {}
+    self.Players[PlayerName].Mission[MissionName].ScoreTask = 0
+    self.Players[PlayerName].Mission[MissionName].ScoreMission = 0
+  end
 
-  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..  
-    Score .. " Score points added.", 
+  self:T( PlayerName )
+  self:T( self.Players[PlayerName].Mission[MissionName] )
+
+  self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score
+  self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+
+  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..
+    Score .. " Score points added.",
     "", 20, "/SCORETASK" .. PlayerName ):ToAll()
 
   _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
@@ -5434,19 +5932,19 @@ end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 function DATABASE:_AddMissionScore( MissionName, Score )
-	self:F( { PlayerUnit, MissionName, Score } )
+  self:F( { PlayerUnit, MissionName, Score } )
 
-	for PlayerName, PlayerData in pairs( self.Players ) do
-	
-		if PlayerData.Mission[MissionName] then
-      PlayerData.Score = PlayerData.Score + Score            
-			PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
-			MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..  
-						  Score .. " Score points added.", 
-						  "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
-			_Database:ScoreAdd( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
-		end
-	end
+  for PlayerName, PlayerData in pairs( self.Players ) do
+
+    if PlayerData.Mission[MissionName] then
+      PlayerData.Score = PlayerData.Score + Score
+      PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
+      MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..
+        Score .. " Score points added.",
+        "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
+      _Database:ScoreAdd( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
+    end
+  end
 end
 
 
@@ -5454,373 +5952,367 @@ end
 -- @section Events
 
 
-function DATABASE:OnHit( event )
-	self:F( { event } )
+--- Handles the OnHit event for the scoring.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnHit( Event )
+  self:F( { Event } )
 
-	local InitUnit = nil
-	local InitUnitName = ""
-	local InitGroupName = ""
-	local InitPlayerName = "dummy"
+  local InitUnit = nil
+  local InitUnitName = ""
+  local InitGroup = nil
+  local InitGroupName = ""
+  local InitPlayerName = "dummy"
 
-	local InitCoalition = nil
-	local InitCategory = nil
-	local InitType = nil
-	local InitUnitCoalition = nil
-	local InitUnitCategory = nil
-	local InitUnitType = nil
+  local InitCoalition = nil
+  local InitCategory = nil
+  local InitType = nil
+  local InitUnitCoalition = nil
+  local InitUnitCategory = nil
+  local InitUnitType = nil
 
-	local TargetUnit = nil
-	local TargetUnitName = ""
-	local TargetGroupName = ""
-	local TargetPlayerName = ""
+  local TargetUnit = nil
+  local TargetUnitName = ""
+  local TargetGroup = nil
+  local TargetGroupName = ""
+  local TargetPlayerName = ""
 
-	local TargetCoalition = nil
-	local TargetCategory = nil
-	local TargetType = nil
-	local TargetUnitCoalition = nil
-	local TargetUnitCategory = nil
-	local TargetUnitType = nil
+  local TargetCoalition = nil
+  local TargetCategory = nil
+  local TargetType = nil
+  local TargetUnitCoalition = nil
+  local TargetUnitCategory = nil
+  local TargetUnitType = nil
 
-	if event.initiator and event.initiator:getName() then
-	
-		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		
-			InitUnit = event.initiator
-			InitGroup = Unit.getGroup( InitUnit )
-			InitUnitDesc = InitUnit:getDesc()
-			
-			InitUnitName = InitUnit:getName()
-			if InitGroup and InitGroup:isExist() then 
-				InitGroupName = InitGroup:getName()
-			end
-			InitPlayerName = InitUnit:getPlayerName()
-			
-			InitCoalition = InitUnit:getCoalition()
-			--InitCategory = InitUnit:getCategory()
-			InitCategory = InitUnitDesc.category  -- Workaround
-			InitType = InitUnit:getTypeName()
+  if Event.IniDCSUnit then
 
-			InitUnitCoalition = DATABASECoalition[InitCoalition]
-			InitUnitCategory = DATABASECategory[InitCategory]
-			InitUnitType = InitType
-			
-			self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType , InitUnitCoalition, InitUnitCategory, InitUnitType } )
-			self:T( { InitUnitDesc } )
-		end
+    InitUnit = Event.IniDCSUnit
+    InitUnitName = Event.IniDCSUnitName
+    InitGroup = Event.IniDCSGroup
+    InitGroupName = Event.IniDCSGroupName
+    InitPlayerName = InitUnit:getPlayerName()
 
-			
-		if event.target and Object.getCategory(event.target) == Object.Category.UNIT then
-		
-			TargetUnit = event.target
-			TargetGroup = Unit.getGroup( TargetUnit )
-			TargetUnitDesc = TargetUnit:getDesc()
-			
-			TargetUnitName = TargetUnit:getName()
-			if TargetGroup and TargetGroup:isExist() then 
-				TargetGroupName = TargetGroup:getName() 
-			end
-			TargetPlayerName = TargetUnit:getPlayerName()
+    InitCoalition = InitUnit:getCoalition()
+    --TODO: Workaround Client DCS Bug
+    --InitCategory = InitUnit:getCategory()
+    InitCategory = InitUnit:getDesc().category
+    InitType = InitUnit:getTypeName()
 
-			TargetCoalition = TargetUnit:getCoalition()
-			--TargetCategory = TargetUnit:getCategory()
-			TargetCategory = TargetUnitDesc.category  -- Workaround
-			TargetType = TargetUnit:getTypeName()
+    InitUnitCoalition = _DATABASECoalition[InitCoalition]
+    InitUnitCategory = _DATABASECategory[InitCategory]
+    InitUnitType = InitType
 
-			TargetUnitCoalition = DATABASECoalition[TargetCoalition]
-			TargetUnitCategory = DATABASECategory[TargetCategory]
-			TargetUnitType = TargetType
-			
-			self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
-			self:T( { TargetUnitDesc } )
-		end
-		
-		if InitPlayerName ~= nil then -- It is a player that is hitting something
-			self:_AddPlayerFromUnit( InitUnit )
-			if self.Players[InitPlayerName] then -- This should normally not happen, but i'll test it anyway.
-				if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-					self:_AddPlayerFromUnit( TargetUnit )
-					self.Players[InitPlayerName].HitPlayers = self.Players[InitPlayerName].HitPlayers + 1
-				end
-				
-				self:T( "Hitting Something" )
-				-- What is he hitting?
-				if TargetCategory then
-					if not self.Players[InitPlayerName].Hit[TargetCategory] then
-						self.Players[InitPlayerName].Hit[TargetCategory] = {}
-					end
-					if not self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName] then
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName] = {}
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = 0
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = 0
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit = 0
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = 0
-					end
-					local Score = 0
-					if InitCoalition == TargetCoalition then
-            self.Players[InitPlayerName].Penalty = self.Players[InitPlayerName].Penalty + 10            
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty + 10						
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit + 1
-						MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty .. 
-						              ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty, 
-									       "", 
-									       2, 
-									       "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName 
-									     ):ToAll()
-						self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-					else
-            self.Players[InitPlayerName].Score = self.Players[InitPlayerName].Score + 10            
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score + 1						
-						self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit + 1
-						MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-						              self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit .. " times. Score: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score ..
-						              ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty, 
-									       "", 
-									       2, 
-									       "/SCORE" .. InitPlayerName .. "/" .. InitUnitName 
-									     ):ToAll()
-						self:ScoreAdd( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-					end
-				end
-			end
-		elseif InitPlayerName == nil then -- It is an AI hitting a player???
-				
-		end
-	end
+    self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType , InitUnitCoalition, InitUnitCategory, InitUnitType } )
+  end
+
+
+  if Event.TgtDCSUnit then
+
+    TargetUnit = Event.TgtDCSUnit
+    TargetUnitName = Event.TgtDCSUnitName
+    TargetGroup = Event.TgtDCSGroup
+    TargetGroupName = Event.TgtDCSGroupName
+    TargetPlayerName = TargetUnit:getPlayerName()
+
+    TargetCoalition = TargetUnit:getCoalition()
+    --TODO: Workaround Client DCS Bug
+    --TargetCategory = TargetUnit:getCategory()
+    TargetCategory = TargetUnit:getDesc().category
+    TargetType = TargetUnit:getTypeName()
+
+    TargetUnitCoalition = _DATABASECoalition[TargetCoalition]
+    TargetUnitCategory = _DATABASECategory[TargetCategory]
+    TargetUnitType = TargetType
+
+    self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
+  end
+
+  if InitPlayerName ~= nil then -- It is a player that is hitting something
+    self:_AddPlayerFromUnit( InitUnit )
+    if self.Players[InitPlayerName] then -- This should normally not happen, but i'll test it anyway.
+      if TargetPlayerName ~= nil then -- It is a player hitting another player ...
+        self:_AddPlayerFromUnit( TargetUnit )
+        self.Players[InitPlayerName].HitPlayers = self.Players[InitPlayerName].HitPlayers + 1
+    end
+
+    self:T( "Hitting Something" )
+    -- What is he hitting?
+    if TargetCategory then
+      if not self.Players[InitPlayerName].Hit[TargetCategory] then
+        self.Players[InitPlayerName].Hit[TargetCategory] = {}
+      end
+      if not self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName] then
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName] = {}
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = 0
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = 0
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit = 0
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = 0
+      end
+      local Score = 0
+      if InitCoalition == TargetCoalition then
+        self.Players[InitPlayerName].Penalty = self.Players[InitPlayerName].Penalty + 10
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty + 10
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit + 1
+        MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+          self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty ..
+          ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty,
+          "",
+          2,
+          "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName
+        ):ToAll()
+        self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+      else
+        self.Players[InitPlayerName].Score = self.Players[InitPlayerName].Score + 10
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score + 1
+        self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit + 1
+        MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+          self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit .. " times. Score: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score ..
+          ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty,
+          "",
+          2,
+          "/SCORE" .. InitPlayerName .. "/" .. InitUnitName
+        ):ToAll()
+        self:ScoreAdd( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+      end
+    end
+    end
+  elseif InitPlayerName == nil then -- It is an AI hitting a player???
+
+  end
 end
 
 
 function DATABASE:ReportScoreAll()
 
-env.info( "Hello World " )
+  env.info( "Hello World " )
 
-	local ScoreMessage = ""
-	local PlayerMessage = ""
-	
-	self:T( "Score Report" )
+  local ScoreMessage = ""
+  local PlayerMessage = ""
 
-	for PlayerName, PlayerData in pairs( self.Players ) do
-		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			self:T( "Score Player: " .. PlayerName )
+  self:T( "Score Report" )
 
-			-- Some variables
-			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
-			local InitUnitCategory = DATABASECategory[PlayerData.UnitCategory]
-			local InitUnitType = PlayerData.UnitType
-			local InitUnitName = PlayerData.UnitName
-			
-			local PlayerScore = 0
-			local PlayerPenalty = 0
-			
-			ScoreMessage = ":\n"
-			
-			local ScoreMessageHits = ""
+  for PlayerName, PlayerData in pairs( self.Players ) do
+    if PlayerData then -- This should normally not happen, but i'll test it anyway.
+      self:T( "Score Player: " .. PlayerName )
 
-			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				self:T( CategoryName )
-				if PlayerData.Hit[CategoryID] then
-					local Score = 0
-					local ScoreHit = 0
-					local Penalty = 0
-					local PenaltyHit = 0
-					self:T( "Hit scores exist for player " .. PlayerName )
-					for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
-						Score = Score + UnitData.Score
-						ScoreHit = ScoreHit + UnitData.ScoreHit
-						Penalty = Penalty + UnitData.Penalty
-						PenaltyHit = UnitData.PenaltyHit
-					end
-					local ScoreMessageHit = string.format( "%s:%d  ", CategoryName, Score - Penalty )
-					self:T( ScoreMessageHit )
-					ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
-					PlayerScore = PlayerScore + Score
-					PlayerPenalty = PlayerPenalty + Penalty
-				else
-					--ScoreMessageHits = ScoreMessageHits .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
-				end
-			end
-			if ScoreMessageHits ~= "" then
-				ScoreMessage = ScoreMessage .. "  Hits: " .. ScoreMessageHits .. "\n"
-			end
-	
-			local ScoreMessageKills = ""
-			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				self:T( "Kill scores exist for player " .. PlayerName )
-				if PlayerData.Kill[CategoryID] then
-					local Score = 0
-					local ScoreKill = 0
-					local Penalty = 0
-					local PenaltyKill = 0
-					
-					for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
-						Score = Score + UnitData.Score
-						ScoreKill = ScoreKill + UnitData.ScoreKill
-						Penalty = Penalty + UnitData.Penalty
-						PenaltyKill = PenaltyKill + UnitData.PenaltyKill
-					end
-					
-					local ScoreMessageKill = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
-					self:T( ScoreMessageKill )
-					ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+      -- Some variables
+      local InitUnitCoalition = _DATABASECoalition[PlayerData.UnitCoalition]
+      local InitUnitCategory = _DATABASECategory[PlayerData.UnitCategory]
+      local InitUnitType = PlayerData.UnitType
+      local InitUnitName = PlayerData.UnitName
 
-					PlayerScore = PlayerScore + Score
-					PlayerPenalty = PlayerPenalty + Penalty
-				else
-					--ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
-				end
-			end
-			if ScoreMessageKills ~= "" then
-				ScoreMessage = ScoreMessage .. "  Kills: " .. ScoreMessageKills .. "\n"
-			end
-			
-			local ScoreMessageCoalitionChangePenalties = ""
-			if PlayerData.PenaltyCoalition ~= 0 then
-				ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
-				PlayerPenalty = PlayerPenalty + PlayerData.Penalty
-			end
-			if ScoreMessageCoalitionChangePenalties ~= "" then
-				ScoreMessage = ScoreMessage .. "  Coalition Penalties: " .. ScoreMessageCoalitionChangePenalties .. "\n"
-			end
+      local PlayerScore = 0
+      local PlayerPenalty = 0
 
-			local ScoreMessageMission = ""
-			local ScoreMission = 0
-			local ScoreTask = 0
-			for MissionName, MissionData in pairs( PlayerData.Mission ) do
-				ScoreMission = ScoreMission + MissionData.ScoreMission
-				ScoreTask = ScoreTask + MissionData.ScoreTask
-				ScoreMessageMission = ScoreMessageMission .. "'" .. MissionName .. "'; " 
-			end
-			PlayerScore = PlayerScore + ScoreMission + ScoreTask
+      ScoreMessage = ":\n"
 
-			if ScoreMessageMission ~= "" then
-				ScoreMessage = ScoreMessage .. "  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ")\n"
-			end
-			
-			PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score:%d (%d Score -%d Penalties)%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
-		end
-	end
-	MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
+      local ScoreMessageHits = ""
+
+      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+        self:T( CategoryName )
+        if PlayerData.Hit[CategoryID] then
+          local Score = 0
+          local ScoreHit = 0
+          local Penalty = 0
+          local PenaltyHit = 0
+          self:T( "Hit scores exist for player " .. PlayerName )
+          for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
+            Score = Score + UnitData.Score
+            ScoreHit = ScoreHit + UnitData.ScoreHit
+            Penalty = Penalty + UnitData.Penalty
+            PenaltyHit = UnitData.PenaltyHit
+          end
+          local ScoreMessageHit = string.format( "%s:%d  ", CategoryName, Score - Penalty )
+          self:T( ScoreMessageHit )
+          ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
+          PlayerScore = PlayerScore + Score
+          PlayerPenalty = PlayerPenalty + Penalty
+        else
+        --ScoreMessageHits = ScoreMessageHits .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        end
+      end
+      if ScoreMessageHits ~= "" then
+        ScoreMessage = ScoreMessage .. "  Hits: " .. ScoreMessageHits .. "\n"
+      end
+
+      local ScoreMessageKills = ""
+      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+        self:T( "Kill scores exist for player " .. PlayerName )
+        if PlayerData.Kill[CategoryID] then
+          local Score = 0
+          local ScoreKill = 0
+          local Penalty = 0
+          local PenaltyKill = 0
+
+          for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
+            Score = Score + UnitData.Score
+            ScoreKill = ScoreKill + UnitData.ScoreKill
+            Penalty = Penalty + UnitData.Penalty
+            PenaltyKill = PenaltyKill + UnitData.PenaltyKill
+          end
+
+          local ScoreMessageKill = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
+          self:T( ScoreMessageKill )
+          ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+
+          PlayerScore = PlayerScore + Score
+          PlayerPenalty = PlayerPenalty + Penalty
+        else
+        --ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        end
+      end
+      if ScoreMessageKills ~= "" then
+        ScoreMessage = ScoreMessage .. "  Kills: " .. ScoreMessageKills .. "\n"
+      end
+
+      local ScoreMessageCoalitionChangePenalties = ""
+      if PlayerData.PenaltyCoalition ~= 0 then
+        ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
+        PlayerPenalty = PlayerPenalty + PlayerData.Penalty
+      end
+      if ScoreMessageCoalitionChangePenalties ~= "" then
+        ScoreMessage = ScoreMessage .. "  Coalition Penalties: " .. ScoreMessageCoalitionChangePenalties .. "\n"
+      end
+
+      local ScoreMessageMission = ""
+      local ScoreMission = 0
+      local ScoreTask = 0
+      for MissionName, MissionData in pairs( PlayerData.Mission ) do
+        ScoreMission = ScoreMission + MissionData.ScoreMission
+        ScoreTask = ScoreTask + MissionData.ScoreTask
+        ScoreMessageMission = ScoreMessageMission .. "'" .. MissionName .. "'; "
+      end
+      PlayerScore = PlayerScore + ScoreMission + ScoreTask
+
+      if ScoreMessageMission ~= "" then
+        ScoreMessage = ScoreMessage .. "  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ")\n"
+      end
+
+      PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score:%d (%d Score -%d Penalties)%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
+    end
+  end
+  MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
 end
 
 
 function DATABASE:ReportScorePlayer()
 
-env.info( "Hello World " )
+  env.info( "Hello World " )
 
-	local ScoreMessage = ""
-	local PlayerMessage = ""
-	
-	self:T( "Score Report" )
+  local ScoreMessage = ""
+  local PlayerMessage = ""
 
-	for PlayerName, PlayerData in pairs( self.Players ) do
-		if PlayerData then -- This should normally not happen, but i'll test it anyway.
-			self:T( "Score Player: " .. PlayerName )
+  self:T( "Score Report" )
 
-			-- Some variables
-			local InitUnitCoalition = DATABASECoalition[PlayerData.UnitCoalition]
-			local InitUnitCategory = DATABASECategory[PlayerData.UnitCategory]
-			local InitUnitType = PlayerData.UnitType
-			local InitUnitName = PlayerData.UnitName
-			
-			local PlayerScore = 0
-			local PlayerPenalty = 0
-			
-			ScoreMessage = ""
-			
-			local ScoreMessageHits = ""
+  for PlayerName, PlayerData in pairs( self.Players ) do
+    if PlayerData then -- This should normally not happen, but i'll test it anyway.
+      self:T( "Score Player: " .. PlayerName )
 
-			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				self:T( CategoryName )
-				if PlayerData.Hit[CategoryID] then
-					local Score = 0
-					local ScoreHit = 0
-					local Penalty = 0
-					local PenaltyHit = 0
-					self:T( "Hit scores exist for player " .. PlayerName )
-					for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
-						Score = Score + UnitData.Score
-						ScoreHit = ScoreHit + UnitData.ScoreHit
-						Penalty = Penalty + UnitData.Penalty
-						PenaltyHit = UnitData.PenaltyHit
-					end
-					local ScoreMessageHit = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
-					self:T( ScoreMessageHit )
-					ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
-					PlayerScore = PlayerScore + Score
-					PlayerPenalty = PlayerPenalty + Penalty
-				else
-					--ScoreMessageHits = ScoreMessageHits .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
-				end
-			end
-			if ScoreMessageHits ~= "" then
-				ScoreMessage = ScoreMessage .. "\n  Hits: " .. ScoreMessageHits .. " "
-			end
-	
-			local ScoreMessageKills = ""
-			for CategoryID, CategoryName in pairs( DATABASECategory ) do
-				self:T( "Kill scores exist for player " .. PlayerName )
-				if PlayerData.Kill[CategoryID] then
-					local Score = 0
-					local ScoreKill = 0
-					local Penalty = 0
-					local PenaltyKill = 0
-					
-					for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
-						Score = Score + UnitData.Score
-						ScoreKill = ScoreKill + UnitData.ScoreKill
-						Penalty = Penalty + UnitData.Penalty
-						PenaltyKill = PenaltyKill + UnitData.PenaltyKill
-					end
-					
-					local ScoreMessageKill = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
-					self:T( ScoreMessageKill )
-					ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+      -- Some variables
+      local InitUnitCoalition = _DATABASECoalition[PlayerData.UnitCoalition]
+      local InitUnitCategory = _DATABASECategory[PlayerData.UnitCategory]
+      local InitUnitType = PlayerData.UnitType
+      local InitUnitName = PlayerData.UnitName
 
-					PlayerScore = PlayerScore + Score
-					PlayerPenalty = PlayerPenalty + Penalty
-				else
-					--ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
-				end
-			end
-			if ScoreMessageKills ~= "" then
-				ScoreMessage = ScoreMessage .. "\n  Kills: " .. ScoreMessageKills .. " "
-			end
-			
-			local ScoreMessageCoalitionChangePenalties = ""
-			if PlayerData.PenaltyCoalition ~= 0 then
-				ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
-				PlayerPenalty = PlayerPenalty + PlayerData.Penalty
-			end
-			if ScoreMessageCoalitionChangePenalties ~= "" then
-				ScoreMessage = ScoreMessage .. "\n  Coalition: " .. ScoreMessageCoalitionChangePenalties .. " "
-			end
+      local PlayerScore = 0
+      local PlayerPenalty = 0
 
-			local ScoreMessageMission = ""
-			local ScoreMission = 0
-			local ScoreTask = 0
-			for MissionName, MissionData in pairs( PlayerData.Mission ) do
-				ScoreMission = ScoreMission + MissionData.ScoreMission
-				ScoreTask = ScoreTask + MissionData.ScoreTask
-				ScoreMessageMission = ScoreMessageMission .. "'" .. MissionName .. "'; " 
-			end
-			PlayerScore = PlayerScore + ScoreMission + ScoreTask
+      ScoreMessage = ""
 
-			if ScoreMessageMission ~= "" then
-				ScoreMessage = ScoreMessage .. "\n  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ") "
-			end
-			
-			PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties ):%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
-		end
-	end
-	MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
+      local ScoreMessageHits = ""
+
+      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+        self:T( CategoryName )
+        if PlayerData.Hit[CategoryID] then
+          local Score = 0
+          local ScoreHit = 0
+          local Penalty = 0
+          local PenaltyHit = 0
+          self:T( "Hit scores exist for player " .. PlayerName )
+          for UnitName, UnitData in pairs( PlayerData.Hit[CategoryID] ) do
+            Score = Score + UnitData.Score
+            ScoreHit = ScoreHit + UnitData.ScoreHit
+            Penalty = Penalty + UnitData.Penalty
+            PenaltyHit = UnitData.PenaltyHit
+          end
+          local ScoreMessageHit = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreHit,  PenaltyHit )
+          self:T( ScoreMessageHit )
+          ScoreMessageHits = ScoreMessageHits .. ScoreMessageHit
+          PlayerScore = PlayerScore + Score
+          PlayerPenalty = PlayerPenalty + Penalty
+        else
+        --ScoreMessageHits = ScoreMessageHits .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        end
+      end
+      if ScoreMessageHits ~= "" then
+        ScoreMessage = ScoreMessage .. "\n  Hits: " .. ScoreMessageHits .. " "
+      end
+
+      local ScoreMessageKills = ""
+      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+        self:T( "Kill scores exist for player " .. PlayerName )
+        if PlayerData.Kill[CategoryID] then
+          local Score = 0
+          local ScoreKill = 0
+          local Penalty = 0
+          local PenaltyKill = 0
+
+          for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
+            Score = Score + UnitData.Score
+            ScoreKill = ScoreKill + UnitData.ScoreKill
+            Penalty = Penalty + UnitData.Penalty
+            PenaltyKill = PenaltyKill + UnitData.PenaltyKill
+          end
+
+          local ScoreMessageKill = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
+          self:T( ScoreMessageKill )
+          ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+
+          PlayerScore = PlayerScore + Score
+          PlayerPenalty = PlayerPenalty + Penalty
+        else
+        --ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        end
+      end
+      if ScoreMessageKills ~= "" then
+        ScoreMessage = ScoreMessage .. "\n  Kills: " .. ScoreMessageKills .. " "
+      end
+
+      local ScoreMessageCoalitionChangePenalties = ""
+      if PlayerData.PenaltyCoalition ~= 0 then
+        ScoreMessageCoalitionChangePenalties = ScoreMessageCoalitionChangePenalties .. string.format( " -%d (%d changed)", PlayerData.Penalty, PlayerData.PenaltyCoalition )
+        PlayerPenalty = PlayerPenalty + PlayerData.Penalty
+      end
+      if ScoreMessageCoalitionChangePenalties ~= "" then
+        ScoreMessage = ScoreMessage .. "\n  Coalition: " .. ScoreMessageCoalitionChangePenalties .. " "
+      end
+
+      local ScoreMessageMission = ""
+      local ScoreMission = 0
+      local ScoreTask = 0
+      for MissionName, MissionData in pairs( PlayerData.Mission ) do
+        ScoreMission = ScoreMission + MissionData.ScoreMission
+        ScoreTask = ScoreTask + MissionData.ScoreTask
+        ScoreMessageMission = ScoreMessageMission .. "'" .. MissionName .. "'; "
+      end
+      PlayerScore = PlayerScore + ScoreMission + ScoreTask
+
+      if ScoreMessageMission ~= "" then
+        ScoreMessage = ScoreMessage .. "\n  Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ") "
+      end
+
+      PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties ):%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
+    end
+  end
+  MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
 
 end
 
 
 function DATABASE:ScoreMenu()
-	local ReportScore = SUBMENU:New( 'Scoring' )
-	local ReportAllScores = COMMANDMENU:New( 'Score All Active Players', ReportScore, DATABASE.ReportScoreAll, self )
-	local ReportPlayerScores = COMMANDMENU:New('Your Current Score', ReportScore, DATABASE.ReportScorePlayer, self )
+  local ReportScore = SUBMENU:New( 'Scoring' )
+  local ReportAllScores = COMMANDMENU:New( 'Score All Active Players', ReportScore, DATABASE.ReportScoreAll, self )
+  local ReportPlayerScores = COMMANDMENU:New('Your Current Score', ReportScore, DATABASE.ReportScorePlayer, self )
 end
 
 
@@ -5829,114 +6321,115 @@ end
 -- File Logic for tracking the scores
 
 function DATABASE:SecondsToClock(sSeconds)
-local nSeconds = sSeconds
-	if nSeconds == 0 then
-		--return nil;
-		return "00:00:00";
-	else
-		nHours = string.format("%02.f", math.floor(nSeconds/3600));
-		nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
-		nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
-		return nHours..":"..nMins..":"..nSecs
-	end
+  local nSeconds = sSeconds
+  if nSeconds == 0 then
+    --return nil;
+    return "00:00:00";
+  else
+    nHours = string.format("%02.f", math.floor(nSeconds/3600));
+    nMins = string.format("%02.f", math.floor(nSeconds/60 - (nHours*60)));
+    nSecs = string.format("%02.f", math.floor(nSeconds - nHours*3600 - nMins *60));
+    return nHours..":"..nMins..":"..nSecs
+  end
 end
 
 
 function DATABASE:ScoreOpen()
-	if lfs then
-		local fdir = lfs.writedir() .. [[Logs\]] .. "Player_Scores_" .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
-		self.StatFile, self.err = io.open(fdir,"w+")
-		if not self.StatFile then
-			error( "Error: Cannot open 'Player Scores.csv' file in " .. lfs.writedir() )
-		end
-		self.StatFile:write( '"RunID","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
-		
-		self.RunID = os.date("%y-%m-%d_%H-%M-%S")
-	end
+  if lfs then
+    local fdir = lfs.writedir() .. [[Logs\]] .. "Player_Scores_" .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
+    self.StatFile, self.err = io.open(fdir,"w+")
+    if not self.StatFile then
+      error( "Error: Cannot open 'Player Scores.csv' file in " .. lfs.writedir() )
+    end
+    self.StatFile:write( '"RunID","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
+
+    self.RunID = os.date("%y-%m-%d_%H-%M-%S")
+  end
 end
 
 
 function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-	--write statistic information to file
-	local ScoreTime = self:SecondsToClock(timer.getTime())
-	PlayerName = PlayerName:gsub( '"', '_' )
+  --write statistic information to file
+  local ScoreTime = self:SecondsToClock(timer.getTime())
+  PlayerName = PlayerName:gsub( '"', '_' )
 
-	if PlayerUnitName and PlayerUnitName ~= '' then
-		local PlayerUnit = Unit.getByName( PlayerUnitName )
-		
-		if PlayerUnit then
-			if not PlayerUnitCategory then
-				--PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
-				PlayerUnitCategory = DATABASECategory[PlayerUnit:getDesc().category]
-			end
-			
-			if not PlayerUnitCoalition then
-				PlayerUnitCoalition = DATABASECoalition[PlayerUnit:getCoalition()]
-			end
-			
-			if not PlayerUnitType then
-				PlayerUnitType = PlayerUnit:getTypeName()
-			end
-		else
-			PlayerUnitName = ''
-			PlayerUnitCategory = ''
-			PlayerUnitCoalition = ''
-			PlayerUnitType = ''
-		end
-	else
-		PlayerUnitName = ''
-		PlayerUnitCategory = ''
-		PlayerUnitCoalition = ''
-		PlayerUnitType = ''
-	end
-			
-	if not TargetUnitCoalition then
-		TargetUnitCoalition = ''
-	end
-	
-	if not TargetUnitCategory then
-		TargetUnitCategory = ''
-	end
-	
-	if not TargetUnitType then
-		TargetUnitType = ''
-	end
-		
-	if not TargetUnitName then
-		TargetUnitName = ''
-	end
+  if PlayerUnitName and PlayerUnitName ~= '' then
+    local PlayerUnit = Unit.getByName( PlayerUnitName )
 
-	if lfs then
-		self.StatFile:write( 
-		  '"' .. self.RunID           .. '"' .. ',' .. 
-		  ''  .. ScoreTime            .. ''  .. ',' .. 
-		  '"' .. PlayerName           .. '"' .. ',' ..
-		  '"' .. ScoreType            .. '"' .. ',' ..
-		  '"' .. PlayerUnitCoalition  .. '"' .. ',' ..
-		  '"' .. PlayerUnitCategory   .. '"' .. ',' .. 
-		  '"' .. PlayerUnitType       .. '"' .. ',' ..
-		  '"' .. PlayerUnitName       .. '"' .. ',' ..
-		  '"' .. TargetUnitCoalition  .. '"' .. ',' ..
-		  '"' .. TargetUnitCategory   .. '"' .. ',' ..
-		  '"' .. TargetUnitType       .. '"' .. ',' ..
-		  '"' .. TargetUnitName       .. '"' .. ',' .. 
-			''  .. ScoreTimes           .. ''  .. ',' .. 
-			''  .. ScoreAmount 
-		)
-		
-		self.StatFile:write( "\n" )
-	end
+    if PlayerUnit then
+      if not PlayerUnitCategory then
+        --PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
+        PlayerUnitCategory = _DATABASECategory[PlayerUnit:getDesc().category]
+      end
+
+      if not PlayerUnitCoalition then
+        PlayerUnitCoalition = _DATABASECoalition[PlayerUnit:getCoalition()]
+      end
+
+      if not PlayerUnitType then
+        PlayerUnitType = PlayerUnit:getTypeName()
+      end
+    else
+      PlayerUnitName = ''
+      PlayerUnitCategory = ''
+      PlayerUnitCoalition = ''
+      PlayerUnitType = ''
+    end
+  else
+    PlayerUnitName = ''
+    PlayerUnitCategory = ''
+    PlayerUnitCoalition = ''
+    PlayerUnitType = ''
+  end
+
+  if not TargetUnitCoalition then
+    TargetUnitCoalition = ''
+  end
+
+  if not TargetUnitCategory then
+    TargetUnitCategory = ''
+  end
+
+  if not TargetUnitType then
+    TargetUnitType = ''
+  end
+
+  if not TargetUnitName then
+    TargetUnitName = ''
+  end
+
+  if lfs then
+    self.StatFile:write(
+      '"' .. self.RunID           .. '"' .. ',' ..
+      ''  .. ScoreTime            .. ''  .. ',' ..
+      '"' .. PlayerName           .. '"' .. ',' ..
+      '"' .. ScoreType            .. '"' .. ',' ..
+      '"' .. PlayerUnitCoalition  .. '"' .. ',' ..
+      '"' .. PlayerUnitCategory   .. '"' .. ',' ..
+      '"' .. PlayerUnitType       .. '"' .. ',' ..
+      '"' .. PlayerUnitName       .. '"' .. ',' ..
+      '"' .. TargetUnitCoalition  .. '"' .. ',' ..
+      '"' .. TargetUnitCategory   .. '"' .. ',' ..
+      '"' .. TargetUnitType       .. '"' .. ',' ..
+      '"' .. TargetUnitName       .. '"' .. ',' ..
+      ''  .. ScoreTimes           .. ''  .. ',' ..
+      ''  .. ScoreAmount
+    )
+
+    self.StatFile:write( "\n" )
+  end
 end
 
-	
+
 function LogClose()
-	if lfs then
-		self.StatFile:close()
-	end
+  if lfs then
+    self.StatFile:close()
+  end
 end
 
 _Database = DATABASE:New() -- Database#DATABASE
 _Database:ScoreOpen()
+
 
 --- CARGO Classes
 -- @module CARGO
@@ -8592,7 +9085,7 @@ end
 --- Get progress of a TASK.
 -- @return string GoalsText
 function TASK:GetGoalProgress()
-	self:F()
+	self:F2()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -8616,7 +9109,7 @@ end
 -- @param MISSION 	Mission 		Group structure describing the Mission.
 -- @param CLIENT	Client	 		Group structure describing the Client.
 function TASK:ShowGoalProgress( Mission, Client )
-	self:F()
+	self:F2()
 
 	local GoalsText = ""
 	for GoalVerb, GoalVerbData in pairs( self.GoalTasks ) do
@@ -8638,14 +9131,14 @@ end
 
 --- Sets a TASK to status Done.
 function TASK:Done()
-	self:F()
+	self:F2()
 	self.TaskDone = true
 end
 
 --- Returns if a TASK is done.
 -- @return bool
 function TASK:IsDone()
-	self:F( self.TaskDone )
+	self:F2( self.TaskDone )
 	return self.TaskDone
 end
 
@@ -8658,12 +9151,12 @@ end
 --- Returns if a TASk has failed.
 -- @return bool
 function TASK:IsFailed()
-	self:F( self.TaskFailed )
+	self:F2( self.TaskFailed )
 	return self.TaskFailed
 end
 
 function TASK:Reset( Mission, Client )
-	self:F()
+	self:F2()
 	self.ExecuteStage = _TransportExecuteStage.NONE
 end
 
@@ -8674,13 +9167,15 @@ function TASK:GetGoals()
 end
 
 --- Returns if a TASK has Goal(s).
--- @param ?string GoalVerb is the name of the Goal of the TASK.
+-- @param #TASK self
+-- @param #string GoalVerb is the name of the Goal of the TASK.
 -- @return bool
 function TASK:Goal( GoalVerb )
-	self:F()
+	self:F2( { GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
+	self:T2( {self.GoalTasks[GoalVerb] } )
 	if self.GoalTasks[GoalVerb] and self.GoalTasks[GoalVerb].GoalTotal > 0 then
 		return true
 	else
@@ -8692,7 +9187,7 @@ end
 -- @param number GoalTotal is the number of times the GoalVerb needs to be achieved.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:SetGoalTotal( GoalTotal, GoalVerb )
-	self:F( { GoalTotal, GoalVerb } )
+	self:F2( { GoalTotal, GoalVerb } )
 	
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
@@ -8707,7 +9202,7 @@ end
 --- Gets the total of Goals to be achieved within the TASK of the GoalVerb.
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 function TASK:GetGoalTotal( GoalVerb )
-	self:F()
+	self:F2( { GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -8723,7 +9218,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:SetGoalCount( GoalCount, GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -8738,7 +9233,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:IncreaseGoalCount( GoalCountIncrease, GoalVerb )
-	self:F()
+	self:F2( { GoalCountIncrease, GoalVerb } )
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -8752,7 +9247,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalCount( GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -8767,7 +9262,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return TASK
 function TASK:GetGoalPercentage( GoalVerb )
-	self:F()
+	self:F2()
 	if not GoalVerb then
 		GoalVerb = self.GoalVerb
 	end
@@ -8780,15 +9275,16 @@ end
 
 --- Returns if all the Goals of the TASK were achieved.
 -- @return bool
-function TASK:IsGoalReached( )
+function TASK:IsGoalReached()
+  self:F2()
 
 	local GoalReached = true
 
 	for GoalVerb, Goals in pairs( self.GoalTasks ) do
-		self:T( { "GoalVerb", GoalVerb } )
+		self:T2( { "GoalVerb", GoalVerb } )
 		if self:Goal( GoalVerb ) then
 			local GoalToDo = self:GetGoalTotal( GoalVerb ) - self:GetGoalCount( GoalVerb )
-			self:T( "GoalToDo = " .. GoalToDo )
+			self:T2( "GoalToDo = " .. GoalToDo )
 			if GoalToDo <= 0 then
 			else
 				GoalReached = false
@@ -8799,7 +9295,7 @@ function TASK:IsGoalReached( )
 		end
 	end
 	
-	self:T( GoalReached )
+	self:T( { GoalReached, self.GoalTasks } )
 	return GoalReached
 end
 
@@ -8808,7 +9304,7 @@ end
 -- @param string GoalTask is a text describing the Goal of the TASK to be achieved.
 -- @param number GoalIncrease is a number by which the Goal achievement is increasing.
 function TASK:AddGoalCompletion( GoalVerb, GoalTask, GoalIncrease )
-	self:F( { GoalVerb, GoalTask, GoalIncrease } )
+	self:F2( { GoalVerb, GoalTask, GoalIncrease } )
 
 	if self:Goal( GoalVerb ) then
 		self.GoalTasks[GoalVerb].Goals[#self.GoalTasks[GoalVerb].Goals+1] = GoalTask
@@ -8821,7 +9317,7 @@ end
 -- @param ?string GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.
 -- @return string Goals
 function TASK:GetGoalCompletion( GoalVerb )
-	self:F( { GoalVerb } )
+	self:F2( { GoalVerb } )
 	
 	if self:Goal( GoalVerb ) then
 		local Goals = ""
@@ -9014,10 +9510,11 @@ DESTROYBASETASK = {
 }
 
 --- Creates a new DESTROYBASETASK.
--- @param string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
--- @param string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
--- @param table{string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
--- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+-- @param #DESTROYBASETASK self
+-- @param #string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
+-- @param #string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
+-- @param #list<#string> DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
+-- @param #number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
 -- @return DESTROYBASETASK
 function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
 	local self = BASE:Inherit( self, TASK:New() )
@@ -9028,34 +9525,31 @@ function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPre
 	self.DestroyGroupPrefixes = DestroyGroupPrefixes
 	self.DestroyGroupType = DestroyGroupType
 	self.DestroyUnitType = DestroyUnitType
+	if DestroyPercentage then
+  	self.DestroyPercentage = DestroyPercentage
+  end
 	self.TaskBriefing = "Task: Destroy " .. DestroyGroupType .. "."
     self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEGROUPSDESTROYED:New(), STAGEDONE:New() }
 	self.SetStage( self, 1 )
 
-	--self.AddEvent( self, world.event.S_EVENT_DEAD, self.EventDead )
-
-	--env.info( 'New Table self = ' .. tostring(self) )
-	--env.info( 'New Table self = ' .. tostring(self) )
-	
 	return self
 end
 
 --- Handle the S_EVENT_DEAD events to validate the destruction of units for the task monitoring.
--- @param 	event 		Event structure of DCS world.
-function DESTROYBASETASK:EventDead( event )
-	self:F( { 'EventDead', event } )
+-- @param #DESTROYBASETASK self
+-- @param Event#EVENTDATA Event structure of MOOSE.
+function DESTROYBASETASK:EventDead( Event )
+	self:F( { Event } )
 	
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		local DestroyUnit = event.initiator
-		local DestroyUnitName = DestroyUnit:getName()
-		local DestroyGroup = Unit.getGroup( DestroyUnit )
-		local DestroyGroupName = ""
-		if DestroyGroup and DestroyGroup:isExist() then
-			local DestroyGroupName = DestroyGroup:getName()
-		end
+	if Event.IniDCSUnit then
+		local DestroyUnit = Event.IniDCSUnit
+		local DestroyUnitName = Event.IniDCSUnitName
+		local DestroyGroup = Event.IniDCSGroup
+		local DestroyGroupName = Event.IniDCSGroupName
+
+    --TODO: I need to fix here if 2 groups in the mission have a similar name with GroupPrefix equal, then i should differentiate for which group the goal was reached!
+    --I may need to test if for the goalverb that group goal was reached or something. Need to think about it a bit more ...
 		local UnitsDestroyed = 0
-		self:T( DestroyGroupName )
-		self:T( DestroyUnitName )
 		for DestroyGroupPrefixID, DestroyGroupPrefix in pairs( self.DestroyGroupPrefixes ) do
 			self:T( DestroyGroupPrefix )
 			if string.find( DestroyGroupName, DestroyGroupPrefix, 1, true ) then
@@ -9068,6 +9562,7 @@ function DESTROYBASETASK:EventDead( event )
 		self:T( { UnitsDestroyed } )
 		self:IncreaseGoalCount( UnitsDestroyed, self.GoalVerb )
 	end
+	
 end
 
 --- Validate task completeness of DESTROYBASETASK.
@@ -9091,10 +9586,11 @@ DESTROYGROUPSTASK = {
 }
 
 --- Creates a new DESTROYGROUPSTASK.
--- @param 	string DestroyGroupType 	String describing the group to be destroyed.
--- @param 	string DestroyUnitType 	String describing the unit to be destroyed.
--- @param 	table{string,...} DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
--- @param ?number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
+-- @param #DESTROYGROUPSTASK self
+-- @param #string DestroyGroupType 	String describing the group to be destroyed.
+-- @param #string DestroyUnitType 	String describing the unit to be destroyed.
+-- @param #list<#string> DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
+-- @param #number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
 ---@return DESTROYGROUPSTASK
 function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
 	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
@@ -9103,34 +9599,34 @@ function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupN
 	self.Name = 'Destroy Groups'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 	
-	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
-	self:AddEvent( world.event.S_EVENT_CRASH, self.EventDead )
-	--Child.AddEvent( Child, world.event.S_EVENT_PILOT_DEAD, Child.EventDead )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnCrash( self.EventDead , self )
 
 	return self
 end
 
 --- Report Goal Progress.
--- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
+-- @param #DESTROYGROUPSTASK self
+-- @param DCSGroup#Group DestroyGroup Group structure describing the group to be evaluated.
+-- @param DCSUnit#Unit DestroyUnit Unit structure describing the Unit to be evaluated.
+-- @return #number The DestroyCount reflecting the amount of units destroyed within the group.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-	self:F( { DestroyGroup, DestroyUnit } )
-	self:T( DestroyGroup:getSize() )
+	self:F( { DestroyGroup, DestroyUnit, self.DestroyPercentage } )
+	
+	local DestroyGroupSize = DestroyGroup:getSize() - 1 -- When a DEAD event occurs, the getSize is still one larger than the destroyed unit.
+	local DestroyGroupInitialSize = DestroyGroup:getInitialSize()
+	self:T( { DestroyGroupSize, DestroyGroupInitialSize - ( DestroyGroupInitialSize * self.DestroyPercentage / 100 ) } )
 
 	local DestroyCount = 0
 	if DestroyGroup then
-		if ( ( DestroyGroup:getInitialSize() * self.DestroyPercentage ) / 100 ) - DestroyGroup:getSize() <= 0 then
+		if DestroyGroupSize <= DestroyGroupInitialSize - ( DestroyGroupInitialSize * self.DestroyPercentage / 100 ) then
 			DestroyCount = 1
---[[ 		else
-			if DestroyGroup:getSize() == 1 then
-				if DestroyUnit and DestroyUnit:getLife() <= 1.0 then
-					DestroyCount = 1
-				end
-			end
- ]]		end
+		end
 	else
 		DestroyCount = 1
 	end
+	
+	self:T( DestroyCount )
 	
 	return DestroyCount
 end
@@ -9154,8 +9650,8 @@ function DESTROYRADARSTASK:New( DestroyGroupNames )
 	self:F()
 
 	self.Name = 'Destroy Radars'
-	
-	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
 
 	return self
 end
@@ -9206,7 +9702,7 @@ function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGro
 	self.Name = 'Destroy Unit Types'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 
-	self:AddEvent( world.event.S_EVENT_DEAD, self.EventDead )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
 
 	return self
 end
@@ -10284,6 +10780,7 @@ Include.File( "Task" )
 
 --- The CLEANUP class.
 -- @type CLEANUP
+-- @extends Base#BASE
 CLEANUP = {
 	ClassName = "CLEANUP",
 	ZoneNames = {},
@@ -10314,15 +10811,8 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 		self.TimeInterval = TimeInterval
 	end
 	
-	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
-	self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
-	--self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
-	self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
+	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
 	
-	self:EnableEvents()
-
 	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
 	return self
@@ -10358,9 +10848,8 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 			local CleanUpGroupUnits = CleanUpGroup:getUnits()
 			if #CleanUpGroupUnits == 1 then
 				local CleanUpGroupName = CleanUpGroup:getName()
-				local Event = {["initiator"]=CleanUpUnit,["id"]=8}
-				world.onEvent( Event )
-				trigger.action.deactivateGroup( CleanUpGroup )
+				--self:CreateEventCrash( timer.getTime(), CleanUpUnit )
+				CleanUpGroup:destroy()
 				self:T( { "Destroyed Group:", CleanUpGroupName } )
 			else
 				CleanUpUnit:destroy()
@@ -10385,13 +10874,43 @@ function CLEANUP:_DestroyMissile( MissileObject )
 	end
 end
 
+function CLEANUP:_OnEventBirth( Event )
+  self:F( { Event } )
+  
+  self.CleanUpList[Event.IniDCSUnitName] = {}
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
+
+  _EVENTDISPATCHER:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
+  _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
+
+  --self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
+  --self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
+--  self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
+--  self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
+--  --self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
+--  self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
+--  
+--  self:EnableEvents()
+
+
+end
+
 --- Detects if a crash event occurs.
 -- Crashed units go into a CleanUpList for removal.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventCrash( event )
-	self:F( { event } )
+function CLEANUP:_EventCrash( Event )
+	self:F( { Event } )
 
+  --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
 	--MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
 	-- self:T("before getGroup")
 	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
@@ -10400,44 +10919,28 @@ function CLEANUP:_EventCrash( event )
 	-- self:T("after deactivateGroup")
 	-- event.initiator:destroy()
 
-	local CleanUpUnit = event.initiator -- the Unit
-	local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
-	local CleanUpGroup = Unit.getGroup(CleanUpUnit)-- Identify the Group 
-	local CleanUpGroupName = ""
-	if CleanUpGroup and CleanUpGroup:isExist() then
-    CleanUpGroupName = CleanUpGroup:getName() -- return the name of the Group
-  end
-
-	self.CleanUpList[CleanUpUnitName] = {}
-	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
-	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
-	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroupName
-	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
+  self.CleanUpList[Event.IniDCSUnitName] = {}
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
+  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
+  
 end
 
 --- Detects if a unit shoots a missile.
 -- If this occurs within one of the zones, then the weapon used must be destroyed.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventShot( event )
-	self:F( { event } )
+function CLEANUP:_EventShot( Event )
+	self:F( { Event } )
 
-	local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
-	local _groupname = _grp:getName() -- return the name of the group
-	local _unittable = {event.initiator:getName()} -- return the name of the units in the group
-	local _SEADmissile = event.weapon -- Identify the weapon fired					
-	--local _SEADmissileName = _SEADmissile:getTypeName()	-- return weapon type
-	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(_SEADmissileName)), 20) --debug message
-	-- Start of the 2nd loop
-	--self:T( "Missile Launched = " .. _SEADmissileName )
-	
 	-- Test if the missile was fired within one of the CLEANUP.ZoneNames.
 	local CurrentLandingZoneID = 0
-	CurrentLandingZoneID  = routines.IsUnitInZones( event.initiator, self.ZoneNames )
+	CurrentLandingZoneID  = routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames )
 	if  ( CurrentLandingZoneID ) then
 		-- Okay, the missile was fired within the CLEANUP.ZoneNames, destroy the fired weapon.
 		--_SEADmissile:destroy()
-		routines.scheduleFunction( CLEANUP._DestroyMissile, {self, _SEADmissile}, timer.getTime() + 0.1)
+		routines.scheduleFunction( CLEANUP._DestroyMissile, { self, Event.Weapon }, timer.getTime() + 0.1)
 	end
 end
 
@@ -10445,38 +10948,28 @@ end
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventHitCleanUp( event )
-	self:F( { event } )
+function CLEANUP:_EventHitCleanUp( Event )
+	self:F( { Event } )
 
-	local CleanUpUnit = event.initiator -- the Unit
-	if CleanUpUnit and CleanUpUnit:isExist() and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
-		local CleanUpUnitName = event.initiator:getName() -- return the name of the Unit
-		
-		if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
-			self:T( "Life: " .. CleanUpUnitName .. ' = ' .. CleanUpUnit:getLife() .. "/" .. CleanUpUnit:getLife0() )
-			if CleanUpUnit:getLife() < CleanUpUnit:getLife0() then
-				self:T( "CleanUp: Destroy: " .. CleanUpUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpUnit}, timer.getTime() + 0.1)
+	if Event.IniDCSUnit then
+		if routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames ) ~= nil then
+			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniDCSUnit:getLife(), "/", Event.IniDCSUnit:getLife0() } )
+			if Event.IniDCSUnit:getLife() < Event.IniDCSUnit:getLife0() then
+				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.IniDCSUnit }, timer.getTime() + 0.1)
 			end
 		end
 	end
 
-	local CleanUpTgtUnit = event.target -- the target Unit
-	if CleanUpTgtUnit and CleanUpTgtUnit:isExist() and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
-		local CleanUpTgtUnitName = event.target:getName() -- return the name of the target Unit
-		local CleanUpTgtGroup = Unit.getGroup(event.target)-- Identify the target Group 
-		local CleanUpTgtGroupName = CleanUpTgtGroup:getName() -- return the name of the target Group
-		
-		
-		if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
-			self:T( "Life: " .. CleanUpTgtUnitName .. ' = ' .. CleanUpTgtUnit:getLife() .. "/" .. CleanUpTgtUnit:getLife0() )
-			if CleanUpTgtUnit:getLife() < CleanUpTgtUnit:getLife0() then
-				self:T( "CleanUp: Destroy: " .. CleanUpTgtUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, {self, CleanUpTgtUnit}, timer.getTime() + 0.1)
+	if Event.TgtDCSUnit then
+		if routines.IsUnitInZones( Event.TgtDCSUnit, self.ZoneNames ) ~= nil then
+			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtDCSUnit:getLife(), "/", Event.TgtDCSUnit:getLife0() } )
+			if Event.TgtDCSUnit:getLife() < Event.TgtDCSUnit:getLife0() then
+				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
+				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.TgtDCSUnit }, timer.getTime() + 0.1 )
 			end
 		end
 	end
-	
 end
 
 --- Add the @{DCSUnit#Unit} to the CleanUpList for CleanUp.
@@ -10498,24 +10991,20 @@ end
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
 -- @param #CLEANUP self
 -- @param DCSTypes#Event event
-function CLEANUP:_EventAddForCleanUp( event )
+function CLEANUP:_EventAddForCleanUp( Event )
 
-	local CleanUpUnit = event.initiator -- the Unit
-	if CleanUpUnit and Object.getCategory(CleanUpUnit) == Object.Category.UNIT then
-		local CleanUpUnitName = CleanUpUnit:getName() -- return the name of the Unit
-		if self.CleanUpList[CleanUpUnitName] == nil then
-			if routines.IsUnitInZones( CleanUpUnit, self.ZoneNames ) ~= nil then
-				self:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
+	if Event.IniDCSUnit then
+		if self.CleanUpList[Event.IniDCSUnitName] == nil then
+			if routines.IsUnitInZones( Event.IniDCSUnit, self.ZoneNames ) ~= nil then
+				self:_AddForCleanUp( Event.IniDCSUnit, Event.IniDCSUnitName )
 			end
 		end
 	end
 
-	local CleanUpTgtUnit = event.target -- the target Unit
-	if CleanUpTgtUnit and Object.getCategory(CleanUpTgtUnit) == Object.Category.UNIT then
-		local CleanUpTgtUnitName = CleanUpTgtUnit:getName() -- return the name of the target Unit
-		if self.CleanUpList[CleanUpTgtUnitName] == nil then
-			if routines.IsUnitInZones( CleanUpTgtUnit, self.ZoneNames ) ~= nil then
-				self:_AddForCleanUp( CleanUpTgtUnit, CleanUpTgtUnitName )
+	if Event.TgtDCSUnit then
+		if self.CleanUpList[Event.TgtDCSUnitName] == nil then
+			if routines.IsUnitInZones( Event.TgtDCSUnit, self.ZoneNames ) ~= nil then
+				self:_AddForCleanUp( Event.TgtDCSUnit, Event.TgtDCSUnitName )
 			end
 		end
 	end
@@ -10533,9 +11022,11 @@ local CleanUpSurfaceTypeText = {
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 -- @param #CLEANUP self
 function CLEANUP:_CleanUpScheduler()
-	self:F( "CleanUp Scheduler" )
+	self:F( { "CleanUp Scheduler" } )
 
+  local CleanUpCount = 0
 	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
+	  CleanUpCount = CleanUpCount + 1
 	
 		self:T( { CleanUpUnitName, UnitData } )
 		local CleanUpUnit = Unit.getByName(UnitData.CleanUpUnitName)
@@ -10597,6 +11088,7 @@ function CLEANUP:_CleanUpScheduler()
 			self.CleanUpList[CleanUpUnitName] = nil -- Not anymore in the DCSRTE
 		end
 	end
+	self:T(CleanUpCount)
 end
 
 --- Dynamic spawning of groups (and units).
@@ -10676,6 +11168,7 @@ Include.File( "Base" )
 Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
+Include.File( "Event" )
 
 --- SPAWN Class
 -- @type SPAWN
@@ -10722,12 +11215,6 @@ function SPAWN:New( SpawnTemplatePrefix )
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
-	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
-	
-	self:EnableEvents()
 
 	return self
 end
@@ -10766,12 +11253,6 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self._OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self._OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self._OnDeadOrCrash )
-	
-	self:EnableEvents()
-
 	return self
 end
 
@@ -10883,16 +11364,11 @@ end
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
 function SPAWN:Repeat()
-	self:F( { self.SpawnTemplatePrefix } )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
 	self.SpawnRepeat = true
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
-
-	self:AddEvent( world.event.S_EVENT_LAND, self._OnLand )
-	self:AddEvent( world.event.S_EVENT_TAKEOFF, self._OnTakeOff )
-	self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._OnEngineShutDown )
-	self:EnableEvents()
 
 	return self
 end
@@ -10986,6 +11462,21 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 		self.SpawnGroups[SpawnGroupID].SpawnTemplate.visible = true
 		
 		self.SpawnGroups[SpawnGroupID].Visible = true
+
+    _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnBirth, self )
+    _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+
+    if self.SpawnRepeat then
+      _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
+    end
+    if self.RepeatOnLanding then
+      _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
+    end
+    if self.RepeatOnEngineShutDown then
+      _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
+    end
+		
 		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
@@ -11020,13 +11511,13 @@ function SPAWN:ReSpawn( SpawnIndex )
 	end
 
 -- TODO: This logic makes DCS crash and i don't know why (yet).
---	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
---	if SpawnGroup then
---    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
---  	if SpawnDCSGroup then
---      SpawnGroup:Destroy()
---  	end
---  end
+	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+	if SpawnGroup then
+    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+  	if SpawnDCSGroup then
+      SpawnGroup:Destroy()
+  	end
+  end
 
 	return self:SpawnWithIndex( SpawnIndex )
 end
@@ -11044,6 +11535,20 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
 			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+      _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
+      _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+      _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+
+      if self.SpawnRepeat then
+        _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
+      end
+      if self.RepeatOnLanding then
+        _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
+      end
+      if self.RepeatOnEngineShutDown then
+        _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
+      end
+
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
@@ -11059,7 +11564,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
-		self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
+		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
 	end
 
 	return nil
@@ -11898,11 +12403,11 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-	self:AddEvent( world.event.S_EVENT_DEAD, self.OnDeadOrCrash )
-	self:AddEvent( world.event.S_EVENT_CRASH, self.OnDeadOrCrash )
+	_EVENTDISPATCHER:OnBirth( self.OnBirth, self )
 	
-	self:EnableEvents()
+--	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
+--	
+--	self:EnableEvents()
 	
 	self:ScheduleStart()
 
@@ -11924,43 +12429,39 @@ end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
-function MOVEMENT:OnBirth( event )
-	self:F( { event } )
+function MOVEMENT:OnBirth( Event )
+	self:F( { Event } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
-		if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-			local MovementUnit = event.initiator
-			local MovementUnitName = MovementUnit:getName()
-			self:T( "Birth object : " .. MovementUnitName )
-			local MovementGroup = MovementUnit:getGroup()
-			if MovementGroup and MovementGroup:isExist() then
-				local MovementGroupName = MovementGroup:getName()
+		if Event.IniDCSUnit then
+			self:T( "Birth object : " .. Event.IniDCSUnitName )
+			if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
 				for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-					if string.find( MovementUnitName, MovePrefix, 1, true ) then
+					if string.find( Event.IniDCSUnitName, MovePrefix, 1, true ) then
 						self.AliveUnits = self.AliveUnits + 1
-						self.MoveUnits[MovementUnitName] = MovementGroupName
+						self.MoveUnits[Event.IniDCSUnitName] = Event.IniDCSGroupName
 						self:T( self.AliveUnits )
 					end
 				end
 			end
 		end
+		_EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
 	end
 
 end
 
 --- Captures the Dead or Crash events when Units crash or are destroyed.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
-function MOVEMENT:OnDeadOrCrash( event )
-	self:F( { event } )
+function MOVEMENT:OnDeadOrCrash( Event )
+	self:F( { Event } )
 
-	if event.initiator and Object.getCategory(event.initiator) == Object.Category.UNIT then
-		local MovementUnit = event.initiator
-		local MovementUnitName = MovementUnit:getName()
-		self:T( "Dead object : " .. MovementUnitName )
+	if Event.IniDCSUnit then
+		self:T( "Dead object : " .. Event.IniDCSUnitName )
 		for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-			if string.find( MovementUnitName, MovePrefix, 1, true ) then
+			if string.find( Event.IniDCSUnitName, MovePrefix, 1, true ) then
 				self.AliveUnits = self.AliveUnits - 1
-				self.MoveUnits[MovementUnitName] = nil
+				self.MoveUnits[Event.IniDCSUnitName] = nil
 				self:T( self.AliveUnits )
 			end
 		end
@@ -11999,6 +12500,7 @@ end
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
 
 Include.File( "Routines" )
+Include.File( "Event" )
 Include.File( "Base" )
 Include.File( "Mission" )
 Include.File( "Client" )
@@ -12037,27 +12539,26 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	self:AddEvent( world.event.S_EVENT_SHOT, self.EventShot )
-	self:EnableEvents()
+	_EVENTDISPATCHER:OnShot( self.EventShot, self )
 	
 	return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
-function SEAD:EventShot( event )
-	self:F( { event } )
+function SEAD:EventShot( Event )
+	self:F( { Event } )
 
-	local SEADUnit = event.initiator
-	local SEADUnitName = SEADUnit:getName()
-	local SEADWeapon = event.weapon -- Identify the weapon fired						
-	local SEADWeaponName = SEADWeapon:getTypeName()	-- return weapon type
+	local SEADUnit = Event.IniDCSUnit
+	local SEADUnitName = Event.IniDCSUnitName
+	local SEADWeapon = Event.Weapon -- Identify the weapon fired						
+	local SEADWeaponName = Event.WeaponName	-- return weapon type
 	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(SEADWeaponName)), 20) --debug message
 	-- Start of the 2nd loop
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
 		local _evade = math.random (1,100) -- random number for chance of evading action
-		local _targetMim = Weapon.getTarget(SEADWeapon) -- Identify target
+		local _targetMim = Event.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim)
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()

@@ -2,6 +2,7 @@ rem Generate Moose_Embedded.lua
 
 copy /b ..\Moose\Routines.lua ^
     + ..\Moose\Base.lua ^
+    + ..\Moose\Event.lua ^
 	+ ..\Moose\Menu.lua ^
 	+ ..\Moose\Group.lua ^
 	+ ..\Moose\Unit.lua ^
