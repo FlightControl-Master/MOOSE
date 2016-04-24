@@ -151,7 +151,7 @@ function CLIENT:_AliveCheckScheduler()
   if self:IsAlive() then
     if self.ClientAlive2 == false then
       self:T("Calling Callback function")
-      self.ClientCallBack( self, self.ClientParameters )
+      self.ClientCallBack( self, unpack( self.ClientParameters ) )
       self.ClientAlive2 = true
     end
   else
