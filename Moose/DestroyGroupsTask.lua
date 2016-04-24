@@ -24,8 +24,8 @@ function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupN
 	self.Name = 'Destroy Groups'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 	
-  _EventDispatcher:OnDead( self.EventDead , self )
-  _EventDispatcher:OnCrash( self.EventDead , self )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnCrash( self.EventDead , self )
 
 	return self
 end

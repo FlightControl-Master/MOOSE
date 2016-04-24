@@ -41,7 +41,7 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 		self.TimeInterval = TimeInterval
 	end
 	
-	_EventDispatcher:OnBirth( self._OnEventBirth, self )
+	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
 	
 	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
@@ -113,13 +113,13 @@ function CLEANUP:_OnEventBirth( Event )
   self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
   self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
 
-  _EventDispatcher:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
-  _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EventDispatcher:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
+  _EVENTDISPATCHER:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
+  _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
 
   --self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
   --self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )

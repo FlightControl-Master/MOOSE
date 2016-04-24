@@ -111,9 +111,9 @@ function DATABASE:New()
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
   --self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-  _EventDispatcher:OnDead( self._EventOnDeadOrCrash, self )
-  _EventDispatcher:OnCrash( self._EventOnDeadOrCrash, self )
-  _EventDispatcher:OnHit( self._EventOnHit, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
 
   self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
 

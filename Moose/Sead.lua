@@ -43,7 +43,7 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	_EventDispatcher:OnShot( self.EventShot, self )
+	_EVENTDISPATCHER:OnShot( self.EventShot, self )
 	
 	return self
 end

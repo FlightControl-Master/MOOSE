@@ -35,7 +35,7 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	_EventDispatcher:OnBirth( self.OnBirth, self )
+	_EVENTDISPATCHER:OnBirth( self.OnBirth, self )
 	
 --	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
 --	
@@ -77,8 +77,8 @@ function MOVEMENT:OnBirth( Event )
 				end
 			end
 		end
-		_EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
-    _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+		_EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
 	end
 
 end

@@ -147,7 +147,7 @@ end
 -- @return Event#EVENT
 function BASE:Event()
 
-  return _EventDispatcher
+  return _EVENTDISPATCHER
 end
 
 

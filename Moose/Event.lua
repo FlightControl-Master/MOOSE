@@ -485,5 +485,5 @@ end
 
 
 --- Declare the event dispatcher based on the EVENT class
-_EventDispatcher = EVENT:New() -- #EVENT
+_EVENTDISPATCHER = EVENT:New() -- #EVENT
 

@@ -2725,7 +2725,7 @@ end
 -- @return Event#EVENT
 function BASE:Event()
 
-  return _EventDispatcher
+  return _EVENTDISPATCHER
 end
 
 
@@ -3506,7 +3506,7 @@ end
 
 
 --- Declare the event dispatcher based on the EVENT class
-_EventDispatcher = EVENT:New() -- #EVENT
+_EVENTDISPATCHER = EVENT:New() -- #EVENT
 
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
 -- @module Menu
@@ -5600,9 +5600,9 @@ function DATABASE:New()
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
   --self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-  _EventDispatcher:OnDead( self._EventOnDeadOrCrash, self )
-  _EventDispatcher:OnCrash( self._EventOnDeadOrCrash, self )
-  _EventDispatcher:OnHit( self._EventOnHit, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
 
   self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
 
@@ -9599,8 +9599,8 @@ function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupN
 	self.Name = 'Destroy Groups'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 	
-  _EventDispatcher:OnDead( self.EventDead , self )
-  _EventDispatcher:OnCrash( self.EventDead , self )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnCrash( self.EventDead , self )
 
 	return self
 end
@@ -9651,7 +9651,7 @@ function DESTROYRADARSTASK:New( DestroyGroupNames )
 
 	self.Name = 'Destroy Radars'
 
-  _EventDispatcher:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
 
 	return self
 end
@@ -9702,7 +9702,7 @@ function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGro
 	self.Name = 'Destroy Unit Types'
 	self.GoalVerb = "Destroy " .. DestroyGroupType
 
-  _EventDispatcher:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
 
 	return self
 end
@@ -10811,7 +10811,7 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 		self.TimeInterval = TimeInterval
 	end
 	
-	_EventDispatcher:OnBirth( self._OnEventBirth, self )
+	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
 	
 	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
 	
@@ -10883,13 +10883,13 @@ function CLEANUP:_OnEventBirth( Event )
   self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
   self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
 
-  _EventDispatcher:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EventDispatcher:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
-  _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EventDispatcher:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
+  _EVENTDISPATCHER:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
+  _EVENTDISPATCHER:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
+  _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
+  _EVENTDISPATCHER:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
 
   --self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
   --self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
@@ -11463,18 +11463,18 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 		
 		self.SpawnGroups[SpawnGroupID].Visible = true
 
-    _EventDispatcher:OnBirthForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnBirth, self )
-    _EventDispatcher:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
-    _EventDispatcher:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnBirth, self )
+    _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
 
     if self.SpawnRepeat then
-      _EventDispatcher:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
+      _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
     end
     if self.RepeatOnLanding then
-      _EventDispatcher:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
+      _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
     end
     if self.RepeatOnEngineShutDown then
-      _EventDispatcher:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
+      _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
     end
 		
 		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
@@ -11535,18 +11535,18 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
 			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
-      _EventDispatcher:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
-      _EventDispatcher:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
-      _EventDispatcher:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+      _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
+      _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+      _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
 
       if self.SpawnRepeat then
-        _EventDispatcher:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
+        _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
       end
       if self.RepeatOnLanding then
-        _EventDispatcher:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
+        _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
-        _EventDispatcher:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
+        _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
 
 			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
@@ -12403,7 +12403,7 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	_EventDispatcher:OnBirth( self.OnBirth, self )
+	_EVENTDISPATCHER:OnBirth( self.OnBirth, self )
 	
 --	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
 --	
@@ -12445,8 +12445,8 @@ function MOVEMENT:OnBirth( Event )
 				end
 			end
 		end
-		_EventDispatcher:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
-    _EventDispatcher:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+		_EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+    _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
 	end
 
 end
@@ -12539,7 +12539,7 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	_EventDispatcher:OnShot( self.EventShot, self )
+	_EVENTDISPATCHER:OnShot( self.EventShot, self )
 	
 	return self
 end

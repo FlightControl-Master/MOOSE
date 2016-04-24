@@ -19,7 +19,7 @@ function DESTROYRADARSTASK:New( DestroyGroupNames )
 
 	self.Name = 'Destroy Radars'
 
-  _EventDispatcher:OnDead( self.EventDead , self )
+  _EVENTDISPATCHER:OnDead( self.EventDead , self )
 
 	return self
 end
