@@ -384,7 +384,7 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
       _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
     end
 		
-		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
+		self.SpawnGroups[SpawnGroupID].Group = _DATABASE:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
 		SpawnY = SpawnYIndex * SpawnDeltaY
@@ -456,7 +456,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
 
-			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -464,7 +464,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			end
 			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
 			--if self.SpawnRepeat then
-			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
 		end
 		
@@ -968,7 +968,7 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _Database.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -1125,7 +1125,7 @@ function SPAWN:_GetSpawnIndex( SpawnIndex )
 end
 
 
--- TODO Need to delete this... _Database does this now ...
+-- TODO Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnBirth( event )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
@@ -1143,7 +1143,7 @@ function SPAWN:_OnBirth( event )
 end
 
 --- Obscolete
--- @todo Need to delete this... _Database does this now ...
+-- @todo Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnDeadOrCrash( event )
   self:F( self.SpawnTemplatePrefix,  event )
 

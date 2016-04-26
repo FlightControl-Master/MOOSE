@@ -7,7 +7,7 @@ Include.File( "Event" )
 
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
-_Database = DATABASE:New():ScanEnvironment() -- Database#DATABASE
+_DATABASE = DATABASE:New():ScanEnvironment() -- Database#DATABASE
 
 --- Declare the event dispatcher based on the EVENT class
 _EVENTDISPATCHER = EVENT:New() -- #EVENT

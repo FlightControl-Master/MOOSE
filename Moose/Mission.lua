@@ -474,7 +474,7 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_Database:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
 
 --								if not Mission:IsCompleted() then
 --								end
@@ -497,7 +497,7 @@ function MISSIONSCHEDULER.Scheduler()
 
 					if MissionComplete then
 						Mission:Completed()
-						_Database:_AddMissionScore( Mission.Name, 100 ) 
+						_DATABASE:_AddMissionScore( Mission.Name, 100 ) 
 					else
 						if TaskComplete then
 							-- Reset for new tasking of active client

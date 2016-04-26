@@ -1696,7 +1696,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _Database.Groups[groupIdent].groupId
+		gpId = _DATABASE.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do
@@ -1746,6 +1746,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then	
 	end --for coa_name, coa_data in pairs(mission.coalition) do
 end
+
 routines.ground.patrolRoute = function(vars)
 	
 	

@@ -24,6 +24,30 @@ DATABASE = {
   AlivePlayers = {},
   ClientsByName = {},
   ClientsByID = {},
+  Filter = {
+    Coalition = {
+      Red = false,
+      Blue = false,
+    },
+    Category = {
+        Air = false,
+        Plane = false,
+        Helicopter = false,
+        Ground = false,
+        Ship = false,
+    },
+    Group = {
+      Prefix = {
+      },
+    },
+    Unit = {
+      Type = {
+      },
+      Prefix = {
+      },
+      Player = false,
+    },
+  },
 }
 
 local _DATABASECoalition =
@@ -51,11 +75,58 @@ function DATABASE:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
+  
+  
 
   _EVENTDISPATCHER:OnBirth( self._EventBirth, self )
   _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
   return self
+end
+
+function DATABASE:Red()
+  self.Filter.Coalition.Red = true
+end
+
+function DATABASE:Blue()
+  self.Filter.Coalition.Blue = true
+end
+
+function DATABASE:GroupPrefixes( Prefixes )
+  for PrefixID, PrefixName in pairs( Prefixes ) do
+    self.Filter.Group.Prefix[#self.Filter.Group.Prefix+1] = PrefixName
+  end
+end
+
+function DATABASE:Air()
+  self.Filter.Air = true
+end
+
+function DATABASE:AirPlane()
+  self.Filter.Plane = true
+end
+
+function DATABASE:Helicopter()
+  self.Filter.Helicopter = true
+end
+
+function DATABASE:Ground()
+  self.Filter.Ground = true
+end
+
+function DATABASE:Ship()
+  self.Filter.Ship = true
+end
+
+function DATABASE:UnitPrefixes( Prefixes )
+  for PrefixID, PrefixName in pairs( Prefixes ) do
+    self.Filter.Group.Prefix[#self.Filter.Unit.Prefix+1] = PrefixName
+  end
+end
+
+function DATABASE:Filter()
+
 end
 
 function DATABASE:ScanEnvironment()
