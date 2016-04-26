@@ -423,7 +423,7 @@ function SCORING:_EventOnHit( Event )
           2,
           "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName
         ):ToAll()
-        self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        self:ScoreCSV( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       else
         self.Players[InitPlayerName].Score = self.Players[InitPlayerName].Score + 10
         self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score + 1
@@ -435,7 +435,7 @@ function SCORING:_EventOnHit( Event )
           2,
           "/SCORE" .. InitPlayerName .. "/" .. InitUnitName
         ):ToAll()
-        self:ScoreAdd( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        self:ScoreCSV( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       end
     end
     end
@@ -701,12 +701,12 @@ function SCORING:OpenCSV( ScoringCSV )
       self.ScoringCSV = ScoringCSV
       local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
 
-      self.StatFile, self.err = io.open( fdir, "w+" )
-      if not self.StatFile then
+      self.CSVFile, self.err = io.open( fdir, "w+" )
+      if not self.CSVFile then
         error( "Error: Cannot open CSV file in " .. lfs.writedir() )
       end
 
-      self.StatFile:write( '"GameName","RunTime","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
+      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
   
       self.RunTime = os.date("%y-%m-%d_%H-%M-%S")
     else
@@ -785,7 +785,7 @@ function SCORING:ScoreCSV( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Playe
   end
 
   if lfs then
-    self.StatFile:write(
+    self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..
       ''  .. ScoreTime            .. ''  .. ',' ..
@@ -803,14 +803,14 @@ function SCORING:ScoreCSV( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Playe
       ''  .. ScoreAmount
     )
 
-    self.StatFile:write( "\n" )
+    self.CSVFile:write( "\n" )
   end
 end
 
 
-function LogClose()
+function SCORING:CloseCSV()
   if lfs then
-    self.StatFile:close()
+    self.CSVFile:close()
   end
 end
 
