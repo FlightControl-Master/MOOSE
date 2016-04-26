@@ -482,8 +482,3 @@ function EVENT:onEvent( Event )
   end
 end
 
-
-
---- Declare the event dispatcher based on the EVENT class
-_EVENTDISPATCHER = EVENT:New() -- #EVENT
-
