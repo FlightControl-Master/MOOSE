@@ -42,7 +42,6 @@ local _SCORINGCategory =
 --- Creates a new SCORING object to administer the scoring achieved by players.
 -- @param #SCORING self
 -- @param #string GameName The name of the game. This name is also logged in the CSV score file.
--- @param #string ScoringCSV The name of the CSV file.
 -- @return #SCORING self
 -- @usage
 -- -- Define a new scoring object for the mission Gori Valley.
@@ -699,7 +698,7 @@ function SCORING:OpenCSV( ScoringCSV )
   if lfs and io and os then
     if ScoringCSV then
       self.ScoringCSV = ScoringCSV
-      local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
+      local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
 
       self.CSVFile, self.err = io.open( fdir, "w+" )
       if not self.CSVFile then
@@ -713,7 +712,7 @@ function SCORING:OpenCSV( ScoringCSV )
       error( "A string containing the CSV file name must be given." )
     end
   else
-    self:E( "The MissionScripting.lua file has not been change to allow lfs, io and os modules to be used..." )
+    self:E( "The MissionScripting.lua file has not been changed to allow lfs, io and os modules to be used..." )
   end
   return self
 end
@@ -784,7 +783,7 @@ function SCORING:ScoreCSV( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Playe
     TargetUnitName = ''
   end
 
-  if lfs then
+  if lfs and io and os then
     self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..
@@ -809,7 +808,7 @@ end
 
 
 function SCORING:CloseCSV()
-  if lfs then
+  if lfs and io and os then
     self.CSVFile:close()
   end
 end
