@@ -497,7 +497,9 @@ function MISSIONSCHEDULER.Scheduler()
 
 					if MissionComplete then
 						Mission:Completed()
-						_Database:_AddMissionScore( Mission.Name, 100 ) 
+						if MISSIONSCHEDULER.Scoring then
+						  MISSIONSCHEDULER.Scoring:_AddMissionScore( Mission.Name, 100 )
+						end
 					else
 						if TaskComplete then
 							-- Reset for new tasking of active client
@@ -659,5 +661,11 @@ function MISSIONSCHEDULER:Time( TimeSeconds, TimeIntervalShow, TimeShow )
 	self.TimeSeconds = TimeSeconds
 	self.TimeIntervalShow = TimeIntervalShow
 	self.TimeShow = TimeShow
+end
+
+--- Adds a mission scoring to the game.
+function MISSIONSCHEDULER:Scoring( Scoring )
+
+  self.Scoring = Scoring
 end
 
