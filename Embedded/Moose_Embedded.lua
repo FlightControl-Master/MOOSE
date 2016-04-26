@@ -1,3 +1,4 @@
+env.info( 'Moose Embedded' ) 
 --- Various routines
 -- @module routines
 -- @author Flightcontrol
@@ -3508,253 +3509,6 @@ end
 --- Declare the event dispatcher based on the EVENT class
 _EVENTDISPATCHER = EVENT:New() -- #EVENT
 
---- Encapsulation of DCS World Menu system in a set of MENU classes.
--- @module Menu
-
-Include.File( "Routines" )
-Include.File( "Base" )
-
---- The MENU class
--- @type MENU
--- @extends Base#BASE
-MENU = {
-  ClassName = "MENU",
-  MenuPath = nil,
-  MenuText = "",
-  MenuParentPath = nil
-}
-
----
-function MENU:New( MenuText, MenuParentPath )
-
-	-- Arrange meta tables
-	local Child = BASE:Inherit( self, BASE:New() )
-
-	Child.MenuPath = nil 
-	Child.MenuText = MenuText
-	Child.MenuParentPath = MenuParentPath
-	return Child
-end
-
---- The COMMANDMENU class
--- @type COMMANDMENU
--- @extends Menu#MENU
-COMMANDMENU = {
-  ClassName = "COMMANDMENU",
-  CommandMenuFunction = nil,
-  CommandMenuArgument = nil
-}
-
-function COMMANDMENU:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
-
-	-- Arrange meta tables
-	
-	local MenuParentPath = nil
-	if ParentMenu ~= nil then
-		MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local Child = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-
-	Child.MenuPath = missionCommands.addCommand( MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
-	Child.CommandMenuFunction = CommandMenuFunction
-	Child.CommandMenuArgument = CommandMenuArgument
-	return Child
-end
-
---- The SUBMENU class
--- @type SUBMENU
--- @extends Menu#MENU
-SUBMENU = {
-  ClassName = "SUBMENU"
-}
-
-function SUBMENU:New( MenuText, ParentMenu )
-
-	-- Arrange meta tables
-	local MenuParentPath = nil
-	if ParentMenu ~= nil then
-		MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local Child = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-
-	Child.MenuPath = missionCommands.addSubMenu( MenuText, MenuParentPath )
-	return Child
-end
-
--- This local variable is used to cache the menus registered under clients.
--- Menus don't dissapear when clients are destroyed and restarted.
--- So every menu for a client created must be tracked so that program logic accidentally does not create
--- the same menus twice during initialization logic.
--- These menu classes are handling this logic with this variable.
-local _MENUCLIENTS = {}
-
---- The MENU_CLIENT class
--- @type MENU_CLIENT
--- @extends Menu#MENU
-MENU_CLIENT = {
-  ClassName = "MENU_CLIENT"
-}
-
---- Creates a new menu item for a group
--- @param self
--- @param Client#CLIENT MenuClient The Client owning the menu.
--- @param #string MenuText The text for the menu.
--- @param #table ParentMenu The parent menu.
--- @return #MENU_CLIENT self
-function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
-
-	-- Arrange meta tables
-	local MenuParentPath = {}
-	if ParentMenu ~= nil then
-	  MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-	self:F( { MenuClient, MenuText, ParentMenu } )
-
-  self.MenuClient = MenuClient
-  self.MenuClientGroupID = MenuClient:GetClientGroupID()
-  self.MenuParentPath = MenuParentPath
-  self.MenuText = MenuText
-  self.ParentMenu = ParentMenu
-  
-  self.Menus = {}
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
-
-  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-  if MenuPath[MenuPathID] then
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
-  end
-
-	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
-	MenuPath[MenuPathID] = self.MenuPath
-
-  self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
-
-  if ParentMenu and ParentMenu.Menus then
-    ParentMenu.Menus[self.MenuPath] = self
-  end
-	return self
-end
-
---- Removes the sub menus recursively of this MENU_CLIENT.
--- @param #MENU_CLIENT self
--- @return #MENU_CLIENT self
-function MENU_CLIENT:RemoveSubMenus()
-  self:F( self.MenuPath )
-
-  for MenuID, Menu in pairs( self.Menus ) do
-    Menu:Remove()
-  end
-
-end
-
---- Removes the sub menus recursively of this MENU_CLIENT.
--- @param #MENU_CLIENT self
--- @return #MENU_CLIENT self
-function MENU_CLIENT:Remove()
-  self:F( self.MenuPath )
-
-  self:RemoveSubMenus()
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-  end
-  
-  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-  self.ParentMenu.Menus[self.MenuPath] = nil
-  return nil
-end
-
-
---- The MENU_CLIENT_COMMAND class
--- @type MENU_CLIENT_COMMAND
--- @extends Menu#MENU
-MENU_CLIENT_COMMAND = {
-  ClassName = "MENU_CLIENT_COMMAND"
-}
-
---- Creates a new radio command item for a group
--- @param self
--- @param Client#CLIENT MenuClient The Client owning the menu.
--- @param MenuText The text for the menu.
--- @param ParentMenu The parent menu.
--- @param CommandMenuFunction A function that is called when the menu key is pressed.
--- @param CommandMenuArgument An argument for the function.
--- @return Menu#MENU_CLIENT_COMMAND self
-function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
-
-	-- Arrange meta tables
-	
-	local MenuParentPath = {}
-	if ParentMenu ~= nil then
-		MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-	
-  self.MenuClient = MenuClient
-  self.MenuClientGroupID = MenuClient:GetClientGroupID()
-  self.MenuParentPath = MenuParentPath
-  self.MenuText = MenuText
-  self.ParentMenu = ParentMenu
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
-
-  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-  if MenuPath[MenuPathID] then
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
-  end
-  
-	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
-  MenuPath[MenuPathID] = self.MenuPath
- 
-	self.CommandMenuFunction = CommandMenuFunction
-	self.CommandMenuArgument = CommandMenuArgument
-	
-	ParentMenu.Menus[self.MenuPath] = self
-	
-	return self
-end
-
-function MENU_CLIENT_COMMAND:Remove()
-  self:F( self.MenuPath )
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-  end
-  
-  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-  self.ParentMenu.Menus[self.MenuPath] = nil
-  return nil
-end
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
 -- @module Group
@@ -5599,15 +5353,6 @@ function DATABASE:New()
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
-  --self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
-
-  self.SchedulerId = routines.scheduleFunction( DATABASE._FollowPlayers, { self }, 0, 5 )
-
-  self:ScoreMenu()
-
   return self
 end
 
@@ -5663,11 +5408,6 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
-
---- Private
--- @section Private
-
-
 --- Registers new Group Templates within the DATABASE Object.
 function DATABASE:_RegisterGroup( GroupTemplate )
 
@@ -5702,15 +5442,116 @@ function DATABASE:_RegisterGroup( GroupTemplate )
   end
 end
 
-
---- Events
--- @section Events
+_Database = DATABASE:New() -- Database#DATABASE
 
 
---- Track DCSRTE DEAD or CRASH events for the internal scoring.
--- @param #DATABASE self
+--- Scoring system for MOOSE.
+-- This scoring class calculates the hits and kills that players make within a simulation session.
+-- Scoring is calculated using a defined algorithm.
+-- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
+-- to a database or a BI tool to publish the scoring results to the player community.
+-- @module Scoring
+-- @author FlightControl
+
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Menu" )
+Include.File( "Group" )
+Include.File( "Event" )
+
+
+--- The Scoring class
+-- @type SCORING
+-- @field Players A collection of the current players that have joined the game.
+-- @extends Base#BASE
+SCORING = {
+  ClassName = "SCORING",
+  ClassID = 0,
+  Players = {},
+}
+
+local _SCORINGCoalition =
+  {
+    [1] = "Red",
+    [2] = "Blue",
+  }
+
+local _SCORINGCategory =
+  {
+    [Unit.Category.AIRPLANE] = "Plane",
+    [Unit.Category.HELICOPTER] = "Helicopter",
+    [Unit.Category.GROUND_UNIT] = "Vehicle",
+    [Unit.Category.SHIP] = "Ship",
+    [Unit.Category.STRUCTURE] = "Structure",
+  }
+
+--- Creates a new SCORING object to administer the scoring achieved by players.
+-- @param #SCORING self
+-- @param #string GameName The name of the game. This name is also logged in the CSV score file.
+-- @param #string ScoringCSV The name of the CSV file.
+-- @return #SCORING self
+-- @usage
+-- -- Define a new scoring object for the mission Gori Valley.
+-- ScoringObject = SCORING:New( "Gori Valley" )
+function SCORING:New( GameName )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  if GameName then 
+    self.GameName = GameName
+  else
+    error( "A game name must be given to register the scoring results" )
+  end
+  
+  
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
+
+  self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
+
+  self:ScoreMenu()
+
+  return self
+  
+end
+
+--- Creates a score radio menu. Can be accessed using Radio -> F10.
+-- @param #SCORING self
+-- @return #SCORING self
+function SCORING:ScoreMenu()
+  self.Menu = SUBMENU:New( 'Scoring' )
+  self.AllScoresMenu = COMMANDMENU:New( 'Score All Active Players', self.Menu, SCORING.ReportScoreAll, self )
+  --- = COMMANDMENU:New('Your Current Score', ReportScore, SCORING.ReportScorePlayer, self )
+  return self
+end
+
+--- Follows new players entering Clients within the DCSRTE.
+-- TODO: Need to see if i can catch this also with an event. It will eliminate the schedule ...
+function SCORING:_FollowPlayersScheduled()
+  self:F3( "_FollowPlayersScheduled" )
+
+  local ClientUnit = 0
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
+  local unitId
+  local unitData
+  local AlivePlayerUnits = {}
+
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    self:T3( { "_FollowPlayersScheduled", CoalitionData } )
+    for UnitId, UnitData in pairs( CoalitionData ) do
+      self:_AddPlayerFromUnit( UnitData )
+    end
+  end
+end
+
+
+--- Track  DEAD or CRASH events for the scoring.
+-- @param #SCORING self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnDeadOrCrash( Event )
+function SCORING:_EventOnDeadOrCrash( Event )
   self:F( { Event } )
 
   local TargetUnit = nil
@@ -5738,8 +5579,8 @@ function DATABASE:_EventOnDeadOrCrash( Event )
     TargetCategory = TargetUnit:getDesc().category  -- Workaround
     TargetType = TargetUnit:getTypeName()
 
-    TargetUnitCoalition = _DATABASECoalition[TargetCoalition]
-    TargetUnitCategory = _DATABASECategory[T1argetCategory]
+    TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
+    TargetUnitCategory = _SCORINGCategory[TargetCategory]
     TargetUnitType = TargetType
 
     self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
@@ -5754,8 +5595,8 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       local InitUnitType = PlayerData.UnitType
       local InitCoalition = PlayerData.UnitCoalition
       local InitCategory = PlayerData.UnitCategory
-      local InitUnitCoalition = _DATABASECoalition[InitCoalition]
-      local InitUnitCategory = _DATABASECategory[InitCategory]
+      local InitUnitCoalition = _SCORINGCoalition[InitCoalition]
+      local InitUnitCategory = _SCORINGCategory[InitCategory]
 
       self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
 
@@ -5781,7 +5622,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
             PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
             "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-          self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+          self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         else
           PlayerData.Score = PlayerData.Score + 10
           PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10
@@ -5790,7 +5631,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
             PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
             "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-          self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+          self:ScoreCSV( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         end
         end
       end
@@ -5799,35 +5640,9 @@ function DATABASE:_EventOnDeadOrCrash( Event )
 end
 
 
---- Scheduled
--- @section Scheduled
-
-
---- Follows new players entering Clients within the DCSRTE.
-function DATABASE:_FollowPlayers()
-  self:F3( "_FollowPlayers" )
-
-  local ClientUnit = 0
-  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers(coalition.side.RED), AlivePlayersBlue = coalition.getPlayers(coalition.side.BLUE) }
-  local unitId
-  local unitData
-  local AlivePlayerUnits = {}
-
-  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-    self:T3( { "_FollowPlayers", CoalitionData } )
-    for UnitId, UnitData in pairs( CoalitionData ) do
-      self:_AddPlayerFromUnit( UnitData )
-    end
-  end
-end
-
-
---- Private
--- @section Private
-
 
 --- Add a new player entering a Unit.
-function DATABASE:_AddPlayerFromUnit( UnitData )
+function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
   if UnitData:isExist() then
@@ -5846,7 +5661,7 @@ function DATABASE:_AddPlayerFromUnit( UnitData )
       self.Players[PlayerName].Kill = {}
       self.Players[PlayerName].Mission = {}
 
-      -- for CategoryID, CategoryName in pairs( DATABASECategory ) do
+      -- for CategoryID, CategoryName in pairs( SCORINGCategory ) do
       -- self.Players[PlayerName].Hit[CategoryID] = {}
       -- self.Players[PlayerName].Kill[CategoryID] = {}
       -- end
@@ -5864,14 +5679,14 @@ function DATABASE:_AddPlayerFromUnit( UnitData )
       if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
         self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-        MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. _DATABASECoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _DATABASECoalition[UnitCoalition] ..
+        MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
           "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
           "",
           2,
           "/PENALTYCOALITION" .. PlayerName
         ):ToAll()
-        self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _DATABASECoalition[self.Players[PlayerName].UnitCoalition], _DATABASECategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
-          UnitName, _DATABASECoalition[UnitCoalition], _DATABASECategory[UnitCategory], UnitData:getTypeName() )
+        self:ScoreCSV( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+          UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:getTypeName() )
       end
     end
     self.Players[PlayerName].UnitName = UnitName
@@ -5905,7 +5720,7 @@ end
 
 
 --- Registers Scores the players completing a Mission Task.
-function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
+function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self:F( { PlayerUnit, MissionName, Score } )
 
   local PlayerName = PlayerUnit:getPlayerName()
@@ -5926,13 +5741,13 @@ function DATABASE:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
     Score .. " Score points added.",
     "", 20, "/SCORETASK" .. PlayerName ):ToAll()
 
-  _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
 
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
-function DATABASE:_AddMissionScore( MissionName, Score )
-  self:F( { PlayerUnit, MissionName, Score } )
+function SCORING:_AddMissionScore( MissionName, Score )
+  self:F( { MissionName, Score } )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
 
@@ -5942,20 +5757,15 @@ function DATABASE:_AddMissionScore( MissionName, Score )
       MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..
         Score .. " Score points added.",
         "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
-      _Database:ScoreAdd( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
+      self:ScoreCSV( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
   end
 end
 
-
---- Events
--- @section Events
-
-
 --- Handles the OnHit event for the scoring.
--- @param #DATABASE self
+-- @param #SCORING self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnHit( Event )
+function SCORING:_EventOnHit( Event )
   self:F( { Event } )
 
   local InitUnit = nil
@@ -5998,8 +5808,8 @@ function DATABASE:_EventOnHit( Event )
     InitCategory = InitUnit:getDesc().category
     InitType = InitUnit:getTypeName()
 
-    InitUnitCoalition = _DATABASECoalition[InitCoalition]
-    InitUnitCategory = _DATABASECategory[InitCategory]
+    InitUnitCoalition = _SCORINGCoalition[InitCoalition]
+    InitUnitCategory = _SCORINGCategory[InitCategory]
     InitUnitType = InitType
 
     self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType , InitUnitCoalition, InitUnitCategory, InitUnitType } )
@@ -6020,8 +5830,8 @@ function DATABASE:_EventOnHit( Event )
     TargetCategory = TargetUnit:getDesc().category
     TargetType = TargetUnit:getTypeName()
 
-    TargetUnitCoalition = _DATABASECoalition[TargetCoalition]
-    TargetUnitCategory = _DATABASECategory[TargetCategory]
+    TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
+    TargetUnitCategory = _SCORINGCategory[TargetCategory]
     TargetUnitType = TargetType
 
     self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
@@ -6060,7 +5870,7 @@ function DATABASE:_EventOnHit( Event )
           2,
           "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName
         ):ToAll()
-        self:ScoreAdd( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        self:ScoreCSV( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       else
         self.Players[InitPlayerName].Score = self.Players[InitPlayerName].Score + 10
         self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score = self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score + 1
@@ -6072,7 +5882,7 @@ function DATABASE:_EventOnHit( Event )
           2,
           "/SCORE" .. InitPlayerName .. "/" .. InitUnitName
         ):ToAll()
-        self:ScoreAdd( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+        self:ScoreCSV( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       end
     end
     end
@@ -6082,7 +5892,7 @@ function DATABASE:_EventOnHit( Event )
 end
 
 
-function DATABASE:ReportScoreAll()
+function SCORING:ReportScoreAll()
 
   env.info( "Hello World " )
 
@@ -6096,8 +5906,8 @@ function DATABASE:ReportScoreAll()
       self:T( "Score Player: " .. PlayerName )
 
       -- Some variables
-      local InitUnitCoalition = _DATABASECoalition[PlayerData.UnitCoalition]
-      local InitUnitCategory = _DATABASECategory[PlayerData.UnitCategory]
+      local InitUnitCoalition = _SCORINGCoalition[PlayerData.UnitCoalition]
+      local InitUnitCategory = _SCORINGCategory[PlayerData.UnitCategory]
       local InitUnitType = PlayerData.UnitType
       local InitUnitName = PlayerData.UnitName
 
@@ -6108,7 +5918,7 @@ function DATABASE:ReportScoreAll()
 
       local ScoreMessageHits = ""
 
-      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+      for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
         self:T( CategoryName )
         if PlayerData.Hit[CategoryID] then
           local Score = 0
@@ -6136,7 +5946,7 @@ function DATABASE:ReportScoreAll()
       end
 
       local ScoreMessageKills = ""
-      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+      for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
         self:T( "Kill scores exist for player " .. PlayerName )
         if PlayerData.Kill[CategoryID] then
           local Score = 0
@@ -6195,7 +6005,7 @@ function DATABASE:ReportScoreAll()
 end
 
 
-function DATABASE:ReportScorePlayer()
+function SCORING:ReportScorePlayer()
 
   env.info( "Hello World " )
 
@@ -6209,8 +6019,8 @@ function DATABASE:ReportScorePlayer()
       self:T( "Score Player: " .. PlayerName )
 
       -- Some variables
-      local InitUnitCoalition = _DATABASECoalition[PlayerData.UnitCoalition]
-      local InitUnitCategory = _DATABASECategory[PlayerData.UnitCategory]
+      local InitUnitCoalition = _SCORINGCoalition[PlayerData.UnitCoalition]
+      local InitUnitCategory = _SCORINGCategory[PlayerData.UnitCategory]
       local InitUnitType = PlayerData.UnitType
       local InitUnitName = PlayerData.UnitName
 
@@ -6221,7 +6031,7 @@ function DATABASE:ReportScorePlayer()
 
       local ScoreMessageHits = ""
 
-      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+      for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
         self:T( CategoryName )
         if PlayerData.Hit[CategoryID] then
           local Score = 0
@@ -6249,7 +6059,7 @@ function DATABASE:ReportScorePlayer()
       end
 
       local ScoreMessageKills = ""
-      for CategoryID, CategoryName in pairs( _DATABASECategory ) do
+      for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
         self:T( "Kill scores exist for player " .. PlayerName )
         if PlayerData.Kill[CategoryID] then
           local Score = 0
@@ -6309,18 +6119,7 @@ function DATABASE:ReportScorePlayer()
 end
 
 
-function DATABASE:ScoreMenu()
-  local ReportScore = SUBMENU:New( 'Scoring' )
-  local ReportAllScores = COMMANDMENU:New( 'Score All Active Players', ReportScore, DATABASE.ReportScoreAll, self )
-  local ReportPlayerScores = COMMANDMENU:New('Your Current Score', ReportScore, DATABASE.ReportScorePlayer, self )
-end
-
-
-
-
--- File Logic for tracking the scores
-
-function DATABASE:SecondsToClock(sSeconds)
+function SCORING:SecondsToClock(sSeconds)
   local nSeconds = sSeconds
   if nSeconds == 0 then
     --return nil;
@@ -6333,24 +6132,58 @@ function DATABASE:SecondsToClock(sSeconds)
   end
 end
 
+--- Opens a score CSV file to log the scores.
+-- @param #SCORING self
+-- @param #string ScoringCSV
+-- @return #SCORING self
+-- @usage
+-- -- Open a new CSV file to log the scores of the game Gori Valley. Let the name of the CSV file begin with "Player Scores".
+-- ScoringObject = SCORING:New( "Gori Valley" )
+-- ScoringObject:OpenCSV( "Player Scores" )
+function SCORING:OpenCSV( ScoringCSV )
+  self:F( ScoringCSV )
+  
+  if lfs and io and os then
+    if ScoringCSV then
+      self.ScoringCSV = ScoringCSV
+      local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
 
-function DATABASE:ScoreOpen()
-  if lfs then
-    local fdir = lfs.writedir() .. [[Logs\]] .. "Player_Scores_" .. os.date( "%Y-%m-%d_%H-%M-%S" ) .. ".csv"
-    self.StatFile, self.err = io.open(fdir,"w+")
-    if not self.StatFile then
-      error( "Error: Cannot open 'Player Scores.csv' file in " .. lfs.writedir() )
+      self.CSVFile, self.err = io.open( fdir, "w+" )
+      if not self.CSVFile then
+        error( "Error: Cannot open CSV file in " .. lfs.writedir() )
+      end
+
+      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
+  
+      self.RunTime = os.date("%y-%m-%d_%H-%M-%S")
+    else
+      error( "A string containing the CSV file name must be given." )
     end
-    self.StatFile:write( '"RunID","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
-
-    self.RunID = os.date("%y-%m-%d_%H-%M-%S")
+  else
+    self:E( "The MissionScripting.lua file has not been change to allow lfs, io and os modules to be used..." )
   end
+  return self
 end
 
 
-function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+--- Registers a score for a player.
+-- @param #SCORING self
+-- @param #string PlayerName The name of the player.
+-- @param #string ScoreType The type of the score.
+-- @param #string ScoreTimes The amount of scores achieved.
+-- @param #string ScoreAmount The score given.
+-- @param #string PlayerUnitName The unit name of the player.
+-- @param #string PlayerUnitCoalition The coalition of the player unit.
+-- @param #string PlayerUnitCategory The category of the player unit.
+-- @param #string PlayerUnitType The type of the player unit.
+-- @param #string TargetUnitName The name of the target unit.
+-- @param #string TargetUnitCoalition The coalition of the target unit.
+-- @param #string TargetUnitCategory The category of the target unit.
+-- @param #string TargetUnitType The type of the target unit.
+-- @return #SCORING self
+function SCORING:ScoreCSV( PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
   --write statistic information to file
-  local ScoreTime = self:SecondsToClock(timer.getTime())
+  local ScoreTime = self:SecondsToClock( timer.getTime() )
   PlayerName = PlayerName:gsub( '"', '_' )
 
   if PlayerUnitName and PlayerUnitName ~= '' then
@@ -6358,12 +6191,12 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
 
     if PlayerUnit then
       if not PlayerUnitCategory then
-        --PlayerUnitCategory = DATABASECategory[PlayerUnit:getCategory()]
-        PlayerUnitCategory = _DATABASECategory[PlayerUnit:getDesc().category]
+        --PlayerUnitCategory = SCORINGCategory[PlayerUnit:getCategory()]
+        PlayerUnitCategory = _SCORINGCategory[PlayerUnit:getDesc().category]
       end
 
       if not PlayerUnitCoalition then
-        PlayerUnitCoalition = _DATABASECoalition[PlayerUnit:getCoalition()]
+        PlayerUnitCoalition = _SCORINGCoalition[PlayerUnit:getCoalition()]
       end
 
       if not PlayerUnitType then
@@ -6399,8 +6232,9 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
   end
 
   if lfs then
-    self.StatFile:write(
-      '"' .. self.RunID           .. '"' .. ',' ..
+    self.CSVFile:write(
+      '"' .. self.GameName        .. '"' .. ',' ..
+      '"' .. self.RunTime         .. '"' .. ',' ..
       ''  .. ScoreTime            .. ''  .. ',' ..
       '"' .. PlayerName           .. '"' .. ',' ..
       '"' .. ScoreType            .. '"' .. ',' ..
@@ -6416,20 +6250,16 @@ function DATABASE:ScoreAdd( PlayerName, ScoreType, ScoreTimes, ScoreAmount, Play
       ''  .. ScoreAmount
     )
 
-    self.StatFile:write( "\n" )
+    self.CSVFile:write( "\n" )
   end
 end
 
 
-function LogClose()
+function SCORING:CloseCSV()
   if lfs then
-    self.StatFile:close()
+    self.CSVFile:close()
   end
 end
-
-_Database = DATABASE:New() -- Database#DATABASE
-_Database:ScoreOpen()
-
 
 --- CARGO Classes
 -- @module CARGO
@@ -10605,7 +10435,9 @@ function MISSIONSCHEDULER.Scheduler()
 
 					if MissionComplete then
 						Mission:Completed()
-						_Database:_AddMissionScore( Mission.Name, 100 ) 
+						if MISSIONSCHEDULER.Scoring then
+						  MISSIONSCHEDULER.Scoring:_AddMissionScore( Mission.Name, 100 )
+						end
 					else
 						if TaskComplete then
 							-- Reset for new tasking of active client
@@ -10767,6 +10599,12 @@ function MISSIONSCHEDULER:Time( TimeSeconds, TimeIntervalShow, TimeShow )
 	self.TimeSeconds = TimeSeconds
 	self.TimeIntervalShow = TimeIntervalShow
 	self.TimeShow = TimeShow
+end
+
+--- Adds a mission scoring to the game.
+function MISSIONSCHEDULER:Scoring( Scoring )
+
+  self.Scoring = Scoring
 end
 
 --- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.

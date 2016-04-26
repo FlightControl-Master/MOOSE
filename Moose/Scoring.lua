@@ -175,7 +175,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
             "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-          self:ScoreAdd( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+          self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         else
           PlayerData.Score = PlayerData.Score + 10
           PlayerData.Kill[TargetCategory][TargetType].Score = PlayerData.Kill[TargetCategory][TargetType].Score + 10
@@ -184,7 +184,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
             "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
-          self:ScoreAdd( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+          self:ScoreCSV( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         end
         end
       end
@@ -238,7 +238,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
           2,
           "/PENALTYCOALITION" .. PlayerName
         ):ToAll()
-        self:ScoreAdd( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
+        self:ScoreCSV( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:getTypeName() )
       end
     end
@@ -294,13 +294,13 @@ function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
     Score .. " Score points added.",
     "", 20, "/SCORETASK" .. PlayerName ):ToAll()
 
-  _Database:ScoreAdd( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
 
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 function SCORING:_AddMissionScore( MissionName, Score )
-  self:F( { PlayerUnit, MissionName, Score } )
+  self:F( { MissionName, Score } )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
 
@@ -310,7 +310,7 @@ function SCORING:_AddMissionScore( MissionName, Score )
       MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..
         Score .. " Score points added.",
         "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
-      _Database:ScoreAdd( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
+      self:ScoreCSV( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
   end
 end
