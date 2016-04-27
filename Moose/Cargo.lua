@@ -517,7 +517,7 @@ function CARGO_GROUP:Spawn( Client )
 			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, 1 ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
 		end
 		self:StatusNone()	
 	end

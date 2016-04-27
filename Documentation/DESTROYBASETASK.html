@@ -30,6 +30,7 @@
 					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li>DESTROYBASETASK</li>
@@ -38,6 +39,7 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="MISSION.html">MISSION</a></li>
@@ -48,6 +50,7 @@
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
@@ -97,7 +100,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYBASETASK).EventDead">DESTROYBASETASK.EventDead(event, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESTROYBASETASK).EventDead">DESTROYBASETASK:EventDead(Event)</a></td>
 		<td class="summary">
 <p>Handle the S<em>EVENT</em>DEAD events to validate the destruction of units for the task monitoring.</p>
 </td>
@@ -109,7 +112,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYBASETASK).New">DESTROYBASETASK.New(string, string, table, ?, self, DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESTROYBASETASK).New">DESTROYBASETASK:New(DestroyGroupType, DestroyUnitType, <, DestroyPercentage, DestroyGroupPrefixes)</a></td>
 		<td class="summary">
 <p>Creates a new DESTROYBASETASK.</p>
 </td>
@@ -188,25 +191,19 @@
 <dt>
 
 <a id="#(DESTROYBASETASK).EventDead" >
-<strong>DESTROYBASETASK.EventDead(event, self)</strong>
+<strong>DESTROYBASETASK:EventDead(Event)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Handle the S<em>EVENT</em>DEAD events to validate the destruction of units for the task monitoring.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
-<pre><code>    Event structure of DCS world.
-</code></pre>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: 
+structure of MOOSE.</p>
 
 				</li>
 		</ul>
@@ -230,7 +227,7 @@
 <dt>
 
 <a id="#(DESTROYBASETASK).New" >
-<strong>DESTROYBASETASK.New(string, string, table, ?, self, DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage)</strong>
+<strong>DESTROYBASETASK:New(DestroyGroupType, DestroyUnitType, <, DestroyPercentage, DestroyGroupPrefixes)</strong>
 </a>
 </dt>
 <dd>
@@ -241,51 +238,31 @@
 		<ul>
 				<li>
 				
-<p><code><em> string </em></code>: 
-DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".</p>
+<p><code><em>#string DestroyGroupType </em></code>: 
+Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".</p>
 
 				</li>
 				<li>
 				
-<p><code><em> string </em></code>: 
-DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".</p>
+<p><code><em>#string DestroyUnitType </em></code>: 
+Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".</p>
 
 				</li>
 				<li>
 				
-<p><code><em> table </em></code>: 
-string,...} DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.</p>
+<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
+string> DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> ? </em></code>: 
-umber DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the <a href="TASK.html">TASK</a>.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> DestroyGroupType </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> DestroyUnitType </em></code>: </p>
+<p><code><em>#number DestroyPercentage </em></code>: 
+defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the <a href="TASK.html">TASK</a>.</p>
 
 				</li>
 				<li>
 				
 <p><code><em> DestroyGroupPrefixes </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> DestroyPercentage </em></code>: </p>
 
 				</li>
 		</ul>
@@ -332,6 +309,8 @@ umber DestroyPercentage defines the %-tage that needs to be destroyed to achieve
 </dd>
 </dl>
 
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
 </div>
 
 </div>

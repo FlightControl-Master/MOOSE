@@ -191,6 +191,7 @@ function DATABASE:ScanEnvironment()
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
+  return self
 end
 
 --- Instantiate new Groups within the DCSRTE.
@@ -277,6 +278,5 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     self:T( { "Unit", self.Units[UnitTemplateName].UnitName } )
   end
 end
-
 
 
