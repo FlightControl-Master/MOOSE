@@ -30,6 +30,7 @@
 					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -38,6 +39,7 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="MISSION.html">MISSION</a></li>
@@ -48,6 +50,7 @@
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
@@ -139,27 +142,33 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventAddForCleanUp">CLEANUP:_EventAddForCleanUp(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventAddForCleanUp">CLEANUP:_EventAddForCleanUp(event, Event)</a></td>
 		<td class="summary">
 <p>Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given ZoneNames.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventCrash">CLEANUP:_EventCrash(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventCrash">CLEANUP:_EventCrash(event, Event)</a></td>
 		<td class="summary">
 <p>Detects if a crash event occurs.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventHitCleanUp">CLEANUP:_EventHitCleanUp(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventHitCleanUp">CLEANUP:_EventHitCleanUp(event, Event)</a></td>
 		<td class="summary">
 <p>Detects if the Unit has an S<em>EVENT</em>HIT within the given ZoneNames.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventShot">CLEANUP:_EventShot(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventShot">CLEANUP:_EventShot(event, Event)</a></td>
 		<td class="summary">
 <p>Detects if a unit shoots a missile.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._OnEventBirth">CLEANUP:_OnEventBirth(Event)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -394,7 +403,7 @@ The Unit name ...</p>
 <dt>
 
 <a id="#(CLEANUP)._EventAddForCleanUp" >
-<strong>CLEANUP:_EventAddForCleanUp(event)</strong>
+<strong>CLEANUP:_EventAddForCleanUp(event, Event)</strong>
 </a>
 </dt>
 <dd>
@@ -404,11 +413,16 @@ The Unit name ...</p>
 	
 <p>If this is the case, add the Group to the CLEANUP List.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -418,7 +432,7 @@ The Unit name ...</p>
 <dt>
 
 <a id="#(CLEANUP)._EventCrash" >
-<strong>CLEANUP:_EventCrash(event)</strong>
+<strong>CLEANUP:_EventCrash(event, Event)</strong>
 </a>
 </dt>
 <dd>
@@ -428,11 +442,16 @@ The Unit name ...</p>
 	
 <p>Crashed units go into a CleanUpList for removal.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -442,7 +461,7 @@ The Unit name ...</p>
 <dt>
 
 <a id="#(CLEANUP)._EventHitCleanUp" >
-<strong>CLEANUP:_EventHitCleanUp(event)</strong>
+<strong>CLEANUP:_EventHitCleanUp(event, Event)</strong>
 </a>
 </dt>
 <dd>
@@ -452,11 +471,16 @@ The Unit name ...</p>
 	
 <p>If this is the case, destroy the unit.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -466,7 +490,7 @@ The Unit name ...</p>
 <dt>
 
 <a id="#(CLEANUP)._EventShot" >
-<strong>CLEANUP:_EventShot(event)</strong>
+<strong>CLEANUP:_EventShot(event, Event)</strong>
 </a>
 </dt>
 <dd>
@@ -476,11 +500,37 @@ The Unit name ...</p>
 	
 <p>If this occurs within one of the zones, then the weapon used must be destroyed.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Event)">DCSTypes#Event</a> event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLEANUP)._OnEventBirth" >
+<strong>CLEANUP:_OnEventBirth(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
 
 				</li>
 		</ul>

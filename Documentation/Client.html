@@ -30,6 +30,7 @@
 					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -38,6 +39,7 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="MISSION.html">MISSION</a></li>
@@ -48,6 +50,7 @@
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
@@ -92,7 +95,7 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBack, ...)</a></td>
 		<td class="summary">
 <p>Checks for a client alive event and calls a function on a continuous basis.</p>
 </td>
@@ -165,6 +168,12 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientName">CLIENT.ClientName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientParameters">CLIENT.ClientParameters</a></td>
 		<td class="summary">
 
 </td>
@@ -400,19 +409,24 @@ is the text defining the Mission briefing.</p>
 <dt>
 
 <a id="#(CLIENT).Alive" >
-<strong>CLIENT:Alive(CallBack)</strong>
+<strong>CLIENT:Alive(CallBack, ...)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Checks for a client alive event and calls a function on a continuous basis.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#function CallBack </em></code>: 
 Function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -581,6 +595,20 @@ Function.</p>
 
 <a id="#(CLIENT).ClientName" >
 <strong>CLIENT.ClientName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CLIENT).ClientParameters" >
+<strong>CLIENT.ClientParameters</strong>
 </a>
 </dt>
 <dd>

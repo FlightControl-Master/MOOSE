@@ -30,6 +30,7 @@
 					<li><a href="DCSTask.html">DCSTask</a></li>
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -38,6 +39,7 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="MISSION.html">MISSION</a></li>
@@ -48,6 +50,7 @@
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li>Spawn</li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
@@ -326,9 +329,9 @@ You can use the <a href="GROUP.html">GROUP</a> object to do further actions with
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</a></td>
 		<td class="summary">
-<p>Will spawn a Group within a given <a href="ZONE.html">ZONE</a>.</p>
+<p>Will spawn a Group within a given <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -1420,19 +1423,29 @@ SpawnGroupName</p>
 <dt>
 
 <a id="#(SPAWN).SpawnInZone" >
-<strong>SPAWN:SpawnInZone(Zone, SpawnIndex)</strong>
+<strong>SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Will spawn a Group within a given <a href="ZONE.html">ZONE</a>.</p>
+<p>Will spawn a Group within a given <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</p>
+
+	
+<p>Once the group is spawned within the zone, it will continue on its route.
+The first waypoint (where the group is spawned) is replaced with the zone coordinates.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(ZONE)">#ZONE</a> Zone </em></code>: 
+<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> Zone </em></code>: 
 The zone where the group is to be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ZoneRandomize </em></code>: 
+(Optional) Set to true if you want to randomize the starting point in the zone.</p>
 
 				</li>
 				<li>
@@ -2297,8 +2310,6 @@ The index of the group to be spawned.</p>
 </dd>
 </dl>
 
-			<h2><a id="#(ZONE)" >Type <code>ZONE</code></a></h2>
-			
 </div>
 
 </div>
