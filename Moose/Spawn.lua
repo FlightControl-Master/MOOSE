@@ -641,11 +641,12 @@ end
 --- Will spawn a Group within a given @{ZONE}.
 -- @param #SPAWN self
 -- @param #ZONE Zone The zone where the group is to be spawned.
+-- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
+function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
   
   if Zone then
     
@@ -660,11 +661,14 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
       
       if SpawnTemplate then
     
-        local ZonePoint = Zone:GetPointVec2()
+        local ZonePoint 
+        
+        if ZoneRandomize == true then
+          ZonePoint = Zone:GetRandomPointVec2()
+        else
+          ZonePoint = Zone:GetPointVec2()
+        end
 
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = ZonePoint.x
         SpawnTemplate.route.points[1].y = ZonePoint.y
         
@@ -674,17 +678,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
           SpawnTemplate.units[UnitID].y = ZonePoint.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
-        
-        local SpawnPos = Zone:GetRandomPointVec2()
-        local Point = {}
-        Point.type = "Turning Point"
-        Point.x = SpawnPos.x
-        Point.y = SpawnPos.y
-        Point.action = "Cone"
-        Point.speed = 5
-        
-        table.insert( SpawnTemplate.route.points, 2, Point )
-        
+       
         return self:SpawnWithIndex( self.SpawnIndex )
       end
     end
