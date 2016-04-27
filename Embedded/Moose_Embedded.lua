@@ -6779,7 +6779,7 @@ function CARGO_GROUP:Spawn( Client )
 			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, 1 ):GetName()
+			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
 		end
 		self:StatusNone()	
 	end
@@ -11569,14 +11569,17 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
   return nil
 end
 
---- Will spawn a Group within a given @{ZONE}.
+--- Will spawn a Group within a given @{Zone#ZONE}.
+-- Once the group is spawned within the zone, it will continue on its route.
+-- The first waypoint (where the group is spawned) is replaced with the zone coordinates.
 -- @param #SPAWN self
--- @param #ZONE Zone The zone where the group is to be spawned.
+-- @param Zone#ZONE Zone The zone where the group is to be spawned.
+-- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, SpawnIndex } )
+function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
   
   if Zone then
     
@@ -11591,11 +11594,14 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
       
       if SpawnTemplate then
     
-        local ZonePoint = Zone:GetPointVec2()
+        local ZonePoint 
+        
+        if ZoneRandomize == true then
+          ZonePoint = Zone:GetRandomPointVec2()
+        else
+          ZonePoint = Zone:GetPointVec2()
+        end
 
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = ZonePoint.x
         SpawnTemplate.route.points[1].y = ZonePoint.y
         
@@ -11605,17 +11611,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
           SpawnTemplate.units[UnitID].y = ZonePoint.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
-        
-        local SpawnPos = Zone:GetRandomPointVec2()
-        local Point = {}
-        Point.type = "Turning Point"
-        Point.x = SpawnPos.x
-        Point.y = SpawnPos.y
-        Point.action = "Cone"
-        Point.speed = 5
-        
-        table.insert( SpawnTemplate.route.points, 2, Point )
-        
+       
         return self:SpawnWithIndex( self.SpawnIndex )
       end
     end
@@ -11623,6 +11619,7 @@ function SPAWN:SpawnInZone( Zone, SpawnIndex )
   
   return nil
 end
+
 
 
 
