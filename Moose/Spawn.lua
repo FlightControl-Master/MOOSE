@@ -638,9 +638,11 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
   return nil
 end
 
---- Will spawn a Group within a given @{ZONE}.
+--- Will spawn a Group within a given @{Zone#ZONE}.
+-- Once the group is spawned within the zone, it will continue on its route.
+-- The first waypoint (where the group is spawned) is replaced with the zone coordinates.
 -- @param #SPAWN self
--- @param #ZONE Zone The zone where the group is to be spawned.
+-- @param Zone#ZONE Zone The zone where the group is to be spawned.
 -- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
@@ -686,6 +688,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
   
   return nil
 end
+
 
 
 
