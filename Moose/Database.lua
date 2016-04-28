@@ -482,6 +482,72 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   end
 end
 
+--- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
+  self:F( arg )
+  
+  local function CoRoutine()
+    for DCSUnitID, DCSUnit in pairs( self.DCSUnitsAlive ) do
+        self:T2( DCSUnit )
+        IteratorFunction( DCSUnit, unpack( arg ) )
+        coroutine.yield()    
+    end
+    return true
+  end
+  
+  local co = coroutine.create( CoRoutine )
+  
+  while true do
+    local status, res = coroutine.resume( co )
+    self:T2( { status, res } )
+    
+    if status == false then
+      error( res )
+    end
+    if res == true then
+      break
+    end
+  end
+  
+  return self
+end
+
+--- Interate the DATABASE and call an interator function for each unit, providing the UNIT and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
+  self:F( arg )
+  
+  local function CoRoutine()
+    for DCSUnitID, DCSUnit in pairs( self.DCSUnits ) do
+        self:T2( DCSUnit )
+        IteratorFunction( DCSUnit, unpack( arg ) )
+        coroutine.yield()    
+    end
+    return true
+  end
+  
+  local co = coroutine.create( CoRoutine )
+  
+  while true do
+    local status, res = coroutine.resume( co )
+    self:T2( { status, res } )
+    
+    if status == false then
+      error( res )
+    end
+    if res == true then
+      break
+    end
+  end
+  
+  return self
+end
+
 --- Traces the current database contents in the log ... (for debug reasons).
 -- @param #DATABASE self
 -- @return #DATABASE self

@@ -60,3 +60,7 @@ routines.scheduleFunction( DBBelgium.TraceDatabase, { DBBelgium }, 1 )
 routines.scheduleFunction( DBNorthKorea.TraceDatabase, { DBNorthKorea }, 1 )
 routines.scheduleFunction( DBKA50Vinson.TraceDatabase, { DBKA50Vinson }, 1 )
 
+DBRedVehicles
+  :ForEachAliveUnit( function( DCSUnit ) 
+    DBRedVehicles:T( DCSUnit:getName() )
+  end )
