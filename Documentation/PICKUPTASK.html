@@ -1,0 +1,392 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li>PICKUPTASK</li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>PICKUPTASK</code></h1>
+   
+<p>A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.</p>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#PICKUPTASK">PICKUPTASK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+	<h2><a id="#(PICKUPTASK)" >Type <code>PICKUPTASK</code></a></h2>
+		<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).AddCargoMenus">PICKUPTASK:AddCargoMenus(Client, Cargos, TransportRadius)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).ClassName">PICKUPTASK.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).FromZone">PICKUPTASK:FromZone(LandingZone)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).GoalVerb">PICKUPTASK.GoalVerb</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).HasFailed">PICKUPTASK:HasFailed(ClientDead)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).InitCargo">PICKUPTASK:InitCargo(InitCargos)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).LoadCargo">PICKUPTASK:LoadCargo(LoadCargos)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).New">PICKUPTASK.New(table, CARGO_TYPE, number, self, CargoType, OnBoardSide)</a></td>
+		<td class="summary">
+<p>Creates a new PICKUPTASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).RemoveCargoMenus">PICKUPTASK:RemoveCargoMenus(Client)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PICKUPTASK).TEXT">PICKUPTASK.TEXT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(PICKUPTASK)">#PICKUPTASK</a></em>
+<a id="PICKUPTASK" >
+<strong>PICKUPTASK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(PICKUPTASK)" >Type <code>PICKUPTASK</code></a></h2>
+		<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).AddCargoMenus" >
+<strong>PICKUPTASK:AddCargoMenus(Client, Cargos, TransportRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Cargos </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TransportRadius </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(PICKUPTASK).ClassName" >
+<strong>PICKUPTASK.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).FromZone" >
+<strong>PICKUPTASK:FromZone(LandingZone)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> LandingZone </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(PICKUPTASK).GoalVerb" >
+<strong>PICKUPTASK.GoalVerb</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).HasFailed" >
+<strong>PICKUPTASK:HasFailed(ClientDead)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClientDead </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).InitCargo" >
+<strong>PICKUPTASK:InitCargo(InitCargos)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> InitCargos </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).LoadCargo" >
+<strong>PICKUPTASK:LoadCargo(LoadCargos)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> LoadCargos </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).New" >
+<strong>PICKUPTASK.New(table, CARGO_TYPE, number, self, CargoType, OnBoardSide)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new PICKUPTASK.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CARGO_TYPE </em></code>: 
+CargoType Type of the Cargo. The type must be of the following Enumeration:..</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> OnBoardSide </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(PICKUPTASK).RemoveCargoMenus" >
+<strong>PICKUPTASK:RemoveCargoMenus(Client)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(PICKUPTASK).TEXT" >
+<strong>PICKUPTASK.TEXT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

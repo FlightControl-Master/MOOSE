@@ -1,0 +1,447 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li>DCSAirbase</li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>DCSAirbase</code></h1>
+   
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#Airbase">Airbase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(Airbase)">Type <code>Airbase</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).Category">Airbase.Category</a></td>
+		<td class="summary">
+<p>enum contains identifiers of airbase categories. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).Desc">Airbase.Desc</a></td>
+		<td class="summary">
+<p>Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).ID">Airbase.ID</a></td>
+		<td class="summary">
+<p>Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getByName">Airbase.getByName(name)</a></td>
+		<td class="summary">
+<p>Returns airbase by its name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getCallsign">Airbase:getCallsign()</a></td>
+		<td class="summary">
+<p>Returns the airbase's callsign - the localized string.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getDesc">Airbase:getDesc()</a></td>
+		<td class="summary">
+<p>Returns descriptor of the airbase. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getDescByName">Airbase.getDescByName(typeName)</a></td>
+		<td class="summary">
+<p>Returns airbase descriptor by type name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getID">Airbase:getID()</a></td>
+		<td class="summary">
+<p>Returns identifier of the airbase.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase).getUnit">Airbase:getUnit()</a></td>
+		<td class="summary">
+<p>Returns Unit that is corresponded to the airbase.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Airbase.Category)">Type <code>Airbase.Category</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase.Category).AIRDROME">Airbase.Category.AIRDROME</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase.Category).HELIPAD">Airbase.Category.HELIPAD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase.Category).SHIP">Airbase.Category.SHIP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Airbase.Desc)">Type <code>Airbase.Desc</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Airbase.Desc).category">Airbase.Desc.category</a></td>
+		<td class="summary">
+<p>Category of the airbase type.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Airbase)">#Airbase</a></em>
+<a id="Airbase" >
+<strong>Airbase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(DCSAirbase)" >Type <code>DCSAirbase</code></a></h2>
+	
+			<h2><a id="#(Airbase)" >Type <code>Airbase</code></a></h2>
+				
+<p>Represents airbases: airdromes, helipads and ships with flying decks or landing pads.</p>
+
+	
+<p> </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Airbase.Category)">#Airbase.Category</a></em>
+<a id="#(Airbase).Category" >
+<strong>Airbase.Category</strong>
+</a>
+</dt>
+<dd>
+	
+<p>enum contains identifiers of airbase categories. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Airbase.Desc)">#Airbase.Desc</a></em>
+<a id="#(Airbase).Desc" >
+<strong>Airbase.Desc</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Airbase.ID)">#Airbase.ID</a></em>
+<a id="#(Airbase).ID" >
+<strong>Airbase.ID</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getByName" >
+<strong>Airbase.getByName(name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns airbase by its name.</p>
+
+	
+<p>If no airbase found the function will return nil.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string name </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Airbase)">#Airbase</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getCallsign" >
+<strong>Airbase:getCallsign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the airbase's callsign - the localized string.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getDesc" >
+<strong>Airbase:getDesc()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns descriptor of the airbase. </p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Airbase.Desc)">#Airbase.Desc</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getDescByName" >
+<strong>Airbase.getDescByName(typeName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns airbase descriptor by type name.</p>
+
+	
+<p>If no descriptor is found the function will return nil.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(TypeName)">#TypeName</a> typeName </em></code>: 
+Airbase type name.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Airbase.Desc)">#Airbase.Desc</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getID" >
+<strong>Airbase:getID()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns identifier of the airbase.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Airbase.ID)">#Airbase.ID</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase).getUnit" >
+<strong>Airbase:getUnit()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns Unit that is corresponded to the airbase.</p>
+
+	
+<p>Works only for ships.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(Unit)">Unit#Unit</a>:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Airbase.Category)" >Type <code>Airbase.Category</code></a></h2>
+				
+<p>Enum contains identifiers of airbase categories.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase.Category).AIRDROME" >
+<strong>Airbase.Category.AIRDROME</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase.Category).HELIPAD" >
+<strong>Airbase.Category.HELIPAD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Airbase.Category).SHIP" >
+<strong>Airbase.Category.SHIP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Airbase.Desc)" >Type <code>Airbase.Desc</code></a></h2>
+				
+<p>Airbase descriptor.</p>
+
+	
+<p>Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Airbase.Category)">#Airbase.Category</a></em>
+<a id="#(Airbase.Desc).category" >
+<strong>Airbase.Desc.category</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Category of the airbase type.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Airbase.ID)" >Type <code>Airbase.ID</code></a></h2>
+			
+			<h2><a id="#(TypeName)" >Type <code>TypeName</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>
