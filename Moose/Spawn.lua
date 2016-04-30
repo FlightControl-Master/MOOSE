@@ -1,5 +1,8 @@
 --- Dynamic spawning of groups (and units).
--- The SPAWN class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
+-- 
+-- @{#SPAWN} class
+-- ===============
+-- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
 -- 
@@ -67,6 +70,7 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
+-- ====
 -- @module Spawn
 -- @author FlightControl
 
