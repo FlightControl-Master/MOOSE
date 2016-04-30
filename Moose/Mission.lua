@@ -474,7 +474,7 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_Database:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
 
 --								if not Mission:IsCompleted() then
 --								end

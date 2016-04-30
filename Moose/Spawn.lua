@@ -21,8 +21,8 @@
 --   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
 --   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
 --   
--- 1. SPAWN object construction methods:
--- ------------------------------------- 
+-- SPAWN construction methods:
+-- =========================== 
 -- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
 -- 
 --   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
@@ -31,8 +31,8 @@
 -- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
--- 2. SPAWN object initialization methods: 
--- ---------------------------------------
+-- SPAWN initialization methods: 
+-- =============================
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
@@ -42,8 +42,8 @@
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.Repeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.RepeatOnLanding} and @{#SPAWN.RepeatOnEngineShutDown}.
 -- 
--- 2. SPAWN object spawning methods:
--- ---------------------------------
+-- SPAWN spawning methods:
+-- =======================
 -- Groups can be spawned at different times and methods:
 -- 
 --   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
@@ -55,8 +55,8 @@
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- 3. SPAWN object cleaning:
--- -------------------------
+-- SPAWN object cleaning:
+-- =========================
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
@@ -384,7 +384,7 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
       _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
     end
 		
-		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
+		self.SpawnGroups[SpawnGroupID].Group = _DATABASE:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
 		SpawnY = SpawnYIndex * SpawnDeltaY
@@ -456,7 +456,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
 
-			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -464,7 +464,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			end
 			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
 			--if self.SpawnRepeat then
-			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
 		end
 		
@@ -965,7 +965,7 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _Database.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -1122,7 +1122,7 @@ function SPAWN:_GetSpawnIndex( SpawnIndex )
 end
 
 
--- TODO Need to delete this... _Database does this now ...
+-- TODO Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnBirth( event )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
@@ -1140,7 +1140,7 @@ function SPAWN:_OnBirth( event )
 end
 
 --- Obscolete
--- @todo Need to delete this... _Database does this now ...
+-- @todo Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnDeadOrCrash( event )
   self:F( self.SpawnTemplatePrefix,  event )
 

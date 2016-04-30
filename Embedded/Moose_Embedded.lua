@@ -1697,7 +1697,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _Database.Groups[groupIdent].groupId
+		gpId = _DATABASE.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do
@@ -1747,6 +1747,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then	
 	end --for coa_name, coa_data in pairs(mission.coalition) do
 end
+
 routines.ground.patrolRoute = function(vars)
 	
 	
@@ -3504,11 +3505,6 @@ function EVENT:onEvent( Event )
   end
 end
 
-
-
---- Declare the event dispatcher based on the EVENT class
-_EVENTDISPATCHER = EVENT:New() -- #EVENT
-
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
 -- @module Group
@@ -4510,7 +4506,7 @@ end
 function GROUP:GetTaskMission()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template )
+  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -4519,7 +4515,7 @@ end
 function GROUP:GetTaskRoute()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template.route.points )
+  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the @{Database#DATABASE} class.
@@ -4543,7 +4539,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 	
 	self:T( { GroupName } )
 	
-	local Template = _Database.Groups[GroupName].Template
+	local Template = _DATABASE.Groups[GroupName].Template
 	
 	if Template then
 		if not Begin then
@@ -5257,14 +5253,40 @@ Include.File( "Event" )
 -- @extends Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
+  DCSUnits = {},
+  DCSUnitsAlive = {},
   Units = {},
   Groups = {},
+  DCSGroups = {},
+  DCSGroupsAlive = {},
   NavPoints = {},
   Statics = {},
   Players = {},
-  ActivePlayers = {},
+  AlivePlayers = {},
   ClientsByName = {},
   ClientsByID = {},
+  Filter = {
+    Coalitions = nil,
+    Categories = nil,
+    Types = nil,
+    Countries = nil,
+    UnitPrefixes = nil,
+    GroupPrefixes = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      plane = Unit.Category.AIRPLANE,
+      helicopter = Unit.Category.HELICOPTER,
+      ground = Unit.Category.GROUND_UNIT,
+      ship = Unit.Category.SHIP,
+      structure = Unit.Category.STRUCTURE,
+    },
+  },
 }
 
 local _DATABASECoalition =
@@ -5283,8 +5305,9 @@ local _DATABASECategory =
   }
 
 
---- Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.
--- @return DATABASE
+--- Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+-- @param #DATABASE self
+-- @return #DATABASE
 -- @usage
 -- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = DATABASE:New()
@@ -5292,6 +5315,234 @@ function DATABASE:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
+  
+  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
+  return self
+end
+
+--- Builds a set of units of coalitons.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #DATABASE self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #DATABASE self
+function DATABASE:FilterCoalition( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+--- Builds a set of units out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #DATABASE self
+-- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+-- @return #DATABASE self
+function DATABASE:FilterCategory( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+--- Builds a set of units of defined unit types.
+-- Possible current types are those types known within DCS world.
+-- @param #DATABASE self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #DATABASE self
+function DATABASE:FilterType( Types )
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
+
+--- Builds a set of units of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #DATABASE self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #DATABASE self
+function DATABASE:FilterCountries( Countries )
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
+
+--- Builds a set of units of defined unit prefixes.
+-- All the units starting with the given prefixes will be included within the set.
+-- @param #DATABASE self
+-- @param #string Prefixes The prefix of which the unit name starts with.
+-- @return #DATABASE self
+function DATABASE:FilterUnitPrefix( Prefixes )
+  if not self.Filter.UnitPrefixes then
+    self.Filter.UnitPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.UnitPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+--- Builds a set of units of defined group prefixes.
+-- All the units starting with the given group prefixes will be included within the set.
+-- @param #DATABASE self
+-- @param #string Prefixes The prefix of which the group name where the unit belongs to starts with.
+-- @return #DATABASE self
+function DATABASE:FilterGroupPrefix( Prefixes )
+  if not self.Filter.GroupPrefixes then
+    self.Filter.GroupPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.GroupPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+--- Starts the filtering.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:FilterStart()
+
+  if _DATABASE then
+    -- OK, we have a _DATABASE
+    -- Now use the different filters to build the set.
+    -- We first take ALL of the Units of the _DATABASE.
+    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Units ) do
+      self:T( UnitRegistration )
+      local DCSUnit = Unit.getByName( UnitRegistration.UnitName )
+      if self:IsIncludeDCSUnit( DCSUnit ) then
+        self.DCSUnits[DCSUnit:getName()] = DCSUnit
+      end
+      if self:IsAliveDCSUnit( DCSUnit ) then
+        self.DCSUnitsAlive[DCSUnit:getName()] = DCSUnit
+      end
+    end
+  else
+    self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom DATABASE." )
+  end
+  
+  return self
+end
+
+---
+-- @param #DATABASE self
+-- @param DCSUnit#Unit DCSUnit
+-- @return #DATABASE self
+function DATABASE:IsIncludeDCSUnit( DCSUnit )
+  self:F( DCSUnit )
+  local DCSUnitInclude = true
+
+  if self.Filter.Coalitions then
+    local DCSUnitCoalition = false
+    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+      self:T( { "Coalition:", DCSUnit:getCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCSUnit:getCoalition() then
+        DCSUnitCoalition = true
+      end
+    end
+    DCSUnitInclude = DCSUnitInclude and DCSUnitCoalition
+  end
+  
+  if self.Filter.Categories then
+    local DCSUnitCategory = false
+    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+      self:T( { "Category:", DCSUnit:getDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == DCSUnit:getDesc().category then
+        DCSUnitCategory = true
+      end
+    end
+    DCSUnitInclude = DCSUnitInclude and DCSUnitCategory
+  end
+  
+  if self.Filter.Types then
+    local DCSUnitType = false
+    for TypeID, TypeName in pairs( self.Filter.Types ) do
+      self:T( { "Type:", DCSUnit:getTypeName(), TypeName } )
+      if TypeName == DCSUnit:getTypeName() then
+        DCSUnitType = true
+      end
+    end
+    DCSUnitInclude = DCSUnitInclude and DCSUnitType
+  end
+  
+  if self.Filter.Countries then
+    local DCSUnitCountry = false
+    for CountryID, CountryName in pairs( self.Filter.Countries ) do
+      self:T( { "Country:", DCSUnit:getCountry(), CountryName } )
+      if country.id[CountryName] == DCSUnit:getCountry() then
+        DCSUnitCountry = true
+      end
+    end
+    DCSUnitInclude = DCSUnitInclude and DCSUnitCountry
+  end
+
+  if self.Filter.UnitPrefixes then
+    local DCSUnitPrefix = false
+    for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
+      self:T( { "Unit Prefix:", string.find( DCSUnit:getName(), UnitPrefix, 1 ), UnitPrefix } )
+      if string.find( DCSUnit:getName(), UnitPrefix, 1 ) then
+        DCSUnitPrefix = true
+      end
+    end
+    DCSUnitInclude = DCSUnitInclude and DCSUnitPrefix
+  end
+
+  self:T( DCSUnitInclude )
+  return DCSUnitInclude
+end
+
+---
+-- @param #DATABASE self
+-- @param DCSUnit#Unit DCSUnit
+-- @return #DATABASE self
+function DATABASE:IsAliveDCSUnit( DCSUnit )
+  self:F( DCSUnit )
+  local DCSUnitAlive = false
+  if DCSUnit and DCSUnit:isExist() and DCSUnit:isActive() then
+    if self.DCSUnits[DCSUnit:getName()] then
+      DCSUnitAlive = true
+    end
+  end
+  self:T( DCSUnitAlive )
+  return DCSUnitAlive
+end
+
+
+function DATABASE:ScanEnvironment()
+  self:F()
 
   self.Navpoints = {}
   self.Units = {}
@@ -5299,7 +5550,7 @@ function DATABASE:New()
   for coa_name, coa_data in pairs(env.mission.coalition) do
 
     if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
-      self.Units[coa_name] = {}
+      --self.Units[coa_name] = {}
 
       ----------------------------------------------
       -- build nav points DB
@@ -5323,8 +5574,8 @@ function DATABASE:New()
         for cntry_id, cntry_data in pairs(coa_data.country) do
 
           local countryName = string.lower(cntry_data.name)
-          self.Units[coa_name][countryName] = {}
-          self.Units[coa_name][countryName]["countryId"] = cntry_data.id
+          --self.Units[coa_name][countryName] = {}
+          --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
           if type(cntry_data) == 'table' then  --just making sure
 
@@ -5336,7 +5587,7 @@ function DATABASE:New()
 
                 if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
 
-                  self.Units[coa_name][countryName][category] = {}
+                  --self.Units[coa_name][countryName][category] = {}
 
                   for group_num, GroupTemplate in pairs(obj_type_data.group) do
 
@@ -5356,14 +5607,14 @@ function DATABASE:New()
   return self
 end
 
-
 --- Instantiate new Groups within the DCSRTE.
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
 function DATABASE:Spawn( SpawnTemplate )
+  self:F( SpawnTemplate.name )
 
-  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID, SpawnTemplate.name } )
+  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
 
   -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
   local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
@@ -5438,11 +5689,47 @@ function DATABASE:_RegisterGroup( GroupTemplate )
       self.ClientsByName[UnitTemplateName] = UnitTemplate
       self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:T( { "Unit", self.Units[UnitTemplateName].UnitName } )
+    self:E( { "Unit", self.Units[UnitTemplateName].UnitName } )
   end
 end
 
-_Database = DATABASE:New() -- Database#DATABASE
+--- Handles the OnBirth event for the alive units set.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnBirth( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit 
+    end
+  end
+end
+
+--- Handles the OnDead or OnCrash event for alive units set.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnDeadOrCrash( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self.DCSUnitsAlive[Event.IniDCSUnitName] then
+      self.DCSUnits[Event.IniDCSUnitName] = nil 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = nil
+    end
+  end
+end
+
+--- Traces the current database contents in the log ... (for debug reasons).
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:TraceDatabase()
+  self:F()
+  
+  self:T( { "DCSUnits:", self.DCSUnits } )
+  self:T( { "DCSUnitsAlive:", self.DCSUnitsAlive } )
+end
 
 
 --- Scoring system for MOOSE.
@@ -7467,12 +7754,12 @@ function CLIENT:GetDCSGroup()
 						-- Now we need to resolve the bugs in DCS 1.5 ...
 						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
 						self:T3( "Bug 1.5 logic" )
-						local ClientUnits = _Database.Groups[self.ClientName].Units
+						local ClientUnits = _DATABASE.Groups[self.ClientName].Units
 						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
 						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
 							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
 							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
-								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
+								local ClientGroupTemplate = _DATABASE.Groups[self.ClientName].Template
 								self.ClientID = ClientGroupTemplate.groupId
 								self.ClientGroupUnit = UnitData
 								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
@@ -10411,7 +10698,7 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_Database:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
 
 --								if not Mission:IsCompleted() then
 --								end
@@ -10872,7 +11159,7 @@ function CLEANUP:_CleanUpScheduler()
 		local CleanUpUnitName = UnitData.CleanUpUnitName
 		if CleanUpUnit then
 			self:T( { "CleanUp Scheduler", "Checking:", CleanUpUnitName } )
-			if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
+			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
 				local CleanUpUnitVec3 = CleanUpUnit:getPoint()
 				--self:T( CleanUpUnitVec3 )
 				local CleanUpUnitVec2 = {}
@@ -11315,7 +11602,7 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
       _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
     end
 		
-		self.SpawnGroups[SpawnGroupID].Group = _Database:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
+		self.SpawnGroups[SpawnGroupID].Group = _DATABASE:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
 
 		SpawnX = SpawnXIndex * SpawnDeltaX
 		SpawnY = SpawnYIndex * SpawnDeltaY
@@ -11387,7 +11674,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
 
-			self.SpawnGroups[self.SpawnIndex].Group = _Database:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -11395,7 +11682,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			end
 			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
 			--if self.SpawnRepeat then
-			--	_Database:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
+			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
 		end
 		
@@ -11896,7 +12183,7 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _Database.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -12053,7 +12340,7 @@ function SPAWN:_GetSpawnIndex( SpawnIndex )
 end
 
 
--- TODO Need to delete this... _Database does this now ...
+-- TODO Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnBirth( event )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
@@ -12071,7 +12358,7 @@ function SPAWN:_OnBirth( event )
 end
 
 --- Obscolete
--- @todo Need to delete this... _Database does this now ...
+-- @todo Need to delete this... _DATABASE does this now ...
 function SPAWN:_OnDeadOrCrash( event )
   self:F( self.SpawnTemplatePrefix,  event )
 
@@ -12398,7 +12685,7 @@ function SEAD:EventShot( Event )
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()
 		local _targetMimcont= _targetMimgroup:getController()
-		local _targetskill =  _Database.Units[_targetMimname].Template.skill
+		local _targetskill =  _DATABASE.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
 		self:T( _targetMimgroupName )
 		local SEADGroupFound = false

@@ -196,12 +196,12 @@ function CLIENT:GetDCSGroup()
 						-- Now we need to resolve the bugs in DCS 1.5 ...
 						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
 						self:T3( "Bug 1.5 logic" )
-						local ClientUnits = _Database.Groups[self.ClientName].Units
+						local ClientUnits = _DATABASE.Groups[self.ClientName].Units
 						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
 						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
 							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
 							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
-								local ClientGroupTemplate = _Database.Groups[self.ClientName].Template
+								local ClientGroupTemplate = _DATABASE.Groups[self.ClientName].Template
 								self.ClientID = ClientGroupTemplate.groupId
 								self.ClientGroupUnit = UnitData
 								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )

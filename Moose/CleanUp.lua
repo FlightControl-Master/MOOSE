@@ -264,7 +264,7 @@ function CLEANUP:_CleanUpScheduler()
 		local CleanUpUnitName = UnitData.CleanUpUnitName
 		if CleanUpUnit then
 			self:T( { "CleanUp Scheduler", "Checking:", CleanUpUnitName } )
-			if _Database:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
+			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
 				local CleanUpUnitVec3 = CleanUpUnit:getPoint()
 				--self:T( CleanUpUnitVec3 )
 				local CleanUpUnitVec2 = {}

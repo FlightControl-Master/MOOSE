@@ -2,6 +2,7 @@
 -- @module DCSTypes
 
 
+
 --- Time is given in seconds.
 -- @type Time
 -- @extends #number

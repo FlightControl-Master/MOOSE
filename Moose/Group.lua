@@ -999,7 +999,7 @@ end
 function GROUP:GetTaskMission()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template )
+  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -1008,7 +1008,7 @@ end
 function GROUP:GetTaskRoute()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _Database.Groups[self.GroupName].Template.route.points )
+  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the @{Database#DATABASE} class.
@@ -1032,7 +1032,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 	
 	self:T( { GroupName } )
 	
-	local Template = _Database.Groups[GroupName].Template
+	local Template = _DATABASE.Groups[GroupName].Template
 	
 	if Template then
 		if not Begin then
