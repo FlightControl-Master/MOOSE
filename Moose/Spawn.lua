@@ -43,7 +43,7 @@
 --   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.Repeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.RepeatOnLanding} and @{#SPAWN.RepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
 -- SPAWN spawning methods:
 -- =======================
@@ -115,7 +115,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
 		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
@@ -152,7 +152,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
 		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
@@ -274,36 +274,37 @@ end
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
-function SPAWN:Repeat()
+function SPAWN:InitRepeat()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
-	self.SpawnRepeat = true
+	self.Repeat = true
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 
 	return self
 end
 
---- Same as the @{Repeat) method.
--- @return SPAWN
--- @see Repeat
-
-function SPAWN:RepeatOnLanding()
+--- Respawn group after landing.
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitRepeatOnLanding()
 	self:F( { self.SpawnTemplatePrefix } )
 
-	self:Repeat()
+	self:InitRepeat()
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 	
 	return self
 end
 
---- Same as the @{#SPAWN.Repeat) method, but now the Group will respawn after its engines have shut down.
--- @return SPAWN
-function SPAWN:RepeatOnEngineShutDown()
+
+--- Respawn after landing when its engines have shut down.
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitRepeatOnEngineShutDown()
 	self:F( { self.SpawnTemplatePrefix } )
 
-	self:Repeat()
+	self:InitRepeat()
 	self.RepeatOnEngineShutDown = true
 	self.RepeatOnLanding = false
 	
@@ -378,10 +379,8 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
     _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
     _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
 
-    if self.SpawnRepeat then
+    if self.Repeat then
       _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
-    end
-    if self.RepeatOnLanding then
       _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
     end
     if self.RepeatOnEngineShutDown then
@@ -450,10 +449,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
       _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
 
-      if self.SpawnRepeat then
+      if self.Repeat then
         _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
-      end
-      if self.RepeatOnLanding then
         _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
@@ -467,7 +464,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			  self.SpawnFunctionHook( self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) )
 			end
 			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
-			--if self.SpawnRepeat then
+			--if self.Repeat then
 			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
 		end

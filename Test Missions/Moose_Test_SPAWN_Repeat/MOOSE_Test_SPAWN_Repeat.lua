@@ -12,10 +12,6 @@
 
 Include.File("Spawn")
 
-BASE:TraceClass("GROUP")
-BASE:TraceClass("SPAWN")
-BASE:TraceClass("DATABASE")
-
 do
 
   -- Declare SPAWN objects
@@ -27,21 +23,21 @@ do
   -- Choose repeat functionality
   
   -- Repeat on landing
-  Spawn_KA_50:RepeatOnLanding()
-  Spawn_C_101EB:RepeatOnLanding()
+  Spawn_KA_50:InitRepeatOnLanding()
+  Spawn_C_101EB:InitRepeatOnLanding()
   
   -- Repeat on enging shutdown (when landed on the airport)
-  Spawn_MI_8MTV2:RepeatOnEngineShutDown()
-  Spawn_A_10C:RepeatOnEngineShutDown()
+  Spawn_MI_8MTV2:InitRepeatOnEngineShutDown()
+  Spawn_A_10C:InitRepeatOnEngineShutDown()
   
   -- Now SPAWN the GROUPs
   Spawn_KA_50:Spawn()
-  Spawn_KA_50:Spawn()
   Spawn_C_101EB:Spawn()
-  Spawn_C_101EB:Spawn()
-  Spawn_MI_8MTV2:Spawn()
   Spawn_MI_8MTV2:Spawn()
   Spawn_A_10C:Spawn()
+  Spawn_KA_50:Spawn()
+  Spawn_C_101EB:Spawn()
+  Spawn_MI_8MTV2:Spawn()
   Spawn_A_10C:Spawn()
   
   -- Now run the mission and observe the behaviour.
