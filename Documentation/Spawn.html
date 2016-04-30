@@ -21,7 +21,6 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
-					<li><a href="DATABASE.html">DATABASE</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSCommand.html">DCSCommand</a></li>
@@ -38,6 +37,7 @@
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
 					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
@@ -68,7 +68,9 @@
 <p>Dynamic spawning of groups (and units).</p>
 
    
-<p>The SPAWN class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
+
+<h1><a href="##(SPAWN)">#SPAWN</a> class</h1>
+<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
 A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
 
@@ -142,6 +144,7 @@ In such a case, when the inactive group is cleaned, a new group will Re-spawned 
 This models AI that has succesfully returned to their airbase, to restart their combat activities.
 Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 
+<hr/>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
