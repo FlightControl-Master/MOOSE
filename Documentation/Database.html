@@ -21,6 +21,7 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li>DATABASE</li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSCommand.html">DCSCommand</a></li>
@@ -37,7 +38,6 @@
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
 					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
-					<li>Database</li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
@@ -63,75 +63,9 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Database</code></h1>
+   <h1>Module <code>DATABASE</code></h1>
    
-<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
 
-   
-<p>Mission designers can use the DATABASE class to build sets of units belonging to certain:</p>
-
-<ul>
-    <li>coalitions</li>
-    <li>categories</li>
-    <li>countries</li>
-    <li>unit types</li>
-    <li>starting with certain prefix strings.</li>
-</ul>
-
-<p> Note that this is an initial filter set. More to follow, like zones etc.</p>
-
-
-<h1>DATABASE construction methods:</h1>
-<p>Create a new DATABASE object with the <a href="##(DATABASE).New">DATABASE.New</a> method:</p>
-
-<ul>
-    <li><a href="##(DATABASE).New">DATABASE.New</a>: Creates a new DATABASE object.</li>
-</ul>
-
-
-<h1>DATABASE filter criteria: </h1>
-<p>You can set filter criteria to define the set of units within the database.
-Filter criteria are defined by:</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterCoalitions">DATABASE.FilterCoalitions</a>: Builds the DATABASE with the units belonging to the coalition(s).</li>
-    <li><a href="##(DATABASE).FilterCategories">DATABASE.FilterCategories</a>: Builds the DATABASE with the units belonging to the category(ies).</li>
-    <li><a href="##(DATABASE).FilterTypes">DATABASE.FilterTypes</a>: Builds the DATABASE with the units belonging to the unit type(s).</li>
-    <li><a href="##(DATABASE).FilterCountries">DATABASE.FilterCountries</a>: Builds the DATABASE with the units belonging to the country(ies).</li>
-    <li><a href="##(DATABASE).FilterUnitPrefixes">DATABASE.FilterUnitPrefixes</a>: Builds the DATABASE with the units starting with the same prefix string(s).</li>
-</ul>
-
-<p>Once the filter criteria have been set for the DATABASE, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterStart">DATABASE.FilterStart</a>: Starts the filtering of the units within the database.</li>
-</ul>
-
-<p>Planned filter criteria within development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterGroupPrefixes">DATABASE.FilterGroupPrefixes</a>: Builds the DATABASE with the groups of the units starting with the same prefix string(s).</li>
-    <li><a href="##(DATABASE).FilterZones">DATABASE.FilterZones</a>: Builds the DATABASE with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
-</ul>
-
-
-<h1>DATABASE iterators:</h1>
-<p>Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
-The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
-The following iterator methods are currently available within the DATABASE:</p>
-
-<ul>
-    <li><a href="##(DATABASE).ForEachAliveUnit">DATABASE.ForEachAliveUnit</a>: Calls a function for each alive unit it finds within the DATABASE.</li>
-</ul>
-
-<p>Planned iterators methods in development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each unit contained within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each group contained within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachUnitInZone">DATABASE.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the DATABASE.
-    </li>
-</ul>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -142,8 +76,8 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(DATABASE)">Type <code>DATABASE</code></a></h2>
-				<table class="function_list">
+	<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
+		<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AlivePlayers">DATABASE.AlivePlayers</a></td>
 		<td class="summary">
@@ -199,13 +133,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCategory">DATABASE:FilterCategory(Categories)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCategories">DATABASE:FilterCategories(Categories)</a></td>
 		<td class="summary">
 <p>Builds a set of units out of categories.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCoalition">DATABASE:FilterCoalition(Coalitions)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCoalitions">DATABASE:FilterCoalitions(Coalitions)</a></td>
 		<td class="summary">
 <p>Builds a set of units of coalitons.</p>
 </td>
@@ -217,7 +151,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterGroupPrefix">DATABASE:FilterGroupPrefix(Prefixes)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterGroupPrefixes">DATABASE:FilterGroupPrefixes(Prefixes)</a></td>
 		<td class="summary">
 <p>Builds a set of units of defined group prefixes.</p>
 </td>
@@ -235,13 +169,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterType">DATABASE:FilterType(Types)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterTypes">DATABASE:FilterTypes(Types)</a></td>
 		<td class="summary">
 <p>Builds a set of units of defined unit types.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterUnitPrefix">DATABASE:FilterUnitPrefix(Prefixes)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterUnitPrefixes">DATABASE:FilterUnitPrefixes(Prefixes)</a></td>
 		<td class="summary">
 <p>Builds a set of units of defined unit prefixes.</p>
 </td>
@@ -365,11 +299,76 @@ The following iterator methods are currently available within the DATABASE:</p>
 
 </dd>
 </dl>
-	<h2><a id="#(Database)" >Type <code>Database</code></a></h2>
+	<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
+		
+<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
+
 	
-			<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
-				
-<p>The DATABASE class</p>
+<p>Mission designers can use the DATABASE class to build sets of units belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Unit types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+<p> This list will grow over time. Planned developments are to include filters and iterators.
+ Additional filters will be added around <a href="Zone.html##(ZONEs)">Zone#ZONEs</a>, Radiuses, Active players, ...
+ More iterators will be implemented in the near future ...</p>
+
+<h1>DATABASE construction methods:</h1>
+<p>Create a new DATABASE object with the <a href="##(DATABASE).New">DATABASE.New</a> method:</p>
+
+<ul>
+    <li><a href="##(DATABASE).New">DATABASE.New</a>: Creates a new DATABASE object.</li>
+</ul>
+
+
+<h1>DATABASE filter criteria: </h1>
+<p>You can set filter criteria to define the set of units within the database.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterCoalitions">DATABASE.FilterCoalitions</a>: Builds the DATABASE with the units belonging to the coalition(s).</li>
+    <li><a href="##(DATABASE).FilterCategories">DATABASE.FilterCategories</a>: Builds the DATABASE with the units belonging to the category(ies).</li>
+    <li><a href="##(DATABASE).FilterTypes">DATABASE.FilterTypes</a>: Builds the DATABASE with the units belonging to the unit type(s).</li>
+    <li><a href="##(DATABASE).FilterCountries">DATABASE.FilterCountries</a>: Builds the DATABASE with the units belonging to the country(ies).</li>
+    <li><a href="##(DATABASE).FilterUnitPrefixes">DATABASE.FilterUnitPrefixes</a>: Builds the DATABASE with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the DATABASE, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterStart">DATABASE.FilterStart</a>: Starts the filtering of the units within the database.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterGroupPrefixes">DATABASE.FilterGroupPrefixes</a>: Builds the DATABASE with the groups of the units starting with the same prefix string(s).</li>
+    <li><a href="##(DATABASE).FilterZones">DATABASE.FilterZones</a>: Builds the DATABASE with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+
+<h1>DATABASE iterators:</h1>
+<p>Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
+The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the DATABASE:</p>
+
+<ul>
+    <li><a href="##(DATABASE).ForEachAliveUnit">DATABASE.ForEachAliveUnit</a>: Calls a function for each alive unit it finds within the DATABASE.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each unit contained within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each group contained within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachUnitInZone">DATABASE.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the DATABASE.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -501,8 +500,8 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterCategory" >
-<strong>DATABASE:FilterCategory(Categories)</strong>
+<a id="#(DATABASE).FilterCategories" >
+<strong>DATABASE:FilterCategories(Categories)</strong>
 </a>
 </dt>
 <dd>
@@ -531,8 +530,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterCoalition" >
-<strong>DATABASE:FilterCoalition(Coalitions)</strong>
+<a id="#(DATABASE).FilterCoalitions" >
+<strong>DATABASE:FilterCoalitions(Coalitions)</strong>
 </a>
 </dt>
 <dd>
@@ -591,8 +590,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterGroupPrefix" >
-<strong>DATABASE:FilterGroupPrefix(Prefixes)</strong>
+<a id="#(DATABASE).FilterGroupPrefixes" >
+<strong>DATABASE:FilterGroupPrefixes(Prefixes)</strong>
 </a>
 </dt>
 <dd>
@@ -653,8 +652,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterType" >
-<strong>DATABASE:FilterType(Types)</strong>
+<a id="#(DATABASE).FilterTypes" >
+<strong>DATABASE:FilterTypes(Types)</strong>
 </a>
 </dt>
 <dd>
@@ -683,8 +682,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterUnitPrefix" >
-<strong>DATABASE:FilterUnitPrefix(Prefixes)</strong>
+<a id="#(DATABASE).FilterUnitPrefixes" >
+<strong>DATABASE:FilterUnitPrefixes(Prefixes)</strong>
 </a>
 </dt>
 <dd>

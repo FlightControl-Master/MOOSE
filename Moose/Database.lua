@@ -1,14 +1,26 @@
---- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
+--- 
+-- @module DATABASE
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Menu" )
+Include.File( "Group" )
+Include.File( "Event" )
+
+---
+-- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- Mission designers can use the DATABASE class to build sets of units belonging to certain:
 -- 
---  * coalitions
---  * categories
---  * countries
---  * unit types
---  * starting with certain prefix strings.
+--  * Coalitions
+--  * Categories
+--  * Countries
+--  * Unit types
+--  * Starting with certain prefix strings.
 --  
---  Note that this is an initial filter set. More to follow, like zones etc.
---  
+--  This list will grow over time. Planned developments are to include filters and iterators.
+--  Additional filters will be added around @{Zone#ZONEs}, Radiuses, Active players, ...
+--  More iterators will be implemented in the near future ...
 -- 
 -- DATABASE construction methods:
 -- =================================
@@ -51,18 +63,7 @@
 --   * @{#DATABASE.ForEachUnit}: Calls a function for each unit contained within the DATABASE.
 --   * @{#DATABASE.ForEachGroup}: Calls a function for each group contained within the DATABASE.
 --   * @{#DATABASE.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the DATABASE.
---   
--- @module Database
--- @author FlightControl
-
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Event" )
-
---- The DATABASE class
+-- 
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
