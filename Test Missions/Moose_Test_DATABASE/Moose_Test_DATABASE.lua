@@ -2,21 +2,21 @@ Include.File( 'Database' )
 Include.File( 'Spawn' )
 
 DBBluePlanes = DATABASE:New()
-  :FilterCoalition( "blue" )
-  :FilterCategory( "plane" )
+  :FilterCoalitions( "blue" )
+  :FilterCategories( "plane" )
   :FilterStart()
 
 DBRedVehicles = DATABASE:New()
-  :FilterCoalition( "red" )
-  :FilterCategory( "ground" )
+  :FilterCoalitions( "red" )
+  :FilterCategories( "ground" )
   :FilterStart()
 
 DBShips = DATABASE:New()
-  :FilterCategory( "ship" )
+  :FilterCategories( "ship" )
   :FilterStart()
   
 DBBelgium = DATABASE:New()
-  :FilterCategory( "helicopter" )
+  :FilterCategories( "helicopter" )
   :FilterCountries( "BELGIUM" )
   :FilterStart()
   
@@ -25,7 +25,7 @@ DBNorthKorea = DATABASE:New()
   :FilterStart()
   
 DBKA50Vinson = DATABASE:New()
-  :FilterType( { "Ka-50", "VINSON" } )
+  :FilterTypes( { "Ka-50", "VINSON" } )
   :FilterStart()
 
 DBBluePlanes:TraceDatabase()
@@ -50,6 +50,14 @@ GroupRU_Vehicle = SpawnRU_Vehicle:Spawn()
 
 SpawnRU_Ship = SPAWN:New( 'Database Spawn Test RUSSIA Ship')
 GroupRU_Ship = SpawnRU_Ship:Spawn()
+
+SpawnUS_AttackVehicle = SPAWN:New( 'Database Spawn Test USA Attack Vehicle' )
+SpawnRU_AttackVehicle = SPAWN:New( 'Database Spawn Test RUSSIA Attack Vehicle' )
+
+for i = 1, 10 do
+  GroupRU_AttackVehicle = SpawnRU_AttackVehicle:SpawnInZone( ZONE:New("Spawn Zone RU"), true)
+  GroupUS_AttackVehicle = SpawnUS_AttackVehicle:SpawnInZone( ZONE:New("Spawn Zone US"), true)
+end
 
 
 --DBBlue:TraceDatabase()
