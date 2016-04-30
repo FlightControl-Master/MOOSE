@@ -46,9 +46,10 @@ function ZONE:GetRandomPointVec2()
 	local Point = {}
 
 	local Zone = trigger.misc.getZone( self.ZoneName )
-
-	Point.x = Zone.point.x + math.random( Zone.radius * -1, Zone.radius )
-	Point.y = Zone.point.z + math.random( Zone.radius * -1, Zone.radius )
+	
+	local angle = math.random() * math.pi*2;
+	Point.x = Zone.point.x + math.cos( angle ) * math.random() * Zone.radius;
+	Point.y = Zone.point.z + math.sin( angle ) * math.random() * Zone.radius;
 	
 	self:T( { Zone, Point } )
 	

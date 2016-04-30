@@ -21,6 +21,7 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li>DATABASE</li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSCommand.html">DCSCommand</a></li>
@@ -37,7 +38,6 @@
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
 					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
-					<li>Database</li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
@@ -63,12 +63,9 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Database</code></h1>
+   <h1>Module <code>DATABASE</code></h1>
    
-<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
 
-   
-<p>Administers the Spawning of new Groups within the DCSRTE and administers these new Groups within the DATABASE object(s).</p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -78,17 +75,11 @@
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_Database">_Database</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
-			<h2><a id="#(DATABASE)">Type <code>DATABASE</code></a></h2>
-				<table class="function_list">
+	<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
+		<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ActivePlayers">DATABASE.ActivePlayers</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AlivePlayers">DATABASE.AlivePlayers</a></td>
 		<td class="summary">
 
 </td>
@@ -112,6 +103,90 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSGroups">DATABASE.DCSGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSGroupsAlive">DATABASE.DCSGroupsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSUnits">DATABASE.DCSUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSUnitsAlive">DATABASE.DCSUnitsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Filter">DATABASE.Filter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCategories">DATABASE:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of units out of categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCoalitions">DATABASE:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of units of coalitons.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCountries">DATABASE:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterGroupPrefixes">DATABASE:FilterGroupPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined group prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterMeta">DATABASE.FilterMeta</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterStart">DATABASE:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterTypes">DATABASE:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterUnitPrefixes">DATABASE:FilterUnitPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachAliveUnit">DATABASE:ForEachAliveUnit(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStatusGroup">DATABASE:GetStatusGroup(GroupName)</a></td>
 		<td class="summary">
 <p>Get a status to a Group within the Database, this to check crossing events for example.</p>
@@ -132,11 +207,17 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).New">DATABASE:New()</a></td>
 		<td class="summary">
-<p>Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.</p>
+<p>Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Players">DATABASE.Players</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ScanEnvironment">DATABASE:ScanEnvironment()</a></td>
 		<td class="summary">
 
 </td>
@@ -160,7 +241,37 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).TraceDatabase">DATABASE:TraceDatabase()</a></td>
+		<td class="summary">
+<p>Traces the current database contents in the log ...</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Units">DATABASE.Units</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._EventOnBirth">DATABASE:_EventOnBirth(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnBirth event for the alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._EventOnDeadOrCrash">DATABASE:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._IsAliveDCSUnit">DATABASE:_IsAliveDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._IsIncludeDCSUnit">DATABASE:_IsIncludeDCSUnit(DCSUnit)</a></td>
 		<td class="summary">
 
 </td>
@@ -188,33 +299,84 @@
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
+	<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
+		
+<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
 
-		<em><a href="Database.html##(DATABASE)">Database#DATABASE</a></em>
-<a id="_Database" >
-<strong>_Database</strong>
-</a>
-</dt>
-<dd>
 	
+<p>Mission designers can use the DATABASE class to build sets of units belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Unit types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+<p> This list will grow over time. Planned developments are to include filters and iterators.
+ Additional filters will be added around <a href="Zone.html##(ZONEs)">Zone#ZONEs</a>, Radiuses, Active players, ...
+ More iterators will be implemented in the near future ...</p>
+
+<h1>DATABASE construction methods:</h1>
+<p>Create a new DATABASE object with the <a href="##(DATABASE).New">DATABASE.New</a> method:</p>
+
+<ul>
+    <li><a href="##(DATABASE).New">DATABASE.New</a>: Creates a new DATABASE object.</li>
+</ul>
 
 
-</dd>
-</dl>
-	<h2><a id="#(Database)" >Type <code>Database</code></a></h2>
-	
-			<h2><a id="#(DATABASE)" >Type <code>DATABASE</code></a></h2>
-				
-<p>The DATABASE class</p>
+<h1>DATABASE filter criteria: </h1>
+<p>You can set filter criteria to define the set of units within the database.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterCoalitions">DATABASE.FilterCoalitions</a>: Builds the DATABASE with the units belonging to the coalition(s).</li>
+    <li><a href="##(DATABASE).FilterCategories">DATABASE.FilterCategories</a>: Builds the DATABASE with the units belonging to the category(ies).</li>
+    <li><a href="##(DATABASE).FilterTypes">DATABASE.FilterTypes</a>: Builds the DATABASE with the units belonging to the unit type(s).</li>
+    <li><a href="##(DATABASE).FilterCountries">DATABASE.FilterCountries</a>: Builds the DATABASE with the units belonging to the country(ies).</li>
+    <li><a href="##(DATABASE).FilterUnitPrefixes">DATABASE.FilterUnitPrefixes</a>: Builds the DATABASE with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the DATABASE, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterStart">DATABASE.FilterStart</a>: Starts the filtering of the units within the database.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(DATABASE).FilterGroupPrefixes">DATABASE.FilterGroupPrefixes</a>: Builds the DATABASE with the groups of the units starting with the same prefix string(s).</li>
+    <li><a href="##(DATABASE).FilterZones">DATABASE.FilterZones</a>: Builds the DATABASE with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+
+<h1>DATABASE iterators:</h1>
+<p>Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
+The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the DATABASE:</p>
+
+<ul>
+    <li><a href="##(DATABASE).ForEachAliveUnit">DATABASE.ForEachAliveUnit</a>: Calls a function for each alive unit it finds within the DATABASE.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each unit contained within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each group contained within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachUnitInZone">DATABASE.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the DATABASE.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).ActivePlayers" >
-<strong>DATABASE.ActivePlayers</strong>
+<a id="#(DATABASE).AlivePlayers" >
+<strong>DATABASE.AlivePlayers</strong>
 </a>
 </dt>
 <dd>
@@ -262,6 +424,320 @@
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).DCSGroups" >
+<strong>DATABASE.DCSGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).DCSGroupsAlive" >
+<strong>DATABASE.DCSGroupsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).DCSUnits" >
+<strong>DATABASE.DCSUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).DCSUnitsAlive" >
+<strong>DATABASE.DCSUnitsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Filter" >
+<strong>DATABASE.Filter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterCategories" >
+<strong>DATABASE:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units out of categories.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterCoalitions" >
+<strong>DATABASE:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of coalitons.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterCountries" >
+<strong>DATABASE:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterGroupPrefixes" >
+<strong>DATABASE:FilterGroupPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined group prefixes.</p>
+
+	
+<p>All the units starting with the given group prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the group name where the unit belongs to starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).FilterMeta" >
+<strong>DATABASE.FilterMeta</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterStart" >
+<strong>DATABASE:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterTypes" >
+<strong>DATABASE:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit types.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FilterUnitPrefixes" >
+<strong>DATABASE:FilterUnitPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit prefixes.</p>
+
+	
+<p>All the units starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the unit name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachAliveUnit" >
+<strong>DATABASE:ForEachAliveUnit(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -323,12 +799,12 @@
 </dt>
 <dd>
 	
-<p>Creates a new DATABASE Object to administer the Groups defined and alive within the DCSRTE.</p>
+<p>Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
 
 		<h3>Return value</h3>
 				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em></p>
 
-<p>DATABASE</p>
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
@@ -342,6 +818,19 @@ DBObject = DATABASE:New()</code></pre>
 		<em></em>
 <a id="#(DATABASE).Players" >
 <strong>DATABASE.Players</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ScanEnvironment" >
+<strong>DATABASE:ScanEnvironment()</strong>
 </a>
 </dt>
 <dd>
@@ -419,6 +908,27 @@ This method is used by the SPAWN class.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).TraceDatabase" >
+<strong>DATABASE:TraceDatabase()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Traces the current database contents in the log ...</p>
+
+	
+<p>(for debug reasons).</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DATABASE).Units" >
 <strong>DATABASE.Units</strong>
@@ -427,6 +937,100 @@ This method is used by the SPAWN class.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._EventOnBirth" >
+<strong>DATABASE:_EventOnBirth(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnBirth event for the alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._EventOnDeadOrCrash" >
+<strong>DATABASE:_EventOnDeadOrCrash(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._IsAliveDCSUnit" >
+<strong>DATABASE:_IsAliveDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._IsIncludeDCSUnit" >
+<strong>DATABASE:_IsIncludeDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
 
 </dd>
 </dl>
