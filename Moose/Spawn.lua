@@ -456,6 +456,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
+      
+      self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
@@ -907,7 +909,6 @@ function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 		self.SpawnGroups[SpawnIndex].Visible = false
 		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].UnControlled = false
-		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].SpawnTime = 0
 		
 		self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefix
@@ -961,6 +962,9 @@ end
 
 --- Gets the Group Template from the ME environment definition.
 -- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @return @SPAWN self
 function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
@@ -981,6 +985,10 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 end
 
 --- Prepares the new Group Template.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
@@ -991,6 +999,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.lateActivation = false
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	  self:T( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false
 	end
 	
@@ -1010,7 +1019,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		
 end
 
---- Internal function randomizing the routes.
+--- Private method randomizing the routes.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
@@ -1034,7 +1043,10 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
   return self
 end
 
-
+--- Private method that randomizes the template of the group.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 

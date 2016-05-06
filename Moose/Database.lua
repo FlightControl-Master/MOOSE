@@ -282,6 +282,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
+-- @param #DATABASE self
+-- @param #table SpawnTemplate
+-- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -330,7 +333,10 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
---- Registers new Group Templates within the DATABASE Object.
+--- Private method that registers new Group Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
 function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
