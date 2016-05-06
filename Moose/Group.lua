@@ -767,8 +767,41 @@ function GROUP:TaskAttackUnit( AttackUnit )
               params = { unitId = AttackUnit:GetID(), 
                          expend = AI.Task.WeaponExpend.TWO,
                          groupAttack = true, 
-                       } 
-            } 
+                       }, 
+            }, 
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Attack a Group.
+-- @param #GROUP self
+-- @param Group#GROUP AttackGroup The Group to be attacked.
+-- @return DCSTask#Task The DCS task structure.
+function GROUP:TaskAttackGroup( AttackGroup )
+  self:F( { self.GroupName, AttackGroup } )
+
+--  AttackGroup = { 
+--   id = 'AttackGroup', 
+--   params = { 
+--     groupId = Group.ID,
+--     weaponType = number,
+--     expend = enum AI.Task.WeaponExpend,
+--     attackQty = number,
+--     directionEnabled = boolean,
+--     direction = Azimuth,
+--     altitudeEnabled = boolean,
+--     altitude = Distance,
+--     attackQtyLimit = boolean,
+--   } 
+-- }  
+
+  local DCSTask    
+  DCSTask = { id = 'AttackGroup', 
+              params = { groupId = AttackGroup:GetID(), 
+                         expend = AI.Task.WeaponExpend.TWO,
+                       }, 
+            }, 
   
   self:T( { DCSTask } )
   return DCSTask

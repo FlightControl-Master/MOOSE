@@ -52,7 +52,7 @@ function TIMETRIGGER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionA
 
   self.StartTime = timer.getTime()
   
-  self:T("Calling function" .. timer.getTime() + self.StartSeconds )
+  self:T("Calling function " .. timer.getTime() + self.StartSeconds )
   
   timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
 
@@ -62,8 +62,19 @@ end
 
 function TIMETRIGGER:Scheduler()
   self:F( self.TimeEventFunctionArguments )
+  
+  local ErrorHandler = function( errmsg )
 
-  local Result = self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) )
+    env.info( "Error in TIMETRIGGER function:" .. errmsg )
+    env.info( debug.traceback() )
+
+    return errmsg
+  end
+
+  local err, Result = xpcall( function() self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments, 1, table.maxn( self.TimeEventFunctionArguments ) ) ) end, ErrorHandler )
+  if not err then
+    --env.info('routines.scheduleFunction, error in scheduled function: ' .. errmsg)
+  end
 
   if Result and Result == true then
     if not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) then
