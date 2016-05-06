@@ -9,7 +9,8 @@ copy /b Moose_Embedded.lua + ..\Moose\Group.lua                 Moose_Embedded.l
 copy /b Moose_Embedded.lua + ..\Moose\Unit.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Zone.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Database.lua              Moose_Embedded.lua
-copy /b Moose_Embedded.lua + ..\Moose\Moose.lua              Moose_Embedded.lua
+copy /b Moose_Embedded.lua + ..\Moose\Moose.lua                 Moose_Embedded.lua
+copy /b Moose_Embedded.lua + ..\Moose\TimeTrigger.lua           Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Scoring.lua               Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Cargo.lua                 Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Client.lua                Moose_Embedded.lua
@@ -31,3 +32,4 @@ copy /b Moose_Embedded.lua + ..\Moose\Spawn.lua                 Moose_Embedded.l
 copy /b Moose_Embedded.lua + ..\Moose\Movement.lua              Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Sead.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Escort.lua                Moose_Embedded.lua
+copy /b Moose_Embedded.lua + ..\Moose\MissileTrainer.lua        Moose_Embedded.lua
