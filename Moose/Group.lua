@@ -601,7 +601,7 @@ end
 -- @param #number Speed The speed flying when holding the position.
 -- @return #GROUP self
 function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
-	self:F( { self.GroupName, Point, Altitude, Speed  } )
+	self:F( { self.GroupName, Point, Altitude, Speed } )
 
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,

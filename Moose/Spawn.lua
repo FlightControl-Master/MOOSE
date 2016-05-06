@@ -589,6 +589,9 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
       if SpawnTemplate then
 
         local UnitPoint = HostUnit:GetPointVec2()
+        
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
+        
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -596,9 +599,6 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
           --Point.alt_type = nil
         --end
         
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = UnitPoint.x
         SpawnTemplate.route.points[1].y = UnitPoint.y
 
@@ -1056,6 +1056,7 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
     self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
     end

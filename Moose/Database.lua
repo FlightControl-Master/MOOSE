@@ -345,6 +345,12 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     self.Groups[GroupTemplateName] = {}
     self.Groups[GroupTemplateName].Status = nil
   end
+  
+  -- Delete the spans from the route, it is not needed and takes memory.
+  if GroupTemplate.route and GroupTemplate.route.spans then 
+    GroupTemplate.route.spans = nil
+  end
+  
   self.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Groups[GroupTemplateName].Template = GroupTemplate
   self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
