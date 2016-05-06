@@ -594,6 +594,41 @@ function GROUP:TaskWrappedAction( DCSCommand, Index )
   return DCSTaskWrappedAction
 end
 
+--- Executes a command action
+-- @param #GROUP self
+-- @param DCSCommand#Command DCSCommand
+-- @return #GROUP self
+function GROUP:SetCommand( DCSCommand )
+  self:F( DCSCommand )
+  
+  local Controller = self:_GetController()
+  
+  Controller:setCommand( DCSCommand )
+
+  return self
+end
+
+--- Perform a switch waypoint command
+-- @param #GROUP self
+-- @param #number FromWayPoint
+-- @param #number ToWayPoint
+-- @return DCSTask#Task
+function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
+  self:F( { FromWayPoint, ToWayPoint, Index } )
+  
+  local CommandSwitchWayPoint = {
+    id = 'SwitchWaypoint', 
+    params = { 
+      fromWaypointIndex = FromWayPoint,  
+      goToWaypointIndex = ToWayPoint, 
+    },
+  }
+  
+  self:T( { CommandSwitchWayPoint } )
+  return CommandSwitchWayPoint
+end
+  
+
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #GROUP self
 -- @param #Vec2 Point The point to hold the position.
