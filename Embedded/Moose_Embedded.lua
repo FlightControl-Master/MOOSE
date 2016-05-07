@@ -2933,6 +2933,7 @@ end
 -- @param #number Level
 function BASE:TraceLevel( Level )
   _TraceLevel = Level
+  self:E( "Tracing level " .. Level )
 end
 
 --- Set tracing for a class
@@ -2941,6 +2942,7 @@ end
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
+  self:E( "Tracing class " .. Class )
 end
 
 --- Set tracing for a specific method of  class
@@ -2953,6 +2955,7 @@ function BASE:TraceClassMethod( Class, Method )
     _TraceClassMethod[Class].Method = {}
   end
   _TraceClassMethod[Class].Method[Method] = true
+  self:E( "Tracing method " .. Method .. " of class " .. Class )
 end
 
 --- Trace a function call. Must be at the beginning of the function logic.
@@ -3650,6 +3653,18 @@ function GROUP:NewFromDCSUnit( DCSUnit )
   return self
 end
 
+--- Returns the name of the Group.
+-- @param #GROUP self
+-- @return #string GroupName
+function GROUP:GetName()
+
+  local GroupName = self.DCSGroup:getName()
+
+  return GroupName
+end
+
+
+
 --- Retrieve the group mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Group#GROUP:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
@@ -3686,7 +3701,12 @@ function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionAr
   
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionGroup = GROUP.FindGroup( ... ) "
-  DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+
+  if FunctionArguments.n > 0 then
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+  else
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup )"
+  end  
   
   DCSTask = self:TaskWrappedAction( 
     self:CommandDoScript(
@@ -4152,6 +4172,41 @@ function GROUP:TaskWrappedAction( DCSCommand, Index )
   return DCSTaskWrappedAction
 end
 
+--- Executes a command action
+-- @param #GROUP self
+-- @param DCSCommand#Command DCSCommand
+-- @return #GROUP self
+function GROUP:SetCommand( DCSCommand )
+  self:F( DCSCommand )
+  
+  local Controller = self:_GetController()
+  
+  Controller:setCommand( DCSCommand )
+
+  return self
+end
+
+--- Perform a switch waypoint command
+-- @param #GROUP self
+-- @param #number FromWayPoint
+-- @param #number ToWayPoint
+-- @return DCSTask#Task
+function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
+  self:F( { FromWayPoint, ToWayPoint, Index } )
+  
+  local CommandSwitchWayPoint = {
+    id = 'SwitchWaypoint', 
+    params = { 
+      fromWaypointIndex = FromWayPoint,  
+      goToWaypointIndex = ToWayPoint, 
+    },
+  }
+  
+  self:T( { CommandSwitchWayPoint } )
+  return CommandSwitchWayPoint
+end
+  
+
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #GROUP self
 -- @param #Vec2 Point The point to hold the position.
@@ -4159,7 +4214,7 @@ end
 -- @param #number Speed The speed flying when holding the position.
 -- @return #GROUP self
 function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
-	self:F( { self.GroupName, Point, Altitude, Speed  } )
+	self:F( { self.GroupName, Point, Altitude, Speed } )
 
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,
@@ -4290,8 +4345,41 @@ function GROUP:TaskAttackUnit( AttackUnit )
               params = { unitId = AttackUnit:GetID(), 
                          expend = AI.Task.WeaponExpend.TWO,
                          groupAttack = true, 
-                       } 
-            } 
+                       }, 
+            }, 
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Attack a Group.
+-- @param #GROUP self
+-- @param Group#GROUP AttackGroup The Group to be attacked.
+-- @return DCSTask#Task The DCS task structure.
+function GROUP:TaskAttackGroup( AttackGroup )
+  self:F( { self.GroupName, AttackGroup } )
+
+--  AttackGroup = { 
+--   id = 'AttackGroup', 
+--   params = { 
+--     groupId = Group.ID,
+--     weaponType = number,
+--     expend = enum AI.Task.WeaponExpend,
+--     attackQty = number,
+--     directionEnabled = boolean,
+--     direction = Azimuth,
+--     altitudeEnabled = boolean,
+--     altitude = Distance,
+--     attackQtyLimit = boolean,
+--   } 
+-- }  
+
+  local DCSTask    
+  DCSTask = { id = 'AttackGroup', 
+              params = { groupId = AttackGroup:GetID(), 
+                         expend = AI.Task.WeaponExpend.TWO,
+                       }, 
+            }, 
   
   self:T( { DCSTask } )
   return DCSTask
@@ -5573,6 +5661,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
+-- @param #DATABASE self
+-- @param #table SpawnTemplate
+-- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -5621,7 +5712,10 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
---- Registers new Group Templates within the DATABASE Object.
+--- Private method that registers new Group Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
 function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
@@ -5630,6 +5724,12 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     self.Groups[GroupTemplateName] = {}
     self.Groups[GroupTemplateName].Status = nil
   end
+  
+  -- Delete the spans from the route, it is not needed and takes memory.
+  if GroupTemplate.route and GroupTemplate.route.spans then 
+    GroupTemplate.route.spans = nil
+  end
+  
   self.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Groups[GroupTemplateName].Template = GroupTemplate
   self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
@@ -5899,90 +5999,6 @@ _EVENTDISPATCHER = EVENT:New() -- #EVENT
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New():ScanEnvironment() -- Database#DATABASE
-
---- Models time events calling event handing functions.
--- @module TimeTrigger
--- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
-
-
---- The TIMETRIGGER class
--- @type TIMETRIGGER
--- @extends Base#BASE
-TIMETRIGGER = {
-  ClassName = "TIMETRIGGER",
-}
-
-
---- TIMETRIGGER constructor.
--- @param #TIMETRIGGER self
--- @param #function TimeEventFunction
--- @param #table TimeEventFunctionArguments
--- @param #number StartSeconds
--- @param #number RepeatSecondsInterval
--- @param #number RandomizationFactor
--- @param #number StopSeconds
--- @return #TIMETRIGGER
-function TIMETRIGGER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
-
-  self.TimeEventObject = TimeEventObject
-  self.TimeEventFunction = TimeEventFunction
-  self.TimeEventFunctionArguments = TimeEventFunctionArguments
-  self.StartSeconds = StartSeconds
-
-  if RepeatSecondsInterval then
-    self.RepeatSecondsInterval = RepeatSecondsInterval
-  else
-    self.RepeatSecondsInterval = 0
-  end
-
-  if RandomizationFactor then
-    self.RandomizationFactor = RandomizationFactor
-  else
-    self.RandomizationFactor = 0
-  end
-
-  if StopSeconds then
-    self.StopSeconds = StopSeconds
-  end
-
-  self.StartTime = timer.getTime()
-  
-  self:T("Calling function" .. timer.getTime() + self.StartSeconds )
-  
-  timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
-
-
-  return self
-end
-
-function TIMETRIGGER:Scheduler()
-  self:F( self.TimeEventFunctionArguments )
-
-  local Result = self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) )
-
-  if Result and Result == true then
-    if not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) then
-      timer.scheduleFunction(
-        self.Scheduler,
-        self,
-        timer.getTime() + self.RepeatSecondsInterval * math.random( self.RandomizationFactor * self.RepeatSecondsInterval ) + 0.01
-      )
-    end
-  end
-
-end
-
-
-
-
-
 
 --- Scoring system for MOOSE.
 -- This scoring class calculates the hits and kills that players make within a simulation session.
@@ -11926,6 +11942,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
+      
+      self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
@@ -12057,6 +12075,9 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
       if SpawnTemplate then
 
         local UnitPoint = HostUnit:GetPointVec2()
+        
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
+        
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -12064,9 +12085,6 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
           --Point.alt_type = nil
         --end
         
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = UnitPoint.x
         SpawnTemplate.route.points[1].y = UnitPoint.y
 
@@ -12377,7 +12395,6 @@ function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 		self.SpawnGroups[SpawnIndex].Visible = false
 		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].UnControlled = false
-		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].SpawnTime = 0
 		
 		self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefix
@@ -12431,6 +12448,9 @@ end
 
 --- Gets the Group Template from the ME environment definition.
 -- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @return @SPAWN self
 function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
@@ -12451,6 +12471,10 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 end
 
 --- Prepares the new Group Template.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
@@ -12461,6 +12485,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.lateActivation = false
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	  self:T( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false
 	end
 	
@@ -12480,7 +12505,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		
 end
 
---- Internal function randomizing the routes.
+--- Private method randomizing the routes.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
@@ -12504,7 +12529,10 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
   return self
 end
 
-
+--- Private method that randomizes the template of the group.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -12514,6 +12542,7 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
     self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
     end
@@ -14258,7 +14287,7 @@ end
 -- @author FlightControl
 
 Include.File( "Client" )
-Include.File( "TimeTrigger" )
+Include.File( "Scheduler" )
 
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
@@ -14268,7 +14297,7 @@ MISSILETRAINER = {
 }
 
 --- Creates the main object which is handling missile tracking.
--- When a missile is fired a TIMETRIGGER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
+-- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
 -- @param #MISSILETRAINER
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
 -- @return #MISSILETRAINER
@@ -14276,8 +14305,8 @@ function MISSILETRAINER:New( Distance )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( Distance )	
 	
-	self.TimeTriggers = {}
-	self.TimeTriggerID = 0
+	self.Schedulers = {}
+	self.SchedulerID = 0
 	
 	self.Distance = Distance
 
@@ -14307,7 +14336,7 @@ function MISSILETRAINER:_EventShot( Event )
 	self:T( TrainerTargetSkill )
 	
 	if TrainerTargetSkill == "Client" or TrainerTargetSkill == "Player" then
-	  self.TimeTriggers[#self.TimeTriggers+1] = TIMETRIGGER:New( self, self._FollowMissile, { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit }, 0.5, 0.05, 0 )  
+	  self.Schedulers[#self.Schedulers+1] = SCHEDULER:New( self, self._FollowMissile, { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit }, 0.5, 0.05, 0 )  
 	end
 end
 
