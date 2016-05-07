@@ -3,7 +3,7 @@
 -- @author FlightControl
 
 Include.File( "Client" )
-Include.File( "TimeTrigger" )
+Include.File( "Scheduler" )
 
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
@@ -13,7 +13,7 @@ MISSILETRAINER = {
 }
 
 --- Creates the main object which is handling missile tracking.
--- When a missile is fired a TIMETRIGGER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
+-- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
 -- @param #MISSILETRAINER
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
 -- @return #MISSILETRAINER
@@ -21,8 +21,8 @@ function MISSILETRAINER:New( Distance )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( Distance )	
 	
-	self.TimeTriggers = {}
-	self.TimeTriggerID = 0
+	self.Schedulers = {}
+	self.SchedulerID = 0
 	
 	self.Distance = Distance
 
@@ -52,7 +52,7 @@ function MISSILETRAINER:_EventShot( Event )
 	self:T( TrainerTargetSkill )
 	
 	if TrainerTargetSkill == "Client" or TrainerTargetSkill == "Player" then
-	  self.TimeTriggers[#self.TimeTriggers+1] = TIMETRIGGER:New( self, self._FollowMissile, { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit }, 0.5, 0.05, 0 )  
+	  self.Schedulers[#self.Schedulers+1] = SCHEDULER:New( self, self._FollowMissile, { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit }, 0.5, 0.05, 0 )  
 	end
 end
 
