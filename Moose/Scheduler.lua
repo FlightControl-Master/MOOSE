@@ -1,5 +1,5 @@
 --- Models time events calling event handing functions.
--- @module TimeTrigger
+-- @module Scheduler
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -8,24 +8,24 @@ Include.File( "Cargo" )
 Include.File( "Message" )
 
 
---- The TIMETRIGGER class
--- @type TIMETRIGGER
+--- The SCHEDULER class
+-- @type SCHEDULER
 -- @extends Base#BASE
-TIMETRIGGER = {
-  ClassName = "TIMETRIGGER",
+SCHEDULER = {
+  ClassName = "SCHEDULER",
 }
 
 
---- TIMETRIGGER constructor.
--- @param #TIMETRIGGER self
+--- SCHEDULER constructor.
+-- @param #SCHEDULER self
 -- @param #function TimeEventFunction
 -- @param #table TimeEventFunctionArguments
 -- @param #number StartSeconds
 -- @param #number RepeatSecondsInterval
 -- @param #number RandomizationFactor
 -- @param #number StopSeconds
--- @return #TIMETRIGGER
-function TIMETRIGGER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+-- @return #SCHEDULER
+function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
 
@@ -60,23 +60,27 @@ function TIMETRIGGER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionA
   return self
 end
 
-function TIMETRIGGER:Scheduler()
+function SCHEDULER:Scheduler()
   self:F( self.TimeEventFunctionArguments )
   
   local ErrorHandler = function( errmsg )
 
-    env.info( "Error in TIMETRIGGER function:" .. errmsg )
+    env.info( "Error in SCHEDULER function:" .. errmsg )
     env.info( debug.traceback() )
 
     return errmsg
   end
 
-  local err, Result = xpcall( function() self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments, 1, table.maxn( self.TimeEventFunctionArguments ) ) ) end, ErrorHandler )
-  if not err then
-    --env.info('routines.scheduleFunction, error in scheduled function: ' .. errmsg)
+  local Status, Result  
+  if self.TimeEventObject then
+    Status, Result = xpcall( function() return self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
+  else
+    Status, Result = xpcall( function() return self.TimeEventFunction( unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
   end
-
-  if Result and Result == true then
+  
+  self:T( { Status, Result } )
+  
+  if Status and Status == true and Result and Result == true then
     if not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) then
       timer.scheduleFunction(
         self.Scheduler,

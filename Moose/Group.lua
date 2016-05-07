@@ -92,6 +92,18 @@ function GROUP:NewFromDCSUnit( DCSUnit )
   return self
 end
 
+--- Returns the name of the Group.
+-- @param #GROUP self
+-- @return #string GroupName
+function GROUP:GetName()
+
+  local GroupName = self.DCSGroup:getName()
+
+  return GroupName
+end
+
+
+
 --- Retrieve the group mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Group#GROUP:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
@@ -128,7 +140,12 @@ function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionAr
   
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionGroup = GROUP.FindGroup( ... ) "
-  DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+
+  if FunctionArguments.n > 0 then
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+  else
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup )"
+  end  
   
   DCSTask = self:TaskWrappedAction( 
     self:CommandDoScript(
