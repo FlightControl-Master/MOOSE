@@ -36,16 +36,22 @@ end
 function STAGE:Execute( Mission, Client, Task )
 
 	local Valid = true
-  
+
+  self:T( self.Name )
+
 	return Valid
 end
 
 function STAGE:Executing( Mission, Client, Task )
 
+  self:T( self.Name )
+
 end
 
 function STAGE:Validate( Mission, Client, Task )
   local Valid = true
+  
+  self:T( self.Name )
 
   return Valid
 end
@@ -255,7 +261,7 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
 	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -354,7 +360,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 	self:F()
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -420,7 +426,7 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 	self:F()
 
-	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
@@ -503,7 +509,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
     Task:RemoveCargoMenus( Client )
@@ -631,7 +637,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 

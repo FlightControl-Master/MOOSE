@@ -31,18 +31,31 @@ CARGO_ZONE = {
 	}
 }
 
-function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, BASE:New() )
+--- Creates a new zone where cargo can be collected or deployed.
+-- The zone functionality is useful to smoke or indicate routes for cargo pickups or deployments.
+-- Provide the zone name as declared in the mission file into the CargoZoneName in the :New method.
+-- An optional parameter is the CargoHostName, which is a Group declared with Late Activation switched on in the mission file.
+-- The CargoHostName is the "host" of the cargo zone:
+-- 
+-- * It will smoke the zone position when a client is approaching the zone.
+-- * Depending on the cargo type, it will assist in the delivery of the cargo by driving to and from the client.
+-- 
+-- @param #CARGO_ZONE self
+-- @param #string CargoZoneName The name of the zone as declared within the mission editor.
+-- @param #string CargoHostName The name of the Group "hosting" the zone. The Group MUST NOT be a static, and must be a "mobile" unit. 
+function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, ZONE:New( CargoZoneName ) )
 	self:F( { CargoZoneName, CargoHostName } )
 
 	self.CargoZoneName = CargoZoneName
-	self.CargoZone = trigger.misc.getZone( CargoZoneName )
+	self.SignalHeight = 2
+	--self.CargoZone = trigger.misc.getZone( CargoZoneName )
 	
 
 	if CargoHostName then
 		self.CargoHostName = CargoHostName
 	end
 
-	self:T( self.CargoZone )
+	self:T( self.CargoZoneName )
 	
 	return self
 end
@@ -50,17 +63,19 @@ end
 function CARGO_ZONE:Spawn()
 	self:F( self.CargoHostName )
 
-	if self.CargoHostSpawn then
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
-		if CargoHostGroup and CargoHostGroup:IsAlive() then
-		else
-			self.CargoHostSpawn:ReSpawn( 1 )
-		end
-	else
-		self:T( "Initialize CargoHostSpawn" )
-		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
-		self.CargoHostSpawn:ReSpawn( 1 )
-	end
+  if self.CargoHostName then -- Only spawn a host in the zone when there is one given as a parameter in the New function.
+  	if self.CargoHostSpawn then
+  		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+  		if CargoHostGroup and CargoHostGroup:IsAlive() then
+  		else
+  			self.CargoHostSpawn:ReSpawn( 1 )
+  		end
+  	else
+  		self:T( "Initialize CargoHostSpawn" )
+  		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+  		self.CargoHostSpawn:ReSpawn( 1 )
+  	end
+  end
 
 	return self
 end
@@ -114,6 +129,14 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 	end
 end
 
+
+function CARGO_ZONE:SignalHeight( SignalHeight )
+
+  self.SignalHeight = SignalHeight
+  
+  return self
+end
+
 function CARGO_ZONE:Signal()
 	self:F()
 
@@ -148,16 +171,15 @@ function CARGO_ZONE:Signal()
 			
 		else
 		
-			local CurrentPosition = { x = self.CargoZone.point.x, y = self.CargoZone.point.z }
-			self.CargoZone.point.y = land.getHeight( CurrentPosition ) + 2
+			local ZonePointVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
 	  
 			if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-				trigger.action.smoke( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR  )
+				trigger.action.smoke( ZonePointVec3, self.SignalColor.TRIGGERCOLOR  )
 				Signalled = true
 
 			elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
-				trigger.action.signalFlare( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR, 0 )
+				trigger.action.signalFlare( ZonePointVec3, self.SignalColor.TRIGGERCOLOR, 0 )
 				Signalled = false
 
 			end
@@ -517,6 +539,7 @@ function CARGO_GROUP:Spawn( Client )
 			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
+			self:T( self.CargoZone )
 			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
 		end
 		self:StatusNone()	
