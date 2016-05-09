@@ -130,13 +130,6 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 end
 
 
-function CARGO_ZONE:SignalHeight( SignalHeight )
-
-  self.SignalHeight = SignalHeight
-  
-  return self
-end
-
 function CARGO_ZONE:Signal()
 	self:F()
 
@@ -190,84 +183,120 @@ function CARGO_ZONE:Signal()
 
 end
 
-function CARGO_ZONE:WhiteSmoke()
+function CARGO_ZONE:WhiteSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
+	
+	if SignalHeight then
+	 self.SignalHeight = SignalHeight
+	end
 
 	return self
 end
 
-function CARGO_ZONE:BlueSmoke()
+function CARGO_ZONE:BlueSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedSmoke()
+function CARGO_ZONE:RedSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:OrangeSmoke()
+function CARGO_ZONE:OrangeSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenSmoke()
+function CARGO_ZONE:GreenSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
 
-function CARGO_ZONE:WhiteFlare()
+function CARGO_ZONE:WhiteFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedFlare()
+function CARGO_ZONE:RedFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenFlare()
+function CARGO_ZONE:GreenFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:YellowFlare()
+function CARGO_ZONE:YellowFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
+
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
 
 	return self
 end
@@ -580,64 +609,72 @@ function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
 	
 	local CargoGroup = Group.getByName( self.CargoGroupName )
 
-	local CargoUnits = CargoGroup:getUnits()
-	local CargoPos = CargoUnits[1]:getPoint()
+	local CargoUnit = CargoGroup:getUnit(1)
+	local CargoPos = CargoUnit:getPoint()
+	
+	self.CargoInAir = CargoUnit:inAir()
+	
+	self:T( self.CargoInAir )
 
+  -- Only move the group to the carrier when the cargo is not in the air 
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then    
 	
-	local Points = {}
-	
-	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-	
-	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-	
-	if OnBoardSide == nil then
-		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-	end
-	
-	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-	
-		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-		CarrierPosMove.z = CarrierPosMove.z - 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-		CarrierPosMove.z = CarrierPosMove.z + 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-		
-		self:T( "TransportCargoOnBoard: Onboarding BACK" )
-		CarrierPosMove.x = CarrierPosMove.x - 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-		CarrierPosMove.x = CarrierPosMove.x + 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-		
-		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-	
-	end
-	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-
-	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	local Points = {}
+  	
+  	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
+  	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
+  	
+  	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
+  
+  	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
+  	
+  	if OnBoardSide == nil then
+  		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
+  	end
+  	
+  	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
+  	
+  		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
+  		CarrierPosMove.z = CarrierPosMove.z - 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
+  		CarrierPosMove.z = CarrierPosMove.z + 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding BACK" )
+  		CarrierPosMove.x = CarrierPosMove.x - 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
+  		CarrierPosMove.x = CarrierPosMove.x + 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
+  	
+  	end
+  	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
+  
+  	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  end
 	
 	self:StatusLoading( Client )
      
@@ -651,12 +688,19 @@ function CARGO_GROUP:OnBoarded( Client, LandingZone )
 
 	local OnBoarded = false
   
-	local CargoGroup = Group.getByName( self.CargoGroupName )
-	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
-		CargoGroup:destroy()
-		self:StatusLoaded( Client )
-		OnBoarded = true
-	end
+  local CargoGroup = Group.getByName( self.CargoGroupName )
+
+	if not self.CargoInAir then
+  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
+  		CargoGroup:destroy()
+  		self:StatusLoaded( Client )
+  		OnBoarded = true
+  	end
+  else
+    CargoGroup:destroy()
+    self:StatusLoaded( Client )
+    OnBoarded = true
+  end
 
 	return OnBoarded
 end
