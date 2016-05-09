@@ -1525,6 +1525,47 @@ function routines.IsUnitInZones( TransportUnit, LandingZones )
 	end
 end
 
+function routines.IsUnitNearZonesRadius( TransportUnit, LandingZones, ZoneRadius )
+--trace.f("", "routines.IsUnitInZones" )
+
+  local TransportZoneResult = nil
+  local TransportZonePos = nil
+  local TransportZone = nil
+
+    -- fill-up some local variables to support further calculations to determine location of units within the zone.
+  if TransportUnit then
+    local TransportUnitPos = TransportUnit:getPosition().p
+    if type( LandingZones ) == "table" then
+      for LandingZoneID, LandingZoneName in pairs( LandingZones ) do
+        TransportZone = trigger.misc.getZone( LandingZoneName )
+        if TransportZone then
+          TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+          if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+            TransportZoneResult = LandingZoneID
+            break
+          end
+        end
+      end
+    else
+      TransportZone = trigger.misc.getZone( LandingZones )
+      TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+      if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+        TransportZoneResult = 1
+      end
+    end
+    if TransportZoneResult then
+      --trace.i( "routines", "TransportZone:" .. TransportZoneResult )
+    else
+      --trace.i( "routines", "TransportZone:nil logic" )
+    end
+    return TransportZoneResult
+  else
+    --trace.i( "routines", "TransportZone:nil hard" )
+    return nil
+  end
+end
+
+
 function routines.IsStaticInZones( TransportStatic, LandingZones )
 --trace.f()
 
@@ -5722,6 +5763,17 @@ function ZONE:GetPointVec2()
 	return Point	
 end
 
+function ZONE:GetPointVec3( Height )
+  self:F( self.ZoneName )
+
+  local Zone = trigger.misc.getZone( self.ZoneName )
+  local Point = { x = Zone.point.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = Zone.point.z }
+
+  self:T( { Zone, Point } )
+  
+  return Point  
+end
+
 function ZONE:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
@@ -6669,7 +6721,7 @@ end
 function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
-  if UnitData:isExist() then
+  if UnitData and UnitData:isExist() then
     local UnitName = UnitData:getName()
     local PlayerName = UnitData:getPlayerName()
     local UnitDesc = UnitData:getDesc()
@@ -6796,7 +6848,7 @@ function SCORING:_EventOnHit( Event )
   local InitUnitName = ""
   local InitGroup = nil
   local InitGroupName = ""
-  local InitPlayerName = "dummy"
+  local InitPlayerName = nil
 
   local InitCoalition = nil
   local InitCategory = nil
@@ -7318,18 +7370,31 @@ CARGO_ZONE = {
 	}
 }
 
-function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, BASE:New() )
+--- Creates a new zone where cargo can be collected or deployed.
+-- The zone functionality is useful to smoke or indicate routes for cargo pickups or deployments.
+-- Provide the zone name as declared in the mission file into the CargoZoneName in the :New method.
+-- An optional parameter is the CargoHostName, which is a Group declared with Late Activation switched on in the mission file.
+-- The CargoHostName is the "host" of the cargo zone:
+-- 
+-- * It will smoke the zone position when a client is approaching the zone.
+-- * Depending on the cargo type, it will assist in the delivery of the cargo by driving to and from the client.
+-- 
+-- @param #CARGO_ZONE self
+-- @param #string CargoZoneName The name of the zone as declared within the mission editor.
+-- @param #string CargoHostName The name of the Group "hosting" the zone. The Group MUST NOT be a static, and must be a "mobile" unit. 
+function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, ZONE:New( CargoZoneName ) )
 	self:F( { CargoZoneName, CargoHostName } )
 
 	self.CargoZoneName = CargoZoneName
-	self.CargoZone = trigger.misc.getZone( CargoZoneName )
+	self.SignalHeight = 2
+	--self.CargoZone = trigger.misc.getZone( CargoZoneName )
 	
 
 	if CargoHostName then
 		self.CargoHostName = CargoHostName
 	end
 
-	self:T( self.CargoZone )
+	self:T( self.CargoZoneName )
 	
 	return self
 end
@@ -7337,17 +7402,19 @@ end
 function CARGO_ZONE:Spawn()
 	self:F( self.CargoHostName )
 
-	if self.CargoHostSpawn then
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
-		if CargoHostGroup and CargoHostGroup:IsAlive() then
-		else
-			self.CargoHostSpawn:ReSpawn( 1 )
-		end
-	else
-		self:T( "Initialize CargoHostSpawn" )
-		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
-		self.CargoHostSpawn:ReSpawn( 1 )
-	end
+  if self.CargoHostName then -- Only spawn a host in the zone when there is one given as a parameter in the New function.
+  	if self.CargoHostSpawn then
+  		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+  		if CargoHostGroup and CargoHostGroup:IsAlive() then
+  		else
+  			self.CargoHostSpawn:ReSpawn( 1 )
+  		end
+  	else
+  		self:T( "Initialize CargoHostSpawn" )
+  		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+  		self.CargoHostSpawn:ReSpawn( 1 )
+  	end
+  end
 
 	return self
 end
@@ -7401,6 +7468,7 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 	end
 end
 
+
 function CARGO_ZONE:Signal()
 	self:F()
 
@@ -7435,16 +7503,15 @@ function CARGO_ZONE:Signal()
 			
 		else
 		
-			local CurrentPosition = { x = self.CargoZone.point.x, y = self.CargoZone.point.z }
-			self.CargoZone.point.y = land.getHeight( CurrentPosition ) + 2
+			local ZonePointVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
 	  
 			if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-				trigger.action.smoke( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR  )
+				trigger.action.smoke( ZonePointVec3, self.SignalColor.TRIGGERCOLOR  )
 				Signalled = true
 
 			elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
-				trigger.action.signalFlare( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR, 0 )
+				trigger.action.signalFlare( ZonePointVec3, self.SignalColor.TRIGGERCOLOR, 0 )
 				Signalled = false
 
 			end
@@ -7455,84 +7522,120 @@ function CARGO_ZONE:Signal()
 
 end
 
-function CARGO_ZONE:WhiteSmoke()
+function CARGO_ZONE:WhiteSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
+	
+	if SignalHeight then
+	 self.SignalHeight = SignalHeight
+	end
 
 	return self
 end
 
-function CARGO_ZONE:BlueSmoke()
+function CARGO_ZONE:BlueSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedSmoke()
+function CARGO_ZONE:RedSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:OrangeSmoke()
+function CARGO_ZONE:OrangeSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenSmoke()
+function CARGO_ZONE:GreenSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
 
-function CARGO_ZONE:WhiteFlare()
+function CARGO_ZONE:WhiteFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedFlare()
+function CARGO_ZONE:RedFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenFlare()
+function CARGO_ZONE:GreenFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:YellowFlare()
+function CARGO_ZONE:YellowFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
+
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
 
 	return self
 end
@@ -7804,6 +7907,7 @@ function CARGO_GROUP:Spawn( Client )
 			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
+			self:T( self.CargoZone )
 			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
 		end
 		self:StatusNone()	
@@ -7844,64 +7948,72 @@ function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
 	
 	local CargoGroup = Group.getByName( self.CargoGroupName )
 
-	local CargoUnits = CargoGroup:getUnits()
-	local CargoPos = CargoUnits[1]:getPoint()
+	local CargoUnit = CargoGroup:getUnit(1)
+	local CargoPos = CargoUnit:getPoint()
+	
+	self.CargoInAir = CargoUnit:inAir()
+	
+	self:T( self.CargoInAir )
 
+  -- Only move the group to the carrier when the cargo is not in the air 
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then    
 	
-	local Points = {}
-	
-	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-	
-	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-	
-	if OnBoardSide == nil then
-		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-	end
-	
-	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-	
-		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-		CarrierPosMove.z = CarrierPosMove.z - 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-		CarrierPosMove.z = CarrierPosMove.z + 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-		
-		self:T( "TransportCargoOnBoard: Onboarding BACK" )
-		CarrierPosMove.x = CarrierPosMove.x - 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-		CarrierPosMove.x = CarrierPosMove.x + 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-		
-		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-	
-	end
-	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-
-	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	local Points = {}
+  	
+  	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
+  	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
+  	
+  	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
+  
+  	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
+  	
+  	if OnBoardSide == nil then
+  		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
+  	end
+  	
+  	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
+  	
+  		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
+  		CarrierPosMove.z = CarrierPosMove.z - 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
+  		CarrierPosMove.z = CarrierPosMove.z + 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding BACK" )
+  		CarrierPosMove.x = CarrierPosMove.x - 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
+  		CarrierPosMove.x = CarrierPosMove.x + 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
+  	
+  	end
+  	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
+  
+  	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  end
 	
 	self:StatusLoading( Client )
      
@@ -7915,12 +8027,19 @@ function CARGO_GROUP:OnBoarded( Client, LandingZone )
 
 	local OnBoarded = false
   
-	local CargoGroup = Group.getByName( self.CargoGroupName )
-	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
-		CargoGroup:destroy()
-		self:StatusLoaded( Client )
-		OnBoarded = true
-	end
+  local CargoGroup = Group.getByName( self.CargoGroupName )
+
+	if not self.CargoInAir then
+  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
+  		CargoGroup:destroy()
+  		self:StatusLoaded( Client )
+  		OnBoarded = true
+  	end
+  else
+    CargoGroup:destroy()
+    self:StatusLoaded( Client )
+    OnBoarded = true
+  end
 
 	return OnBoarded
 end
@@ -9034,7 +9153,7 @@ end
 function STAGE:Execute( Mission, Client, Task )
 
 	local Valid = true
-  
+
 	return Valid
 end
 
@@ -9044,7 +9163,7 @@ end
 
 function STAGE:Validate( Mission, Client, Task )
   local Valid = true
-
+  
   return Valid
 end
 
@@ -9253,7 +9372,7 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
 	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -9266,9 +9385,11 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 			end
 		end
 
+    self:T( 1 )
 		return 1
 	end
   
+  self:T( 0 )
 	return 0
 end
 
@@ -9343,8 +9464,17 @@ function STAGELANDING:Execute( Mission, Client, Task )
 		else
 			HostMessage = "Use the Radio menu and F6 to find the cargo, then fly or land near the cargo and " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
 		end
+
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
 		
-		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Host, Host, 10 )
 		
 	end
 end
@@ -9352,7 +9482,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 	self:F()
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -9375,14 +9505,34 @@ function STAGELANDING:Validate( Mission, Client, Task )
 		end
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -1 )
 		return -1
 	end
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		return 0
-	end
+	
+	local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+	local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+	
+	local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+	local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+	
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and not Client:GetClientGroupDCSUnit():inAir() then
+    self:T( 1 )
+    Task.IsInAirTestRequired = true
+    return 1
+  end
   
-	return 1
+	self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+	if Task.IsLandingRequired and DCSUnitVelocity <= 0.05 and DCSUnitHeight <= Task.CurrentCargoZone.SignalHeight then
+    self:T( 1 )
+    Task.IsInAirTestRequired = false
+    return 1
+	end
+
+  self:T( 0 )
+	return 0
 end
 
 STAGELANDED = {
@@ -9403,9 +9553,20 @@ function STAGELANDED:Execute( Mission, Client, Task )
 	self:F()
 
 	if Task.IsLandingRequired then
-		Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-		                self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-		if not self.MenusAdded then
+
+	  local Host = "Command"
+	  if Task.HostUnitName then
+	    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  	else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
+    Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
+                    self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC" .. Host, Host )
+
+  	if not self.MenusAdded then
 			Task.Cargo = nil
 			Task:RemoveCargoMenus( Client )
 			Task:AddCargoMenus( Client, CARGOS, 250 )
@@ -9418,26 +9579,44 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 	self:F()
 
-	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -2 )
 		return -2
 	end
+
+  local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+  local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		self:T( "Client went back in the air. Go back to stage Landing." )
-		Task.Signalled = false 
-		return -1
-	end
+  local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+  local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+  
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+    self:T( "Client went back in the air. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
+  
+  self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+    self:T( "It seems the Client went back in the air and over the boundary limits. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
   
     -- Wait until cargo is selected from the menu.
 	if Task.IsLandingRequired then 
 		if not Task.Cargo then
+		  self:T( 0 )
 			return 0
 		end
 	end
-  
+
+  self:T( 1 )
 	return 1
 end
 
@@ -9501,7 +9680,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
     Task:RemoveCargoMenus( Client )
@@ -9560,10 +9739,21 @@ function STAGELOAD:Execute( Mission, Client, Task )
 	self:F()
 	
 	if not Task.IsSlingLoad then
+ 
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Host, Host )
 
 		-- Route the cargo to the Carrier
+		
 		Task.Cargo:OnBoard( Client, Task.CurrentCargoZone, Task.OnBoardSide )
 		Task.ExecuteStage = _TransportExecuteStage.EXECUTING
 	else
@@ -9576,6 +9766,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 
 	-- If the Cargo is ready to be loaded, load it into the Client.
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
 		
 	if not Task.IsSlingLoad then
 		self:T( Task.Cargo.CargoName)
@@ -9587,14 +9785,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 		
 			-- Message to the pilot that cargo has been loaded.
 			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							20, Mission.Name .. "/STAGELANDING.LOADING1."  .. Host, Host )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
 			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1."  .. Host, Host , 10 )
 		for CargoID, Cargo in pairs( CARGOS ) do
 			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
@@ -9610,7 +9808,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2."  .. Host, Host  )
 						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 						break
 					end
@@ -9628,32 +9826,61 @@ function STAGELOAD:Validate( Mission, Client, Task )
 
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
+
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
 			return -1
 		end
 
-		if not Client:GetClientGroupDCSUnit():inAir() then
-		else
-			-- The carrier is back in the air, undo the loading process.
-			Task:RemoveCargoMenus( Client )
-			Task.ExecuteStage = _TransportExecuteStage.NONE
-			Task.CargoName = nil
-			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-			return -1
-		end
+    local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+    local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+    
+    local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+    local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+    local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+    
+    self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
+    
+    self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
 
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Host, Host )
 			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
+      self:T( 1 )
 			return 1
 		end
 
@@ -9662,8 +9889,9 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
 			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
 				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Host, Host )
 				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
+        self:T( 1 )
 				return 1
 			end
 		end
@@ -9671,6 +9899,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 	end
   
  
+  self:T( 0 )
 	return 0
 end
 
@@ -10611,7 +10840,7 @@ function PICKUPTASK:New( CargoType, OnBoardSide )
 		self.CargoType = CargoType
 		self.GoalVerb = CargoType .. " " .. self.GoalVerb
 		self.OnBoardSide = OnBoardSide
-		self.IsLandingRequired = false -- required to decide whether the client needs to land or not
+		self.IsLandingRequired = true -- required to decide whether the client needs to land or not
 		self.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
 		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
 		self.SetStage( self, 1 )
@@ -11436,7 +11665,9 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								if MISSIONSCHEDULER.Scoring then
+								  MISSIONSCHEDULER.Scoring:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								end
 
 --								if not Mission:IsCompleted() then
 --								end
@@ -12635,8 +12866,9 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          SpawnTemplate.units[UnitID].x = ZonePoint.x
-          SpawnTemplate.units[UnitID].y = ZonePoint.y
+          local ZonePointUnit = Zone:GetRandomPointVec2()
+          SpawnTemplate.units[UnitID].x = ZonePointUnit.x
+          SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
        

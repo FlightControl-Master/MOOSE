@@ -679,8 +679,9 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          SpawnTemplate.units[UnitID].x = ZonePoint.x
-          SpawnTemplate.units[UnitID].y = ZonePoint.y
+          local ZonePointUnit = Zone:GetRandomPointVec2()
+          SpawnTemplate.units[UnitID].x = ZonePointUnit.x
+          SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
        

@@ -31,7 +31,7 @@ function PICKUPTASK:New( CargoType, OnBoardSide )
 		self.CargoType = CargoType
 		self.GoalVerb = CargoType .. " " .. self.GoalVerb
 		self.OnBoardSide = OnBoardSide
-		self.IsLandingRequired = false -- required to decide whether the client needs to land or not
+		self.IsLandingRequired = true -- required to decide whether the client needs to land or not
 		self.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
 		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
 		self.SetStage( self, 1 )
