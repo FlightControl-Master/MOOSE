@@ -500,10 +500,6 @@ end
 function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:F( { SpawnTime, SpawnTimeVariation } )
 
-	self.SpawnCurrentTimer = 0									-- The internal timer counter to trigger a scheduled spawning of SpawnTemplatePrefix.
-	self.SpawnSetTimer = 0										-- The internal timer value when a scheduled spawning of SpawnTemplatePrefix occurs.
-	self.AliveFactor = 1									--
-		
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
     self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, 1, SpawnTime, SpawnTimeVariation )
 	end
