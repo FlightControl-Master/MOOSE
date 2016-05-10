@@ -18,6 +18,7 @@ SCHEDULER = {
 
 --- SCHEDULER constructor.
 -- @param #SCHEDULER self
+-- @param #table TimeEventObject
 -- @param #function TimeEventFunction
 -- @param #table TimeEventFunctionArguments
 -- @param #number StartSeconds
@@ -49,13 +50,12 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
   if StopSeconds then
     self.StopSeconds = StopSeconds
   end
+  
+  self.Repeat = false
 
   self.StartTime = timer.getTime()
   
-  self:T("Calling function " .. timer.getTime() + self.StartSeconds )
-  
-  timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
-
+  self:Start()
 
   return self
 end
@@ -81,7 +81,7 @@ function SCHEDULER:Scheduler()
   self:T( { Status, Result } )
   
   if Status and Status == true and Result and Result == true then
-    if not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) then
+    if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
       timer.scheduleFunction(
         self.Scheduler,
         self,
@@ -90,6 +90,21 @@ function SCHEDULER:Scheduler()
     end
   end
 
+end
+
+function SCHEDULER:Start()
+  self:F( self.TimeEventObject )
+  
+  self.Repeat = true
+  timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+  
+  return self
+end
+
+function SCHEDULER:Stop()
+  self:F( self.TimeEventObject )
+  
+  self.Repeat = false
 end
 
 
