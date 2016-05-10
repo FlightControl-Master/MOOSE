@@ -1,15 +1,7 @@
---- 
--- @module DATABASE
--- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Event" )
-
----
--- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
+--- Manage sets of units and groups. 
+-- 
+-- @{#Database} class
+-- ==================
 -- Mission designers can use the DATABASE class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
@@ -18,9 +10,11 @@ Include.File( "Event" )
 --  * Unit types
 --  * Starting with certain prefix strings.
 --  
---  This list will grow over time. Planned developments are to include filters and iterators.
---  Additional filters will be added around @{Zone#ZONEs}, Radiuses, Active players, ...
---  More iterators will be implemented in the near future ...
+-- This list will grow over time. Planned developments are to include filters and iterators.
+-- Additional filters will be added around @{Zone#ZONEs}, Radiuses, Active players, ...
+-- More iterators will be implemented in the near future ...
+--
+-- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- 
 -- DATABASE construction methods:
 -- =================================
@@ -64,6 +58,17 @@ Include.File( "Event" )
 --   * @{#DATABASE.ForEachGroup}: Calls a function for each group contained within the DATABASE.
 --   * @{#DATABASE.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the DATABASE.
 -- 
+-- ====
+-- @module Database
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Menu" )
+Include.File( "Group" )
+Include.File( "Event" )
+
+--- DATABASE class
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
@@ -277,6 +282,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
+-- @param #DATABASE self
+-- @param #table SpawnTemplate
+-- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -325,7 +333,10 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
---- Registers new Group Templates within the DATABASE Object.
+--- Private method that registers new Group Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
 function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
@@ -334,6 +345,12 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     self.Groups[GroupTemplateName] = {}
     self.Groups[GroupTemplateName].Status = nil
   end
+  
+  -- Delete the spans from the route, it is not needed and takes memory.
+  if GroupTemplate.route and GroupTemplate.route.spans then 
+    GroupTemplate.route.spans = nil
+  end
+  
   self.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Groups[GroupTemplateName].Template = GroupTemplate
   self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId

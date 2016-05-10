@@ -46,15 +46,15 @@ Spawn_Helicopter_Scheduled = SPAWN:New( "Spawn Helicopter Scheduled" ):SpawnSche
 Spawn_Ship_Scheduled = SPAWN:New( "Spawn Ship Scheduled" ):SpawnScheduled( 30, 0.5 )
 Spawn_Vehicle_Scheduled = SPAWN:New( "Spawn Vehicle Scheduled" ):SpawnScheduled( 30, 0.5 )
 
--- Tests Tbilisi: Limited Spawning
--- -------------------------------
+-- Tests Tbilisi: Limited Spawning and repeat
+-- ------------------------------------------
 -- Spawing one group, and respawning the same group when it lands ...
-Spawn_Plane_Limited_Repeat = SPAWN:New( "Spawn Plane Limited Repeat" ):Limit( 1, 1 ):Repeat():Spawn()
-Spawn_Plane_Limited_RepeatOnLanding = SPAWN:New( "Spawn Plane Limited RepeatOnLanding" ):Limit( 1, 1 ):Repeat():Spawn()
-Spawn_Plane_Limited_RepeatOnEngineShutDown = SPAWN:New( "Spawn Plane Limited RepeatOnEngineShutDown" ):Limit( 1, 1 ):Repeat():Spawn()
-Spawn_Helicopter_Limited_Repeat = SPAWN:New( "Spawn Helicopter Limited Repeat" ):Limit( 1, 1 ):Repeat():Spawn()
-Spawn_Helicopter_Limited_RepeatOnLanding = SPAWN:New( "Spawn Helicopter Limited RepeatOnLanding" ):Limit( 1, 1 ):Repeat():Spawn()
-Spawn_Helicopter_Limited_RepeatOnEngineShutDown = SPAWN:New( "Spawn Helicopter Limited RepeatOnEngineShutDown" ):Limit( 1, 1 ):Repeat():Spawn()
+Spawn_Plane_Limited_Repeat = SPAWN:New( "Spawn Plane Limited Repeat" ):Limit( 1, 1 ):InitRepeat():Spawn()
+Spawn_Plane_Limited_RepeatOnLanding = SPAWN:New( "Spawn Plane Limited RepeatOnLanding" ):Limit( 1, 1 ):InitRepeatOnLanding():Spawn()
+Spawn_Plane_Limited_RepeatOnEngineShutDown = SPAWN:New( "Spawn Plane Limited RepeatOnEngineShutDown" ):Limit( 1, 1 ):InitRepeatOnEngineShutDown():Spawn()
+Spawn_Helicopter_Limited_Repeat = SPAWN:New( "Spawn Helicopter Limited Repeat" ):Limit( 1, 1 ):InitRepeat():Spawn()
+Spawn_Helicopter_Limited_RepeatOnLanding = SPAWN:New( "Spawn Helicopter Limited RepeatOnLanding" ):Limit( 1, 1 ):InitRepeatOnLanding():Spawn()
+Spawn_Helicopter_Limited_RepeatOnEngineShutDown = SPAWN:New( "Spawn Helicopter Limited RepeatOnEngineShutDown" ):Limit( 1, 1 ):InitRepeatOnEngineShutDown():Spawn()
 
 
 -- Tests Soganlug
@@ -67,8 +67,8 @@ Spawn_Ground_Limited_Scheduled = SPAWN:New( "Spawn Vehicle Limited Scheduled" ):
 -- Tests Sukhumi
 -- -------------
 -- Limited spawning of groups, scheduled every seconds with route randomization.
-Spawn_Plane_Limited_Scheduled_RandomizeRoute = SPAWN:New( "Spawn Plane Limited Scheduled RandomizeRoute" ):Limit( 2, 10 ):RandomizeRoute( 1, 1, 4000 ):SpawnScheduled( 30, 0 )
-Spawn_Helicopter_Limited_Scheduled_RandomizeRoute = SPAWN:New( "Spawn Helicopter Limited Scheduled RandomizeRoute" ):Limit( 2, 10 ):RandomizeRoute( 1, 1, 4000 ):SpawnScheduled( 30, 0 )
+Spawn_Plane_Limited_Scheduled_RandomizeRoute = SPAWN:New( "Spawn Plane Limited Scheduled RandomizeRoute" ):Limit( 5, 10 ):RandomizeRoute( 1, 1, 4000 ):SpawnScheduled( 2, 0 )
+Spawn_Helicopter_Limited_Scheduled_RandomizeRoute = SPAWN:New( "Spawn Helicopter Limited Scheduled RandomizeRoute" ):Limit( 5, 10 ):RandomizeRoute( 1, 1, 4000 ):SpawnScheduled( 2, 0 )
 Spawn_Vehicle_Limited_Scheduled_RandomizeRoute = SPAWN:New( "Spawn Vehicle Limited Scheduled RandomizeRoute" ):Limit( 10, 10 ):RandomizeRoute( 1, 1, 1000 ):SpawnScheduled( 1, 0 )
 
 
@@ -85,7 +85,7 @@ Spawn_Vehicle_Scheduled_CleanUp = SPAWN:New( "Spawn Vehicle Scheduled CleanUp" )
 -- Creates arrays of groups ready to be spawned and dynamic spawning of groups from another group.
 
 -- SpawnTestVisible creates an array of 200 groups, every 20 groups with 20 meters space in between, and will activate a group of the array every 10 seconds with a 0.2 time randomization.
-SpawnTestVisible = SPAWN:New( "Spawn Vehicle Visible Scheduled" ):Limit( 200, 200 ):Array( 59, 20, 20, 10 ):SpawnScheduled( 10, 0.2 )
+SpawnTestVisible = SPAWN:New( "Spawn Vehicle Visible Scheduled" ):Limit( 200, 200 ):Array( 59, 20, 30, 30 ):SpawnScheduled( 10, 0.2 )
 
 -- Spawn_Templates_Visible contains different templates...
 Spawn_Templates_Visible = { "Spawn Vehicle Visible Template A",

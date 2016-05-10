@@ -21,7 +21,6 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
-					<li><a href="DATABASE.html">DATABASE</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSCommand.html">DCSCommand</a></li>
@@ -38,6 +37,7 @@
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
 					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
 					<li>Escort</li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
@@ -68,15 +68,19 @@
 <p>Taking the lead of AI escorting your flight.</p>
 
    
-<p>The ESCORT class allows you to interact with escorting AI on your flight and take the lead.
+
+<h1><a href="##(ESCORT)">#ESCORT</a> class</h1>
+<p>The <a href="##(ESCORT)">#ESCORT</a> class allows you to interact with escorting AI on your flight and take the lead.
 Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).</p>
 
 <p>The radio commands will vary according the category of the group. The richest set of commands are with Helicopters and AirPlanes.
 Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.</p>
 
+<h1>RADIO MENUs that can be created:</h1>
 <p>Find a summary below of the current available commands:</p>
 
-<p><strong>1. Navigation ...:</strong> Escort group navigation functions:</p>
+<h2>Navigation ...:</h2>
+<p>Escort group navigation functions:</p>
 
 <ul>
     <li><strong>"Join-Up and Follow at x meters":</strong> The escort group fill follow you at about x meters, and they will follow you.</li>
@@ -84,14 +88,16 @@ Ships and Ground troops will have a more limited set, but they can provide suppo
     <li><strong>"Smoke":</strong> Provides menu commands to let the escort group smoke the air in a color. Note that smoking is only available for ground and naval troops.</li>
 </ul>
 
-<p><strong>2. Hold position ...:</strong> Escort group navigation functions:</p>
+<h2>Hold position ...:</h2>
+<p>Escort group navigation functions:</p>
 
 <ul>
     <li><strong>"At current location":</strong> Stops the escort group and they will hover 30 meters above the ground at the position they stopped.</li>
     <li><strong>"At client location":</strong> Stops the escort group and they will hover 30 meters above the ground at the position they stopped.</li>
 </ul>
 
-<p><strong>3. Report targets ...:</strong> Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).</p>
+<h2>Report targets ...:</h2>
+<p>Report targets will make the escort group to report any target that it identifies within a 8km range. Any detected target can be attacked using the 4. Attack nearby targets function. (see below).</p>
 
 <ul>
     <li><strong>"Report now":</strong> Will report the current detected targets.</li>
@@ -99,21 +105,25 @@ Ships and Ground troops will have a more limited set, but they can provide suppo
     <li><strong>"Report targets off":</strong> Will stop detecting targets.</li>
 </ul>
 
-<p><strong>4. Scan targets ...:</strong> Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.</p>
+<h2>Scan targets ...:</h2>
+<p>Menu items to pop-up the escort group for target scanning. After scanning, the escort group will resume with the mission or defined task.</p>
 
 <ul>
     <li><strong>"Scan targets 30 seconds":</strong> Scan 30 seconds for targets.</li>
     <li><strong>"Scan targets 60 seconds":</strong> Scan 60 seconds for targets.</li>
 </ul>
 
-<p><strong>5. Attack targets ...:</strong> This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.</p>
+<h2>Attack targets ...:</h2>
+<p>This menu item will list all detected targets within a 15km range. Depending on the level of detection (known/unknown) and visuality, the targets type will also be listed.</p>
 
-<p><strong>6. Request assistance from ...:</strong> This menu item will list all detected targets within a 15km range, as with the menu item <strong>Attack Targets</strong>.
+<h2>Request assistance from ...:</h2>
+<p>This menu item will list all detected targets within a 15km range, as with the menu item <strong>Attack Targets</strong>.
 This menu item allows to request attack support from other escorts supporting the current client group.
 eg. the function allows a player to request support from the Ship escort to attack a target identified by the Plane escort with its Tomahawk missiles.
 eg. the function allows a player to request support from other Planes escorting to bomb the unit with illumination missiles or bombs, so that the main plane escort can attack the area.</p>
 
-<p><strong>7. ROE ...:</strong> Defines the Rules of Engagement of the escort group when in flight.</p>
+<h2>ROE ...:</h2>
+<p>Sets the Rules of Engagement (ROE) of the escort group when in flight.</p>
 
 <ul>
     <li><strong>"Hold Fire":</strong> The escort group will hold fire.</li>
@@ -122,7 +132,8 @@ eg. the function allows a player to request support from other Planes escorting 
     <li><strong>"Weapon Free":</strong> The escort group will engage with any target.</li>
 </ul>
 
-<p><strong>8. Evasion ...:</strong> Will define the evasion techniques that the escort group will perform during flight or combat.</p>
+<h2>Evasion ...:</h2>
+<p>Will define the evasion techniques that the escort group will perform during flight or combat.</p>
 
 <ul>
     <li><strong>"Fight until death":</strong> The escort group will have no reaction to threats.</li>
@@ -131,27 +142,31 @@ eg. the function allows a player to request support from other Planes escorting 
     <li><strong>"Go below radar and evade fire":</strong> The escort group will perform evasive vertical manoeuvres.</li>
 </ul>
 
-<p><strong>9. Resume Mission ...:</strong> Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
+<h2>Resume Mission ...:</h2>
+<p>Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
 Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.</p>
 
-<p><strong>10. Abort Current Task:</strong> Cancel the current task and rejoin formation.</p>
+<h1>ESCORT construction methods.</h1>
+<p>Create a new SPAWN object with the <a href="##(ESCORT).New">ESCORT.New</a> method:</p>
 
-<ol>
-    <li><h2>ESCORT object construction methods.</h2>
-    <p>Create a new SPAWN object with the <a href="##(ESCORT).New">ESCORT.New</a> method:</p></li>
-    <li><p><a href="##(ESCORT).New">ESCORT.New</a>: Creates a new ESCORT object from a <a href="Group.html##(GROUP)">Group#GROUP</a> for a <a href="Client.html##(CLIENT)">Client#CLIENT</a>, with an optional briefing text.</p></li>
-    <li><h2>ESCORT object initialization methods.</h2>
-    <p>The following menus can be setup:</p></li>
-    <li><p><a href="##(ESCORT).MenuFollowAt">ESCORT.MenuFollowAt</a>: Creates a menu to make the escort follow the client.</p></li>
-    <li><p><a href="##(ESCORT).MenuHoldAtEscortPosition">ESCORT.MenuHoldAtEscortPosition</a>: Creates a menu to hold the escort at its current position.</p></li>
-    <li><p><a href="##(ESCORT).MenuHoldAtLeaderPosition">ESCORT.MenuHoldAtLeaderPosition</a>: Creates a menu to hold the escort at the client position.</p></li>
-    <li><p><a href="##(ESCORT).MenuScanForTargets">ESCORT.MenuScanForTargets</a>: Creates a menu so that the escort scans targets.</p></li>
-    <li><p><a href="##(ESCORT).MenuFlare">ESCORT.MenuFlare</a>: Creates a menu to disperse flares.</p></li>
-    <li><p><a href="##(ESCORT).MenuSmoke">ESCORT.MenuSmoke</a>: Creates a menu to disparse smoke.</p></li>
-    <li><p><a href="##(ESCORT).MenuReportTargets">ESCORT.MenuReportTargets</a>: Creates a menu so that the escort reports targets.</p></li>
-    <li><p><a href="##(ESCORT).MenuReportPosition">ESCORT.MenuReportPosition</a>: Creates a menu so that the escort reports its current position from bullseye.</p></li>
-    <li><p><a href="##(ESCORT).MenuAssistedAttack">ESCORT.MenuAssistedAttack</a>: Creates a menu structure so that the escort can resume from a waypoint.</p></li>
-</ol>
+<ul>
+    <li><a href="##(ESCORT).New">ESCORT.New</a>: Creates a new ESCORT object from a <a href="Group.html##(GROUP)">Group#GROUP</a> for a <a href="Client.html##(CLIENT)">Client#CLIENT</a>, with an optional briefing text.</li>
+</ul>
+
+<h1>ESCORT initialization methods.</h1>
+<p>The following menus are created within the RADIO MENU of an active unit hosted by a player:</p>
+
+<ul>
+    <li><a href="##(ESCORT).MenuFollowAt">ESCORT.MenuFollowAt</a>: Creates a menu to make the escort follow the client.</li>
+    <li><a href="##(ESCORT).MenuHoldAtEscortPosition">ESCORT.MenuHoldAtEscortPosition</a>: Creates a menu to hold the escort at its current position.</li>
+    <li><a href="##(ESCORT).MenuHoldAtLeaderPosition">ESCORT.MenuHoldAtLeaderPosition</a>: Creates a menu to hold the escort at the client position.</li>
+    <li><a href="##(ESCORT).MenuScanForTargets">ESCORT.MenuScanForTargets</a>: Creates a menu so that the escort scans targets.</li>
+    <li><a href="##(ESCORT).MenuFlare">ESCORT.MenuFlare</a>: Creates a menu to disperse flares.</li>
+    <li><a href="##(ESCORT).MenuSmoke">ESCORT.MenuSmoke</a>: Creates a menu to disparse smoke.</li>
+    <li><a href="##(ESCORT).MenuReportTargets">ESCORT.MenuReportTargets</a>: Creates a menu so that the escort reports targets.</li>
+    <li><a href="##(ESCORT).MenuReportPosition">ESCORT.MenuReportPosition</a>: Creates a menu so that the escort reports its current position from bullseye.</li>
+    <li><a href="##(ESCORT).MenuAssistedAttack">ESCORT.MenuAssistedAttack</a>: Creates a menu structure so that the escort can resume from a waypoint.</li>
+</ul>
 
 
 	<h2>Global(s)</h2>
@@ -720,10 +735,7 @@ Note that this is really fantastic, as you now have the dynamic of taking contro
 			<h2><a id="#(Distance)" >Type <code>Distance</code></a></h2>
 			
 			<h2><a id="#(ESCORT)" >Type <code>ESCORT</code></a></h2>
-				
-<p>ESCORT class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1835,6 +1847,7 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(ESCORT).ReportTargetsScheduler" >
 <strong>ESCORT.ReportTargetsScheduler</strong>
 </a>
