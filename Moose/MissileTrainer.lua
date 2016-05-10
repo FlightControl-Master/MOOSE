@@ -47,7 +47,7 @@ function MISSILETRAINER:_EventShot( Event )
 	local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
 	local TrainerTargetDCSGroup = TrainerTargetDCSUnit:getGroup()
 	local TrainerTargetDCSGroupName = TrainerTargetDCSGroup:getName()
-	local TrainerTargetSkill =  _DATABASE.Units[TrainerTargetDCSUnitName].Template.skill
+	local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
 
 	self:T( TrainerTargetSkill )
 	

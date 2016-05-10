@@ -66,6 +66,7 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Unit" )
 Include.File( "Event" )
 
 --- DATABASE class
@@ -73,6 +74,7 @@ Include.File( "Event" )
 -- @extends Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
+  Templates = {},
   DCSUnits = {},
   DCSUnitsAlive = {},
   Units = {},
@@ -260,7 +262,7 @@ function DATABASE:FilterStart()
     -- OK, we have a _DATABASE
     -- Now use the different filters to build the set.
     -- We first take ALL of the Units of the _DATABASE.
-    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Units ) do
+    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Templates.Units ) do
       self:T( UnitRegistration )
       local DCSUnit = Unit.getByName( UnitRegistration.UnitName )
       if self:_IsIncludeDCSUnit( DCSUnit ) then
@@ -318,7 +320,7 @@ end
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F( Status )
 
-  self.Groups[GroupName].Status = Status
+  self.Templates.Groups[GroupName].Status = Status
 end
 
 
@@ -326,8 +328,8 @@ end
 function DATABASE:GetStatusGroup( GroupName )
   self:F( Status )
 
-  if self.Groups[GroupName] then
-    return self.Groups[GroupName].Status
+  if self.Templates.Groups[GroupName] then
+    return self.Templates.Groups[GroupName].Status
   else
     return ""
   end
@@ -341,9 +343,9 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
-  if not self.Groups[GroupTemplateName] then
-    self.Groups[GroupTemplateName] = {}
-    self.Groups[GroupTemplateName].Status = nil
+  if not self.Templates.Groups[GroupTemplateName] then
+    self.Templates.Groups[GroupTemplateName] = {}
+    self.Templates.Groups[GroupTemplateName].Status = nil
   end
   
   -- Delete the spans from the route, it is not needed and takes memory.
@@ -351,28 +353,28 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     GroupTemplate.route.spans = nil
   end
   
-  self.Groups[GroupTemplateName].GroupName = GroupTemplateName
-  self.Groups[GroupTemplateName].Template = GroupTemplate
-  self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-  self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-  self.Groups[GroupTemplateName].Units = GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
+  self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
+  self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
+  self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
-  for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
+  for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
     local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Units[UnitTemplateName] = {}
-    self.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Units[UnitTemplateName].Template = UnitTemplate
-    self.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplateName] = {}
+    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
+    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
+    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:E( { "Unit", self.Units[UnitTemplateName].UnitName } )
+    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
   end
 end
 
@@ -385,7 +387,7 @@ function DATABASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
     end
   end
 end
@@ -439,7 +441,7 @@ function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
     end
   end
 
-  timer.scheduleFunction( Schedule, {}, timer.getTime() + 1 )
+  timer.scheduleFunction( Schedule, {}, timer.getTime() + 0.001 )
   
   return self
 end
