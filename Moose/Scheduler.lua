@@ -85,7 +85,7 @@ function SCHEDULER:Scheduler()
       timer.scheduleFunction(
         self.Scheduler,
         self,
-        timer.getTime() + self.RepeatSecondsInterval * math.random( self.RandomizationFactor * self.RepeatSecondsInterval ) + 0.01
+        timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
       )
     end
   end
