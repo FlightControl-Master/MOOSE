@@ -437,6 +437,32 @@ function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
   return self
 end
 
+--- Set a new listener for an S_EVENT_PLAYER_ENTER_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerEnterUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_ENTER_UNIT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_PLAYER_LEAVE_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
+  
+  return self
+end
+
 
 
 function EVENT:onEvent( Event )
@@ -468,6 +494,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
+    self:E( { _EVENTCODES[Event.id], Event } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
