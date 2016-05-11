@@ -5,12 +5,13 @@ echo env.info( 'Moose Embedded' ) > Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Routines.lua              Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Base.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Event.lua                 Moose_Embedded.lua
+copy /b Moose_Embedded.lua + ..\Moose\Menu.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Group.lua                 Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Unit.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Zone.lua                  Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Database.lua              Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Moose.lua                 Moose_Embedded.lua
-copy /b Moose_Embedded.lua + ..\Moose\TimeTrigger.lua           Moose_Embedded.lua
+copy /b Moose_Embedded.lua + ..\Moose\Scheduler.lua             Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Scoring.lua               Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Cargo.lua                 Moose_Embedded.lua
 copy /b Moose_Embedded.lua + ..\Moose\Client.lua                Moose_Embedded.lua

@@ -40,6 +40,17 @@ function ZONE:GetPointVec2()
 	return Point	
 end
 
+function ZONE:GetPointVec3( Height )
+  self:F( self.ZoneName )
+
+  local Zone = trigger.misc.getZone( self.ZoneName )
+  local Point = { x = Zone.point.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = Zone.point.z }
+
+  self:T( { Zone, Point } )
+  
+  return Point  
+end
+
 function ZONE:GetRandomPointVec2()
 	self:F( self.ZoneName )
 

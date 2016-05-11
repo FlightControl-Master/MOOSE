@@ -245,3 +245,127 @@ function MENU_CLIENT_COMMAND:Remove()
   self.ParentMenu.Menus[self.MenuPath] = nil
   return nil
 end
+
+
+--- The MENU_COALITION class
+-- @type MENU_COALITION
+-- @extends Menu#MENU
+MENU_COALITION = {
+  ClassName = "MENU_COALITION"
+}
+
+--- Creates a new coalition menu item
+-- @param #MENU_COALITION self
+-- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param #string MenuText The text for the menu.
+-- @param #table ParentMenu The parent menu.
+-- @return #MENU_COALITION self
+function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
+
+  -- Arrange meta tables
+  local MenuParentPath = {}
+  if ParentMenu ~= nil then
+    MenuParentPath = ParentMenu.MenuPath
+  end
+
+  local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  self:F( { MenuCoalition, MenuText, ParentMenu } )
+
+  self.MenuCoalition = MenuCoalition
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+  
+  self.Menus = {}
+
+  self:T( { MenuParentPath, MenuText } )
+
+  self.MenuPath = missionCommands.addSubMenuForCoalition( self.MenuCoalition, MenuText, MenuParentPath )
+
+  self:T( { self.MenuPath } )
+
+  if ParentMenu and ParentMenu.Menus then
+    ParentMenu.Menus[self.MenuPath] = self
+  end
+  return self
+end
+
+--- Removes the sub menus recursively of this MENU_COALITION.
+-- @param #MENU_COALITION self
+-- @return #MENU_COALITION self
+function MENU_COALITION:RemoveSubMenus()
+  self:F( self.MenuPath )
+
+  for MenuID, Menu in pairs( self.Menus ) do
+    Menu:Remove()
+  end
+
+end
+
+--- Removes the sub menus recursively of this MENU_COALITION.
+-- @param #MENU_COALITION self
+-- @return #MENU_COALITION self
+function MENU_COALITION:Remove()
+  self:F( self.MenuPath )
+
+  self:RemoveSubMenus()
+  missionCommands.removeItemForCoalition( self.MenuCoalition, self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+
+  return nil
+end
+
+
+--- The MENU_COALITION_COMMAND class
+-- @type MENU_COALITION_COMMAND
+-- @extends Menu#MENU
+MENU_COALITION_COMMAND = {
+  ClassName = "MENU_COALITION_COMMAND"
+}
+
+--- Creates a new radio command item for a group
+-- @param #MENU_COALITION_COMMAND self
+-- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param MenuText The text for the menu.
+-- @param ParentMenu The parent menu.
+-- @param CommandMenuFunction A function that is called when the menu key is pressed.
+-- @param CommandMenuArgument An argument for the function.
+-- @return #MENU_COALITION_COMMAND self
+function MENU_COALITION_COMMAND:New( MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+
+  -- Arrange meta tables
+  
+  local MenuParentPath = {}
+  if ParentMenu ~= nil then
+    MenuParentPath = ParentMenu.MenuPath
+  end
+
+  local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  
+  self.MenuCoalition = MenuCoalition
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+
+  self:T( { MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+
+  self.MenuPath = missionCommands.addCommandForCoalition( self.MenuCoalition, MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+ 
+  self.CommandMenuFunction = CommandMenuFunction
+  self.CommandMenuArgument = CommandMenuArgument
+  
+  ParentMenu.Menus[self.MenuPath] = self
+  
+  return self
+end
+
+--- Removes a radio command item for a coalition
+-- @param #MENU_COALITION_COMMAND self
+-- @return #MENU_COALITION_COMMAND self
+function MENU_COALITION_COMMAND:Remove()
+  self:F( self.MenuPath )
+
+  missionCommands.removeItemForCoalition( self.MenuCoalition, self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
+end
