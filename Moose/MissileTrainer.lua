@@ -24,6 +24,9 @@ function MISSILETRAINER:New( Distance )
 	self.Schedulers = {}
 	self.SchedulerID = 0
 	
+	self.MessageInterval = 2
+	self.MessageLastTime = timer.getTime()
+	
 	self.Distance = Distance
 
 	_EVENTDISPATCHER:OnShot( self._EventShot, self )
@@ -32,28 +35,47 @@ function MISSILETRAINER:New( Distance )
 	self.DBClients = self.DB.Clients
 	self.DBUnits = self.DB.Units
 	
-	self.DB:ForEachClient( 
-	 --- @param Client#CLIENT Client
-	 function( Client )
-	   Client:Message( "Welcome to the Missile Trainer", 10, "ID", "TEST" )
-	   --Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
-	   --Client.MenuOnOff = MENU_CLIENT:New( Client, "On/Off", Client.MainMenu )
-	   --Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuOnOff, MISSILETRAINER._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
-     --Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuOnOff, MISSILETRAINER._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
-	 end 
-	)
+	for ClientID, Client in pairs( self.DBClients ) do
+     Client:Message( "Welcome to the Missile Trainer", 10, "ID", "TEST" )
+     Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
+     Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
+     Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
+     Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
+     Client.MenuToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesToAll = true } )
+     Client.MenuToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesToAll = false } )
+     Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesTrack = true } )
+     Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesTrack = false } )
+	end
+--	self.DB:ForEachClient( 
+--	 --- @param Client#CLIENT Client
+--	 function( Client )
+--     
+--	 end 
+--	)
 	
-	self.DisplayMessages = true
+	self.MessagesOnOff = true
+  self.MessagesToAll = false
+  self.MessagesTrack = true
 	
 	return self
 end
 
-function MISSILETRAINER._MenuMessages( MenuParameters )
+function MISSILETRAINER:_MenuMessages( MenuParameters )
 
   local self = MenuParameters.MenuSelf
-  local MessagesOnOff = MenuParameters.MessagesOnOff
   
-  self.DisplayMessages = MessagesOnOff
+  if MenuParameters.MessagesOnOff then
+    self.MessagesOnOff = MenuParameters.MessagesOnOff
+  end
+  
+  if MenuParameters.MessagesToAll then
+    self.MessagesToAll = MenuParameters.MessagesToAll
+  end
+  
+  if MenuParameters.MessagesTrack then
+    self.MessagesTrack = MenuParameters.MessagesTrack
+  end
+  
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
@@ -86,9 +108,9 @@ end
 
 ---
 -- @param #MISSILETRAINER self
--- @param DCSUnit#Unit TrainerSourceDCSUnit
+-- @param Unit#UNIT TrainerSourceDCSUnit
 -- @param DCSWeapon#Weapon TrainerWeapon
--- @param DCSUnit#Unit TrainerTargetDCSUnit
+-- @param Unit#UNIT TrainerTargetDCSUnit
 -- @param Client#CLIENT Client
 function MISSILETRAINER:_FollowMissile( TrainerSourceUnit, TrainerWeapon, TrainerTargetUnit, Client )
   self:F( { TrainerSourceUnit, TrainerWeapon, TrainerTargetUnit, Client } )
@@ -101,16 +123,39 @@ function MISSILETRAINER:_FollowMissile( TrainerSourceUnit, TrainerWeapon, Traine
     ( PositionMissile.z - PositionTarget.z )^2
     ) ^ 0.5
 
-  if self.DisplayMessages then
+  
+  if self.MessagesOnOff and self.MessagesTrack and self.MessageLastTime + 2 <= timer.getTime() then
     self:T( Distance )
-    MESSAGE:New( "Distance Missile = " .. Distance, "TEST", 0.2, "ID"  ):ToAll()
+    self.MessageLastTime = timer.getTime()
+    local Message = MESSAGE:New( 
+        string.format( "%s launched by %s: %4.2f km", 
+          TrainerWeapon:getTypeName(), 
+          TrainerSourceUnit:GetName(), 
+          Distance 
+        ),"Tracking", 2, "ID" )  
+    
+    if self.MessagesToAll then
+      Message:ToAll()
+    else
+      Message:ToClient( Client )
+    end
   end
   
   if Distance <= self.Distance then
     TrainerWeapon:destroy()
-    if self.DisplayMessages then
+    if self.MessagesOnOff then
       self:T( "Destroyed" )
-      MESSAGE:New( "Missile Destroyed", "TEST", 5, "ID"  ):ToAll()
+      local Message = MESSAGE:New( 
+          string.format( "%s launched by %s destroyed", 
+            TrainerWeapon:getTypeName(), 
+            TrainerSourceUnit:GetName(), 
+            Distance 
+          ),"Tracking", 2, "ID" )  
+      if self.MessagesToAll then
+        Message:ToAll()
+      else
+        Message:ToClient( Client )
+      end
     end
     return false
   end

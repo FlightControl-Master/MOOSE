@@ -242,9 +242,7 @@ end
 -- @return DCSTypes#Group.ID
 function CLIENT:GetClientGroupID()
 
-  if not self.ClientGroupID then
-    local ClientGroup = self:GetDCSGroup()
-  end
+  local ClientGroup = self:GetDCSGroup()
 
   self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
 	return self.ClientGroupID
@@ -256,9 +254,7 @@ end
 -- @return #string
 function CLIENT:GetClientGroupName()
 
-  if not self.ClientGroupName then
-    local ClientGroup = self:GetDCSGroup()
-  end
+  local ClientGroup = self:GetDCSGroup()
 
   self:T( self.ClientGroupName ) -- Determined in GetDCSGroup()
 	return self.ClientGroupName
