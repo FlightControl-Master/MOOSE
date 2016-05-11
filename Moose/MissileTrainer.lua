@@ -4,12 +4,13 @@
 
 Include.File( "Client" )
 Include.File( "Scheduler" )
+Include.File( "Menu" )
 
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
 -- @extends Base#BASE
 MISSILETRAINER = {
-	ClassName = "MISSILETRAINER", 
+	ClassName = "MISSILETRAINER",
 }
 
 --- Creates the main object which is handling missile tracking.
@@ -27,6 +28,10 @@ function MISSILETRAINER:New( Distance )
 	self.Distance = Distance
 
 	_EVENTDISPATCHER:OnShot( self._EventShot, self )
+	
+	self.Database = DATABASE:New():FilterStart()
+	
+	-- Set the menus for the missile trainer
 	
 	return self
 end
