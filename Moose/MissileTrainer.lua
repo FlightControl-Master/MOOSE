@@ -36,34 +36,39 @@ function MISSILETRAINER:New( Distance )
 	self.DBUnits = self.DB.Units
 	
 	for ClientID, Client in pairs( self.DBClients ) do
-     Client:Message( "Welcome to the Missile Trainer", 10, "ID", "TEST" )
-     
-     Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
-     
-     Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
-     Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
-     Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
-     
-     Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
-     Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
-     Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
-     Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, Tracking = true } )
-     Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, Tracking = false } )
-     
-     Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
-     Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
-     Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
-     Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHits = true } )
-     Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHits = false } )
-     Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunches = true } )
-     Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunches = false } )
-     
-     Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
-     Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRange = true } )
-     Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRange = false } )
-     Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = true } )
-     Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = false } )
-     
+	
+	  local function _Alive( Client )
+
+       Client:Message( "Welcome to the Missile Trainer", 10, "ID", "TEST" )
+       
+       Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
+       
+       Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
+       Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
+       Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
+       
+       Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
+       Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
+       Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
+       Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, Tracking = true } )
+       Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, Tracking = false } )
+       
+       Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
+       Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
+       Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
+       Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHits = true } )
+       Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHits = false } )
+       Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunches = true } )
+       Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunches = false } )
+       
+       Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
+       Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRange = true } )
+       Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRange = false } )
+       Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = true } )
+       Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = false } )
+    end
+	
+    Client:Alive( _Alive )	
      
 	end
 --	self.DB:ForEachClient( 
@@ -145,10 +150,9 @@ function MISSILETRAINER:_EventShot( Event )
 
 	local TrainerTargetDCSUnit = TrainerWeapon:getTarget() -- Identify target
 	local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
-	local TrainerTargetDCSGroup = TrainerTargetDCSUnit:getGroup()
-	local TrainerTargetDCSGroupName = TrainerTargetDCSGroup:getName()
 	local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
 
+	self:T(TrainerTargetDCSUnitName )
 	
 	local Client = self.DBClients[TrainerTargetDCSUnitName]
 	if Client then
@@ -271,46 +275,70 @@ function MISSILETRAINER:_TrackMissiles()
         local TrainerWeapon = MissileData.TrainerWeapon
         local TrainerTargetUnit = MissileData.TrainerTargetUnit
         
-        local PositionMissile = TrainerWeapon:getPosition().p
-        local PositionTarget = Client:GetPositionVec3()
+        if TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+          local PositionMissile = TrainerWeapon:getPosition().p
+          local PositionTarget = Client:GetPositionVec3()
+          
+          local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
+            ( PositionMissile.y - PositionTarget.y )^2 +
+            ( PositionMissile.z - PositionTarget.z )^2
+            ) ^ 0.5
+                      
+          if Distance <= self.Distance then
+            -- Hit alert
+            TrainerWeapon:destroy()
+            if self.MessagesOnOff and self.AlertsHits then
         
-        local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
-          ( PositionMissile.y - PositionTarget.y )^2 +
-          ( PositionMissile.z - PositionTarget.z )^2
-          ) ^ 0.5
-                    
-        if Distance <= self.Distance then
-          -- Hit alert
-          TrainerWeapon:destroy()
-          if self.MessagesOnOff and self.AlertsHits then
-      
-            self:T( "Destroyed" )
-      
-            local Message = MESSAGE:New( 
-                string.format( "%s launched by %s destroyed", 
-                  TrainerWeapon:getTypeName(), 
-                  TrainerSourceUnit:GetTypeName()
-                ),"Tracking", 2, "ID" )  
-      
-            if self.AlertsToAll then
-              Message:ToAll()
-            else
-              Message:ToClient( Client )
+              self:T( "killed" )
+        
+              local Message = MESSAGE:New( 
+                  string.format( "%s launched by %s killed '%s'", 
+                    TrainerWeapon:getTypeName(), 
+                    TrainerSourceUnit:GetTypeName(),
+                    TrainerSourceUnit:GetPlayerName()
+                  ),"Tracking", 15, "ID" )  
+        
+              if self.AlertsToAll then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+              
+              MissileData = nil
+              table.remove( TrackingData.MissileData, MissileDataID )
+              self:T(TrackingData.MissileData)
             end
-            
-            MissileData = nil
-            table.remove( TrackingData.MissileData, MissileDataID )
+          else
+            local TrackingTo = string.format( "  -> %s launched by %s", 
+                TrainerWeapon:getTypeName(), 
+                TrainerSourceUnit:GetName()
+              ) 
+          
+            if ClientDataID == TrackingDataID then
+              ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:AddRange( ClientData.Client, TrainerWeapon ) .. self:AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
+            else
+              ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:AddRange( TrackingData.Client, TrainerWeapon ) .. self:AddBearing( TrackingData.Client, TrainerWeapon ) .. "\n"
+            end
           end
         else
-          local TrackingTo = string.format( "  -> %s launched by %s", 
-              TrainerWeapon:getTypeName(), 
-              TrainerSourceUnit:GetName()
-            ) 
+          if not ( TrainerWeapon and TrainerWeapon:isExist() ) then
+            if self.MessagesOnOff and self.AlertsLaunches then
+            -- Weapon does not exist anymore. Delete from Table 
+              local Message = MESSAGE:New( 
+                  string.format( "%s launched by %s is self destructed!", 
+                    TrainerWeapon:getTypeName(), 
+                    TrainerSourceUnit:GetTypeName()
+                  ),"Tracking", 5, "ID" )  
         
-          if ClientDataID == TrackingDataID then
-            ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:AddRange( ClientData.Client, TrainerWeapon ) .. self:AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
-          else
-            ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:AddRange( TrackingData.Client, TrainerWeapon ) .. self:AddBearing( TrackingData.Client, TrainerWeapon ) .. "\n"
+              if self.AlertsToAll then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+            end
+            MissileData = nil
+            table.remove( TrackingData.MissileData, MissileDataID )
+            self:T(TrackingData.MissileData)
           end
         end
       end

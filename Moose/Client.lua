@@ -12,7 +12,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
--- @extends Unit#UNIT
+-- @extends Base#BASE
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -48,7 +48,7 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, UNIT:New( Unit.getByName( ClientName ) ) )
+	local self = BASE:Inherit( self, BASE:New() )
 	self:F( ClientName, ClientBriefing )
 
   self.ClientName = ClientName
@@ -318,6 +318,44 @@ function CLIENT:GetPointVec2()
   
   return nil
 end 
+
+function CLIENT:GetPositionVec3()
+  self:F( self.ClientName )
+  
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitPos = DCSUnit:getPosition().p
+
+  self:T( UnitPos )
+  return UnitPos
+end
+
+function CLIENT:GetID()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitID = DCSUnit:getID()
+  
+  self:T( UnitID )
+  return UnitID
+end
+
+function CLIENT:GetName()
+  self:F( self.ClientName )
+  
+  self:T( self.ClientName )
+  return self.ClientName
+end
+
+function CLIENT:GetTypeName()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local TypeName = DCSUnit:getTypeName()
+  
+  self:T( TypeName )
+  return TypeName
+end
+
 
 
 --- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.

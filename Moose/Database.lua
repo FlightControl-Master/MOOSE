@@ -413,6 +413,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
     self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
     self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self:E( {"skill",UnitTemplate.skill})
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
       self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
@@ -477,11 +478,10 @@ function DATABASE:_RegisterDatabase()
           self.DCSUnitsAlive[DCSUnitName] = DCSUnit
           self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
         end
-
-        if self.Templates.ClientsByName[DCSUnitName] then
-          self.Clients[DCSUnitName] = CLIENT:New( DCSUnitName )
-        end
-        
+      end
+      
+      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
+        self.Clients[ClientName] = CLIENT:New( ClientName )
       end
     end
   end
@@ -504,11 +504,12 @@ function DATABASE:_EventOnBirth( Event )
       self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
       self.Units[Event.IniDCSUnitName] = UNIT:New( Event.IniDCSUnit )
       
-      if not self.DCSGroups[Event.IniDCSGroupName] then
-        self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
-        self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
-        self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
-      end
+      --if not self.DCSGroups[Event.IniDCSGroupName] then
+      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
+      --end
+      self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
