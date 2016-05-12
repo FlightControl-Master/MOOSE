@@ -12,7 +12,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
--- @extends Base#BASE
+-- @extends Unit#UNIT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -48,7 +48,7 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, UNIT:New( Unit.getByName( ClientName ) ) )
 	self:F( ClientName, ClientBriefing )
 
   self.ClientName = ClientName
