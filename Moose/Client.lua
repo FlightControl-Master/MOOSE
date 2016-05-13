@@ -190,7 +190,7 @@ function CLIENT:GetDCSGroup()
   				local ClientGroup = ClientUnit:getGroup()
   				if ClientGroup then
   					self:T3( "ClientGroup = " .. self.ClientName )
-  					if ClientGroup:isExist() then 
+  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then 
   						if ClientGroup:getID() == UnitData:getGroup():getID() then
   							self:T3( "Normal logic" )
   							self:T3( self.ClientName .. " : group found!" )
@@ -244,7 +244,7 @@ function CLIENT:GetClientGroupID()
 
   local ClientGroup = self:GetDCSGroup()
 
-  self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
+  --self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
 	return self.ClientGroupID
 end
 

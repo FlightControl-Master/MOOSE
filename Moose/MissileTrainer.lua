@@ -27,7 +27,7 @@ function MISSILETRAINER:New( Distance )
 	self.MessageInterval = 2
 	self.MessageLastTime = timer.getTime()
 	
-	self.Distance = Distance
+	self.Distance = Distance / 1000
 
 	_EVENTDISPATCHER:OnShot( self._EventShot, self )
 	
@@ -39,7 +39,7 @@ function MISSILETRAINER:New( Distance )
 	
 	  local function _Alive( Client )
 
-       Client:Message( "Welcome to the Missile Trainer", 10, "ID", "TEST" )
+       Client:Message( "Hello trainee, welcome to the Missile Trainer.\nUse the F10->F2 menu options in the radio menu to change the Missile Trainer settings.\nGood luck!", 10, "ID", "Trainer" )
        
        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
        
@@ -66,6 +66,23 @@ function MISSILETRAINER:New( Distance )
        Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRange = false } )
        Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = true } )
        Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearing = false } )
+       
+       Client.MenuDistance = MENU_CLIENT:New( Client, "Set distance to plane", Client.MainMenu )
+       Client.MenuDistance50 = MENU_CLIENT_COMMAND:New( Client, "50 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 50 / 1000 } )
+       Client.MenuDistance100 = MENU_CLIENT_COMMAND:New( Client, "100 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 100 / 1000 } )
+       Client.MenuDistance150 = MENU_CLIENT_COMMAND:New( Client, "150 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 150 / 1000 } )
+       Client.MenuDistance200 = MENU_CLIENT_COMMAND:New( Client, "200 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 200 / 1000 } )
+       
+
+      local ClientID = Client:GetID()
+      self:T( ClientID )
+      if not self.TrackingMissiles[ClientID] then
+        self.TrackingMissiles[ClientID] = {}
+      end
+      self.TrackingMissiles[ClientID].Client = Client
+      if not self.TrackingMissiles[ClientID].MissileData then
+        self.TrackingMissiles[ClientID].MissileData = {}
+      end
     end
 	
     Client:Alive( _Alive )	
@@ -97,40 +114,86 @@ function MISSILETRAINER:New( Distance )
 	return self
 end
 
-function MISSILETRAINER:_MenuMessages( MenuParameters )
+function MISSILETRAINER._MenuMessages( MenuParameters )
 
   local self = MenuParameters.MenuSelf
   
-  if MenuParameters.MessagesOnOff then
+  if MenuParameters.MessagesOnOff ~= nil then
     self.MessagesOnOff = MenuParameters.MessagesOnOff
+    if self.MessagesOnOff == true then
+      MESSAGE:New( "Messages ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Messages OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
   
-  if MenuParameters.TrackingToAll then
+  if MenuParameters.TrackingToAll ~= nil then
     self.TrackingToAll = MenuParameters.TrackingToAll
+    if self.TrackingToAll == true then
+      MESSAGE:New( "Missile tracking to all players ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Missile tracking to all players OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
   
-  if MenuParameters.Tracking then
+  if MenuParameters.Tracking ~= nil then
     self.Tracking = MenuParameters.Tracking
+    if self.Tracking == true then
+      MESSAGE:New( "Missile tracking ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Missile tracking OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
 
-  if MenuParameters.AlertsToAll then
+  if MenuParameters.AlertsToAll ~= nil then
     self.AlertsToAll = MenuParameters.AlertsToAll
+    if self.AlertsToAll == true then
+      MESSAGE:New( "Alerts to all players ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Alerts to all players OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
 
-  if MenuParameters.AlertsHits then
+  if MenuParameters.AlertsHits ~= nil then
     self.AlertsHits = MenuParameters.AlertsHits
+    if self.AlertsHits == true then
+      MESSAGE:New( "Alerts Hits ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Alerts Hits OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
   
-  if MenuParameters.AlertsLaunches then
+  if MenuParameters.AlertsLaunches ~= nil then
     self.AlertsLaunches = MenuParameters.AlertsLaunches
+    if self.AlertsLaunches == true then
+      MESSAGE:New( "Alerts Launches ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Alerts Launches OFF", "Menu", 15, "ID" ):ToAll()
+    end
+      
   end
   
-  if MenuParameters.DetailsRange then
+  if MenuParameters.DetailsRange ~= nil then
     self.DetailsRange = MenuParameters.DetailsRange
+    if self.DetailsRange == true then
+      MESSAGE:New( "Range display ON", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Range display OFF", "Menu", 15, "ID" ):ToAll()
+    end
   end
   
-  if MenuParameters.DetailsBearing then
+  if MenuParameters.DetailsBearing ~= nil then
     self.DetailsBearing = MenuParameters.DetailsBearing
+    if self.DetailsBearing == true then
+      MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    else
+      MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    end
+  end
+  
+  if MenuParameters.Distance ~= nil then
+    self.Distance = MenuParameters.Distance
+      MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", "Menu", 15, "ID" ):ToAll()
   end
   
 end
@@ -166,7 +229,7 @@ function MISSILETRAINER:_EventShot( Event )
         string.format( "%s launched a %s", 
           TrainerSourceUnit:GetTypeName(), 
           TrainerWeaponName 
-        ) .. self:AddRange( Client, TrainerWeapon ) .. self:AddBearing( Client, TrainerWeapon ),"Launch", 5, "ID" )  
+        ) .. self:AddRange( Client, TrainerWeapon ) .. self:AddBearing( Client, TrainerWeapon ),"Launch Alert", 5, "ID" )  
   
       if self.AlertsToAll then
         Message:ToAll()
@@ -176,18 +239,12 @@ function MISSILETRAINER:_EventShot( Event )
     end
     
     local ClientID = Client:GetID()
-    self:T( ClientID )
-    if not self.TrackingMissiles[ClientID] then
-      self.TrackingMissiles[ClientID] = {}
-    end
-    self.TrackingMissiles[ClientID].Client = Client
-    if not self.TrackingMissiles[ClientID].MissileData then
-      self.TrackingMissiles[ClientID].MissileData = {}
-    end
     local MissileData = {}
     MissileData.TrainerSourceUnit = TrainerSourceUnit
     MissileData.TrainerWeapon = TrainerWeapon
     MissileData.TrainerTargetUnit = TrainerTargetUnit
+    MissileData.TrainerWeaponTypeName = TrainerWeapon:getTypeName()
+    MissileData.TrainerWeaponLaunched = true
     table.insert( self.TrackingMissiles[ClientID].MissileData, MissileData )
     --self:T( self.TrackingMissiles )
 	end
@@ -205,7 +262,7 @@ function MISSILETRAINER:AddRange( Client, TrainerWeapon )
     local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
       ( PositionMissile.y - PositionTarget.y )^2 +
       ( PositionMissile.z - PositionTarget.z )^2
-      ) ^ 0.5
+      ) ^ 0.5 / 1000
 
     RangeText = string.format( ", at %4.2fkm", Range )
   end
@@ -222,7 +279,7 @@ function MISSILETRAINER:AddBearing( Client, TrainerWeapon )
     local PositionMissile = TrainerWeapon:getPoint()
     local PositionTarget = Client:GetPositionVec3()
     
-    self:T( { PositionTarget, PositionMissile })
+    self:T2( { PositionTarget, PositionMissile })
     
     local DirectionVector = { x = PositionMissile.x - PositionTarget.x, y = PositionMissile.y - PositionTarget.y, z = PositionMissile.z - PositionTarget.z }
     local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
@@ -261,28 +318,28 @@ function MISSILETRAINER:_TrackMissiles()
     self:T2( { Client:GetName() } )
     
   
-    ClientData.MessageToAll = "Missiles to Other Players:\n"
-    ClientData.MessageToClient = "Missiles to You:\n"
+    ClientData.MessageToClient = ""
+    ClientData.MessageToAll = ""
     
     for TrackingDataID, TrackingData in pairs( self.TrackingMissiles ) do
       
-      self:T( #TrackingData.MissileData )
-      
       for MissileDataID, MissileData in pairs( TrackingData.MissileData ) do
-        self:T( MissileDataID )
+        self:T3( MissileDataID )
       
         local TrainerSourceUnit = MissileData.TrainerSourceUnit
         local TrainerWeapon = MissileData.TrainerWeapon
         local TrainerTargetUnit = MissileData.TrainerTargetUnit
+        local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
+        local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
         
-        if TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+        if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
           local PositionMissile = TrainerWeapon:getPosition().p
           local PositionTarget = Client:GetPositionVec3()
           
           local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
             ( PositionMissile.y - PositionTarget.y )^2 +
             ( PositionMissile.z - PositionTarget.z )^2
-            ) ^ 0.5
+            ) ^ 0.5 / 1000
                       
           if Distance <= self.Distance then
             -- Hit alert
@@ -292,11 +349,11 @@ function MISSILETRAINER:_TrackMissiles()
               self:T( "killed" )
         
               local Message = MESSAGE:New( 
-                  string.format( "%s launched by %s killed '%s'", 
+                  string.format( "%s launched by %s killed %s", 
                     TrainerWeapon:getTypeName(), 
                     TrainerSourceUnit:GetTypeName(),
-                    TrainerSourceUnit:GetPlayerName()
-                  ),"Tracking", 15, "ID" )  
+                    TrainerTargetUnit:GetPlayerName()
+                  ),"Hit Alert", 15, "ID" )  
         
               if self.AlertsToAll then
                 Message:ToAll()
@@ -309,15 +366,25 @@ function MISSILETRAINER:_TrackMissiles()
               self:T(TrackingData.MissileData)
             end
           else
-            local TrackingTo = string.format( "  -> %s launched by %s", 
-                TrainerWeapon:getTypeName(), 
-                TrainerSourceUnit:GetName()
-              ) 
-          
-            if ClientDataID == TrackingDataID then
-              ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:AddRange( ClientData.Client, TrainerWeapon ) .. self:AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
-            else
-              ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:AddRange( TrackingData.Client, TrainerWeapon ) .. self:AddBearing( TrackingData.Client, TrainerWeapon ) .. "\n"
+            if ShowMessages then
+              local TrackingTo
+              TrackingTo = string.format( "  -> %s", 
+                  TrainerWeaponTypeName 
+                )
+            
+              if ClientDataID == TrackingDataID then
+                if ClientData.MessageToClient == "" then
+                  ClientData.MessageToClient = "Missiles to You:\n"
+                end
+                ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:AddRange( ClientData.Client, TrainerWeapon ) .. self:AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
+              else
+                if self.TrackingToAll then
+                  if ClientData.MessageToAll == "" then
+                    ClientData.MessageToAll = "Missiles to other Players:\n"
+                  end
+                  ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:AddRange( ClientData.Client, TrainerWeapon ) .. self:AddBearing( ClientData.Client, TrainerWeapon ) .. " ( " .. TrainerTargetUnit:GetPlayerName()  ..   " )\n"
+                end
+              end
             end
           end
         else
@@ -325,8 +392,8 @@ function MISSILETRAINER:_TrackMissiles()
             if self.MessagesOnOff and self.AlertsLaunches then
             -- Weapon does not exist anymore. Delete from Table 
               local Message = MESSAGE:New( 
-                  string.format( "%s launched by %s is self destructed!", 
-                    TrainerWeapon:getTypeName(), 
+                  string.format( "%s launched by %s self destructed!", 
+                    TrainerWeaponTypeName, 
                     TrainerSourceUnit:GetTypeName()
                   ),"Tracking", 5, "ID" )  
         
@@ -345,7 +412,9 @@ function MISSILETRAINER:_TrackMissiles()
     end
 
     if self.MessagesOnOff and self.Tracking and ShowMessages then
-      local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )  
+      if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
+        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )
+      end  
     end
 
   end

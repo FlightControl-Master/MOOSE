@@ -96,7 +96,14 @@ end
 function UNIT:GetPlayerName()
   self:F( self.UnitName )
   
-  return self.DCSUnit:getPlayerName()
+  local DCSUnit = Unit.getByName( self.UnitName )
+  
+  local PlayerName = DCSUnit:getPlayerName()
+  if PlayerName == nil then
+    PlayerName = ""
+  end
+  
+  return PlayerName
 end
 function UNIT:GetTypeName()
 	self:F( self.UnitName )
