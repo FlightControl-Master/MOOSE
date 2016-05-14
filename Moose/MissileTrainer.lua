@@ -122,12 +122,15 @@ function MISSILETRAINER:New( Distance )
     Client:Alive( _Alive )
 
   end
-  --	self.DB:ForEachClient(
-  --	 --- @param Client#CLIENT Client
-  --	 function( Client )
-  --
-  --	 end
-  --	)
+  
+--  	self.DB:ForEachClient(
+--  	 --- @param Client#CLIENT Client
+--  	 function( Client )
+--  
+--        ... actions ...
+--        
+--  	 end
+--  	)
 
   self.MessagesOnOff = true
 
