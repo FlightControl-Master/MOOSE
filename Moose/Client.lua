@@ -1,6 +1,18 @@
 --- The CLIENT models client units in multi player missions.
--- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
+-- 
+-- @{#CLIENT} class
+-- ================
+-- Clients are those units defined within the Mission Editor that have the skillset defined as "Client" or "Player".
+-- Note that clients are NOT the same as units, they are NOT necessarily alive.
+-- 
+-- Clients are being used in a mission and tasks to follow players and their successes.
+-- 
+-- CLIENT construction methods:
+-- ============================ 
+-- Create a new CLIENT object with the @{#CLIENT.New} method:
+-- 
+--   * @{#CLIENT.New}: Creates a new CLIENT object taking the name of the **DCSUnit** that is a client as defined within the mission editor.
+--  
 -- @module Client
 -- @author FlightControl
 
@@ -33,9 +45,9 @@ CLIENT = {
 }
 
 
---- Use this method to register new Clients within the MOF.
+--- Use this method to register new Clients within a mission.
 -- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
 -- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
 -- @return #CLIENT
 -- @usage
