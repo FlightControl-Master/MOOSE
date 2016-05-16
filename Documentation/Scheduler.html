@@ -24,7 +24,7 @@
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li>DESTROYRADARSTASK</li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -40,7 +40,7 @@
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
-					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li>Scheduler</li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
@@ -51,43 +51,49 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>DESTROYRADARSTASK</code></h1>
+   <h1>Module <code>Scheduler</code></h1>
    
-<p>Task class to destroy radar installations.</p>
+<p>Models time events calling event handing functions.</p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#DESTROYRADARSTASK">DESTROYRADARSTASK</a></td>
+		<td class="name" nowrap="nowrap"><a href="#SCHEDULER">SCHEDULER</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-	<h2><a id="#(DESTROYRADARSTASK)" >Type <code>DESTROYRADARSTASK</code></a></h2>
-		<table class="function_list">
+			<h2><a id="#(SCHEDULER)">Type <code>SCHEDULER</code></a></h2>
+				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYRADARSTASK).ClassName">DESTROYRADARSTASK.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).ClassName">SCHEDULER.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYRADARSTASK).GoalVerb">DESTROYRADARSTASK.GoalVerb</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).New">SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
+		<td class="summary">
+<p>SCHEDULER constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Scheduler">SCHEDULER:Scheduler()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYRADARSTASK).New">DESTROYRADARSTASK.New(table, self, DestroyGroupNames)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Start">SCHEDULER:Start()</a></td>
 		<td class="summary">
-<p>Creates a new DESTROYRADARSTASK.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESTROYRADARSTASK).ReportGoalProgress">DESTROYRADARSTASK.ReportGoalProgress(Group, Unit, self, DestroyGroup, DestroyUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Stop">SCHEDULER:Stop()</a></td>
 		<td class="summary">
-<p>Report Goal Progress.</p>
+
 </td>
 		</tr>
 	</table>
@@ -96,9 +102,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(DESTROYRADARSTASK)">#DESTROYRADARSTASK</a></em>
-<a id="DESTROYRADARSTASK" >
-<strong>DESTROYRADARSTASK</strong>
+		<em><a href="##(SCHEDULER)">#SCHEDULER</a></em>
+<a id="SCHEDULER" >
+<strong>SCHEDULER</strong>
 </a>
 </dt>
 <dd>
@@ -107,14 +113,19 @@
 
 </dd>
 </dl>
-	<h2><a id="#(DESTROYRADARSTASK)" >Type <code>DESTROYRADARSTASK</code></a></h2>
-		<h3>Field(s)</h3>
+	<h2><a id="#(Scheduler)" >Type <code>Scheduler</code></a></h2>
+	
+			<h2><a id="#(SCHEDULER)" >Type <code>SCHEDULER</code></a></h2>
+				
+<p>The SCHEDULER class</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(DESTROYRADARSTASK).ClassName" >
-<strong>DESTROYRADARSTASK.ClassName</strong>
+<a id="#(SCHEDULER).ClassName" >
+<strong>SCHEDULER.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -126,95 +137,96 @@
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(DESTROYRADARSTASK).GoalVerb" >
-<strong>DESTROYRADARSTASK.GoalVerb</strong>
+<a id="#(SCHEDULER).New" >
+<strong>SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DESTROYRADARSTASK).New" >
-<strong>DESTROYRADARSTASK.New(table, self, DestroyGroupNames)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Creates a new DESTROYRADARSTASK.</p>
+<p>SCHEDULER constructor.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> table </em></code>: 
-string,...} DestroyGroupNames   Table of string containing the group names of which the radars are be destroyed.</p>
+<p><code><em>#table TimeEventObject </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> self </em></code>: </p>
+<p><code><em>#function TimeEventFunction </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> DestroyGroupNames </em></code>: </p>
+<p><code><em>#table TimeEventFunctionArguments </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number StartSeconds </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RepeatSecondsInterval </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RandomizationFactor </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number StopSeconds </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
+<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em></p>
 
-<p>DESTROYRADARSTASK</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(DESTROYRADARSTASK).ReportGoalProgress" >
-<strong>DESTROYRADARSTASK.ReportGoalProgress(Group, Unit, self, DestroyGroup, DestroyUnit)</strong>
+<a id="#(SCHEDULER).Scheduler" >
+<strong>SCHEDULER:Scheduler()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Report Goal Progress.</p>
 
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> Group </em></code>: 
-DestroyGroup        Group structure describing the group to be evaluated.</p>
 
-				</li>
-				<li>
-				
-<p><code><em> Unit </em></code>: 
-DestroyUnit         Unit structure describing the Unit to be evaluated.</p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
 
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
+<a id="#(SCHEDULER).Start" >
+<strong>SCHEDULER:Start()</strong>
+</a>
+</dt>
+<dd>
+	
 
-				</li>
-				<li>
-				
-<p><code><em> DestroyGroup </em></code>: </p>
 
-				</li>
-				<li>
-				
-<p><code><em> DestroyUnit </em></code>: </p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
 
-				</li>
-		</ul>
+<a id="#(SCHEDULER).Stop" >
+<strong>SCHEDULER:Stop()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 
