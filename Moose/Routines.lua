@@ -1737,7 +1737,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _DATABASE.Groups[groupIdent].groupId
+		gpId = _DATABASE.Templates.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do

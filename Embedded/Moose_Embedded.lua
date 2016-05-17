@@ -1738,7 +1738,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _DATABASE.Groups[groupIdent].groupId
+		gpId = _DATABASE.Templates.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do
@@ -3555,6 +3555,32 @@ function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
   return self
 end
 
+--- Set a new listener for an S_EVENT_PLAYER_ENTER_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerEnterUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_ENTER_UNIT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_PLAYER_LEAVE_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
+  
+  return self
+end
+
 
 
 function EVENT:onEvent( Event )
@@ -3586,6 +3612,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
+    self:E( { _EVENTCODES[Event.id], Event } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
@@ -5057,7 +5084,7 @@ end
 function GROUP:GetTaskMission()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template )
+  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -5066,7 +5093,7 @@ end
 function GROUP:GetTaskRoute()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template.route.points )
+  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the @{Database#DATABASE} class.
@@ -5090,7 +5117,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 	
 	self:T( { GroupName } )
 	
-	local Template = _DATABASE.Groups[GroupName].Template
+	local Template = _DATABASE.Templates.Groups[GroupName].Template
 	
 	if Template then
 		if not Begin then
@@ -5523,11 +5550,13 @@ UNIT = {
 -- @return Unit#UNIT
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F( DCSUnit:getName() )
+	self:F( DCSUnit )
 
 	self.DCSUnit = DCSUnit
-	self.UnitName = DCSUnit:getName()
-	self.UnitID = DCSUnit:getID()
+	if DCSUnit then
+  	self.UnitName = DCSUnit:getName()
+  	self.UnitID = DCSUnit:getID()
+  end
 
 	return self
 end
@@ -5558,6 +5587,18 @@ function UNIT:GetName()
 	return self.UnitName
 end
 
+function UNIT:GetPlayerName()
+  self:F( self.UnitName )
+  
+  local DCSUnit = Unit.getByName( self.UnitName )
+  
+  local PlayerName = DCSUnit:getPlayerName()
+  if PlayerName == nil then
+    PlayerName = ""
+  end
+  
+  return PlayerName
+end
 function UNIT:GetTypeName()
 	self:F( self.UnitName )
 	
@@ -5800,6 +5841,499 @@ function ZONE:GetRadius()
 	return Zone.radius
 end
 
+--- The CLIENT models client units in multi player missions.
+-- 
+-- @{#CLIENT} class
+-- ================
+-- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
+-- Note that clients are NOT the same as Units, they are NOT necessarily alive.
+-- 
+-- Clients are being used by the @{MISSION} class to follow players and register their successes.
+-- 
+-- CLIENT construction methods:
+-- ============================ 
+-- Create a new CLIENT object with the @{#CLIENT.New} method:
+-- 
+--   * @{#CLIENT.New}: Creates a new CLIENT object taking the name of the **DCSUnit** that is a client as defined within the mission editor.
+--  
+-- @module Client
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Cargo" )
+Include.File( "Message" )
+
+
+--- The CLIENT class
+-- @type CLIENT
+-- @extends Base#BASE
+CLIENT = {
+	ONBOARDSIDE = {
+		NONE = 0,
+		LEFT = 1,
+		RIGHT = 2,
+		BACK = 3,
+		FRONT = 4
+	},
+	ClassName = "CLIENT",
+	ClientName = nil,
+	ClientAlive = false,
+	ClientTransport = false,
+	ClientBriefingShown = false,
+	_Menus = {},
+	_Tasks = {},
+	Messages = { 
+	}
+}
+
+
+--- Use this method to register new Clients within a mission.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return #CLIENT
+-- @usage
+-- -- Create new Clients.
+--	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
+--	Mission:AddGoal( DeploySA6TroopsGoal )
+--
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
+function CLIENT:New( ClientName, ClientBriefing )
+	local self = BASE:Inherit( self, BASE:New() )
+	self:F( ClientName, ClientBriefing )
+
+  self.ClientName = ClientName
+	self:AddBriefing( ClientBriefing )
+	self.MessageSwitch = true
+	
+	return self
+end
+
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @return #CLIENT
+function CLIENT:Transport()
+  self:F()
+
+  self.ClientTransport = true
+  return self
+end
+
+--- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+-- @param #CLIENT self
+-- @param #string ClientBriefing is the text defining the Mission briefing.
+-- @return #CLIENT
+function CLIENT:AddBriefing( ClientBriefing )
+  self:F()
+  self.ClientBriefing = ClientBriefing
+  return self
+end
+
+
+--- Resets a CLIENT.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+function CLIENT:Reset( ClientName )
+	self:F()
+	self._Menus = {}
+end
+
+--- Checks for a client alive event and calls a function on a continuous basis.
+-- @param #CLIENT self
+-- @param #function CallBack Function.
+-- @return #CLIENT
+function CLIENT:Alive( CallBack, ... )
+  self:F()
+  
+  self.ClientAlive2 = false
+  self.ClientCallBack = CallBack
+  self.ClientParameters = arg
+  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+
+  return self
+end
+
+-- Is Functions
+
+--- Checks if the CLIENT is a multi-seated UNIT.
+-- @param #CLIENT self
+-- @return #boolean true if multi-seated.
+function CLIENT:IsMultiSeated()
+  self:F( self.ClientName )
+
+  local ClientMultiSeatedTypes = { 
+    ["Mi-8MT"]  = "Mi-8MT", 
+    ["UH-1H"]   = "UH-1H", 
+    ["P-51B"]   = "P-51B" 
+  }
+  
+  if self:IsAlive() then
+    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
+    if ClientMultiSeatedTypes[ClientTypeName] then
+      return true
+    end
+  end
+  
+  return false
+end
+
+--- Checks if client is alive and returns true or false.
+-- @param #CLIENT self
+-- @returns #boolean Returns true if client is alive.
+function CLIENT:IsAlive()
+  self:F( self.ClientName )
+  
+  local ClientUnit = Unit.getByName( self.ClientName )
+  
+  if ClientUnit and ClientUnit:isExist() then
+    self:T("true")
+    return true
+  end
+  
+  self:T( "false" )
+  return false
+end
+
+
+--- @param #CLIENT self
+function CLIENT:_AliveCheckScheduler()
+  self:F( { self.ClientName, self.ClientAlive2 } )
+
+  if self:IsAlive() then
+    if self.ClientAlive2 == false then
+      self:T("Calling Callback function")
+      self.ClientCallBack( self, unpack( self.ClientParameters ) )
+      self.ClientAlive2 = true
+    end
+  else
+    if self.ClientAlive2 == true then
+      self.ClientAlive2 = false
+    end
+  end
+end
+
+--- Return the DCSGroup of a Client.
+-- This function is modified to deal with a couple of bugs in DCS 1.5.3
+-- @param #CLIENT self
+-- @return DCSGroup#Group
+function CLIENT:GetDCSGroup()
+  self:F3()
+
+--  local ClientData = Group.getByName( self.ClientName )
+--	if ClientData and ClientData:isExist() then
+--		self:T( self.ClientName .. " : group found!" )
+--		return ClientData
+--	else
+--		return nil
+--	end
+
+  local ClientUnit = Unit.getByName( self.ClientName )
+
+	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+		self:T3( { "CoalitionData:", CoalitionData } )
+		for UnitId, UnitData in pairs( CoalitionData ) do
+			self:T3( { "UnitData:", UnitData } )
+			if UnitData and UnitData:isExist() then
+
+        --self:E(self.ClientName)
+        if ClientUnit then
+  				local ClientGroup = ClientUnit:getGroup()
+  				if ClientGroup then
+  					self:T3( "ClientGroup = " .. self.ClientName )
+  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then 
+  						if ClientGroup:getID() == UnitData:getGroup():getID() then
+  							self:T3( "Normal logic" )
+  							self:T3( self.ClientName .. " : group found!" )
+                self.ClientGroupID = ClientGroup:getID()
+  							self.ClientGroupName = ClientGroup:getName()
+  							return ClientGroup
+  						end
+  					else
+  						-- Now we need to resolve the bugs in DCS 1.5 ...
+  						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
+  						self:T3( "Bug 1.5 logic" )
+  						local ClientGroupTemplate = _DATABASE.Templates.Units[self.ClientName].GroupTemplate
+  						self.ClientGroupID = ClientGroupTemplate.groupId
+  						self.ClientGroupName = _DATABASE.Templates.Units[self.ClientName].GroupName
+  						self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+  						return ClientGroup
+  					end
+  --				else
+  --					error( "Client " .. self.ClientName .. " not found!" )
+  				end
+  		  end
+			end
+		end
+	end
+
+	-- For non player clients
+	if ClientUnit then
+  	local ClientGroup = ClientUnit:getGroup()
+  	if ClientGroup then
+  		self:T3( "ClientGroup = " .. self.ClientName )
+  		if ClientGroup:isExist() then 
+  			self:T3( "Normal logic" )
+  			self:T3( self.ClientName .. " : group found!" )
+  			return ClientGroup
+  		end
+  	end
+  end
+	
+	self.ClientGroupID = nil
+	self.ClientGroupUnit = nil
+	
+	return nil
+end 
+
+
+-- TODO: Check DCSTypes#Group.ID
+--- Get the group ID of the client.
+-- @param #CLIENT self
+-- @return DCSTypes#Group.ID
+function CLIENT:GetClientGroupID()
+
+  local ClientGroup = self:GetDCSGroup()
+
+  --self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
+	return self.ClientGroupID
+end
+
+
+--- Get the name of the group of the client.
+-- @param #CLIENT self
+-- @return #string
+function CLIENT:GetClientGroupName()
+
+  local ClientGroup = self:GetDCSGroup()
+
+  self:T( self.ClientGroupName ) -- Determined in GetDCSGroup()
+	return self.ClientGroupName
+end
+
+--- Returns the UNIT of the CLIENT.
+-- @param #CLIENT self
+-- @return Unit#UNIT
+function CLIENT:GetClientGroupUnit()
+	self:F2()
+
+	local ClientDCSUnit = Unit.getByName( self.ClientName )
+
+  self:T( self.ClientDCSUnit )
+	if ClientDCSUnit and ClientDCSUnit:isExist() then
+		local ClientUnit = _DATABASE.Units[ self.ClientName ]
+		self:T2( ClientUnit )
+		return ClientUnit
+	end
+end
+
+--- Returns the DCSUnit of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Unit
+function CLIENT:GetClientGroupDCSUnit()
+	self:F2()
+
+  local ClientDCSUnit = Unit.getByName( self.ClientName )
+  
+  if ClientDCSUnit and ClientDCSUnit:isExist() then
+    self:T2( ClientDCSUnit )
+    return ClientDCSUnit
+  end
+end
+
+-- TODO what is this??? check. possible double function.
+function CLIENT:GetUnit()
+	self:F()
+	
+	return UNIT:New( self:GetClientGroupDCSUnit() )
+end
+
+--- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
+-- @param #CLIENT self
+-- @return DCSTypes#Vec2
+function CLIENT:GetPointVec2()
+	self:F()
+
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      local PointVec2 = {} --DCSTypes#Vec2
+      PointVec2.x = PointVec3.x
+      PointVec2.y = PointVec3.z
+      self:T( { PointVec2 } )
+      return PointVec2
+    end
+  end
+  
+  return nil
+end 
+
+function CLIENT:GetPositionVec3()
+  self:F( self.ClientName )
+  
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitPos = DCSUnit:getPosition().p
+
+  self:T( UnitPos )
+  return UnitPos
+end
+
+function CLIENT:GetID()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitID = DCSUnit:getID()
+  
+  self:T( UnitID )
+  return UnitID
+end
+
+function CLIENT:GetName()
+  self:F( self.ClientName )
+  
+  self:T( self.ClientName )
+  return self.ClientName
+end
+
+function CLIENT:GetTypeName()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local TypeName = DCSUnit:getTypeName()
+  
+  self:T( TypeName )
+  return TypeName
+end
+
+
+
+--- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
+-- @param #CLIENT self
+-- @return DCSTypes#Vec3
+function CLIENT:ClientPosition()
+	self:F()
+
+	local ClientGroupUnit = self:GetClientGroupDCSUnit()
+	
+	if ClientGroupUnit then
+		if ClientGroupUnit:isExist() then
+			return ClientGroupUnit:getPosition()
+		end
+	end
+	
+	return nil
+end 
+
+--- Returns the altitude of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Distance
+function CLIENT:GetAltitude()
+	self:F()
+
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      return PointVec3.y
+    end
+  end
+  
+  return nil
+end 
+
+
+--- Evaluates if the CLIENT is a transport.
+-- @param #CLIENT self
+-- @return #boolean true is a transport.
+function CLIENT:IsTransport()
+	self:F()
+	return self.ClientTransport
+end
+
+--- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+-- @param #CLIENT self
+function CLIENT:ShowCargo()
+	self:F()
+
+	local CargoMsg = ""
+  
+	for CargoName, Cargo in pairs( CARGOS ) do
+		if self == Cargo:IsLoadedInClient() then
+			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
+		end
+	end
+  
+	if CargoMsg == "" then
+		CargoMsg = "empty"
+	end
+  
+	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
+
+end
+
+-- TODO (1) I urgently need to revise this.
+--- A local function called by the DCS World Menu system to switch off messages.
+function CLIENT.SwitchMessages( PrmTable )
+	PrmTable[1].MessageSwitch = PrmTable[2]
+end
+
+--- The main message driver for the CLIENT.
+-- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
+-- @param #CLIENT self
+-- @param #string Message is the text describing the message.
+-- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param #string MessageCategory is the category of the message (the title).
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
+function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
+	self:F()
+
+	if not self.MenuMessages then
+		if self:GetClientGroupID() then
+			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
+			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+		end
+	end
+
+	if self.MessageSwitch == true then
+		if MessageCategory == nil then
+			MessageCategory = "Messages"
+		end
+		if self.Messages[MessageId] == nil then
+			self.Messages[MessageId] = {}
+			self.Messages[MessageId].MessageId = MessageId
+			self.Messages[MessageId].MessageTime = timer.getTime()
+			self.Messages[MessageId].MessageDuration = MessageDuration
+			if MessageInterval == nil then
+				self.Messages[MessageId].MessageInterval = 600
+			else
+				self.Messages[MessageId].MessageInterval = MessageInterval
+			end
+			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+		else
+			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
+				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
+					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					self.Messages[MessageId].MessageTime = timer.getTime()
+				end
+			else
+				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
+					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					self.Messages[MessageId].MessageTime = timer.getTime()
+				end
+			end
+		end
+	end
+end
 --- Manage sets of units and groups. 
 -- 
 -- @{#Database} class
@@ -5868,25 +6402,35 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Unit" )
 Include.File( "Event" )
+Include.File( "Client" )
 
 --- DATABASE class
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
+  Templates = {
+    Units = {},
+    Groups = {},
+    ClientsByName = {},
+    ClientsByID = {},
+  },
   DCSUnits = {},
   DCSUnitsAlive = {},
-  Units = {},
-  Groups = {},
   DCSGroups = {},
   DCSGroupsAlive = {},
+  Units = {},
+  UnitsAlive = {},
+  Groups = {},
+  GroupsAlive = {},
   NavPoints = {},
   Statics = {},
   Players = {},
-  AlivePlayers = {},
-  ClientsByName = {},
-  ClientsByID = {},
+  PlayersAlive = {},
+  Clients = {},
+  ClientsAlive = {},
   Filter = {
     Coalitions = nil,
     Categories = nil,
@@ -5941,6 +6485,14 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
   _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
+  
+  -- Add database with registered clients and already alive players
+  
+  -- Follow alive players and clients
+  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
+  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  
   
   return self
 end
@@ -6062,16 +6614,43 @@ function DATABASE:FilterStart()
     -- OK, we have a _DATABASE
     -- Now use the different filters to build the set.
     -- We first take ALL of the Units of the _DATABASE.
-    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Units ) do
-      self:T( UnitRegistration )
-      local DCSUnit = Unit.getByName( UnitRegistration.UnitName )
+    
+    self:E( { "Adding Database Datapoints with filters" } )
+    for DCSUnitName, DCSUnit in pairs( _DATABASE.DCSUnits ) do
+
       if self:_IsIncludeDCSUnit( DCSUnit ) then
-        self.DCSUnits[DCSUnit:getName()] = DCSUnit
-      end
-      if self:_IsAliveDCSUnit( DCSUnit ) then
-        self.DCSUnitsAlive[DCSUnit:getName()] = DCSUnit
+
+        self:E( { "Adding Unit:", DCSUnitName } )
+        self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
+        self.Units[DCSUnitName] = _DATABASE.Units[DCSUnitName]
+        
+        if _DATABASE.DCSUnitsAlive[DCSUnitName] then
+          self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
+          self.UnitsAlive[DCSUnitName] = _DATABASE.UnitsAlive[DCSUnitName]
+        end
+        
       end
     end
+    
+    for DCSGroupName, DCSGroup in pairs( _DATABASE.DCSGroups ) do
+      
+      --if self:_IsIncludeDCSGroup( DCSGroup ) then
+      self:E( { "Adding Group:", DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
+      self.Groups[DCSGroupName] = _DATABASE.Groups[DCSGroupName]
+      --end
+      
+      if _DATABASE.DCSGroupsAlive[DCSGroupName] then
+        self.DCSGroupsAlive[DCSGroupName] = _DATABASE.DCSGroupsAlive[DCSGroupName]
+        self.GroupsAlive[DCSGroupName] = _DATABASE.GroupsAlive[DCSGroupName]
+      end
+    end
+
+    for DCSUnitName, Client in pairs( _DATABASE.Clients ) do
+      self:E( { "Adding Client for Unit:", DCSUnitName } )
+      self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
+    end
+    
   else
     self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom DATABASE." )
   end
@@ -6120,7 +6699,7 @@ end
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F( Status )
 
-  self.Groups[GroupName].Status = Status
+  self.Templates.Groups[GroupName].Status = Status
 end
 
 
@@ -6128,8 +6707,8 @@ end
 function DATABASE:GetStatusGroup( GroupName )
   self:F( Status )
 
-  if self.Groups[GroupName] then
-    return self.Groups[GroupName].Status
+  if self.Templates.Groups[GroupName] then
+    return self.Templates.Groups[GroupName].Status
   else
     return ""
   end
@@ -6143,9 +6722,9 @@ function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
-  if not self.Groups[GroupTemplateName] then
-    self.Groups[GroupTemplateName] = {}
-    self.Groups[GroupTemplateName].Status = nil
+  if not self.Templates.Groups[GroupTemplateName] then
+    self.Templates.Groups[GroupTemplateName] = {}
+    self.Templates.Groups[GroupTemplateName].Status = nil
   end
   
   -- Delete the spans from the route, it is not needed and takes memory.
@@ -6153,30 +6732,101 @@ function DATABASE:_RegisterGroup( GroupTemplate )
     GroupTemplate.route.spans = nil
   end
   
-  self.Groups[GroupTemplateName].GroupName = GroupTemplateName
-  self.Groups[GroupTemplateName].Template = GroupTemplate
-  self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-  self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-  self.Groups[GroupTemplateName].Units = GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
+  self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
+  self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
+  self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
-  for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
+  for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
     local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Units[UnitTemplateName] = {}
-    self.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Units[UnitTemplateName].Template = UnitTemplate
-    self.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplateName] = {}
+    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
+    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
+    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self:E( {"skill",UnitTemplate.skill})
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:E( { "Unit", self.Units[UnitTemplateName].UnitName } )
+    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
   end
 end
+
+--- Private method that registers all alive players in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterPlayers()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for UnitId, UnitData in pairs( CoalitionData ) do
+      self:T3( { "UnitData:", UnitData } )
+      if UnitData and UnitData:isExist() then
+        local UnitName = UnitData:getName()
+        if not self.PlayersAlive[UnitName] then
+          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
+          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
+        end
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Private method that registers all datapoints within in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterDatabase()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getGroups( coalition.side.RED ), AlivePlayersBlue = coalition.getGroups( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
+
+      local DCSGroupName = DCSGroup:getName()
+
+      self:E( { "Register Group:", DCSGroup, DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = DCSGroup
+      self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+
+      if self:_IsAliveDCSGroup(DCSGroup) then
+        self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+        self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+        self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
+      end
+
+      for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+
+        local DCSUnitName = DCSUnit:getName()
+        self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
+
+        self.DCSUnits[DCSUnitName] = DCSUnit
+        self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+
+        if self:_IsAliveDCSUnit(DCSUnit) then
+          self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+          self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+          self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+        end
+      end
+      
+      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
+        self.Clients[ClientName] = CLIENT:New( ClientName )
+      end
+    end
+  end
+  
+  return self
+end
+
+
+--- Events
 
 --- Handles the OnBirth event for the alive units set.
 -- @param #DATABASE self
@@ -6187,7 +6837,15 @@ function DATABASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
+      self.Units[Event.IniDCSUnitName] = UNIT:New( Event.IniDCSUnit )
+      
+      --if not self.DCSGroups[Event.IniDCSGroupName] then
+      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
+      --end
+      self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
@@ -6206,18 +6864,54 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   end
 end
 
---- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+--- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerEnterUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if not self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
+        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
+      end
+    end
+  end
+end
+
+--- Handles the OnPlayerLeaveUnit event to clean the active players table.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerLeaveUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = nil
+        self.ClientsAlive[Event.IniDCSUnitName] = nil
+      end
+    end
+  end
+end
+
+--- Iterators
+
+--- Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
+function DATABASE:ForEach( IteratorFunction, arg, Set )
   self:F( arg )
   
   local function CoRoutine()
     local Count = 0
-    for DCSUnitID, DCSUnit in pairs( self.DCSUnitsAlive ) do
-        self:T2( DCSUnit )
-        IteratorFunction( DCSUnit, unpack( arg ) )
+    for ObjectID, Object in pairs( Set ) do
+        self:T2( Object )
+        IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
         if Count % 10 == 0 then
           coroutine.yield( false )
@@ -6237,14 +6931,55 @@ function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
       error( res )
     end
     if res == false then
-      timer.scheduleFunction( Schedule, {}, timer.getTime() + 0.001 )
+      return true -- resume next time the loop
     end
+    
+    return false
   end
 
-  timer.scheduleFunction( Schedule, {}, timer.getTime() + 1 )
+  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
   return self
 end
+
+
+--- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachDCSUnitAlive( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
+
+  return self
+end
+
+--- Interate the DATABASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayer( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  
+  return self
+end
+
+
+--- Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachClient( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Clients )
+
+  return self
+end
+
 
 function DATABASE:ScanEnvironment()
   self:F()
@@ -6308,6 +7043,9 @@ function DATABASE:ScanEnvironment()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
+
+  self:_RegisterDatabase()
+  self:_RegisterPlayers()
 
   return self
 end
@@ -6394,6 +7132,22 @@ function DATABASE:_IsAliveDCSUnit( DCSUnit )
   end
   self:T( DCSUnitAlive )
   return DCSUnitAlive
+end
+
+---
+-- @param #DATABASE self
+-- @param DCSGroup#Group DCSGroup
+-- @return #DATABASE self
+function DATABASE:_IsAliveDCSGroup( DCSGroup )
+  self:F( DCSGroup )
+  local DCSGroupAlive = false
+  if DCSGroup and DCSGroup:isExist() then
+    if self.DCSGroups[DCSGroup:getName()] then
+      DCSGroupAlive = true
+    end
+  end
+  self:T( DCSGroupAlive )
+  return DCSGroupAlive
 end
 
 
@@ -8427,461 +9181,6 @@ function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
 	self:StatusUnLoaded()
 
 	return Cargo
-end
---- The CLIENT models client units in multi player missions.
--- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
--- @module Client
--- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
-
-
---- The CLIENT class
--- @type CLIENT
--- @extends Base#BASE
-CLIENT = {
-	ONBOARDSIDE = {
-		NONE = 0,
-		LEFT = 1,
-		RIGHT = 2,
-		BACK = 3,
-		FRONT = 4
-	},
-	ClassName = "CLIENT",
-	ClientName = nil,
-	ClientAlive = false,
-	ClientTransport = false,
-	ClientBriefingShown = false,
-	_Menus = {},
-	_Tasks = {},
-	Messages = { 
-	}
-}
-
-
---- Use this method to register new Clients within the MOF.
--- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @return #CLIENT
--- @usage
--- -- Create new Clients.
---	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
---	Mission:AddGoal( DeploySA6TroopsGoal )
---
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( ClientName, ClientBriefing )
-
-	self.ClientName = ClientName
-	self:AddBriefing( ClientBriefing )
-	self.MessageSwitch = true
-	
-	return self
-end
-
---- Transport defines that the Client is a Transport. Transports show cargo.
--- @param #CLIENT self
--- @return #CLIENT
-function CLIENT:Transport()
-  self:F()
-
-  self.ClientTransport = true
-  return self
-end
-
---- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
--- @param #CLIENT self
--- @param #string ClientBriefing is the text defining the Mission briefing.
--- @return #CLIENT
-function CLIENT:AddBriefing( ClientBriefing )
-  self:F()
-  self.ClientBriefing = ClientBriefing
-  return self
-end
-
-
---- Resets a CLIENT.
--- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
-function CLIENT:Reset( ClientName )
-	self:F()
-	self._Menus = {}
-end
-
---- Checks for a client alive event and calls a function on a continuous basis.
--- @param #CLIENT self
--- @param #function CallBack Function.
--- @return #CLIENT
-function CLIENT:Alive( CallBack, ... )
-  self:F()
-  
-  self.ClientAlive2 = false
-  self.ClientCallBack = CallBack
-  self.ClientParameters = arg
-  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-
-  return self
-end
-
--- Is Functions
-
---- Checks if the CLIENT is a multi-seated UNIT.
--- @param #CLIENT self
--- @return #boolean true if multi-seated.
-function CLIENT:IsMultiSeated()
-  self:F( self.ClientName )
-
-  local ClientMultiSeatedTypes = { 
-    ["Mi-8MT"]  = "Mi-8MT", 
-    ["UH-1H"]   = "UH-1H", 
-    ["P-51B"]   = "P-51B" 
-  }
-  
-  if self:IsAlive() then
-    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
-    if ClientMultiSeatedTypes[ClientTypeName] then
-      return true
-    end
-  end
-  
-  return false
-end
-
---- Checks if client is alive and returns true or false.
--- @param #CLIENT self
--- @returns #boolean Returns true if client is alive.
-function CLIENT:IsAlive()
-  self:F( self.ClientName )
-  
-  local ClientDCSGroup = self:GetDCSGroup()
-  
-  if ClientDCSGroup then
-    self:T("true")
-    return true
-  end
-  
-  self:T( "false" )
-  return false
-end
-
-
---- @param #CLIENT self
-function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2 } )
-
-  if self:IsAlive() then
-    if self.ClientAlive2 == false then
-      self:T("Calling Callback function")
-      self.ClientCallBack( self, unpack( self.ClientParameters ) )
-      self.ClientAlive2 = true
-    end
-  else
-    if self.ClientAlive2 == true then
-      self.ClientAlive2 = false
-    end
-  end
-end
-
---- Return the DCSGroup of a Client.
--- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @param #CLIENT self
--- @return DCSGroup#Group
-function CLIENT:GetDCSGroup()
-  self:F3()
-
---  local ClientData = Group.getByName( self.ClientName )
---	if ClientData and ClientData:isExist() then
---		self:T( self.ClientName .. " : group found!" )
---		return ClientData
---	else
---		return nil
---	end
-
-	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
-	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T3( { "CoalitionData:", CoalitionData } )
-		for UnitId, UnitData in pairs( CoalitionData ) do
-			self:T3( { "UnitData:", UnitData } )
-			if UnitData and UnitData:isExist() then
-
-				local ClientGroup = Group.getByName( self.ClientName )
-				if ClientGroup then
-					self:T3( "ClientGroup = " .. self.ClientName )
-					if ClientGroup:isExist() then 
-						if ClientGroup:getID() == UnitData:getGroup():getID() then
-							self:T3( "Normal logic" )
-							self:T3( self.ClientName .. " : group found!" )
-							return ClientGroup
-						end
-					else
-						-- Now we need to resolve the bugs in DCS 1.5 ...
-						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
-						self:T3( "Bug 1.5 logic" )
-						local ClientUnits = _DATABASE.Groups[self.ClientName].Units
-						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
-						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
-							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
-							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
-								local ClientGroupTemplate = _DATABASE.Groups[self.ClientName].Template
-								self.ClientID = ClientGroupTemplate.groupId
-								self.ClientGroupUnit = UnitData
-								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
-								return ClientGroup
-							end
-						end
-					end
---				else
---					error( "Client " .. self.ClientName .. " not found!" )
-				end
-			end
-		end
-	end
-
-	-- For non player clients
-	local ClientGroup = Group.getByName( self.ClientName )
-	if ClientGroup then
-		self:T3( "ClientGroup = " .. self.ClientName )
-		if ClientGroup:isExist() then 
-			self:T3( "Normal logic" )
-			self:T3( self.ClientName .. " : group found!" )
-			return ClientGroup
-		end
-	end
-	
-	self.ClientGroupID = nil
-	self.ClientGroupUnit = nil
-	
-	return nil
-end 
-
-
--- TODO: Check DCSTypes#Group.ID
---- Get the group ID of the client.
--- @param #CLIENT self
--- @return DCSTypes#Group.ID
-function CLIENT:GetClientGroupID()
-
-  if not self.ClientGroupID then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupID = ClientGroup:getID()
-    else
-      self.ClientGroupID = self.ClientID
-    end
-  end
-
-  self:T( self.ClientGroupID )
-	return self.ClientGroupID
-end
-
-
---- Get the name of the group of the client.
--- @param #CLIENT self
--- @return #string
-function CLIENT:GetClientGroupName()
-
-  if not self.ClientGroupName then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupName = ClientGroup:getName()
-    else
-      self.ClientGroupName = self.ClientName
-    end
-  end
-
-  self:T( self.ClientGroupName )
-	return self.ClientGroupName
-end
-
---- Returns the UNIT of the CLIENT.
--- @param #CLIENT self
--- @return Unit#UNIT
-function CLIENT:GetClientGroupUnit()
-	self:F()
-
-	local ClientGroup = self:GetDCSGroup()
-	
-	if ClientGroup and ClientGroup:isExist() then
-		return UNIT:New( ClientGroup:getUnit(1) )
-	else
-		return UNIT:New( self.ClientGroupUnit )
-	end
-end
-
---- Returns the DCSUnit of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Unit
-function CLIENT:GetClientGroupDCSUnit()
-	self:F2()
-
-  local ClientGroup = self:GetDCSGroup()
-  
-  if ClientGroup and ClientGroup:isExist() then
-    return ClientGroup:getUnit(1)
-  else
-    return self.ClientGroupUnit
-  end
-end
-
--- TODO what is this??? check. possible double function.
-function CLIENT:GetUnit()
-	self:F()
-	
-	return UNIT:New( self:GetClientGroupDCSUnit() )
-end
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
--- @param #CLIENT self
--- @return DCSTypes#Vec2
-function CLIENT:GetPointVec2()
-	self:F()
-
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      local PointVec2 = {} --DCSTypes#Vec2
-      PointVec2.x = PointVec3.x
-      PointVec2.y = PointVec3.z
-      self:T( { PointVec2 } )
-      return PointVec2
-    end
-  end
-  
-  return nil
-end 
-
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
--- @param #CLIENT self
--- @return DCSTypes#Vec3
-function CLIENT:ClientPosition()
-	self:F()
-
-	ClientGroupUnit = self:GetClientGroupDCSUnit()
-	
-	if ClientGroupUnit then
-		if ClientGroupUnit:isExist() then
-			return ClientGroupUnit:getPosition()
-		end
-	end
-	
-	return nil
-end 
-
---- Returns the altitude of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Distance
-function CLIENT:GetAltitude()
-	self:F()
-
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      return PointVec3.y
-    end
-  end
-  
-  return nil
-end 
-
-
---- Evaluates if the CLIENT is a transport.
--- @param #CLIENT self
--- @return #boolean true is a transport.
-function CLIENT:IsTransport()
-	self:F()
-	return self.ClientTransport
-end
-
---- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
--- @param #CLIENT self
-function CLIENT:ShowCargo()
-	self:F()
-
-	local CargoMsg = ""
-  
-	for CargoName, Cargo in pairs( CARGOS ) do
-		if self == Cargo:IsLoadedInClient() then
-			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
-		end
-	end
-  
-	if CargoMsg == "" then
-		CargoMsg = "empty"
-	end
-  
-	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
-
-end
-
--- TODO (1) I urgently need to revise this.
---- A local function called by the DCS World Menu system to switch off messages.
-function CLIENT.SwitchMessages( PrmTable )
-	PrmTable[1].MessageSwitch = PrmTable[2]
-end
-
---- The main message driver for the CLIENT.
--- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @param #CLIENT self
--- @param #string Message is the text describing the message.
--- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
-function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-	self:F()
-
-	if not self.MenuMessages then
-		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
-		end
-	end
-
-	if self.MessageSwitch == true then
-		if MessageCategory == nil then
-			MessageCategory = "Messages"
-		end
-		if self.Messages[MessageId] == nil then
-			self.Messages[MessageId] = {}
-			self.Messages[MessageId].MessageId = MessageId
-			self.Messages[MessageId].MessageTime = timer.getTime()
-			self.Messages[MessageId].MessageDuration = MessageDuration
-			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 600
-			else
-				self.Messages[MessageId].MessageInterval = MessageInterval
-			end
-			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-		else
-			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
-				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			else
-				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			end
-		end
-	end
 end
 --- Message System to display Messages for Clients and Coalitions or All.
 -- Messages are grouped on the display panel per Category to improve readability for the players.
@@ -13156,7 +13455,7 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Templates.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -13660,7 +13959,7 @@ function SEAD:EventShot( Event )
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()
 		local _targetMimcont= _targetMimgroup:getController()
-		local _targetskill =  _DATABASE.Units[_targetMimname].Template.skill
+		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
 		self:T( _targetMimgroupName )
 		local SEADGroupFound = false
@@ -14976,6 +15275,71 @@ function ESCORT:_ReportTargetsScheduler()
   end
 end
 --- Provides missile training functions.
+--
+-- @{#MISSILETRAINER} class
+-- ========================
+-- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
+-- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
+-- It suports the following functionality:
+--
+--  * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
+--  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …
+--  * Provide alerts when a missile would have killed your aircraft.
+--  * Provide alerts when the missile self destructs.
+--  * Enable / Disable and Configure the Missile Trainer using the various menu options.
+--  
+--  When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:
+--  
+--  * **Messages**: Menu to configure all messages.
+--     * **Messages On**: Show all messages.
+--     * **Messages Off**: Disable all messages.
+--  * **Tracking**: Menu to configure missile tracking messages.
+--     * **To All**: Shows missile tracking messages to all players.
+--     * **To Target**: Shows missile tracking messages only to the player where the missile is targetted at.
+--     * **Tracking On**: Show missile tracking messages.
+--     * **Tracking Off**: Disable missile tracking messages.
+--  * **Alerts**: Menu to configure alert messages.
+--     * **To All**: Shows alert messages to all players.
+--     * **To Target**: Shows alter messages only to the player where the missile is (was) targetted at.
+--     * **Hits On**: Show missile hit alert messages.
+--     * **Hits Off**: Disable missile hit altert messages.
+--     * **Launches On**: Show missile launch messages.
+--     * **Launches Off**: Disable missile launch messages.
+--  * **Details**: Menu to configure message details.
+--     * **Range On**: Shows range information when a missile is fired to a target.
+--     * **Range Off**: Disable range information when a missile is fired to a target.
+--     * **Bearing On**: Shows bearing information when a missile is fired to a target.
+--     * **Bearing Off**: Disable bearing information when a missile is fired to a target.
+--  * **Distance**: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. 
+--              This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
+--     * **50 meter**: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.
+--     * **100 meter**: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.
+--     * **150 meter**: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.
+--     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
+--   
+--
+-- MISSILETRAINER construction methods:
+-- ====================================
+-- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
+--
+--   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
+--
+-- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
+--
+-- MISSILETRAINER initialization methods:
+-- ======================================
+-- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
+--
+--  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
+--  * @{#MISSILETRAINER.InitTrackingToAll}: Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+--  * @{#MISSILETRAINER.InitTrackingOnOff}: Sets by default the display of missile tracking report to be ON or OFF.
+--  * @{#MISSILETRAINER.InitAlertsToAll}: Sets by default the display of alerts to be shown to all players or only to you.
+--  * @{#MISSILETRAINER.InitAlertsHitsOnOff}: Sets by default the display of hit alerts ON or OFF.
+--  * @{#MISSILETRAINER.InitAlertsLaunchesOnOff}: Sets by default the display of launch alerts ON or OFF.
+--  * @{#MISSILETRAINER.InitRangeOnOff}: Sets by default the display of range information of missiles ON of OFF.
+--  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
+--  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
+--
 -- @module MissileTrainer
 -- @author FlightControl
 
@@ -14986,7 +15350,7 @@ Include.File( "Scheduler" )
 -- @type MISSILETRAINER
 -- @extends Base#BASE
 MISSILETRAINER = {
-	ClassName = "MISSILETRAINER", 
+  ClassName = "MISSILETRAINER",
 }
 
 --- Creates the main object which is handling missile tracking.
@@ -14995,64 +15359,534 @@ MISSILETRAINER = {
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
 -- @return #MISSILETRAINER
 function MISSILETRAINER:New( Distance )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( Distance )	
-	
-	self.Schedulers = {}
-	self.SchedulerID = 0
-	
-	self.Distance = Distance
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( Distance )
 
-	_EVENTDISPATCHER:OnShot( self._EventShot, self )
-	
-	return self
+  self.Schedulers = {}
+  self.SchedulerID = 0
+
+  self.MessageInterval = 2
+  self.MessageLastTime = timer.getTime()
+
+  self.Distance = Distance / 1000
+
+  _EVENTDISPATCHER:OnShot( self._EventShot, self )
+
+  self.DB = DATABASE:New():FilterStart()
+  self.DBClients = self.DB.Clients
+  self.DBUnits = self.DB.Units
+
+  for ClientID, Client in pairs( self.DBClients ) do
+
+    local function _Alive( Client )
+
+      Client:Message( "Hello trainee, welcome to the Missile Trainer.\nGood luck!", 15, "HELLO WORLD", "Trainer" )
+      
+      
+
+      if self.MenusOnOff == true then
+        Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+  
+        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
+  
+        Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
+        Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
+        Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
+  
+        Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
+        Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
+        Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
+        Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = true } )
+        Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = false } )
+  
+        Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
+        Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
+        Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
+        Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = true } )
+        Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = false } )
+        Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = true } )
+        Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = false } )
+  
+        Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
+        Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = true } )
+        Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = false } )
+        Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = true } )
+        Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = false } )
+  
+        Client.MenuDistance = MENU_CLIENT:New( Client, "Set distance to plane", Client.MainMenu )
+        Client.MenuDistance50 = MENU_CLIENT_COMMAND:New( Client, "50 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 50 / 1000 } )
+        Client.MenuDistance100 = MENU_CLIENT_COMMAND:New( Client, "100 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 100 / 1000 } )
+        Client.MenuDistance150 = MENU_CLIENT_COMMAND:New( Client, "150 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 150 / 1000 } )
+        Client.MenuDistance200 = MENU_CLIENT_COMMAND:New( Client, "200 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 200 / 1000 } )
+      else
+        if Client.MainMenu then
+          Client.MainMenu:Remove()
+        end
+      end
+
+
+      local ClientID = Client:GetID()
+      self:T( ClientID )
+      if not self.TrackingMissiles[ClientID] then
+        self.TrackingMissiles[ClientID] = {}
+      end
+      self.TrackingMissiles[ClientID].Client = Client
+      if not self.TrackingMissiles[ClientID].MissileData then
+        self.TrackingMissiles[ClientID].MissileData = {}
+      end
+    end
+
+    Client:Alive( _Alive )
+
+  end
+  
+--  	self.DB:ForEachClient(
+--  	 --- @param Client#CLIENT Client
+--  	 function( Client )
+--  
+--        ... actions ...
+--        
+--  	 end
+--  	)
+
+  self.MessagesOnOff = true
+
+  self.TrackingToAll = false
+  self.TrackingOnOff = true
+
+  self.AlertsToAll = true
+  self.AlertsHitsOnOff = true
+  self.AlertsLaunchesOnOff = true
+
+  self.DetailsRangeOnOff = true
+  self.DetailsBearingOnOff = true
+  
+  self.MenusOnOff = true
+
+  self.TrackingMissiles = {}
+
+  self.TrackingScheduler = SCHEDULER:New( self, self._TrackMissiles, {}, 0.5, 0.05, 0 )
+
+  return self
+end
+
+-- Initialization methods.
+
+
+--- Sets by default the display of any message to be ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean MessagesOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitMessagesOnOff( MessagesOnOff )
+  self:F( MessagesOnOff )
+
+  self.MessagesOnOff = MessagesOnOff
+  if self.MessagesOnOff == true then
+    MESSAGE:New( "Messages ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Messages OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+-- @param #MISSILETRAINER self
+-- @param #boolean TrackingToAll true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitTrackingToAll( TrackingToAll )
+  self:F( TrackingToAll )
+
+  self.TrackingToAll = TrackingToAll
+  if self.TrackingToAll == true then
+    MESSAGE:New( "Missile tracking to all players ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Missile tracking to all players OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of missile tracking report to be ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean TrackingOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitTrackingOnOff( TrackingOnOff )
+  self:F( TrackingOnOff )
+
+  self.TrackingOnOff = TrackingOnOff
+  if self.TrackingOnOff == true then
+    MESSAGE:New( "Missile tracking ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Missile tracking OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of alerts to be shown to all players or only to you.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsToAll true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsToAll( AlertsToAll )
+  self:F( AlertsToAll )
+
+  self.AlertsToAll = AlertsToAll
+  if self.AlertsToAll == true then
+    MESSAGE:New( "Alerts to all players ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts to all players OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of hit alerts ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsHitsOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsHitsOnOff( AlertsHitsOnOff )
+  self:F( AlertsHitsOnOff )
+
+  self.AlertsHitsOnOff = AlertsHitsOnOff
+  if self.AlertsHitsOnOff == true then
+    MESSAGE:New( "Alerts Hits ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts Hits OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of launch alerts ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsLaunchesOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsLaunchesOnOff( AlertsLaunchesOnOff )
+  self:F( AlertsLaunchesOnOff )
+
+  self.AlertsLaunchesOnOff = AlertsLaunchesOnOff
+  if self.AlertsLaunchesOnOff == true then
+    MESSAGE:New( "Alerts Launches ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts Launches OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of range information of missiles ON of OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean DetailsRangeOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitRangeOnOff( DetailsRangeOnOff )
+  self:F( DetailsRangeOnOff )
+
+  self.DetailsRangeOnOff = DetailsRangeOnOff
+  if self.DetailsRangeOnOff == true then
+    MESSAGE:New( "Range display ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Range display OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of bearing information of missiles ON of OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean DetailsBearingOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitBearingOnOff( DetailsBearingOnOff )
+  self:F( DetailsBearingOnOff )
+
+  self.DetailsBearingOnOff = DetailsBearingOnOff
+  if self.DetailsBearingOnOff == true then
+    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Enables / Disables the menus.
+-- @param #MISSILETRAINER self
+-- @param #boolean MenusOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitMenusOnOff( MenusOnOff )
+  self:F( MenusOnOff )
+
+  self.MenusOnOff = MenusOnOff
+  if self.MenusOnOff == true then
+    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Menus are DISABLED", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+
+-- Menu functions
+
+function MISSILETRAINER._MenuMessages( MenuParameters )
+
+  local self = MenuParameters.MenuSelf
+
+  if MenuParameters.MessagesOnOff ~= nil then
+    self:InitMessagesOnOff( MenuParameters.MessagesOnOff )
+  end
+
+  if MenuParameters.TrackingToAll ~= nil then
+    self:InitTrackingToAll( MenuParameters.TrackingToAll )
+  end
+
+  if MenuParameters.TrackingOnOff ~= nil then
+    self:InitTrackingOnOff( MenuParameters.TrackingOnOff )
+  end
+
+  if MenuParameters.AlertsToAll ~= nil then
+    self:InitAlertsToAll( MenuParameters.AlertsToAll )
+  end
+
+  if MenuParameters.AlertsHitsOnOff ~= nil then
+    self:InitAlertsHitsOnOff( MenuParameters.AlertsHitsOnOff )
+  end
+
+  if MenuParameters.AlertsLaunchesOnOff ~= nil then
+    self:InitAlertsLaunchesOnOff( MenuParameters.AlertsLaunchesOnOff )
+  end
+
+  if MenuParameters.DetailsRangeOnOff ~= nil then
+    self:InitRangeOnOff( MenuParameters.DetailsRangeOnOff )
+  end
+
+  if MenuParameters.DetailsBearingOnOff ~= nil then
+    self:InitBearingOnOff( MenuParameters.DetailsBearingOnOff )
+  end
+
+  if MenuParameters.Distance ~= nil then
+    self.Distance = MenuParameters.Distance
+    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", "Menu", 15, "ID" ):ToAll()
+  end
+
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
--- @see MISSILETRAINER
+-- @param #MISSILETRAINER self
+-- @param Event#EVENTDATA Event
 function MISSILETRAINER:_EventShot( Event )
-	self:F( { Event } )
+  self:F( { Event } )
 
-	local TrainerSourceDCSUnit = Event.IniDCSUnit
-	local TrainerSourceDCSUnitName = Event.IniDCSUnitName
-	local TrainerWeapon = Event.Weapon -- Identify the weapon fired						
-	local TrainerWeaponName = Event.WeaponName	-- return weapon type
+  local TrainerSourceDCSUnit = Event.IniDCSUnit
+  local TrainerSourceDCSUnitName = Event.IniDCSUnitName
+  local TrainerWeapon = Event.Weapon -- Identify the weapon fired
+  local TrainerWeaponName = Event.WeaponName	-- return weapon type
 
-	self:T( "Missile Launched = " .. TrainerWeaponName )
+  self:T( "Missile Launched = " .. TrainerWeaponName )
 
-	local TrainerTargetDCSUnit = TrainerWeapon:getTarget() -- Identify target
-	local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
-	local TrainerTargetDCSGroup = TrainerTargetDCSUnit:getGroup()
-	local TrainerTargetDCSGroupName = TrainerTargetDCSGroup:getName()
-	local TrainerTargetSkill =  _DATABASE.Units[TrainerTargetDCSUnitName].Template.skill
+  local TrainerTargetDCSUnit = TrainerWeapon:getTarget() -- Identify target
+  local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
+  local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
 
-	self:T( TrainerTargetSkill )
-	
-	if TrainerTargetSkill == "Client" or TrainerTargetSkill == "Player" then
-	  self.Schedulers[#self.Schedulers+1] = SCHEDULER:New( self, self._FollowMissile, { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit }, 0.5, 0.05, 0 )  
-	end
+  self:T(TrainerTargetDCSUnitName )
+
+  local Client = self.DBClients[TrainerTargetDCSUnitName]
+  if Client then
+
+    local TrainerSourceUnit = UNIT:New(TrainerSourceDCSUnit)
+    local TrainerTargetUnit = UNIT:New(TrainerTargetDCSUnit)
+
+    if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+
+      local Message = MESSAGE:New(
+        string.format( "%s launched a %s",
+          TrainerSourceUnit:GetTypeName(),
+          TrainerWeaponName
+        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ),"Launch Alert", 5, "ID" )
+
+      if self.AlertsToAll then
+        Message:ToAll()
+      else
+        Message:ToClient( Client )
+      end
+    end
+
+    local ClientID = Client:GetID()
+    local MissileData = {}
+    MissileData.TrainerSourceUnit = TrainerSourceUnit
+    MissileData.TrainerWeapon = TrainerWeapon
+    MissileData.TrainerTargetUnit = TrainerTargetUnit
+    MissileData.TrainerWeaponTypeName = TrainerWeapon:getTypeName()
+    MissileData.TrainerWeaponLaunched = true
+    table.insert( self.TrackingMissiles[ClientID].MissileData, MissileData )
+    --self:T( self.TrackingMissiles )
+  end
 end
 
-function MISSILETRAINER:_FollowMissile( TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit )
-  self:F( { TrainerSourceDCSUnit, TrainerWeapon, TrainerTargetDCSUnit } )
-  
-  local TrainerSourceUnit = UNIT:New( TrainerSourceDCSUnit )
-  local TrainerTargetUnit = UNIT:New( TrainerTargetDCSUnit ) 
+function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
 
-  local PositionMissile = TrainerWeapon:getPoint()
-  local PositionTarget = TrainerTargetUnit:GetPositionVec3()
-  
-  local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
-    ( PositionMissile.y - PositionTarget.y )^2 +
-    ( PositionMissile.z - PositionTarget.z )^2
-    ) ^ 0.5
+  local RangeText = ""
 
-  MESSAGE:New( "Distance Missle = " .. Distance, nil, 0.2, "/Missile" ):ToAll()
-  
-  if Distance <= self.Distance then
-    TrainerWeapon:destroy()
-    MESSAGE:New( "Missle Destroyed", nil, 5, "/Missile" ):ToAll()
-    return false
+  if self.DetailsRangeOnOff then
+
+    local PositionMissile = TrainerWeapon:getPoint()
+    local PositionTarget = Client:GetPositionVec3()
+
+    local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
+      ( PositionMissile.y - PositionTarget.y )^2 +
+      ( PositionMissile.z - PositionTarget.z )^2
+      ) ^ 0.5 / 1000
+
+    RangeText = string.format( ", at %4.2fkm", Range )
+  end
+
+  return RangeText
+end
+
+function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
+
+  local BearingText = ""
+
+  if self.DetailsBearingOnOff then
+
+    local PositionMissile = TrainerWeapon:getPoint()
+    local PositionTarget = Client:GetPositionVec3()
+
+    self:T2( { PositionTarget, PositionMissile })
+
+    local DirectionVector = { x = PositionMissile.x - PositionTarget.x, y = PositionMissile.y - PositionTarget.y, z = PositionMissile.z - PositionTarget.z }
+    local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
+    --DirectionRadians = DirectionRadians + routines.getNorthCorrection( PositionTarget )
+    if DirectionRadians < 0 then
+      DirectionRadians = DirectionRadians + 2 * math.pi
+    end
+    local DirectionDegrees = DirectionRadians * 180 / math.pi
+
+    BearingText = string.format( ", %d degrees", DirectionDegrees )
+  end
+
+  return BearingText
+end
+
+
+---
+-- @param #MISSILETRAINER self
+function MISSILETRAINER:_TrackMissiles()
+  self:F2()
+
+
+  local ShowMessages = false
+  if self.MessagesOnOff and self.MessageLastTime + 3 <= timer.getTime() then
+    self.MessageLastTime = timer.getTime()
+    ShowMessages = true
+  end
+
+  for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
+
+    local Client = ClientData.Client
+    self:T2( { Client:GetName() } )
+
+
+    ClientData.MessageToClient = ""
+    ClientData.MessageToAll = ""
+
+    for TrackingDataID, TrackingData in pairs( self.TrackingMissiles ) do
+
+      for MissileDataID, MissileData in pairs( TrackingData.MissileData ) do
+        self:T3( MissileDataID )
+
+        local TrainerSourceUnit = MissileData.TrainerSourceUnit
+        local TrainerWeapon = MissileData.TrainerWeapon
+        local TrainerTargetUnit = MissileData.TrainerTargetUnit
+        local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
+        local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
+
+        if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+          local PositionMissile = TrainerWeapon:getPosition().p
+          local PositionTarget = Client:GetPositionVec3()
+
+          local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
+            ( PositionMissile.y - PositionTarget.y )^2 +
+            ( PositionMissile.z - PositionTarget.z )^2
+            ) ^ 0.5 / 1000
+
+          if Distance <= self.Distance then
+            -- Hit alert
+            TrainerWeapon:destroy()
+            if self.MessagesOnOff == true and self.AlertsHitsOnOff == true then
+
+              self:T( "killed" )
+
+              local Message = MESSAGE:New(
+                string.format( "%s launched by %s killed %s",
+                  TrainerWeapon:getTypeName(),
+                  TrainerSourceUnit:GetTypeName(),
+                  TrainerTargetUnit:GetPlayerName()
+                ),"Hit Alert", 15, "ID" )
+
+              if self.AlertsToAll == true then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+
+              MissileData = nil
+              table.remove( TrackingData.MissileData, MissileDataID )
+              self:T(TrackingData.MissileData)
+            end
+          else
+            if ShowMessages == true then
+              local TrackingTo
+              TrackingTo = string.format( "  -> %s",
+                TrainerWeaponTypeName
+              )
+
+              if ClientDataID == TrackingDataID then
+                if ClientData.MessageToClient == "" then
+                  ClientData.MessageToClient = "Missiles to You:\n"
+                end
+                ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:_AddRange( ClientData.Client, TrainerWeapon ) .. self:_AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
+              else
+                if self.TrackingToAll == true then
+                  if ClientData.MessageToAll == "" then
+                    ClientData.MessageToAll = "Missiles to other Players:\n"
+                  end
+                  ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:_AddRange( ClientData.Client, TrainerWeapon ) .. self:_AddBearing( ClientData.Client, TrainerWeapon ) .. " ( " .. TrainerTargetUnit:GetPlayerName()  ..   " )\n"
+                end
+              end
+            end
+          end
+        else
+          if not ( TrainerWeapon and TrainerWeapon:isExist() ) then
+            if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+              -- Weapon does not exist anymore. Delete from Table
+              local Message = MESSAGE:New(
+                string.format( "%s launched by %s self destructed!",
+                  TrainerWeaponTypeName,
+                  TrainerSourceUnit:GetTypeName()
+                ),"Tracking", 5, "ID" )
+
+              if self.AlertsToAll == true then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+            end
+            MissileData = nil
+            table.remove( TrackingData.MissileData, MissileDataID )
+            self:T(TrackingData.MissileData)
+          end
+        end
+      end
+    end
+
+    if self.MessagesOnOff == true and self.TrackingOnOff == true and ShowMessages == true then
+      if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
+        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )
+      end
+    end
+
   end
 
   return true

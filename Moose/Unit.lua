@@ -56,11 +56,13 @@ UNIT = {
 -- @return Unit#UNIT
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F( DCSUnit:getName() )
+	self:F( DCSUnit )
 
 	self.DCSUnit = DCSUnit
-	self.UnitName = DCSUnit:getName()
-	self.UnitID = DCSUnit:getID()
+	if DCSUnit then
+  	self.UnitName = DCSUnit:getName()
+  	self.UnitID = DCSUnit:getID()
+  end
 
 	return self
 end
@@ -91,6 +93,18 @@ function UNIT:GetName()
 	return self.UnitName
 end
 
+function UNIT:GetPlayerName()
+  self:F( self.UnitName )
+  
+  local DCSUnit = Unit.getByName( self.UnitName )
+  
+  local PlayerName = DCSUnit:getPlayerName()
+  if PlayerName == nil then
+    PlayerName = ""
+  end
+  
+  return PlayerName
+end
 function UNIT:GetTypeName()
 	self:F( self.UnitName )
 	

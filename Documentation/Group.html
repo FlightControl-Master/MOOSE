@@ -21,17 +21,6 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
-					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
-					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
-					<li><a href="DCSCommand.html">DCSCommand</a></li>
-					<li><a href="DCSController.html">DCSController</a></li>
-					<li><a href="DCSGroup.html">DCSGroup</a></li>
-					<li><a href="DCSObject.html">DCSObject</a></li>
-					<li><a href="DCSTask.html">DCSTask</a></li>
-					<li><a href="DCSTypes.html">DCSTypes</a></li>
-					<li><a href="DCSUnit.html">DCSUnit</a></li>
-					<li><a href="DCSWorld.html">DCSWorld</a></li>
-					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -46,19 +35,18 @@
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
-					<li><a href="env.html">env</a></li>
-					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -113,6 +101,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).CommandDoScript">GROUP:CommandDoScript(DoScript)</a></td>
 		<td class="summary">
 <p>Do Script command</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).CommandSwitchWayPoint">GROUP:CommandSwitchWayPoint(FromWayPoint, ToWayPoint, Index)</a></td>
+		<td class="summary">
+<p>Perform a switch waypoint command</p>
 </td>
 		</tr>
 		<tr>
@@ -209,7 +203,7 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetName">GROUP:GetName()</a></td>
 		<td class="summary">
-<p>Gets the name of the GROUP.</p>
+<p>Returns the name of the Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -465,9 +459,21 @@ Note that this destroy method also raises a destroy event at run-time.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetCommand">GROUP:SetCommand(DCSCommand)</a></td>
+		<td class="summary">
+<p>Executes a command action</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTask">GROUP:SetTask(DCSTask, WaitTime)</a></td>
 		<td class="summary">
 <p>Clearing the Task Queue and Setting the Task on the queue from the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackGroup">GROUP:TaskAttackGroup(AttackGroup)</a></td>
+		<td class="summary">
+<p>Attack a Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -749,6 +755,42 @@ All units on the ground result.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(DCSCommand)">#DCSCommand</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).CommandSwitchWayPoint" >
+<strong>GROUP:CommandSwitchWayPoint(FromWayPoint, ToWayPoint, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Perform a switch waypoint command</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number FromWayPoint </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ToWayPoint </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
 
 
 </dd>
@@ -1075,12 +1117,12 @@ Minimum height found.</p>
 </dt>
 <dd>
 	
-<p>Gets the name of the GROUP.</p>
+<p>Returns the name of the Group.</p>
 
 		<h3>Return value</h3>
 				
 <p><em>#string:</em>
-The name of the GROUP.</p>
+GroupName</p>
 
 </dd>
 </dl>
@@ -1975,6 +2017,32 @@ self </p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).SetCommand" >
+<strong>GROUP:SetCommand(DCSCommand)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Executes a command action</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCommand.html##(Command)">DCSCommand#Command</a> DCSCommand </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).SetTask" >
 <strong>GROUP:SetTask(DCSTask, WaitTime)</strong>
 </a>
@@ -2000,6 +2068,33 @@ self </p>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskAttackGroup" >
+<strong>GROUP:TaskAttackGroup(AttackGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Attack a Group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> AttackGroup </em></code>: 
+The Group to be attacked.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
 
 </dd>
 </dl>

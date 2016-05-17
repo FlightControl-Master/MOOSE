@@ -1,6 +1,18 @@
 --- The CLIENT models client units in multi player missions.
--- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
+-- 
+-- @{#CLIENT} class
+-- ================
+-- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
+-- Note that clients are NOT the same as Units, they are NOT necessarily alive.
+-- 
+-- Clients are being used by the @{MISSION} class to follow players and register their successes.
+-- 
+-- CLIENT construction methods:
+-- ============================ 
+-- Create a new CLIENT object with the @{#CLIENT.New} method:
+-- 
+--   * @{#CLIENT.New}: Creates a new CLIENT object taking the name of the **DCSUnit** that is a client as defined within the mission editor.
+--  
 -- @module Client
 -- @author FlightControl
 
@@ -33,9 +45,9 @@ CLIENT = {
 }
 
 
---- Use this method to register new Clients within the MOF.
+--- Use this method to register new Clients within a mission.
 -- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+-- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
 -- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
 -- @return #CLIENT
 -- @usage
@@ -51,7 +63,7 @@ function CLIENT:New( ClientName, ClientBriefing )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( ClientName, ClientBriefing )
 
-	self.ClientName = ClientName
+  self.ClientName = ClientName
 	self:AddBriefing( ClientBriefing )
 	self.MessageSwitch = true
 	
@@ -132,9 +144,9 @@ end
 function CLIENT:IsAlive()
   self:F( self.ClientName )
   
-  local ClientDCSGroup = self:GetDCSGroup()
+  local ClientUnit = Unit.getByName( self.ClientName )
   
-  if ClientDCSGroup then
+  if ClientUnit and ClientUnit:isExist() then
     self:T("true")
     return true
   end
@@ -176,6 +188,8 @@ function CLIENT:GetDCSGroup()
 --		return nil
 --	end
 
+  local ClientUnit = Unit.getByName( self.ClientName )
+
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
 	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
 		self:T3( { "CoalitionData:", CoalitionData } )
@@ -183,49 +197,49 @@ function CLIENT:GetDCSGroup()
 			self:T3( { "UnitData:", UnitData } )
 			if UnitData and UnitData:isExist() then
 
-				local ClientGroup = Group.getByName( self.ClientName )
-				if ClientGroup then
-					self:T3( "ClientGroup = " .. self.ClientName )
-					if ClientGroup:isExist() then 
-						if ClientGroup:getID() == UnitData:getGroup():getID() then
-							self:T3( "Normal logic" )
-							self:T3( self.ClientName .. " : group found!" )
-							return ClientGroup
-						end
-					else
-						-- Now we need to resolve the bugs in DCS 1.5 ...
-						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
-						self:T3( "Bug 1.5 logic" )
-						local ClientUnits = _DATABASE.Groups[self.ClientName].Units
-						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
-						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
-							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
-							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
-								local ClientGroupTemplate = _DATABASE.Groups[self.ClientName].Template
-								self.ClientID = ClientGroupTemplate.groupId
-								self.ClientGroupUnit = UnitData
-								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
-								return ClientGroup
-							end
-						end
-					end
---				else
---					error( "Client " .. self.ClientName .. " not found!" )
-				end
+        --self:E(self.ClientName)
+        if ClientUnit then
+  				local ClientGroup = ClientUnit:getGroup()
+  				if ClientGroup then
+  					self:T3( "ClientGroup = " .. self.ClientName )
+  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then 
+  						if ClientGroup:getID() == UnitData:getGroup():getID() then
+  							self:T3( "Normal logic" )
+  							self:T3( self.ClientName .. " : group found!" )
+                self.ClientGroupID = ClientGroup:getID()
+  							self.ClientGroupName = ClientGroup:getName()
+  							return ClientGroup
+  						end
+  					else
+  						-- Now we need to resolve the bugs in DCS 1.5 ...
+  						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
+  						self:T3( "Bug 1.5 logic" )
+  						local ClientGroupTemplate = _DATABASE.Templates.Units[self.ClientName].GroupTemplate
+  						self.ClientGroupID = ClientGroupTemplate.groupId
+  						self.ClientGroupName = _DATABASE.Templates.Units[self.ClientName].GroupName
+  						self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+  						return ClientGroup
+  					end
+  --				else
+  --					error( "Client " .. self.ClientName .. " not found!" )
+  				end
+  		  end
 			end
 		end
 	end
 
 	-- For non player clients
-	local ClientGroup = Group.getByName( self.ClientName )
-	if ClientGroup then
-		self:T3( "ClientGroup = " .. self.ClientName )
-		if ClientGroup:isExist() then 
-			self:T3( "Normal logic" )
-			self:T3( self.ClientName .. " : group found!" )
-			return ClientGroup
-		end
-	end
+	if ClientUnit then
+  	local ClientGroup = ClientUnit:getGroup()
+  	if ClientGroup then
+  		self:T3( "ClientGroup = " .. self.ClientName )
+  		if ClientGroup:isExist() then 
+  			self:T3( "Normal logic" )
+  			self:T3( self.ClientName .. " : group found!" )
+  			return ClientGroup
+  		end
+  	end
+  end
 	
 	self.ClientGroupID = nil
 	self.ClientGroupUnit = nil
@@ -240,16 +254,9 @@ end
 -- @return DCSTypes#Group.ID
 function CLIENT:GetClientGroupID()
 
-  if not self.ClientGroupID then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupID = ClientGroup:getID()
-    else
-      self.ClientGroupID = self.ClientID
-    end
-  end
+  local ClientGroup = self:GetDCSGroup()
 
-  self:T( self.ClientGroupID )
+  --self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
 	return self.ClientGroupID
 end
 
@@ -259,16 +266,9 @@ end
 -- @return #string
 function CLIENT:GetClientGroupName()
 
-  if not self.ClientGroupName then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupName = ClientGroup:getName()
-    else
-      self.ClientGroupName = self.ClientName
-    end
-  end
+  local ClientGroup = self:GetDCSGroup()
 
-  self:T( self.ClientGroupName )
+  self:T( self.ClientGroupName ) -- Determined in GetDCSGroup()
 	return self.ClientGroupName
 end
 
@@ -276,14 +276,15 @@ end
 -- @param #CLIENT self
 -- @return Unit#UNIT
 function CLIENT:GetClientGroupUnit()
-	self:F()
+	self:F2()
 
-	local ClientGroup = self:GetDCSGroup()
-	
-	if ClientGroup and ClientGroup:isExist() then
-		return UNIT:New( ClientGroup:getUnit(1) )
-	else
-		return UNIT:New( self.ClientGroupUnit )
+	local ClientDCSUnit = Unit.getByName( self.ClientName )
+
+  self:T( self.ClientDCSUnit )
+	if ClientDCSUnit and ClientDCSUnit:isExist() then
+		local ClientUnit = _DATABASE.Units[ self.ClientName ]
+		self:T2( ClientUnit )
+		return ClientUnit
 	end
 end
 
@@ -293,12 +294,11 @@ end
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
-  local ClientGroup = self:GetDCSGroup()
+  local ClientDCSUnit = Unit.getByName( self.ClientName )
   
-  if ClientGroup and ClientGroup:isExist() then
-    return ClientGroup:getUnit(1)
-  else
-    return self.ClientGroupUnit
+  if ClientDCSUnit and ClientDCSUnit:isExist() then
+    self:T2( ClientDCSUnit )
+    return ClientDCSUnit
   end
 end
 
@@ -315,7 +315,7 @@ end
 function CLIENT:GetPointVec2()
 	self:F()
 
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
   
   if ClientGroupUnit then
     if ClientGroupUnit:isExist() then
@@ -331,6 +331,44 @@ function CLIENT:GetPointVec2()
   return nil
 end 
 
+function CLIENT:GetPositionVec3()
+  self:F( self.ClientName )
+  
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitPos = DCSUnit:getPosition().p
+
+  self:T( UnitPos )
+  return UnitPos
+end
+
+function CLIENT:GetID()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitID = DCSUnit:getID()
+  
+  self:T( UnitID )
+  return UnitID
+end
+
+function CLIENT:GetName()
+  self:F( self.ClientName )
+  
+  self:T( self.ClientName )
+  return self.ClientName
+end
+
+function CLIENT:GetTypeName()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local TypeName = DCSUnit:getTypeName()
+  
+  self:T( TypeName )
+  return TypeName
+end
+
+
 
 --- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
 -- @param #CLIENT self
@@ -338,7 +376,7 @@ end
 function CLIENT:ClientPosition()
 	self:F()
 
-	ClientGroupUnit = self:GetClientGroupDCSUnit()
+	local ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
 	if ClientGroupUnit then
 		if ClientGroupUnit:isExist() then
@@ -355,7 +393,7 @@ end
 function CLIENT:GetAltitude()
 	self:F()
 
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
   
   if ClientGroupUnit then
     if ClientGroupUnit:isExist() then

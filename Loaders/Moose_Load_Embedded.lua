@@ -1,4 +1,3 @@
-
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
