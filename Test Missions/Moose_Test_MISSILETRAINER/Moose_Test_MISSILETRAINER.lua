@@ -16,4 +16,4 @@ local Trainer = MISSILETRAINER
   :InitTrackingOnOff(true)
   :InitTrackingToAll(true)
 
-Trainer:InitAlertsHitsOnOff(true) -- Now alerts are also on
+Trainer:InitAlertsToAll(true) -- Now alerts are also on
