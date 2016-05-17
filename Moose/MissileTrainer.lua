@@ -64,6 +64,7 @@
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+--
 -- @module MissileTrainer
 -- @author FlightControl
 
