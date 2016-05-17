@@ -2,10 +2,10 @@
 -- 
 -- @{#CLIENT} class
 -- ================
--- Clients are those units defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- Note that clients are NOT the same as units, they are NOT necessarily alive.
+-- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
+-- Note that clients are NOT the same as Units, they are NOT necessarily alive.
 -- 
--- Clients are being used in a mission and tasks to follow players and their successes.
+-- Clients are being used by the @{MISSION} class to follow players and register their successes.
 -- 
 -- CLIENT construction methods:
 -- ============================ 
@@ -315,7 +315,7 @@ end
 function CLIENT:GetPointVec2()
 	self:F()
 
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
   
   if ClientGroupUnit then
     if ClientGroupUnit:isExist() then
@@ -376,7 +376,7 @@ end
 function CLIENT:ClientPosition()
 	self:F()
 
-	ClientGroupUnit = self:GetClientGroupDCSUnit()
+	local ClientGroupUnit = self:GetClientGroupDCSUnit()
 	
 	if ClientGroupUnit then
 		if ClientGroupUnit:isExist() then
@@ -393,7 +393,7 @@ end
 function CLIENT:GetAltitude()
 	self:F()
 
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
   
   if ClientGroupUnit then
     if ClientGroupUnit:isExist() then

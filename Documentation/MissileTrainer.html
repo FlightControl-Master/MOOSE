@@ -1,0 +1,884 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li>MissileTrainer</li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>MissileTrainer</code></h1>
+   
+<p>Provides missile training functions.</p>
+
+   
+
+<h1><a href="##(MISSILETRAINER)">#MISSILETRAINER</a> class</h1>
+<p>The <a href="##(MISSILETRAINER)">#MISSILETRAINER</a> class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
+the class will destroy the missile within a certain range, to avoid damage to your aircraft.
+It suports the following functionality:</p>
+
+<ul>
+    <li>Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.</li>
+    <li>Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …</li>
+    <li>Provide alerts when a missile would have killed your aircraft.</li>
+    <li>Provide alerts when the missile self destructs.</li>
+    <li>Enable / Disable and Configure the Missile Trainer using the various menu options.</li>
+</ul>
+
+<p> When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:</p>
+
+<ul>
+    <li><strong>Messages</strong>: Menu to configure all messages.
+    <ul>
+        <li><strong>Messages On</strong>: Show all messages.</li>
+        <li><strong>Messages Off</strong>: Disable all messages.</li>
+    </ul></li>
+    <li><strong>Tracking</strong>: Menu to configure missile tracking messages.
+    <ul>
+        <li><strong>To All</strong>: Shows missile tracking messages to all players.</li>
+        <li><strong>To Target</strong>: Shows missile tracking messages only to the player where the missile is targetted at.</li>
+        <li><strong>Tracking On</strong>: Show missile tracking messages.</li>
+        <li><strong>Tracking Off</strong>: Disable missile tracking messages.</li>
+    </ul></li>
+    <li><strong>Alerts</strong>: Menu to configure alert messages.
+    <ul>
+        <li><strong>To All</strong>: Shows alert messages to all players.</li>
+        <li><strong>To Target</strong>: Shows alter messages only to the player where the missile is (was) targetted at.</li>
+        <li><strong>Hits On</strong>: Show missile hit alert messages.</li>
+        <li><strong>Hits Off</strong>: Disable missile hit altert messages.</li>
+        <li><strong>Launches On</strong>: Show missile launch messages.</li>
+        <li><strong>Launches Off</strong>: Disable missile launch messages.</li>
+    </ul></li>
+    <li><strong>Details</strong>: Menu to configure message details.
+    <ul>
+        <li><strong>Range On</strong>: Shows range information when a missile is fired to a target.</li>
+        <li><strong>Range Off</strong>: Disable range information when a missile is fired to a target.</li>
+        <li><strong>Bearing On</strong>: Shows bearing information when a missile is fired to a target.</li>
+        <li><strong>Bearing Off</strong>: Disable bearing information when a missile is fired to a target.</li>
+    </ul></li>
+    <li><strong>Distance</strong>: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. 
+             This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
+    <ul>
+        <li><strong>50 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.</li>
+        <li><strong>100 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.</li>
+        <li><strong>150 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.</li>
+        <li><strong>200 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.</li>
+    </ul></li>
+</ul>
+
+
+<h1>MISSILETRAINER construction methods:</h1>
+<p>Create a new MISSILETRAINER object with the <a href="##(MISSILETRAINER).New">MISSILETRAINER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(MISSILETRAINER).New">MISSILETRAINER.New</a>: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.</li>
+</ul>
+
+<p>MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.</p>
+
+<h1>MISSILETRAINER initialization methods:</h1>
+<p>A MISSILETRAINER object will behave differently based on the usage of initialization methods:</p>
+
+<ul>
+    <li><a href="##(MISSILETRAINER).InitMessagesOnOff">MISSILETRAINER.InitMessagesOnOff</a>: Sets by default the display of any message to be ON or OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitTrackingToAll">MISSILETRAINER.InitTrackingToAll</a>: Sets by default the missile tracking report for all players or only for those missiles targetted to you.</li>
+    <li><a href="##(MISSILETRAINER).InitTrackingOnOff">MISSILETRAINER.InitTrackingOnOff</a>: Sets by default the display of missile tracking report to be ON or OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitAlertsToAll">MISSILETRAINER.InitAlertsToAll</a>: Sets by default the display of alerts to be shown to all players or only to you.</li>
+    <li><a href="##(MISSILETRAINER).InitAlertsHitsOnOff">MISSILETRAINER.InitAlertsHitsOnOff</a>: Sets by default the display of hit alerts ON or OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitAlertsLaunchesOnOff">MISSILETRAINER.InitAlertsLaunchesOnOff</a>: Sets by default the display of launch alerts ON or OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitRangeOnOff">MISSILETRAINER.InitRangeOnOff</a>: Sets by default the display of range information of missiles ON of OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitBearingOnOff">MISSILETRAINER.InitBearingOnOff</a>: Sets by default the display of bearing information of missiles ON of OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitMenusOnOff">MISSILETRAINER.InitMenusOnOff</a>: Allows to configure the options through the radio menu.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#MISSILETRAINER">MISSILETRAINER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(MISSILETRAINER)">Type <code>MISSILETRAINER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).AlertsHitsOnOff">MISSILETRAINER.AlertsHitsOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).AlertsLaunchesOnOff">MISSILETRAINER.AlertsLaunchesOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).AlertsToAll">MISSILETRAINER.AlertsToAll</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).ClassName">MISSILETRAINER.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).DetailsBearingOnOff">MISSILETRAINER.DetailsBearingOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).DetailsRangeOnOff">MISSILETRAINER.DetailsRangeOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitAlertsHitsOnOff">MISSILETRAINER:InitAlertsHitsOnOff(AlertsHitsOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of hit alerts ON or OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitAlertsLaunchesOnOff">MISSILETRAINER:InitAlertsLaunchesOnOff(AlertsLaunchesOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of launch alerts ON or OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitAlertsToAll">MISSILETRAINER:InitAlertsToAll(AlertsToAll)</a></td>
+		<td class="summary">
+<p>Sets by default the display of alerts to be shown to all players or only to you.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitBearingOnOff">MISSILETRAINER:InitBearingOnOff(DetailsBearingOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of bearing information of missiles ON of OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitMenusOnOff">MISSILETRAINER:InitMenusOnOff(MenusOnOff)</a></td>
+		<td class="summary">
+<p>Enables / Disables the menus.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitMessagesOnOff">MISSILETRAINER:InitMessagesOnOff(MessagesOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of any message to be ON or OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitRangeOnOff">MISSILETRAINER:InitRangeOnOff(DetailsRangeOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of range information of missiles ON of OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitTrackingOnOff">MISSILETRAINER:InitTrackingOnOff(TrackingOnOff)</a></td>
+		<td class="summary">
+<p>Sets by default the display of missile tracking report to be ON or OFF.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitTrackingToAll">MISSILETRAINER:InitTrackingToAll(TrackingToAll)</a></td>
+		<td class="summary">
+<p>Sets by default the missile tracking report for all players or only for those missiles targetted to you.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MenusOnOff">MISSILETRAINER.MenusOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MessageLastTime">MISSILETRAINER.MessageLastTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MessagesOnOff">MISSILETRAINER.MessagesOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).New">MISSILETRAINER.New(#, Distance, self)</a></td>
+		<td class="summary">
+<p>Creates the main object which is handling missile tracking.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).TrackingOnOff">MISSILETRAINER.TrackingOnOff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).TrackingToAll">MISSILETRAINER.TrackingToAll</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._AddBearing">MISSILETRAINER:_AddBearing(Client, TrainerWeapon)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._AddRange">MISSILETRAINER:_AddRange(Client, TrainerWeapon)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._EventShot">MISSILETRAINER:_EventShot(Event)</a></td>
+		<td class="summary">
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._MenuMessages">MISSILETRAINER._MenuMessages(MenuParameters)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._TrackMissiles">MISSILETRAINER:_TrackMissiles()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a></em>
+<a id="MISSILETRAINER" >
+<strong>MISSILETRAINER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(MissileTrainer)" >Type <code>MissileTrainer</code></a></h2>
+	
+			<h2><a id="#(MISSILETRAINER)" >Type <code>MISSILETRAINER</code></a></h2>
+				
+<p>The MISSILETRAINER class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).AlertsHitsOnOff" >
+<strong>MISSILETRAINER.AlertsHitsOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).AlertsLaunchesOnOff" >
+<strong>MISSILETRAINER.AlertsLaunchesOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).AlertsToAll" >
+<strong>MISSILETRAINER.AlertsToAll</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MISSILETRAINER).ClassName" >
+<strong>MISSILETRAINER.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).DetailsBearingOnOff" >
+<strong>MISSILETRAINER.DetailsBearingOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).DetailsRangeOnOff" >
+<strong>MISSILETRAINER.DetailsRangeOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitAlertsHitsOnOff" >
+<strong>MISSILETRAINER:InitAlertsHitsOnOff(AlertsHitsOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of hit alerts ON or OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean AlertsHitsOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitAlertsLaunchesOnOff" >
+<strong>MISSILETRAINER:InitAlertsLaunchesOnOff(AlertsLaunchesOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of launch alerts ON or OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean AlertsLaunchesOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitAlertsToAll" >
+<strong>MISSILETRAINER:InitAlertsToAll(AlertsToAll)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of alerts to be shown to all players or only to you.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean AlertsToAll </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitBearingOnOff" >
+<strong>MISSILETRAINER:InitBearingOnOff(DetailsBearingOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of bearing information of missiles ON of OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean DetailsBearingOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitMenusOnOff" >
+<strong>MISSILETRAINER:InitMenusOnOff(MenusOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enables / Disables the menus.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean MenusOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitMessagesOnOff" >
+<strong>MISSILETRAINER:InitMessagesOnOff(MessagesOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of any message to be ON or OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean MessagesOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitRangeOnOff" >
+<strong>MISSILETRAINER:InitRangeOnOff(DetailsRangeOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of range information of missiles ON of OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean DetailsRangeOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitTrackingOnOff" >
+<strong>MISSILETRAINER:InitTrackingOnOff(TrackingOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the display of missile tracking report to be ON or OFF.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean TrackingOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).InitTrackingToAll" >
+<strong>MISSILETRAINER:InitTrackingToAll(TrackingToAll)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets by default the missile tracking report for all players or only for those missiles targetted to you.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean TrackingToAll </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).MenusOnOff" >
+<strong>MISSILETRAINER.MenusOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).MessageLastTime" >
+<strong>MISSILETRAINER.MessageLastTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).MessagesOnOff" >
+<strong>MISSILETRAINER.MessagesOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).New" >
+<strong>MISSILETRAINER.New(#, Distance, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates the main object which is handling missile tracking.</p>
+
+	
+<p>When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+ISSILETRAINER</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Distance </em></code>: 
+The distance in meters when a tracked missile needs to be destroyed when close to a player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).TrackingOnOff" >
+<strong>MISSILETRAINER.TrackingOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).TrackingToAll" >
+<strong>MISSILETRAINER.TrackingToAll</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER)._AddBearing" >
+<strong>MISSILETRAINER:_AddBearing(Client, TrainerWeapon)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TrainerWeapon </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER)._AddRange" >
+<strong>MISSILETRAINER:_AddRange(Client, TrainerWeapon)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TrainerWeapon </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER)._EventShot" >
+<strong>MISSILETRAINER:_EventShot(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
+
+	
+<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER)._MenuMessages" >
+<strong>MISSILETRAINER._MenuMessages(MenuParameters)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuParameters </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER)._TrackMissiles" >
+<strong>MISSILETRAINER:_TrackMissiles()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>
