@@ -15,6 +15,7 @@ local Trainer = MISSILETRAINER
   :InitRangeOnOff(true)
   :InitTrackingOnOff(true)
   :InitTrackingToAll(true)
-  :InitMenusOnOff(false)
-
---Trainer:InitAlertsToAll(true) -- Now alerts are also on
+  :InitMenusOnOff(false) -- Disable menus
+  :InitTrackingFrequency( 1 ) -- Make Tracking Frequency 4 seconds ...
+  
+-- Trainer:InitAlertsToAll(true) -- Now alerts are also on
