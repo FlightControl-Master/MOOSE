@@ -70,6 +70,48 @@ It suports the following functionality:</p>
     <li>Enable / Disable and Configure the Missile Trainer using the various menu options.</li>
 </ul>
 
+<p> When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:</p>
+
+<ul>
+    <li><strong>Messages</strong>: Menu to configure all messages.
+    <ul>
+        <li><strong>Messages On</strong>: Show all messages.</li>
+        <li><strong>Messages Off</strong>: Disable all messages.</li>
+    </ul></li>
+    <li><strong>Tracking</strong>: Menu to configure missile tracking messages.
+    <ul>
+        <li><strong>To All</strong>: Shows missile tracking messages to all players.</li>
+        <li><strong>To Target</strong>: Shows missile tracking messages only to the player where the missile is targetted at.</li>
+        <li><strong>Tracking On</strong>: Show missile tracking messages.</li>
+        <li><strong>Tracking Off</strong>: Disable missile tracking messages.</li>
+    </ul></li>
+    <li><strong>Alerts</strong>: Menu to configure alert messages.
+    <ul>
+        <li><strong>To All</strong>: Shows alert messages to all players.</li>
+        <li><strong>To Target</strong>: Shows alter messages only to the player where the missile is (was) targetted at.</li>
+        <li><strong>Hits On</strong>: Show missile hit alert messages.</li>
+        <li><strong>Hits Off</strong>: Disable missile hit altert messages.</li>
+        <li><strong>Launches On</strong>: Show missile launch messages.</li>
+        <li><strong>Launches Off</strong>: Disable missile launch messages.</li>
+    </ul></li>
+    <li><strong>Details</strong>: Menu to configure message details.
+    <ul>
+        <li><strong>Range On</strong>: Shows range information when a missile is fired to a target.</li>
+        <li><strong>Range Off</strong>: Disable range information when a missile is fired to a target.</li>
+        <li><strong>Bearing On</strong>: Shows bearing information when a missile is fired to a target.</li>
+        <li><strong>Bearing Off</strong>: Disable bearing information when a missile is fired to a target.</li>
+    </ul></li>
+    <li><strong>Distance</strong>: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. 
+             This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
+    <ul>
+        <li><strong>50 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.</li>
+        <li><strong>100 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.</li>
+        <li><strong>150 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.</li>
+        <li><strong>200 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.</li>
+    </ul></li>
+</ul>
+
+
 <h1>MISSILETRAINER construction methods:</h1>
 <p>Create a new MISSILETRAINER object with the <a href="##(MISSILETRAINER).New">MISSILETRAINER.New</a> method:</p>
 
@@ -91,6 +133,7 @@ It suports the following functionality:</p>
     <li><a href="##(MISSILETRAINER).InitAlertsLaunchesOnOff">MISSILETRAINER.InitAlertsLaunchesOnOff</a>: Sets by default the display of launch alerts ON or OFF.</li>
     <li><a href="##(MISSILETRAINER).InitRangeOnOff">MISSILETRAINER.InitRangeOnOff</a>: Sets by default the display of range information of missiles ON of OFF.</li>
     <li><a href="##(MISSILETRAINER).InitBearingOnOff">MISSILETRAINER.InitBearingOnOff</a>: Sets by default the display of bearing information of missiles ON of OFF.</li>
+    <li><a href="##(MISSILETRAINER).InitMenusOnOff">MISSILETRAINER.InitMenusOnOff</a>: Allows to configure the options through the radio menu.</li>
 </ul>
 
 
@@ -166,6 +209,12 @@ It suports the following functionality:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitMenusOnOff">MISSILETRAINER:InitMenusOnOff(MenusOnOff)</a></td>
+		<td class="summary">
+<p>Enables / Disables the menus.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitMessagesOnOff">MISSILETRAINER:InitMessagesOnOff(MessagesOnOff)</a></td>
 		<td class="summary">
 <p>Sets by default the display of any message to be ON or OFF.</p>
@@ -187,6 +236,12 @@ It suports the following functionality:</p>
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitTrackingToAll">MISSILETRAINER:InitTrackingToAll(TrackingToAll)</a></td>
 		<td class="summary">
 <p>Sets by default the missile tracking report for all players or only for those missiles targetted to you.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MenusOnOff">MISSILETRAINER.MenusOnOff</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -468,6 +523,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSILETRAINER).InitMenusOnOff" >
+<strong>MISSILETRAINER:InitMenusOnOff(MenusOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enables / Disables the menus.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean MenusOnOff </em></code>: 
+true or false</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSILETRAINER).InitMessagesOnOff" >
 <strong>MISSILETRAINER:InitMessagesOnOff(MessagesOnOff)</strong>
 </a>
@@ -570,6 +652,20 @@ true or false</p>
 				
 <p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MISSILETRAINER).MenusOnOff" >
+<strong>MISSILETRAINER.MenusOnOff</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
