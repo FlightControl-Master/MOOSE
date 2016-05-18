@@ -15275,7 +15275,6 @@ function ESCORT:_ReportTargetsScheduler()
   end
 end
 --- Provides missile training functions.
--- @module MissileTrainer
 --
 -- @{#MISSILETRAINER} class
 -- ========================
@@ -15343,6 +15342,7 @@ end
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+-- @module MissileTrainer
 -- @author FlightControl
 
 
@@ -15360,10 +15360,15 @@ MISSILETRAINER = {
 -- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
 -- @param #MISSILETRAINER self
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
+-- @param #string Briefing (Optional) Will show a text to the players when starting their mission. Can be used for briefing purposes. 
 -- @return #MISSILETRAINER
-function MISSILETRAINER:New( Distance )
+function MISSILETRAINER:New( Distance, Briefing )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( Distance )
+
+  if Briefing then
+    self.Briefing = Briefing
+  end
 
   self.Schedulers = {}
   self.SchedulerID = 0
@@ -15383,7 +15388,9 @@ function MISSILETRAINER:New( Distance )
 
     local function _Alive( Client )
 
-      Client:Message( "Hello trainee, welcome to the Missile Trainer.\nGood luck!", 15, "HELLO WORLD", "Trainer" )
+      if self.Briefing then
+        Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
+      end
 
       if self.MenusOnOff == true then
         Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
