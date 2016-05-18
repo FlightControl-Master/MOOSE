@@ -6,15 +6,15 @@ Include.File("MissileTrainer")
 
 -- This is an example of a global
 local Trainer = MISSILETRAINER
-  :New( 200 )
+  :New( 200, "Trainer: Welcome to the missile training, trainee! Missiles will be fired at you. Try to evade them. Good luck!" )
   :InitMessagesOnOff(true)
-  :InitAlertsToAll(true) -- I'll correct it below ...
+  :InitAlertsToAll(true) 
   :InitAlertsHitsOnOff(true)
-  :InitAlertsLaunchesOnOff(false)
+  :InitAlertsLaunchesOnOff(false) -- I'll put it on below ...
   :InitBearingOnOff(true)
   :InitRangeOnOff(true)
   :InitTrackingOnOff(true)
   :InitTrackingToAll(true)
   :InitMenusOnOff(false)
 
---Trainer:InitAlertsToAll(true) -- Now alerts are also on
+Trainer:InitAlertsToAll(true) -- Now alerts are also on

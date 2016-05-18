@@ -15340,6 +15340,7 @@ end
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+--
 -- @module MissileTrainer
 -- @author FlightControl
 
@@ -15357,8 +15358,9 @@ MISSILETRAINER = {
 -- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
 -- @param #MISSILETRAINER
 -- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
+-- @param #string MissileTrainerBriefing (Optional) Parameter to provide players with a briefing text for the training.
 -- @return #MISSILETRAINER
-function MISSILETRAINER:New( Distance )
+function MISSILETRAINER:New( Distance, MissileTrainerBriefing )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( Distance )
 
@@ -15369,6 +15371,10 @@ function MISSILETRAINER:New( Distance )
   self.MessageLastTime = timer.getTime()
 
   self.Distance = Distance / 1000
+  
+  if MissileTrainerBriefing then
+    self.MissileTrainerBriefing = MissileTrainerBriefing
+  end
 
   _EVENTDISPATCHER:OnShot( self._EventShot, self )
 
@@ -15380,14 +15386,14 @@ function MISSILETRAINER:New( Distance )
 
     local function _Alive( Client )
 
-      Client:Message( "Hello trainee, welcome to the Missile Trainer.\nGood luck!", 15, "HELLO WORLD", "Trainer" )
+      if self.MissileTrainerBriefing then 
+        Client:Message( self.MissileTrainerBriefing, 15, "HELLO WORLD", "Trainer" )
+      end
       
-      
-
       if self.MenusOnOff == true then
-        Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+        Client:Message( "Missile Trainer: Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
   
-        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
+        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil )
   
         Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
         Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
