@@ -26,9 +26,9 @@
 --     * **Frequency Decrease**: Decreases the missile tracking message frequency with one second.
 --  * **Alerts**: Menu to configure alert messages.
 --     * **To All**: Shows alert messages to all players.
---     * **To Target**: Shows alter messages only to the player where the missile is (was) targetted at.
+--     * **To Target**: Shows alert messages only to the player where the missile is (was) targetted at.
 --     * **Hits On**: Show missile hit alert messages.
---     * **Hits Off**: Disable missile hit altert messages.
+--     * **Hits Off**: Disable missile hit alert messages.
 --     * **Launches On**: Show missile launch messages.
 --     * **Launches Off**: Disable missile launch messages.
 --  * **Details**: Menu to configure message details.
