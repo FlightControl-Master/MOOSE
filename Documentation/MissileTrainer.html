@@ -55,88 +55,6 @@
    
 <p>Provides missile training functions.</p>
 
-   
-
-<h1><a href="##(MISSILETRAINER)">#MISSILETRAINER</a> class</h1>
-<p>The <a href="##(MISSILETRAINER)">#MISSILETRAINER</a> class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
-the class will destroy the missile within a certain range, to avoid damage to your aircraft.
-It suports the following functionality:</p>
-
-<ul>
-    <li>Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.</li>
-    <li>Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …</li>
-    <li>Provide alerts when a missile would have killed your aircraft.</li>
-    <li>Provide alerts when the missile self destructs.</li>
-    <li>Enable / Disable and Configure the Missile Trainer using the various menu options.</li>
-</ul>
-
-<p> When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:</p>
-
-<ul>
-    <li><strong>Messages</strong>: Menu to configure all messages.
-    <ul>
-        <li><strong>Messages On</strong>: Show all messages.</li>
-        <li><strong>Messages Off</strong>: Disable all messages.</li>
-    </ul></li>
-    <li><strong>Tracking</strong>: Menu to configure missile tracking messages.
-    <ul>
-        <li><strong>To All</strong>: Shows missile tracking messages to all players.</li>
-        <li><strong>To Target</strong>: Shows missile tracking messages only to the player where the missile is targetted at.</li>
-        <li><strong>Tracking On</strong>: Show missile tracking messages.</li>
-        <li><strong>Tracking Off</strong>: Disable missile tracking messages.</li>
-    </ul></li>
-    <li><strong>Alerts</strong>: Menu to configure alert messages.
-    <ul>
-        <li><strong>To All</strong>: Shows alert messages to all players.</li>
-        <li><strong>To Target</strong>: Shows alter messages only to the player where the missile is (was) targetted at.</li>
-        <li><strong>Hits On</strong>: Show missile hit alert messages.</li>
-        <li><strong>Hits Off</strong>: Disable missile hit altert messages.</li>
-        <li><strong>Launches On</strong>: Show missile launch messages.</li>
-        <li><strong>Launches Off</strong>: Disable missile launch messages.</li>
-    </ul></li>
-    <li><strong>Details</strong>: Menu to configure message details.
-    <ul>
-        <li><strong>Range On</strong>: Shows range information when a missile is fired to a target.</li>
-        <li><strong>Range Off</strong>: Disable range information when a missile is fired to a target.</li>
-        <li><strong>Bearing On</strong>: Shows bearing information when a missile is fired to a target.</li>
-        <li><strong>Bearing Off</strong>: Disable bearing information when a missile is fired to a target.</li>
-    </ul></li>
-    <li><strong>Distance</strong>: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. 
-             This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
-    <ul>
-        <li><strong>50 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.</li>
-        <li><strong>100 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.</li>
-        <li><strong>150 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.</li>
-        <li><strong>200 meter</strong>: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.</li>
-    </ul></li>
-</ul>
-
-
-<h1>MISSILETRAINER construction methods:</h1>
-<p>Create a new MISSILETRAINER object with the <a href="##(MISSILETRAINER).New">MISSILETRAINER.New</a> method:</p>
-
-<ul>
-    <li><a href="##(MISSILETRAINER).New">MISSILETRAINER.New</a>: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.</li>
-</ul>
-
-<p>MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.</p>
-
-<h1>MISSILETRAINER initialization methods:</h1>
-<p>A MISSILETRAINER object will behave differently based on the usage of initialization methods:</p>
-
-<ul>
-    <li><a href="##(MISSILETRAINER).InitMessagesOnOff">MISSILETRAINER.InitMessagesOnOff</a>: Sets by default the display of any message to be ON or OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitTrackingToAll">MISSILETRAINER.InitTrackingToAll</a>: Sets by default the missile tracking report for all players or only for those missiles targetted to you.</li>
-    <li><a href="##(MISSILETRAINER).InitTrackingOnOff">MISSILETRAINER.InitTrackingOnOff</a>: Sets by default the display of missile tracking report to be ON or OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitAlertsToAll">MISSILETRAINER.InitAlertsToAll</a>: Sets by default the display of alerts to be shown to all players or only to you.</li>
-    <li><a href="##(MISSILETRAINER).InitAlertsHitsOnOff">MISSILETRAINER.InitAlertsHitsOnOff</a>: Sets by default the display of hit alerts ON or OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitAlertsLaunchesOnOff">MISSILETRAINER.InitAlertsLaunchesOnOff</a>: Sets by default the display of launch alerts ON or OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitRangeOnOff">MISSILETRAINER.InitRangeOnOff</a>: Sets by default the display of range information of missiles ON of OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitBearingOnOff">MISSILETRAINER.InitBearingOnOff</a>: Sets by default the display of bearing information of missiles ON of OFF.</li>
-    <li><a href="##(MISSILETRAINER).InitMenusOnOff">MISSILETRAINER.InitMenusOnOff</a>: Allows to configure the options through the radio menu.</li>
-</ul>
-
-
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
@@ -227,6 +145,12 @@ It suports the following functionality:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitTrackingFrequency">MISSILETRAINER:InitTrackingFrequency(TrackingFrequency)</a></td>
+		<td class="summary">
+<p>Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).InitTrackingOnOff">MISSILETRAINER:InitTrackingOnOff(TrackingOnOff)</a></td>
 		<td class="summary">
 <p>Sets by default the display of missile tracking report to be ON or OFF.</p>
@@ -245,21 +169,21 @@ It suports the following functionality:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MessageLastTime">MISSILETRAINER.MessageLastTime</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).MessagesOnOff">MISSILETRAINER.MessagesOnOff</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).New">MISSILETRAINER.New(#, Distance, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).New">MISSILETRAINER:New(Distance)</a></td>
 		<td class="summary">
 <p>Creates the main object which is handling missile tracking.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).TrackingFrequency">MISSILETRAINER.TrackingFrequency</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -604,6 +528,36 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSILETRAINER).InitTrackingFrequency" >
+<strong>MISSILETRAINER:InitTrackingFrequency(TrackingFrequency)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.</p>
+
+	
+<p>The default frequency is a 3 second interval, so the Tracking Frequency parameter specifies the increase or decrease from the default 3 seconds or the last frequency update.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number TrackingFrequency </em></code>: 
+Provide a negative or positive value in seconds to incraese or decrease the display frequency. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSILETRAINER).InitTrackingOnOff" >
 <strong>MISSILETRAINER:InitTrackingOnOff(TrackingOnOff)</strong>
 </a>
@@ -673,20 +627,6 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(MISSILETRAINER).MessageLastTime" >
-<strong>MISSILETRAINER.MessageLastTime</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(MISSILETRAINER).MessagesOnOff" >
 <strong>MISSILETRAINER.MessagesOnOff</strong>
 </a>
@@ -701,7 +641,7 @@ self</p>
 <dt>
 
 <a id="#(MISSILETRAINER).New" >
-<strong>MISSILETRAINER.New(#, Distance, self)</strong>
+<strong>MISSILETRAINER:New(Distance)</strong>
 </a>
 </dt>
 <dd>
@@ -711,29 +651,31 @@ self</p>
 	
 <p>When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
-				<li>
-				
-<p><code><em> # </em></code>: 
-ISSILETRAINER</p>
-
-				</li>
 				<li>
 				
 <p><code><em>#number Distance </em></code>: 
 The distance in meters when a tracked missile needs to be destroyed when close to a player.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(MISSILETRAINER)">#MISSILETRAINER</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSILETRAINER).TrackingFrequency" >
+<strong>MISSILETRAINER.TrackingFrequency</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
