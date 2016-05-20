@@ -453,31 +453,35 @@ function DATABASE:_RegisterDatabase()
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
 
-      local DCSGroupName = DCSGroup:getName()
-
-      self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-      self.DCSGroups[DCSGroupName] = DCSGroup
-      self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
-
-      if self:_IsAliveDCSGroup(DCSGroup) then
-        self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
-        self.DCSGroupsAlive[DCSGroupName] = DCSGroup
-        self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
-      end
-
-      for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
-
-        local DCSUnitName = DCSUnit:getName()
-        self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-
-        self.DCSUnits[DCSUnitName] = DCSUnit
-        self.Units[DCSUnitName] = UNIT:New( DCSUnit )
-
-        if self:_IsAliveDCSUnit(DCSUnit) then
-          self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
-          self.DCSUnitsAlive[DCSUnitName] = DCSUnit
-          self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+      if DCSGroup:isExist() then
+        local DCSGroupName = DCSGroup:getName()
+  
+        self:E( { "Register Group:", DCSGroup, DCSGroupName } )
+        self.DCSGroups[DCSGroupName] = DCSGroup
+        self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+  
+        if self:_IsAliveDCSGroup(DCSGroup) then
+          self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+          self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+          self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
         end
+  
+        for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+  
+          local DCSUnitName = DCSUnit:getName()
+          self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
+  
+          self.DCSUnits[DCSUnitName] = DCSUnit
+          self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+  
+          if self:_IsAliveDCSUnit(DCSUnit) then
+            self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+            self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+            self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+          end
+        end
+      else
+        self:E( "Group does not exist: " .. DCSGroup )
       end
       
       for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
