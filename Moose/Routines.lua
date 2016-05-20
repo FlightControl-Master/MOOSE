@@ -1524,6 +1524,47 @@ function routines.IsUnitInZones( TransportUnit, LandingZones )
 	end
 end
 
+function routines.IsUnitNearZonesRadius( TransportUnit, LandingZones, ZoneRadius )
+--trace.f("", "routines.IsUnitInZones" )
+
+  local TransportZoneResult = nil
+  local TransportZonePos = nil
+  local TransportZone = nil
+
+    -- fill-up some local variables to support further calculations to determine location of units within the zone.
+  if TransportUnit then
+    local TransportUnitPos = TransportUnit:getPosition().p
+    if type( LandingZones ) == "table" then
+      for LandingZoneID, LandingZoneName in pairs( LandingZones ) do
+        TransportZone = trigger.misc.getZone( LandingZoneName )
+        if TransportZone then
+          TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+          if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+            TransportZoneResult = LandingZoneID
+            break
+          end
+        end
+      end
+    else
+      TransportZone = trigger.misc.getZone( LandingZones )
+      TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+      if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+        TransportZoneResult = 1
+      end
+    end
+    if TransportZoneResult then
+      --trace.i( "routines", "TransportZone:" .. TransportZoneResult )
+    else
+      --trace.i( "routines", "TransportZone:nil logic" )
+    end
+    return TransportZoneResult
+  else
+    --trace.i( "routines", "TransportZone:nil hard" )
+    return nil
+  end
+end
+
+
 function routines.IsStaticInZones( TransportStatic, LandingZones )
 --trace.f()
 
@@ -1696,7 +1737,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _DATABASE.Groups[groupIdent].groupId
+		gpId = _DATABASE.Templates.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do

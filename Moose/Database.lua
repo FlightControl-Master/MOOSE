@@ -66,25 +66,35 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Unit" )
 Include.File( "Event" )
+Include.File( "Client" )
 
 --- DATABASE class
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
+  Templates = {
+    Units = {},
+    Groups = {},
+    ClientsByName = {},
+    ClientsByID = {},
+  },
   DCSUnits = {},
   DCSUnitsAlive = {},
-  Units = {},
-  Groups = {},
   DCSGroups = {},
   DCSGroupsAlive = {},
+  Units = {},
+  UnitsAlive = {},
+  Groups = {},
+  GroupsAlive = {},
   NavPoints = {},
   Statics = {},
   Players = {},
-  AlivePlayers = {},
-  ClientsByName = {},
-  ClientsByID = {},
+  PlayersAlive = {},
+  Clients = {},
+  ClientsAlive = {},
   Filter = {
     Coalitions = nil,
     Categories = nil,
@@ -139,6 +149,14 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
   _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
+  
+  -- Add database with registered clients and already alive players
+  
+  -- Follow alive players and clients
+  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
+  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  
   
   return self
 end
@@ -260,16 +278,43 @@ function DATABASE:FilterStart()
     -- OK, we have a _DATABASE
     -- Now use the different filters to build the set.
     -- We first take ALL of the Units of the _DATABASE.
-    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Units ) do
-      self:T( UnitRegistration )
-      local DCSUnit = Unit.getByName( UnitRegistration.UnitName )
+    
+    self:E( { "Adding Database Datapoints with filters" } )
+    for DCSUnitName, DCSUnit in pairs( _DATABASE.DCSUnits ) do
+
       if self:_IsIncludeDCSUnit( DCSUnit ) then
-        self.DCSUnits[DCSUnit:getName()] = DCSUnit
-      end
-      if self:_IsAliveDCSUnit( DCSUnit ) then
-        self.DCSUnitsAlive[DCSUnit:getName()] = DCSUnit
+
+        self:E( { "Adding Unit:", DCSUnitName } )
+        self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
+        self.Units[DCSUnitName] = _DATABASE.Units[DCSUnitName]
+        
+        if _DATABASE.DCSUnitsAlive[DCSUnitName] then
+          self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
+          self.UnitsAlive[DCSUnitName] = _DATABASE.UnitsAlive[DCSUnitName]
+        end
+        
       end
     end
+    
+    for DCSGroupName, DCSGroup in pairs( _DATABASE.DCSGroups ) do
+      
+      --if self:_IsIncludeDCSGroup( DCSGroup ) then
+      self:E( { "Adding Group:", DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
+      self.Groups[DCSGroupName] = _DATABASE.Groups[DCSGroupName]
+      --end
+      
+      if _DATABASE.DCSGroupsAlive[DCSGroupName] then
+        self.DCSGroupsAlive[DCSGroupName] = _DATABASE.DCSGroupsAlive[DCSGroupName]
+        self.GroupsAlive[DCSGroupName] = _DATABASE.GroupsAlive[DCSGroupName]
+      end
+    end
+
+    for DCSUnitName, Client in pairs( _DATABASE.Clients ) do
+      self:E( { "Adding Client for Unit:", DCSUnitName } )
+      self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
+    end
+    
   else
     self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom DATABASE." )
   end
@@ -282,6 +327,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
+-- @param #DATABASE self
+-- @param #table SpawnTemplate
+-- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -315,7 +363,7 @@ end
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F( Status )
 
-  self.Groups[GroupName].Status = Status
+  self.Templates.Groups[GroupName].Status = Status
 end
 
 
@@ -323,46 +371,126 @@ end
 function DATABASE:GetStatusGroup( GroupName )
   self:F( Status )
 
-  if self.Groups[GroupName] then
-    return self.Groups[GroupName].Status
+  if self.Templates.Groups[GroupName] then
+    return self.Templates.Groups[GroupName].Status
   else
     return ""
   end
 end
 
---- Registers new Group Templates within the DATABASE Object.
+--- Private method that registers new Group Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
 function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
-  if not self.Groups[GroupTemplateName] then
-    self.Groups[GroupTemplateName] = {}
-    self.Groups[GroupTemplateName].Status = nil
+  if not self.Templates.Groups[GroupTemplateName] then
+    self.Templates.Groups[GroupTemplateName] = {}
+    self.Templates.Groups[GroupTemplateName].Status = nil
   end
-  self.Groups[GroupTemplateName].GroupName = GroupTemplateName
-  self.Groups[GroupTemplateName].Template = GroupTemplate
-  self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-  self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-  self.Groups[GroupTemplateName].Units = GroupTemplate.units
+  
+  -- Delete the spans from the route, it is not needed and takes memory.
+  if GroupTemplate.route and GroupTemplate.route.spans then 
+    GroupTemplate.route.spans = nil
+  end
+  
+  self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
+  self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
+  self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
+  self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
-  for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
+  for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
     local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Units[UnitTemplateName] = {}
-    self.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Units[UnitTemplateName].Template = UnitTemplate
-    self.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplateName] = {}
+    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
+    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
+    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self:E( {"skill",UnitTemplate.skill})
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:E( { "Unit", self.Units[UnitTemplateName].UnitName } )
+    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
   end
 end
+
+--- Private method that registers all alive players in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterPlayers()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for UnitId, UnitData in pairs( CoalitionData ) do
+      self:T3( { "UnitData:", UnitData } )
+      if UnitData and UnitData:isExist() then
+        local UnitName = UnitData:getName()
+        if not self.PlayersAlive[UnitName] then
+          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
+          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
+        end
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Private method that registers all datapoints within in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterDatabase()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getGroups( coalition.side.RED ), AlivePlayersBlue = coalition.getGroups( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
+
+      local DCSGroupName = DCSGroup:getName()
+
+      self:E( { "Register Group:", DCSGroup, DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = DCSGroup
+      self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+
+      if self:_IsAliveDCSGroup(DCSGroup) then
+        self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+        self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+        self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
+      end
+
+      for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+
+        local DCSUnitName = DCSUnit:getName()
+        self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
+
+        self.DCSUnits[DCSUnitName] = DCSUnit
+        self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+
+        if self:_IsAliveDCSUnit(DCSUnit) then
+          self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+          self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+          self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+        end
+      end
+      
+      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
+        self.Clients[ClientName] = CLIENT:New( ClientName )
+      end
+    end
+  end
+  
+  return self
+end
+
+
+--- Events
 
 --- Handles the OnBirth event for the alive units set.
 -- @param #DATABASE self
@@ -373,7 +501,15 @@ function DATABASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
+      self.Units[Event.IniDCSUnitName] = UNIT:New( Event.IniDCSUnit )
+      
+      --if not self.DCSGroups[Event.IniDCSGroupName] then
+      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
+      --end
+      self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
@@ -392,18 +528,54 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   end
 end
 
---- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+--- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerEnterUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if not self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
+        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
+      end
+    end
+  end
+end
+
+--- Handles the OnPlayerLeaveUnit event to clean the active players table.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerLeaveUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = nil
+        self.ClientsAlive[Event.IniDCSUnitName] = nil
+      end
+    end
+  end
+end
+
+--- Iterators
+
+--- Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
+function DATABASE:ForEach( IteratorFunction, arg, Set )
   self:F( arg )
   
   local function CoRoutine()
     local Count = 0
-    for DCSUnitID, DCSUnit in pairs( self.DCSUnitsAlive ) do
-        self:T2( DCSUnit )
-        IteratorFunction( DCSUnit, unpack( arg ) )
+    for ObjectID, Object in pairs( Set ) do
+        self:T2( Object )
+        IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
         if Count % 10 == 0 then
           coroutine.yield( false )
@@ -423,14 +595,55 @@ function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
       error( res )
     end
     if res == false then
-      timer.scheduleFunction( Schedule, {}, timer.getTime() + 0.001 )
+      return true -- resume next time the loop
     end
+    
+    return false
   end
 
-  timer.scheduleFunction( Schedule, {}, timer.getTime() + 1 )
+  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
   return self
 end
+
+
+--- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachDCSUnitAlive( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
+
+  return self
+end
+
+--- Interate the DATABASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayer( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  
+  return self
+end
+
+
+--- Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachClient( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Clients )
+
+  return self
+end
+
 
 function DATABASE:ScanEnvironment()
   self:F()
@@ -494,6 +707,9 @@ function DATABASE:ScanEnvironment()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
+
+  self:_RegisterDatabase()
+  self:_RegisterPlayers()
 
   return self
 end
@@ -580,6 +796,22 @@ function DATABASE:_IsAliveDCSUnit( DCSUnit )
   end
   self:T( DCSUnitAlive )
   return DCSUnitAlive
+end
+
+---
+-- @param #DATABASE self
+-- @param DCSGroup#Group DCSGroup
+-- @return #DATABASE self
+function DATABASE:_IsAliveDCSGroup( DCSGroup )
+  self:F( DCSGroup )
+  local DCSGroupAlive = false
+  if DCSGroup and DCSGroup:isExist() then
+    if self.DCSGroups[DCSGroup:getName()] then
+      DCSGroupAlive = true
+    end
+  end
+  self:T( DCSGroupAlive )
+  return DCSGroupAlive
 end
 
 

@@ -353,6 +353,7 @@ end
 -- @param #number Level
 function BASE:TraceLevel( Level )
   _TraceLevel = Level
+  self:E( "Tracing level " .. Level )
 end
 
 --- Set tracing for a class
@@ -361,6 +362,7 @@ end
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
+  self:E( "Tracing class " .. Class )
 end
 
 --- Set tracing for a specific method of  class
@@ -373,6 +375,7 @@ function BASE:TraceClassMethod( Class, Method )
     _TraceClassMethod[Class].Method = {}
   end
   _TraceClassMethod[Class].Method[Method] = true
+  self:E( "Tracing method " .. Method .. " of class " .. Class )
 end
 
 --- Trace a function call. Must be at the beginning of the function logic.

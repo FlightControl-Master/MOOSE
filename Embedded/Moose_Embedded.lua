@@ -1525,6 +1525,47 @@ function routines.IsUnitInZones( TransportUnit, LandingZones )
 	end
 end
 
+function routines.IsUnitNearZonesRadius( TransportUnit, LandingZones, ZoneRadius )
+--trace.f("", "routines.IsUnitInZones" )
+
+  local TransportZoneResult = nil
+  local TransportZonePos = nil
+  local TransportZone = nil
+
+    -- fill-up some local variables to support further calculations to determine location of units within the zone.
+  if TransportUnit then
+    local TransportUnitPos = TransportUnit:getPosition().p
+    if type( LandingZones ) == "table" then
+      for LandingZoneID, LandingZoneName in pairs( LandingZones ) do
+        TransportZone = trigger.misc.getZone( LandingZoneName )
+        if TransportZone then
+          TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+          if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+            TransportZoneResult = LandingZoneID
+            break
+          end
+        end
+      end
+    else
+      TransportZone = trigger.misc.getZone( LandingZones )
+      TransportZonePos = {radius = TransportZone.radius, x = TransportZone.point.x, y = TransportZone.point.y, z = TransportZone.point.z}
+      if  ((( TransportUnitPos.x - TransportZonePos.x)^2 + (TransportUnitPos.z - TransportZonePos.z)^2)^0.5 <= ZoneRadius ) then
+        TransportZoneResult = 1
+      end
+    end
+    if TransportZoneResult then
+      --trace.i( "routines", "TransportZone:" .. TransportZoneResult )
+    else
+      --trace.i( "routines", "TransportZone:nil logic" )
+    end
+    return TransportZoneResult
+  else
+    --trace.i( "routines", "TransportZone:nil hard" )
+    return nil
+  end
+end
+
+
 function routines.IsStaticInZones( TransportStatic, LandingZones )
 --trace.f()
 
@@ -1697,7 +1738,7 @@ function routines.getGroupRoute(groupIdent, task)   -- same as getGroupPoints bu
 		-- refactor to search by groupId and allow groupId and groupName as inputs
 	local gpId = groupIdent
 	if type(groupIdent) == 'string' and not tonumber(groupIdent) then
-		gpId = _DATABASE.Groups[groupIdent].groupId
+		gpId = _DATABASE.Templates.Groups[groupIdent].groupId
 	end
 	
 	for coa_name, coa_data in pairs(env.mission.coalition) do
@@ -2933,6 +2974,7 @@ end
 -- @param #number Level
 function BASE:TraceLevel( Level )
   _TraceLevel = Level
+  self:E( "Tracing level " .. Level )
 end
 
 --- Set tracing for a class
@@ -2941,6 +2983,7 @@ end
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
+  self:E( "Tracing class " .. Class )
 end
 
 --- Set tracing for a specific method of  class
@@ -2953,6 +2996,7 @@ function BASE:TraceClassMethod( Class, Method )
     _TraceClassMethod[Class].Method = {}
   end
   _TraceClassMethod[Class].Method[Method] = true
+  self:E( "Tracing method " .. Method .. " of class " .. Class )
 end
 
 --- Trace a function call. Must be at the beginning of the function logic.
@@ -3511,6 +3555,32 @@ function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
   return self
 end
 
+--- Set a new listener for an S_EVENT_PLAYER_ENTER_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerEnterUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_ENTER_UNIT )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_PLAYER_LEAVE_UNIT event.
+-- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf The self instance of the class for which the event is.
+-- @return #EVENT
+function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
+  self:F()
+
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
+  
+  return self
+end
+
 
 
 function EVENT:onEvent( Event )
@@ -3542,6 +3612,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
+    self:E( { _EVENTCODES[Event.id], Event } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
@@ -3556,6 +3627,377 @@ function EVENT:onEvent( Event )
   end
 end
 
+--- Encapsulation of DCS World Menu system in a set of MENU classes.
+-- @module Menu
+
+Include.File( "Routines" )
+Include.File( "Base" )
+
+--- The MENU class
+-- @type MENU
+-- @extends Base#BASE
+MENU = {
+  ClassName = "MENU",
+  MenuPath = nil,
+  MenuText = "",
+  MenuParentPath = nil
+}
+
+---
+function MENU:New( MenuText, MenuParentPath )
+
+	-- Arrange meta tables
+	local Child = BASE:Inherit( self, BASE:New() )
+
+	Child.MenuPath = nil 
+	Child.MenuText = MenuText
+	Child.MenuParentPath = MenuParentPath
+	return Child
+end
+
+--- The COMMANDMENU class
+-- @type COMMANDMENU
+-- @extends Menu#MENU
+COMMANDMENU = {
+  ClassName = "COMMANDMENU",
+  CommandMenuFunction = nil,
+  CommandMenuArgument = nil
+}
+
+function COMMANDMENU:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+
+	-- Arrange meta tables
+	
+	local MenuParentPath = nil
+	if ParentMenu ~= nil then
+		MenuParentPath = ParentMenu.MenuPath
+	end
+
+	local Child = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+
+	Child.MenuPath = missionCommands.addCommand( MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+	Child.CommandMenuFunction = CommandMenuFunction
+	Child.CommandMenuArgument = CommandMenuArgument
+	return Child
+end
+
+--- The SUBMENU class
+-- @type SUBMENU
+-- @extends Menu#MENU
+SUBMENU = {
+  ClassName = "SUBMENU"
+}
+
+function SUBMENU:New( MenuText, ParentMenu )
+
+	-- Arrange meta tables
+	local MenuParentPath = nil
+	if ParentMenu ~= nil then
+		MenuParentPath = ParentMenu.MenuPath
+	end
+
+	local Child = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+
+	Child.MenuPath = missionCommands.addSubMenu( MenuText, MenuParentPath )
+	return Child
+end
+
+-- This local variable is used to cache the menus registered under clients.
+-- Menus don't dissapear when clients are destroyed and restarted.
+-- So every menu for a client created must be tracked so that program logic accidentally does not create
+-- the same menus twice during initialization logic.
+-- These menu classes are handling this logic with this variable.
+local _MENUCLIENTS = {}
+
+--- The MENU_CLIENT class
+-- @type MENU_CLIENT
+-- @extends Menu#MENU
+MENU_CLIENT = {
+  ClassName = "MENU_CLIENT"
+}
+
+--- Creates a new menu item for a group
+-- @param self
+-- @param Client#CLIENT MenuClient The Client owning the menu.
+-- @param #string MenuText The text for the menu.
+-- @param #table ParentMenu The parent menu.
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
+
+	-- Arrange meta tables
+	local MenuParentPath = {}
+	if ParentMenu ~= nil then
+	  MenuParentPath = ParentMenu.MenuPath
+	end
+
+	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+	self:F( { MenuClient, MenuText, ParentMenu } )
+
+  self.MenuClient = MenuClient
+  self.MenuClientGroupID = MenuClient:GetClientGroupID()
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+  
+  self.Menus = {}
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
+
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
+  end
+
+	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+	MenuPath[MenuPathID] = self.MenuPath
+
+  self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
+
+  if ParentMenu and ParentMenu.Menus then
+    ParentMenu.Menus[self.MenuPath] = self
+  end
+	return self
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:RemoveSubMenus()
+  self:F( self.MenuPath )
+
+  for MenuID, Menu in pairs( self.Menus ) do
+    Menu:Remove()
+  end
+
+end
+
+--- Removes the sub menus recursively of this MENU_CLIENT.
+-- @param #MENU_CLIENT self
+-- @return #MENU_CLIENT self
+function MENU_CLIENT:Remove()
+  self:F( self.MenuPath )
+
+  self:RemoveSubMenus()
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+  end
+  
+  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
+end
+
+
+--- The MENU_CLIENT_COMMAND class
+-- @type MENU_CLIENT_COMMAND
+-- @extends Menu#MENU
+MENU_CLIENT_COMMAND = {
+  ClassName = "MENU_CLIENT_COMMAND"
+}
+
+--- Creates a new radio command item for a group
+-- @param self
+-- @param Client#CLIENT MenuClient The Client owning the menu.
+-- @param MenuText The text for the menu.
+-- @param ParentMenu The parent menu.
+-- @param CommandMenuFunction A function that is called when the menu key is pressed.
+-- @param CommandMenuArgument An argument for the function.
+-- @return Menu#MENU_CLIENT_COMMAND self
+function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+
+	-- Arrange meta tables
+	
+	local MenuParentPath = {}
+	if ParentMenu ~= nil then
+		MenuParentPath = ParentMenu.MenuPath
+	end
+
+	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+	
+  self.MenuClient = MenuClient
+  self.MenuClientGroupID = MenuClient:GetClientGroupID()
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+
+  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+  if MenuPath[MenuPathID] then
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
+  end
+  
+	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+  MenuPath[MenuPathID] = self.MenuPath
+ 
+	self.CommandMenuFunction = CommandMenuFunction
+	self.CommandMenuArgument = CommandMenuArgument
+	
+	ParentMenu.Menus[self.MenuPath] = self
+	
+	return self
+end
+
+function MENU_CLIENT_COMMAND:Remove()
+  self:F( self.MenuPath )
+
+  if not _MENUCLIENTS[self.MenuClientGroupID] then
+    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  end
+  
+  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+
+  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+  end
+  
+  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
+end
+
+
+--- The MENU_COALITION class
+-- @type MENU_COALITION
+-- @extends Menu#MENU
+MENU_COALITION = {
+  ClassName = "MENU_COALITION"
+}
+
+--- Creates a new coalition menu item
+-- @param #MENU_COALITION self
+-- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param #string MenuText The text for the menu.
+-- @param #table ParentMenu The parent menu.
+-- @return #MENU_COALITION self
+function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
+
+  -- Arrange meta tables
+  local MenuParentPath = {}
+  if ParentMenu ~= nil then
+    MenuParentPath = ParentMenu.MenuPath
+  end
+
+  local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  self:F( { MenuCoalition, MenuText, ParentMenu } )
+
+  self.MenuCoalition = MenuCoalition
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+  
+  self.Menus = {}
+
+  self:T( { MenuParentPath, MenuText } )
+
+  self.MenuPath = missionCommands.addSubMenuForCoalition( self.MenuCoalition, MenuText, MenuParentPath )
+
+  self:T( { self.MenuPath } )
+
+  if ParentMenu and ParentMenu.Menus then
+    ParentMenu.Menus[self.MenuPath] = self
+  end
+  return self
+end
+
+--- Removes the sub menus recursively of this MENU_COALITION.
+-- @param #MENU_COALITION self
+-- @return #MENU_COALITION self
+function MENU_COALITION:RemoveSubMenus()
+  self:F( self.MenuPath )
+
+  for MenuID, Menu in pairs( self.Menus ) do
+    Menu:Remove()
+  end
+
+end
+
+--- Removes the sub menus recursively of this MENU_COALITION.
+-- @param #MENU_COALITION self
+-- @return #MENU_COALITION self
+function MENU_COALITION:Remove()
+  self:F( self.MenuPath )
+
+  self:RemoveSubMenus()
+  missionCommands.removeItemForCoalition( self.MenuCoalition, self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+
+  return nil
+end
+
+
+--- The MENU_COALITION_COMMAND class
+-- @type MENU_COALITION_COMMAND
+-- @extends Menu#MENU
+MENU_COALITION_COMMAND = {
+  ClassName = "MENU_COALITION_COMMAND"
+}
+
+--- Creates a new radio command item for a group
+-- @param #MENU_COALITION_COMMAND self
+-- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param MenuText The text for the menu.
+-- @param ParentMenu The parent menu.
+-- @param CommandMenuFunction A function that is called when the menu key is pressed.
+-- @param CommandMenuArgument An argument for the function.
+-- @return #MENU_COALITION_COMMAND self
+function MENU_COALITION_COMMAND:New( MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+
+  -- Arrange meta tables
+  
+  local MenuParentPath = {}
+  if ParentMenu ~= nil then
+    MenuParentPath = ParentMenu.MenuPath
+  end
+
+  local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  
+  self.MenuCoalition = MenuCoalition
+  self.MenuParentPath = MenuParentPath
+  self.MenuText = MenuText
+  self.ParentMenu = ParentMenu
+
+  self:T( { MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+
+  self.MenuPath = missionCommands.addCommandForCoalition( self.MenuCoalition, MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+ 
+  self.CommandMenuFunction = CommandMenuFunction
+  self.CommandMenuArgument = CommandMenuArgument
+  
+  ParentMenu.Menus[self.MenuPath] = self
+  
+  return self
+end
+
+--- Removes a radio command item for a coalition
+-- @param #MENU_COALITION_COMMAND self
+-- @return #MENU_COALITION_COMMAND self
+function MENU_COALITION_COMMAND:Remove()
+  self:F( self.MenuPath )
+
+  missionCommands.removeItemForCoalition( self.MenuCoalition, self.MenuPath )
+  self.ParentMenu.Menus[self.MenuPath] = nil
+  return nil
+end
 --- A GROUP class abstraction of a DCSGroup class. 
 -- The GROUP class will take an abstraction of the DCSGroup class, providing more methods that can be done with a GROUP.
 -- @module Group
@@ -3650,6 +4092,18 @@ function GROUP:NewFromDCSUnit( DCSUnit )
   return self
 end
 
+--- Returns the name of the Group.
+-- @param #GROUP self
+-- @return #string GroupName
+function GROUP:GetName()
+
+  local GroupName = self.DCSGroup:getName()
+
+  return GroupName
+end
+
+
+
 --- Retrieve the group mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Group#GROUP:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
@@ -3686,7 +4140,12 @@ function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionAr
   
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionGroup = GROUP.FindGroup( ... ) "
-  DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+
+  if FunctionArguments.n > 0 then
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
+  else
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup )"
+  end  
   
   DCSTask = self:TaskWrappedAction( 
     self:CommandDoScript(
@@ -4152,6 +4611,41 @@ function GROUP:TaskWrappedAction( DCSCommand, Index )
   return DCSTaskWrappedAction
 end
 
+--- Executes a command action
+-- @param #GROUP self
+-- @param DCSCommand#Command DCSCommand
+-- @return #GROUP self
+function GROUP:SetCommand( DCSCommand )
+  self:F( DCSCommand )
+  
+  local Controller = self:_GetController()
+  
+  Controller:setCommand( DCSCommand )
+
+  return self
+end
+
+--- Perform a switch waypoint command
+-- @param #GROUP self
+-- @param #number FromWayPoint
+-- @param #number ToWayPoint
+-- @return DCSTask#Task
+function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
+  self:F( { FromWayPoint, ToWayPoint, Index } )
+  
+  local CommandSwitchWayPoint = {
+    id = 'SwitchWaypoint', 
+    params = { 
+      fromWaypointIndex = FromWayPoint,  
+      goToWaypointIndex = ToWayPoint, 
+    },
+  }
+  
+  self:T( { CommandSwitchWayPoint } )
+  return CommandSwitchWayPoint
+end
+  
+
 --- Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #GROUP self
 -- @param #Vec2 Point The point to hold the position.
@@ -4159,7 +4653,7 @@ end
 -- @param #number Speed The speed flying when holding the position.
 -- @return #GROUP self
 function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
-	self:F( { self.GroupName, Point, Altitude, Speed  } )
+	self:F( { self.GroupName, Point, Altitude, Speed } )
 
 --  pattern = enum AI.Task.OribtPattern,
 --    point = Vec2,
@@ -4290,8 +4784,41 @@ function GROUP:TaskAttackUnit( AttackUnit )
               params = { unitId = AttackUnit:GetID(), 
                          expend = AI.Task.WeaponExpend.TWO,
                          groupAttack = true, 
-                       } 
-            } 
+                       }, 
+            }, 
+  
+  self:T( { DCSTask } )
+  return DCSTask
+end
+
+--- Attack a Group.
+-- @param #GROUP self
+-- @param Group#GROUP AttackGroup The Group to be attacked.
+-- @return DCSTask#Task The DCS task structure.
+function GROUP:TaskAttackGroup( AttackGroup )
+  self:F( { self.GroupName, AttackGroup } )
+
+--  AttackGroup = { 
+--   id = 'AttackGroup', 
+--   params = { 
+--     groupId = Group.ID,
+--     weaponType = number,
+--     expend = enum AI.Task.WeaponExpend,
+--     attackQty = number,
+--     directionEnabled = boolean,
+--     direction = Azimuth,
+--     altitudeEnabled = boolean,
+--     altitude = Distance,
+--     attackQtyLimit = boolean,
+--   } 
+-- }  
+
+  local DCSTask    
+  DCSTask = { id = 'AttackGroup', 
+              params = { groupId = AttackGroup:GetID(), 
+                         expend = AI.Task.WeaponExpend.TWO,
+                       }, 
+            }, 
   
   self:T( { DCSTask } )
   return DCSTask
@@ -4557,7 +5084,7 @@ end
 function GROUP:GetTaskMission()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template )
+  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template )
 end
 
 --- Return the mission route of the group.
@@ -4566,7 +5093,7 @@ end
 function GROUP:GetTaskRoute()
   self:F( self.GroupName )
 
-  return routines.utils.deepCopy( _DATABASE.Groups[self.GroupName].Template.route.points )
+  return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
 --- Return the route of a group by using the @{Database#DATABASE} class.
@@ -4590,7 +5117,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 	
 	self:T( { GroupName } )
 	
-	local Template = _DATABASE.Groups[GroupName].Template
+	local Template = _DATABASE.Templates.Groups[GroupName].Template
 	
 	if Template then
 		if not Begin then
@@ -5023,11 +5550,13 @@ UNIT = {
 -- @return Unit#UNIT
 function UNIT:New( DCSUnit )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F( DCSUnit:getName() )
+	self:F( DCSUnit )
 
 	self.DCSUnit = DCSUnit
-	self.UnitName = DCSUnit:getName()
-	self.UnitID = DCSUnit:getID()
+	if DCSUnit then
+  	self.UnitName = DCSUnit:getName()
+  	self.UnitID = DCSUnit:getID()
+  end
 
 	return self
 end
@@ -5058,6 +5587,18 @@ function UNIT:GetName()
 	return self.UnitName
 end
 
+function UNIT:GetPlayerName()
+  self:F( self.UnitName )
+  
+  local DCSUnit = Unit.getByName( self.UnitName )
+  
+  local PlayerName = DCSUnit:getPlayerName()
+  if PlayerName == nil then
+    PlayerName = ""
+  end
+  
+  return PlayerName
+end
 function UNIT:GetTypeName()
 	self:F( self.UnitName )
 	
@@ -5263,6 +5804,17 @@ function ZONE:GetPointVec2()
 	return Point	
 end
 
+function ZONE:GetPointVec3( Height )
+  self:F( self.ZoneName )
+
+  local Zone = trigger.misc.getZone( self.ZoneName )
+  local Point = { x = Zone.point.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = Zone.point.z }
+
+  self:T( { Zone, Point } )
+  
+  return Point  
+end
+
 function ZONE:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
@@ -5289,6 +5841,499 @@ function ZONE:GetRadius()
 	return Zone.radius
 end
 
+--- The CLIENT models client units in multi player missions.
+-- 
+-- @{#CLIENT} class
+-- ================
+-- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
+-- Note that clients are NOT the same as Units, they are NOT necessarily alive.
+-- 
+-- Clients are being used by the @{MISSION} class to follow players and register their successes.
+-- 
+-- CLIENT construction methods:
+-- ============================ 
+-- Create a new CLIENT object with the @{#CLIENT.New} method:
+-- 
+--   * @{#CLIENT.New}: Creates a new CLIENT object taking the name of the **DCSUnit** that is a client as defined within the mission editor.
+--  
+-- @module Client
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Cargo" )
+Include.File( "Message" )
+
+
+--- The CLIENT class
+-- @type CLIENT
+-- @extends Base#BASE
+CLIENT = {
+	ONBOARDSIDE = {
+		NONE = 0,
+		LEFT = 1,
+		RIGHT = 2,
+		BACK = 3,
+		FRONT = 4
+	},
+	ClassName = "CLIENT",
+	ClientName = nil,
+	ClientAlive = false,
+	ClientTransport = false,
+	ClientBriefingShown = false,
+	_Menus = {},
+	_Tasks = {},
+	Messages = { 
+	}
+}
+
+
+--- Use this method to register new Clients within a mission.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return #CLIENT
+-- @usage
+-- -- Create new Clients.
+--	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
+--	Mission:AddGoal( DeploySA6TroopsGoal )
+--
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+--	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
+function CLIENT:New( ClientName, ClientBriefing )
+	local self = BASE:Inherit( self, BASE:New() )
+	self:F( ClientName, ClientBriefing )
+
+  self.ClientName = ClientName
+	self:AddBriefing( ClientBriefing )
+	self.MessageSwitch = true
+	
+	return self
+end
+
+--- Transport defines that the Client is a Transport. Transports show cargo.
+-- @param #CLIENT self
+-- @return #CLIENT
+function CLIENT:Transport()
+  self:F()
+
+  self.ClientTransport = true
+  return self
+end
+
+--- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
+-- @param #CLIENT self
+-- @param #string ClientBriefing is the text defining the Mission briefing.
+-- @return #CLIENT
+function CLIENT:AddBriefing( ClientBriefing )
+  self:F()
+  self.ClientBriefing = ClientBriefing
+  return self
+end
+
+
+--- Resets a CLIENT.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
+function CLIENT:Reset( ClientName )
+	self:F()
+	self._Menus = {}
+end
+
+--- Checks for a client alive event and calls a function on a continuous basis.
+-- @param #CLIENT self
+-- @param #function CallBack Function.
+-- @return #CLIENT
+function CLIENT:Alive( CallBack, ... )
+  self:F()
+  
+  self.ClientAlive2 = false
+  self.ClientCallBack = CallBack
+  self.ClientParameters = arg
+  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+
+  return self
+end
+
+-- Is Functions
+
+--- Checks if the CLIENT is a multi-seated UNIT.
+-- @param #CLIENT self
+-- @return #boolean true if multi-seated.
+function CLIENT:IsMultiSeated()
+  self:F( self.ClientName )
+
+  local ClientMultiSeatedTypes = { 
+    ["Mi-8MT"]  = "Mi-8MT", 
+    ["UH-1H"]   = "UH-1H", 
+    ["P-51B"]   = "P-51B" 
+  }
+  
+  if self:IsAlive() then
+    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
+    if ClientMultiSeatedTypes[ClientTypeName] then
+      return true
+    end
+  end
+  
+  return false
+end
+
+--- Checks if client is alive and returns true or false.
+-- @param #CLIENT self
+-- @returns #boolean Returns true if client is alive.
+function CLIENT:IsAlive()
+  self:F( self.ClientName )
+  
+  local ClientUnit = Unit.getByName( self.ClientName )
+  
+  if ClientUnit and ClientUnit:isExist() then
+    self:T("true")
+    return true
+  end
+  
+  self:T( "false" )
+  return false
+end
+
+
+--- @param #CLIENT self
+function CLIENT:_AliveCheckScheduler()
+  self:F( { self.ClientName, self.ClientAlive2 } )
+
+  if self:IsAlive() then
+    if self.ClientAlive2 == false then
+      self:T("Calling Callback function")
+      self.ClientCallBack( self, unpack( self.ClientParameters ) )
+      self.ClientAlive2 = true
+    end
+  else
+    if self.ClientAlive2 == true then
+      self.ClientAlive2 = false
+    end
+  end
+end
+
+--- Return the DCSGroup of a Client.
+-- This function is modified to deal with a couple of bugs in DCS 1.5.3
+-- @param #CLIENT self
+-- @return DCSGroup#Group
+function CLIENT:GetDCSGroup()
+  self:F3()
+
+--  local ClientData = Group.getByName( self.ClientName )
+--	if ClientData and ClientData:isExist() then
+--		self:T( self.ClientName .. " : group found!" )
+--		return ClientData
+--	else
+--		return nil
+--	end
+
+  local ClientUnit = Unit.getByName( self.ClientName )
+
+	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+		self:T3( { "CoalitionData:", CoalitionData } )
+		for UnitId, UnitData in pairs( CoalitionData ) do
+			self:T3( { "UnitData:", UnitData } )
+			if UnitData and UnitData:isExist() then
+
+        --self:E(self.ClientName)
+        if ClientUnit then
+  				local ClientGroup = ClientUnit:getGroup()
+  				if ClientGroup then
+  					self:T3( "ClientGroup = " .. self.ClientName )
+  					if ClientGroup:isExist() and UnitData:getGroup():isExist() then 
+  						if ClientGroup:getID() == UnitData:getGroup():getID() then
+  							self:T3( "Normal logic" )
+  							self:T3( self.ClientName .. " : group found!" )
+                self.ClientGroupID = ClientGroup:getID()
+  							self.ClientGroupName = ClientGroup:getName()
+  							return ClientGroup
+  						end
+  					else
+  						-- Now we need to resolve the bugs in DCS 1.5 ...
+  						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
+  						self:T3( "Bug 1.5 logic" )
+  						local ClientGroupTemplate = _DATABASE.Templates.Units[self.ClientName].GroupTemplate
+  						self.ClientGroupID = ClientGroupTemplate.groupId
+  						self.ClientGroupName = _DATABASE.Templates.Units[self.ClientName].GroupName
+  						self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
+  						return ClientGroup
+  					end
+  --				else
+  --					error( "Client " .. self.ClientName .. " not found!" )
+  				end
+  		  end
+			end
+		end
+	end
+
+	-- For non player clients
+	if ClientUnit then
+  	local ClientGroup = ClientUnit:getGroup()
+  	if ClientGroup then
+  		self:T3( "ClientGroup = " .. self.ClientName )
+  		if ClientGroup:isExist() then 
+  			self:T3( "Normal logic" )
+  			self:T3( self.ClientName .. " : group found!" )
+  			return ClientGroup
+  		end
+  	end
+  end
+	
+	self.ClientGroupID = nil
+	self.ClientGroupUnit = nil
+	
+	return nil
+end 
+
+
+-- TODO: Check DCSTypes#Group.ID
+--- Get the group ID of the client.
+-- @param #CLIENT self
+-- @return DCSTypes#Group.ID
+function CLIENT:GetClientGroupID()
+
+  local ClientGroup = self:GetDCSGroup()
+
+  --self:E( self.ClientGroupID ) -- Determined in GetDCSGroup()
+	return self.ClientGroupID
+end
+
+
+--- Get the name of the group of the client.
+-- @param #CLIENT self
+-- @return #string
+function CLIENT:GetClientGroupName()
+
+  local ClientGroup = self:GetDCSGroup()
+
+  self:T( self.ClientGroupName ) -- Determined in GetDCSGroup()
+	return self.ClientGroupName
+end
+
+--- Returns the UNIT of the CLIENT.
+-- @param #CLIENT self
+-- @return Unit#UNIT
+function CLIENT:GetClientGroupUnit()
+	self:F2()
+
+	local ClientDCSUnit = Unit.getByName( self.ClientName )
+
+  self:T( self.ClientDCSUnit )
+	if ClientDCSUnit and ClientDCSUnit:isExist() then
+		local ClientUnit = _DATABASE.Units[ self.ClientName ]
+		self:T2( ClientUnit )
+		return ClientUnit
+	end
+end
+
+--- Returns the DCSUnit of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Unit
+function CLIENT:GetClientGroupDCSUnit()
+	self:F2()
+
+  local ClientDCSUnit = Unit.getByName( self.ClientName )
+  
+  if ClientDCSUnit and ClientDCSUnit:isExist() then
+    self:T2( ClientDCSUnit )
+    return ClientDCSUnit
+  end
+end
+
+-- TODO what is this??? check. possible double function.
+function CLIENT:GetUnit()
+	self:F()
+	
+	return UNIT:New( self:GetClientGroupDCSUnit() )
+end
+
+--- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
+-- @param #CLIENT self
+-- @return DCSTypes#Vec2
+function CLIENT:GetPointVec2()
+	self:F()
+
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      local PointVec2 = {} --DCSTypes#Vec2
+      PointVec2.x = PointVec3.x
+      PointVec2.y = PointVec3.z
+      self:T( { PointVec2 } )
+      return PointVec2
+    end
+  end
+  
+  return nil
+end 
+
+function CLIENT:GetPositionVec3()
+  self:F( self.ClientName )
+  
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitPos = DCSUnit:getPosition().p
+
+  self:T( UnitPos )
+  return UnitPos
+end
+
+function CLIENT:GetID()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local UnitID = DCSUnit:getID()
+  
+  self:T( UnitID )
+  return UnitID
+end
+
+function CLIENT:GetName()
+  self:F( self.ClientName )
+  
+  self:T( self.ClientName )
+  return self.ClientName
+end
+
+function CLIENT:GetTypeName()
+  self:F( self.ClientName )
+
+  local DCSUnit = Unit.getByName( self.ClientName )
+  local TypeName = DCSUnit:getTypeName()
+  
+  self:T( TypeName )
+  return TypeName
+end
+
+
+
+--- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
+-- @param #CLIENT self
+-- @return DCSTypes#Vec3
+function CLIENT:ClientPosition()
+	self:F()
+
+	local ClientGroupUnit = self:GetClientGroupDCSUnit()
+	
+	if ClientGroupUnit then
+		if ClientGroupUnit:isExist() then
+			return ClientGroupUnit:getPosition()
+		end
+	end
+	
+	return nil
+end 
+
+--- Returns the altitude of the CLIENT.
+-- @param #CLIENT self
+-- @return DCSTypes#Distance
+function CLIENT:GetAltitude()
+	self:F()
+
+  local ClientGroupUnit = self:GetClientGroupDCSUnit()
+  
+  if ClientGroupUnit then
+    if ClientGroupUnit:isExist() then
+      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
+      return PointVec3.y
+    end
+  end
+  
+  return nil
+end 
+
+
+--- Evaluates if the CLIENT is a transport.
+-- @param #CLIENT self
+-- @return #boolean true is a transport.
+function CLIENT:IsTransport()
+	self:F()
+	return self.ClientTransport
+end
+
+--- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+-- @param #CLIENT self
+function CLIENT:ShowCargo()
+	self:F()
+
+	local CargoMsg = ""
+  
+	for CargoName, Cargo in pairs( CARGOS ) do
+		if self == Cargo:IsLoadedInClient() then
+			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
+		end
+	end
+  
+	if CargoMsg == "" then
+		CargoMsg = "empty"
+	end
+  
+	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
+
+end
+
+-- TODO (1) I urgently need to revise this.
+--- A local function called by the DCS World Menu system to switch off messages.
+function CLIENT.SwitchMessages( PrmTable )
+	PrmTable[1].MessageSwitch = PrmTable[2]
+end
+
+--- The main message driver for the CLIENT.
+-- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
+-- @param #CLIENT self
+-- @param #string Message is the text describing the message.
+-- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
+-- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
+-- @param #string MessageCategory is the category of the message (the title).
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
+function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
+	self:F()
+
+	if not self.MenuMessages then
+		if self:GetClientGroupID() then
+			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
+			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
+			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
+		end
+	end
+
+	if self.MessageSwitch == true then
+		if MessageCategory == nil then
+			MessageCategory = "Messages"
+		end
+		if self.Messages[MessageId] == nil then
+			self.Messages[MessageId] = {}
+			self.Messages[MessageId].MessageId = MessageId
+			self.Messages[MessageId].MessageTime = timer.getTime()
+			self.Messages[MessageId].MessageDuration = MessageDuration
+			if MessageInterval == nil then
+				self.Messages[MessageId].MessageInterval = 600
+			else
+				self.Messages[MessageId].MessageInterval = MessageInterval
+			end
+			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+		else
+			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
+				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
+					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					self.Messages[MessageId].MessageTime = timer.getTime()
+				end
+			else
+				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
+					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					self.Messages[MessageId].MessageTime = timer.getTime()
+				end
+			end
+		end
+	end
+end
 --- Manage sets of units and groups. 
 -- 
 -- @{#Database} class
@@ -5357,25 +6402,35 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Unit" )
 Include.File( "Event" )
+Include.File( "Client" )
 
 --- DATABASE class
 -- @type DATABASE
 -- @extends Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
+  Templates = {
+    Units = {},
+    Groups = {},
+    ClientsByName = {},
+    ClientsByID = {},
+  },
   DCSUnits = {},
   DCSUnitsAlive = {},
-  Units = {},
-  Groups = {},
   DCSGroups = {},
   DCSGroupsAlive = {},
+  Units = {},
+  UnitsAlive = {},
+  Groups = {},
+  GroupsAlive = {},
   NavPoints = {},
   Statics = {},
   Players = {},
-  AlivePlayers = {},
-  ClientsByName = {},
-  ClientsByID = {},
+  PlayersAlive = {},
+  Clients = {},
+  ClientsAlive = {},
   Filter = {
     Coalitions = nil,
     Categories = nil,
@@ -5430,6 +6485,14 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
   _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
+  
+  -- Add database with registered clients and already alive players
+  
+  -- Follow alive players and clients
+  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
+  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  
   
   return self
 end
@@ -5551,16 +6614,43 @@ function DATABASE:FilterStart()
     -- OK, we have a _DATABASE
     -- Now use the different filters to build the set.
     -- We first take ALL of the Units of the _DATABASE.
-    for UnitRegistrationID, UnitRegistration in pairs( _DATABASE.Units ) do
-      self:T( UnitRegistration )
-      local DCSUnit = Unit.getByName( UnitRegistration.UnitName )
+    
+    self:E( { "Adding Database Datapoints with filters" } )
+    for DCSUnitName, DCSUnit in pairs( _DATABASE.DCSUnits ) do
+
       if self:_IsIncludeDCSUnit( DCSUnit ) then
-        self.DCSUnits[DCSUnit:getName()] = DCSUnit
-      end
-      if self:_IsAliveDCSUnit( DCSUnit ) then
-        self.DCSUnitsAlive[DCSUnit:getName()] = DCSUnit
+
+        self:E( { "Adding Unit:", DCSUnitName } )
+        self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
+        self.Units[DCSUnitName] = _DATABASE.Units[DCSUnitName]
+        
+        if _DATABASE.DCSUnitsAlive[DCSUnitName] then
+          self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
+          self.UnitsAlive[DCSUnitName] = _DATABASE.UnitsAlive[DCSUnitName]
+        end
+        
       end
     end
+    
+    for DCSGroupName, DCSGroup in pairs( _DATABASE.DCSGroups ) do
+      
+      --if self:_IsIncludeDCSGroup( DCSGroup ) then
+      self:E( { "Adding Group:", DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
+      self.Groups[DCSGroupName] = _DATABASE.Groups[DCSGroupName]
+      --end
+      
+      if _DATABASE.DCSGroupsAlive[DCSGroupName] then
+        self.DCSGroupsAlive[DCSGroupName] = _DATABASE.DCSGroupsAlive[DCSGroupName]
+        self.GroupsAlive[DCSGroupName] = _DATABASE.GroupsAlive[DCSGroupName]
+      end
+    end
+
+    for DCSUnitName, Client in pairs( _DATABASE.Clients ) do
+      self:E( { "Adding Client for Unit:", DCSUnitName } )
+      self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
+    end
+    
   else
     self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom DATABASE." )
   end
@@ -5573,6 +6663,9 @@ end
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
 -- SpawnCountryID, SpawnCategoryID
 -- This method is used by the SPAWN class.
+-- @param #DATABASE self
+-- @param #table SpawnTemplate
+-- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
   self:F( SpawnTemplate.name )
 
@@ -5606,7 +6699,7 @@ end
 function DATABASE:SetStatusGroup( GroupName, Status )
   self:F( Status )
 
-  self.Groups[GroupName].Status = Status
+  self.Templates.Groups[GroupName].Status = Status
 end
 
 
@@ -5614,46 +6707,126 @@ end
 function DATABASE:GetStatusGroup( GroupName )
   self:F( Status )
 
-  if self.Groups[GroupName] then
-    return self.Groups[GroupName].Status
+  if self.Templates.Groups[GroupName] then
+    return self.Templates.Groups[GroupName].Status
   else
     return ""
   end
 end
 
---- Registers new Group Templates within the DATABASE Object.
+--- Private method that registers new Group Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
 function DATABASE:_RegisterGroup( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
-  if not self.Groups[GroupTemplateName] then
-    self.Groups[GroupTemplateName] = {}
-    self.Groups[GroupTemplateName].Status = nil
+  if not self.Templates.Groups[GroupTemplateName] then
+    self.Templates.Groups[GroupTemplateName] = {}
+    self.Templates.Groups[GroupTemplateName].Status = nil
   end
-  self.Groups[GroupTemplateName].GroupName = GroupTemplateName
-  self.Groups[GroupTemplateName].Template = GroupTemplate
-  self.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-  self.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-  self.Groups[GroupTemplateName].Units = GroupTemplate.units
+  
+  -- Delete the spans from the route, it is not needed and takes memory.
+  if GroupTemplate.route and GroupTemplate.route.spans then 
+    GroupTemplate.route.spans = nil
+  end
+  
+  self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
+  self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
+  self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
+  self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Groups[GroupTemplateName].GroupName, self.Groups[GroupTemplateName].UnitCount } )
+  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
-  for unit_num, UnitTemplate in pairs(GroupTemplate.units) do
+  for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
     local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Units[UnitTemplateName] = {}
-    self.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Units[UnitTemplateName].Template = UnitTemplate
-    self.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplateName] = {}
+    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
+    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
+    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self:E( {"skill",UnitTemplate.skill})
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:E( { "Unit", self.Units[UnitTemplateName].UnitName } )
+    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
   end
 end
+
+--- Private method that registers all alive players in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterPlayers()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for UnitId, UnitData in pairs( CoalitionData ) do
+      self:T3( { "UnitData:", UnitData } )
+      if UnitData and UnitData:isExist() then
+        local UnitName = UnitData:getName()
+        if not self.PlayersAlive[UnitName] then
+          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
+          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
+        end
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Private method that registers all datapoints within in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterDatabase()
+
+  local CoalitionsData = { AlivePlayersRed = coalition.getGroups( coalition.side.RED ), AlivePlayersBlue = coalition.getGroups( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
+
+      local DCSGroupName = DCSGroup:getName()
+
+      self:E( { "Register Group:", DCSGroup, DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = DCSGroup
+      self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+
+      if self:_IsAliveDCSGroup(DCSGroup) then
+        self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+        self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+        self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
+      end
+
+      for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+
+        local DCSUnitName = DCSUnit:getName()
+        self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
+
+        self.DCSUnits[DCSUnitName] = DCSUnit
+        self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+
+        if self:_IsAliveDCSUnit(DCSUnit) then
+          self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+          self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+          self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+        end
+      end
+      
+      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
+        self.Clients[ClientName] = CLIENT:New( ClientName )
+      end
+    end
+  end
+  
+  return self
+end
+
+
+--- Events
 
 --- Handles the OnBirth event for the alive units set.
 -- @param #DATABASE self
@@ -5664,7 +6837,15 @@ function DATABASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
+      self.Units[Event.IniDCSUnitName] = UNIT:New( Event.IniDCSUnit )
+      
+      --if not self.DCSGroups[Event.IniDCSGroupName] then
+      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
+      --end
+      self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
@@ -5683,18 +6864,54 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   end
 end
 
---- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+--- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerEnterUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if not self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
+        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
+      end
+    end
+  end
+end
+
+--- Handles the OnPlayerLeaveUnit event to clean the active players table.
+-- @param #DATABASE self
+-- @param Event#EVENTDATA Event
+function DATABASE:_EventOnPlayerLeaveUnit( Event )
+  self:F( { Event } )
+
+  if Event.IniDCSUnit then
+    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
+      if self.PlayersAlive[Event.IniDCSUnitName] then
+        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+        self.PlayersAlive[Event.IniDCSUnitName] = nil
+        self.ClientsAlive[Event.IniDCSUnitName] = nil
+      end
+    end
+  end
+end
+
+--- Iterators
+
+--- Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
+function DATABASE:ForEach( IteratorFunction, arg, Set )
   self:F( arg )
   
   local function CoRoutine()
     local Count = 0
-    for DCSUnitID, DCSUnit in pairs( self.DCSUnitsAlive ) do
-        self:T2( DCSUnit )
-        IteratorFunction( DCSUnit, unpack( arg ) )
+    for ObjectID, Object in pairs( Set ) do
+        self:T2( Object )
+        IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
         if Count % 10 == 0 then
           coroutine.yield( false )
@@ -5714,14 +6931,55 @@ function DATABASE:ForEachAliveUnit( IteratorFunction, ... )
       error( res )
     end
     if res == false then
-      timer.scheduleFunction( Schedule, {}, timer.getTime() + 0.001 )
+      return true -- resume next time the loop
     end
+    
+    return false
   end
 
-  timer.scheduleFunction( Schedule, {}, timer.getTime() + 1 )
+  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
   return self
 end
+
+
+--- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachDCSUnitAlive( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
+
+  return self
+end
+
+--- Interate the DATABASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayer( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  
+  return self
+end
+
+
+--- Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachClient( IteratorFunction, ... )
+  self:F( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Clients )
+
+  return self
+end
+
 
 function DATABASE:ScanEnvironment()
   self:F()
@@ -5785,6 +7043,9 @@ function DATABASE:ScanEnvironment()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
+
+  self:_RegisterDatabase()
+  self:_RegisterPlayers()
 
   return self
 end
@@ -5873,6 +7134,22 @@ function DATABASE:_IsAliveDCSUnit( DCSUnit )
   return DCSUnitAlive
 end
 
+---
+-- @param #DATABASE self
+-- @param DCSGroup#Group DCSGroup
+-- @return #DATABASE self
+function DATABASE:_IsAliveDCSGroup( DCSGroup )
+  self:F( DCSGroup )
+  local DCSGroupAlive = false
+  if DCSGroup and DCSGroup:isExist() then
+    if self.DCSGroups[DCSGroup:getName()] then
+      DCSGroupAlive = true
+    end
+  end
+  self:T( DCSGroupAlive )
+  return DCSGroupAlive
+end
+
 
 --- Traces the current database contents in the log ... (for debug reasons).
 -- @param #DATABASE self
@@ -5899,6 +7176,120 @@ _EVENTDISPATCHER = EVENT:New() -- #EVENT
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New():ScanEnvironment() -- Database#DATABASE
+
+--- Models time events calling event handing functions.
+-- @module Scheduler
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+Include.File( "Cargo" )
+Include.File( "Message" )
+
+
+--- The SCHEDULER class
+-- @type SCHEDULER
+-- @extends Base#BASE
+SCHEDULER = {
+  ClassName = "SCHEDULER",
+}
+
+
+--- SCHEDULER constructor.
+-- @param #SCHEDULER self
+-- @param #table TimeEventObject
+-- @param #function TimeEventFunction
+-- @param #table TimeEventFunctionArguments
+-- @param #number StartSeconds
+-- @param #number RepeatSecondsInterval
+-- @param #number RandomizationFactor
+-- @param #number StopSeconds
+-- @return #SCHEDULER
+function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+
+  self.TimeEventObject = TimeEventObject
+  self.TimeEventFunction = TimeEventFunction
+  self.TimeEventFunctionArguments = TimeEventFunctionArguments
+  self.StartSeconds = StartSeconds
+
+  if RepeatSecondsInterval then
+    self.RepeatSecondsInterval = RepeatSecondsInterval
+  else
+    self.RepeatSecondsInterval = 0
+  end
+
+  if RandomizationFactor then
+    self.RandomizationFactor = RandomizationFactor
+  else
+    self.RandomizationFactor = 0
+  end
+
+  if StopSeconds then
+    self.StopSeconds = StopSeconds
+  end
+  
+  self.Repeat = false
+
+  self.StartTime = timer.getTime()
+  
+  self:Start()
+
+  return self
+end
+
+function SCHEDULER:Scheduler()
+  self:F( self.TimeEventFunctionArguments )
+  
+  local ErrorHandler = function( errmsg )
+
+    env.info( "Error in SCHEDULER function:" .. errmsg )
+    env.info( debug.traceback() )
+
+    return errmsg
+  end
+
+  local Status, Result  
+  if self.TimeEventObject then
+    Status, Result = xpcall( function() return self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
+  else
+    Status, Result = xpcall( function() return self.TimeEventFunction( unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
+  end
+  
+  self:T( { Status, Result } )
+  
+  if Status and Status == true and Result and Result == true then
+    if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
+      timer.scheduleFunction(
+        self.Scheduler,
+        self,
+        timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
+      )
+    end
+  end
+
+end
+
+function SCHEDULER:Start()
+  self:F( self.TimeEventObject )
+  
+  self.Repeat = true
+  timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+  
+  return self
+end
+
+function SCHEDULER:Stop()
+  self:F( self.TimeEventObject )
+  
+  self.Repeat = false
+end
+
+
+
+
+
 
 --- Scoring system for MOOSE.
 -- This scoring class calculates the hits and kills that players make within a simulation session.
@@ -6099,7 +7490,7 @@ end
 function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
-  if UnitData:isExist() then
+  if UnitData and UnitData:isExist() then
     local UnitName = UnitData:getName()
     local PlayerName = UnitData:getPlayerName()
     local UnitDesc = UnitData:getDesc()
@@ -6226,7 +7617,7 @@ function SCORING:_EventOnHit( Event )
   local InitUnitName = ""
   local InitGroup = nil
   local InitGroupName = ""
-  local InitPlayerName = "dummy"
+  local InitPlayerName = nil
 
   local InitCoalition = nil
   local InitCategory = nil
@@ -6748,18 +8139,31 @@ CARGO_ZONE = {
 	}
 }
 
-function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, BASE:New() )
+--- Creates a new zone where cargo can be collected or deployed.
+-- The zone functionality is useful to smoke or indicate routes for cargo pickups or deployments.
+-- Provide the zone name as declared in the mission file into the CargoZoneName in the :New method.
+-- An optional parameter is the CargoHostName, which is a Group declared with Late Activation switched on in the mission file.
+-- The CargoHostName is the "host" of the cargo zone:
+-- 
+-- * It will smoke the zone position when a client is approaching the zone.
+-- * Depending on the cargo type, it will assist in the delivery of the cargo by driving to and from the client.
+-- 
+-- @param #CARGO_ZONE self
+-- @param #string CargoZoneName The name of the zone as declared within the mission editor.
+-- @param #string CargoHostName The name of the Group "hosting" the zone. The Group MUST NOT be a static, and must be a "mobile" unit. 
+function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, ZONE:New( CargoZoneName ) )
 	self:F( { CargoZoneName, CargoHostName } )
 
 	self.CargoZoneName = CargoZoneName
-	self.CargoZone = trigger.misc.getZone( CargoZoneName )
+	self.SignalHeight = 2
+	--self.CargoZone = trigger.misc.getZone( CargoZoneName )
 	
 
 	if CargoHostName then
 		self.CargoHostName = CargoHostName
 	end
 
-	self:T( self.CargoZone )
+	self:T( self.CargoZoneName )
 	
 	return self
 end
@@ -6767,17 +8171,19 @@ end
 function CARGO_ZONE:Spawn()
 	self:F( self.CargoHostName )
 
-	if self.CargoHostSpawn then
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
-		if CargoHostGroup and CargoHostGroup:IsAlive() then
-		else
-			self.CargoHostSpawn:ReSpawn( 1 )
-		end
-	else
-		self:T( "Initialize CargoHostSpawn" )
-		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
-		self.CargoHostSpawn:ReSpawn( 1 )
-	end
+  if self.CargoHostName then -- Only spawn a host in the zone when there is one given as a parameter in the New function.
+  	if self.CargoHostSpawn then
+  		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+  		if CargoHostGroup and CargoHostGroup:IsAlive() then
+  		else
+  			self.CargoHostSpawn:ReSpawn( 1 )
+  		end
+  	else
+  		self:T( "Initialize CargoHostSpawn" )
+  		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+  		self.CargoHostSpawn:ReSpawn( 1 )
+  	end
+  end
 
 	return self
 end
@@ -6831,6 +8237,7 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 	end
 end
 
+
 function CARGO_ZONE:Signal()
 	self:F()
 
@@ -6865,16 +8272,15 @@ function CARGO_ZONE:Signal()
 			
 		else
 		
-			local CurrentPosition = { x = self.CargoZone.point.x, y = self.CargoZone.point.z }
-			self.CargoZone.point.y = land.getHeight( CurrentPosition ) + 2
+			local ZonePointVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
 	  
 			if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-				trigger.action.smoke( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR  )
+				trigger.action.smoke( ZonePointVec3, self.SignalColor.TRIGGERCOLOR  )
 				Signalled = true
 
 			elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
-				trigger.action.signalFlare( self.CargoZone.point, self.SignalColor.TRIGGERCOLOR, 0 )
+				trigger.action.signalFlare( ZonePointVec3, self.SignalColor.TRIGGERCOLOR, 0 )
 				Signalled = false
 
 			end
@@ -6885,84 +8291,120 @@ function CARGO_ZONE:Signal()
 
 end
 
-function CARGO_ZONE:WhiteSmoke()
+function CARGO_ZONE:WhiteSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
+	
+	if SignalHeight then
+	 self.SignalHeight = SignalHeight
+	end
 
 	return self
 end
 
-function CARGO_ZONE:BlueSmoke()
+function CARGO_ZONE:BlueSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedSmoke()
+function CARGO_ZONE:RedSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:OrangeSmoke()
+function CARGO_ZONE:OrangeSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenSmoke()
+function CARGO_ZONE:GreenSmoke( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
 
-function CARGO_ZONE:WhiteFlare()
+function CARGO_ZONE:WhiteFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:RedFlare()
+function CARGO_ZONE:RedFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:GreenFlare()
+function CARGO_ZONE:GreenFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
+
 	return self
 end
 
-function CARGO_ZONE:YellowFlare()
+function CARGO_ZONE:YellowFlare( SignalHeight )
 	self:F()
 
 	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
 	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
+
+  if SignalHeight then
+   self.SignalHeight = SignalHeight
+  end
 
 	return self
 end
@@ -7234,6 +8676,7 @@ function CARGO_GROUP:Spawn( Client )
 			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
 		else
 			--- ReSpawn the Cargo in the CargoZone without a host ...
+			self:T( self.CargoZone )
 			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
 		end
 		self:StatusNone()	
@@ -7274,64 +8717,72 @@ function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
 	
 	local CargoGroup = Group.getByName( self.CargoGroupName )
 
-	local CargoUnits = CargoGroup:getUnits()
-	local CargoPos = CargoUnits[1]:getPoint()
+	local CargoUnit = CargoGroup:getUnit(1)
+	local CargoPos = CargoUnit:getPoint()
+	
+	self.CargoInAir = CargoUnit:inAir()
+	
+	self:T( self.CargoInAir )
 
+  -- Only move the group to the carrier when the cargo is not in the air 
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then    
 	
-	local Points = {}
-	
-	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-	
-	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-	
-	if OnBoardSide == nil then
-		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-	end
-	
-	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-	
-		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-		CarrierPosMove.z = CarrierPosMove.z - 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-		CarrierPosMove.z = CarrierPosMove.z + 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-		
-		self:T( "TransportCargoOnBoard: Onboarding BACK" )
-		CarrierPosMove.x = CarrierPosMove.x - 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-		CarrierPosMove.x = CarrierPosMove.x + 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-		
-		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-	
-	end
-	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-
-	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	local Points = {}
+  	
+  	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
+  	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
+  	
+  	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
+  
+  	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
+  	
+  	if OnBoardSide == nil then
+  		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
+  	end
+  	
+  	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
+  	
+  		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
+  		CarrierPosMove.z = CarrierPosMove.z - 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
+  		CarrierPosMove.z = CarrierPosMove.z + 25
+  		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding BACK" )
+  		CarrierPosMove.x = CarrierPosMove.x - 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
+  		CarrierPosMove.x = CarrierPosMove.x + 25
+  		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
+  	
+  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
+  		
+  		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
+  		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
+  	
+  	end
+  	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
+  
+  	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  end
 	
 	self:StatusLoading( Client )
      
@@ -7345,12 +8796,19 @@ function CARGO_GROUP:OnBoarded( Client, LandingZone )
 
 	local OnBoarded = false
   
-	local CargoGroup = Group.getByName( self.CargoGroupName )
-	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
-		CargoGroup:destroy()
-		self:StatusLoaded( Client )
-		OnBoarded = true
-	end
+  local CargoGroup = Group.getByName( self.CargoGroupName )
+
+	if not self.CargoInAir then
+  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
+  		CargoGroup:destroy()
+  		self:StatusLoaded( Client )
+  		OnBoarded = true
+  	end
+  else
+    CargoGroup:destroy()
+    self:StatusLoaded( Client )
+    OnBoarded = true
+  end
 
 	return OnBoarded
 end
@@ -7724,461 +9182,6 @@ function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
 
 	return Cargo
 end
---- The CLIENT models client units in multi player missions.
--- Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- Note that clients are NOT the same as groups, they are NOT necessarily alive. 
--- @module Client
--- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
-
-
---- The CLIENT class
--- @type CLIENT
--- @extends Base#BASE
-CLIENT = {
-	ONBOARDSIDE = {
-		NONE = 0,
-		LEFT = 1,
-		RIGHT = 2,
-		BACK = 3,
-		FRONT = 4
-	},
-	ClassName = "CLIENT",
-	ClientName = nil,
-	ClientAlive = false,
-	ClientTransport = false,
-	ClientBriefingShown = false,
-	_Menus = {},
-	_Tasks = {},
-	Messages = { 
-	}
-}
-
-
---- Use this method to register new Clients within the MOF.
--- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
--- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @return #CLIENT
--- @usage
--- -- Create new Clients.
---	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
---	Mission:AddGoal( DeploySA6TroopsGoal )
---
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( ClientName, ClientBriefing )
-
-	self.ClientName = ClientName
-	self:AddBriefing( ClientBriefing )
-	self.MessageSwitch = true
-	
-	return self
-end
-
---- Transport defines that the Client is a Transport. Transports show cargo.
--- @param #CLIENT self
--- @return #CLIENT
-function CLIENT:Transport()
-  self:F()
-
-  self.ClientTransport = true
-  return self
-end
-
---- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
--- @param #CLIENT self
--- @param #string ClientBriefing is the text defining the Mission briefing.
--- @return #CLIENT
-function CLIENT:AddBriefing( ClientBriefing )
-  self:F()
-  self.ClientBriefing = ClientBriefing
-  return self
-end
-
-
---- Resets a CLIENT.
--- @param #CLIENT self
--- @param #string ClientName Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.
-function CLIENT:Reset( ClientName )
-	self:F()
-	self._Menus = {}
-end
-
---- Checks for a client alive event and calls a function on a continuous basis.
--- @param #CLIENT self
--- @param #function CallBack Function.
--- @return #CLIENT
-function CLIENT:Alive( CallBack, ... )
-  self:F()
-  
-  self.ClientAlive2 = false
-  self.ClientCallBack = CallBack
-  self.ClientParameters = arg
-  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-
-  return self
-end
-
--- Is Functions
-
---- Checks if the CLIENT is a multi-seated UNIT.
--- @param #CLIENT self
--- @return #boolean true if multi-seated.
-function CLIENT:IsMultiSeated()
-  self:F( self.ClientName )
-
-  local ClientMultiSeatedTypes = { 
-    ["Mi-8MT"]  = "Mi-8MT", 
-    ["UH-1H"]   = "UH-1H", 
-    ["P-51B"]   = "P-51B" 
-  }
-  
-  if self:IsAlive() then
-    local ClientTypeName = self:GetClientGroupUnit():GetTypeName()
-    if ClientMultiSeatedTypes[ClientTypeName] then
-      return true
-    end
-  end
-  
-  return false
-end
-
---- Checks if client is alive and returns true or false.
--- @param #CLIENT self
--- @returns #boolean Returns true if client is alive.
-function CLIENT:IsAlive()
-  self:F( self.ClientName )
-  
-  local ClientDCSGroup = self:GetDCSGroup()
-  
-  if ClientDCSGroup then
-    self:T("true")
-    return true
-  end
-  
-  self:T( "false" )
-  return false
-end
-
-
---- @param #CLIENT self
-function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2 } )
-
-  if self:IsAlive() then
-    if self.ClientAlive2 == false then
-      self:T("Calling Callback function")
-      self.ClientCallBack( self, unpack( self.ClientParameters ) )
-      self.ClientAlive2 = true
-    end
-  else
-    if self.ClientAlive2 == true then
-      self.ClientAlive2 = false
-    end
-  end
-end
-
---- Return the DCSGroup of a Client.
--- This function is modified to deal with a couple of bugs in DCS 1.5.3
--- @param #CLIENT self
--- @return DCSGroup#Group
-function CLIENT:GetDCSGroup()
-  self:F3()
-
---  local ClientData = Group.getByName( self.ClientName )
---	if ClientData and ClientData:isExist() then
---		self:T( self.ClientName .. " : group found!" )
---		return ClientData
---	else
---		return nil
---	end
-
-	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
-	for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-		self:T3( { "CoalitionData:", CoalitionData } )
-		for UnitId, UnitData in pairs( CoalitionData ) do
-			self:T3( { "UnitData:", UnitData } )
-			if UnitData and UnitData:isExist() then
-
-				local ClientGroup = Group.getByName( self.ClientName )
-				if ClientGroup then
-					self:T3( "ClientGroup = " .. self.ClientName )
-					if ClientGroup:isExist() then 
-						if ClientGroup:getID() == UnitData:getGroup():getID() then
-							self:T3( "Normal logic" )
-							self:T3( self.ClientName .. " : group found!" )
-							return ClientGroup
-						end
-					else
-						-- Now we need to resolve the bugs in DCS 1.5 ...
-						-- Consult the database for the units of the Client Group. (ClientGroup:getUnits() returns nil)
-						self:T3( "Bug 1.5 logic" )
-						local ClientUnits = _DATABASE.Groups[self.ClientName].Units
-						self:T3( { ClientUnits[1].name, env.getValueDictByKey(ClientUnits[1].name) } )
-						for ClientUnitID, ClientUnitData in pairs( ClientUnits ) do
-							self:T3( { tonumber(UnitData:getID()), ClientUnitData.unitId } )
-							if tonumber(UnitData:getID()) == ClientUnitData.unitId then
-								local ClientGroupTemplate = _DATABASE.Groups[self.ClientName].Template
-								self.ClientID = ClientGroupTemplate.groupId
-								self.ClientGroupUnit = UnitData
-								self:T3( self.ClientName .. " : group found in bug 1.5 resolvement logic!" )
-								return ClientGroup
-							end
-						end
-					end
---				else
---					error( "Client " .. self.ClientName .. " not found!" )
-				end
-			end
-		end
-	end
-
-	-- For non player clients
-	local ClientGroup = Group.getByName( self.ClientName )
-	if ClientGroup then
-		self:T3( "ClientGroup = " .. self.ClientName )
-		if ClientGroup:isExist() then 
-			self:T3( "Normal logic" )
-			self:T3( self.ClientName .. " : group found!" )
-			return ClientGroup
-		end
-	end
-	
-	self.ClientGroupID = nil
-	self.ClientGroupUnit = nil
-	
-	return nil
-end 
-
-
--- TODO: Check DCSTypes#Group.ID
---- Get the group ID of the client.
--- @param #CLIENT self
--- @return DCSTypes#Group.ID
-function CLIENT:GetClientGroupID()
-
-  if not self.ClientGroupID then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupID = ClientGroup:getID()
-    else
-      self.ClientGroupID = self.ClientID
-    end
-  end
-
-  self:T( self.ClientGroupID )
-	return self.ClientGroupID
-end
-
-
---- Get the name of the group of the client.
--- @param #CLIENT self
--- @return #string
-function CLIENT:GetClientGroupName()
-
-  if not self.ClientGroupName then
-    local ClientGroup = self:GetDCSGroup()
-    if ClientGroup and ClientGroup:isExist() then
-      self.ClientGroupName = ClientGroup:getName()
-    else
-      self.ClientGroupName = self.ClientName
-    end
-  end
-
-  self:T( self.ClientGroupName )
-	return self.ClientGroupName
-end
-
---- Returns the UNIT of the CLIENT.
--- @param #CLIENT self
--- @return Unit#UNIT
-function CLIENT:GetClientGroupUnit()
-	self:F()
-
-	local ClientGroup = self:GetDCSGroup()
-	
-	if ClientGroup and ClientGroup:isExist() then
-		return UNIT:New( ClientGroup:getUnit(1) )
-	else
-		return UNIT:New( self.ClientGroupUnit )
-	end
-end
-
---- Returns the DCSUnit of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Unit
-function CLIENT:GetClientGroupDCSUnit()
-	self:F2()
-
-  local ClientGroup = self:GetDCSGroup()
-  
-  if ClientGroup and ClientGroup:isExist() then
-    return ClientGroup:getUnit(1)
-  else
-    return self.ClientGroupUnit
-  end
-end
-
--- TODO what is this??? check. possible double function.
-function CLIENT:GetUnit()
-	self:F()
-	
-	return UNIT:New( self:GetClientGroupDCSUnit() )
-end
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
--- @param #CLIENT self
--- @return DCSTypes#Vec2
-function CLIENT:GetPointVec2()
-	self:F()
-
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      local PointVec2 = {} --DCSTypes#Vec2
-      PointVec2.x = PointVec3.x
-      PointVec2.y = PointVec3.z
-      self:T( { PointVec2 } )
-      return PointVec2
-    end
-  end
-  
-  return nil
-end 
-
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
--- @param #CLIENT self
--- @return DCSTypes#Vec3
-function CLIENT:ClientPosition()
-	self:F()
-
-	ClientGroupUnit = self:GetClientGroupDCSUnit()
-	
-	if ClientGroupUnit then
-		if ClientGroupUnit:isExist() then
-			return ClientGroupUnit:getPosition()
-		end
-	end
-	
-	return nil
-end 
-
---- Returns the altitude of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Distance
-function CLIENT:GetAltitude()
-	self:F()
-
-  ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      return PointVec3.y
-    end
-  end
-  
-  return nil
-end 
-
-
---- Evaluates if the CLIENT is a transport.
--- @param #CLIENT self
--- @return #boolean true is a transport.
-function CLIENT:IsTransport()
-	self:F()
-	return self.ClientTransport
-end
-
---- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
--- @param #CLIENT self
-function CLIENT:ShowCargo()
-	self:F()
-
-	local CargoMsg = ""
-  
-	for CargoName, Cargo in pairs( CARGOS ) do
-		if self == Cargo:IsLoadedInClient() then
-			CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
-		end
-	end
-  
-	if CargoMsg == "" then
-		CargoMsg = "empty"
-	end
-  
-	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
-
-end
-
--- TODO (1) I urgently need to revise this.
---- A local function called by the DCS World Menu system to switch off messages.
-function CLIENT.SwitchMessages( PrmTable )
-	PrmTable[1].MessageSwitch = PrmTable[2]
-end
-
---- The main message driver for the CLIENT.
--- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
--- @param #CLIENT self
--- @param #string Message is the text describing the message.
--- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
--- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
-function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-	self:F()
-
-	if not self.MenuMessages then
-		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
-		end
-	end
-
-	if self.MessageSwitch == true then
-		if MessageCategory == nil then
-			MessageCategory = "Messages"
-		end
-		if self.Messages[MessageId] == nil then
-			self.Messages[MessageId] = {}
-			self.Messages[MessageId].MessageId = MessageId
-			self.Messages[MessageId].MessageTime = timer.getTime()
-			self.Messages[MessageId].MessageDuration = MessageDuration
-			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 600
-			else
-				self.Messages[MessageId].MessageInterval = MessageInterval
-			end
-			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-		else
-			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
-				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			else
-				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			end
-		end
-	end
-end
 --- Message System to display Messages for Clients and Coalitions or All.
 -- Messages are grouped on the display panel per Category to improve readability for the players.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
@@ -8464,7 +9467,7 @@ end
 function STAGE:Execute( Mission, Client, Task )
 
 	local Valid = true
-  
+
 	return Valid
 end
 
@@ -8474,7 +9477,7 @@ end
 
 function STAGE:Validate( Mission, Client, Task )
   local Valid = true
-
+  
   return Valid
 end
 
@@ -8683,7 +9686,7 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
 	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -8696,9 +9699,11 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 			end
 		end
 
+    self:T( 1 )
 		return 1
 	end
   
+  self:T( 0 )
 	return 0
 end
 
@@ -8773,8 +9778,17 @@ function STAGELANDING:Execute( Mission, Client, Task )
 		else
 			HostMessage = "Use the Radio menu and F6 to find the cargo, then fly or land near the cargo and " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
 		end
+
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
 		
-		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Host, Host, 10 )
 		
 	end
 end
@@ -8782,7 +9796,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 	self:F()
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -8805,14 +9819,34 @@ function STAGELANDING:Validate( Mission, Client, Task )
 		end
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -1 )
 		return -1
 	end
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		return 0
-	end
+	
+	local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+	local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+	
+	local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+	local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+	
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and not Client:GetClientGroupDCSUnit():inAir() then
+    self:T( 1 )
+    Task.IsInAirTestRequired = true
+    return 1
+  end
   
-	return 1
+	self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+	if Task.IsLandingRequired and DCSUnitVelocity <= 0.05 and DCSUnitHeight <= Task.CurrentCargoZone.SignalHeight then
+    self:T( 1 )
+    Task.IsInAirTestRequired = false
+    return 1
+	end
+
+  self:T( 0 )
+	return 0
 end
 
 STAGELANDED = {
@@ -8833,9 +9867,20 @@ function STAGELANDED:Execute( Mission, Client, Task )
 	self:F()
 
 	if Task.IsLandingRequired then
-		Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-		                self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-		if not self.MenusAdded then
+
+	  local Host = "Command"
+	  if Task.HostUnitName then
+	    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  	else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
+    Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
+                    self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC" .. Host, Host )
+
+  	if not self.MenusAdded then
 			Task.Cargo = nil
 			Task:RemoveCargoMenus( Client )
 			Task:AddCargoMenus( Client, CARGOS, 250 )
@@ -8848,26 +9893,44 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 	self:F()
 
-	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -2 )
 		return -2
 	end
+
+  local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+  local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		self:T( "Client went back in the air. Go back to stage Landing." )
-		Task.Signalled = false 
-		return -1
-	end
+  local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+  local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+  
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+    self:T( "Client went back in the air. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
+  
+  self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+    self:T( "It seems the Client went back in the air and over the boundary limits. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
   
     -- Wait until cargo is selected from the menu.
 	if Task.IsLandingRequired then 
 		if not Task.Cargo then
+		  self:T( 0 )
 			return 0
 		end
 	end
-  
+
+  self:T( 1 )
 	return 1
 end
 
@@ -8931,7 +9994,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
     Task:RemoveCargoMenus( Client )
@@ -8990,10 +10053,21 @@ function STAGELOAD:Execute( Mission, Client, Task )
 	self:F()
 	
 	if not Task.IsSlingLoad then
+ 
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Host, Host )
 
 		-- Route the cargo to the Carrier
+		
 		Task.Cargo:OnBoard( Client, Task.CurrentCargoZone, Task.OnBoardSide )
 		Task.ExecuteStage = _TransportExecuteStage.EXECUTING
 	else
@@ -9006,6 +10080,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 
 	-- If the Cargo is ready to be loaded, load it into the Client.
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
 		
 	if not Task.IsSlingLoad then
 		self:T( Task.Cargo.CargoName)
@@ -9017,14 +10099,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 		
 			-- Message to the pilot that cargo has been loaded.
 			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							20, Mission.Name .. "/STAGELANDING.LOADING1."  .. Host, Host )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
 			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1."  .. Host, Host , 10 )
 		for CargoID, Cargo in pairs( CARGOS ) do
 			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
@@ -9040,7 +10122,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2."  .. Host, Host  )
 						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 						break
 					end
@@ -9058,32 +10140,61 @@ function STAGELOAD:Validate( Mission, Client, Task )
 
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
+
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
 			return -1
 		end
 
-		if not Client:GetClientGroupDCSUnit():inAir() then
-		else
-			-- The carrier is back in the air, undo the loading process.
-			Task:RemoveCargoMenus( Client )
-			Task.ExecuteStage = _TransportExecuteStage.NONE
-			Task.CargoName = nil
-			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-			return -1
-		end
+    local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+    local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+    
+    local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+    local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+    local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+    
+    self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
+    
+    self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
 
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Host, Host )
 			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
+      self:T( 1 )
 			return 1
 		end
 
@@ -9092,8 +10203,9 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
 			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
 				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Host, Host )
 				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
+        self:T( 1 )
 				return 1
 			end
 		end
@@ -9101,6 +10213,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 	end
   
  
+  self:T( 0 )
 	return 0
 end
 
@@ -10041,7 +11154,7 @@ function PICKUPTASK:New( CargoType, OnBoardSide )
 		self.CargoType = CargoType
 		self.GoalVerb = CargoType .. " " .. self.GoalVerb
 		self.OnBoardSide = OnBoardSide
-		self.IsLandingRequired = false -- required to decide whether the client needs to land or not
+		self.IsLandingRequired = true -- required to decide whether the client needs to land or not
 		self.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
 		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
 		self.SetStage( self, 1 )
@@ -10866,7 +11979,9 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								if MISSIONSCHEDULER.Scoring then
+								  MISSIONSCHEDULER.Scoring:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								end
 
 --								if not Mission:IsCompleted() then
 --								end
@@ -11466,6 +12581,7 @@ Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
 Include.File( "Event" )
+Include.File( "Scheduler" )
 
 --- SPAWN Class
 -- @type SPAWN
@@ -11709,8 +12825,8 @@ function SPAWN:CleanUp( SpawnCleanUpInterval )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
-	self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
-	
+	--self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
+	self.CleanUpScheduler = SCHEDULER:New( self, self._SpawnCleanUpScheduler, {}, 1, SpawnCleanUpInterval, 0.2 )
 	return self
 end
 
@@ -11842,6 +12958,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
+      
+      self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
@@ -11883,22 +13001,28 @@ end
 function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:F( { SpawnTime, SpawnTimeVariation } )
 
-	self.SpawnCurrentTimer = 0									-- The internal timer counter to trigger a scheduled spawning of SpawnTemplatePrefix.
-	self.SpawnSetTimer = 0										-- The internal timer value when a scheduled spawning of SpawnTemplatePrefix occurs.
-	self.AliveFactor = 1									--
-	self.SpawnLowTimer = 0
-	self.SpawnHighTimer = 0
-		
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
-		self.SpawnLowTimer = SpawnTime - SpawnTime / 2 * SpawnTimeVariation
-		self.SpawnHighTimer = SpawnTime + SpawnTime / 2 * SpawnTimeVariation
-		self:SpawnScheduleStart()
+    self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, 1, SpawnTime, SpawnTimeVariation )
 	end
 
-	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
-	
 	return self
 end
+
+--- Will re-start the spawning scheduler.
+-- Note: This function is only required to be called when the schedule was stopped.
+function SPAWN:SpawnScheduleStart()
+  self:F( { self.SpawnTemplatePrefix } )
+
+  self.SpawnScheduler:Start()
+end
+
+--- Will stop the scheduled spawning scheduler.
+function SPAWN:SpawnScheduleStop()
+  self:F( { self.SpawnTemplatePrefix } )
+  
+  self.SpawnScheduler:Stop()
+end
+
 
 --- Allows to place a CallFunction hook when a new group spawns.
 -- The provided function will be called when a new group is spawned, including its given parameters.
@@ -11921,30 +13045,6 @@ end
 
 
 
---- Will start the spawning scheduler.
--- Note: This function is called automatically when @{#SPAWN.Scheduled} is called.
-function SPAWN:SpawnScheduleStart()
-	self:F( { self.SpawnTemplatePrefix } )
-
-	--local ClientUnit = #AlivePlayerUnits()
-	
-	self.AliveFactor = 10 -- ( 10 - ClientUnit  ) / 10
-	
-	if self.SpawnIsScheduled == false then
-		self.SpawnIsScheduled = true
-		self.SpawnInit = true
-		self.SpawnSetTimer = math.random( self.SpawnLowTimer * self.AliveFactor / 10 , self.SpawnHighTimer * self.AliveFactor  / 10 )
-		
-		self.SpawnFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 1 )
-	end
-end
-
---- Will stop the scheduled spawning scheduler.
-function SPAWN:SpawnScheduleStop()
-	self:F( { self.SpawnTemplatePrefix } )
-	
-	self.SpawnIsScheduled = false
-end
 
 --- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
@@ -11973,6 +13073,9 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
       if SpawnTemplate then
 
         local UnitPoint = HostUnit:GetPointVec2()
+        
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
+        
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -11980,9 +13083,6 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
           --Point.alt_type = nil
         --end
         
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = UnitPoint.x
         SpawnTemplate.route.points[1].y = UnitPoint.y
 
@@ -12063,8 +13163,9 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          SpawnTemplate.units[UnitID].x = ZonePoint.x
-          SpawnTemplate.units[UnitID].y = ZonePoint.y
+          local ZonePointUnit = Zone:GetRandomPointVec2()
+          SpawnTemplate.units[UnitID].x = ZonePointUnit.x
+          SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
        
@@ -12293,7 +13394,6 @@ function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 		self.SpawnGroups[SpawnIndex].Visible = false
 		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].UnControlled = false
-		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].SpawnTime = 0
 		
 		self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefix
@@ -12347,12 +13447,15 @@ end
 
 --- Gets the Group Template from the ME environment definition.
 -- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @return @SPAWN self
 function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Templates.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -12367,6 +13470,10 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 end
 
 --- Prepares the new Group Template.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
@@ -12377,6 +13484,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.lateActivation = false
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	  self:T( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false
 	end
 	
@@ -12396,7 +13504,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		
 end
 
---- Internal function randomizing the routes.
+--- Private method randomizing the routes.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
@@ -12420,7 +13528,10 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
   return self
 end
 
-
+--- Private method that randomizes the template of the group.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -12430,6 +13541,7 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
     self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
     end
@@ -12612,19 +13724,10 @@ end
 function SPAWN:_Scheduler()
 	self:F( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
 	
-	if self.SpawnInit or self.SpawnCurrentTimer == self.SpawnSetTimer then
-		-- Validate if there are still groups left in the batch...
-		self:Spawn()
-		self.SpawnInit = false
-		if self.SpawnIsScheduled == true then
-			--local ClientUnit = #AlivePlayerUnits()
-			self.AliveFactor = 1 -- ( 10 - ClientUnit  ) / 10
-			self.SpawnCurrentTimer = 0
-			self.SpawnSetTimer = math.random( self.SpawnLowTimer * self.AliveFactor , self.SpawnHighTimer * self.AliveFactor )
-		end
-	else
-		self.SpawnCurrentTimer = self.SpawnCurrentTimer + 1
-	end
+	-- Validate if there are still groups left in the batch...
+	self:Spawn()
+	
+	return true
 end
 
 function SPAWN:_SpawnCleanUpScheduler()
@@ -12655,6 +13758,8 @@ function SPAWN:_SpawnCleanUpScheduler()
 		self:T( { "CleanUp Scheduler:", SpawnGroup } )
 		
 	end
+	
+	return true -- Repeat
 	
 end
 --- Limit the simultaneous movement of Groups within a running Mission.
@@ -12854,7 +13959,7 @@ function SEAD:EventShot( Event )
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()
 		local _targetMimcont= _targetMimgroup:getController()
-		local _targetskill =  _DATABASE.Units[_targetMimname].Template.skill
+		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
 		self:T( _targetMimgroupName )
 		local SEADGroupFound = false
@@ -14168,4 +15273,684 @@ function ESCORT:_ReportTargetsScheduler()
     routines.removeFunction( self.ReportTargetsScheduler )
     self.ReportTargetsScheduler = nil
   end
+end
+--- Provides missile training functions.
+--
+-- @{#MISSILETRAINER} class
+-- ========================
+-- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
+-- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
+-- It suports the following functionality:
+--
+--  * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
+--  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …
+--  * Provide alerts when a missile would have killed your aircraft.
+--  * Provide alerts when the missile self destructs.
+--  * Enable / Disable and Configure the Missile Trainer using the various menu options.
+--  
+--  When running a mission where MISSILETRAINER is used, the following radio menu structure ( 'Radio Menu' -> 'Other (F10)' -> 'MissileTrainer' ) options are available for the players:
+--  
+--  * **Messages**: Menu to configure all messages.
+--     * **Messages On**: Show all messages.
+--     * **Messages Off**: Disable all messages.
+--  * **Tracking**: Menu to configure missile tracking messages.
+--     * **To All**: Shows missile tracking messages to all players.
+--     * **To Target**: Shows missile tracking messages only to the player where the missile is targetted at.
+--     * **Tracking On**: Show missile tracking messages.
+--     * **Tracking Off**: Disable missile tracking messages.
+--     * **Frequency Increase**: Increases the missile tracking message frequency with one second.
+--     * **Frequency Decrease**: Decreases the missile tracking message frequency with one second.
+--  * **Alerts**: Menu to configure alert messages.
+--     * **To All**: Shows alert messages to all players.
+--     * **To Target**: Shows alter messages only to the player where the missile is (was) targetted at.
+--     * **Hits On**: Show missile hit alert messages.
+--     * **Hits Off**: Disable missile hit altert messages.
+--     * **Launches On**: Show missile launch messages.
+--     * **Launches Off**: Disable missile launch messages.
+--  * **Details**: Menu to configure message details.
+--     * **Range On**: Shows range information when a missile is fired to a target.
+--     * **Range Off**: Disable range information when a missile is fired to a target.
+--     * **Bearing On**: Shows bearing information when a missile is fired to a target.
+--     * **Bearing Off**: Disable bearing information when a missile is fired to a target.
+--  * **Distance**: Menu to configure the distance when a missile needs to be destroyed when near to a player, during tracking. This will improve/influence hit calculation accuracy, but has the risk of damaging the aircraft when the missile reaches the aircraft before the distance is measured. 
+--     * **50 meter**: Destroys the missile when the distance to the aircraft is below or equal to 50 meter.
+--     * **100 meter**: Destroys the missile when the distance to the aircraft is below or equal to 100 meter.
+--     * **150 meter**: Destroys the missile when the distance to the aircraft is below or equal to 150 meter.
+--     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
+--   
+--
+-- MISSILETRAINER construction methods:
+-- ====================================
+-- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
+--
+--   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
+--
+-- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
+--
+-- MISSILETRAINER initialization methods:
+-- ======================================
+-- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
+--
+--  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
+--  * @{#MISSILETRAINER.InitTrackingToAll}: Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+--  * @{#MISSILETRAINER.InitTrackingOnOff}: Sets by default the display of missile tracking report to be ON or OFF.
+--  * @{#MISSILETRAINER.InitTrackingFrequency}: Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.
+--  * @{#MISSILETRAINER.InitAlertsToAll}: Sets by default the display of alerts to be shown to all players or only to you.
+--  * @{#MISSILETRAINER.InitAlertsHitsOnOff}: Sets by default the display of hit alerts ON or OFF.
+--  * @{#MISSILETRAINER.InitAlertsLaunchesOnOff}: Sets by default the display of launch alerts ON or OFF.
+--  * @{#MISSILETRAINER.InitRangeOnOff}: Sets by default the display of range information of missiles ON of OFF.
+--  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
+--  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
+--
+-- @module MissileTrainer
+-- @author FlightControl
+
+
+Include.File( "Client" )
+Include.File( "Scheduler" )
+
+--- The MISSILETRAINER class
+-- @type MISSILETRAINER
+-- @extends Base#BASE
+MISSILETRAINER = {
+  ClassName = "MISSILETRAINER",
+}
+
+--- Creates the main object which is handling missile tracking.
+-- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
+-- @param #MISSILETRAINER self
+-- @param #number Distance The distance in meters when a tracked missile needs to be destroyed when close to a player.
+-- @param #string Briefing (Optional) Will show a text to the players when starting their mission. Can be used for briefing purposes. 
+-- @return #MISSILETRAINER
+function MISSILETRAINER:New( Distance, Briefing )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( Distance )
+
+  if Briefing then
+    self.Briefing = Briefing
+  end
+
+  self.Schedulers = {}
+  self.SchedulerID = 0
+
+  self.MessageInterval = 2
+  self.MessageLastTime = timer.getTime()
+
+  self.Distance = Distance / 1000
+
+  _EVENTDISPATCHER:OnShot( self._EventShot, self )
+
+  self.DB = DATABASE:New():FilterStart()
+  self.DBClients = self.DB.Clients
+  self.DBUnits = self.DB.Units
+
+  for ClientID, Client in pairs( self.DBClients ) do
+
+    local function _Alive( Client )
+
+      if self.Briefing then
+        Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
+      end
+
+      if self.MenusOnOff == true then
+        Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+  
+        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
+  
+        Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
+        Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
+        Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
+  
+        Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
+        Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
+        Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
+        Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = true } )
+        Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = false } )
+        Client.MenuTrackIncrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Increase", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = -1 } )
+        Client.MenuTrackDecrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Decrease", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = 1 } )
+  
+        Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
+        Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
+        Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
+        Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = true } )
+        Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = false } )
+        Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = true } )
+        Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = false } )
+  
+        Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
+        Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = true } )
+        Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = false } )
+        Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = true } )
+        Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = false } )
+  
+        Client.MenuDistance = MENU_CLIENT:New( Client, "Set distance to plane", Client.MainMenu )
+        Client.MenuDistance50 = MENU_CLIENT_COMMAND:New( Client, "50 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 50 / 1000 } )
+        Client.MenuDistance100 = MENU_CLIENT_COMMAND:New( Client, "100 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 100 / 1000 } )
+        Client.MenuDistance150 = MENU_CLIENT_COMMAND:New( Client, "150 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 150 / 1000 } )
+        Client.MenuDistance200 = MENU_CLIENT_COMMAND:New( Client, "200 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 200 / 1000 } )
+      else
+        if Client.MainMenu then
+          Client.MainMenu:Remove()
+        end
+      end
+
+
+      local ClientID = Client:GetID()
+      self:T( ClientID )
+      if not self.TrackingMissiles[ClientID] then
+        self.TrackingMissiles[ClientID] = {}
+      end
+      self.TrackingMissiles[ClientID].Client = Client
+      if not self.TrackingMissiles[ClientID].MissileData then
+        self.TrackingMissiles[ClientID].MissileData = {}
+      end
+    end
+
+    Client:Alive( _Alive )
+
+  end
+  
+--  	self.DB:ForEachClient(
+--  	 --- @param Client#CLIENT Client
+--  	 function( Client )
+--  
+--        ... actions ...
+--        
+--  	 end
+--  	)
+
+  self.MessagesOnOff = true
+
+  self.TrackingToAll = false
+  self.TrackingOnOff = true
+  self.TrackingFrequency = 3
+
+  self.AlertsToAll = true
+  self.AlertsHitsOnOff = true
+  self.AlertsLaunchesOnOff = true
+
+  self.DetailsRangeOnOff = true
+  self.DetailsBearingOnOff = true
+  
+  self.MenusOnOff = true
+
+  self.TrackingMissiles = {}
+
+  self.TrackingScheduler = SCHEDULER:New( self, self._TrackMissiles, {}, 0.5, 0.05, 0 )
+
+  return self
+end
+
+-- Initialization methods.
+
+
+--- Sets by default the display of any message to be ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean MessagesOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitMessagesOnOff( MessagesOnOff )
+  self:F( MessagesOnOff )
+
+  self.MessagesOnOff = MessagesOnOff
+  if self.MessagesOnOff == true then
+    MESSAGE:New( "Messages ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Messages OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the missile tracking report for all players or only for those missiles targetted to you.
+-- @param #MISSILETRAINER self
+-- @param #boolean TrackingToAll true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitTrackingToAll( TrackingToAll )
+  self:F( TrackingToAll )
+
+  self.TrackingToAll = TrackingToAll
+  if self.TrackingToAll == true then
+    MESSAGE:New( "Missile tracking to all players ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Missile tracking to all players OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of missile tracking report to be ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean TrackingOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitTrackingOnOff( TrackingOnOff )
+  self:F( TrackingOnOff )
+
+  self.TrackingOnOff = TrackingOnOff
+  if self.TrackingOnOff == true then
+    MESSAGE:New( "Missile tracking ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Missile tracking OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Increases, decreases the missile tracking message display frequency with the provided time interval in seconds.
+-- The default frequency is a 3 second interval, so the Tracking Frequency parameter specifies the increase or decrease from the default 3 seconds or the last frequency update.
+-- @param #MISSILETRAINER self
+-- @param #number TrackingFrequency Provide a negative or positive value in seconds to incraese or decrease the display frequency. 
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitTrackingFrequency( TrackingFrequency )
+  self:F( TrackingFrequency )
+
+  self.TrackingFrequency = self.TrackingFrequency + TrackingFrequency
+  if self.TrackingFrequency < 0.5 then
+    self.TrackingFrequency = 0.5
+  end
+  if self.TrackingFrequency then
+    MESSAGE:New( "Missile tracking frequency is " .. self.TrackingFrequency .. " seconds.", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of alerts to be shown to all players or only to you.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsToAll true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsToAll( AlertsToAll )
+  self:F( AlertsToAll )
+
+  self.AlertsToAll = AlertsToAll
+  if self.AlertsToAll == true then
+    MESSAGE:New( "Alerts to all players ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts to all players OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of hit alerts ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsHitsOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsHitsOnOff( AlertsHitsOnOff )
+  self:F( AlertsHitsOnOff )
+
+  self.AlertsHitsOnOff = AlertsHitsOnOff
+  if self.AlertsHitsOnOff == true then
+    MESSAGE:New( "Alerts Hits ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts Hits OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of launch alerts ON or OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean AlertsLaunchesOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitAlertsLaunchesOnOff( AlertsLaunchesOnOff )
+  self:F( AlertsLaunchesOnOff )
+
+  self.AlertsLaunchesOnOff = AlertsLaunchesOnOff
+  if self.AlertsLaunchesOnOff == true then
+    MESSAGE:New( "Alerts Launches ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Alerts Launches OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of range information of missiles ON of OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean DetailsRangeOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitRangeOnOff( DetailsRangeOnOff )
+  self:F( DetailsRangeOnOff )
+
+  self.DetailsRangeOnOff = DetailsRangeOnOff
+  if self.DetailsRangeOnOff == true then
+    MESSAGE:New( "Range display ON", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Range display OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Sets by default the display of bearing information of missiles ON of OFF.
+-- @param #MISSILETRAINER self
+-- @param #boolean DetailsBearingOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitBearingOnOff( DetailsBearingOnOff )
+  self:F( DetailsBearingOnOff )
+
+  self.DetailsBearingOnOff = DetailsBearingOnOff
+  if self.DetailsBearingOnOff == true then
+    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+--- Enables / Disables the menus.
+-- @param #MISSILETRAINER self
+-- @param #boolean MenusOnOff true or false
+-- @return #MISSILETRAINER self
+function MISSILETRAINER:InitMenusOnOff( MenusOnOff )
+  self:F( MenusOnOff )
+
+  self.MenusOnOff = MenusOnOff
+  if self.MenusOnOff == true then
+    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", "Menu", 15, "ID" ):ToAll()
+  else
+    MESSAGE:New( "Menus are DISABLED", "Menu", 15, "ID" ):ToAll()
+  end
+
+  return self
+end
+
+
+-- Menu functions
+
+function MISSILETRAINER._MenuMessages( MenuParameters )
+
+  local self = MenuParameters.MenuSelf
+
+  if MenuParameters.MessagesOnOff ~= nil then
+    self:InitMessagesOnOff( MenuParameters.MessagesOnOff )
+  end
+
+  if MenuParameters.TrackingToAll ~= nil then
+    self:InitTrackingToAll( MenuParameters.TrackingToAll )
+  end
+
+  if MenuParameters.TrackingOnOff ~= nil then
+    self:InitTrackingOnOff( MenuParameters.TrackingOnOff )
+  end
+
+  if MenuParameters.TrackingFrequency ~= nil then
+    self:InitTrackingFrequency( MenuParameters.TrackingFrequency )
+  end
+
+  if MenuParameters.AlertsToAll ~= nil then
+    self:InitAlertsToAll( MenuParameters.AlertsToAll )
+  end
+
+  if MenuParameters.AlertsHitsOnOff ~= nil then
+    self:InitAlertsHitsOnOff( MenuParameters.AlertsHitsOnOff )
+  end
+
+  if MenuParameters.AlertsLaunchesOnOff ~= nil then
+    self:InitAlertsLaunchesOnOff( MenuParameters.AlertsLaunchesOnOff )
+  end
+
+  if MenuParameters.DetailsRangeOnOff ~= nil then
+    self:InitRangeOnOff( MenuParameters.DetailsRangeOnOff )
+  end
+
+  if MenuParameters.DetailsBearingOnOff ~= nil then
+    self:InitBearingOnOff( MenuParameters.DetailsBearingOnOff )
+  end
+
+  if MenuParameters.Distance ~= nil then
+    self.Distance = MenuParameters.Distance
+    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", "Menu", 15, "ID" ):ToAll()
+  end
+
+end
+
+--- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
+-- @param #MISSILETRAINER self
+-- @param Event#EVENTDATA Event
+function MISSILETRAINER:_EventShot( Event )
+  self:F( { Event } )
+
+  local TrainerSourceDCSUnit = Event.IniDCSUnit
+  local TrainerSourceDCSUnitName = Event.IniDCSUnitName
+  local TrainerWeapon = Event.Weapon -- Identify the weapon fired
+  local TrainerWeaponName = Event.WeaponName	-- return weapon type
+
+  self:T( "Missile Launched = " .. TrainerWeaponName )
+
+  local TrainerTargetDCSUnit = TrainerWeapon:getTarget() -- Identify target
+  local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
+  local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
+
+  self:T(TrainerTargetDCSUnitName )
+
+  local Client = self.DBClients[TrainerTargetDCSUnitName]
+  if Client then
+
+    local TrainerSourceUnit = UNIT:New(TrainerSourceDCSUnit)
+    local TrainerTargetUnit = UNIT:New(TrainerTargetDCSUnit)
+
+    if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+
+      local Message = MESSAGE:New(
+        string.format( "%s launched a %s",
+          TrainerSourceUnit:GetTypeName(),
+          TrainerWeaponName
+        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ),"Launch Alert", 5, "ID" )
+
+      if self.AlertsToAll then
+        Message:ToAll()
+      else
+        Message:ToClient( Client )
+      end
+    end
+
+    local ClientID = Client:GetID()
+    local MissileData = {}
+    MissileData.TrainerSourceUnit = TrainerSourceUnit
+    MissileData.TrainerWeapon = TrainerWeapon
+    MissileData.TrainerTargetUnit = TrainerTargetUnit
+    MissileData.TrainerWeaponTypeName = TrainerWeapon:getTypeName()
+    MissileData.TrainerWeaponLaunched = true
+    table.insert( self.TrackingMissiles[ClientID].MissileData, MissileData )
+    --self:T( self.TrackingMissiles )
+  end
+end
+
+function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
+
+  local RangeText = ""
+
+  if self.DetailsRangeOnOff then
+
+    local PositionMissile = TrainerWeapon:getPoint()
+    local PositionTarget = Client:GetPositionVec3()
+
+    local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
+      ( PositionMissile.y - PositionTarget.y )^2 +
+      ( PositionMissile.z - PositionTarget.z )^2
+      ) ^ 0.5 / 1000
+
+    RangeText = string.format( ", at %4.2fkm", Range )
+  end
+
+  return RangeText
+end
+
+function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
+
+  local BearingText = ""
+
+  if self.DetailsBearingOnOff then
+
+    local PositionMissile = TrainerWeapon:getPoint()
+    local PositionTarget = Client:GetPositionVec3()
+
+    self:T2( { PositionTarget, PositionMissile })
+
+    local DirectionVector = { x = PositionMissile.x - PositionTarget.x, y = PositionMissile.y - PositionTarget.y, z = PositionMissile.z - PositionTarget.z }
+    local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
+    --DirectionRadians = DirectionRadians + routines.getNorthCorrection( PositionTarget )
+    if DirectionRadians < 0 then
+      DirectionRadians = DirectionRadians + 2 * math.pi
+    end
+    local DirectionDegrees = DirectionRadians * 180 / math.pi
+
+    BearingText = string.format( ", %d degrees", DirectionDegrees )
+  end
+
+  return BearingText
+end
+
+
+function MISSILETRAINER:_TrackMissiles()
+  self:F2()
+
+
+  local ShowMessages = false
+  if self.MessagesOnOff and self.MessageLastTime + self.TrackingFrequency <= timer.getTime() then
+    self.MessageLastTime = timer.getTime()
+    ShowMessages = true
+  end
+
+  -- ALERTS PART
+  
+  -- Loop for all Player Clients to check the alerts and deletion of missiles.
+  for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
+
+    local Client = ClientData.Client
+    self:T2( { Client:GetName() } )
+
+    for MissileDataID, MissileData in pairs( ClientData.MissileData ) do
+      self:T3( MissileDataID )
+
+      local TrainerSourceUnit = MissileData.TrainerSourceUnit
+      local TrainerWeapon = MissileData.TrainerWeapon
+      local TrainerTargetUnit = MissileData.TrainerTargetUnit
+      local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
+      local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
+  
+      if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+        local PositionMissile = TrainerWeapon:getPosition().p
+        local PositionTarget = Client:GetPositionVec3()
+  
+        local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
+          ( PositionMissile.y - PositionTarget.y )^2 +
+          ( PositionMissile.z - PositionTarget.z )^2
+          ) ^ 0.5 / 1000
+  
+        if Distance <= self.Distance then
+          -- Hit alert
+          TrainerWeapon:destroy()
+          if self.MessagesOnOff == true and self.AlertsHitsOnOff == true then
+  
+            self:T( "killed" )
+  
+            local Message = MESSAGE:New(
+              string.format( "%s launched by %s killed %s",
+                TrainerWeapon:getTypeName(),
+                TrainerSourceUnit:GetTypeName(),
+                TrainerTargetUnit:GetPlayerName()
+              ),"Hit Alert", 15, "ID" )
+  
+            if self.AlertsToAll == true then
+              Message:ToAll()
+            else
+              Message:ToClient( Client )
+            end
+  
+            MissileData = nil
+            table.remove( ClientData.MissileData, MissileDataID )
+            self:T(ClientData.MissileData)
+          end
+        end
+      else
+        if not ( TrainerWeapon and TrainerWeapon:isExist() ) then
+          if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+            -- Weapon does not exist anymore. Delete from Table
+            local Message = MESSAGE:New(
+              string.format( "%s launched by %s self destructed!",
+                TrainerWeaponTypeName,
+                TrainerSourceUnit:GetTypeName()
+              ),"Tracking", 5, "ID" )
+  
+            if self.AlertsToAll == true then
+              Message:ToAll()
+            else
+              Message:ToClient( Client )
+            end
+          end
+          MissileData = nil
+          table.remove( ClientData.MissileData, MissileDataID )
+          self:T( ClientData.MissileData )
+        end
+      end
+    end
+  end
+
+  if ShowMessages == true and self.MessagesOnOff == true and self.TrackingOnOff == true then -- Only do this when tracking information needs to be displayed.
+
+    -- TRACKING PART
+  
+    -- For the current client, the missile range and bearing details are displayed To the Player Client.
+    -- For the other clients, the missile range and bearing details are displayed To the other Player Clients.
+    -- To achieve this, a cross loop is done for each Player Client <-> Other Player Client missile information. 
+  
+    -- Main Player Client loop
+    for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
+  
+      local Client = ClientData.Client
+      self:T2( { Client:GetName() } )
+  
+  
+      ClientData.MessageToClient = ""
+      ClientData.MessageToAll = ""
+  
+      -- Other Players Client loop
+      for TrackingDataID, TrackingData in pairs( self.TrackingMissiles ) do
+  
+        for MissileDataID, MissileData in pairs( TrackingData.MissileData ) do
+          self:T3( MissileDataID )
+  
+          local TrainerSourceUnit = MissileData.TrainerSourceUnit
+          local TrainerWeapon = MissileData.TrainerWeapon
+          local TrainerTargetUnit = MissileData.TrainerTargetUnit
+          local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
+          local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
+  
+          if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+  
+            if ShowMessages == true then
+              local TrackingTo
+              TrackingTo = string.format( "  -> %s",
+                TrainerWeaponTypeName
+              )
+  
+              if ClientDataID == TrackingDataID then
+                if ClientData.MessageToClient == "" then
+                  ClientData.MessageToClient = "Missiles to You:\n"
+                end
+                ClientData.MessageToClient = ClientData.MessageToClient .. TrackingTo .. self:_AddRange( ClientData.Client, TrainerWeapon ) .. self:_AddBearing( ClientData.Client, TrainerWeapon ) .. "\n"
+              else
+                if self.TrackingToAll == true then
+                  if ClientData.MessageToAll == "" then
+                    ClientData.MessageToAll = "Missiles to other Players:\n"
+                  end
+                  ClientData.MessageToAll = ClientData.MessageToAll .. TrackingTo .. self:_AddRange( ClientData.Client, TrainerWeapon ) .. self:_AddBearing( ClientData.Client, TrainerWeapon ) .. " ( " .. TrainerTargetUnit:GetPlayerName()  ..   " )\n"
+                end
+              end
+            end
+          end
+        end
+      end
+  
+      -- Once the Player Client and the Other Player Client tracking messages are prepared, show them.
+      if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
+        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )
+      end
+    end
+  end
+
+  return true
 end

@@ -21,17 +21,6 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
-					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
-					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
-					<li><a href="DCSCommand.html">DCSCommand</a></li>
-					<li><a href="DCSController.html">DCSController</a></li>
-					<li><a href="DCSGroup.html">DCSGroup</a></li>
-					<li><a href="DCSObject.html">DCSObject</a></li>
-					<li><a href="DCSTask.html">DCSTask</a></li>
-					<li><a href="DCSTypes.html">DCSTypes</a></li>
-					<li><a href="DCSUnit.html">DCSUnit</a></li>
-					<li><a href="DCSWorld.html">DCSWorld</a></li>
-					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -46,19 +35,18 @@
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li>Menu</li>
 					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
-					<li><a href="env.html">env</a></li>
-					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -89,6 +77,18 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_CLIENT_COMMAND">MENU_CLIENT_COMMAND</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#MENU_COALITION">MENU_COALITION</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#MENU_COALITION_COMMAND">MENU_COALITION_COMMAND</a></td>
 		<td class="summary">
 
 </td>
@@ -212,6 +212,56 @@
 		</tr>
 	</table>
 
+			<h2><a id="#(MENU_COALITION)">Type <code>MENU_COALITION</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).ClassName">MENU_COALITION.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).New">MENU_COALITION:New(MenuCoalition, MenuText, ParentMenu)</a></td>
+		<td class="summary">
+<p>Creates a new coalition menu item</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).Remove">MENU_COALITION:Remove()</a></td>
+		<td class="summary">
+<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).RemoveSubMenus">MENU_COALITION:RemoveSubMenus()</a></td>
+		<td class="summary">
+<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(MENU_COALITION_COMMAND)">Type <code>MENU_COALITION_COMMAND</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).ClassName">MENU_COALITION_COMMAND.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).New">MENU_COALITION_COMMAND:New(MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</a></td>
+		<td class="summary">
+<p>Creates a new radio command item for a group</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).Remove">MENU_COALITION_COMMAND:Remove()</a></td>
+		<td class="summary">
+<p>Removes a radio command item for a coalition</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(SUBMENU)">Type <code>SUBMENU</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -277,6 +327,34 @@
 		<em><a href="##(MENU_CLIENT_COMMAND)">#MENU_CLIENT_COMMAND</a></em>
 <a id="MENU_CLIENT_COMMAND" >
 <strong>MENU_CLIENT_COMMAND</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(MENU_COALITION)">#MENU_COALITION</a></em>
+<a id="MENU_COALITION" >
+<strong>MENU_COALITION</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(MENU_COALITION_COMMAND)">#MENU_COALITION_COMMAND</a></em>
+<a id="MENU_COALITION_COMMAND" >
+<strong>MENU_COALITION_COMMAND</strong>
 </a>
 </dt>
 <dd>
@@ -644,6 +722,190 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+
+			<h2><a id="#(MENU_COALITION)" >Type <code>MENU_COALITION</code></a></h2>
+				
+<p>The MENU_COALITION class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MENU_COALITION).ClassName" >
+<strong>MENU_COALITION.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COALITION).New" >
+<strong>MENU_COALITION:New(MenuCoalition, MenuText, ParentMenu)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new coalition menu item</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCoalition.html##(coalition.side)">DCSCoalition#coalition.side</a> MenuCoalition </em></code>: 
+The coalition owning the menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string MenuText </em></code>: 
+The text for the menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ParentMenu </em></code>: 
+The parent menu.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COALITION).Remove" >
+<strong>MENU_COALITION:Remove()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COALITION).RemoveSubMenus" >
+<strong>MENU_COALITION:RemoveSubMenus()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(MENU_COALITION_COMMAND)" >Type <code>MENU_COALITION_COMMAND</code></a></h2>
+				
+<p>The MENU<em>COALITION</em>COMMAND class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MENU_COALITION_COMMAND).ClassName" >
+<strong>MENU_COALITION_COMMAND.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COALITION_COMMAND).New" >
+<strong>MENU_COALITION_COMMAND:New(MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new radio command item for a group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCoalition.html##(coalition.side)">DCSCoalition#coalition.side</a> MenuCoalition </em></code>: 
+The coalition owning the menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuText </em></code>: 
+The text for the menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ParentMenu </em></code>: 
+The parent menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuFunction </em></code>: 
+A function that is called when the menu key is pressed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuArgument </em></code>: 
+An argument for the function.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COALITION_COMMAND)">#MENU<em>COALITION</em>COMMAND</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COALITION_COMMAND).Remove" >
+<strong>MENU_COALITION_COMMAND:Remove()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a radio command item for a coalition</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COALITION_COMMAND)">#MENU<em>COALITION</em>COMMAND</a>:</em>
+self</p>
 
 </dd>
 </dl>

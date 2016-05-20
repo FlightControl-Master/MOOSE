@@ -67,7 +67,7 @@ function SEAD:EventShot( Event )
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()
 		local _targetMimcont= _targetMimgroup:getController()
-		local _targetskill =  _DATABASE.Units[_targetMimname].Template.skill
+		local _targetskill =  _DATABASE.Templates.Units[_targetMimname].Template.skill
 		self:T( self.SEADGroupPrefixes )
 		self:T( _targetMimgroupName )
 		local SEADGroupFound = false

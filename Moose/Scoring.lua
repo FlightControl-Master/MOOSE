@@ -197,7 +197,7 @@ end
 function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
-  if UnitData:isExist() then
+  if UnitData and UnitData:isExist() then
     local UnitName = UnitData:getName()
     local PlayerName = UnitData:getPlayerName()
     local UnitDesc = UnitData:getDesc()
@@ -324,7 +324,7 @@ function SCORING:_EventOnHit( Event )
   local InitUnitName = ""
   local InitGroup = nil
   local InitGroupName = ""
-  local InitPlayerName = "dummy"
+  local InitPlayerName = nil
 
   local InitCoalition = nil
   local InitCategory = nil
