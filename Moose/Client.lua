@@ -187,7 +187,7 @@ function CLIENT:GetDCSGroup()
 --	else
 --		return nil
 --	end
-
+  
   local ClientUnit = Unit.getByName( self.ClientName )
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
@@ -223,6 +223,8 @@ function CLIENT:GetDCSGroup()
   --				else
   --					error( "Client " .. self.ClientName .. " not found!" )
   				end
+  			else
+  			  --self:E( { "Client not found!", self.ClientName } )
   		  end
 			end
 		end

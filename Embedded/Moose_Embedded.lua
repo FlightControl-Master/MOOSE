@@ -6030,7 +6030,7 @@ function CLIENT:GetDCSGroup()
 --	else
 --		return nil
 --	end
-
+  
   local ClientUnit = Unit.getByName( self.ClientName )
 
 	local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
@@ -6066,6 +6066,8 @@ function CLIENT:GetDCSGroup()
   --				else
   --					error( "Client " .. self.ClientName .. " not found!" )
   				end
+  			else
+  			  --self:E( { "Client not found!", self.ClientName } )
   		  end
 			end
 		end
@@ -6789,31 +6791,35 @@ function DATABASE:_RegisterDatabase()
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
 
-      local DCSGroupName = DCSGroup:getName()
-
-      self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-      self.DCSGroups[DCSGroupName] = DCSGroup
-      self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
-
-      if self:_IsAliveDCSGroup(DCSGroup) then
-        self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
-        self.DCSGroupsAlive[DCSGroupName] = DCSGroup
-        self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
-      end
-
-      for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
-
-        local DCSUnitName = DCSUnit:getName()
-        self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-
-        self.DCSUnits[DCSUnitName] = DCSUnit
-        self.Units[DCSUnitName] = UNIT:New( DCSUnit )
-
-        if self:_IsAliveDCSUnit(DCSUnit) then
-          self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
-          self.DCSUnitsAlive[DCSUnitName] = DCSUnit
-          self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+      if DCSGroup:isExist() then
+        local DCSGroupName = DCSGroup:getName()
+  
+        self:E( { "Register Group:", DCSGroup, DCSGroupName } )
+        self.DCSGroups[DCSGroupName] = DCSGroup
+        self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+  
+        if self:_IsAliveDCSGroup(DCSGroup) then
+          self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+          self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+          self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
         end
+  
+        for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+  
+          local DCSUnitName = DCSUnit:getName()
+          self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
+  
+          self.DCSUnits[DCSUnitName] = DCSUnit
+          self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+  
+          if self:_IsAliveDCSUnit(DCSUnit) then
+            self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+            self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+            self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+          end
+        end
+      else
+        self:E( "Group does not exist: " .. DCSGroup )
       end
       
       for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
@@ -15302,9 +15308,9 @@ end
 --     * **Frequency Decrease**: Decreases the missile tracking message frequency with one second.
 --  * **Alerts**: Menu to configure alert messages.
 --     * **To All**: Shows alert messages to all players.
---     * **To Target**: Shows alter messages only to the player where the missile is (was) targetted at.
+--     * **To Target**: Shows alert messages only to the player where the missile is (was) targetted at.
 --     * **Hits On**: Show missile hit alert messages.
---     * **Hits Off**: Disable missile hit altert messages.
+--     * **Hits Off**: Disable missile hit alert messages.
 --     * **Launches On**: Show missile launch messages.
 --     * **Launches Off**: Disable missile launch messages.
 --  * **Details**: Menu to configure message details.
