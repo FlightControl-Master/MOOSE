@@ -115,15 +115,33 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetAmmo">UNIT:GetAmmo()</a></td>
+		<td class="summary">
+<p>Returns the Unit's ammunition.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCallSign">UNIT:GetCallSign()</a></td>
 		<td class="summary">
-
+<p>Returns the unit's callsign - the localized string.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCategoryName">UNIT:GetCategoryName()</a></td>
 		<td class="summary">
-
+<p>Returns the Unit's Category Name as defined within the Unit's Descriptor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCoalition">UNIT:GetCoalition()</a></td>
+		<td class="summary">
+<p>Returns coalition of the Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCountry">UNIT:GetCountry()</a></td>
+		<td class="summary">
+<p>Returns country of the Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -133,21 +151,57 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetDesc">UNIT:GetDesc()</a></td>
+		<td class="summary">
+<p>Returns unit descriptor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetFuel">UNIT:GetFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetGroup">UNIT:GetGroup()</a></td>
+		<td class="summary">
+<p>Returns the unit's group if it exist and nil otherwise.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetID">UNIT:GetID()</a></td>
 		<td class="summary">
-
+<p>Returns the unit's unique identifier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetLife">UNIT:GetLife()</a></td>
+		<td class="summary">
+<p>Returns the unit's health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetLife0">UNIT:GetLife0()</a></td>
+		<td class="summary">
+<p>Returns the Unit's initial health.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetName">UNIT:GetName()</a></td>
 		<td class="summary">
-
+<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetNumber">UNIT:GetNumber()</a></td>
+		<td class="summary">
+<p>Returns the unit's number in the group.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetPlayerName">UNIT:GetPlayerName()</a></td>
 		<td class="summary">
-
+<p>Returns name of the player that control the unit or nil if the unit is controlled by A.I.</p>
 </td>
 		</tr>
 		<tr>
@@ -169,9 +223,43 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetRadar">UNIT:GetRadar()</a></td>
+		<td class="summary">
+<p>Returns two values:</p>
+
+<ul>
+    <li>First value indicates if at least one of the unit's radar(s) is on.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetSensors">UNIT:GetSensors()</a></td>
+		<td class="summary">
+<p>Returns the unit sensors.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetTypeName">UNIT:GetTypeName()</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetVelocity">UNIT:GetVelocity()</a></td>
+		<td class="summary">
+<p>Returns the unit's velocity vector.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).InAir">UNIT:InAir()</a></td>
+		<td class="summary">
+<p>Returns true if the Unit is in air.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsActive">UNIT:IsActive()</a></td>
+		<td class="summary">
+<p>Returns if the unit is activated.</p>
 </td>
 		</tr>
 		<tr>
@@ -183,13 +271,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsAlive">UNIT:IsAlive()</a></td>
 		<td class="summary">
-
+<p>Returns if the unit is alive.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).New">UNIT:New(DCSUnit)</a></td>
 		<td class="summary">
 <p>Create a new UNIT from DCSUnit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).NewFromName">UNIT:NewFromName(Unit, UnitName)</a></td>
+		<td class="summary">
+<p>Create a new UNIT from a Unit Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -444,13 +538,36 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).GetAmmo" >
+<strong>UNIT:GetAmmo()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the Unit's ammunition.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSUnit.html##(Unit.Ammo)">DCSUnit#Unit.Ammo</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).GetCallSign" >
 <strong>UNIT:GetCallSign()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Returns the unit's callsign - the localized string.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The Callsign of the Unit.</p>
 
 </dd>
 </dl>
@@ -463,7 +580,48 @@
 </dt>
 <dd>
 	
+<p>Returns the Unit's Category Name as defined within the Unit's Descriptor.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Unit's Category Name</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetCoalition" >
+<strong>UNIT:GetCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns coalition of the Unit.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetCountry" >
+<strong>UNIT:GetCountry()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns country of the Unit.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a>:</em>
+The country identifyer.</p>
 
 </dd>
 </dl>
@@ -483,13 +641,117 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).GetDesc" >
+<strong>UNIT:GetDesc()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns unit descriptor.</p>
+
+	
+<p>Descriptor type depends on unit category.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSUnit.html##(Unit.Desc)">DCSUnit#Unit.Desc</a>:</em>
+The Unit descriptor.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetFuel" >
+<strong>UNIT:GetFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+
+	
+<p>If there are additional fuel tanks the value may be greater than 1.0.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The relative amount of fuel (from 0.0 to 1.0).</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetGroup" >
+<strong>UNIT:GetGroup()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's group if it exist and nil otherwise.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+The Group of the Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).GetID" >
 <strong>UNIT:GetID()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Returns the unit's unique identifier.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSUnit.html##(Unit.ID)">DCSUnit#Unit.ID</a>:</em>
+Unit ID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetLife" >
+<strong>UNIT:GetLife()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's health.</p>
+
+	
+<p>Dead units has health &lt;= 1.0.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The Unit's health value.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetLife0" >
+<strong>UNIT:GetLife0()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the Unit's initial health.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The Unit's initial health value.</p>
 
 </dd>
 </dl>
@@ -502,7 +764,35 @@
 </dt>
 <dd>
 	
+<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
 
+	
+<p>If there is unit with such name or the unit is destroyed the function will return nil. 
+The function provides access to non-activated units too.
+  </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetNumber" >
+<strong>UNIT:GetNumber()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's number in the group.</p>
+
+	
+<p>The number is the same number the unit has in ME. 
+It may not be changed during the mission. 
+If any unit in the group is destroyed, the numbers of another units will not be changed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The Unit number. </p>
 
 </dd>
 </dl>
@@ -515,7 +805,12 @@
 </dt>
 <dd>
 	
+<p>Returns name of the player that control the unit or nil if the unit is controlled by A.I.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Player Name</p>
 
 </dd>
 </dl>
@@ -561,6 +856,61 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).GetRadar" >
+<strong>UNIT:GetRadar()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns two values:</p>
+
+<ul>
+    <li>First value indicates if at least one of the unit's radar(s) is on.</li>
+</ul>
+
+	
+<ul>
+    <li>Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.</li>
+</ul>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+ Indicates if at least one of the unit's radar(s) is on.</p>
+
+				</li>
+				<li>
+				
+<p><em><a href="DCSObject.html##(Object)">DCSObject#Object</a>:</em>
+The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetSensors" >
+<strong>UNIT:GetSensors()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit sensors.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSUnit.html##(Unit.Sensors)">DCSUnit#Unit.Sensors</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).GetTypeName" >
 <strong>UNIT:GetTypeName()</strong>
 </a>
@@ -568,6 +918,60 @@
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetVelocity" >
+<strong>UNIT:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the unit's velocity vector.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+Velocity Vector</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).InAir" >
+<strong>UNIT:InAir()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if the Unit is in air.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if in the air.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsActive" >
+<strong>UNIT:IsActive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is activated.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is activated.</p>
 
 </dd>
 </dl>
@@ -601,7 +1005,12 @@ Air category evaluation result.</p>
 </dt>
 <dd>
 	
+<p>Returns if the unit is alive.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is alive.</p>
 
 </dd>
 </dl>
@@ -621,6 +1030,38 @@ Air category evaluation result.</p>
 				<li>
 				
 <p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).NewFromName" >
+<strong>UNIT:NewFromName(Unit, UnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new UNIT from a Unit Name.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Unit </em></code>: 
+Name</p>
+
+				</li>
+				<li>
+				
+<p><code><em> UnitName </em></code>: </p>
 
 				</li>
 		</ul>

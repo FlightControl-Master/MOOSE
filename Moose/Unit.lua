@@ -50,21 +50,42 @@ UNIT = {
 -- @field Blue
 	
 
---- Create a new UNIT from DCSUnit.
+--- Finds the Unit from the _DATABASE.
 -- @param #UNIT self
 -- @param DCSUnit#Unit DCSUnit
 -- @return Unit#UNIT
 function UNIT:New( DCSUnit )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( DCSUnit )
 
-	if DCSUnit then
-  	self.UnitName = DCSUnit:getName()
-  	return self
+  if DCSUnit then
+    local UnitName = DCSUnit:getName()
+    if _DATABASE then
+      local UnitFound = _DATABASE:FindUnit( UnitName )
+      if UnitFound then
+        return UnitFound
+      end
+    end
   end
 
   self.UnitName = nil
 	return nil
+end
+
+--- Create a new UNIT from DCSUnit.
+-- @param #UNIT self
+-- @param DCSUnit#Unit DCSUnit
+-- @param Database#DATABASE Database
+-- @return Unit#UNIT
+function UNIT:Register( DCSUnit )
+
+  if DCSUnit then
+    local self = BASE:Inherit( self, BASE:New() )
+    self:F( DCSUnit )
+    self.UnitName = DCSUnit:getName()
+    return self
+  end
+
+  self.UnitName = nil
+  return nil
 end
 
 --- Create a new UNIT from a Unit Name.
@@ -95,9 +116,9 @@ function UNIT:GetDCSUnit()
   return nil
 end
 
---- Returns coalition of the object.
+--- Returns coalition of the Unit.
 -- @param Unit#UNIT self
--- @return #DCSCoalitionObject#coalition.side
+-- @return DCSCoalitionObject#coalition.side
 function UNIT:GetCoalition()
   self:F( self.UnitName )
 
@@ -110,8 +131,25 @@ function UNIT:GetCoalition()
   end 
   
   return nil
-
 end
+
+--- Returns country of the Unit.
+-- @param Unit#UNIT self
+-- @return DCScountry#country.id The country identifyer.
+function UNIT:GetCountry()
+  self:F( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+    local UnitCountry = DCSUnit:getCountry()
+    self:T( UnitCountry )
+    return UnitCountry
+  end 
+  
+  return nil
+end
+ 
 
 --- Returns unit object by the name assigned to the unit in Mission Editor. 
 -- If there is unit with such name or the unit is destroyed the function will return nil. 
@@ -420,6 +458,8 @@ end
 
 
 function UNIT:GetPositionVec3()
+  self:F( self.UnitName )
+
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
@@ -430,6 +470,55 @@ function UNIT:GetPositionVec3()
 	
 	return nil
 end
+
+--- Returns the unit's velocity vector.
+-- @param Unit#UNIT self
+-- @return DCSTypes#Vec3 Velocity Vector
+function UNIT:GetVelocity()
+  self:F( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+    local UnitVelocityVec3 = DCSUnit:getVelocity()
+    self:T( UnitVelocityVec3 )
+    return UnitVelocityVec3
+  end
+  
+  return nil
+end
+ 
+--- Returns true if the Unit is in air.
+-- @param Unit#UNIT self
+-- @return #boolean true if in the air.
+function UNIT:InAir()
+  self:F( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+    local UnitInAir = DCSUnit:inAir()
+    self:T( UnitInAir )
+    return UnitInAir
+  end
+  
+  return nil
+end
+ 
+function UNIT:GetPositionVec3()
+  self:F( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+    local UnitPos = DCSUnit:getPosition().p
+    self:T( UnitPos )
+    return UnitPos
+  end
+  
+  return nil
+end
+
 
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	self:F( { self.UnitName, AwaitUnit.UnitName, Radius } )

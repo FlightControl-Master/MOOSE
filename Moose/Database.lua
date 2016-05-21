@@ -161,6 +161,28 @@ function DATABASE:New()
   return self
 end
 
+--- Finds a Unit based on the Unit Name.
+-- @param #DATABASE self
+-- @param #string UnitName
+-- @return Unit#UNIT The found Unit.
+function DATABASE:FindUnit( UnitName )
+
+  local UnitFound = self.Units[UnitName]
+  return UnitFound
+end
+
+--- Finds a Unit based on the Unit Name.
+-- @param #DATABASE self
+-- @param Unit#UNIT UnitToAdd
+-- @return Unit#UNIT The added Unit.
+function DATABASE:AddUnit( UnitToAdd )
+
+  self.Units[UnitToAdd.UnitName] = UnitToAdd
+  return self.Units[UnitToAdd.UnitName]
+end
+
+
+
 --- Builds a set of units of coalitons.
 -- Possible current coalitions are red, blue and neutral.
 -- @param #DATABASE self
@@ -472,7 +494,8 @@ function DATABASE:_RegisterDatabase()
           self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
   
           self.DCSUnits[DCSUnitName] = DCSUnit
-          self.Units[DCSUnitName] = UNIT:New( DCSUnit )
+          self:AddUnit( UNIT:Register( DCSUnit ) )
+          --self.Units[DCSUnitName] = UNIT:Register( DCSUnit )
   
           if self:_IsAliveDCSUnit(DCSUnit) then
             self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
@@ -506,7 +529,8 @@ function DATABASE:_EventOnBirth( Event )
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
       self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
-      self.Units[Event.IniDCSUnitName] = UNIT:New( Event.IniDCSUnit )
+      self:AddUnit( UNIT:Register( Event.IniDCSUnit ) )
+      --self.Units[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnit )
       
       --if not self.DCSGroups[Event.IniDCSGroupName] then
       --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName

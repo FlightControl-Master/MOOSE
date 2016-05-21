@@ -452,8 +452,8 @@ function MISSILETRAINER:_EventShot( Event )
   local Client = self.DBClients[TrainerTargetDCSUnitName]
   if Client then
 
-    local TrainerSourceUnit = UNIT:New(TrainerSourceDCSUnit)
-    local TrainerTargetUnit = UNIT:New(TrainerTargetDCSUnit)
+    local TrainerSourceUnit = UNIT:New( TrainerSourceDCSUnit )
+    local TrainerTargetUnit = UNIT:New( TrainerTargetDCSUnit )
 
     if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
 
