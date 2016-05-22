@@ -282,10 +282,10 @@ end
 
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current Vec3 position of the group.
-function GROUP:GetPositionVec3()
+function GROUP:GetPointVec3()
 	self:F( self.GroupName )
   
-  local GroupPoint = self:GetUnit(1):GetPositionVec3()
+  local GroupPoint = self:GetUnit(1):GetPointVec3()
   self:T( GroupPoint )
   return GroupPoint
 end
@@ -311,7 +311,7 @@ end
 -- @return Unit#UNIT The DCS Unit.
 function GROUP:GetUnit( UnitNumber )
 	self:F( { self.GroupName, UnitNumber } )
-	return UNIT:New( self.DCSGroup:getUnit( UnitNumber ) )
+	return UNIT:Find( self.DCSGroup:getUnit( UnitNumber ) )
 end
 
 --- Returns the category name of the group.
@@ -934,7 +934,7 @@ end
 function GROUP:TaskRouteToVec3( Point, Speed )
   self:F( { Point, Speed } )
 
-  local GroupPoint = self:GetUnit( 1 ):GetPositionVec3()
+  local GroupPoint = self:GetUnit( 1 ):GetPointVec3()
   
   local PointFrom = {}
   PointFrom.x = GroupPoint.x

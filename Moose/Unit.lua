@@ -49,61 +49,40 @@ UNIT = {
 -- @field Orange
 -- @field Blue
 	
-
---- Finds the Unit from the _DATABASE.
--- @param #UNIT self
--- @param DCSUnit#Unit DCSUnit
--- @return Unit#UNIT
-function UNIT:New( DCSUnit )
-
-  if DCSUnit then
-    local UnitName = DCSUnit:getName()
-    if _DATABASE then
-      local UnitFound = _DATABASE:FindUnit( UnitName )
-      if UnitFound then
-        return UnitFound
-      end
-    end
-  end
-
-  self.UnitName = nil
-	return nil
-end
-
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param DCSUnit#Unit DCSUnit
 -- @param Database#DATABASE Database
 -- @return Unit#UNIT
-function UNIT:Register( DCSUnit )
+function UNIT:Register( UnitName )
 
-  if DCSUnit then
-    local self = BASE:Inherit( self, BASE:New() )
-    self:F( DCSUnit )
-    self.UnitName = DCSUnit:getName()
-    return self
-  end
-
-  self.UnitName = nil
-  return nil
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( UnitName )
+  self.UnitName = UnitName
+  return self
 end
 
---- Create a new UNIT from a Unit Name.
+
+--- Finds a UNIT from the _DATABASE using a DCSUnit object.
+-- @param #UNIT self
+-- @param DCSUnit#Unit DCSUnit
+-- @return Unit#UNIT
+function UNIT:Find( DCSUnit )
+
+  local UnitName = DCSUnit:getName()
+  local UnitFound = _DATABASE:FindUnit( UnitName )
+  return UnitFound
+end
+
+--- Find a UNIT in the _DATABASE using the name of the UNIT.
 -- @param #UNIT self
 -- @param #string Unit Name
 -- @return Unit#UNIT
-function UNIT:NewFromName( UnitName )
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F( UnitName )
-
-  local DCSUnit = Unit.getByName( UnitName )
-  if DCSUnit then
-    self.UnitName = DCSUnit:getName()
-    return self
-  end
-
-  self.UnitName = nil -- Sanitize
-  return nil
+function UNIT:FindByName( UnitName )
+--  self:F( UnitName )
+  
+  local FoundUnit = _DATABASE:FindUnit( UnitName )
+  return FoundUnit
 end
 
 function UNIT:GetDCSUnit()
@@ -182,7 +161,7 @@ function UNIT:IsAlive()
     return UnitIsAlive
   end	
 	
-	return nil
+	return false
 end
 
 --- Returns if the unit is activated.
@@ -443,19 +422,33 @@ function UNIT:GetPointVec2()
   local DCSUnit = self:GetDCSUnit()
 	
   if DCSUnit then
-  	local UnitPos = DCSUnit:getPosition().p
+  	local UnitPointVec3 = DCSUnit:getPosition().p
   	
-  	local UnitPoint = {}
-  	UnitPoint.x = UnitPos.x
-  	UnitPoint.y = UnitPos.z
+  	local UnitPointVec2 = {}
+  	UnitPointVec2.x = UnitPointVec3.x
+  	UnitPointVec2.y = UnitPointVec3.z
   
-  	self:T( UnitPoint )
-  	return UnitPoint
+  	self:T( UnitPointVec2 )
+  	return UnitPointVec2
   end
   
   return nil
 end
 
+
+function UNIT:GetPointVec3()
+  self:F( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+  	local UnitPointVec3 = DCSUnit:getPosition().p
+  	self:T( UnitPointVec3 )
+  	return UnitPointVec3
+  end
+	
+	return nil
+end
 
 function UNIT:GetPositionVec3()
   self:F( self.UnitName )
@@ -463,12 +456,12 @@ function UNIT:GetPositionVec3()
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-  	local UnitPos = DCSUnit:getPosition().p
-  	self:T( UnitPos )
-  	return UnitPos
+    local UnitPosition = DCSUnit:getPosition()
+    self:T( UnitPosition )
+    return UnitPosition
   end
-	
-	return nil
+  
+  return nil
 end
 
 --- Returns the unit's velocity vector.
@@ -505,26 +498,27 @@ function UNIT:InAir()
   return nil
 end
  
-function UNIT:GetPositionVec3()
-  self:F( self.UnitName )
+--- Returns the altitude of the UNIT.
+-- @param #UNIT self
+-- @return DCSTypes#Distance
+function UNIT:GetAltitude()
+  self:F()
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-    local UnitPos = DCSUnit:getPosition().p
-    self:T( UnitPos )
-    return UnitPos
+    local UnitPointVec3 = DCSUnit:getPoint() --DCSTypes#Vec3
+    return UnitPointVec3.y
   end
   
   return nil
-end
-
+end 
 
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	self:F( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
-	local UnitPos = self:GetPositionVec3()
-	local AwaitUnitPos = AwaitUnit:GetPositionVec3()
+	local UnitPos = self:GetPointVec3()
+	local AwaitUnitPos = AwaitUnit:GetPointVec3()
 
 	if  (((UnitPos.x - AwaitUnitPos.x)^2 + (UnitPos.z - AwaitUnitPos.z)^2)^0.5 <= Radius) then
 		self:T( "true" )
@@ -556,77 +550,77 @@ end
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), FlareColor , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), FlareColor , 0 )
 end
 
 --- Signal a white flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareWhite()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.White , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.White , 0 )
 end
 
 --- Signal a yellow flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareYellow()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Yellow , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Yellow , 0 )
 end
 
 --- Signal a green flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareGreen()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Green , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Green , 0 )
 end
 
 --- Signal a red flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareRed()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Red, 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Red, 0 )
 end
 
 --- Smoke the UNIT.
 -- @param #UNIT self
 function UNIT:Smoke( SmokeColor )
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), SmokeColor )
+  trigger.action.smoke( self:GetPointVec3(), SmokeColor )
 end
 
 --- Smoke the UNIT Green.
 -- @param #UNIT self
 function UNIT:SmokeGreen()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Green )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Green )
 end
 
 --- Smoke the UNIT Red.
 -- @param #UNIT self
 function UNIT:SmokeRed()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Red )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Red )
 end
 
 --- Smoke the UNIT White.
 -- @param #UNIT self
 function UNIT:SmokeWhite()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.White )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.White )
 end
 
 --- Smoke the UNIT Orange.
 -- @param #UNIT self
 function UNIT:SmokeOrange()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Orange )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Orange )
 end
 
 --- Smoke the UNIT Blue.
 -- @param #UNIT self
 function UNIT:SmokeBlue()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Blue )
 end
 
 -- Is methods

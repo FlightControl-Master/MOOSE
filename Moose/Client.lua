@@ -24,7 +24,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
--- @extends Base#BASE
+-- @extends Unit#UNIT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -60,15 +60,24 @@ CLIENT = {
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
 function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( ClientName, ClientBriefing )
+  self = _DATABASE:FindClient( ClientName )
 
+  self:F( ClientName, ClientBriefing )
   self.ClientName = ClientName
-	self:AddBriefing( ClientBriefing )
-	self.MessageSwitch = true
-	
+  self:AddBriefing( ClientBriefing )
+  self.MessageSwitch = true
+
 	return self
 end
+
+function CLIENT:Register( ClientName )
+  local self = BASE:Inherit( self, UNIT:Register( ClientName ) )
+
+  self.ClientName = ClientName
+  
+  return self
+end
+
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
 -- @param #CLIENT self
@@ -138,29 +147,12 @@ function CLIENT:IsMultiSeated()
   return false
 end
 
---- Checks if client is alive and returns true or false.
--- @param #CLIENT self
--- @returns #boolean Returns true if client is alive.
-function CLIENT:IsAlive()
-  self:F( self.ClientName )
-  
-  local ClientUnit = Unit.getByName( self.ClientName )
-  
-  if ClientUnit and ClientUnit:isExist() then
-    self:T("true")
-    return true
-  end
-  
-  self:T( "false" )
-  return false
-end
-
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler()
   self:F( { self.ClientName, self.ClientAlive2 } )
 
-  if self:IsAlive() then
+  if self:IsAlive() then -- Polymorphic call of UNIT
     if self.ClientAlive2 == false then
       self:T("Calling Callback function")
       self.ClientCallBack( self, unpack( self.ClientParameters ) )
@@ -303,109 +295,6 @@ function CLIENT:GetClientGroupDCSUnit()
     return ClientDCSUnit
   end
 end
-
--- TODO what is this??? check. possible double function.
-function CLIENT:GetUnit()
-	self:F()
-	
-	return UNIT:New( self:GetClientGroupDCSUnit() )
-end
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
--- @param #CLIENT self
--- @return DCSTypes#Vec2
-function CLIENT:GetPointVec2()
-	self:F()
-
-  local ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      local PointVec2 = {} --DCSTypes#Vec2
-      PointVec2.x = PointVec3.x
-      PointVec2.y = PointVec3.z
-      self:T( { PointVec2 } )
-      return PointVec2
-    end
-  end
-  
-  return nil
-end 
-
-function CLIENT:GetPositionVec3()
-  self:F( self.ClientName )
-  
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local UnitPos = DCSUnit:getPosition().p
-
-  self:T( UnitPos )
-  return UnitPos
-end
-
-function CLIENT:GetID()
-  self:F( self.ClientName )
-
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local UnitID = DCSUnit:getID()
-  
-  self:T( UnitID )
-  return UnitID
-end
-
-function CLIENT:GetName()
-  self:F( self.ClientName )
-  
-  self:T( self.ClientName )
-  return self.ClientName
-end
-
-function CLIENT:GetTypeName()
-  self:F( self.ClientName )
-
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local TypeName = DCSUnit:getTypeName()
-  
-  self:T( TypeName )
-  return TypeName
-end
-
-
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
--- @param #CLIENT self
--- @return DCSTypes#Vec3
-function CLIENT:ClientPosition()
-	self:F()
-
-	local ClientGroupUnit = self:GetClientGroupDCSUnit()
-	
-	if ClientGroupUnit then
-		if ClientGroupUnit:isExist() then
-			return ClientGroupUnit:getPosition()
-		end
-	end
-	
-	return nil
-end 
-
---- Returns the altitude of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Distance
-function CLIENT:GetAltitude()
-	self:F()
-
-  local ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      return PointVec3.y
-    end
-  end
-  
-  return nil
-end 
 
 
 --- Evaluates if the CLIENT is a transport.

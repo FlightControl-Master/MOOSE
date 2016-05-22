@@ -146,7 +146,7 @@ function CARGO_ZONE:Signal()
 			if SignalUnit then
 			
 				self:T( 'Signalling Unit' )
-				local SignalVehiclePos = SignalUnit:GetPositionVec3()
+				local SignalVehiclePos = SignalUnit:GetPointVec3()
 				SignalVehiclePos.y = SignalVehiclePos.y + 2
 
 				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
@@ -586,7 +586,7 @@ function CARGO_GROUP:IsNear( Client, LandingZone )
 
 	if self.CargoGroupName then 
 		local CargoGroup = Group.getByName( self.CargoGroupName )
-		if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 250 ) then
+		if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 250 ) then
 			Near = true
 		end
 	end
@@ -691,7 +691,7 @@ function CARGO_GROUP:OnBoarded( Client, LandingZone )
   local CargoGroup = Group.getByName( self.CargoGroupName )
 
 	if not self.CargoInAir then
-  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
+  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 25 ) then
   		CargoGroup:destroy()
   		self:StatusLoaded( Client )
   		OnBoarded = true
@@ -790,7 +790,7 @@ function CARGO_PACKAGE:IsNear( Client, LandingZone )
 		self:T( self.CargoClient.ClientName )
 		self:T( 'Client Exists.' )
 
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:ClientPosition(), 150 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:GetPositionVec3(), 150 ) then
 			Near = true
 		end
 	end
@@ -897,7 +897,7 @@ function CARGO_PACKAGE:OnBoarded( Client, LandingZone )
 	local OnBoarded = false
   
 	if self.CargoClient and self.CargoClient:GetDCSGroup() then
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:ClientPosition(), 10 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:GetPositionVec3(), 10 ) then
 			
 			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
 			self:StatusLoaded( Client )

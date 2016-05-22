@@ -452,8 +452,8 @@ function MISSILETRAINER:_EventShot( Event )
   local Client = self.DBClients[TrainerTargetDCSUnitName]
   if Client then
 
-    local TrainerSourceUnit = UNIT:New( TrainerSourceDCSUnit )
-    local TrainerTargetUnit = UNIT:New( TrainerTargetDCSUnit )
+    local TrainerSourceUnit = UNIT:Find( TrainerSourceDCSUnit )
+    local TrainerTargetUnit = UNIT:Find( TrainerTargetDCSUnit )
 
     if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
 
@@ -489,7 +489,7 @@ function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
   if self.DetailsRangeOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPositionVec3()
+    local PositionTarget = Client:GetPointVec3()
 
     local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
       ( PositionMissile.y - PositionTarget.y )^2 +
@@ -509,7 +509,7 @@ function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
   if self.DetailsBearingOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPositionVec3()
+    local PositionTarget = Client:GetPointVec3()
 
     self:T2( { PositionTarget, PositionMissile })
 
@@ -557,7 +557,7 @@ function MISSILETRAINER:_TrackMissiles()
   
       if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
         local PositionMissile = TrainerWeapon:getPosition().p
-        local PositionTarget = Client:GetPositionVec3()
+        local PositionTarget = Client:GetPointVec3()
   
         local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
           ( PositionMissile.y - PositionTarget.y )^2 +

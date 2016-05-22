@@ -4282,10 +4282,10 @@ end
 
 --- Gets the current Point of the GROUP in VEC3 format.
 -- @return #Vec3 Current Vec3 position of the group.
-function GROUP:GetPositionVec3()
+function GROUP:GetPointVec3()
 	self:F( self.GroupName )
   
-  local GroupPoint = self:GetUnit(1):GetPositionVec3()
+  local GroupPoint = self:GetUnit(1):GetPointVec3()
   self:T( GroupPoint )
   return GroupPoint
 end
@@ -4934,7 +4934,7 @@ end
 function GROUP:TaskRouteToVec3( Point, Speed )
   self:F( { Point, Speed } )
 
-  local GroupPoint = self:GetUnit( 1 ):GetPositionVec3()
+  local GroupPoint = self:GetUnit( 1 ):GetPointVec3()
   
   local PointFrom = {}
   PointFrom.x = GroupPoint.x
@@ -5636,7 +5636,7 @@ function UNIT:GetPointVec2()
 end
 
 
-function UNIT:GetPositionVec3()
+function UNIT:GetPointVec3()
 	self:F( self.UnitName )
 	
 	local UnitPos = self.DCSUnit:getPosition().p
@@ -5648,8 +5648,8 @@ end
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	self:F( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
-	local UnitPos = self:GetPositionVec3()
-	local AwaitUnitPos = AwaitUnit:GetPositionVec3()
+	local UnitPos = self:GetPointVec3()
+	local AwaitUnitPos = AwaitUnit:GetPointVec3()
 
 	if  (((UnitPos.x - AwaitUnitPos.x)^2 + (UnitPos.z - AwaitUnitPos.z)^2)^0.5 <= Radius) then
 		self:T( "true" )
@@ -5671,77 +5671,77 @@ end
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), FlareColor , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), FlareColor , 0 )
 end
 
 --- Signal a white flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareWhite()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.White , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.White , 0 )
 end
 
 --- Signal a yellow flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareYellow()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Yellow , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Yellow , 0 )
 end
 
 --- Signal a green flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareGreen()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Green , 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Green , 0 )
 end
 
 --- Signal a red flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareRed()
   self:F()
-  trigger.action.signalFlare( self:GetPositionVec3(), trigger.flareColor.Red, 0 )
+  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Red, 0 )
 end
 
 --- Smoke the UNIT.
 -- @param #UNIT self
 function UNIT:Smoke( SmokeColor )
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), SmokeColor )
+  trigger.action.smoke( self:GetPointVec3(), SmokeColor )
 end
 
 --- Smoke the UNIT Green.
 -- @param #UNIT self
 function UNIT:SmokeGreen()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Green )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Green )
 end
 
 --- Smoke the UNIT Red.
 -- @param #UNIT self
 function UNIT:SmokeRed()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Red )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Red )
 end
 
 --- Smoke the UNIT White.
 -- @param #UNIT self
 function UNIT:SmokeWhite()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.White )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.White )
 end
 
 --- Smoke the UNIT Orange.
 -- @param #UNIT self
 function UNIT:SmokeOrange()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Orange )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Orange )
 end
 
 --- Smoke the UNIT Blue.
 -- @param #UNIT self
 function UNIT:SmokeBlue()
   self:F()
-  trigger.action.smoke( self:GetPositionVec3(), trigger.smokeColor.Blue )
+  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Blue )
 end
 
 -- Is methods
@@ -6176,7 +6176,7 @@ function CLIENT:GetPointVec2()
   return nil
 end 
 
-function CLIENT:GetPositionVec3()
+function CLIENT:GetPointVec3()
   self:F( self.ClientName )
   
   local DCSUnit = Unit.getByName( self.ClientName )
@@ -6218,7 +6218,7 @@ end
 --- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
 -- @param #CLIENT self
 -- @return DCSTypes#Vec3
-function CLIENT:ClientPosition()
+function CLIENT:GetPositionVec3()
 	self:F()
 
 	local ClientGroupUnit = self:GetClientGroupDCSUnit()
@@ -8260,7 +8260,7 @@ function CARGO_ZONE:Signal()
 			if SignalUnit then
 			
 				self:T( 'Signalling Unit' )
-				local SignalVehiclePos = SignalUnit:GetPositionVec3()
+				local SignalVehiclePos = SignalUnit:GetPointVec3()
 				SignalVehiclePos.y = SignalVehiclePos.y + 2
 
 				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
@@ -8700,7 +8700,7 @@ function CARGO_GROUP:IsNear( Client, LandingZone )
 
 	if self.CargoGroupName then 
 		local CargoGroup = Group.getByName( self.CargoGroupName )
-		if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 250 ) then
+		if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 250 ) then
 			Near = true
 		end
 	end
@@ -8805,7 +8805,7 @@ function CARGO_GROUP:OnBoarded( Client, LandingZone )
   local CargoGroup = Group.getByName( self.CargoGroupName )
 
 	if not self.CargoInAir then
-  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:ClientPosition(), 25 ) then
+  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 25 ) then
   		CargoGroup:destroy()
   		self:StatusLoaded( Client )
   		OnBoarded = true
@@ -8904,7 +8904,7 @@ function CARGO_PACKAGE:IsNear( Client, LandingZone )
 		self:T( self.CargoClient.ClientName )
 		self:T( 'Client Exists.' )
 
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:ClientPosition(), 150 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:GetPositionVec3(), 150 ) then
 			Near = true
 		end
 	end
@@ -9011,7 +9011,7 @@ function CARGO_PACKAGE:OnBoarded( Client, LandingZone )
 	local OnBoarded = false
   
 	if self.CargoClient and self.CargoClient:GetDCSGroup() then
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:ClientPosition(), 10 ) then
+		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:GetPositionVec3(), 10 ) then
 			
 			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
 			self:StatusLoaded( Client )
@@ -14670,7 +14670,7 @@ function ESCORT._HoldPosition( MenuParam )
   routines.removeFunction( self.FollowScheduler )
 
   local PointFrom = {}
-  local GroupPoint = EscortGroup:GetUnit(1):GetPositionVec3()
+  local GroupPoint = EscortGroup:GetUnit(1):GetPointVec3()
   PointFrom = {}
   PointFrom.x = GroupPoint.x
   PointFrom.y = GroupPoint.z
@@ -15012,15 +15012,15 @@ function ESCORT:_FollowScheduler( FollowDistance )
     local GroupUnit = self.EscortGroup:GetUnit( 1 )
 
     if self.CT1 == 0 and self.GT1 == 0 then
-      self.CV1 = ClientUnit:GetPositionVec3()
+      self.CV1 = ClientUnit:GetPointVec3()
       self.CT1 = timer.getTime()
-      self.GV1 = GroupUnit:GetPositionVec3()
+      self.GV1 = GroupUnit:GetPointVec3()
       self.GT1 = timer.getTime()
     else
       local CT1 = self.CT1
       local CT2 = timer.getTime()
       local CV1 = self.CV1
-      local CV2 = ClientUnit:GetPositionVec3()
+      local CV2 = ClientUnit:GetPointVec3()
       self.CT1 = CT2
       self.CV1 = CV2
 
@@ -15034,7 +15034,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       local GT1 = self.GT1
       local GT2 = timer.getTime()
       local GV1 = self.GV1
-      local GV2 = GroupUnit:GetPositionVec3()
+      local GV2 = GroupUnit:GetPointVec3()
       self.GT1 = GT2
       self.GV1 = GV2
 
@@ -15140,8 +15140,8 @@ function ESCORT:_ReportTargetsScheduler()
         --                EscortTargetLastVelocity } )
 
 
-        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec3()
-        local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPointVec3()
+        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
         local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
           ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
           ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
@@ -15199,8 +15199,8 @@ function ESCORT:_ReportTargetsScheduler()
               EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
             end
 
-            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPositionVec3()
-            local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPointVec3()
+            local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
             local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
               ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
               ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
@@ -15267,7 +15267,7 @@ function ESCORT:_ReportTargetsScheduler()
 
       local TaskPoints = self:RegisterRoute()
       for WayPointID, WayPoint in pairs( TaskPoints ) do
-        local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
         local Distance = ( ( WayPoint.x - EscortPositionVec3.x )^2 +
           ( WayPoint.y - EscortPositionVec3.z )^2
           ) ^ 0.5 / 1000
@@ -15771,7 +15771,7 @@ function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
   if self.DetailsRangeOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPositionVec3()
+    local PositionTarget = Client:GetPointVec3()
 
     local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
       ( PositionMissile.y - PositionTarget.y )^2 +
@@ -15791,7 +15791,7 @@ function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
   if self.DetailsBearingOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPositionVec3()
+    local PositionTarget = Client:GetPointVec3()
 
     self:T2( { PositionTarget, PositionMissile })
 
@@ -15839,7 +15839,7 @@ function MISSILETRAINER:_TrackMissiles()
   
       if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
         local PositionMissile = TrainerWeapon:getPosition().p
-        local PositionTarget = Client:GetPositionVec3()
+        local PositionTarget = Client:GetPointVec3()
   
         local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
           ( PositionMissile.y - PositionTarget.y )^2 +
