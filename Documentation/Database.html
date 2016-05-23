@@ -43,6 +43,7 @@
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -139,6 +140,18 @@ The following iterator methods are currently available within the DATABASE:</p>
 			<h2><a id="#(DATABASE)">Type <code>DATABASE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddClient">DATABASE:AddClient(ClientName)</a></td>
+		<td class="summary">
+<p>Adds a CLIENT based on the ClientName in the DATABASE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddUnit">DATABASE:AddUnit(DCSUnit, DCSUnitName)</a></td>
+		<td class="summary">
+<p>Adds a Unit based on the Unit Name in the DATABASE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClassName">DATABASE.ClassName</a></td>
 		<td class="summary">
 
@@ -163,21 +176,15 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSGroupsAlive">DATABASE.DCSGroupsAlive</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSUnits">DATABASE.DCSUnits</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DCSUnitsAlive">DATABASE.DCSUnitsAlive</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteUnit">DATABASE:DeleteUnit(DCSUnitName)</a></td>
 		<td class="summary">
-
+<p>Deletes a Unit from the DATABASE based on the Unit Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -187,51 +194,21 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCategories">DATABASE:FilterCategories(Categories)</a></td>
-		<td class="summary">
-<p>Builds a set of units out of categories.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCoalitions">DATABASE:FilterCoalitions(Coalitions)</a></td>
-		<td class="summary">
-<p>Builds a set of units of coalitons.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterCountries">DATABASE:FilterCountries(Countries)</a></td>
-		<td class="summary">
-<p>Builds a set of units of defined countries.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterGroupPrefixes">DATABASE:FilterGroupPrefixes(Prefixes)</a></td>
-		<td class="summary">
-<p>Builds a set of units of defined group prefixes.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterMeta">DATABASE.FilterMeta</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterStart">DATABASE:FilterStart()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FindClient">DATABASE:FindClient(ClientName)</a></td>
 		<td class="summary">
-<p>Starts the filtering.</p>
+<p>Finds a CLIENT based on the ClientName.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterTypes">DATABASE:FilterTypes(Types)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FindUnit">DATABASE:FindUnit(UnitName)</a></td>
 		<td class="summary">
-<p>Builds a set of units of defined unit types.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterUnitPrefixes">DATABASE:FilterUnitPrefixes(Prefixes)</a></td>
-		<td class="summary">
-<p>Builds a set of units of defined unit prefixes.</p>
+<p>Finds a Unit based on the Unit Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -247,7 +224,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachDCSUnitAlive">DATABASE:ForEachDCSUnitAlive(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachDCSUnit">DATABASE:ForEachDCSUnit(IteratorFunction, ...)</a></td>
 		<td class="summary">
 <p>Interate the DATABASE and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
 </td>
@@ -266,12 +243,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Groups">DATABASE.Groups</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GroupsAlive">DATABASE.GroupsAlive</a></td>
 		<td class="summary">
 
 </td>
@@ -338,12 +309,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Units">DATABASE.Units</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).UnitsAlive">DATABASE.UnitsAlive</a></td>
 		<td class="summary">
 
 </td>
@@ -435,6 +400,53 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).AddClient" >
+<strong>DATABASE:AddClient(ClientName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a CLIENT based on the ClientName in the DATABASE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClientName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).AddUnit" >
+<strong>DATABASE:AddUnit(DCSUnit, DCSUnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a Unit based on the Unit Name in the DATABASE.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DCSUnitName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(DATABASE).ClassName" >
 <strong>DATABASE.ClassName</strong>
@@ -492,20 +504,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).DCSGroupsAlive" >
-<strong>DATABASE.DCSGroupsAlive</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(DATABASE).DCSUnits" >
 <strong>DATABASE.DCSUnits</strong>
 </a>
@@ -519,15 +517,22 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(DATABASE).DCSUnitsAlive" >
-<strong>DATABASE.DCSUnitsAlive</strong>
+<a id="#(DATABASE).DeleteUnit" >
+<strong>DATABASE:DeleteUnit(DCSUnitName)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Deletes a Unit from the DATABASE based on the Unit Name.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSUnitName </em></code>: </p>
 
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -541,126 +546,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 <dd>
 	
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).FilterCategories" >
-<strong>DATABASE:FilterCategories(Categories)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Builds a set of units out of categories.</p>
-
-	
-<p>Possible current categories are plane, helicopter, ground, ship.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Categories </em></code>: 
-Can take the following values: "plane", "helicopter", "ground", "ship".</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).FilterCoalitions" >
-<strong>DATABASE:FilterCoalitions(Coalitions)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Builds a set of units of coalitons.</p>
-
-	
-<p>Possible current coalitions are red, blue and neutral.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Coalitions </em></code>: 
-Can take the following values: "red", "blue", "neutral".</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).FilterCountries" >
-<strong>DATABASE:FilterCountries(Countries)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Builds a set of units of defined countries.</p>
-
-	
-<p>Possible current countries are those known within DCS world.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Countries </em></code>: 
-Can take those country strings known within DCS world.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).FilterGroupPrefixes" >
-<strong>DATABASE:FilterGroupPrefixes(Prefixes)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Builds a set of units of defined group prefixes.</p>
-
-	
-<p>All the units starting with the given group prefixes will be included within the set.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Prefixes </em></code>: 
-The prefix of which the group name where the unit belongs to starts with.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
 
 </dd>
 </dl>
@@ -681,78 +566,52 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterStart" >
-<strong>DATABASE:FilterStart()</strong>
+<a id="#(DATABASE).FindClient" >
+<strong>DATABASE:FindClient(ClientName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Starts the filtering.</p>
+<p>Finds a CLIENT based on the ClientName.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ClientName </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
+<p><em><a href="Client.html##(CLIENT)">Client#CLIENT</a>:</em>
+The found CLIENT.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).FilterTypes" >
-<strong>DATABASE:FilterTypes(Types)</strong>
+<a id="#(DATABASE).FindUnit" >
+<strong>DATABASE:FindUnit(UnitName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Builds a set of units of defined unit types.</p>
-
-	
-<p>Possible current types are those types known within DCS world.</p>
+<p>Finds a Unit based on the Unit Name.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string Types </em></code>: 
-Can take those type strings known within DCS world.</p>
+<p><code><em>#string UnitName </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).FilterUnitPrefixes" >
-<strong>DATABASE:FilterUnitPrefixes(Prefixes)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Builds a set of units of defined unit prefixes.</p>
-
-	
-<p>All the units starting with the given prefixes will be included within the set.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Prefixes </em></code>: 
-The prefix of which the unit name starts with.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+The found Unit.</p>
 
 </dd>
 </dl>
@@ -828,8 +687,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).ForEachDCSUnitAlive" >
-<strong>DATABASE:ForEachDCSUnitAlive(IteratorFunction, ...)</strong>
+<a id="#(DATABASE).ForEachDCSUnit" >
+<strong>DATABASE:ForEachDCSUnit(IteratorFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -916,20 +775,6 @@ self</p>
 		<em></em>
 <a id="#(DATABASE).Groups" >
 <strong>DATABASE.Groups</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(DATABASE).GroupsAlive" >
-<strong>DATABASE.GroupsAlive</strong>
 </a>
 </dt>
 <dd>
@@ -1127,20 +972,6 @@ self</p>
 		<em></em>
 <a id="#(DATABASE).Units" >
 <strong>DATABASE.Units</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(DATABASE).UnitsAlive" >
-<strong>DATABASE.UnitsAlive</strong>
 </a>
 </dt>
 <dd>

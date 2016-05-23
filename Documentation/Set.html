@@ -1,0 +1,1318 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li>Set</li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Set</code></h1>
+   
+<p>Manage sets of units and groups.</p>
+
+   
+
+<h1><a href="##(Set)">#Set</a> class</h1>
+<p>Mission designers can use the SET class to build sets of units belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Unit types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+<p>This list will grow over time. Planned developments are to include filters and iterators.
+Additional filters will be added around <a href="Zone.html##(ZONEs)">Zone#ZONEs</a>, Radiuses, Active players, ...
+More iterators will be implemented in the near future ...</p>
+
+<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
+
+<h1>SET construction methods:</h1>
+<p>Create a new SET object with the <a href="##(SET).New">SET.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET).New">SET.New</a>: Creates a new SET object.</li>
+</ul>
+
+
+<h1>SET filter criteria: </h1>
+<p>You can set filter criteria to define the set of units within the SET.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET).FilterCoalitions">SET.FilterCoalitions</a>: Builds the SET with the units belonging to the coalition(s).</li>
+    <li><a href="##(SET).FilterCategories">SET.FilterCategories</a>: Builds the SET with the units belonging to the category(ies).</li>
+    <li><a href="##(SET).FilterTypes">SET.FilterTypes</a>: Builds the SET with the units belonging to the unit type(s).</li>
+    <li><a href="##(SET).FilterCountries">SET.FilterCountries</a>: Builds the SET with the units belonging to the country(ies).</li>
+    <li><a href="##(SET).FilterUnitPrefixes">SET.FilterUnitPrefixes</a>: Builds the SET with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET).FilterStart">SET.FilterStart</a>: Starts the filtering of the units within the SET.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET).FilterGroupPrefixes">SET.FilterGroupPrefixes</a>: Builds the SET with the groups of the units starting with the same prefix string(s).</li>
+    <li><a href="##(SET).FilterZones">SET.FilterZones</a>: Builds the SET with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+
+<h1>SET iterators:</h1>
+<p>Once the filters have been defined and the SET has been built, you can iterate the SET with the available iterator methods.
+The iterator methods will walk the SET set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET:</p>
+
+<ul>
+    <li><a href="##(SET).ForEachAliveUnit">SET.ForEachAliveUnit</a>: Calls a function for each alive unit it finds within the SET.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET).ForEachUnit">SET.ForEachUnit</a>: Calls a function for each unit contained within the SET.</li>
+    <li><a href="##(SET).ForEachGroup">SET.ForEachGroup</a>: Calls a function for each group contained within the SET.</li>
+    <li><a href="##(SET).ForEachUnitInZone">SET.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the SET.</li>
+</ul>
+
+<hr/>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET">SET</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(SET)">Type <code>SET</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).AddUnit">SET:AddUnit(UnitToAdd)</a></td>
+		<td class="summary">
+<p>Finds a Unit based on the Unit Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ClassName">SET.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Clients">SET.Clients</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ClientsAlive">SET.ClientsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).DCSGroups">SET.DCSGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).DCSGroupsAlive">SET.DCSGroupsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).DCSUnits">SET.DCSUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).DCSUnitsAlive">SET.DCSUnitsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Filter">SET.Filter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterCategories">SET:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of units out of categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterCoalitions">SET:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of units of coalitons.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterCountries">SET:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterGroupPrefixes">SET:FilterGroupPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined group prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterMeta">SET.FilterMeta</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterStart">SET:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterTypes">SET:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FilterUnitPrefixes">SET:FilterUnitPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).FindUnit">SET:FindUnit(UnitName)</a></td>
+		<td class="summary">
+<p>Finds a Unit based on the Unit Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ForEach">SET:ForEach(IteratorFunction, arg, Set)</a></td>
+		<td class="summary">
+<p>Interate the SET and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ForEachClient">SET:ForEachClient(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Interate the SET and call an interator function for each client, providing the Client to the function and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ForEachDCSUnitAlive">SET:ForEachDCSUnitAlive(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Interate the SET and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ForEachPlayer">SET:ForEachPlayer(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Interate the SET and call an interator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Groups">SET.Groups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).GroupsAlive">SET.GroupsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).NavPoints">SET.NavPoints</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).New">SET:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Players">SET.Players</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).PlayersAlive">SET.PlayersAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).ScanEnvironment">SET:ScanEnvironment()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Statics">SET.Statics</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Templates">SET.Templates</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).TraceDatabase">SET:TraceDatabase()</a></td>
+		<td class="summary">
+<p>Traces the current SET contents in the log ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).Units">SET.Units</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET).UnitsAlive">SET.UnitsAlive</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnBirth">SET:_EventOnBirth(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnBirth event for the alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnDeadOrCrash">SET:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnPlayerEnterUnit">SET:_EventOnPlayerEnterUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnPlayerLeaveUnit">SET:_EventOnPlayerLeaveUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._IsAliveDCSGroup">SET:_IsAliveDCSGroup(DCSGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._IsAliveDCSUnit">SET:_IsAliveDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._IsIncludeDCSUnit">SET:_IsIncludeDCSUnit(DCSUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._RegisterDatabase">SET:_RegisterDatabase()</a></td>
+		<td class="summary">
+<p>Private method that registers all datapoints within in the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET)._RegisterPlayers">SET:_RegisterPlayers()</a></td>
+		<td class="summary">
+<p>Private method that registers all alive players in the mission.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET)">#SET</a></em>
+<a id="SET" >
+<strong>SET</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Set)" >Type <code>Set</code></a></h2>
+	
+			<h2><a id="#(SET)" >Type <code>SET</code></a></h2>
+				
+<p>SET class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).AddUnit" >
+<strong>SET:AddUnit(UnitToAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Unit based on the Unit Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> UnitToAdd </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+The added Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(SET).ClassName" >
+<strong>SET.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Clients" >
+<strong>SET.Clients</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).ClientsAlive" >
+<strong>SET.ClientsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).DCSGroups" >
+<strong>SET.DCSGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).DCSGroupsAlive" >
+<strong>SET.DCSGroupsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).DCSUnits" >
+<strong>SET.DCSUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).DCSUnitsAlive" >
+<strong>SET.DCSUnitsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Filter" >
+<strong>SET.Filter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterCategories" >
+<strong>SET:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units out of categories.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterCoalitions" >
+<strong>SET:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of coalitons.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterCountries" >
+<strong>SET:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterGroupPrefixes" >
+<strong>SET:FilterGroupPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined group prefixes.</p>
+
+	
+<p>All the units starting with the given group prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the group name where the unit belongs to starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).FilterMeta" >
+<strong>SET.FilterMeta</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterStart" >
+<strong>SET:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterTypes" >
+<strong>SET:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit types.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FilterUnitPrefixes" >
+<strong>SET:FilterUnitPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit prefixes.</p>
+
+	
+<p>All the units starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the unit name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).FindUnit" >
+<strong>SET:FindUnit(UnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Unit based on the Unit Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UnitName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+The found Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).ForEach" >
+<strong>SET:ForEach(IteratorFunction, arg, Set)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Interate the SET and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive player in the SET.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> arg </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Set </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).ForEachClient" >
+<strong>SET:ForEachClient(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Interate the SET and call an interator function for each client, providing the Client to the function and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive player in the SET. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).ForEachDCSUnitAlive" >
+<strong>SET:ForEachDCSUnitAlive(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Interate the SET and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive unit in the SET. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).ForEachPlayer" >
+<strong>SET:ForEachPlayer(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Interate the SET and call an interator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive player in the SET. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Groups" >
+<strong>SET.Groups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).GroupsAlive" >
+<strong>SET.GroupsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).NavPoints" >
+<strong>SET.NavPoints</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).New" >
+<strong>SET:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
+DBObject = SET:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Players" >
+<strong>SET.Players</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).PlayersAlive" >
+<strong>SET.PlayersAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).ScanEnvironment" >
+<strong>SET:ScanEnvironment()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Statics" >
+<strong>SET.Statics</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Templates" >
+<strong>SET.Templates</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET).TraceDatabase" >
+<strong>SET:TraceDatabase()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Traces the current SET contents in the log ...</p>
+
+	
+<p>(for debug reasons).</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).Units" >
+<strong>SET.Units</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET).UnitsAlive" >
+<strong>SET.UnitsAlive</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._EventOnBirth" >
+<strong>SET:_EventOnBirth(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnBirth event for the alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._EventOnDeadOrCrash" >
+<strong>SET:_EventOnDeadOrCrash(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._EventOnPlayerEnterUnit" >
+<strong>SET:_EventOnPlayerEnterUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._EventOnPlayerLeaveUnit" >
+<strong>SET:_EventOnPlayerLeaveUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._IsAliveDCSGroup" >
+<strong>SET:_IsAliveDCSGroup(DCSGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a> DCSGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._IsAliveDCSUnit" >
+<strong>SET:_IsAliveDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._IsIncludeDCSUnit" >
+<strong>SET:_IsIncludeDCSUnit(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._RegisterDatabase" >
+<strong>SET:_RegisterDatabase()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Private method that registers all datapoints within in the mission.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET)._RegisterPlayers" >
+<strong>SET:_RegisterPlayers()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Private method that registers all alive players in the mission.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET)">#SET</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

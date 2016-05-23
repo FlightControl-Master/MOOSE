@@ -43,6 +43,7 @@
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -167,21 +168,9 @@ Note that clients are NOT the same as Units, they are NOT necessarily alive.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientPosition">CLIENT:ClientPosition()</a></td>
-		<td class="summary">
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientTransport">CLIENT.ClientTransport</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetAltitude">CLIENT:GetAltitude()</a></td>
-		<td class="summary">
-<p>Returns the altitude of the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
@@ -212,48 +201,6 @@ Note that clients are NOT the same as Units, they are NOT necessarily alive.</p>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetDCSGroup">CLIENT:GetDCSGroup()</a></td>
 		<td class="summary">
 <p>Return the DCSGroup of a Client.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetID">CLIENT:GetID()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetName">CLIENT:GetName()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetPointVec2">CLIENT:GetPointVec2()</a></td>
-		<td class="summary">
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetPositionVec3">CLIENT:GetPositionVec3()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetTypeName">CLIENT:GetTypeName()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetUnit">CLIENT:GetUnit()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsAlive">CLIENT:IsAlive()</a></td>
-		<td class="summary">
-<p>Checks if client is alive and returns true or false.</p>
 </td>
 		</tr>
 		<tr>
@@ -293,6 +240,12 @@ Note that clients are NOT the same as Units, they are NOT necessarily alive.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).MessageSwitch">CLIENT.MessageSwitch</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Messages">CLIENT.Messages</a></td>
 		<td class="summary">
 
@@ -306,6 +259,12 @@ Note that clients are NOT the same as Units, they are NOT necessarily alive.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ONBOARDSIDE">CLIENT.ONBOARDSIDE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Register">CLIENT:Register(ClientName)</a></td>
 		<td class="summary">
 
 </td>
@@ -577,6 +536,7 @@ Function.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(CLIENT).ClientName" >
 <strong>CLIENT.ClientName</strong>
 </a>
@@ -604,24 +564,6 @@ Function.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CLIENT).ClientPosition" >
-<strong>CLIENT:ClientPosition()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em>#boolean</em>
 <a id="#(CLIENT).ClientTransport" >
 <strong>CLIENT.ClientTransport</strong>
@@ -629,24 +571,6 @@ Function.</p>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetAltitude" >
-<strong>CLIENT:GetAltitude()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the altitude of the CLIENT.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em></p>
 
 
 </dd>
@@ -742,105 +666,6 @@ Function.</p>
 				
 <p><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetID" >
-<strong>CLIENT:GetID()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetName" >
-<strong>CLIENT:GetName()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetPointVec2" >
-<strong>CLIENT:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetPositionVec3" >
-<strong>CLIENT:GetPositionVec3()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetTypeName" >
-<strong>CLIENT:GetTypeName()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetUnit" >
-<strong>CLIENT:GetUnit()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> TODO what is this??? check. possible double function.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).IsAlive" >
-<strong>CLIENT:IsAlive()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Checks if client is alive and returns true or false.</p>
 
 </dd>
 </dl>
@@ -974,6 +799,20 @@ is the interval in seconds between the display of the <a href="Message.html##(ME
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(CLIENT).MessageSwitch" >
+<strong>CLIENT.MessageSwitch</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(CLIENT).Messages" >
 <strong>CLIENT.Messages</strong>
@@ -1040,6 +879,27 @@ Text that describes the briefing of the mission when a Player logs into the Clie
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLIENT).Register" >
+<strong>CLIENT:Register(ClientName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClientName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

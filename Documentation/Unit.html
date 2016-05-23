@@ -43,6 +43,7 @@
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li>Unit</li>
@@ -53,7 +54,43 @@
 	<div id="content">
    <h1>Module <code>Unit</code></h1>
    
-<p>UNIT Classes</p>
+<p>UNIT Class</p>
+
+<h1><a href="UNIT.html">UNIT</a> class</h1>
+<p>The <a href="UNIT.html">UNIT</a> class is a wrapper class to handle the DCS Unit objects:</p>
+
+<ul>
+    <li>Support all DCS Unit APIs.</li>
+</ul>
+
+   
+<ul>
+    <li>Enhance with Unit specific APIs not in the DCS Unit API set.</li>
+    <li>Handle local Unit Controller.</li>
+    <li>Manage the "state" of the objects.</li>
+</ul>
+
+
+<h1>UNIT reference methods</h1>
+<p>For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
+
+<p>The UNIT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the DCS Unit or the DCS UnitName.</p>
+
+<p>Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
+The UNIT methods will reference the DCS Unit object by name when it is needed during API execution.
+If the DCS Unit object does not exist or is nil, the UNIT methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:</p>
+
+<ul>
+    <li><a href="##(UNIT).Find">UNIT.Find</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
+    <li><a href="##(UNIT).FindByName">UNIT.FindByName</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -76,6 +113,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).ClassName">UNIT.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Find">UNIT:Find(DCSUnit)</a></td>
+		<td class="summary">
+<p>Finds a UNIT from the _DATABASE using a DCSUnit object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).FindByName">UNIT:FindByName(UnitName)</a></td>
+		<td class="summary">
+<p>Find a UNIT in the _DATABASE using the name of an existing DCS Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -115,6 +164,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetAltitude">UNIT:GetAltitude()</a></td>
+		<td class="summary">
+<p>Returns the altitude of the DCS Unit.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetAmmo">UNIT:GetAmmo()</a></td>
 		<td class="summary">
 <p>Returns the Unit's ammunition.</p>
@@ -129,7 +184,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetCategoryName">UNIT:GetCategoryName()</a></td>
 		<td class="summary">
-<p>Returns the Unit's Category Name as defined within the Unit's Descriptor.</p>
+<p>Returns the DCS Unit category name as defined within the DCS Unit Descriptor.</p>
 </td>
 		</tr>
 		<tr>
@@ -189,7 +244,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetName">UNIT:GetName()</a></td>
 		<td class="summary">
-<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
+<p>Returns DCS Unit object name.</p>
 </td>
 		</tr>
 		<tr>
@@ -207,19 +262,25 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetPointVec2">UNIT:GetPointVec2()</a></td>
 		<td class="summary">
-
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Unit within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetPointVec3">UNIT:GetPointVec3()</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the point in 3D of the DCS Unit within the mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetPositionVec3">UNIT:GetPositionVec3()</a></td>
 		<td class="summary">
-
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the DCS Unit within the mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetPrefix">UNIT:GetPrefix()</a></td>
 		<td class="summary">
-
+<p>Returns the prefix name of the DCS Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -241,19 +302,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetTypeName">UNIT:GetTypeName()</a></td>
 		<td class="summary">
-
+<p>Returns the type name of the DCS Unit.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetVelocity">UNIT:GetVelocity()</a></td>
 		<td class="summary">
-<p>Returns the unit's velocity vector.</p>
+<p>Returns the DCS Unit velocity vector.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).InAir">UNIT:InAir()</a></td>
 		<td class="summary">
-<p>Returns true if the Unit is in air.</p>
+<p>Returns true if the DCS Unit is in the air.</p>
 </td>
 		</tr>
 		<tr>
@@ -275,21 +336,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).New">UNIT:New(DCSUnit)</a></td>
-		<td class="summary">
-<p>Create a new UNIT from DCSUnit.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).NewFromName">UNIT:NewFromName(Unit, UnitName)</a></td>
-		<td class="summary">
-<p>Create a new UNIT from a Unit Name.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).OtherUnitInRadius">UNIT:OtherUnitInRadius(AwaitUnit, Radius)</a></td>
 		<td class="summary">
-
+<p>Returns true if there is an <strong>other</strong> DCS Unit within a radius of the current 2D point of the DCS Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Register">UNIT:Register(DCSUnit, Database, UnitName)</a></td>
+		<td class="summary">
+<p>Create a new UNIT from DCSUnit.</p>
 </td>
 		</tr>
 		<tr>
@@ -451,6 +506,60 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).Find" >
+<strong>UNIT:Find(DCSUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a UNIT from the _DATABASE using a DCSUnit object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: 
+An existing DCS Unit object reference.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).FindByName" >
+<strong>UNIT:FindByName(UnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find a UNIT in the _DATABASE using the name of an existing DCS Unit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UnitName </em></code>: 
+The Unit Name.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).Flare" >
 <strong>UNIT:Flare(FlareColor)</strong>
 </a>
@@ -538,6 +647,34 @@
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).GetAltitude" >
+<strong>UNIT:GetAltitude()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the altitude of the DCS Unit.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The altitude of the DCS Unit.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).GetAmmo" >
 <strong>UNIT:GetAmmo()</strong>
 </a>
@@ -546,11 +683,21 @@
 	
 <p>Returns the Unit's ammunition.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCSUnit.html##(Unit.Ammo)">DCSUnit#Unit.Ammo</a>:</em></p>
 
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -564,11 +711,21 @@
 	
 <p>Returns the unit's callsign - the localized string.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#string:</em>
 The Callsign of the Unit.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -580,12 +737,12 @@ The Callsign of the Unit.</p>
 </dt>
 <dd>
 	
-<p>Returns the Unit's Category Name as defined within the Unit's Descriptor.</p>
+<p>Returns the DCS Unit category name as defined within the DCS Unit Descriptor.</p>
 
 		<h3>Return value</h3>
 				
 <p><em>#string:</em>
-Unit's Category Name</p>
+The DCS Unit Category Name</p>
 
 </dd>
 </dl>
@@ -600,11 +757,21 @@ Unit's Category Name</p>
 	
 <p>Returns coalition of the Unit.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
-<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em></p>
+<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em>
+The side of the coalition.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
 
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -618,11 +785,21 @@ Unit's Category Name</p>
 	
 <p>Returns country of the Unit.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a>:</em>
-The country identifyer.</p>
+The country identifier.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -652,11 +829,21 @@ The country identifyer.</p>
 	
 <p>Descriptor type depends on unit category.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCSUnit.html##(Unit.Desc)">DCSUnit#Unit.Desc</a>:</em>
 The Unit descriptor.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -673,11 +860,21 @@ The Unit descriptor.</p>
 	
 <p>If there are additional fuel tanks the value may be greater than 1.0.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
 The relative amount of fuel (from 0.0 to 1.0).</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -691,11 +888,21 @@ The relative amount of fuel (from 0.0 to 1.0).</p>
 	
 <p>Returns the unit's group if it exist and nil otherwise.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
 The Group of the Unit.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -709,11 +916,21 @@ The Group of the Unit.</p>
 	
 <p>Returns the unit's unique identifier.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCSUnit.html##(Unit.ID)">DCSUnit#Unit.ID</a>:</em>
 Unit ID</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -730,11 +947,21 @@ Unit ID</p>
 	
 <p>Dead units has health &lt;= 1.0.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
 The Unit's health value.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -748,11 +975,21 @@ The Unit's health value.</p>
 	
 <p>Returns the Unit's initial health.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
 The Unit's initial health value.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -764,13 +1001,26 @@ The Unit's initial health value.</p>
 </dt>
 <dd>
 	
-<p>Returns unit object by the name assigned to the unit in Mission Editor.</p>
+<p>Returns DCS Unit object name.</p>
 
 	
-<p>If there is unit with such name or the unit is destroyed the function will return nil. 
-The function provides access to non-activated units too.
-  </p>
+<p>The function provides access to non-activated units too.</p>
 
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the DCS Unit.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -789,11 +1039,21 @@ The function provides access to non-activated units too.
 It may not be changed during the mission. 
 If any unit in the group is destroyed, the numbers of another units will not be changed.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
 The Unit number. </p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -807,11 +1067,21 @@ The Unit number. </p>
 	
 <p>Returns name of the player that control the unit or nil if the unit is controlled by A.I.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#string:</em>
 Player Name</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -823,8 +1093,51 @@ Player Name</p>
 </dt>
 <dd>
 	
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Unit within the mission.</p>
 
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The 2D point vector of the DCS Unit.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).GetPointVec3" >
+<strong>UNIT:GetPointVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the point in 3D of the DCS Unit within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+The 3D point vector of the DCS Unit.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -836,8 +1149,23 @@ Player Name</p>
 </dt>
 <dd>
 	
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the DCS Unit within the mission.</p>
 
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Position)">DCSTypes#Position</a>:</em>
+The 3D position vectors of the DCS Unit.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -849,8 +1177,28 @@ Player Name</p>
 </dt>
 <dd>
 	
+<p>Returns the prefix name of the DCS Unit.</p>
 
+	
+<p>A prefix name is a part of the name before a '#'-sign.
+DCS Units spawned with the <a href="SPAWN.html">SPAWN</a> class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
+The spawn sequence number and unit number are contained within the name after the '#' sign. </p>
 
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the DCS Unit.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -887,6 +1235,12 @@ Player Name</p>
 The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.</p>
 
 				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
 			</ol>
 </dd>
 </dl>
@@ -901,11 +1255,21 @@ The object of the radar's interest. Not nil only if at least one radar of the un
 	
 <p>Returns the unit sensors.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCSUnit.html##(Unit.Sensors)">DCSUnit#Unit.Sensors</a>:</em></p>
 
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -917,8 +1281,23 @@ The object of the radar's interest. Not nil only if at least one radar of the un
 </dt>
 <dd>
 	
+<p>Returns the type name of the DCS Unit.</p>
 
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The type name of the DCS Unit.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -930,13 +1309,23 @@ The object of the radar's interest. Not nil only if at least one radar of the un
 </dt>
 <dd>
 	
-<p>Returns the unit's velocity vector.</p>
+<p>Returns the DCS Unit velocity vector.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
-Velocity Vector</p>
+The velocity vector</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -948,13 +1337,23 @@ Velocity Vector</p>
 </dt>
 <dd>
 	
-<p>Returns true if the Unit is in air.</p>
+<p>Returns true if the DCS Unit is in the air.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#boolean:</em>
 true if in the air.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -968,11 +1367,21 @@ true if in the air.</p>
 	
 <p>Returns if the unit is activated.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#boolean:</em>
 true if Unit is activated.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1007,56 +1416,87 @@ Air category evaluation result.</p>
 	
 <p>Returns if the unit is alive.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#boolean:</em>
 true if Unit is alive.</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(UNIT).New" >
-<strong>UNIT:New(DCSUnit)</strong>
+<a id="#(UNIT).OtherUnitInRadius" >
+<strong>UNIT:OtherUnitInRadius(AwaitUnit, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if there is an <strong>other</strong> DCS Unit within a radius of the current 2D point of the DCS Unit.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> AwaitUnit </em></code>: 
+The other UNIT wrapper object.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Radius </em></code>: 
+The radius in meters with the DCS Unit in the centre.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+
+<p>true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. </p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).Register" >
+<strong>UNIT:Register(DCSUnit, Database, UnitName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Create a new UNIT from DCSUnit.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
 
 				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).NewFromName" >
-<strong>UNIT:NewFromName(Unit, UnitName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Create a new UNIT from a Unit Name.</p>
-
-		<h3>Parameters</h3>
-		<ul>
 				<li>
 				
-<p><code><em>#string Unit </em></code>: 
-Name</p>
+<p><code><em><a href="Database.html##(DATABASE)">Database#DATABASE</a> Database </em></code>: </p>
 
 				</li>
 				<li>
@@ -1070,32 +1510,6 @@ Name</p>
 <p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em></p>
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).OtherUnitInRadius" >
-<strong>UNIT:OtherUnitInRadius(AwaitUnit, Radius)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> AwaitUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Radius </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
