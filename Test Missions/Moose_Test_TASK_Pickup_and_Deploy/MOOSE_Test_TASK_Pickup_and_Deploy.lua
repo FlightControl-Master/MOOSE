@@ -14,8 +14,8 @@ Include.File( "CleanUp" )
 do
 	local Mission = MISSION:New( 'Pickup', 'Operational', 'Pickup Troops', 'NATO' )
 
-	Mission:AddClient( CLIENT:New( 'DE Pickup Test 1' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'DE Pickup Test 2' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'DE Pickup Test 1' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'DE Pickup Test 2' ):Transport() )
 
 	local CargoTable = {}
 
@@ -62,7 +62,7 @@ end
 do
 	local Mission = MISSION:New( 'Deliver secret letter', 'Operational', 'Pickup letter to the commander.', 'NATO' )
 
-	Client_Package_1 = CLIENT:New( 'BE Package Test 1' ):Transport()
+	Client_Package_1 = CLIENT:FindByName( 'BE Package Test 1' ):Transport()
 	
 	Mission:AddClient( Client_Package_1 )
 
@@ -95,8 +95,8 @@ end
 do
 	local Mission = MISSION:New( 'Sling load Cargo', 'Operational', 'Sling Load Cargo to Deploy Zone.', 'NATO' )
 
-	Mission:AddClient( CLIENT:New( 'Sling Load Test Client 1' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'Sling Load Test Client 2' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'Sling Load Test Client 1' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'Sling Load Test Client 2' ):Transport() )
 
 	Sling_Load_Pickup_Zone = CARGO_ZONE:New( 'Sling Load Pickup Zone', 'Sling Load Guard' ):RedSmoke()
 

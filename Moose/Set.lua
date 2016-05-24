@@ -308,7 +308,7 @@ function SET:FilterStart()
 
         self:E( { "Adding Unit:", DCSUnitName } )
         self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
-        self.Units[DCSUnitName] = _DATABASE.Units[DCSUnitName]
+        self.Units[DCSUnitName] = _DATABASE:FindUnit( DCSUnitName )
         
         if _DATABASE.DCSUnitsAlive[DCSUnitName] then
           self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
@@ -323,7 +323,7 @@ function SET:FilterStart()
       --if self:_IsIncludeDCSGroup( DCSGroup ) then
       self:E( { "Adding Group:", DCSGroupName } )
       self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
-      self.Groups[DCSGroupName] = _DATABASE.Groups[DCSGroupName]
+      self.Groups[DCSGroupName] = _DATABASE:FindGroups( DCSGroupName )
       --end
       
       if _DATABASE.DCSGroupsAlive[DCSGroupName] then
@@ -332,7 +332,7 @@ function SET:FilterStart()
       end
     end
 
-    for DCSUnitName, Client in pairs( _DATABASE.Clients ) do
+    for DCSUnitName, Client in pairs( _DATABASE.CLIENTS ) do
       self:E( { "Adding Client for Unit:", DCSUnitName } )
       self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
     end

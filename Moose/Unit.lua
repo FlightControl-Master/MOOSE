@@ -7,7 +7,7 @@
 --  * Support all DCS Unit APIs.
 --  * Enhance with Unit specific APIs not in the DCS Unit API set.
 --  * Handle local Unit Controller.
---  * Manage the "state" of the objects.
+--  * Manage the "state" of the DCS Unit.
 --  
 --  
 -- UNIT reference methods
@@ -15,7 +15,7 @@
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
--- The UNIT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
 -- using the DCS Unit or the DCS UnitName.
 -- 
 -- Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
@@ -25,9 +25,50 @@
 -- The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:
 -- 
 --  * @{#UNIT.Find}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
---  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
+--  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
+-- 
+-- DCS UNIT APIs
+-- =============
+-- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
+-- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSUnit#Unit.getName}()
+-- is implemented in the UNIT class as @{#UNIT.GetName}().
+-- 
+-- Additional UNIT APIs
+-- ====================
+-- The UNIT class comes with additional methods. Find below a summary.
+-- 
+-- Smoke, Flare Units
+-- ------------------
+-- The UNIT class provides methods to smoke or flare units easily. 
+-- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
+-- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
+-- When the DCS Unit moves for whatever reason, the smoking will still continue!
+-- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
+-- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
+-- 
+-- Position, Point
+-- ---------------
+-- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current location of the DCS Unit in a Vec2 (2D) or a Vec3 (3D) vector respectively.
+-- If you want to obtain the complete 3D position including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- 
+-- Alive
+-- -----
+-- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
+-- 
+-- Test for other units in radius
+-- ------------------------------
+-- One can test if another DCS Unit is within a given radius of the current DCS Unit, by using the @{#UNIT.OtherUnitInRadius}() method.
+-- 
+-- More functions will be added
+-- ----------------------------
+-- During the MOOSE development, more functions will be added. A complete list of the current functions is below.
+-- 
+-- 
+-- 
 -- 
 -- @module Unit
 -- @author FlightControl
@@ -38,7 +79,7 @@ Include.File( "Message" )
 
 --- The UNIT class
 -- @type UNIT
--- @Extends Base#BASE
+-- @extends Base#BASE
 -- @field #UNIT.FlareColor FlareColor
 -- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
@@ -79,6 +120,8 @@ UNIT = {
 -- @field White
 -- @field Orange
 -- @field Blue
+
+-- Registration.
 	
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
@@ -88,11 +131,12 @@ UNIT = {
 function UNIT:Register( UnitName )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self:F( UnitName )
+  self:F2( UnitName )
   self.UnitName = UnitName
   return self
 end
 
+-- Reference methods.
 
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
 -- @param #UNIT self
@@ -110,10 +154,9 @@ end
 -- @param #string UnitName The Unit Name.
 -- @return Unit#UNIT self
 function UNIT:FindByName( UnitName )
---  self:F( UnitName )
   
-  local FoundUnit = _DATABASE:FindUnit( UnitName )
-  return FoundUnit
+  local UnitFound = _DATABASE:FindUnit( UnitName )
+  return UnitFound
 end
 
 function UNIT:GetDCSUnit()
@@ -131,13 +174,13 @@ end
 -- @return DCSCoalitionObject#coalition.side The side of the coalition.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCoalition()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitCoalition = DCSUnit:getCoalition()
-    self:T( UnitCoalition )
+    self:T3( UnitCoalition )
     return UnitCoalition
   end 
   
@@ -149,13 +192,13 @@ end
 -- @return DCScountry#country.id The country identifier.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCountry()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitCountry = DCSUnit:getCountry()
-    self:T( UnitCountry )
+    self:T3( UnitCountry )
     return UnitCountry
   end 
   
@@ -169,7 +212,7 @@ end
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetName()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -187,7 +230,7 @@ end
 -- @return #boolean true if Unit is alive.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:IsAlive()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -204,7 +247,7 @@ end
 -- @return #boolean true if Unit is activated.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -222,7 +265,7 @@ end
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -243,7 +286,7 @@ end
 -- @return DCSUnit#Unit.ID Unit ID
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetID()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -263,7 +306,7 @@ end
 -- @return #number The Unit number. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetNumber()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -280,7 +323,7 @@ end
 -- @return Group#GROUP The Group of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetGroup()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -298,7 +341,7 @@ end
 -- @return #string The Callsign of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCallSign()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -315,7 +358,7 @@ end
 -- @return #number The Unit's health value.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetLife()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -332,7 +375,7 @@ end
 -- @return #number The Unit's initial health value.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetLife0()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -349,7 +392,7 @@ end
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetFuel()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -366,7 +409,7 @@ end
 -- @return DCSUnit#Unit.Ammo
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAmmo()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -383,7 +426,7 @@ end
 -- @return DCSUnit#Unit.Sensors
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetSensors()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -407,7 +450,7 @@ end
 -- @return DCSObject#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -426,7 +469,7 @@ end
 -- @return DCSUnit#Unit.Desc The Unit descriptor.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetDesc()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -444,13 +487,13 @@ end
 -- @return #string The type name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetTypeName()
-	self:F( self.UnitName )
+	self:F2( self.UnitName )
 	
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitTypeName = DCSUnit:getTypeName()
-    self:T( UnitTypeName )
+    self:T3( UnitTypeName )
     return UnitTypeName
   end
 
@@ -466,13 +509,13 @@ end
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
-	self:F( self.UnitName )
+	self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
 	
   if DCSUnit then
   	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-  	self:T( UnitPrefix )
+  	self:T3( UnitPrefix )
   	return UnitPrefix
   end
   
@@ -486,7 +529,7 @@ end
 -- @return DCSTypes#Vec2 The 2D point vector of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPointVec2()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
 	
@@ -497,7 +540,7 @@ function UNIT:GetPointVec2()
   	UnitPointVec2.x = UnitPointVec3.x
   	UnitPointVec2.y = UnitPointVec3.z
   
-  	self:T( UnitPointVec2 )
+  	self:T3( UnitPointVec2 )
   	return UnitPointVec2
   end
   
@@ -510,13 +553,13 @@ end
 -- @return DCSTypes#Vec3 The 3D point vector of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPointVec3()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
   	local UnitPointVec3 = DCSUnit:getPosition().p
-  	self:T( UnitPointVec3 )
+  	self:T3( UnitPointVec3 )
   	return UnitPointVec3
   end
 	
@@ -528,13 +571,13 @@ end
 -- @return DCSTypes#Position The 3D position vectors of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPositionVec3()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitPosition = DCSUnit:getPosition()
-    self:T( UnitPosition )
+    self:T3( UnitPosition )
     return UnitPosition
   end
   
@@ -546,13 +589,13 @@ end
 -- @return DCSTypes#Vec3 The velocity vector
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetVelocity()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitVelocityVec3 = DCSUnit:getVelocity()
-    self:T( UnitVelocityVec3 )
+    self:T3( UnitVelocityVec3 )
     return UnitVelocityVec3
   end
   
@@ -564,13 +607,13 @@ end
 -- @return #boolean true if in the air.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:InAir()
-  self:F( self.UnitName )
+  self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
     local UnitInAir = DCSUnit:inAir()
-    self:T( UnitInAir )
+    self:T3( UnitInAir )
     return UnitInAir
   end
   
@@ -582,7 +625,7 @@ end
 -- @return DCSTypes#Distance The altitude of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAltitude()
-  self:F()
+  self:F2()
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -601,7 +644,7 @@ end
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
-	self:F( { self.UnitName, AwaitUnit.UnitName, Radius } )
+	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
   local DCSUnit = self:GetDCSUnit()
   
@@ -610,10 +653,10 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
   	local AwaitUnitPos = AwaitUnit:GetPointVec3()
   
   	if  (((UnitPos.x - AwaitUnitPos.x)^2 + (UnitPos.z - AwaitUnitPos.z)^2)^0.5 <= Radius) then
-  		self:T( "true" )
+  		self:T3( "true" )
   		return true
   	else
-  		self:T( "false" )
+  		self:T3( "false" )
   		return false
   	end
   end
@@ -638,77 +681,77 @@ end
 --- Signal a flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
-  self:F()
+  self:F2()
   trigger.action.signalFlare( self:GetPointVec3(), FlareColor , 0 )
 end
 
 --- Signal a white flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareWhite()
-  self:F()
+  self:F2()
   trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.White , 0 )
 end
 
 --- Signal a yellow flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareYellow()
-  self:F()
+  self:F2()
   trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Yellow , 0 )
 end
 
 --- Signal a green flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareGreen()
-  self:F()
+  self:F2()
   trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Green , 0 )
 end
 
 --- Signal a red flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareRed()
-  self:F()
+  self:F2()
   trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Red, 0 )
 end
 
 --- Smoke the UNIT.
 -- @param #UNIT self
 function UNIT:Smoke( SmokeColor )
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), SmokeColor )
 end
 
 --- Smoke the UNIT Green.
 -- @param #UNIT self
 function UNIT:SmokeGreen()
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Green )
 end
 
 --- Smoke the UNIT Red.
 -- @param #UNIT self
 function UNIT:SmokeRed()
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Red )
 end
 
 --- Smoke the UNIT White.
 -- @param #UNIT self
 function UNIT:SmokeWhite()
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.White )
 end
 
 --- Smoke the UNIT Orange.
 -- @param #UNIT self
 function UNIT:SmokeOrange()
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Orange )
 end
 
 --- Smoke the UNIT Blue.
 -- @param #UNIT self
 function UNIT:SmokeBlue()
-  self:F()
+  self:F2()
   trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Blue )
 end
 
@@ -719,14 +762,14 @@ end
 -- @param #UNIT self
 -- @return #boolean Air category evaluation result.
 function UNIT:IsAir()
-  self:F()
+  self:F2()
   
   local UnitDescriptor = self.DCSUnit:getDesc()
-  self:T( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+  self:T3( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
   
   local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
 
-  self:T( IsAirResult )
+  self:T3( IsAirResult )
   return IsAirResult
 end
 

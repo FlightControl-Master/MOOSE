@@ -26,7 +26,7 @@ Group_Vehicle6 = Spawn_Vehicle:Spawn()
 Group_Vehicle1:TaskRouteToZone( ZONE:New( "Landing Zone" ), true, 40, "Cone" )
 
 -- Now land the spawned plane on to the Vinson, by copying the route of another object.
-Route_Plane = GROUP:NewFromName( "Spawn Helicopter Route Copy" ):CopyRoute( 1, 0 )
+Route_Plane = GROUP:FindByName( "Spawn Helicopter Route Copy" ):CopyRoute( 1, 0 )
 
 Group_Plane:Route( Route_Plane )
 

@@ -21,6 +21,17 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -45,9 +56,12 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li>Unit</li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -67,7 +81,7 @@
 <ul>
     <li>Enhance with Unit specific APIs not in the DCS Unit API set.</li>
     <li>Handle local Unit Controller.</li>
-    <li>Manage the "state" of the objects.</li>
+    <li>Manage the "state" of the DCS Unit.</li>
 </ul>
 
 
@@ -75,7 +89,7 @@
 <p>For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
 This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
 
-<p>The UNIT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+<p>The UNIT class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
 using the DCS Unit or the DCS UnitName.</p>
 
 <p>Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
@@ -86,10 +100,44 @@ If the DCS Unit object does not exist or is nil, the UNIT methods will return ni
 
 <ul>
     <li><a href="##(UNIT).Find">UNIT.Find</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
-    <li><a href="##(UNIT).FindByName">UNIT.FindByName</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
+    <li><a href="##(UNIT).FindByName">UNIT.FindByName</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.</li>
 </ul>
 
 <p>IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).</p>
+
+<h1>DCS UNIT APIs</h1>
+<p>The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
+To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
+the first letter of the method is also capitalized. So, by example, the DCS Unit method <a href="DCSUnit.html##(Unit).getName">DCSUnit#Unit.getName</a>()
+is implemented in the UNIT class as <a href="##(UNIT).GetName">UNIT.GetName</a>().</p>
+
+<h1>Additional UNIT APIs</h1>
+<p>The UNIT class comes with additional methods. Find below a summary.</p>
+
+<h2>Smoke, Flare Units</h2>
+<p>The UNIT class provides methods to smoke or flare units easily. 
+The <a href="##(UNIT).SmokeBlue">UNIT.SmokeBlue</a>(), <a href="##(UNIT).SmokeGreen">UNIT.SmokeGreen</a>(),<a href="##(UNIT).SmokeOrange">UNIT.SmokeOrange</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>() methods
+will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
+When the DCS Unit moves for whatever reason, the smoking will still continue!
+The <a href="##(UNIT).FlareGreen">UNIT.FlareGreen</a>(), <a href="##(UNIT).FlareRed">UNIT.FlareRed</a>(), <a href="##(UNIT).FlareWhite">UNIT.FlareWhite</a>(), <a href="##(UNIT).FlareYellow">UNIT.FlareYellow</a>() 
+methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.</p>
+
+<h2>Position, Point</h2>
+<p>The UNIT class provides methods to obtain the current point or position of the DCS Unit.
+The <a href="##(UNIT).GetPointVec2">UNIT.GetPointVec2</a>(), <a href="##(UNIT).GetPointVec3">UNIT.GetPointVec3</a>() will obtain the current location of the DCS Unit in a Vec2 (2D) or a Vec3 (3D) vector respectively.
+If you want to obtain the complete 3D position including oriëntation and direction vectors, consult the <a href="##(UNIT).GetPositionVec3">UNIT.GetPositionVec3</a>() method respectively.</p>
+
+<h2>Alive</h2>
+<p>The <a href="##(UNIT).IsAlive">UNIT.IsAlive</a>(), <a href="##(UNIT).IsActive">UNIT.IsActive</a>() methods determines if the DCS Unit is alive, meaning, it is existing and active.</p>
+
+<h2>Test for other units in radius</h2>
+<p>One can test if another DCS Unit is within a given radius of the current DCS Unit, by using the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
+
+<h2>More functions will be added</h2>
+<p>During the MOOSE development, more functions will be added. A complete list of the current functions is below.</p>
+
+
+
 
 
 	<h2>Global(s)</h2>

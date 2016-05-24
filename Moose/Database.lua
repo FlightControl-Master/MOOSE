@@ -83,13 +83,13 @@ DATABASE = {
   },
   DCSUnits = {},
   DCSGroups = {},
-  Units = {},
-  Groups = {},
+  UNITS = {},
+  GROUPS = {},
   NavPoints = {},
   Statics = {},
   Players = {},
   PlayersAlive = {},
-  Clients = {},
+  CLIENTS = {},
   ClientsAlive = {},
   Filter = {
     Coalitions = nil,
@@ -163,7 +163,7 @@ end
 -- @return Unit#UNIT The found Unit.
 function DATABASE:FindUnit( UnitName )
 
-  local UnitFound = self.Units[UnitName]
+  local UnitFound = self.UNITS[UnitName]
   return UnitFound
 end
 
@@ -172,7 +172,7 @@ end
 function DATABASE:AddUnit( DCSUnit, DCSUnitName )
 
   self.DCSUnits[DCSUnitName] = DCSUnit 
-  self.Units[DCSUnitName] = UNIT:Register( DCSUnitName )
+  self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
 end
 
 --- Deletes a Unit from the DATABASE based on the Unit Name.
@@ -188,7 +188,7 @@ end
 -- @return Client#CLIENT The found CLIENT.
 function DATABASE:FindClient( ClientName )
 
-  local ClientFound = self.Clients[ClientName]
+  local ClientFound = self.CLIENTS[ClientName]
   return ClientFound
 end
 
@@ -196,7 +196,26 @@ end
 -- @param #DATABASE self
 function DATABASE:AddClient( ClientName )
 
-  self.Clients[ClientName] = CLIENT:Register( ClientName )
+  self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
+  self:E( self.CLIENTS[ClientName]:GetClassNameAndID() )
+end
+
+--- Finds a GROUP based on the GroupName.
+-- @param #DATABASE self
+-- @param #string GroupName
+-- @return Group#GROUP The found GROUP.
+function DATABASE:FindGroup( GroupName )
+
+  local GroupFound = self.GROUPS[GroupName]
+  return GroupFound
+end
+
+--- Adds a GROUP based on the GroupName in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddGroup( DCSGroup, GroupName )
+
+  self.DCSGroups[GroupName] = DCSGroup
+  self.GROUPS[GroupName] = GROUP:Register( GroupName )
 end
 
 --- Instantiate new Groups within the DCSRTE.
@@ -230,7 +249,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCategoryID = SpawnCategoryID
 
 
-  local SpawnGroup = GROUP:New( Group.getByName( SpawnTemplate.name ) )
+  local SpawnGroup = GROUP:Register( SpawnTemplate.name )
   return SpawnGroup
 end
 
@@ -333,8 +352,7 @@ function DATABASE:_RegisterDatabase()
         local DCSGroupName = DCSGroup:getName()
   
         self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-        self.DCSGroups[DCSGroupName] = DCSGroup
-        self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+        self:AddGroup( DCSGroup, DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
@@ -368,12 +386,7 @@ function DATABASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
       self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
-
-      --if not self.DCSGroups[Event.IniDCSGroupName] then
-      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
-      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
-      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
-      --end
+      self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
       self:_EventOnPlayerEnterUnit( Event )
     end
   end
@@ -388,6 +401,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   if Event.IniDCSUnit then
     if self.DCSUnits[Event.IniDCSUnitName] then
       self:DeleteUnit( Event.IniDCSUnitName )
+      -- add logic to correctly remove a group once all units are destroyed...
     end
   end
 end
@@ -403,7 +417,7 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
       if not self.PlayersAlive[Event.IniDCSUnitName] then
         self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
         self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
-        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
+        self.ClientsAlive[Event.IniDCSUnitName] = self.CLIENTS[ Event.IniDCSUnitName ]
       end
     end
   end
@@ -503,7 +517,7 @@ end
 function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Clients )
+  self:ForEach( IteratorFunction, arg, self.CLIENTS )
 
   return self
 end
@@ -513,7 +527,7 @@ function DATABASE:ScanEnvironment()
   self:F()
 
   self.Navpoints = {}
-  self.Units = {}
+  self.UNITS = {}
   --Build routines.db.units and self.Navpoints
   for coa_name, coa_data in pairs(env.mission.coalition) do
 
