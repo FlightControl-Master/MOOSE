@@ -4,15 +4,36 @@
 -- ================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
+-- The @{CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- 
+--  * Wraps the DCS Unit objects with skill level set to Player or Client.
+--  * Support all DCS Unit APIs.
+--  * Enhance with Unit specific APIs not in the DCS Group API set.
+--  * When player joins Unit, execute alive init logic.
+--  * Handles messages to players.
+--  * Manage the "state" of the DCS Unit.
 -- 
 -- Clients are being used by the @{MISSION} class to follow players and register their successes.
--- 
--- CLIENT construction methods:
--- ============================ 
--- Create a new CLIENT object with the @{#CLIENT.New} method:
--- 
---   * @{#CLIENT.New}: Creates a new CLIENT object taking the name of the **DCSUnit** that is a client as defined within the mission editor.
 --  
+-- CLIENT reference methods
+-- ======================= 
+-- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts).
+--  
+-- The CLIENT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- using the DCS Unit or the DCS UnitName.
+-- 
+-- Another thing to know is that CLIENT objects do not "contain" the DCS Unit object. 
+-- The CLIENT methods will reference the DCS Unit object by name when it is needed during API execution.
+-- If the DCS Unit object does not exist or is nil, the CLIENT methods will return nil and log an exception in the DCS.log file.
+--  
+-- The CLIENT class provides the following functions to retrieve quickly the relevant CLIENT instance:
+-- 
+--  * @{#CLIENT.Find}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.
+--  * @{#CLIENT.FindByName}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).
+-- 
 -- @module Client
 -- @author FlightControl
 
@@ -24,7 +45,7 @@ Include.File( "Message" )
 
 --- The CLIENT class
 -- @type CLIENT
--- @extends Base#BASE
+-- @extends Unit#UNIT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -45,7 +66,35 @@ CLIENT = {
 }
 
 
---- Use this method to register new Clients within a mission.
+--- Finds a CLIENT from the _DATABASE using the relevant DCS Unit.
+-- @param #CLIENT self
+-- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
+-- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
+-- @return #CLIENT
+-- @usage
+-- -- Create new Clients.
+--  local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
+--  Mission:AddGoal( DeploySA6TroopsGoal )
+--
+--  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+--  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+--  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+--  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
+function CLIENT:Find( DCSUnit )
+  local ClientName = DCSUnit:getName()
+  local ClientFound = _DATABASE:FindClient( ClientName )
+  
+  if ClientFound then
+    ClientFound:F( ClientName )
+    return ClientFound
+  end
+  
+  error( "CLIENT not found for: " .. ClientName )
+end
+
+
+--- Finds a CLIENT from the _DATABASE using the relevant Client Unit Name.
+-- As an optional parameter, a briefing text can be given also.
 -- @param #CLIENT self
 -- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
 -- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
@@ -55,20 +104,37 @@ CLIENT = {
 --	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
 --	Mission:AddGoal( DeploySA6TroopsGoal )
 --
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-function CLIENT:New( ClientName, ClientBriefing )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( ClientName, ClientBriefing )
+--	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
+function CLIENT:FindByName( ClientName, ClientBriefing )
+  local ClientFound = _DATABASE:FindClient( ClientName )
 
-  self.ClientName = ClientName
-	self:AddBriefing( ClientBriefing )
-	self.MessageSwitch = true
-	
-	return self
+  if ClientFound then
+    ClientFound:F( { ClientName, ClientBriefing } )
+    ClientFound:AddBriefing( ClientBriefing )
+    ClientFound.MessageSwitch = true
+
+  	return ClientFound
+  end
+  
+  error( "CLIENT not found for: " .. ClientName )
 end
+
+function CLIENT:Register( ClientName )
+  local self = BASE:Inherit( self, UNIT:Register( ClientName ) )
+
+  self:F( ClientName )
+  self.ClientName = ClientName
+  self.MessageSwitch = true
+  self.ClientAlive2 = false
+  
+  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+
+  return self
+end
+
 
 --- Transport defines that the Client is a Transport. Transports show cargo.
 -- @param #CLIENT self
@@ -83,12 +149,37 @@ end
 --- AddBriefing adds a briefing to a CLIENT when a player joins a mission.
 -- @param #CLIENT self
 -- @param #string ClientBriefing is the text defining the Mission briefing.
--- @return #CLIENT
+-- @return #CLIENT self
 function CLIENT:AddBriefing( ClientBriefing )
-  self:F()
+  self:F( ClientBriefing )
   self.ClientBriefing = ClientBriefing
+  self.ClientBriefingShown = false
+  
   return self
 end
+
+--- Show the briefing of the MISSION to the CLIENT.
+-- @param #CLIENT self
+-- @return #CLIENT self
+function CLIENT:ShowBriefing()
+  self:F( { self.ClientName, self.ClientBriefingShown } )
+
+  if not self.ClientBriefingShown then
+    self.ClientBriefingShown = true
+    local Briefing = ""
+    if self.MissionBriefing then
+      Briefing = Briefing .. self.MissionBriefing 
+    end
+    if self.ClientBriefing then
+      Briefing = Briefing .. "\n" .. self.ClientBriefing
+    end
+    Briefing = Briefing .. "\nPress [LEFT ALT]+[B] to view the complete mission briefing."
+    self:Message( Briefing, 30,  self.ClientName .. '/MissionBriefing', "Briefing" )
+  end
+
+  return self
+end
+
 
 
 --- Resets a CLIENT.
@@ -97,21 +188,6 @@ end
 function CLIENT:Reset( ClientName )
 	self:F()
 	self._Menus = {}
-end
-
---- Checks for a client alive event and calls a function on a continuous basis.
--- @param #CLIENT self
--- @param #function CallBack Function.
--- @return #CLIENT
-function CLIENT:Alive( CallBack, ... )
-  self:F()
-  
-  self.ClientAlive2 = false
-  self.ClientCallBack = CallBack
-  self.ClientParameters = arg
-  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-
-  return self
 end
 
 -- Is Functions
@@ -138,32 +214,30 @@ function CLIENT:IsMultiSeated()
   return false
 end
 
---- Checks if client is alive and returns true or false.
+--- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
--- @returns #boolean Returns true if client is alive.
-function CLIENT:IsAlive()
-  self:F( self.ClientName )
+-- @param #function CallBack Function.
+-- @return #CLIENT
+function CLIENT:Alive( CallBack, ... )
+  self:F()
   
-  local ClientUnit = Unit.getByName( self.ClientName )
-  
-  if ClientUnit and ClientUnit:isExist() then
-    self:T("true")
-    return true
-  end
-  
-  self:T( "false" )
-  return false
-end
+  self.ClientCallBack = CallBack
+  self.ClientParameters = arg
 
+  return self
+end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2 } )
+  self:F( { self.ClientName, self.ClientAlive2, self.ClientBriefingShown } )
 
-  if self:IsAlive() then
+  if self:IsAlive() then -- Polymorphic call of UNIT
     if self.ClientAlive2 == false then
-      self:T("Calling Callback function")
-      self.ClientCallBack( self, unpack( self.ClientParameters ) )
+      self:ShowBriefing()
+      if self.ClientCallBack then
+        self:T("Calling Callback function")
+        self.ClientCallBack( self, unpack( self.ClientParameters ) )
+      end
       self.ClientAlive2 = true
     end
   else
@@ -284,7 +358,7 @@ function CLIENT:GetClientGroupUnit()
 
   self:T( self.ClientDCSUnit )
 	if ClientDCSUnit and ClientDCSUnit:isExist() then
-		local ClientUnit = _DATABASE.Units[ self.ClientName ]
+		local ClientUnit = _DATABASE:FindUnit( self.ClientName )
 		self:T2( ClientUnit )
 		return ClientUnit
 	end
@@ -303,109 +377,6 @@ function CLIENT:GetClientGroupDCSUnit()
     return ClientDCSUnit
   end
 end
-
--- TODO what is this??? check. possible double function.
-function CLIENT:GetUnit()
-	self:F()
-	
-	return UNIT:New( self:GetClientGroupDCSUnit() )
-end
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec2} format..
--- @param #CLIENT self
--- @return DCSTypes#Vec2
-function CLIENT:GetPointVec2()
-	self:F()
-
-  local ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      local PointVec2 = {} --DCSTypes#Vec2
-      PointVec2.x = PointVec3.x
-      PointVec2.y = PointVec3.z
-      self:T( { PointVec2 } )
-      return PointVec2
-    end
-  end
-  
-  return nil
-end 
-
-function CLIENT:GetPositionVec3()
-  self:F( self.ClientName )
-  
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local UnitPos = DCSUnit:getPosition().p
-
-  self:T( UnitPos )
-  return UnitPos
-end
-
-function CLIENT:GetID()
-  self:F( self.ClientName )
-
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local UnitID = DCSUnit:getID()
-  
-  self:T( UnitID )
-  return UnitID
-end
-
-function CLIENT:GetName()
-  self:F( self.ClientName )
-  
-  self:T( self.ClientName )
-  return self.ClientName
-end
-
-function CLIENT:GetTypeName()
-  self:F( self.ClientName )
-
-  local DCSUnit = Unit.getByName( self.ClientName )
-  local TypeName = DCSUnit:getTypeName()
-  
-  self:T( TypeName )
-  return TypeName
-end
-
-
-
---- Returns the position of the CLIENT in @{DCSTypes#Vec3} format.
--- @param #CLIENT self
--- @return DCSTypes#Vec3
-function CLIENT:ClientPosition()
-	self:F()
-
-	local ClientGroupUnit = self:GetClientGroupDCSUnit()
-	
-	if ClientGroupUnit then
-		if ClientGroupUnit:isExist() then
-			return ClientGroupUnit:getPosition()
-		end
-	end
-	
-	return nil
-end 
-
---- Returns the altitude of the CLIENT.
--- @param #CLIENT self
--- @return DCSTypes#Distance
-function CLIENT:GetAltitude()
-	self:F()
-
-  local ClientGroupUnit = self:GetClientGroupDCSUnit()
-  
-  if ClientGroupUnit then
-    if ClientGroupUnit:isExist() then
-      local PointVec3 = ClientGroupUnit:getPoint() --DCSTypes#Vec3
-      return PointVec3.y
-    end
-  end
-  
-  return nil
-end 
 
 
 --- Evaluates if the CLIENT is a transport.
@@ -453,7 +424,7 @@ end
 -- @param #string MessageCategory is the category of the message (the title).
 -- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
 function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-	self:F()
+	self:F( { Message, MessageDuration, MessageId, MessageCategory, MessageInterval } )
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then

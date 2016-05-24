@@ -69,7 +69,7 @@ end
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	self:F()
-	Mission:ShowBriefing( Client )
+	Client:ShowBriefing()
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
 end

@@ -1,8 +1,8 @@
 --- Manage sets of units and groups. 
 -- 
--- @{#Database} class
+-- @{#Set} class
 -- ==================
--- Mission designers can use the DATABASE class to build sets of units belonging to certain:
+-- Mission designers can use the SET class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -16,50 +16,50 @@
 --
 -- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
 -- 
--- DATABASE construction methods:
+-- SET construction methods:
 -- =================================
--- Create a new DATABASE object with the @{#DATABASE.New} method:
+-- Create a new SET object with the @{#SET.New} method:
 -- 
---    * @{#DATABASE.New}: Creates a new DATABASE object.
+--    * @{#SET.New}: Creates a new SET object.
 --   
 -- 
--- DATABASE filter criteria: 
+-- SET filter criteria: 
 -- =========================
--- You can set filter criteria to define the set of units within the database.
+-- You can set filter criteria to define the set of units within the SET.
 -- Filter criteria are defined by:
 -- 
---    * @{#DATABASE.FilterCoalitions}: Builds the DATABASE with the units belonging to the coalition(s).
---    * @{#DATABASE.FilterCategories}: Builds the DATABASE with the units belonging to the category(ies).
---    * @{#DATABASE.FilterTypes}: Builds the DATABASE with the units belonging to the unit type(s).
---    * @{#DATABASE.FilterCountries}: Builds the DATABASE with the units belonging to the country(ies).
---    * @{#DATABASE.FilterUnitPrefixes}: Builds the DATABASE with the units starting with the same prefix string(s).
+--    * @{#SET.FilterCoalitions}: Builds the SET with the units belonging to the coalition(s).
+--    * @{#SET.FilterCategories}: Builds the SET with the units belonging to the category(ies).
+--    * @{#SET.FilterTypes}: Builds the SET with the units belonging to the unit type(s).
+--    * @{#SET.FilterCountries}: Builds the SET with the units belonging to the country(ies).
+--    * @{#SET.FilterUnitPrefixes}: Builds the SET with the units starting with the same prefix string(s).
 --   
--- Once the filter criteria have been set for the DATABASE, you can start filtering using:
+-- Once the filter criteria have been set for the SET, you can start filtering using:
 -- 
---   * @{#DATABASE.FilterStart}: Starts the filtering of the units within the database.
+--   * @{#SET.FilterStart}: Starts the filtering of the units within the SET.
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#DATABASE.FilterGroupPrefixes}: Builds the DATABASE with the groups of the units starting with the same prefix string(s).
---    * @{#DATABASE.FilterZones}: Builds the DATABASE with the units within a @{Zone#ZONE}.
+--    * @{#SET.FilterGroupPrefixes}: Builds the SET with the groups of the units starting with the same prefix string(s).
+--    * @{#SET.FilterZones}: Builds the SET with the units within a @{Zone#ZONE}.
 -- 
 -- 
--- DATABASE iterators:
+-- SET iterators:
 -- ===================
--- Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
--- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the DATABASE:
+-- Once the filters have been defined and the SET has been built, you can iterate the SET with the available iterator methods.
+-- The iterator methods will walk the SET set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET:
 -- 
---   * @{#DATABASE.ForEachAliveUnit}: Calls a function for each alive unit it finds within the DATABASE.
+--   * @{#SET.ForEachAliveUnit}: Calls a function for each alive unit it finds within the SET.
 --   
 -- Planned iterators methods in development are (so these are not yet available):
 -- 
---   * @{#DATABASE.ForEachUnit}: Calls a function for each unit contained within the DATABASE.
---   * @{#DATABASE.ForEachGroup}: Calls a function for each group contained within the DATABASE.
---   * @{#DATABASE.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the DATABASE.
+--   * @{#SET.ForEachUnit}: Calls a function for each unit contained within the SET.
+--   * @{#SET.ForEachGroup}: Calls a function for each group contained within the SET.
+--   * @{#SET.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the SET.
 -- 
 -- ====
--- @module Database
+-- @module Set
 -- @author FlightControl
 
 Include.File( "Routines" )
@@ -70,11 +70,11 @@ Include.File( "Unit" )
 Include.File( "Event" )
 Include.File( "Client" )
 
---- DATABASE class
--- @type DATABASE
+--- SET class
+-- @type SET
 -- @extends Base#BASE
-DATABASE = {
-  ClassName = "DATABASE",
+SET = {
+  ClassName = "SET",
   Templates = {
     Units = {},
     Groups = {},
@@ -82,14 +82,18 @@ DATABASE = {
     ClientsByID = {},
   },
   DCSUnits = {},
+  DCSUnitsAlive = {},
   DCSGroups = {},
-  UNITS = {},
-  GROUPS = {},
+  DCSGroupsAlive = {},
+  Units = {},
+  UnitsAlive = {},
+  Groups = {},
+  GroupsAlive = {},
   NavPoints = {},
   Statics = {},
   Players = {},
   PlayersAlive = {},
-  CLIENTS = {},
+  Clients = {},
   ClientsAlive = {},
   Filter = {
     Coalitions = nil,
@@ -131,13 +135,13 @@ local _DATABASECategory =
   }
 
 
---- Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
--- @param #DATABASE self
--- @return #DATABASE
+--- Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+-- @param #SET self
+-- @return #SET
 -- @usage
--- -- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
--- DBObject = DATABASE:New()
-function DATABASE:New()
+-- -- Define a new SET Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
+-- DBObject = SET:New()
+function SET:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -147,7 +151,7 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
   
   
-  -- Add database with registered clients and already alive players
+  -- Add SET with registered clients and already alive players
   
   -- Follow alive players and clients
   _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
@@ -158,169 +162,194 @@ function DATABASE:New()
 end
 
 --- Finds a Unit based on the Unit Name.
--- @param #DATABASE self
+-- @param #SET self
 -- @param #string UnitName
 -- @return Unit#UNIT The found Unit.
-function DATABASE:FindUnit( UnitName )
+function SET:FindUnit( UnitName )
 
-  local UnitFound = self.UNITS[UnitName]
+  local UnitFound = self.Units[UnitName]
   return UnitFound
 end
 
---- Adds a Unit based on the Unit Name in the DATABASE.
--- @param #DATABASE self
-function DATABASE:AddUnit( DCSUnit, DCSUnitName )
+--- Finds a Unit based on the Unit Name.
+-- @param #SET self
+-- @param Unit#UNIT UnitToAdd
+-- @return Unit#UNIT The added Unit.
+function SET:AddUnit( UnitToAdd )
 
-  self.DCSUnits[DCSUnitName] = DCSUnit 
-  self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
-end
-
---- Deletes a Unit from the DATABASE based on the Unit Name.
--- @param #DATABASE self
-function DATABASE:DeleteUnit( DCSUnitName )
-
-  self.DCSUnits[DCSUnitName] = nil 
-end
-
---- Finds a CLIENT based on the ClientName.
--- @param #DATABASE self
--- @param #string ClientName
--- @return Client#CLIENT The found CLIENT.
-function DATABASE:FindClient( ClientName )
-
-  local ClientFound = self.CLIENTS[ClientName]
-  return ClientFound
-end
-
---- Adds a CLIENT based on the ClientName in the DATABASE.
--- @param #DATABASE self
-function DATABASE:AddClient( ClientName )
-
-  self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
-  self:E( self.CLIENTS[ClientName]:GetClassNameAndID() )
-end
-
---- Finds a GROUP based on the GroupName.
--- @param #DATABASE self
--- @param #string GroupName
--- @return Group#GROUP The found GROUP.
-function DATABASE:FindGroup( GroupName )
-
-  local GroupFound = self.GROUPS[GroupName]
-  return GroupFound
-end
-
---- Adds a GROUP based on the GroupName in the DATABASE.
--- @param #DATABASE self
-function DATABASE:AddGroup( DCSGroup, GroupName )
-
-  self.DCSGroups[GroupName] = DCSGroup
-  self.GROUPS[GroupName] = GROUP:Register( GroupName )
-end
-
---- Instantiate new Groups within the DCSRTE.
--- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
--- SpawnCountryID, SpawnCategoryID
--- This method is used by the SPAWN class.
--- @param #DATABASE self
--- @param #table SpawnTemplate
--- @return #DATABASE self
-function DATABASE:Spawn( SpawnTemplate )
-  self:F( SpawnTemplate.name )
-
-  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
-
-  -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
-  local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
-  local SpawnCountryID = SpawnTemplate.SpawnCountryID
-  local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
-
-  -- Nullify
-  SpawnTemplate.SpawnCoalitionID = nil
-  SpawnTemplate.SpawnCountryID = nil
-  SpawnTemplate.SpawnCategoryID = nil
-
-  self:_RegisterGroup( SpawnTemplate )
-  coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
-
-  -- Restore
-  SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
-  SpawnTemplate.SpawnCountryID = SpawnCountryID
-  SpawnTemplate.SpawnCategoryID = SpawnCategoryID
-
-
-  local SpawnGroup = GROUP:Register( SpawnTemplate.name )
-  return SpawnGroup
+  self.Units[UnitToAdd.UnitName] = UnitToAdd
+  return self.Units[UnitToAdd.UnitName]
 end
 
 
---- Set a status to a Group within the Database, this to check crossing events for example.
-function DATABASE:SetStatusGroup( GroupName, Status )
-  self:F( Status )
 
-  self.Templates.Groups[GroupName].Status = Status
-end
-
-
---- Get a status to a Group within the Database, this to check crossing events for example.
-function DATABASE:GetStatusGroup( GroupName )
-  self:F( Status )
-
-  if self.Templates.Groups[GroupName] then
-    return self.Templates.Groups[GroupName].Status
-  else
-    return ""
+--- Builds a set of units of coalitons.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET self
+function SET:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
   end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
 end
 
---- Private method that registers new Group Templates within the DATABASE Object.
--- @param #DATABASE self
--- @param #table GroupTemplate
--- @return #DATABASE self
-function DATABASE:_RegisterGroup( GroupTemplate )
-
-  local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
-
-  if not self.Templates.Groups[GroupTemplateName] then
-    self.Templates.Groups[GroupTemplateName] = {}
-    self.Templates.Groups[GroupTemplateName].Status = nil
+--- Builds a set of units out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET self
+-- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+-- @return #SET self
+function SET:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
   end
-  
-  -- Delete the spans from the route, it is not needed and takes memory.
-  if GroupTemplate.route and GroupTemplate.route.spans then 
-    GroupTemplate.route.spans = nil
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
   end
-  
-  self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
-  self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
-  self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
-  self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
-  self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
 
-  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
+--- Builds a set of units of defined unit types.
+-- Possible current types are those types known within DCS world.
+-- @param #SET self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #SET self
+function SET:FilterTypes( Types )
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
 
-  for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
+--- Builds a set of units of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #SET self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #SET self
+function SET:FilterCountries( Countries )
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
 
-    local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Templates.Units[UnitTemplateName] = {}
-    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
-    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
-    self:E( {"skill",UnitTemplate.skill})
-    if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
+--- Builds a set of units of defined unit prefixes.
+-- All the units starting with the given prefixes will be included within the set.
+-- @param #SET self
+-- @param #string Prefixes The prefix of which the unit name starts with.
+-- @return #SET self
+function SET:FilterUnitPrefixes( Prefixes )
+  if not self.Filter.UnitPrefixes then
+    self.Filter.UnitPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.UnitPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+--- Builds a set of units of defined group prefixes.
+-- All the units starting with the given group prefixes will be included within the set.
+-- @param #SET self
+-- @param #string Prefixes The prefix of which the group name where the unit belongs to starts with.
+-- @return #SET self
+function SET:FilterGroupPrefixes( Prefixes )
+  if not self.Filter.GroupPrefixes then
+    self.Filter.GroupPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.GroupPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+--- Starts the filtering.
+-- @param #SET self
+-- @return #SET self
+function SET:FilterStart()
+
+  if _DATABASE then
+    -- OK, we have a _DATABASE
+    -- Now use the different filters to build the set.
+    -- We first take ALL of the Units of the _DATABASE.
+    
+    self:E( { "Adding Set Datapoints with filters" } )
+    for DCSUnitName, DCSUnit in pairs( _DATABASE.DCSUnits ) do
+
+      if self:_IsIncludeDCSUnit( DCSUnit ) then
+
+        self:E( { "Adding Unit:", DCSUnitName } )
+        self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
+        self.Units[DCSUnitName] = _DATABASE:FindUnit( DCSUnitName )
+        
+        if _DATABASE.DCSUnitsAlive[DCSUnitName] then
+          self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
+          self.UnitsAlive[DCSUnitName] = _DATABASE.UnitsAlive[DCSUnitName]
+        end
+        
+      end
     end
-    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
+    
+    for DCSGroupName, DCSGroup in pairs( _DATABASE.DCSGroups ) do
+      
+      --if self:_IsIncludeDCSGroup( DCSGroup ) then
+      self:E( { "Adding Group:", DCSGroupName } )
+      self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
+      self.Groups[DCSGroupName] = _DATABASE:FindGroups( DCSGroupName )
+      --end
+      
+      if _DATABASE.DCSGroupsAlive[DCSGroupName] then
+        self.DCSGroupsAlive[DCSGroupName] = _DATABASE.DCSGroupsAlive[DCSGroupName]
+        self.GroupsAlive[DCSGroupName] = _DATABASE.GroupsAlive[DCSGroupName]
+      end
+    end
+
+    for DCSUnitName, Client in pairs( _DATABASE.CLIENTS ) do
+      self:E( { "Adding Client for Unit:", DCSUnitName } )
+      self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
+    end
+    
+  else
+    self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom SET." )
   end
+  
+  return self
 end
+
+
 
 --- Private method that registers all alive players in the mission.
--- @param #DATABASE self
--- @return #DATABASE self
-function DATABASE:_RegisterPlayers()
+-- @param #SET self
+-- @return #SET self
+function SET:_RegisterPlayers()
 
   local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
@@ -340,11 +369,11 @@ function DATABASE:_RegisterPlayers()
 end
 
 --- Private method that registers all datapoints within in the mission.
--- @param #DATABASE self
--- @return #DATABASE self
-function DATABASE:_RegisterDatabase()
+-- @param #SET self
+-- @return #SET self
+function SET:_RegisterDatabase()
 
-  local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ) }
+  local CoalitionsData = { AlivePlayersRed = coalition.getGroups( coalition.side.RED ), AlivePlayersBlue = coalition.getGroups( coalition.side.BLUE ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
 
@@ -352,64 +381,87 @@ function DATABASE:_RegisterDatabase()
         local DCSGroupName = DCSGroup:getName()
   
         self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-        self:AddGroup( DCSGroup, DCSGroupName )
-
+        self.DCSGroups[DCSGroupName] = DCSGroup
+        self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
+  
+        if self:_IsAliveDCSGroup(DCSGroup) then
+          self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
+          self.DCSGroupsAlive[DCSGroupName] = DCSGroup
+          self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
+        end
+  
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
           local DCSUnitName = DCSUnit:getName()
           self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-          self:AddUnit( DCSUnit, DCSUnitName )
+  
+          self.DCSUnits[DCSUnitName] = DCSUnit
+          self:AddUnit( UNIT:Find( DCSUnit ) )
+          --self.Units[DCSUnitName] = UNIT:Register( DCSUnit )
+  
+          if self:_IsAliveDCSUnit(DCSUnit) then
+            self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
+            self.DCSUnitsAlive[DCSUnitName] = DCSUnit
+            self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
+          end
         end
       else
-        self:E( { "Group does not exist: ",  DCSGroup } )
+        self:E( "Group does not exist: " .. DCSGroup )
       end
       
+      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
+        self.Clients[ClientName] = CLIENT:Find( ClientName )
+      end
     end
-  end
-
-  for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:E( { "Adding Client:", ClientName } )
-    self:AddClient( ClientName )
   end
   
   return self
 end
 
+
 --- Events
 
 --- Handles the OnBirth event for the alive units set.
--- @param #DATABASE self
+-- @param #SET self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnBirth( Event )
+function SET:_EventOnBirth( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
-      self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
+      self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
+      self:AddUnit( UNIT:Register( Event.IniDCSUnit ) )
+      --self.Units[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnit )
+      
+      --if not self.DCSGroups[Event.IniDCSGroupName] then
+      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
+      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
+      --end
       self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
 
 --- Handles the OnDead or OnCrash event for alive units set.
--- @param #DATABASE self
+-- @param #SET self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnDeadOrCrash( Event )
+function SET:_EventOnDeadOrCrash( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
-    if self.DCSUnits[Event.IniDCSUnitName] then
-      self:DeleteUnit( Event.IniDCSUnitName )
-      -- add logic to correctly remove a group once all units are destroyed...
+    if self.DCSUnitsAlive[Event.IniDCSUnitName] then
+      self.DCSUnits[Event.IniDCSUnitName] = nil 
+      self.DCSUnitsAlive[Event.IniDCSUnitName] = nil
     end
   end
 end
 
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
--- @param #DATABASE self
+-- @param #SET self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnPlayerEnterUnit( Event )
+function SET:_EventOnPlayerEnterUnit( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
@@ -417,16 +469,16 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
       if not self.PlayersAlive[Event.IniDCSUnitName] then
         self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
         self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
-        self.ClientsAlive[Event.IniDCSUnitName] = self.CLIENTS[ Event.IniDCSUnitName ]
+        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
       end
     end
   end
 end
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
--- @param #DATABASE self
+-- @param #SET self
 -- @param Event#EVENTDATA Event
-function DATABASE:_EventOnPlayerLeaveUnit( Event )
+function SET:_EventOnPlayerLeaveUnit( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
@@ -442,11 +494,11 @@ end
 
 --- Iterators
 
---- Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
--- @return #DATABASE self
-function DATABASE:ForEach( IteratorFunction, arg, Set )
+--- Interate the SET and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+-- @param #SET self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the SET.
+-- @return #SET self
+function SET:ForEach( IteratorFunction, arg, Set )
   self:F( arg )
   
   local function CoRoutine()
@@ -485,23 +537,23 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
 end
 
 
---- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachDCSUnit( IteratorFunction, ... )
+--- Interate the SET and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+-- @param #SET self
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET. The function needs to accept a UNIT parameter.
+-- @return #SET self
+function SET:ForEachDCSUnitAlive( IteratorFunction, ... )
   self:F( arg )
   
-  self:ForEach( IteratorFunction, arg, self.DCSUnits )
+  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
 
   return self
 end
 
---- Interate the DATABASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachPlayer( IteratorFunction, ... )
+--- Interate the SET and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+-- @param #SET self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a UNIT parameter.
+-- @return #SET self
+function SET:ForEachPlayer( IteratorFunction, ... )
   self:F( arg )
   
   self:ForEach( IteratorFunction, arg, self.PlayersAlive )
@@ -510,24 +562,24 @@ function DATABASE:ForEachPlayer( IteratorFunction, ... )
 end
 
 
---- Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachClient( IteratorFunction, ... )
+--- Interate the SET and call an interator function for each client, providing the Client to the function and optional parameters.
+-- @param #SET self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a CLIENT parameter.
+-- @return #SET self
+function SET:ForEachClient( IteratorFunction, ... )
   self:F( arg )
   
-  self:ForEach( IteratorFunction, arg, self.CLIENTS )
+  self:ForEach( IteratorFunction, arg, self.Clients )
 
   return self
 end
 
 
-function DATABASE:ScanEnvironment()
+function SET:ScanEnvironment()
   self:F()
 
   self.Navpoints = {}
-  self.UNITS = {}
+  self.Units = {}
   --Build routines.db.units and self.Navpoints
   for coa_name, coa_data in pairs(env.mission.coalition) do
 
@@ -594,10 +646,10 @@ end
 
 
 ---
--- @param #DATABASE self
+-- @param #SET self
 -- @param DCSUnit#Unit DCSUnit
--- @return #DATABASE self
-function DATABASE:_IsIncludeDCSUnit( DCSUnit )
+-- @return #SET self
+function SET:_IsIncludeDCSUnit( DCSUnit )
   self:F( DCSUnit )
   local DCSUnitInclude = true
 
@@ -661,10 +713,10 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
 end
 
 ---
--- @param #DATABASE self
+-- @param #SET self
 -- @param DCSUnit#Unit DCSUnit
--- @return #DATABASE self
-function DATABASE:_IsAliveDCSUnit( DCSUnit )
+-- @return #SET self
+function SET:_IsAliveDCSUnit( DCSUnit )
   self:F( DCSUnit )
   local DCSUnitAlive = false
   if DCSUnit and DCSUnit:isExist() and DCSUnit:isActive() then
@@ -677,10 +729,10 @@ function DATABASE:_IsAliveDCSUnit( DCSUnit )
 end
 
 ---
--- @param #DATABASE self
+-- @param #SET self
 -- @param DCSGroup#Group DCSGroup
--- @return #DATABASE self
-function DATABASE:_IsAliveDCSGroup( DCSGroup )
+-- @return #SET self
+function SET:_IsAliveDCSGroup( DCSGroup )
   self:F( DCSGroup )
   local DCSGroupAlive = false
   if DCSGroup and DCSGroup:isExist() then
@@ -693,13 +745,14 @@ function DATABASE:_IsAliveDCSGroup( DCSGroup )
 end
 
 
---- Traces the current database contents in the log ... (for debug reasons).
--- @param #DATABASE self
--- @return #DATABASE self
-function DATABASE:TraceDatabase()
+--- Traces the current SET contents in the log ... (for debug reasons).
+-- @param #SET self
+-- @return #SET self
+function SET:TraceDatabase()
   self:F()
   
   self:T( { "DCSUnits:", self.DCSUnits } )
+  self:T( { "DCSUnitsAlive:", self.DCSUnitsAlive } )
 end
 
 
