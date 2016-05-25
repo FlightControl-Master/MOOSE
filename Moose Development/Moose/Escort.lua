@@ -527,7 +527,8 @@ function ESCORT:MenuReportTargets( Seconds )
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
 
 
-  self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
+  --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
+  self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
 end
@@ -694,7 +695,8 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
 
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
+  --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
+  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, { Distance }, 1, .5, .1 )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
@@ -748,7 +750,8 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+      --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+      self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
     routines.removeFunction( self.ReportTargetsScheduler )
@@ -772,31 +775,30 @@ function ESCORT._ScanTargets( MenuParam )
   self:T( { "FollowScheduler after removefunction: ", self.FollowScheduler } )
 
   if EscortGroup:IsHelicopter() then
-    routines.scheduleFunction( EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskControlled(
+    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
+      { EscortGroup:TaskControlled(
           EscortGroup:TaskOrbitCircle( 200, 20 ),
           EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
         )
       },
-      timer.getTime() + 1
+      1
     )
   elseif EscortGroup:IsAirPlane() then
-    routines.scheduleFunction( EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskControlled(
+    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
+      { EscortGroup:TaskControlled(
           EscortGroup:TaskOrbitCircle( 1000, 500 ),
           EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
         )
       },
-      timer.getTime() + 1
+      1
     )
   end
 
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 
   if self.EscortMode == ESCORT.MODE.FOLLOW then
-    self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+    --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+    self.FollowScheduler:Start()
   end
 
 end
@@ -830,25 +832,42 @@ function ESCORT._AttackTarget( MenuParam )
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup.Escort = self -- Need to do this trick to get the reference for the escort in the _Resume function.
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroup.PushTask,
+--      { EscortGroup,
+--        EscortGroup:TaskCombo(
+--          { EscortGroup:TaskAttackUnit( AttackUnit ),
+--            EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskCombo(
+      { EscortGroup:TaskCombo(
           { EscortGroup:TaskAttackUnit( AttackUnit ),
             EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   else
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroup.PushTask,
+--      { EscortGroup,
+--        EscortGroup:TaskCombo(
+--          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskCombo(
+      { EscortGroup:TaskCombo(
           { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   end
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
@@ -875,25 +894,42 @@ function ESCORT._AssistTarget( MenuParam )
   if EscortGroupAttack:IsAir() then
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroupAttack.PushTask,
+--      { EscortGroupAttack,
+--        EscortGroupAttack:TaskCombo(
+--          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
+--            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
-      { EscortGroupAttack,
-        EscortGroupAttack:TaskCombo(
+      { EscortGroupAttack:TaskCombo(
           { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
             EscortGroupAttack:TaskOrbitCircle( 500, 350 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   else
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroupAttack.PushTask,
+--      { EscortGroupAttack,
+--        EscortGroupAttack:TaskCombo(
+--          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
-      { EscortGroupAttack,
-        EscortGroupAttack:TaskCombo(
+      { EscortGroupAttack:TaskCombo(
           { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   end
   EscortGroupAttack:MessageToClient( "Assisting with the destroying the enemy unit!", 10, EscortClient )
@@ -947,7 +983,8 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
 
-  routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
+  --routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
+  SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
 
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )
 end
@@ -1036,6 +1073,8 @@ function ESCORT:_FollowScheduler( FollowDistance )
 
       -- Now we can calculate the group destination vector GDV.
       local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
+      
+      --trigger.action.smoke( GDV, trigger.smokeColor.Red )
       self:T2( { "CV2:", CV2 } )
       self:T2( { "CVI:", CVI } )
       self:T2( { "GDV:", GDV } )
@@ -1058,10 +1097,10 @@ function ESCORT:_FollowScheduler( FollowDistance )
       -- Now route the escort to the desired point with the desired speed.
       self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
-  else
-    routines.removeFunction( self.FollowScheduler )
+    return true
   end
 
+  return false
 end
 
 
@@ -1239,9 +1278,8 @@ function ESCORT:_ReportTargetsScheduler()
         MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
       end
     end
-
-  else
-    routines.removeFunction( self.ReportTargetsScheduler )
-    self.ReportTargetsScheduler = nil
+    return true
   end
+  
+  return false
 end

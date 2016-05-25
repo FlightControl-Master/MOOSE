@@ -187,7 +187,8 @@ function MESSAGEQUEUE:New( RefreshInterval )
 	
 	self.RefreshInterval = RefreshInterval
 
-	self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
+	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
+  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
 
 	return self
 end
@@ -240,6 +241,8 @@ function MESSAGEQUEUE:_DisplayMessages()
 			end
 		end
 	end
+	
+	return true
 end
 
 --- The _MessageQueue object is created when the MESSAGE class module is loaded.

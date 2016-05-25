@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160525_1217' ) 
+env.info( 'Moose Generation Timestamp: 20160525_1659' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -486,102 +486,6 @@ do
 
 end
 
-
-do
-	local Tasks = {}
-	local task_id = 0
-	--[[ routines.scheduleFunction:
-	int id = routines.schedule_task(f function, vars table, t number, rep number, st number)
-	id - integer id of this function task
-	f - function to run
-	vars - table of vars for that function
-	t - time to run function
-	rep - time between repetitions of this function (OPTIONAL)
-	st - time when repetitions of this function will stop automatically (OPTIONAL)
-	]]
-	
-	--- Schedule a function
-	-- @param #function f
-	-- @param #table parameters
-	-- @param #Time t
-	-- @param #Time rep seconds
-	-- @param #Time st
-	routines.scheduleFunction = function(f, vars, t, rep, st)
-	--verify correct types
-		assert(type(f) == 'function', 'variable 1, expected function, got ' .. type(f))
-		assert(type(vars) == 'table' or vars == nil, 'variable 2, expected table or nil, got ' .. type(f))
-		assert(type(t) == 'number', 'variable 3, expected number, got ' .. type(t))
-		assert(type(rep) == 'number' or rep == nil, 'variable 4, expected number or nil, got ' .. type(rep))
-		assert(type(st) == 'number' or st == nil, 'variable 5, expected number or nil, got ' .. type(st))
-		if not vars then
-			vars = {}
-		end
-		task_id = task_id + 1
-		table.insert(Tasks, {f = f, vars = vars, t = t, rep = rep, st = st, id = task_id})
-		return task_id
-	end
-
-	-- removes a scheduled function based on the function's id.  returns true if successful, false if not successful.
-	routines.removeFunction = function(id)
-		local i = 1
-		while i <= #Tasks do
-			if Tasks[i].id == id then
-				table.remove(Tasks, i)
-			else
-				i = i + 1
-			end
-		end
-	end
-
-	routines.errhandler = function(errmsg)
-
-		env.info( "Error in scheduled function:" .. errmsg )
-		env.info( debug.traceback() )
-
-		return errmsg
-	end
-
-	--------------------------------------------------------------------------------------------------------------------
-	-- not intended for users to use this function.
-	routines.do_scheduled_functions = function()
-		local i = 1
-		while i <= #Tasks do
-			if not Tasks[i].rep then -- not a repeated process
-				if Tasks[i].t <= timer.getTime() then
-					local Task = Tasks[i] -- local reference
-					--env.info("do_scheduled_functions:call function " .. i )
-					table.remove(Tasks, i)
-					local err, errmsg = xpcall(function() Task.f( unpack(Task.vars, 1, table.maxn(Task.vars))) end, routines.errhandler )
-					if not err then
-						--env.info('routines.scheduleFunction, error in scheduled function: ' .. errmsg)
-					end
-					--Task.f(unpack(Task.vars, 1, table.maxn(Task.vars)))  -- do the task, do not increment i
-				else
-					i = i + 1
-				end
-			else
-				if Tasks[i].st and Tasks[i].st <= timer.getTime() then   --if a stoptime was specified, and the stop time exceeded
-					--env.info("do_scheduled_functions:remove repeated")
-					table.remove(Tasks, i) -- stop time exceeded, do not execute, do not increment i
-				elseif Tasks[i].t <= timer.getTime() then
-					local Task = Tasks[i] -- local reference
-					Task.t = timer.getTime() + Task.rep  --schedule next run
-					--env.info("do_scheduled_functions:call function " .. i )
-					local err, errmsg = xpcall(function() Task.f( unpack(Task.vars, 1, table.maxn(Task.vars))) end, routines.errhandler )
-					if not err then
-						--env.info('routines.scheduleFunction, error in scheduled function: ' .. errmsg)
-					end
-					--Tasks[i].f(unpack(Tasks[i].vars, 1, table.maxn(Tasks[i].vars)))  -- do the task
-					i = i + 1
-				else
-					i = i + 1
-				end
-			end
-		end
-
-	end
-
-end
 
 do
 	local idNum = 0
@@ -3141,6 +3045,148 @@ end
 
 
 
+--- Models time events calling event handing functions.
+-- 
+-- @{SCHEDULER} class
+-- ===================
+-- The @{SCHEDULER} class models time events calling given event handling functions.
+-- 
+-- SCHEDULER constructor
+-- =====================
+-- The SCHEDULER class is quite easy to use:
+-- 
+--  * @{#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
+--  
+-- SCHEDULER timer methods
+-- =======================
+-- The SCHEDULER can be stopped and restarted with the following methods:
+-- 
+--  * @{#SCHEDULER.Start}: (Re-)Start the scheduler.
+--  * @{#SCHEDULER.Start}: Stop the scheduler.
+-- 
+-- @module Scheduler
+-- @author FlightControl
+
+Include.File( "Routines" )
+Include.File( "Base" )
+
+
+--- The SCHEDULER class
+-- @type SCHEDULER
+-- @extends Base#BASE
+SCHEDULER = {
+  ClassName = "SCHEDULER",
+}
+
+
+--- Constructor.
+-- @param #SCHEDULER self
+-- @param #table TimeEventObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+-- @param #function TimeEventFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.
+-- @param #table TimeEventFunctionArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+-- @param #number StartSeconds Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+-- @param #number RepeatSecondsInterval Specifies the interval in seconds when the scheduler will call the event function.
+-- @param #number RandomizationFactor Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.
+-- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
+-- @return #SCHEDULER self
+function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F2( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+
+  self.TimeEventObject = TimeEventObject
+  self.TimeEventFunction = TimeEventFunction
+  self.TimeEventFunctionArguments = TimeEventFunctionArguments
+  self.StartSeconds = StartSeconds
+
+  if RepeatSecondsInterval then
+    self.RepeatSecondsInterval = RepeatSecondsInterval
+  else
+    self.RepeatSecondsInterval = 0
+  end
+
+  if RandomizationFactor then
+    self.RandomizationFactor = RandomizationFactor
+  else
+    self.RandomizationFactor = 0
+  end
+
+  if StopSeconds then
+    self.StopSeconds = StopSeconds
+  end
+  
+  self.Repeat = false
+
+  self.StartTime = timer.getTime()
+  
+  self:Start()
+
+  return self
+end
+
+--- (Re-)Starts the scheduler.
+-- @param #SCHEDULER self
+-- @return #SCHEDULER self
+function SCHEDULER:Start()
+  self:F2( self.TimeEventObject )
+  
+  self.Repeat = true
+  timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+  
+  return self
+end
+
+--- Stops the scheduler.
+-- @param #SCHEDULER self
+-- @return #SCHEDULER self
+function SCHEDULER:Stop()
+  self:F2( self.TimeEventObject )
+  
+  self.Repeat = false
+  
+  return self
+end
+
+-- Private Functions
+
+function SCHEDULER:_Scheduler()
+  self:F2( self.TimeEventFunctionArguments )
+  
+  local ErrorHandler = function( errmsg )
+
+    env.info( "Error in SCHEDULER function:" .. errmsg )
+    env.info( debug.traceback() )
+
+    return errmsg
+  end
+
+  local Status, Result  
+  if self.TimeEventObject then
+    Status, Result = xpcall( function() return self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
+  else
+    Status, Result = xpcall( function() return self.TimeEventFunction( unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
+  end
+  
+  self:T( { Status, Result } )
+  
+  if Status and Status == true and Result and Result == true then
+    if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
+      timer.scheduleFunction(
+        self._Scheduler,
+        self,
+        timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
+      )
+    end
+  end
+
+end
+
+
+
+
+
+
+
+
 --- The EVENT class models an efficient event handling process between other classes and its units, weapons.
 -- @module Event
 -- @author FlightControl
@@ -4726,7 +4772,8 @@ function GROUP:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
   
     if WaitTime then
-      routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+      --routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+      SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
     end
@@ -4756,7 +4803,8 @@ function GROUP:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       WaitTime = 1
     end
-    routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+    --routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+    SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
     
     return self
   end
@@ -5300,7 +5348,8 @@ function GROUP:Route( GoPoints )
   	local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
   	local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-  	routines.scheduleFunction( Controller.setTask, { Controller, MissionTask}, timer.getTime() + 1 )
+  	--routines.scheduleFunction( Controller.setTask, { Controller, MissionTask}, timer.getTime() + 1 )
+    SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
   	return self
   end
   
@@ -6881,7 +6930,8 @@ function CLIENT:Register( ClientName )
   self.MessageSwitch = true
   self.ClientAlive2 = false
   
-  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+  --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, {}, 1, 5 )
 
   return self
 end
@@ -6996,6 +7046,8 @@ function CLIENT:_AliveCheckScheduler()
       self.ClientAlive2 = false
     end
   end
+  
+  return true
 end
 
 --- Return the DCSGroup of a Client.
@@ -7935,120 +7987,6 @@ _EVENTDISPATCHER = EVENT:New() -- #EVENT
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New():ScanEnvironment() -- Database#DATABASE
 
---- Models time events calling event handing functions.
--- @module Scheduler
--- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
-
-
---- The SCHEDULER class
--- @type SCHEDULER
--- @extends Base#BASE
-SCHEDULER = {
-  ClassName = "SCHEDULER",
-}
-
-
---- SCHEDULER constructor.
--- @param #SCHEDULER self
--- @param #table TimeEventObject
--- @param #function TimeEventFunction
--- @param #table TimeEventFunctionArguments
--- @param #number StartSeconds
--- @param #number RepeatSecondsInterval
--- @param #number RandomizationFactor
--- @param #number StopSeconds
--- @return #SCHEDULER
-function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
-
-  self.TimeEventObject = TimeEventObject
-  self.TimeEventFunction = TimeEventFunction
-  self.TimeEventFunctionArguments = TimeEventFunctionArguments
-  self.StartSeconds = StartSeconds
-
-  if RepeatSecondsInterval then
-    self.RepeatSecondsInterval = RepeatSecondsInterval
-  else
-    self.RepeatSecondsInterval = 0
-  end
-
-  if RandomizationFactor then
-    self.RandomizationFactor = RandomizationFactor
-  else
-    self.RandomizationFactor = 0
-  end
-
-  if StopSeconds then
-    self.StopSeconds = StopSeconds
-  end
-  
-  self.Repeat = false
-
-  self.StartTime = timer.getTime()
-  
-  self:Start()
-
-  return self
-end
-
-function SCHEDULER:Scheduler()
-  self:F( self.TimeEventFunctionArguments )
-  
-  local ErrorHandler = function( errmsg )
-
-    env.info( "Error in SCHEDULER function:" .. errmsg )
-    env.info( debug.traceback() )
-
-    return errmsg
-  end
-
-  local Status, Result  
-  if self.TimeEventObject then
-    Status, Result = xpcall( function() return self.TimeEventFunction( self.TimeEventObject, unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
-  else
-    Status, Result = xpcall( function() return self.TimeEventFunction( unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
-  end
-  
-  self:T( { Status, Result } )
-  
-  if Status and Status == true and Result and Result == true then
-    if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
-      timer.scheduleFunction(
-        self.Scheduler,
-        self,
-        timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
-      )
-    end
-  end
-
-end
-
-function SCHEDULER:Start()
-  self:F( self.TimeEventObject )
-  
-  self.Repeat = true
-  timer.scheduleFunction( self.Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
-  
-  return self
-end
-
-function SCHEDULER:Stop()
-  self:F( self.TimeEventObject )
-  
-  self.Repeat = false
-end
-
-
-
-
-
-
 --- Scoring system for MOOSE.
 -- This scoring class calculates the hits and kills that players make within a simulation session.
 -- Scoring is calculated using a defined algorithm.
@@ -8113,7 +8051,8 @@ function SCORING:New( GameName )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
 
-  self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
+  --self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
+  self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )
 
   self:ScoreMenu()
 
@@ -8148,6 +8087,8 @@ function SCORING:_FollowPlayersScheduled()
       self:_AddPlayerFromUnit( UnitData )
     end
   end
+  
+  return true
 end
 
 
@@ -8870,6 +8811,8 @@ end
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
+Include.File( "Scheduler" )
+
 
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
 -- These clients are defined within the Mission Orchestration Framework (MOF)
@@ -9539,7 +9482,8 @@ function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
   	end
   	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
   
-  	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	--routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	SCHEDULER:New( self, routines.goRoute, { self.CargoGroupName, Points}, 4 )
   end
 	
 	self:StatusLoading( Client )
@@ -9750,7 +9694,8 @@ function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
 	end
 	self:T( "Routing " .. CargoHostName )
 
-	routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
+	--routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
+	SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
      
 	return Valid
   
@@ -10129,7 +10074,8 @@ function MESSAGEQUEUE:New( RefreshInterval )
 	
 	self.RefreshInterval = RefreshInterval
 
-	self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
+	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
+  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
 
 	return self
 end
@@ -10182,6 +10128,8 @@ function MESSAGEQUEUE:_DisplayMessages()
 			end
 		end
 	end
+	
+	return true
 end
 
 --- The _MessageQueue object is created when the MESSAGE class module is loaded.
@@ -12783,12 +12731,15 @@ function MISSIONSCHEDULER.Scheduler()
 			Mission:ReportToAll()
 		end
 	end
+	
+	return true
 end
 
 --- Start the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Start()
   if MISSIONSCHEDULER ~= nil then
-    MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
+    --MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
+    MISSIONSCHEDULER.SchedulerId = SCHEDULER:New( nil, MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
   end
 end
 
@@ -12960,7 +12911,8 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 	
 	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
 	
-	self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
+	--self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
+  self.CleanUpScheduler = SCHEDULER:New( self, self._CleanUpScheduler, {}, 1, TimeInterval )
 	
 	return self
 end
@@ -13087,7 +13039,8 @@ function CLEANUP:_EventShot( Event )
 	if  ( CurrentLandingZoneID ) then
 		-- Okay, the missile was fired within the CLEANUP.ZoneNames, destroy the fired weapon.
 		--_SEADmissile:destroy()
-		routines.scheduleFunction( CLEANUP._DestroyMissile, { self, Event.Weapon }, timer.getTime() + 0.1)
+		--routines.scheduleFunction( CLEANUP._DestroyMissile, { self, Event.Weapon }, timer.getTime() + 0.1)
+    SCHEDULER:New( self, CLEANUP._DestroyMissile, { Event.Weapon }, 0.1 )
 	end
 end
 
@@ -13103,7 +13056,8 @@ function CLEANUP:_EventHitCleanUp( Event )
 			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniDCSUnit:getLife(), "/", Event.IniDCSUnit:getLife0() } )
 			if Event.IniDCSUnit:getLife() < Event.IniDCSUnit:getLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.IniDCSUnit }, timer.getTime() + 0.1)
+				--routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.IniDCSUnit }, timer.getTime() + 0.1)
+        SCHEDULER:New( self, CLEANUP._DestroyUnit, { Event.IniDCSUnit }, 0.1 )
 			end
 		end
 	end
@@ -13113,7 +13067,8 @@ function CLEANUP:_EventHitCleanUp( Event )
 			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtDCSUnit:getLife(), "/", Event.TgtDCSUnit:getLife0() } )
 			if Event.TgtDCSUnit:getLife() < Event.TgtDCSUnit:getLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
-				routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.TgtDCSUnit }, timer.getTime() + 0.1 )
+				--routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.TgtDCSUnit }, timer.getTime() + 0.1 )
+        SCHEDULER:New( self, CLEANUP._DestroyUnit, { Event.TgtDCSUnit }, 0.1 )
 			end
 		end
 	end
@@ -13236,6 +13191,8 @@ function CLEANUP:_CleanUpScheduler()
 		end
 	end
 	self:T(CleanUpCount)
+	
+	return true
 end
 
 --- Dynamic spawning of groups (and units).
@@ -14552,7 +14509,8 @@ end
 --- Call this function to start the MOVEMENT scheduling.
 function MOVEMENT:ScheduleStart()
 	self:F()
-	self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
+	--self.MoveFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 120 )
+  self.MoveFunction = SCHEDULER:New( self, self._Scheduler, {}, 1, 120 )
 end
 
 --- Call this function to stop the MOVEMENT scheduling.
@@ -14628,6 +14586,7 @@ function MOVEMENT:_Scheduler()
 			end
 		end
 	end
+	return true
 end
 --- Provides defensive behaviour to a set of SAM sites within a running Mission.
 -- @module Sead
@@ -15295,7 +15254,8 @@ function ESCORT:MenuReportTargets( Seconds )
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
 
 
-  self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
+  --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
+  self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
 end
@@ -15462,7 +15422,8 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
 
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
+  --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
+  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, { Distance }, 1, .5, .1 )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
@@ -15516,7 +15477,8 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+      --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
+      self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
     routines.removeFunction( self.ReportTargetsScheduler )
@@ -15540,31 +15502,30 @@ function ESCORT._ScanTargets( MenuParam )
   self:T( { "FollowScheduler after removefunction: ", self.FollowScheduler } )
 
   if EscortGroup:IsHelicopter() then
-    routines.scheduleFunction( EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskControlled(
+    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
+      { EscortGroup:TaskControlled(
           EscortGroup:TaskOrbitCircle( 200, 20 ),
           EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
         )
       },
-      timer.getTime() + 1
+      1
     )
   elseif EscortGroup:IsAirPlane() then
-    routines.scheduleFunction( EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskControlled(
+    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
+      { EscortGroup:TaskControlled(
           EscortGroup:TaskOrbitCircle( 1000, 500 ),
           EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
         )
       },
-      timer.getTime() + 1
+      1
     )
   end
 
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 
   if self.EscortMode == ESCORT.MODE.FOLLOW then
-    self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+    --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
+    self.FollowScheduler:Start()
   end
 
 end
@@ -15598,25 +15559,42 @@ function ESCORT._AttackTarget( MenuParam )
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup.Escort = self -- Need to do this trick to get the reference for the escort in the _Resume function.
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroup.PushTask,
+--      { EscortGroup,
+--        EscortGroup:TaskCombo(
+--          { EscortGroup:TaskAttackUnit( AttackUnit ),
+--            EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskCombo(
+      { EscortGroup:TaskCombo(
           { EscortGroup:TaskAttackUnit( AttackUnit ),
             EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   else
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroup.PushTask,
+--      { EscortGroup,
+--        EscortGroup:TaskCombo(
+--          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
-      { EscortGroup,
-        EscortGroup:TaskCombo(
+      { EscortGroup:TaskCombo(
           { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   end
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
@@ -15643,25 +15621,42 @@ function ESCORT._AssistTarget( MenuParam )
   if EscortGroupAttack:IsAir() then
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroupAttack.PushTask,
+--      { EscortGroupAttack,
+--        EscortGroupAttack:TaskCombo(
+--          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
+--            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
-      { EscortGroupAttack,
-        EscortGroupAttack:TaskCombo(
+      { EscortGroupAttack:TaskCombo(
           { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
             EscortGroupAttack:TaskOrbitCircle( 500, 350 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   else
-    routines.scheduleFunction(
+--    routines.scheduleFunction(
+--      EscortGroupAttack.PushTask,
+--      { EscortGroupAttack,
+--        EscortGroupAttack:TaskCombo(
+--          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+--          }
+--        )
+--      }, timer.getTime() + 10
+--    )
+    SCHEDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
-      { EscortGroupAttack,
-        EscortGroupAttack:TaskCombo(
+      { EscortGroupAttack:TaskCombo(
           { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
           }
         )
-      }, timer.getTime() + 10
+      }, 10
     )
   end
   EscortGroupAttack:MessageToClient( "Assisting with the destroying the enemy unit!", 10, EscortClient )
@@ -15715,7 +15710,8 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
 
-  routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
+  --routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
+  SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
 
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )
 end
@@ -15804,6 +15800,8 @@ function ESCORT:_FollowScheduler( FollowDistance )
 
       -- Now we can calculate the group destination vector GDV.
       local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
+      
+      --trigger.action.smoke( GDV, trigger.smokeColor.Red )
       self:T2( { "CV2:", CV2 } )
       self:T2( { "CVI:", CVI } )
       self:T2( { "GDV:", GDV } )
@@ -15826,10 +15824,10 @@ function ESCORT:_FollowScheduler( FollowDistance )
       -- Now route the escort to the desired point with the desired speed.
       self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
-  else
-    routines.removeFunction( self.FollowScheduler )
+    return true
   end
 
+  return false
 end
 
 
@@ -16007,11 +16005,10 @@ function ESCORT:_ReportTargetsScheduler()
         MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
       end
     end
-
-  else
-    routines.removeFunction( self.ReportTargetsScheduler )
-    self.ReportTargetsScheduler = nil
+    return true
   end
+  
+  return false
 end
 --- Provides missile training functions.
 --

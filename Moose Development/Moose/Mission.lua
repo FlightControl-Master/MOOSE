@@ -520,12 +520,15 @@ function MISSIONSCHEDULER.Scheduler()
 			Mission:ReportToAll()
 		end
 	end
+	
+	return true
 end
 
 --- Start the MISSIONSCHEDULER.
 function MISSIONSCHEDULER.Start()
   if MISSIONSCHEDULER ~= nil then
-    MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
+    --MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
+    MISSIONSCHEDULER.SchedulerId = SCHEDULER:New( nil, MISSIONSCHEDULER.Scheduler, { }, 0, 2 )
   end
 end
 

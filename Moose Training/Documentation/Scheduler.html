@@ -70,6 +70,29 @@
    
 <p>Models time events calling event handing functions.</p>
 
+   
+
+<h1><a href="SCHEDULER.html">SCHEDULER</a> class</h1>
+<p>The <a href="SCHEDULER.html">SCHEDULER</a> class models time events calling given event handling functions.</p>
+
+<h1>SCHEDULER constructor</h1>
+<p>The SCHEDULER class is quite easy to use:</p>
+
+<ul>
+    <li><a href="##(SCHEDULER).New">SCHEDULER.New</a>: Setup a new scheduler and start it with the specified parameters.</li>
+</ul>
+
+<h1>SCHEDULER timer methods</h1>
+<p>The SCHEDULER can be stopped and restarted with the following methods:</p>
+
+<ul>
+    <li><a href="##(SCHEDULER).Start">SCHEDULER.Start</a>: (Re-)Start the scheduler.</li>
+    <li><a href="##(SCHEDULER).Start">SCHEDULER.Start</a>: Stop the scheduler.</li>
+</ul>
+
+
+
+
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
@@ -90,7 +113,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).New">SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
 		<td class="summary">
-<p>SCHEDULER constructor.</p>
+<p>Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Repeat">SCHEDULER.Repeat</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -102,13 +131,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Start">SCHEDULER:Start()</a></td>
 		<td class="summary">
-
+<p>(Re-)Starts the scheduler.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Stop">SCHEDULER:Stop()</a></td>
 		<td class="summary">
-
+<p>Stops the scheduler.</p>
 </td>
 		</tr>
 	</table>
@@ -158,49 +187,70 @@
 </dt>
 <dd>
 	
-<p>SCHEDULER constructor.</p>
+<p>Constructor.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#table TimeEventObject </em></code>: </p>
+<p><code><em>#table TimeEventObject </em></code>: 
+Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#function TimeEventFunction </em></code>: </p>
+<p><code><em>#function TimeEventFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#table TimeEventFunctionArguments </em></code>: </p>
+<p><code><em>#table TimeEventFunctionArguments </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StartSeconds </em></code>: </p>
+<p><code><em>#number StartSeconds </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RepeatSecondsInterval </em></code>: </p>
+<p><code><em>#number RepeatSecondsInterval </em></code>: 
+Specifies the interval in seconds when the scheduler will call the event function.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RandomizationFactor </em></code>: </p>
+<p><code><em>#number RandomizationFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StopSeconds </em></code>: </p>
+<p><code><em>#number StopSeconds </em></code>: 
+Specifies the amount of seconds when the scheduler will be stopped.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em></p>
+<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(SCHEDULER).Repeat" >
+<strong>SCHEDULER.Repeat</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -227,7 +277,12 @@
 </dt>
 <dd>
 	
+<p>(Re-)Starts the scheduler.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -240,7 +295,12 @@
 </dt>
 <dd>
 	
+<p>Stops the scheduler.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
+self</p>
 
 </dd>
 </dl>

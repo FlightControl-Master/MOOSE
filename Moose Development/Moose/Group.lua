@@ -701,7 +701,8 @@ function GROUP:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
   
     if WaitTime then
-      routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+      --routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+      SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
     end
@@ -731,7 +732,8 @@ function GROUP:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       WaitTime = 1
     end
-    routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+    --routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
+    SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
     
     return self
   end
@@ -1275,7 +1277,8 @@ function GROUP:Route( GoPoints )
   	local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
   	local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-  	routines.scheduleFunction( Controller.setTask, { Controller, MissionTask}, timer.getTime() + 1 )
+  	--routines.scheduleFunction( Controller.setTask, { Controller, MissionTask}, timer.getTime() + 1 )
+    SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
   	return self
   end
   
