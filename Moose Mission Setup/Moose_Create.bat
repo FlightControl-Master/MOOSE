@@ -39,6 +39,7 @@ COPY /b Moose.lua + "Moose Create Static\Moose_Static_Loader.lua"        Moose.l
 
 COPY /b Moose.lua + %1\Routines.lua              Moose.lua
 COPY /b Moose.lua + %1\Base.lua                  Moose.lua
+COPY /b Moose.lua + %1\Scheduler.lua             Moose.lua
 COPY /b Moose.lua + %1\Event.lua                 Moose.lua
 COPY /b Moose.lua + %1\Menu.lua                  Moose.lua
 COPY /b Moose.lua + %1\Group.lua                 Moose.lua
@@ -47,7 +48,6 @@ COPY /b Moose.lua + %1\Zone.lua                  Moose.lua
 COPY /b Moose.lua + %1\Client.lua                Moose.lua
 COPY /b Moose.lua + %1\Database.lua              Moose.lua
 COPY /b Moose.lua + %1\Moose.lua                 Moose.lua
-COPY /b Moose.lua + %1\Scheduler.lua             Moose.lua
 COPY /b Moose.lua + %1\Scoring.lua               Moose.lua
 COPY /b Moose.lua + %1\Cargo.lua                 Moose.lua
 COPY /b Moose.lua + %1\Message.lua               Moose.lua
