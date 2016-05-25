@@ -635,7 +635,7 @@ function ESCORT._HoldPosition( MenuParam )
   routines.removeFunction( self.FollowScheduler )
 
   local PointFrom = {}
-  local GroupPoint = EscortGroup:GetUnit(1):GetPositionVec3()
+  local GroupPoint = EscortGroup:GetUnit(1):GetPointVec3()
   PointFrom = {}
   PointFrom.x = GroupPoint.x
   PointFrom.y = GroupPoint.z
@@ -977,15 +977,15 @@ function ESCORT:_FollowScheduler( FollowDistance )
     local GroupUnit = self.EscortGroup:GetUnit( 1 )
 
     if self.CT1 == 0 and self.GT1 == 0 then
-      self.CV1 = ClientUnit:GetPositionVec3()
+      self.CV1 = ClientUnit:GetPointVec3()
       self.CT1 = timer.getTime()
-      self.GV1 = GroupUnit:GetPositionVec3()
+      self.GV1 = GroupUnit:GetPointVec3()
       self.GT1 = timer.getTime()
     else
       local CT1 = self.CT1
       local CT2 = timer.getTime()
       local CV1 = self.CV1
-      local CV2 = ClientUnit:GetPositionVec3()
+      local CV2 = ClientUnit:GetPointVec3()
       self.CT1 = CT2
       self.CV1 = CV2
 
@@ -999,7 +999,7 @@ function ESCORT:_FollowScheduler( FollowDistance )
       local GT1 = self.GT1
       local GT2 = timer.getTime()
       local GV1 = self.GV1
-      local GV2 = GroupUnit:GetPositionVec3()
+      local GV2 = GroupUnit:GetPointVec3()
       self.GT1 = GT2
       self.GV1 = GV2
 
@@ -1082,7 +1082,7 @@ function ESCORT:_ReportTargetsScheduler()
       self:T( EscortObject )
       if EscortObject and EscortObject:isExist() and EscortObject.id_ < 50000000 then
 
-        local EscortTargetUnit = UNIT:New( EscortObject )
+        local EscortTargetUnit = UNIT:Find( EscortObject )
         local EscortTargetUnitName = EscortTargetUnit:GetName()
 
 
@@ -1105,8 +1105,8 @@ function ESCORT:_ReportTargetsScheduler()
         --                EscortTargetLastVelocity } )
 
 
-        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPositionVec3()
-        local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPointVec3()
+        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
         local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
           ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
           ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
@@ -1164,8 +1164,8 @@ function ESCORT:_ReportTargetsScheduler()
               EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
             end
 
-            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPositionVec3()
-            local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPointVec3()
+            local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
             local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
               ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
               ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
@@ -1232,7 +1232,7 @@ function ESCORT:_ReportTargetsScheduler()
 
       local TaskPoints = self:RegisterRoute()
       for WayPointID, WayPoint in pairs( TaskPoints ) do
-        local EscortPositionVec3 = self.EscortGroup:GetPositionVec3()
+        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
         local Distance = ( ( WayPoint.x - EscortPositionVec3.x )^2 +
           ( WayPoint.y - EscortPositionVec3.z )^2
           ) ^ 0.5 / 1000

@@ -37,10 +37,11 @@
 -- @return #Group.Category
 
 --TODO check coalition.side
---- Returns coalition of the group.
+
+--- Returns the coalition of the group.
 -- @function [parent=#Group] getCoalition
 -- @param #Group self 
--- @return #coalition.side
+-- @return DCSCoalitionObject#coalition.side
 
 --- Returns the group's name. This is the same name assigned to the group in Mission Editor.
 -- @function [parent=#Group] getName

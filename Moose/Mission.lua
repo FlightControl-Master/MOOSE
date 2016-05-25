@@ -231,25 +231,6 @@ function MISSION:AddGoalFunction( GoalFunction )
 	self.GoalFunction = GoalFunction 
 end
 
---- Show the briefing of the MISSION to the CLIENT.
--- @param CLIENT Client to show briefing to.
--- @return CLIENT
-function MISSION:ShowBriefing( Client )
-	self:F( { Client.ClientName } )
-
-	if not Client.ClientBriefingShown then
-		Client.ClientBriefingShown = true
-		local Briefing = self.MissionBriefing 
-		if Client.ClientBriefing then
-			Briefing = Briefing .. "\n" .. Client.ClientBriefing
-		end
-		Briefing = Briefing .. "\n (Press [LEFT ALT]+[B] to view the graphical documentation.)"
-		Client:Message( Briefing, 30,  self.Name .. '/MissionBriefing', "Command: Mission Briefing" )
-	end
-
-	return Client
-end
-
 --- Register a new @{CLIENT} to participate within the mission.
 -- @param CLIENT Client is the @{CLIENT} object. The object must have been instantiated with @{CLIENT:New}.
 -- @return CLIENT
@@ -474,7 +455,9 @@ function MISSIONSCHEDULER.Scheduler()
 								if Mission.GoalFunction ~= nil then
 									Mission.GoalFunction( Mission, Client )
 								end
-								_DATABASE:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								if MISSIONSCHEDULER.Scoring then
+								  MISSIONSCHEDULER.Scoring:_AddMissionTaskScore( Client:GetClientGroupDCSUnit(), Mission.Name, 25 )
+								end
 
 --								if not Mission:IsCompleted() then
 --								end

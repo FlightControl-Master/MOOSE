@@ -46,12 +46,15 @@
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
@@ -68,19 +71,48 @@
 <p>The CLIENT models client units in multi player missions.</p>
 
    
-<p>Clients are those groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
-Note that clients are NOT the same as groups, they are NOT necessarily alive. </p>
+
+<h1><a href="##(CLIENT)">#CLIENT</a> class</h1>
+<p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.
+Note that clients are NOT the same as Units, they are NOT necessarily alive.
+The <a href="CLIENT.html">CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
+
+<ul>
+    <li>Wraps the DCS Unit objects with skill level set to Player or Client.</li>
+    <li>Support all DCS Unit APIs.</li>
+    <li>Enhance with Unit specific APIs not in the DCS Group API set.</li>
+    <li>When player joins Unit, execute alive init logic.</li>
+    <li>Handles messages to players.</li>
+    <li>Manage the "state" of the DCS Unit.</li>
+</ul>
+
+<p>Clients are being used by the <a href="MISSION.html">MISSION</a> class to follow players and register their successes.</p>
+
+<h1>CLIENT reference methods</h1>
+<p>For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The CLIENT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the DCS Unit or the DCS UnitName.</p>
+
+<p>Another thing to know is that CLIENT objects do not "contain" the DCS Unit object. 
+The CLIENT methods will reference the DCS Unit object by name when it is needed during API execution.
+If the DCS Unit object does not exist or is nil, the CLIENT methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The CLIENT class provides the following functions to retrieve quickly the relevant CLIENT instance:</p>
+
+<ul>
+    <li><a href="##(CLIENT).Find">CLIENT.Find</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.</li>
+    <li><a href="##(CLIENT).FindByName">CLIENT.FindByName</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CLIENT">CLIENT</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#ClientGroupUnit">ClientGroupUnit</a></td>
 		<td class="summary">
 
 </td>
@@ -98,12 +130,6 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBack, ...)</a></td>
 		<td class="summary">
 <p>Checks for a client alive event and calls a function on a continuous basis.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).AliveCheckScheduler">CLIENT.AliveCheckScheduler</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -161,12 +187,6 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientID">CLIENT.ClientID</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientName">CLIENT.ClientName</a></td>
 		<td class="summary">
 
@@ -179,21 +199,21 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientPosition">CLIENT:ClientPosition()</a></td>
-		<td class="summary">
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientTransport">CLIENT.ClientTransport</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetAltitude">CLIENT:GetAltitude()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Find">CLIENT:Find(ClientName, ClientBriefing, DCSUnit)</a></td>
 		<td class="summary">
-<p>Returns the altitude of the CLIENT.</p>
+<p>Finds a CLIENT from the _DATABASE using the relevant DCS Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).FindByName">CLIENT:FindByName(ClientName, ClientBriefing)</a></td>
+		<td class="summary">
+<p>Finds a CLIENT from the _DATABASE using the relevant Client Unit Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -224,24 +244,6 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetDCSGroup">CLIENT:GetDCSGroup()</a></td>
 		<td class="summary">
 <p>Return the DCSGroup of a Client.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetPointVec2">CLIENT:GetPointVec2()</a></td>
-		<td class="summary">
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).GetUnit">CLIENT:GetUnit()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).IsAlive">CLIENT:IsAlive()</a></td>
-		<td class="summary">
-<p>Checks if client is alive and returns true or false.</p>
 </td>
 		</tr>
 		<tr>
@@ -287,13 +289,13 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).New">CLIENT:New(ClientName, ClientBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ONBOARDSIDE">CLIENT.ONBOARDSIDE</a></td>
 		<td class="summary">
-<p>Use this method to register new Clients within the MOF.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ONBOARDSIDE">CLIENT.ONBOARDSIDE</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Register">CLIENT:Register(ClientName)</a></td>
 		<td class="summary">
 
 </td>
@@ -302,6 +304,12 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Reset">CLIENT:Reset(ClientName)</a></td>
 		<td class="summary">
 <p>Resets a CLIENT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ShowBriefing">CLIENT:ShowBriefing()</a></td>
+		<td class="summary">
+<p>Show the briefing of the MISSION to the CLIENT.</p>
 </td>
 		</tr>
 		<tr>
@@ -357,20 +365,6 @@ Note that clients are NOT the same as groups, they are NOT necessarily alive. </
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="ClientGroupUnit" >
-<strong>ClientGroupUnit</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 	<h2><a id="#(Client)" >Type <code>Client</code></a></h2>
 	
 			<h2><a id="#(CLIENT)" >Type <code>CLIENT</code></a></h2>
@@ -400,8 +394,8 @@ is the text defining the Mission briefing.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
-
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -433,20 +427,6 @@ Function.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(CLIENT).AliveCheckScheduler" >
-<strong>CLIENT.AliveCheckScheduler</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
@@ -538,6 +518,7 @@ Function.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(CLIENT).ClientGroupID" >
 <strong>CLIENT.ClientGroupID</strong>
 </a>
@@ -565,23 +546,8 @@ Function.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(CLIENT).ClientGroupUnit" >
 <strong>CLIENT.ClientGroupUnit</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(CLIENT).ClientID" >
-<strong>CLIENT.ClientID</strong>
 </a>
 </dt>
 <dd>
@@ -620,24 +586,6 @@ Function.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CLIENT).ClientPosition" >
-<strong>CLIENT:ClientPosition()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> format.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em>#boolean</em>
 <a id="#(CLIENT).ClientTransport" >
 <strong>CLIENT.ClientTransport</strong>
@@ -652,18 +600,94 @@ Function.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CLIENT).GetAltitude" >
-<strong>CLIENT:GetAltitude()</strong>
+<a id="#(CLIENT).Find" >
+<strong>CLIENT:Find(ClientName, ClientBriefing, DCSUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns the altitude of the CLIENT.</p>
+<p>Finds a CLIENT from the _DATABASE using the relevant DCS Unit.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ClientName </em></code>: 
+Name of the DCS <strong>Unit</strong> as defined within the Mission Editor.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ClientBriefing </em></code>: 
+Text that describes the briefing of the mission when a Player logs into the Client.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DCSUnit </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em></p>
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
 
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Create new Clients.
+ local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
+ Mission:AddGoal( DeploySA6TroopsGoal )
+
+ Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+ Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+ Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+ Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLIENT).FindByName" >
+<strong>CLIENT:FindByName(ClientName, ClientBriefing)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a CLIENT from the _DATABASE using the relevant Client Unit Name.</p>
+
+	
+<p>As an optional parameter, a briefing text can be given also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ClientName </em></code>: 
+Name of the DCS <strong>Unit</strong> as defined within the Mission Editor.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ClientBriefing </em></code>: 
+Text that describes the briefing of the mission when a Player logs into the Client.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Create new Clients.
+	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
+	Mission:AddGoal( DeploySA6TroopsGoal )
+
+	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )</code></pre>
 
 </dd>
 </dl>
@@ -758,53 +782,6 @@ Function.</p>
 				
 <p><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetPointVec2" >
-<strong>CLIENT:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the position of the CLIENT in <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> format..</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).GetUnit" >
-<strong>CLIENT:GetUnit()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> TODO what is this??? check. possible double function.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).IsAlive" >
-<strong>CLIENT:IsAlive()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Checks if client is alive and returns true or false.</p>
 
 </dd>
 </dl>
@@ -952,49 +929,6 @@ is the interval in seconds between the display of the <a href="Message.html##(ME
 		<dl class="function">
 <dt>
 
-<a id="#(CLIENT).New" >
-<strong>CLIENT:New(ClientName, ClientBriefing)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Use this method to register new Clients within the MOF.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string ClientName </em></code>: 
-Name of the Group as defined within the Mission Editor. The Group must have a Unit with the type Client.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ClientBriefing </em></code>: 
-Text that describes the briefing of the mission when a Player logs into the Client.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
-
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- Create new Clients.
-	local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
-	Mission:AddGoal( DeploySA6TroopsGoal )
-
-	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 1' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )</code></pre>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em></em>
 <a id="#(CLIENT).ONBOARDSIDE" >
 <strong>CLIENT.ONBOARDSIDE</strong>
@@ -1004,6 +938,27 @@ Text that describes the briefing of the mission when a Player logs into the Clie
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLIENT).Register" >
+<strong>CLIENT:Register(ClientName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClientName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1026,6 +981,24 @@ Name of the Group as defined within the Mission Editor. The Group must have a Un
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLIENT).ShowBriefing" >
+<strong>CLIENT:ShowBriefing()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Show the briefing of the MISSION to the CLIENT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLIENT)">#CLIENT</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">

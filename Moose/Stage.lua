@@ -36,7 +36,7 @@ end
 function STAGE:Execute( Mission, Client, Task )
 
 	local Valid = true
-  
+
 	return Valid
 end
 
@@ -46,7 +46,7 @@ end
 
 function STAGE:Validate( Mission, Client, Task )
   local Valid = true
-
+  
   return Valid
 end
 
@@ -69,7 +69,7 @@ end
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	self:F()
-	Mission:ShowBriefing( Client )
+	Client:ShowBriefing()
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
 end
@@ -255,7 +255,7 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 	
 	-- check if the Client is in the landing zone
 	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	
 	if  Task.CurrentLandingZoneName then
 
@@ -268,9 +268,11 @@ function STAGEROUTE:Validate( Mission, Client, Task )
 			end
 		end
 
+    self:T( 1 )
 		return 1
 	end
   
+  self:T( 0 )
 	return 0
 end
 
@@ -345,8 +347,17 @@ function STAGELANDING:Execute( Mission, Client, Task )
 		else
 			HostMessage = "Use the Radio menu and F6 to find the cargo, then fly or land near the cargo and " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
 		end
+
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
 		
-		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Host, Host, 10 )
 		
 	end
 end
@@ -354,7 +365,7 @@ end
 function STAGELANDING:Validate( Mission, Client, Task )
 	self:F()
   
-	Task.CurrentLandingZoneName = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames )
+	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
 	if Task.CurrentLandingZoneName then
 	
 		-- Client is in de landing zone.
@@ -377,14 +388,34 @@ function STAGELANDING:Validate( Mission, Client, Task )
 		end
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -1 )
 		return -1
 	end
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		return 0
-	end
+	
+	local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+	local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+	
+	local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+	local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+	
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and not Client:GetClientGroupDCSUnit():inAir() then
+    self:T( 1 )
+    Task.IsInAirTestRequired = true
+    return 1
+  end
   
-	return 1
+	self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+	if Task.IsLandingRequired and DCSUnitVelocity <= 0.05 and DCSUnitHeight <= Task.CurrentCargoZone.SignalHeight then
+    self:T( 1 )
+    Task.IsInAirTestRequired = false
+    return 1
+	end
+
+  self:T( 0 )
+	return 0
 end
 
 STAGELANDED = {
@@ -405,9 +436,20 @@ function STAGELANDED:Execute( Mission, Client, Task )
 	self:F()
 
 	if Task.IsLandingRequired then
-		Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-		                self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-		if not self.MenusAdded then
+
+	  local Host = "Command"
+	  if Task.HostUnitName then
+	    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  	else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
+    Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
+                    self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC" .. Host, Host )
+
+  	if not self.MenusAdded then
 			Task.Cargo = nil
 			Task:RemoveCargoMenus( Client )
 			Task:AddCargoMenus( Client, CARGOS, 250 )
@@ -420,26 +462,44 @@ end
 function STAGELANDED:Validate( Mission, Client, Task )
 	self:F()
 
-	if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+	if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
 		Task.Signalled = false 
 		Task:RemoveCargoMenus( Client )
+    self:T( -2 )
 		return -2
 	end
+
+  local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+  local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
   
-	if Task.IsLandingRequired and Client:GetClientGroupDCSUnit():inAir() then
-		self:T( "Client went back in the air. Go back to stage Landing." )
-		Task.Signalled = false 
-		return -1
-	end
+  local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+  local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+  
+  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+    self:T( "Client went back in the air. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
+  
+  self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+  if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+    self:T( "It seems the Client went back in the air and over the boundary limits. Go back to stage Landing." )
+    self:T( -1 )
+    return -1
+  end
   
     -- Wait until cargo is selected from the menu.
 	if Task.IsLandingRequired then 
 		if not Task.Cargo then
+		  self:T( 0 )
 			return 0
 		end
 	end
-  
+
+  self:T( 1 )
 	return 1
 end
 
@@ -503,7 +563,7 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
   
-  if routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+  if routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
   else
     Task.ExecuteStage = _TransportExecuteStage.FAILED
     Task:RemoveCargoMenus( Client )
@@ -562,10 +622,21 @@ function STAGELOAD:Execute( Mission, Client, Task )
 	self:F()
 	
 	if not Task.IsSlingLoad then
+ 
+    local Host = "Command"
+    if Task.HostUnitName then
+      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+    else
+      if Client:IsMultiSeated() then
+        Host = "Co-Pilot"
+      end
+    end
+
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Host, Host )
 
 		-- Route the cargo to the Carrier
+		
 		Task.Cargo:OnBoard( Client, Task.CurrentCargoZone, Task.OnBoardSide )
 		Task.ExecuteStage = _TransportExecuteStage.EXECUTING
 	else
@@ -578,6 +649,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 
 	-- If the Cargo is ready to be loaded, load it into the Client.
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
 		
 	if not Task.IsSlingLoad then
 		self:T( Task.Cargo.CargoName)
@@ -589,14 +668,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 		
 			-- Message to the pilot that cargo has been loaded.
 			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Mission.Name .. "/STAGELANDING.LOADING1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							20, Mission.Name .. "/STAGELANDING.LOADING1."  .. Host, Host )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
 			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")", 10 )
+						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1."  .. Host, Host , 10 )
 		for CargoID, Cargo in pairs( CARGOS ) do
 			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
@@ -612,7 +691,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2."  .. Host, Host  )
 						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 						break
 					end
@@ -630,32 +709,61 @@ function STAGELOAD:Validate( Mission, Client, Task )
 
 	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
 
+  local Host = "Command"
+  if Task.HostUnitName then
+    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
+  else
+    if Client:IsMultiSeated() then
+      Host = "Co-Pilot"
+    end
+  end
+
  	if not Task.IsSlingLoad then
-		if not routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName ) then
+		if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
 			Task:RemoveCargoMenus( Client )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
 			return -1
 		end
 
-		if not Client:GetClientGroupDCSUnit():inAir() then
-		else
-			-- The carrier is back in the air, undo the loading process.
-			Task:RemoveCargoMenus( Client )
-			Task.ExecuteStage = _TransportExecuteStage.NONE
-			Task.CargoName = nil
-			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.2." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
-			return -1
-		end
+    local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
+    local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
+    
+    local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
+    local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
+    local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
+    
+    self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
+    
+    self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
+    if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
+      Task:RemoveCargoMenus( Client )
+      Task.ExecuteStage = _TransportExecuteStage.FAILED
+      Task.CargoName = nil 
+      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
+              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+      self:T( -1 )
+      return -1
+    end
 
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Host, Host )
 			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
+      self:T( 1 )
 			return 1
 		end
 
@@ -664,8 +772,9 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
 			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
 				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Task.HostUnitName, Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")" )
+								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Host, Host )
 				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
+        self:T( 1 )
 				return 1
 			end
 		end
@@ -673,6 +782,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 	end
   
  
+  self:T( 0 )
 	return 0
 end
 

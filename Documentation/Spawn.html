@@ -46,12 +46,15 @@
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li>Spawn</li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
@@ -116,7 +119,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).RandomizeTemplate">SPAWN.RandomizeTemplate</a>: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. </li>
     <li><a href="##(SPAWN).Uncontrolled">SPAWN.Uncontrolled</a>: Spawn plane groups uncontrolled.</li>
     <li><a href="##(SPAWN).Array">SPAWN.Array</a>: Make groups visible before they are actually activated, and order these groups like a batallion in an array.</li>
-    <li><a href="##(SPAWN).Repeat">SPAWN.Repeat</a>: Re-spawn groups when they land at the home base. Similar functions are <a href="##(SPAWN).RepeatOnLanding">SPAWN.RepeatOnLanding</a> and <a href="##(SPAWN).RepeatOnEngineShutDown">SPAWN.RepeatOnEngineShutDown</a>.</li>
+    <li><a href="##(SPAWN).InitRepeat">SPAWN.InitRepeat</a>: Re-spawn groups when they land at the home base. Similar functions are <a href="##(SPAWN).InitRepeatOnLanding">SPAWN.InitRepeatOnLanding</a> and <a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN.InitRepeatOnEngineShutDown</a>.</li>
 </ul>
 
 <h1>SPAWN spawning methods:</h1>
@@ -158,12 +161,6 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 			<h2><a id="#(SPAWN)">Type <code>SPAWN</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).AliveFactor">SPAWN.AliveFactor</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Array">SPAWN:Array(SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY)</a></td>
 		<td class="summary">
 <p>Makes the groups visible before start (like a batallion).</p>
@@ -182,7 +179,7 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).CleanUpFunction">SPAWN.CleanUpFunction</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).CleanUpScheduler">SPAWN.CleanUpScheduler</a></td>
 		<td class="summary">
 
 </td>
@@ -215,6 +212,24 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetSpawnIndexFromGroup">SPAWN:GetSpawnIndexFromGroup(SpawnGroup)</a></td>
 		<td class="summary">
 <p>Get the index from a given group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRepeat">SPAWN:InitRepeat()</a></td>
+		<td class="summary">
+<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN:InitRepeatOnEngineShutDown()</a></td>
+		<td class="summary">
+<p>Respawn after landing when its engines have shut down.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRepeatOnLanding">SPAWN:InitRepeatOnLanding()</a></td>
+		<td class="summary">
+<p>Respawn group after landing.</p>
 </td>
 		</tr>
 		<tr>
@@ -254,9 +269,9 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Repeat">SPAWN:Repeat()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Repeat">SPAWN.Repeat</a></td>
 		<td class="summary">
-<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -296,12 +311,6 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnCurrentTimer">SPAWN.SpawnCurrentTimer</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, OuterRadius, InnerRadius, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting unit.</p>
@@ -332,21 +341,9 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnHighTimer">SPAWN.SpawnHighTimer</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a Group within a given <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnLowTimer">SPAWN.SpawnLowTimer</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -392,15 +389,9 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnRepeat">SPAWN.SpawnRepeat</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnScheduleStart">SPAWN:SpawnScheduleStart()</a></td>
 		<td class="summary">
-<p>Will start the spawning scheduler.</p>
+<p>Will re-start the spawning scheduler.</p>
 </td>
 		</tr>
 		<tr>
@@ -416,7 +407,7 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnSetTimer">SPAWN.SpawnSetTimer</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnScheduler">SPAWN.SpawnScheduler</a></td>
 		<td class="summary">
 
 </td>
@@ -550,13 +541,13 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._RandomizeRoute">SPAWN:_RandomizeRoute(SpawnIndex)</a></td>
 		<td class="summary">
-<p>Internal function randomizing the routes.</p>
+<p>Private method randomizing the routes.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._RandomizeTemplate">SPAWN:_RandomizeTemplate(SpawnIndex)</a></td>
 		<td class="summary">
-
+<p>Private method that randomizes the template of the group.</p>
 </td>
 		</tr>
 		<tr>
@@ -601,20 +592,6 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 <p>SPAWN Class</p>
 
 	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(SPAWN).AliveFactor" >
-<strong>SPAWN.AliveFactor</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -721,13 +698,16 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(SPAWN).CleanUpFunction" >
-<strong>SPAWN.CleanUpFunction</strong>
+<a id="#(SPAWN).CleanUpScheduler" >
+<strong>SPAWN.CleanUpScheduler</strong>
 </a>
 </dt>
 <dd>
 	
 
+
+	
+<p>self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )</p>
 
 </dd>
 </dl>
@@ -871,6 +851,71 @@ When no group is found, #nil is returned.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRepeat" >
+<strong>SPAWN:InitRepeat()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
+
+	
+<p>This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
+Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
+So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- RU Su-34 - AI Ship Attack
+-- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
+SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRepeatOnEngineShutDown" >
+<strong>SPAWN:InitRepeatOnEngineShutDown()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Respawn after landing when its engines have shut down.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRepeatOnLanding" >
+<strong>SPAWN:InitRepeatOnLanding()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Respawn group after landing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1123,29 +1168,14 @@ The group that was spawned. You can use this group for further actions.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
 <a id="#(SPAWN).Repeat" >
-<strong>SPAWN:Repeat()</strong>
+<strong>SPAWN.Repeat</strong>
 </a>
 </dt>
 <dd>
 	
-<p>For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.</p>
 
-	
-<p>This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
-This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
-Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
-So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
-self</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- RU Su-34 - AI Ship Attack
--- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
-SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()</code></pre>
 
 </dd>
 </dl>
@@ -1237,23 +1267,6 @@ The group that was spawned. You can use this group for further actions.</p>
 <dd>
 	
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(SPAWN).SpawnCurrentTimer" >
-<strong>SPAWN.SpawnCurrentTimer</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> The internal timer counter to trigger a scheduled spawning of SpawnTemplatePrefix.</p>
 
 </dd>
 </dl>
@@ -1417,20 +1430,6 @@ SpawnGroupName</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(SPAWN).SpawnHighTimer" >
-<strong>SPAWN.SpawnHighTimer</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SPAWN).SpawnInZone" >
 <strong>SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</strong>
 </a>
@@ -1479,20 +1478,6 @@ when nothing was spawned.</p>
 
 				</li>
 			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(SPAWN).SpawnLowTimer" >
-<strong>SPAWN.SpawnLowTimer</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -1602,30 +1587,16 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
-<a id="#(SPAWN).SpawnRepeat" >
-<strong>SPAWN.SpawnRepeat</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SPAWN).SpawnScheduleStart" >
 <strong>SPAWN:SpawnScheduleStart()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Will start the spawning scheduler.</p>
+<p>Will re-start the spawning scheduler.</p>
 
 	
-<p>Note: This function is called automatically when <a href="##(SPAWN).Scheduled">SPAWN.Scheduled</a> is called.</p>
+<p>Note: This function is only required to be called when the schedule was stopped.</p>
 
 </dd>
 </dl>
@@ -1692,17 +1663,14 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(SPAWN).SpawnSetTimer" >
-<strong>SPAWN.SpawnSetTimer</strong>
+		<em></em>
+<a id="#(SPAWN).SpawnScheduler" >
+<strong>SPAWN.SpawnScheduler</strong>
 </a>
 </dt>
 <dd>
 	
 
-
-	
-<p> The internal timer value when a scheduled spawning of SpawnTemplatePrefix occurs.</p>
 
 </dd>
 </dl>
@@ -2022,10 +1990,15 @@ Nothing found</p>
 		<ul>
 				<li>
 				
-<p><code><em> SpawnTemplatePrefix </em></code>: </p>
+<p><code><em>#string SpawnTemplatePrefix </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+
+<p>@SPAWN self</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2184,15 +2157,20 @@ This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.</p
 		<ul>
 				<li>
 				
-<p><code><em> SpawnTemplatePrefix </em></code>: </p>
+<p><code><em>#string SpawnTemplatePrefix </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> SpawnIndex </em></code>: </p>
+<p><code><em>#number SpawnIndex </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2204,7 +2182,7 @@ This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.</p
 </dt>
 <dd>
 	
-<p>Internal function randomizing the routes.</p>
+<p>Private method randomizing the routes.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2231,16 +2209,21 @@ The index of the group to be spawned.</p>
 </dt>
 <dd>
 	
-
+<p>Private method that randomizes the template of the group.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> SpawnIndex </em></code>: </p>
+<p><code><em>#number SpawnIndex </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">

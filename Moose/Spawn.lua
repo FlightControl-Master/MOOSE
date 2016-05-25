@@ -43,7 +43,7 @@
 --   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.Repeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.RepeatOnLanding} and @{#SPAWN.RepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
 -- SPAWN spawning methods:
 -- =======================
@@ -80,6 +80,7 @@ Include.File( "Database" )
 Include.File( "Group" )
 Include.File( "Zone" )
 Include.File( "Event" )
+Include.File( "Scheduler" )
 
 --- SPAWN Class
 -- @type SPAWN
@@ -115,7 +116,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
 		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
@@ -152,7 +153,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
 		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.SpawnRepeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
@@ -274,36 +275,37 @@ end
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
 -- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
-function SPAWN:Repeat()
+function SPAWN:InitRepeat()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
-	self.SpawnRepeat = true
+	self.Repeat = true
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 
 	return self
 end
 
---- Same as the @{Repeat) method.
--- @return SPAWN
--- @see Repeat
-
-function SPAWN:RepeatOnLanding()
+--- Respawn group after landing.
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitRepeatOnLanding()
 	self:F( { self.SpawnTemplatePrefix } )
 
-	self:Repeat()
+	self:InitRepeat()
 	self.RepeatOnEngineShutDown = false
 	self.RepeatOnLanding = true
 	
 	return self
 end
 
---- Same as the @{#SPAWN.Repeat) method, but now the Group will respawn after its engines have shut down.
--- @return SPAWN
-function SPAWN:RepeatOnEngineShutDown()
+
+--- Respawn after landing when its engines have shut down.
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitRepeatOnEngineShutDown()
 	self:F( { self.SpawnTemplatePrefix } )
 
-	self:Repeat()
+	self:InitRepeat()
 	self.RepeatOnEngineShutDown = true
 	self.RepeatOnLanding = false
 	
@@ -322,8 +324,8 @@ function SPAWN:CleanUp( SpawnCleanUpInterval )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
-	self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
-	
+	--self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
+	self.CleanUpScheduler = SCHEDULER:New( self, self._SpawnCleanUpScheduler, {}, 1, SpawnCleanUpInterval, 0.2 )
 	return self
 end
 
@@ -378,10 +380,8 @@ function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
     _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
     _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
 
-    if self.SpawnRepeat then
+    if self.Repeat then
       _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
-    end
-    if self.RepeatOnLanding then
       _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
     end
     if self.RepeatOnEngineShutDown then
@@ -450,15 +450,15 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
       _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
 
-      if self.SpawnRepeat then
+      if self.Repeat then
         _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
-      end
-      if self.RepeatOnLanding then
         _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
+      
+      self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
@@ -467,7 +467,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			  self.SpawnFunctionHook( self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) )
 			end
 			-- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
-			--if self.SpawnRepeat then
+			--if self.Repeat then
 			--	_DATABASE:SetStatusGroup( SpawnTemplate.name, "ReSpawn" )
 			--end
 		end
@@ -500,22 +500,28 @@ end
 function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:F( { SpawnTime, SpawnTimeVariation } )
 
-	self.SpawnCurrentTimer = 0									-- The internal timer counter to trigger a scheduled spawning of SpawnTemplatePrefix.
-	self.SpawnSetTimer = 0										-- The internal timer value when a scheduled spawning of SpawnTemplatePrefix occurs.
-	self.AliveFactor = 1									--
-	self.SpawnLowTimer = 0
-	self.SpawnHighTimer = 0
-		
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
-		self.SpawnLowTimer = SpawnTime - SpawnTime / 2 * SpawnTimeVariation
-		self.SpawnHighTimer = SpawnTime + SpawnTime / 2 * SpawnTimeVariation
-		self:SpawnScheduleStart()
+    self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, 1, SpawnTime, SpawnTimeVariation )
 	end
 
-	self:T( { self.SpawnLowTimer, self.SpawnHighTimer } )
-	
 	return self
 end
+
+--- Will re-start the spawning scheduler.
+-- Note: This function is only required to be called when the schedule was stopped.
+function SPAWN:SpawnScheduleStart()
+  self:F( { self.SpawnTemplatePrefix } )
+
+  self.SpawnScheduler:Start()
+end
+
+--- Will stop the scheduled spawning scheduler.
+function SPAWN:SpawnScheduleStop()
+  self:F( { self.SpawnTemplatePrefix } )
+  
+  self.SpawnScheduler:Stop()
+end
+
 
 --- Allows to place a CallFunction hook when a new group spawns.
 -- The provided function will be called when a new group is spawned, including its given parameters.
@@ -538,30 +544,6 @@ end
 
 
 
---- Will start the spawning scheduler.
--- Note: This function is called automatically when @{#SPAWN.Scheduled} is called.
-function SPAWN:SpawnScheduleStart()
-	self:F( { self.SpawnTemplatePrefix } )
-
-	--local ClientUnit = #AlivePlayerUnits()
-	
-	self.AliveFactor = 10 -- ( 10 - ClientUnit  ) / 10
-	
-	if self.SpawnIsScheduled == false then
-		self.SpawnIsScheduled = true
-		self.SpawnInit = true
-		self.SpawnSetTimer = math.random( self.SpawnLowTimer * self.AliveFactor / 10 , self.SpawnHighTimer * self.AliveFactor  / 10 )
-		
-		self.SpawnFunction = routines.scheduleFunction( self._Scheduler, { self }, timer.getTime() + 1, 1 )
-	end
-end
-
---- Will stop the scheduled spawning scheduler.
-function SPAWN:SpawnScheduleStop()
-	self:F( { self.SpawnTemplatePrefix } )
-	
-	self.SpawnIsScheduled = false
-end
 
 --- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
@@ -590,6 +572,9 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
       if SpawnTemplate then
 
         local UnitPoint = HostUnit:GetPointVec2()
+        
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
+        
         --for PointID, Point in pairs( SpawnTemplate.route.points ) do
           --Point.x = UnitPoint.x
           --Point.y = UnitPoint.y
@@ -597,9 +582,6 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
           --Point.alt_type = nil
         --end
         
-        SpawnTemplate.route.points = nil
-        SpawnTemplate.route.points = {}
-        SpawnTemplate.route.points[1] = {}
         SpawnTemplate.route.points[1].x = UnitPoint.x
         SpawnTemplate.route.points[1].y = UnitPoint.y
 
@@ -680,8 +662,9 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          SpawnTemplate.units[UnitID].x = ZonePoint.x
-          SpawnTemplate.units[UnitID].y = ZonePoint.y
+          local ZonePointUnit = Zone:GetRandomPointVec2()
+          SpawnTemplate.units[UnitID].x = ZonePointUnit.x
+          SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
        
@@ -910,7 +893,6 @@ function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 		self.SpawnGroups[SpawnIndex].Visible = false
 		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].UnControlled = false
-		self.SpawnGroups[SpawnIndex].Spawned = false
 		self.SpawnGroups[SpawnIndex].SpawnTime = 0
 		
 		self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefix
@@ -964,12 +946,15 @@ end
 
 --- Gets the Group Template from the ME environment definition.
 -- This method used the @{DATABASE} object, which contains ALL initial and new spawned object in MOOSE.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @return @SPAWN self
 function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnTemplatePrefix } )
 
 	local SpawnTemplate = nil
 
-	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Groups[SpawnTemplatePrefix].Template )
+	SpawnTemplate = routines.utils.deepCopy( _DATABASE.Templates.Groups[SpawnTemplatePrefix].Template )
 	
 	if SpawnTemplate == nil then
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
@@ -984,6 +969,10 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 end
 
 --- Prepares the new Group Template.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefix
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
@@ -994,6 +983,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.lateActivation = false
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	  self:T( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false
 	end
 	
@@ -1013,7 +1003,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		
 end
 
---- Internal function randomizing the routes.
+--- Private method randomizing the routes.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to be spawned.
 -- @return #SPAWN
@@ -1037,7 +1027,10 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
   return self
 end
 
-
+--- Private method that randomizes the template of the group.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 
@@ -1047,6 +1040,7 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.route = routines.utils.deepCopy( self.SpawnTemplate.route )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.x = self.SpawnTemplate.x
     self.SpawnGroups[SpawnIndex].SpawnTemplate.y = self.SpawnTemplate.y
+    self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
     end
@@ -1229,19 +1223,10 @@ end
 function SPAWN:_Scheduler()
 	self:F( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
 	
-	if self.SpawnInit or self.SpawnCurrentTimer == self.SpawnSetTimer then
-		-- Validate if there are still groups left in the batch...
-		self:Spawn()
-		self.SpawnInit = false
-		if self.SpawnIsScheduled == true then
-			--local ClientUnit = #AlivePlayerUnits()
-			self.AliveFactor = 1 -- ( 10 - ClientUnit  ) / 10
-			self.SpawnCurrentTimer = 0
-			self.SpawnSetTimer = math.random( self.SpawnLowTimer * self.AliveFactor , self.SpawnHighTimer * self.AliveFactor )
-		end
-	else
-		self.SpawnCurrentTimer = self.SpawnCurrentTimer + 1
-	end
+	-- Validate if there are still groups left in the batch...
+	self:Spawn()
+	
+	return true
 end
 
 function SPAWN:_SpawnCleanUpScheduler()
@@ -1272,5 +1257,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 		self:T( { "CleanUp Scheduler:", SpawnGroup } )
 		
 	end
+	
+	return true -- Repeat
 	
 end

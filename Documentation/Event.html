@@ -46,12 +46,15 @@
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
@@ -232,6 +235,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDeadForUnit">EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerEnterUnit">EVENT:OnPlayerEnterUnit(EventFunction, EventSelf)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerLeaveUnit">EVENT:OnPlayerLeaveUnit(EventFunction, EventSelf)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>PLAYER<em>LEAVE</em>UNIT event.</p>
 </td>
 		</tr>
 		<tr>
@@ -1241,6 +1256,72 @@ The self instance of the class for which the event is.</p>
 <p><code><em>#string EventDCSUnitName </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerEnterUnit" >
+<strong>EVENT:OnPlayerEnterUnit(EventFunction, EventSelf)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerLeaveUnit" >
+<strong>EVENT:OnPlayerLeaveUnit(EventFunction, EventSelf)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PLAYER<em>LEAVE</em>UNIT event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
 				<li>
 				
 <p><code><em>#function EventFunction </em></code>: 
