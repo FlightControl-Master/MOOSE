@@ -4,6 +4,8 @@
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
+Include.File( "Scheduler" )
+
 
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
 -- These clients are defined within the Mission Orchestration Framework (MOF)
@@ -673,7 +675,8 @@ function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
   	end
   	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
   
-  	routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	--routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
+  	SCHEDULER:New( self, routines.goRoute, { self.CargoGroupName, Points}, 4 )
   end
 	
 	self:StatusLoading( Client )
@@ -884,7 +887,8 @@ function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
 	end
 	self:T( "Routing " .. CargoHostName )
 
-	routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
+	--routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
+	SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
      
 	return Valid
   

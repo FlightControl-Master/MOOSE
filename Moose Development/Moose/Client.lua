@@ -130,7 +130,8 @@ function CLIENT:Register( ClientName )
   self.MessageSwitch = true
   self.ClientAlive2 = false
   
-  self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+  --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, {}, 1, 5 )
 
   return self
 end
@@ -245,6 +246,8 @@ function CLIENT:_AliveCheckScheduler()
       self.ClientAlive2 = false
     end
   end
+  
+  return true
 end
 
 --- Return the DCSGroup of a Client.
