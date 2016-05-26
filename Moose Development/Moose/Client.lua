@@ -159,7 +159,7 @@ function CLIENT:AddBriefing( ClientBriefing )
   return self
 end
 
---- Show the briefing of the MISSION to the CLIENT.
+--- Show the briefing of a CLIENT.
 -- @param #CLIENT self
 -- @return #CLIENT self
 function CLIENT:ShowBriefing()
@@ -168,14 +168,25 @@ function CLIENT:ShowBriefing()
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
     local Briefing = ""
-    if self.MissionBriefing then
-      Briefing = Briefing .. self.MissionBriefing 
-    end
     if self.ClientBriefing then
-      Briefing = Briefing .. "\n" .. self.ClientBriefing
+      Briefing = Briefing .. self.ClientBriefing
     end
-    Briefing = Briefing .. "\nPress [LEFT ALT]+[B] to view the complete mission briefing."
-    self:Message( Briefing, 30,  self.ClientName .. '/MissionBriefing', "Briefing" )
+    Briefing = Briefing .. " Press [LEFT ALT]+[B] to view the complete mission briefing."
+    self:Message( Briefing, 60,  self.ClientName .. '/ClientBriefing', "Briefing" )
+  end
+
+  return self
+end
+
+--- Show the mission briefing of a MISSION to the CLIENT.
+-- @param #CLIENT self
+-- @param #string MissionBriefing
+-- @return #CLIENT self
+function CLIENT:ShowMissionBriefing( MissionBriefing )
+  self:F( { self.ClientName } )
+
+  if MissionBriefing then
+    self:Message( MissionBriefing, 60,  self.ClientName .. '/MissionBriefing', "Mission Briefing" )
   end
 
   return self

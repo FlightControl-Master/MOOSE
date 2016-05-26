@@ -127,7 +127,7 @@ Spawn_Vehicle_SpawnToZone = SPAWN:New( "Spawn Vehicle SpawnToZone" )
 -- and the vehicle will drive to a random location within the defined zone.
 -- For this, the following code is activated within the mission on waypoint 3:
 --
---   local InfantryDropGroup = Spawn_Vehicle_SpawnToZone:SpawnFromUnit( GROUP:New( ... ):GetUnit(1) )
+--   local InfantryDropGroup = Spawn_Vehicle_SpawnToZone:SpawnFromUnit( GROUP:Find( ... ):GetUnit(1) )
 --   local InfantryDropRoute = InfantryDropGroup:CopyRoute( 1, 0 )
 --   InfantryDropGroup:RouteToZone( ZONE:New( "Target Zone" ), true, 80 )
 --

@@ -66,10 +66,16 @@ function STAGEBRIEF:New()
 	return self
 end
 
+--- Execute
+-- @param #STAGEBRIEF self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
+-- @return #boolean
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	self:F()
-	Client:ShowBriefing()
+	Client:ShowMissionBriefing( Mission.MissionBriefing )
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
 end

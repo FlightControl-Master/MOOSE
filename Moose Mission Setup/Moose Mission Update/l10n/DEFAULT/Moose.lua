@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160525_1659' ) 
+env.info( 'Moose Generation Timestamp: 20160526_1413' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -2666,7 +2666,6 @@ FORMATION = {
 --     return self
 -- end
 -- @todo need to investigate if the deepCopy is really needed... Don't think so.
-
 function BASE:New()
 	local Child = routines.utils.deepCopy( self )
 	local Parent = {}
@@ -6959,7 +6958,7 @@ function CLIENT:AddBriefing( ClientBriefing )
   return self
 end
 
---- Show the briefing of the MISSION to the CLIENT.
+--- Show the briefing of a CLIENT.
 -- @param #CLIENT self
 -- @return #CLIENT self
 function CLIENT:ShowBriefing()
@@ -6968,14 +6967,25 @@ function CLIENT:ShowBriefing()
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
     local Briefing = ""
-    if self.MissionBriefing then
-      Briefing = Briefing .. self.MissionBriefing 
-    end
     if self.ClientBriefing then
-      Briefing = Briefing .. "\n" .. self.ClientBriefing
+      Briefing = Briefing .. self.ClientBriefing
     end
-    Briefing = Briefing .. "\nPress [LEFT ALT]+[B] to view the complete mission briefing."
-    self:Message( Briefing, 30,  self.ClientName .. '/MissionBriefing', "Briefing" )
+    Briefing = Briefing .. " Press [LEFT ALT]+[B] to view the complete mission briefing."
+    self:Message( Briefing, 60,  self.ClientName .. '/ClientBriefing', "Briefing" )
+  end
+
+  return self
+end
+
+--- Show the mission briefing of a MISSION to the CLIENT.
+-- @param #CLIENT self
+-- @param #string MissionBriefing
+-- @return #CLIENT self
+function CLIENT:ShowMissionBriefing( MissionBriefing )
+  self:F( { self.ClientName } )
+
+  if MissionBriefing then
+    self:Message( MissionBriefing, 60,  self.ClientName .. '/MissionBriefing', "Mission Briefing" )
   end
 
   return self
@@ -10203,10 +10213,16 @@ function STAGEBRIEF:New()
 	return self
 end
 
+--- Execute
+-- @param #STAGEBRIEF self
+-- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
+-- @param Task#TASK Task
+-- @return #boolean
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	self:F()
-	Client:ShowBriefing()
+	Client:ShowMissionBriefing( Mission.MissionBriefing )
 	self.StageBriefingTime = timer.getTime()
 	return Valid 
 end
@@ -12211,7 +12227,7 @@ end
 
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
--- @module MISSION
+-- @module Mission
 
 Include.File( "Routines" )
 Include.File( "Base" )
@@ -12219,7 +12235,10 @@ Include.File( "Client" )
 Include.File( "Task" )
 
 --- The MISSION class
--- @type
+-- @type MISSION
+-- @extends Base#BASE
+-- @field #MISSION.Clients _Clients
+-- @field #string MissionBriefing
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -12240,6 +12259,8 @@ MISSION = {
 	_GoalTasks = {}
 }
 
+--- @type MISSION.Clients
+-- @list <Client#CLIENTS>
 
 function MISSION:Meta()
 
@@ -12447,10 +12468,10 @@ end
 -- @return CLIENT
 -- @usage
 -- Add a number of Client objects to the Mission.
--- 	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 3', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
---	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+-- 	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*RAMP-Deploy Troops 3', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+--	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
 function MISSION:AddClient( Client )
 	self:F( { Client } )
 
@@ -12566,6 +12587,7 @@ _TransportExecuteStage = {
 
 --- The MISSIONSCHEDULER is an OBJECT and is the main scheduler of ALL active MISSIONs registered within this scheduler. It's workings are considered internal and is automatically created when the Mission.lua file is included.
 -- @type MISSIONSCHEDULER
+-- @field #MISSIONSCHEDULER.MISSIONS Missions
 MISSIONSCHEDULER = {
   Missions = {},
   MissionCount = 0,
@@ -12575,20 +12597,28 @@ MISSIONSCHEDULER = {
   TimeShow = 5
 }
 
+--- @type MISSIONSCHEDULER.MISSIONS
+-- @list <#MISSION> Mission
+
 --- This is the main MISSIONSCHEDULER Scheduler function. It is considered internal and is automatically created when the Mission.lua file is included.
 function MISSIONSCHEDULER.Scheduler()
+  
 
 	-- loop through the missions in the TransportTasks
-	for MissionName, Mission in pairs( MISSIONSCHEDULER.Missions ) do
-	
+	for MissionName, MissionData in pairs( MISSIONSCHEDULER.Missions ) do
+	  
+	  local Mission = MissionData -- #MISSION
+    
 		if not Mission:IsCompleted() then
 		
 			-- This flag will monitor if for this mission, there are clients alive. If this flag is still false at the end of the loop, the mission status will be set to Pending (if not Failed or Completed).
 			local ClientsAlive = false
 			
-			for ClientID, Client in pairs( Mission._Clients ) do
+			for ClientID, ClientData in pairs( Mission._Clients ) do
+			  
+			  local Client = ClientData -- Client#CLIENT
 			
-				if Client:GetDCSGroup() then
+				if Client:IsAlive() then
 
 					-- There is at least one Client that is alive... So the Mission status is set to Ongoing.
 					ClientsAlive = true 
@@ -12616,7 +12646,7 @@ function MISSIONSCHEDULER.Scheduler()
 
 					-- For each Client, check for each Task the state and evolve the mission.
 					-- This flag will indicate if the Task of the Client is Complete.
-					TaskComplete = false
+					local TaskComplete = false
 
 					for TaskNumber, Task in pairs( Client._Tasks ) do
 
@@ -12765,7 +12795,7 @@ function MISSIONSCHEDULER.AddMission( Mission )
 	MISSIONSCHEDULER.Missions[Mission.Name] = Mission
 	MISSIONSCHEDULER.MissionCount = MISSIONSCHEDULER.MissionCount + 1
 	-- Add an overall AI Client for the AI tasks... This AI Client will facilitate the Events in the background for each Task. 
-	--MissionAdd:AddClient( CLIENT:New( 'AI' ) )
+	--MissionAdd:AddClient( CLIENT:Register( 'AI' ) )
 	
 	return Mission
 end
