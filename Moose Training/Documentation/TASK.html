@@ -1,0 +1,1665 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li>TASK</li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>TASK</code></h1>
+   
+<p>The TASK Classes define major end-to-end activities within a MISSION.</p>
+
+   
+<p>The TASK Class is the Master Class to orchestrate these activities. From this class, many concrete TASK classes are inherited.</p>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK">TASK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+	<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
+		<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ActiveStage">TASK.ActiveStage</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddFlareBlue">TASK.AddFlareBlue(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a BLUE FLARE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddFlareGreen">TASK.AddFlareGreen(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a GREEN FLARE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddFlareOrange">TASK.AddFlareOrange(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, an ORANGE FLARE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddFlareRed">TASK.AddFlareRed(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a RED FLARE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddFlareWhite">TASK.AddFlareWhite(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a WHITE FLARE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddGoalCompletion">TASK.AddGoalCompletion(string, string, number, self, GoalVerb, GoalTask, GoalIncrease)</a></td>
+		<td class="summary">
+<p>Adds an Additional Goal for the TASK to be achieved.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSignal">TASK:AddSignal(SignalUnitNames, SignalType, SignalColor, SignalHeight)</a></td>
+		<td class="summary">
+<p>Work function to set signal events within a TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSmokeBlue">TASK.AddSmokeBlue(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a BLUE SMOKE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSmokeGreen">TASK.AddSmokeGreen(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a GREEN SMOKE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSmokeOrange">TASK.AddSmokeOrange(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, an ORANGE SMOKE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSmokeRed">TASK.AddSmokeRed(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a RED SMOKE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddSmokeWhite">TASK.AddSmokeWhite(table, number, self, SignalUnitNames, SignalHeight)</a></td>
+		<td class="summary">
+<p>When the CLIENT is approaching the landing zone, a WHITE SMOKE will be fired by an optional SignalUnitNames.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Cargos">TASK.Cargos</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ClassName">TASK.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Done">TASK:Done()</a></td>
+		<td class="summary">
+<p>Sets a TASK to status Done.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Failed">TASK:Failed()</a></td>
+		<td class="summary">
+<p>Sets a TASK to status failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoalCompletion">TASK.GetGoalCompletion(?, self, GoalVerb)</a></td>
+		<td class="summary">
+<p>Returns if the additional Goal for the TASK was completed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoalCount">TASK.GetGoalCount(?, self, GoalVerb)</a></td>
+		<td class="summary">
+<p>Gets the total of Goals currently achieved within the TASK of the GoalVerb.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoalPercentage">TASK.GetGoalPercentage(?, self, GoalVerb)</a></td>
+		<td class="summary">
+<p>Gets the percentage of Goals currently achieved within the TASK of the GoalVerb.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoalProgress">TASK:GetGoalProgress()</a></td>
+		<td class="summary">
+<p>Get progress of a TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoalTotal">TASK.GetGoalTotal(?, self, GoalVerb)</a></td>
+		<td class="summary">
+<p>Gets the total of Goals to be achieved within the TASK of the GoalVerb.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGoals">TASK:GetGoals()</a></td>
+		<td class="summary">
+<p>Returns the Goals of a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal(GoalVerb)</a></td>
+		<td class="summary">
+<p>Returns if a TASK has Goal(s).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GoalTasks">TASK.GoalTasks</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IncreaseGoalCount">TASK.IncreaseGoalCount(number, ?, self, GoalCountIncrease, GoalVerb)</a></td>
+		<td class="summary">
+<p>Increments the total of Goals currently achieved within the TASK of the GoalVerb, with the given GoalCountIncrease.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Init">TASK:Init()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsDone">TASK:IsDone()</a></td>
+		<td class="summary">
+<p>Returns if a TASK is done.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsFailed">TASK:IsFailed()</a></td>
+		<td class="summary">
+<p>Returns if a TASk has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsGoalReached">TASK:IsGoalReached()</a></td>
+		<td class="summary">
+<p>Returns if all the Goals of the TASK were achieved.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).LandingZones">TASK.LandingZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAction">TASK.MenuAction(Parameter)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Mission">TASK.Mission</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Name">TASK.Name</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New()</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK Base.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Reset">TASK:Reset(Mission, Client)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SIGNAL">TASK.SIGNAL</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGoalCount">TASK.SetGoalCount(number, ?, self, GoalCount, GoalVerb)</a></td>
+		<td class="summary">
+<p>Sets the total of Goals currently achieved within the TASK of the GoalVerb.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGoalTotal">TASK.SetGoalTotal(number, ?, self, GoalTotal, GoalVerb)</a></td>
+		<td class="summary">
+<p>Sets the total Goals to be achieved of the Goal Name</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetStage">TASK:SetStage(StageSequenceIncrement)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ShowGoalProgress">TASK.ShowGoalProgress(MISSION, CLIENT, self, Mission, Client)</a></td>
+		<td class="summary">
+<p>Show progress of a TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Stage">TASK.Stage</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StageExecute">TASK:StageExecute()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Stages">TASK.Stages</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskDone">TASK.TaskDone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskFailed">TASK.TaskFailed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK)">#TASK</a></em>
+<a id="TASK" >
+<strong>TASK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
+		
+<p>The TASK class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(TASK).ActiveStage" >
+<strong>TASK.ActiveStage</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddFlareBlue" >
+<strong>TASK.AddFlareBlue(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a BLUE FLARE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddFlareGreen" >
+<strong>TASK.AddFlareGreen(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a GREEN FLARE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddFlareOrange" >
+<strong>TASK.AddFlareOrange(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, an ORANGE FLARE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddFlareRed" >
+<strong>TASK.AddFlareRed(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a RED FLARE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddFlareWhite" >
+<strong>TASK.AddFlareWhite(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a WHITE FLARE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddGoalCompletion" >
+<strong>TASK.AddGoalCompletion(string, string, number, self, GoalVerb, GoalTask, GoalIncrease)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds an Additional Goal for the TASK to be achieved.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> string </em></code>: 
+GoalVerb is the name of the Goal of the TASK.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> string </em></code>: 
+GoalTask is a text describing the Goal of the TASK to be achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+GoalIncrease is a number by which the Goal achievement is increasing.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalTask </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalIncrease </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSignal" >
+<strong>TASK:AddSignal(SignalUnitNames, SignalType, SignalColor, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Work function to set signal events within a TASK.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalColor </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSmokeBlue" >
+<strong>TASK.AddSmokeBlue(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a BLUE SMOKE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSmokeGreen" >
+<strong>TASK.AddSmokeGreen(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a GREEN SMOKE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSmokeOrange" >
+<strong>TASK.AddSmokeOrange(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, an ORANGE SMOKE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSmokeRed" >
+<strong>TASK.AddSmokeRed(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a RED SMOKE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddSmokeWhite" >
+<strong>TASK.AddSmokeWhite(table, number, self, SignalUnitNames, SignalHeight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the CLIENT is approaching the landing zone, a WHITE SMOKE will be fired by an optional SignalUnitNames.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> table </em></code>: 
+string SignalUnitNames Name of the Group that will fire the signal. If this parameter is NIL, the signal will be fired from the center of the landing zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> number </em></code>: 
+SignalHeight Altitude that the Signal should be fired...</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalUnitNames </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SignalHeight </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Cargos" >
+<strong>TASK.Cargos</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK).ClassName" >
+<strong>TASK.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Done" >
+<strong>TASK:Done()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a TASK to status Done.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Failed" >
+<strong>TASK:Failed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a TASK to status failed.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoalCompletion" >
+<strong>TASK.GetGoalCompletion(?, self, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the additional Goal for the TASK was completed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>string Goals</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoalCount" >
+<strong>TASK.GetGoalCount(?, self, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the total of Goals currently achieved within the TASK of the GoalVerb.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoalPercentage" >
+<strong>TASK.GetGoalPercentage(?, self, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the percentage of Goals currently achieved within the TASK of the GoalVerb.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoalProgress" >
+<strong>TASK:GetGoalProgress()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get progress of a TASK.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>string GoalsText</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoalTotal" >
+<strong>TASK.GetGoalTotal(?, self, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the total of Goals to be achieved within the TASK of the GoalVerb.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetGoals" >
+<strong>TASK:GetGoals()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the Goals of a TASK</p>
+
+		<h3>Return value</h3>
+				
+
+<p>@table Goals</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Goal" >
+<strong>TASK:Goal(GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a TASK has Goal(s).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string GoalVerb </em></code>: 
+is the name of the Goal of the TASK.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>bool</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).GoalTasks" >
+<strong>TASK.GoalTasks</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IncreaseGoalCount" >
+<strong>TASK.IncreaseGoalCount(number, ?, self, GoalCountIncrease, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Increments the total of Goals currently achieved within the TASK of the GoalVerb, with the given GoalCountIncrease.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> number </em></code>: 
+GoalCountIncrease is the number of new Goals achieved within the TASK.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalCountIncrease </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Init" >
+<strong>TASK:Init()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsDone" >
+<strong>TASK:IsDone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a TASK is done.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>bool</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsFailed" >
+<strong>TASK:IsFailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a TASk has failed.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>bool</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsGoalReached" >
+<strong>TASK:IsGoalReached()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if all the Goals of the TASK were achieved.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>bool</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).LandingZones" >
+<strong>TASK.LandingZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).MenuAction" >
+<strong>TASK.MenuAction(Parameter)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Parameter </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Mission" >
+<strong>TASK.Mission</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK).Name" >
+<strong>TASK.Name</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).New" >
+<strong>TASK:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK Base.</p>
+
+	
+<p>Should never be used. Interface Class.</p>
+
+		<h3>Return value</h3>
+				
+
+<p>TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Reset" >
+<strong>TASK:Reset(Mission, Client)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).SIGNAL" >
+<strong>TASK.SIGNAL</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Defines the different signal types with a Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetGoalCount" >
+<strong>TASK.SetGoalCount(number, ?, self, GoalCount, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the total of Goals currently achieved within the TASK of the GoalVerb.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> number </em></code>: 
+GoalCount is the total number of Goals achieved within the TASK.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalCount </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetGoalTotal" >
+<strong>TASK.SetGoalTotal(number, ?, self, GoalTotal, GoalVerb)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the total Goals to be achieved of the Goal Name</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> number </em></code>: 
+GoalTotal is the number of times the GoalVerb needs to be achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ? </em></code>: 
+tring GoalVerb is the name of the Goal of the TASK. If the GoalVerb is not given, then the default TASK Goals will be used.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalTotal </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> GoalVerb </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetStage" >
+<strong>TASK:SetStage(StageSequenceIncrement)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> StageSequenceIncrement </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).ShowGoalProgress" >
+<strong>TASK.ShowGoalProgress(MISSION, CLIENT, self, Mission, Client)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Show progress of a TASK.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MISSION </em></code>: </p>
+<pre><code>Mission         Group structure describing the Mission.
+</code></pre>
+
+				</li>
+				<li>
+				
+<p><code><em> CLIENT </em></code>: 
+Client          Group structure describing the Client.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Client </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Stage" >
+<strong>TASK.Stage</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).StageExecute" >
+<strong>TASK:StageExecute()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Stages" >
+<strong>TASK.Stages</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(TASK).TaskDone" >
+<strong>TASK.TaskDone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(TASK).TaskFailed" >
+<strong>TASK.TaskFailed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>
