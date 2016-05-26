@@ -116,7 +116,6 @@ FORMATION = {
 --     return self
 -- end
 -- @todo need to investigate if the deepCopy is really needed... Don't think so.
-
 function BASE:New()
 	local Child = routines.utils.deepCopy( self )
 	local Parent = {}
