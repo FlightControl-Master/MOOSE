@@ -23,7 +23,7 @@
 -- 
 --    * @{#GROUPSET.FilterCoalitions}: Builds the GROUPSET with the groups belonging to the coalition(s).
 --    * @{#GROUPSET.FilterCategories}: Builds the GROUPSET with the groups belonging to the category(ies).
---    * @{#GROUPSET.FilterTypes}: Builds the GROUPSET with the groups belonging to the unit type(s).
+--    * @{#GROUPSET.FilterCountries}: Builds the GROUPSET with the gruops belonging to the country(ies).
 --    * @{#GROUPSET.FilterPrefixes}: Builds the GROUPSET with the groups starting with the same prefix string(s).
 --   
 -- Once the filter criteria have been set for the GROUPSET, you can start filtering using:
@@ -41,12 +41,7 @@
 -- The iterator methods will walk the GROUPSET set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the GROUPSET:
 -- 
---   * @{#GROUPSET.ForEachGroup}: Calls a function for each alive unit it finds within the GROUPSET.
---   
--- Planned iterators methods in development are (so these are not yet available):
--- 
---   * @{#GROUPSET.ForEachUnitInGroup}: Calls a function for each group contained within the GROUPSET.
---   * @{#GROUPSET.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the GROUPSET.
+--   * @{#GROUPSET.ForEachGroup}: Calls a function for each alive group it finds within the GROUPSET.
 -- 
 -- @module GroupSet
 -- @author FlightControl
@@ -101,10 +96,10 @@ function GROUPSET:New()
 end
 
 
---- Finds a Unit based on the Unit Name.
+--- Finds a Group based on the Group Name.
 -- @param #GROUPSET self
 -- @param #string GroupName
--- @return Group#GROUP The found Unit.
+-- @return Group#GROUP The found Group.
 function GROUPSET:FindUnit( GroupName )
 
   local GroupFound = self.Set[GroupName]
@@ -169,7 +164,7 @@ function GROUPSET:FilterCountries( Countries )
 end
 
 
---- Builds a set of groups of defined unit prefixes.
+--- Builds a set of groups of defined GROUP prefixes.
 -- All the groups starting with the given prefixes will be included within the set.
 -- @param #GROUPSET self
 -- @param #string Prefixes The prefix of which the group name starts with.
@@ -242,7 +237,7 @@ function GROUPSET:ForEachUnit( IteratorFunction, ... )
 end
 
 
------ Interate the GROUPSET and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Interate the GROUPSET and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #GROUPSET self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the GROUPSET. The function needs to accept a GROUP parameter.
 ---- @return #GROUPSET self
