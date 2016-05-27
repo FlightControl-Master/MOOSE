@@ -42,11 +42,12 @@
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
-					<li>MISSION</li>
+					<li><a href="GroupSet.html">GroupSet</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li>Mission</li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
@@ -59,6 +60,7 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UnitSet.html">UnitSet</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -66,7 +68,7 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>MISSION</code></h1>
+   <h1>Module <code>Mission</code></h1>
    
 <p>A MISSION is the main owner of a Mission orchestration within MOOSE .</p>
 
@@ -89,20 +91,14 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TaskComplete">TaskComplete</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="#_TransportExecuteStage">_TransportExecuteStage</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-	<h2><a id="#(MISSION)" >Type <code>MISSION</code></a></h2>
-		<table class="function_list">
+			<h2><a id="#(MISSION)">Type <code>MISSION</code></a></h2>
+				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).AddClient">MISSION.AddClient(CLIENT, self, Client)</a></td>
 		<td class="summary">
@@ -195,6 +191,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).Meta">MISSION:Meta()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionBriefing">MISSION.MissionBriefing</a></td>
 		<td class="summary">
 
 </td>
@@ -471,24 +473,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
-<a id="TaskComplete" >
-<strong>TaskComplete</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> For each Client, check for each Task the state and evolve the mission.
- This flag will indicate if the Task of the Client is Complete.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em></em>
 <a id="_TransportExecuteStage" >
 <strong>_TransportExecuteStage</strong>
@@ -511,8 +495,13 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 
 </dd>
 </dl>
-	<h2><a id="#(MISSION)" >Type <code>MISSION</code></a></h2>
-		<h3>Field(s)</h3>
+	<h2><a id="#(Mission)" >Type <code>Mission</code></a></h2>
+	
+			<h2><a id="#(MISSION)" >Type <code>MISSION</code></a></h2>
+				
+<p>The MISSION class</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -550,10 +539,10 @@ Client is the <a href="CLIENT.html">CLIENT</a> object. The object must have been
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>Add a number of Client objects to the Mission.
-	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 3', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
-	Mission:AddClient( CLIENT:New( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )</code></pre>
+	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*HOT-Deploy Troops 1', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*RAMP-Deploy Troops 3', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*HOT-Deploy Troops 2', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )
+	Mission:AddClient( CLIENT:FindByName( 'US UH-1H*RAMP-Deploy Troops 4', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.' ):Transport() )</code></pre>
 
 </dd>
 </dl>
@@ -891,6 +880,20 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 <dt>
 
 		<em>#string</em>
+<a id="#(MISSION).MissionBriefing" >
+<strong>MISSION.MissionBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
 <a id="#(MISSION).MissionCoalition" >
 <strong>MISSION.MissionCoalition</strong>
 </a>
@@ -1197,7 +1200,7 @@ local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="##(MISSION.Clients)">#MISSION.Clients</a></em>
 <a id="#(MISSION)._Clients" >
 <strong>MISSION._Clients</strong>
 </a>
@@ -1237,6 +1240,8 @@ local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 
 </dd>
 </dl>
 
+			<h2><a id="#(MISSION.Clients)" >Type <code>MISSION.Clients</code></a></h2>
+			
 			<h2><a id="#(MISSIONSCHEDULER)" >Type <code>MISSIONSCHEDULER</code></a></h2>
 				
 <p>The MISSIONSCHEDULER is an OBJECT and is the main scheduler of ALL active MISSIONs registered within this scheduler.</p>
@@ -1339,7 +1344,7 @@ MissionFind = MISSIONSCHEDULER:FindMission( 'Russia Transport Troops SA-6' )</co
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="##(MISSIONSCHEDULER.MISSIONS)">#MISSIONSCHEDULER.MISSIONS</a></em>
 <a id="#(MISSIONSCHEDULER).Missions" >
 <strong>MISSIONSCHEDULER.Missions</strong>
 </a>
@@ -1491,6 +1496,9 @@ MISSIONSCHEDULER:RemoveMission( 'Russia Transport Troops SA-6' )</code></pre>
 	
 
 
+	
+<p>MISSIONSCHEDULER.SchedulerId = routines.scheduleFunction( MISSIONSCHEDULER.Scheduler, { }, 0, 2 )</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1628,6 +1636,8 @@ MISSIONSCHEDULER:RemoveMission( 'Russia Transport Troops SA-6' )</code></pre>
 </dd>
 </dl>
 
+			<h2><a id="#(MISSIONSCHEDULER.MISSIONS)" >Type <code>MISSIONSCHEDULER.MISSIONS</code></a></h2>
+			
 </div>
 
 </div>
