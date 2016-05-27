@@ -75,65 +75,9 @@ Include.File( "Client" )
 -- @extends Base#BASE
 SET = {
   ClassName = "SET",
-  Templates = {
-    Units = {},
-    Groups = {},
-    ClientsByName = {},
-    ClientsByID = {},
-  },
-  DCSUnits = {},
-  DCSUnitsAlive = {},
-  DCSGroups = {},
-  DCSGroupsAlive = {},
-  Units = {},
-  UnitsAlive = {},
-  Groups = {},
-  GroupsAlive = {},
-  NavPoints = {},
-  Statics = {},
-  Players = {},
-  PlayersAlive = {},
-  Clients = {},
-  ClientsAlive = {},
-  Filter = {
-    Coalitions = nil,
-    Categories = nil,
-    Types = nil,
-    Countries = nil,
-    UnitPrefixes = nil,
-    GroupPrefixes = nil,
-  },
-  FilterMeta = {
-    Coalitions = {
-      red = coalition.side.RED,
-      blue = coalition.side.BLUE,
-      neutral = coalition.side.NEUTRAL,
-    },
-    Categories = {
-      plane = Unit.Category.AIRPLANE,
-      helicopter = Unit.Category.HELICOPTER,
-      ground = Unit.Category.GROUND_UNIT,
-      ship = Unit.Category.SHIP,
-      structure = Unit.Category.STRUCTURE,
-    },
-  },
+  Set = {},
+  Database = {},
 }
-
-local _DATABASECoalition =
-  {
-    [1] = "Red",
-    [2] = "Blue",
-  }
-
-local _DATABASECategory =
-  {
-    [Unit.Category.AIRPLANE] = "Plane",
-    [Unit.Category.HELICOPTER] = "Helicopter",
-    [Unit.Category.GROUND_UNIT] = "Vehicle",
-    [Unit.Category.SHIP] = "Ship",
-    [Unit.Category.STRUCTURE] = "Structure",
-  }
-
 
 --- Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET self
@@ -146,21 +90,7 @@ function SET:New( Database )
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  
-  
-  -- Add SET with registered clients and already alive players
-  
-  -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
-
-  self.Collection = Database
-
-  self:_RegisterSet()
-  self:_RegisterPlayers()
+  self.Database = Database
 
   return self
 end
@@ -190,7 +120,7 @@ end
 -- @return #SET self
 function SET:_FilterStart()
 
-  for ObjectName, Object in pairs( self.Collection ) do
+  for ObjectName, Object in pairs( self.Database ) do
 
     if self:IsIncludeObject( Object ) then
       self:E( { "Adding Object:", ObjectName } )
@@ -198,32 +128,41 @@ function SET:_FilterStart()
     end
   end
   
-  return self
-end
-
-
-
---- Private method that registers all alive players in the mission.
--- @param #SET self
--- @return #SET self
-function SET:_RegisterPlayers()
-
-  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
-  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-    for UnitId, UnitData in pairs( CoalitionData ) do
-      self:T3( { "UnitData:", UnitData } )
-      if UnitData and UnitData:isExist() then
-        local UnitName = UnitData:getName()
-        if not self.PlayersAlive[UnitName] then
-          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
-          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
-        end
-      end
-    end
-  end
+  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  
+  -- Follow alive players and clients
+--  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
+--  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  
   
   return self
 end
+
+
+
+----- Private method that registers all alive players in the mission.
+---- @param #SET self
+---- @return #SET self
+--function SET:_RegisterPlayers()
+--
+--  local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+--  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+--    for UnitId, UnitData in pairs( CoalitionData ) do
+--      self:T3( { "UnitData:", UnitData } )
+--      if UnitData and UnitData:isExist() then
+--        local UnitName = UnitData:getName()
+--        if not self.PlayersAlive[UnitName] then
+--          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
+--          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
+--        end
+--      end
+--    end
+--  end
+--  
+--  return self
+--end
 
 --- Events
 
@@ -231,10 +170,11 @@ end
 -- @param #SET self
 -- @param Event#EVENTDATA Event
 function SET:_EventOnBirth( Event )
-  self:F( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:AddInDatabase( Event )
+    self:T3( ObjectName, Object )
     if self:IsIncludeObject( Object ) then
       self:_Add( ObjectName, Object )
       --self:_EventOnPlayerEnterUnit( Event )
@@ -246,7 +186,7 @@ end
 -- @param #SET self
 -- @param Event#EVENTDATA Event
 function SET:_EventOnDeadOrCrash( Event )
-  self:F( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -260,7 +200,7 @@ end
 ---- @param #SET self
 ---- @param Event#EVENTDATA Event
 --function SET:_EventOnPlayerEnterUnit( Event )
---  self:F( { Event } )
+--  self:F3( { Event } )
 --
 --  if Event.IniDCSUnit then
 --    if self:IsIncludeObject( Event.IniDCSUnit ) then
@@ -277,7 +217,7 @@ end
 ---- @param #SET self
 ---- @param Event#EVENTDATA Event
 --function SET:_EventOnPlayerLeaveUnit( Event )
---  self:F( { Event } )
+--  self:F3( { Event } )
 --
 --  if Event.IniDCSUnit then
 --    if self:IsIncludeObject( Event.IniDCSUnit ) then
@@ -297,7 +237,7 @@ end
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET.
 -- @return #SET self
 function SET:ForEach( IteratorFunction, arg, Set )
-  self:F( arg )
+  self:F3( arg )
   
   local function CoRoutine()
     local Count = 0
@@ -317,7 +257,7 @@ function SET:ForEach( IteratorFunction, arg, Set )
   local function Schedule()
   
     local status, res = coroutine.resume( co )
-    self:T( { status, res } )
+    self:T3( { status, res } )
     
     if status == false then
       error( res )
@@ -335,42 +275,42 @@ function SET:ForEach( IteratorFunction, arg, Set )
 end
 
 
---- Interate the SET and call an interator function for each **alive** unit, providing the Unit and optional parameters.
--- @param #SET self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET. The function needs to accept a UNIT parameter.
--- @return #SET self
-function SET:ForEachDCSUnitAlive( IteratorFunction, ... )
-  self:F( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
-
-  return self
-end
-
---- Interate the SET and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
--- @param #SET self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a UNIT parameter.
--- @return #SET self
-function SET:ForEachPlayer( IteratorFunction, ... )
-  self:F( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
-  
-  return self
-end
-
-
---- Interate the SET and call an interator function for each client, providing the Client to the function and optional parameters.
--- @param #SET self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a CLIENT parameter.
--- @return #SET self
-function SET:ForEachClient( IteratorFunction, ... )
-  self:F( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.Clients )
-
-  return self
-end
+----- Interate the SET and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+---- @param #SET self
+---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET. The function needs to accept a UNIT parameter.
+---- @return #SET self
+--function SET:ForEachDCSUnitAlive( IteratorFunction, ... )
+--  self:F3( arg )
+--  
+--  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
+--
+--  return self
+--end
+--
+----- Interate the SET and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+---- @param #SET self
+---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a UNIT parameter.
+---- @return #SET self
+--function SET:ForEachPlayer( IteratorFunction, ... )
+--  self:F3( arg )
+--  
+--  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+--  
+--  return self
+--end
+--
+--
+----- Interate the SET and call an interator function for each client, providing the Client to the function and optional parameters.
+---- @param #SET self
+---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET. The function needs to accept a CLIENT parameter.
+---- @return #SET self
+--function SET:ForEachClient( IteratorFunction, ... )
+--  self:F3( arg )
+--  
+--  self:ForEach( IteratorFunction, arg, self.Clients )
+--
+--  return self
+--end
 
 
 --- Decides whether to include the Object
@@ -378,53 +318,22 @@ end
 -- @param #table Object
 -- @return #SET self
 function SET:IsIncludeObject( Object )
-  self:F( Object )
+  self:F3( Object )
   
   return true
 end
 
-
----
+--- Flushes the current SET contents in the log ... (for debug reasons).
 -- @param #SET self
--- @param DCSUnit#Unit DCSUnit
 -- @return #SET self
-function SET:_IsAliveDCSUnit( DCSUnit )
-  self:F( DCSUnit )
-  local DCSUnitAlive = false
-  if DCSUnit and DCSUnit:isExist() and DCSUnit:isActive() then
-    if self.DCSUnits[DCSUnit:getName()] then
-      DCSUnitAlive = true
-    end
+function SET:Flush()
+  self:F3()
+
+  local ObjectNames = ""
+  for ObjectName, Object in pairs( self.Set ) do
+    ObjectNames = ObjectNames .. ObjectName .. ", "
   end
-  self:T( DCSUnitAlive )
-  return DCSUnitAlive
-end
-
----
--- @param #SET self
--- @param DCSGroup#Group DCSGroup
--- @return #SET self
-function SET:_IsAliveDCSGroup( DCSGroup )
-  self:F( DCSGroup )
-  local DCSGroupAlive = false
-  if DCSGroup and DCSGroup:isExist() then
-    if self.DCSGroups[DCSGroup:getName()] then
-      DCSGroupAlive = true
-    end
-  end
-  self:T( DCSGroupAlive )
-  return DCSGroupAlive
-end
-
-
---- Traces the current SET contents in the log ... (for debug reasons).
--- @param #SET self
--- @return #SET self
-function SET:TraceDatabase()
-  self:F()
-  
-  self:T( { "DCSUnits:", self.DCSUnits } )
-  self:T( { "DCSUnitsAlive:", self.DCSUnitsAlive } )
+  self:T( { "Objects in Set:", ObjectNames } )
 end
 
 

@@ -64,7 +64,7 @@ local _EVENTCODES = {
 
 function EVENT:New()
   local self = BASE:Inherit( self, BASE:New() )
-  self:F()
+  self:F2()
   self.EventHandler = world.addEventHandler( self )
   return self
 end
@@ -154,7 +154,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnBirthForUnit )
   
@@ -167,7 +167,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnBirth( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
   
@@ -181,7 +181,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnBirthForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
   
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
   
@@ -195,7 +195,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnCrashForUnit )
 
@@ -208,7 +208,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnCrash( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_CRASH )
   
@@ -222,7 +222,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnCrashForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
   
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_CRASH )
 
@@ -236,7 +236,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
   
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnDeadForUnit )
 
@@ -249,7 +249,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnDead( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_DEAD )
   
@@ -264,7 +264,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_DEAD )
   
@@ -278,7 +278,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPilotDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_PILOT_DEAD )
 
@@ -292,7 +292,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnLandForUnit )
   
@@ -306,7 +306,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnLandForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_LAND )
 
@@ -320,7 +320,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnTakeOffForUnit )
 
@@ -334,7 +334,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnTakeOffForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_TAKEOFF )
 
@@ -348,7 +348,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnEngineShutDownForUnit )
   
@@ -362,7 +362,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineShutDownForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_SHUTDOWN )
   
@@ -376,7 +376,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineStartUpForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_STARTUP )
   
@@ -389,7 +389,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnShot( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_SHOT )
   
@@ -403,7 +403,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnShotForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_SHOT )
   
@@ -416,7 +416,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnHit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_HIT )
   
@@ -430,7 +430,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_HIT )
   
@@ -443,7 +443,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPlayerEnterUnit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_ENTER_UNIT )
   
@@ -456,7 +456,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
   
@@ -466,7 +466,7 @@ end
 
 
 function EVENT:onEvent( Event )
-  self:F( { _EVENTCODES[Event.id], Event } )
+  self:F2( { _EVENTCODES[Event.id], Event } )
 
   if self and self.Events and self.Events[Event.id] then
     if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then

@@ -226,9 +226,9 @@ end
 -- @param #table SpawnTemplate
 -- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
-  self:F( SpawnTemplate.name )
+  self:F2( SpawnTemplate.name )
 
-  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
+  self:T2( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
 
   -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
   local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
@@ -240,7 +240,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCountryID = nil
   SpawnTemplate.SpawnCategoryID = nil
 
-  self:_RegisterGroup( SpawnTemplate )
+  self:_RegisterTemplate( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
@@ -256,7 +256,7 @@ end
 
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
-  self:F( Status )
+  self:F2( Status )
 
   self.Templates.Groups[GroupName].Status = Status
 end
@@ -264,7 +264,7 @@ end
 
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
-  self:F( Status )
+  self:F2( Status )
 
   if self.Templates.Groups[GroupName] then
     return self.Templates.Groups[GroupName].Status
@@ -277,7 +277,7 @@ end
 -- @param #DATABASE self
 -- @param #table GroupTemplate
 -- @return #DATABASE self
-function DATABASE:_RegisterGroup( GroupTemplate )
+function DATABASE:_RegisterTemplate( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
@@ -297,7 +297,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
   self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
+  self:T2( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
@@ -381,7 +381,7 @@ end
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
@@ -396,7 +396,7 @@ end
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnDeadOrCrash( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     if self.DCSUnits[Event.IniDCSUnitName] then
@@ -410,7 +410,7 @@ end
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerEnterUnit( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
@@ -427,7 +427,7 @@ end
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
@@ -447,7 +447,7 @@ end
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
 function DATABASE:ForEach( IteratorFunction, arg, Set )
-  self:F( arg )
+  self:F2( arg )
   
   local function CoRoutine()
     local Count = 0
@@ -467,7 +467,7 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
   local function Schedule()
   
     local status, res = coroutine.resume( co )
-    self:T( { status, res } )
+    self:T2( { status, res } )
     
     if status == false then
       error( res )
@@ -490,7 +490,7 @@ end
 -- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachDCSUnit( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.DCSUnits )
 
@@ -502,7 +502,7 @@ end
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachPlayer( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.PlayersAlive )
   
@@ -515,7 +515,7 @@ end
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachClient( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
 
@@ -524,7 +524,7 @@ end
 
 
 function DATABASE:ScanEnvironment()
-  self:F()
+  self:F2()
 
   self.Navpoints = {}
   self.UNITS = {}
@@ -574,7 +574,7 @@ function DATABASE:ScanEnvironment()
                   for group_num, GroupTemplate in pairs(obj_type_data.group) do
 
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterGroup( GroupTemplate )
+                      self:_RegisterTemplate( GroupTemplate )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
                 end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then
@@ -598,13 +598,13 @@ end
 -- @param DCSUnit#Unit DCSUnit
 -- @return #DATABASE self
 function DATABASE:_IsIncludeDCSUnit( DCSUnit )
-  self:F( DCSUnit )
+  self:F2( DCSUnit )
   local DCSUnitInclude = true
 
   if self.Filter.Coalitions then
     local DCSUnitCoalition = false
     for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-      self:T( { "Coalition:", DCSUnit:getCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      self:T2( { "Coalition:", DCSUnit:getCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
       if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCSUnit:getCoalition() then
         DCSUnitCoalition = true
       end
@@ -615,7 +615,7 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
   if self.Filter.Categories then
     local DCSUnitCategory = false
     for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-      self:T( { "Category:", DCSUnit:getDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+      self:T2( { "Category:", DCSUnit:getDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
       if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == DCSUnit:getDesc().category then
         DCSUnitCategory = true
       end
@@ -626,7 +626,7 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
   if self.Filter.Types then
     local DCSUnitType = false
     for TypeID, TypeName in pairs( self.Filter.Types ) do
-      self:T( { "Type:", DCSUnit:getTypeName(), TypeName } )
+      self:T2( { "Type:", DCSUnit:getTypeName(), TypeName } )
       if TypeName == DCSUnit:getTypeName() then
         DCSUnitType = true
       end
@@ -637,7 +637,7 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
   if self.Filter.Countries then
     local DCSUnitCountry = false
     for CountryID, CountryName in pairs( self.Filter.Countries ) do
-      self:T( { "Country:", DCSUnit:getCountry(), CountryName } )
+      self:T2( { "Country:", DCSUnit:getCountry(), CountryName } )
       if country.id[CountryName] == DCSUnit:getCountry() then
         DCSUnitCountry = true
       end
@@ -648,7 +648,7 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
   if self.Filter.UnitPrefixes then
     local DCSUnitPrefix = false
     for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-      self:T( { "Unit Prefix:", string.find( DCSUnit:getName(), UnitPrefix, 1 ), UnitPrefix } )
+      self:T2( { "Unit Prefix:", string.find( DCSUnit:getName(), UnitPrefix, 1 ), UnitPrefix } )
       if string.find( DCSUnit:getName(), UnitPrefix, 1 ) then
         DCSUnitPrefix = true
       end
@@ -656,7 +656,7 @@ function DATABASE:_IsIncludeDCSUnit( DCSUnit )
     DCSUnitInclude = DCSUnitInclude and DCSUnitPrefix
   end
 
-  self:T( DCSUnitInclude )
+  self:T2( DCSUnitInclude )
   return DCSUnitInclude
 end
 
@@ -665,14 +665,14 @@ end
 -- @param DCSUnit#Unit DCSUnit
 -- @return #DATABASE self
 function DATABASE:_IsAliveDCSUnit( DCSUnit )
-  self:F( DCSUnit )
+  self:F2( DCSUnit )
   local DCSUnitAlive = false
   if DCSUnit and DCSUnit:isExist() and DCSUnit:isActive() then
     if self.DCSUnits[DCSUnit:getName()] then
       DCSUnitAlive = true
     end
   end
-  self:T( DCSUnitAlive )
+  self:T2( DCSUnitAlive )
   return DCSUnitAlive
 end
 
@@ -681,25 +681,15 @@ end
 -- @param DCSGroup#Group DCSGroup
 -- @return #DATABASE self
 function DATABASE:_IsAliveDCSGroup( DCSGroup )
-  self:F( DCSGroup )
+  self:F2( DCSGroup )
   local DCSGroupAlive = false
   if DCSGroup and DCSGroup:isExist() then
     if self.DCSGroups[DCSGroup:getName()] then
       DCSGroupAlive = true
     end
   end
-  self:T( DCSGroupAlive )
+  self:T2( DCSGroupAlive )
   return DCSGroupAlive
-end
-
-
---- Traces the current database contents in the log ... (for debug reasons).
--- @param #DATABASE self
--- @return #DATABASE self
-function DATABASE:TraceDatabase()
-  self:F()
-  
-  self:T( { "DCSUnits:", self.DCSUnits } )
 end
 
 

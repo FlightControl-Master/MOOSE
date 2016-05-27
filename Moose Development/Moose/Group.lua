@@ -198,6 +198,23 @@ function GROUP:GetCoalition()
   return nil
 end
 
+--- Returns the country of the DCS Group.
+-- @param #GROUP self
+-- @return DCScountry#country.id The country identifier.
+-- @return #nil The DCS Group is not existing or alive.  
+function GROUP:GetCountry()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSGroup()
+  if DCSGroup then
+    local GroupCountry = DCSGroup:getUnit(1):getCountry()
+    self:T3( GroupCountry )
+    return GroupCountry
+  end
+  
+  return nil
+end
+
 --- Returns the name of the DCS Group.
 -- @param #GROUP self
 -- @return #string The DCS Group name.
