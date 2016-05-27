@@ -99,7 +99,7 @@ Filter criteria are defined by:</p>
 <ul>
     <li><a href="##(GROUPSET).FilterCoalitions">GROUPSET.FilterCoalitions</a>: Builds the GROUPSET with the groups belonging to the coalition(s).</li>
     <li><a href="##(GROUPSET).FilterCategories">GROUPSET.FilterCategories</a>: Builds the GROUPSET with the groups belonging to the category(ies).</li>
-    <li><a href="##(GROUPSET).FilterTypes">GROUPSET.FilterTypes</a>: Builds the GROUPSET with the groups belonging to the unit type(s).</li>
+    <li><a href="##(GROUPSET).FilterCountries">GROUPSET.FilterCountries</a>: Builds the GROUPSET with the gruops belonging to the country(ies).</li>
     <li><a href="##(GROUPSET).FilterPrefixes">GROUPSET.FilterPrefixes</a>: Builds the GROUPSET with the groups starting with the same prefix string(s).</li>
 </ul>
 
@@ -122,14 +122,7 @@ The iterator methods will walk the GROUPSET set, and call for each element withi
 The following iterator methods are currently available within the GROUPSET:</p>
 
 <ul>
-    <li><a href="##(GROUPSET).ForEachGroup">GROUPSET.ForEachGroup</a>: Calls a function for each alive unit it finds within the GROUPSET.</li>
-</ul>
-
-<p>Planned iterators methods in development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(GROUPSET).ForEachUnitInGroup">GROUPSET.ForEachUnitInGroup</a>: Calls a function for each group contained within the GROUPSET.</li>
-    <li><a href="##(GROUPSET).ForEachUnitInZone">GROUPSET.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the GROUPSET.</li>
+    <li><a href="##(GROUPSET).ForEachGroup">GROUPSET.ForEachGroup</a>: Calls a function for each alive group it finds within the GROUPSET.</li>
 </ul>
 
 
@@ -189,7 +182,7 @@ The following iterator methods are currently available within the GROUPSET:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUPSET).FilterPrefixes">GROUPSET:FilterPrefixes(Prefixes)</a></td>
 		<td class="summary">
-<p>Builds a set of groups of defined unit prefixes.</p>
+<p>Builds a set of groups of defined GROUP prefixes.</p>
 </td>
 		</tr>
 		<tr>
@@ -207,7 +200,7 @@ The following iterator methods are currently available within the GROUPSET:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUPSET).FindUnit">GROUPSET:FindUnit(GroupName)</a></td>
 		<td class="summary">
-<p>Finds a Unit based on the Unit Name.</p>
+<p>Finds a Group based on the Group Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -438,7 +431,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Builds a set of groups of defined unit prefixes.</p>
+<p>Builds a set of groups of defined GROUP prefixes.</p>
 
 	
 <p>All the groups starting with the given prefixes will be included within the set.</p>
@@ -525,7 +518,7 @@ The GROUP</p>
 </dt>
 <dd>
 	
-<p>Finds a Unit based on the Unit Name.</p>
+<p>Finds a Group based on the Group Name.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -538,7 +531,7 @@ The GROUP</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
-The found Unit.</p>
+The found Group.</p>
 
 </dd>
 </dl>
