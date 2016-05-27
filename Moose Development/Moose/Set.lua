@@ -325,7 +325,7 @@ end
 
 --- Flushes the current SET contents in the log ... (for debug reasons).
 -- @param #SET self
--- @return #SET self
+-- @return #string A string with the names of the objects.
 function SET:Flush()
   self:F3()
 
@@ -334,6 +334,8 @@ function SET:Flush()
     ObjectNames = ObjectNames .. ObjectName .. ", "
   end
   self:T( { "Objects in Set:", ObjectNames } )
+  
+  return ObjectNames
 end
 
 

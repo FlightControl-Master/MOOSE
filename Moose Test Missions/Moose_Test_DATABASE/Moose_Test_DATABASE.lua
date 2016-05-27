@@ -88,6 +88,21 @@ DBRedVehicles
   :ForEachUnit( function( MooseUnit ) 
     DBRedVehicles:T( MooseUnit:GetName() )
   end )
+
+local function FlushPlayers()
+
+  _DATABASE:E( "FlushPlayers" )
+  _DATABASE
+    :ForEachPlayerAlive( function( Player )
+      _DATABASE:E( Player )
+      MESSAGE:New( Player, "Test", 5, "Player Test" ):ToAll()
+      return true
+    end )
+  return true
+end
+
+_DATABASE:E( "Schedule" )
+local PlayerShow = SCHEDULER:New( nil, FlushPlayers, {}, 1, 10 )
   
   
   
