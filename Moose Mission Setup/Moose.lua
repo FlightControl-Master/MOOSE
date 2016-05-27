@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160526_1413' ) 
+env.info( 'Moose Generation Timestamp: 20160527_1334' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -3037,7 +3037,10 @@ function BASE:E( Arguments )
 	end
 
 	local LineCurrent = DebugInfoCurrent.currentline
-	local LineFrom = DebugInfoFrom.currentline
+  local LineFrom = -1 
+	if DebugInfoFrom then
+	  LineFrom = DebugInfoFrom.currentline
+	end
 
 	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
 end
@@ -3252,7 +3255,7 @@ local _EVENTCODES = {
 
 function EVENT:New()
   local self = BASE:Inherit( self, BASE:New() )
-  self:F()
+  self:F2()
   self.EventHandler = world.addEventHandler( self )
   return self
 end
@@ -3342,7 +3345,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnBirthForUnit )
   
@@ -3355,7 +3358,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnBirth( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
   
@@ -3369,7 +3372,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnBirthForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
   
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_BIRTH )
   
@@ -3383,7 +3386,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnCrashForUnit )
 
@@ -3396,7 +3399,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnCrash( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_CRASH )
   
@@ -3410,7 +3413,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnCrashForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
   
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_CRASH )
 
@@ -3424,7 +3427,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
   
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnDeadForUnit )
 
@@ -3437,7 +3440,7 @@ end
 -- @param Base#BASE EventSelf
 -- @return #EVENT
 function EVENT:OnDead( EventFunction, EventSelf )
-  self:F()
+  self:F2()
   
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_DEAD )
   
@@ -3452,7 +3455,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_DEAD )
   
@@ -3466,7 +3469,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPilotDeadForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_PILOT_DEAD )
 
@@ -3480,7 +3483,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnLandForUnit )
   
@@ -3494,7 +3497,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnLandForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_LAND )
 
@@ -3508,7 +3511,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnTakeOffForUnit )
 
@@ -3522,7 +3525,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnTakeOffForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_TAKEOFF )
 
@@ -3536,7 +3539,7 @@ end
 -- @param EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventSelf )
-  self:F( EventTemplate.name )
+  self:F2( EventTemplate.name )
 
   self:OnEventForTemplate( EventTemplate, EventFunction, EventSelf, self.OnEngineShutDownForUnit )
   
@@ -3550,7 +3553,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineShutDownForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_SHUTDOWN )
   
@@ -3564,7 +3567,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnEngineStartUpForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_ENGINE_STARTUP )
   
@@ -3577,7 +3580,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnShot( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_SHOT )
   
@@ -3591,7 +3594,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnShotForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_SHOT )
   
@@ -3604,7 +3607,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnHit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_HIT )
   
@@ -3618,7 +3621,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventSelf )
-  self:F( EventDCSUnitName )
+  self:F2( EventDCSUnitName )
 
   self:OnEventForUnit( EventDCSUnitName, EventFunction, EventSelf, world.event.S_EVENT_HIT )
   
@@ -3631,7 +3634,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPlayerEnterUnit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_ENTER_UNIT )
   
@@ -3644,7 +3647,7 @@ end
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
 -- @return #EVENT
 function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
-  self:F()
+  self:F2()
 
   self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
   
@@ -3654,7 +3657,7 @@ end
 
 
 function EVENT:onEvent( Event )
-  self:F( { _EVENTCODES[Event.id], Event } )
+  self:F2( { _EVENTCODES[Event.id], Event } )
 
   if self and self.Events and self.Events[Event.id] then
     if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
@@ -4263,6 +4266,23 @@ function GROUP:GetCoalition()
     local GroupCoalition = DCSGroup:getCoalition()
     self:T3( GroupCoalition )
     return GroupCoalition
+  end
+  
+  return nil
+end
+
+--- Returns the country of the DCS Group.
+-- @param #GROUP self
+-- @return DCScountry#country.id The country identifier.
+-- @return #nil The DCS Group is not existing or alive.  
+function GROUP:GetCountry()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSGroup()
+  if DCSGroup then
+    local GroupCountry = DCSGroup:getUnit(1):getCountry()
+    self:T3( GroupCountry )
+    return GroupCountry
   end
   
   return nil
@@ -7277,67 +7297,37 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 		end
 	end
 end
---- Manage sets of units and groups. 
+--- Manage the mission database. 
 -- 
--- @{#Database} class
+-- @{#DATABASE} class
 -- ==================
--- Mission designers can use the DATABASE class to build sets of units belonging to certain:
+-- Mission designers can use the DATABASE class to refer to:
 -- 
---  * Coalitions
---  * Categories
---  * Countries
---  * Unit types
---  * Starting with certain prefix strings.
+--  * UNITS
+--  * GROUPS
+--  * players
+--  * alive players
+--  * CLIENTS
+--  * alive CLIENTS
 --  
--- This list will grow over time. Planned developments are to include filters and iterators.
--- Additional filters will be added around @{Zone#ZONEs}, Radiuses, Active players, ...
--- More iterators will be implemented in the near future ...
---
--- Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.
+-- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.
 -- 
--- DATABASE construction methods:
--- =================================
--- Create a new DATABASE object with the @{#DATABASE.New} method:
--- 
---    * @{#DATABASE.New}: Creates a new DATABASE object.
---   
--- 
--- DATABASE filter criteria: 
--- =========================
--- You can set filter criteria to define the set of units within the database.
--- Filter criteria are defined by:
--- 
---    * @{#DATABASE.FilterCoalitions}: Builds the DATABASE with the units belonging to the coalition(s).
---    * @{#DATABASE.FilterCategories}: Builds the DATABASE with the units belonging to the category(ies).
---    * @{#DATABASE.FilterTypes}: Builds the DATABASE with the units belonging to the unit type(s).
---    * @{#DATABASE.FilterCountries}: Builds the DATABASE with the units belonging to the country(ies).
---    * @{#DATABASE.FilterUnitPrefixes}: Builds the DATABASE with the units starting with the same prefix string(s).
---   
--- Once the filter criteria have been set for the DATABASE, you can start filtering using:
--- 
---   * @{#DATABASE.FilterStart}: Starts the filtering of the units within the database.
--- 
--- Planned filter criteria within development are (so these are not yet available):
--- 
---    * @{#DATABASE.FilterGroupPrefixes}: Builds the DATABASE with the groups of the units starting with the same prefix string(s).
---    * @{#DATABASE.FilterZones}: Builds the DATABASE with the units within a @{Zone#ZONE}.
--- 
+-- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
+-- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 -- 
 -- DATABASE iterators:
 -- ===================
--- Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
+-- You can iterate the database with the available iterator methods.
 -- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the DATABASE:
 -- 
---   * @{#DATABASE.ForEachAliveUnit}: Calls a function for each alive unit it finds within the DATABASE.
+--   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayer}: Calls a function for each player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayerAlive}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
 --   
--- Planned iterators methods in development are (so these are not yet available):
--- 
---   * @{#DATABASE.ForEachUnit}: Calls a function for each unit contained within the DATABASE.
---   * @{#DATABASE.ForEachGroup}: Calls a function for each group contained within the DATABASE.
---   * @{#DATABASE.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the DATABASE.
--- 
--- ====
 -- @module Database
 -- @author FlightControl
 
@@ -7348,6 +7338,7 @@ Include.File( "Group" )
 Include.File( "Unit" )
 Include.File( "Event" )
 Include.File( "Client" )
+
 
 --- DATABASE class
 -- @type DATABASE
@@ -7364,34 +7355,11 @@ DATABASE = {
   DCSGroups = {},
   UNITS = {},
   GROUPS = {},
-  NavPoints = {},
-  Statics = {},
-  Players = {},
-  PlayersAlive = {},
+  PLAYERS = {},
+  PLAYERSALIVE = {},
   CLIENTS = {},
-  ClientsAlive = {},
-  Filter = {
-    Coalitions = nil,
-    Categories = nil,
-    Types = nil,
-    Countries = nil,
-    UnitPrefixes = nil,
-    GroupPrefixes = nil,
-  },
-  FilterMeta = {
-    Coalitions = {
-      red = coalition.side.RED,
-      blue = coalition.side.BLUE,
-      neutral = coalition.side.NEUTRAL,
-    },
-    Categories = {
-      plane = Unit.Category.AIRPLANE,
-      helicopter = Unit.Category.HELICOPTER,
-      ground = Unit.Category.GROUND_UNIT,
-      ship = Unit.Category.SHIP,
-      structure = Unit.Category.STRUCTURE,
-    },
-  },
+  CLIENTSALIVE = {},
+  NavPoints = {},
 }
 
 local _DATABASECoalition =
@@ -7426,12 +7394,13 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
   
   
-  -- Add database with registered clients and already alive players
-  
   -- Follow alive players and clients
   _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
   _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
   
+  self:_RegisterTemplates()
+  self:_RegisterDatabase()
+  self:_RegisterPlayers()
   
   return self
 end
@@ -7446,6 +7415,7 @@ function DATABASE:FindUnit( UnitName )
   return UnitFound
 end
 
+
 --- Adds a Unit based on the Unit Name in the DATABASE.
 -- @param #DATABASE self
 function DATABASE:AddUnit( DCSUnit, DCSUnitName )
@@ -7454,12 +7424,14 @@ function DATABASE:AddUnit( DCSUnit, DCSUnitName )
   self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
 end
 
+
 --- Deletes a Unit from the DATABASE based on the Unit Name.
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
 
   self.DCSUnits[DCSUnitName] = nil 
 end
+
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
@@ -7471,6 +7443,7 @@ function DATABASE:FindClient( ClientName )
   return ClientFound
 end
 
+
 --- Adds a CLIENT based on the ClientName in the DATABASE.
 -- @param #DATABASE self
 function DATABASE:AddClient( ClientName )
@@ -7478,6 +7451,7 @@ function DATABASE:AddClient( ClientName )
   self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
   self:E( self.CLIENTS[ClientName]:GetClassNameAndID() )
 end
+
 
 --- Finds a GROUP based on the GroupName.
 -- @param #DATABASE self
@@ -7489,6 +7463,7 @@ function DATABASE:FindGroup( GroupName )
   return GroupFound
 end
 
+
 --- Adds a GROUP based on the GroupName in the DATABASE.
 -- @param #DATABASE self
 function DATABASE:AddGroup( DCSGroup, GroupName )
@@ -7496,6 +7471,30 @@ function DATABASE:AddGroup( DCSGroup, GroupName )
   self.DCSGroups[GroupName] = DCSGroup
   self.GROUPS[GroupName] = GROUP:Register( GroupName )
 end
+
+--- Adds a player based on the Player Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddPlayer( UnitName, PlayerName )
+
+  if PlayerName then
+    self:E( { "Add player for unit:", UnitName, PlayerName } )
+    self.PLAYERS[PlayerName] = PlayerName
+    self.PLAYERSALIVE[PlayerName] = PlayerName
+    self.CLIENTSALIVE[PlayerName] = self:FindClient( UnitName )
+  end
+end
+
+--- Deletes a player from the DATABASE based on the Player Name.
+-- @param #DATABASE self
+function DATABASE:DeletePlayer( PlayerName )
+
+  if PlayerName then
+    self:E( { "Clean player:", PlayerName } )
+    self.PLAYERSALIVE[PlayerName] = nil
+    self.CLIENTSALIVE[PlayerName] = nil
+  end
+end
+
 
 --- Instantiate new Groups within the DCSRTE.
 -- This method expects EXACTLY the same structure as a structure within the ME, and needs 2 additional fields defined:
@@ -7505,9 +7504,9 @@ end
 -- @param #table SpawnTemplate
 -- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
-  self:F( SpawnTemplate.name )
+  self:F2( SpawnTemplate.name )
 
-  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
+  self:T2( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
 
   -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
   local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
@@ -7519,7 +7518,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCountryID = nil
   SpawnTemplate.SpawnCategoryID = nil
 
-  self:_RegisterGroup( SpawnTemplate )
+  self:_RegisterTemplate( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
@@ -7532,18 +7531,16 @@ function DATABASE:Spawn( SpawnTemplate )
   return SpawnGroup
 end
 
-
 --- Set a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:SetStatusGroup( GroupName, Status )
-  self:F( Status )
+  self:F2( Status )
 
   self.Templates.Groups[GroupName].Status = Status
 end
 
-
 --- Get a status to a Group within the Database, this to check crossing events for example.
 function DATABASE:GetStatusGroup( GroupName )
-  self:F( Status )
+  self:F2( Status )
 
   if self.Templates.Groups[GroupName] then
     return self.Templates.Groups[GroupName].Status
@@ -7552,11 +7549,12 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
+
 --- Private method that registers new Group Templates within the DATABASE Object.
 -- @param #DATABASE self
 -- @param #table GroupTemplate
 -- @return #DATABASE self
-function DATABASE:_RegisterGroup( GroupTemplate )
+function DATABASE:_RegisterTemplate( GroupTemplate )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
@@ -7576,7 +7574,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
   self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
 
-  self:T( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
+  self:T2( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
@@ -7596,6 +7594,7 @@ function DATABASE:_RegisterGroup( GroupTemplate )
   end
 end
 
+
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
@@ -7607,9 +7606,10 @@ function DATABASE:_RegisterPlayers()
       self:T3( { "UnitData:", UnitData } )
       if UnitData and UnitData:isExist() then
         local UnitName = UnitData:getName()
-        if not self.PlayersAlive[UnitName] then
-          self:E( { "Add player for unit:", UnitName, UnitData:getPlayerName() } )
-          self.PlayersAlive[UnitName] = UnitData:getPlayerName()
+        local PlayerName = UnitData:getPlayerName()
+        if not self.PLAYERS[PlayerName] then
+          self:E( { "Add player for unit:", UnitName, PlayerName } )
+          self:AddPlayer( UnitName, PlayerName )
         end
       end
     end
@@ -7617,6 +7617,7 @@ function DATABASE:_RegisterPlayers()
   
   return self
 end
+
 
 --- Private method that registers all datapoints within in the mission.
 -- @param #DATABASE self
@@ -7660,22 +7661,21 @@ end
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
-      self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
-      self:_EventOnPlayerEnterUnit( Event )
-    end
+    self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
+    self:_EventOnPlayerEnterUnit( Event )
   end
 end
+
 
 --- Handles the OnDead or OnCrash event for alive units set.
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnDeadOrCrash( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     if self.DCSUnits[Event.IniDCSUnitName] then
@@ -7685,48 +7685,44 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   end
 end
 
+
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerEnterUnit( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      if not self.PlayersAlive[Event.IniDCSUnitName] then
-        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
-        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
-        self.ClientsAlive[Event.IniDCSUnitName] = self.CLIENTS[ Event.IniDCSUnitName ]
-      end
+    local PlayerName = Event.IniDCSUnit:getPlayerName()
+    if not self.PLAYERSALIVE[PlayerName] then
+      self:AddPlayer( Event.IniDCSUnitName, PlayerName )
     end
   end
 end
+
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #DATABASE self
 -- @param Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
-  self:F( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      if self.PlayersAlive[Event.IniDCSUnitName] then
-        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
-        self.PlayersAlive[Event.IniDCSUnitName] = nil
-        self.ClientsAlive[Event.IniDCSUnitName] = nil
-      end
+    local PlayerName = Event.IniDCSUnit:getPlayerName()
+    if self.PLAYERSALIVE[PlayerName] then
+      self:DeletePlayer( PlayerName )
     end
   end
 end
 
 --- Iterators
 
---- Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+--- Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
 function DATABASE:ForEach( IteratorFunction, arg, Set )
-  self:F( arg )
+  self:F2( arg )
   
   local function CoRoutine()
     local Count = 0
@@ -7746,7 +7742,7 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
   local function Schedule()
   
     local status, res = coroutine.resume( co )
-    self:T( { status, res } )
+    self:T2( { status, res } )
     
     if status == false then
       error( res )
@@ -7764,46 +7760,96 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
 end
 
 
---- Interate the DATABASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each **alive** unit, providing the DCSUnit and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a DCSUnit parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachDCSUnit( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.DCSUnits )
 
   return self
 end
 
---- Interate the DATABASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+
+--- Iterate the DATABASE and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachUnit( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.UNITS )
+
+  return self
+end
+
+--- Iterate the DATABASE and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the database. The function needs to accept a GROUP parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachGroup( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.GROUPS )
+
+  return self
+end
+
+
+--- Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an player in the database. The function needs to accept the player name.
 -- @return #DATABASE self
 function DATABASE:ForEachPlayer( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  self:ForEach( IteratorFunction, arg, self.PLAYERS )
   
   return self
 end
 
 
---- Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayerAlive( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.PLAYERSALIVE )
+  
+  return self
+end
+
+--- Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachClient( IteratorFunction, ... )
-  self:F( arg )
+  self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
 
   return self
 end
 
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** CLIENT, providing the CLIENT to the function and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachClientAlive( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.CLIENTSALIVE )
 
-function DATABASE:ScanEnvironment()
-  self:F()
+  return self
+end
+
+
+function DATABASE:_RegisterTemplates()
+  self:F2()
 
   self.Navpoints = {}
   self.UNITS = {}
@@ -7853,7 +7899,7 @@ function DATABASE:ScanEnvironment()
                   for group_num, GroupTemplate in pairs(obj_type_data.group) do
 
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterGroup( GroupTemplate )
+                      self:_RegisterTemplate( GroupTemplate )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
                 end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then
@@ -7865,121 +7911,10 @@ function DATABASE:ScanEnvironment()
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
-  self:_RegisterDatabase()
-  self:_RegisterPlayers()
-
   return self
 end
 
 
----
--- @param #DATABASE self
--- @param DCSUnit#Unit DCSUnit
--- @return #DATABASE self
-function DATABASE:_IsIncludeDCSUnit( DCSUnit )
-  self:F( DCSUnit )
-  local DCSUnitInclude = true
-
-  if self.Filter.Coalitions then
-    local DCSUnitCoalition = false
-    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-      self:T( { "Coalition:", DCSUnit:getCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCSUnit:getCoalition() then
-        DCSUnitCoalition = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCoalition
-  end
-  
-  if self.Filter.Categories then
-    local DCSUnitCategory = false
-    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-      self:T( { "Category:", DCSUnit:getDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
-      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == DCSUnit:getDesc().category then
-        DCSUnitCategory = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCategory
-  end
-  
-  if self.Filter.Types then
-    local DCSUnitType = false
-    for TypeID, TypeName in pairs( self.Filter.Types ) do
-      self:T( { "Type:", DCSUnit:getTypeName(), TypeName } )
-      if TypeName == DCSUnit:getTypeName() then
-        DCSUnitType = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitType
-  end
-  
-  if self.Filter.Countries then
-    local DCSUnitCountry = false
-    for CountryID, CountryName in pairs( self.Filter.Countries ) do
-      self:T( { "Country:", DCSUnit:getCountry(), CountryName } )
-      if country.id[CountryName] == DCSUnit:getCountry() then
-        DCSUnitCountry = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCountry
-  end
-
-  if self.Filter.UnitPrefixes then
-    local DCSUnitPrefix = false
-    for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-      self:T( { "Unit Prefix:", string.find( DCSUnit:getName(), UnitPrefix, 1 ), UnitPrefix } )
-      if string.find( DCSUnit:getName(), UnitPrefix, 1 ) then
-        DCSUnitPrefix = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitPrefix
-  end
-
-  self:T( DCSUnitInclude )
-  return DCSUnitInclude
-end
-
----
--- @param #DATABASE self
--- @param DCSUnit#Unit DCSUnit
--- @return #DATABASE self
-function DATABASE:_IsAliveDCSUnit( DCSUnit )
-  self:F( DCSUnit )
-  local DCSUnitAlive = false
-  if DCSUnit and DCSUnit:isExist() and DCSUnit:isActive() then
-    if self.DCSUnits[DCSUnit:getName()] then
-      DCSUnitAlive = true
-    end
-  end
-  self:T( DCSUnitAlive )
-  return DCSUnitAlive
-end
-
----
--- @param #DATABASE self
--- @param DCSGroup#Group DCSGroup
--- @return #DATABASE self
-function DATABASE:_IsAliveDCSGroup( DCSGroup )
-  self:F( DCSGroup )
-  local DCSGroupAlive = false
-  if DCSGroup and DCSGroup:isExist() then
-    if self.DCSGroups[DCSGroup:getName()] then
-      DCSGroupAlive = true
-    end
-  end
-  self:T( DCSGroupAlive )
-  return DCSGroupAlive
-end
-
-
---- Traces the current database contents in the log ... (for debug reasons).
--- @param #DATABASE self
--- @return #DATABASE self
-function DATABASE:TraceDatabase()
-  self:F()
-  
-  self:T( { "DCSUnits:", self.DCSUnits } )
-end
 
 
 --- The main include file for the MOOSE system.
@@ -7995,7 +7930,7 @@ Include.File( "Event" )
 _EVENTDISPATCHER = EVENT:New() -- #EVENT
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
-_DATABASE = DATABASE:New():ScanEnvironment() -- Database#DATABASE
+_DATABASE = DATABASE:New() -- Database#DATABASE
 
 --- Scoring system for MOOSE.
 -- This scoring class calculates the hits and kills that players make within a simulation session.

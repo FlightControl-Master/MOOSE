@@ -42,11 +42,12 @@
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
-					<li><a href="MISSION.html">MISSION</a></li>
+					<li><a href="GroupSet.html">GroupSet</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
@@ -59,6 +60,7 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UnitSet.html">UnitSet</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -68,79 +70,41 @@
 	<div id="content">
    <h1>Module <code>Database</code></h1>
    
-<p>Manage sets of units and groups.</p>
+<p>Manage the mission database.</p>
 
    
 
-<h1><a href="##(Database)">#Database</a> class</h1>
-<p>Mission designers can use the DATABASE class to build sets of units belonging to certain:</p>
+<h1><a href="##(DATABASE)">#DATABASE</a> class</h1>
+<p>Mission designers can use the DATABASE class to refer to:</p>
 
 <ul>
-    <li>Coalitions</li>
-    <li>Categories</li>
-    <li>Countries</li>
-    <li>Unit types</li>
-    <li>Starting with certain prefix strings.</li>
+    <li>UNITS</li>
+    <li>GROUPS</li>
+    <li>players</li>
+    <li>alive players</li>
+    <li>CLIENTS</li>
+    <li>alive CLIENTS</li>
 </ul>
 
-<p>This list will grow over time. Planned developments are to include filters and iterators.
-Additional filters will be added around <a href="Zone.html##(ZONEs)">Zone#ZONEs</a>, Radiuses, Active players, ...
-More iterators will be implemented in the near future ...</p>
+<p>On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.</p>
 
-<p>Administers the Initial Sets of the Mission Templates as defined within the Mission Editor.</p>
-
-<h1>DATABASE construction methods:</h1>
-<p>Create a new DATABASE object with the <a href="##(DATABASE).New">DATABASE.New</a> method:</p>
-
-<ul>
-    <li><a href="##(DATABASE).New">DATABASE.New</a>: Creates a new DATABASE object.</li>
-</ul>
-
-
-<h1>DATABASE filter criteria: </h1>
-<p>You can set filter criteria to define the set of units within the database.
-Filter criteria are defined by:</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterCoalitions">DATABASE.FilterCoalitions</a>: Builds the DATABASE with the units belonging to the coalition(s).</li>
-    <li><a href="##(DATABASE).FilterCategories">DATABASE.FilterCategories</a>: Builds the DATABASE with the units belonging to the category(ies).</li>
-    <li><a href="##(DATABASE).FilterTypes">DATABASE.FilterTypes</a>: Builds the DATABASE with the units belonging to the unit type(s).</li>
-    <li><a href="##(DATABASE).FilterCountries">DATABASE.FilterCountries</a>: Builds the DATABASE with the units belonging to the country(ies).</li>
-    <li><a href="##(DATABASE).FilterUnitPrefixes">DATABASE.FilterUnitPrefixes</a>: Builds the DATABASE with the units starting with the same prefix string(s).</li>
-</ul>
-
-<p>Once the filter criteria have been set for the DATABASE, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterStart">DATABASE.FilterStart</a>: Starts the filtering of the units within the database.</li>
-</ul>
-
-<p>Planned filter criteria within development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(DATABASE).FilterGroupPrefixes">DATABASE.FilterGroupPrefixes</a>: Builds the DATABASE with the groups of the units starting with the same prefix string(s).</li>
-    <li><a href="##(DATABASE).FilterZones">DATABASE.FilterZones</a>: Builds the DATABASE with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
-</ul>
-
+<p>Moose will automatically create one instance of the DATABASE class into the <strong>global</strong> object _DATABASE.
+Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.</p>
 
 <h1>DATABASE iterators:</h1>
-<p>Once the filters have been defined and the DATABASE has been built, you can iterate the database with the available iterator methods.
+<p>You can iterate the database with the available iterator methods.
 The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 The following iterator methods are currently available within the DATABASE:</p>
 
 <ul>
-    <li><a href="##(DATABASE).ForEachAliveUnit">DATABASE.ForEachAliveUnit</a>: Calls a function for each alive unit it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each <a href="UNIT.html">UNIT</a> it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each <a href="GROUP.html">GROUP</a> it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachPlayer">DATABASE.ForEachPlayer</a>: Calls a function for each player it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachPlayerAlive">DATABASE.ForEachPlayerAlive</a>: Calls a function for each alive player it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachClient">DATABASE.ForEachClient</a>: Calls a function for each <a href="CLIENT.html">CLIENT</a> it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachClientAlive">DATABASE.ForEachClientAlive</a>: Calls a function for each alive <a href="CLIENT.html">CLIENT</a> it finds within the DATABASE.
+    </li>
 </ul>
-
-<p>Planned iterators methods in development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each unit contained within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each group contained within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachUnitInZone">DATABASE.ForEachUnitInZone</a>: Calls a function for each unit within a certain zone contained within the DATABASE.</li>
-</ul>
-
-<hr/>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -166,6 +130,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddPlayer">DATABASE:AddPlayer(UnitName, PlayerName)</a></td>
+		<td class="summary">
+<p>Adds a player based on the Player Name in the DATABASE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddUnit">DATABASE:AddUnit(DCSUnit, DCSUnitName)</a></td>
 		<td class="summary">
 <p>Adds a Unit based on the Unit Name in the DATABASE.</p>
@@ -178,13 +148,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClassName">DATABASE.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).CLIENTSALIVE">DATABASE.CLIENTSALIVE</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClientsAlive">DATABASE.ClientsAlive</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClassName">DATABASE.ClassName</a></td>
 		<td class="summary">
 
 </td>
@@ -202,21 +172,15 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeletePlayer">DATABASE:DeletePlayer(PlayerName)</a></td>
+		<td class="summary">
+<p>Deletes a player from the DATABASE based on the Player Name.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteUnit">DATABASE:DeleteUnit(DCSUnitName)</a></td>
 		<td class="summary">
 <p>Deletes a Unit from the DATABASE based on the Unit Name.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Filter">DATABASE.Filter</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FilterMeta">DATABASE.FilterMeta</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -240,25 +204,49 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEach">DATABASE:ForEach(IteratorFunction, arg, Set)</a></td>
 		<td class="summary">
-<p>Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachClient">DATABASE:ForEachClient(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachClientAlive">DATABASE:ForEachClientAlive(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> CLIENT, providing the CLIENT to the function and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachDCSUnit">DATABASE:ForEachDCSUnit(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> unit, providing the DCSUnit and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachGroup">DATABASE:ForEachGroup(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayer">DATABASE:ForEachPlayer(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerAlive">DATABASE:ForEachPlayerAlive(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachUnit">DATABASE:ForEachUnit(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -286,19 +274,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Players">DATABASE.Players</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERS">DATABASE.PLAYERS</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PlayersAlive">DATABASE.PlayersAlive</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ScanEnvironment">DATABASE:ScanEnvironment()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERSALIVE">DATABASE.PLAYERSALIVE</a></td>
 		<td class="summary">
 
 </td>
@@ -316,21 +298,9 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Statics">DATABASE.Statics</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Templates">DATABASE.Templates</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).TraceDatabase">DATABASE:TraceDatabase()</a></td>
-		<td class="summary">
-<p>Traces the current database contents in the log ...</p>
 </td>
 		</tr>
 		<tr>
@@ -364,39 +334,27 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._IsAliveDCSGroup">DATABASE:_IsAliveDCSGroup(DCSGroup)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._IsAliveDCSUnit">DATABASE:_IsAliveDCSUnit(DCSUnit)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._IsIncludeDCSUnit">DATABASE:_IsIncludeDCSUnit(DCSUnit)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterDatabase">DATABASE:_RegisterDatabase()</a></td>
 		<td class="summary">
 <p>Private method that registers all datapoints within in the mission.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterGroup">DATABASE:_RegisterGroup(GroupTemplate)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterPlayers">DATABASE:_RegisterPlayers()</a></td>
+		<td class="summary">
+<p>Private method that registers all alive players in the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterTemplate">DATABASE:_RegisterTemplate(GroupTemplate)</a></td>
 		<td class="summary">
 <p>Private method that registers new Group Templates within the DATABASE Object.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterPlayers">DATABASE:_RegisterPlayers()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterTemplates">DATABASE:_RegisterTemplates()</a></td>
 		<td class="summary">
-<p>Private method that registers all alive players in the mission.</p>
+
 </td>
 		</tr>
 	</table>
@@ -473,6 +431,32 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).AddPlayer" >
+<strong>DATABASE:AddPlayer(UnitName, PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a player based on the Player Name in the DATABASE.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> UnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).AddUnit" >
 <strong>DATABASE:AddUnit(DCSUnit, DCSUnitName)</strong>
 </a>
@@ -513,9 +497,9 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(DATABASE).ClassName" >
-<strong>DATABASE.ClassName</strong>
+		<em></em>
+<a id="#(DATABASE).CLIENTSALIVE" >
+<strong>DATABASE.CLIENTSALIVE</strong>
 </a>
 </dt>
 <dd>
@@ -527,9 +511,9 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(DATABASE).ClientsAlive" >
-<strong>DATABASE.ClientsAlive</strong>
+		<em>#string</em>
+<a id="#(DATABASE).ClassName" >
+<strong>DATABASE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -569,6 +553,27 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).DeletePlayer" >
+<strong>DATABASE:DeletePlayer(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Deletes a player from the DATABASE based on the Player Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).DeleteUnit" >
 <strong>DATABASE:DeleteUnit(DCSUnitName)</strong>
 </a>
@@ -585,34 +590,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(DATABASE).Filter" >
-<strong>DATABASE.Filter</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(DATABASE).FilterMeta" >
-<strong>DATABASE.FilterMeta</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -702,7 +679,7 @@ The found Unit.</p>
 </dt>
 <dd>
 	
-<p>Interate the DATABASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -739,7 +716,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Interate the DATABASE and call an interator function for each client, providing the Client to the function and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -765,20 +742,84 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).ForEachDCSUnit" >
-<strong>DATABASE:ForEachDCSUnit(IteratorFunction, ...)</strong>
+<a id="#(DATABASE).ForEachClientAlive" >
+<strong>DATABASE:ForEachClientAlive(IteratorFunction, ...)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> unit, providing the Unit and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> CLIENT, providing the CLIENT to the function and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive unit in the database. The function needs to accept a UNIT parameter.</p>
+The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachDCSUnit" >
+<strong>DATABASE:ForEachDCSUnit(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> unit, providing the DCSUnit and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive unit in the database. The function needs to accept a DCSUnit parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachGroup" >
+<strong>DATABASE:ForEachGroup(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive GROUP in the database. The function needs to accept a GROUP parameter.</p>
 
 				</li>
 				<li>
@@ -803,7 +844,39 @@ self</p>
 </dt>
 <dd>
 	
-<p>Interate the DATABASE and call an interator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an player in the database. The function needs to accept the player name.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachPlayerAlive" >
+<strong>DATABASE:ForEachPlayerAlive(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -811,6 +884,38 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachUnit" >
+<strong>DATABASE:ForEachUnit(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.</p>
 
 				</li>
 				<li>
@@ -901,8 +1006,8 @@ DBObject = DATABASE:New()</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).Players" >
-<strong>DATABASE.Players</strong>
+<a id="#(DATABASE).PLAYERS" >
+<strong>DATABASE.PLAYERS</strong>
 </a>
 </dt>
 <dd>
@@ -915,21 +1020,8 @@ DBObject = DATABASE:New()</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).PlayersAlive" >
-<strong>DATABASE.PlayersAlive</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).ScanEnvironment" >
-<strong>DATABASE:ScanEnvironment()</strong>
+<a id="#(DATABASE).PLAYERSALIVE" >
+<strong>DATABASE.PLAYERSALIVE</strong>
 </a>
 </dt>
 <dd>
@@ -999,20 +1091,6 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).Statics" >
-<strong>DATABASE.Statics</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(DATABASE).Templates" >
 <strong>DATABASE.Templates</strong>
 </a>
@@ -1020,27 +1098,6 @@ self</p>
 <dd>
 	
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE).TraceDatabase" >
-<strong>DATABASE:TraceDatabase()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Traces the current database contents in the log ...</p>
-
-	
-<p>(for debug reasons).</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
 
 </dd>
 </dl>
@@ -1145,84 +1202,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE)._IsAliveDCSGroup" >
-<strong>DATABASE:_IsAliveDCSGroup(DCSGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="DCSGroup.html##(Group)">DCSGroup#Group</a> DCSGroup </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE)._IsAliveDCSUnit" >
-<strong>DATABASE:_IsAliveDCSUnit(DCSUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE)._IsIncludeDCSUnit" >
-<strong>DATABASE:_IsIncludeDCSUnit(DCSUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DATABASE)._RegisterDatabase" >
 <strong>DATABASE:_RegisterDatabase()</strong>
 </a>
@@ -1241,8 +1220,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE)._RegisterGroup" >
-<strong>DATABASE:_RegisterGroup(GroupTemplate)</strong>
+<a id="#(DATABASE)._RegisterPlayers" >
+<strong>DATABASE:_RegisterPlayers()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Private method that registers all alive players in the mission.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._RegisterTemplate" >
+<strong>DATABASE:_RegisterTemplate(GroupTemplate)</strong>
 </a>
 </dt>
 <dd>
@@ -1267,18 +1264,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE)._RegisterPlayers" >
-<strong>DATABASE:_RegisterPlayers()</strong>
+<a id="#(DATABASE)._RegisterTemplates" >
+<strong>DATABASE:_RegisterTemplates()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Private method that registers all alive players in the mission.</p>
 
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
 
 </dd>
 </dl>
