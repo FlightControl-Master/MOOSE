@@ -141,7 +141,7 @@ local _DATABASECategory =
 -- @usage
 -- -- Define a new SET Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = SET:New()
-function SET:New()
+function SET:New( Database )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -156,189 +156,46 @@ function SET:New()
   -- Follow alive players and clients
   _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
   _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
-  
-  
+
+  self.Collection = Database
+
+  self:_RegisterSet()
+  self:_RegisterPlayers()
+
   return self
 end
 
---- Finds a Unit based on the Unit Name.
+--- Finds an Object based on the Object Name.
 -- @param #SET self
--- @param #string UnitName
--- @return Unit#UNIT The found Unit.
-function SET:FindUnit( UnitName )
+-- @param #string ObjectName
+-- @return #table The Object found.
+function SET:_Find( ObjectName )
 
-  local UnitFound = self.Units[UnitName]
-  return UnitFound
+  local ObjectFound = self.Set[ObjectName]
+  return ObjectFound
 end
 
---- Finds a Unit based on the Unit Name.
+--- Adds a Object based on the Object Name.
 -- @param #SET self
--- @param Unit#UNIT UnitToAdd
--- @return Unit#UNIT The added Unit.
-function SET:AddUnit( UnitToAdd )
+-- @param #string ObjectName
+-- @param #table Object
+-- @return #table The added Object.
+function SET:_Add( ObjectName, Object )
 
-  self.Units[UnitToAdd.UnitName] = UnitToAdd
-  return self.Units[UnitToAdd.UnitName]
+  self.Set[ObjectName] = Object
 end
 
-
-
---- Builds a set of units of coalitons.
--- Possible current coalitions are red, blue and neutral.
--- @param #SET self
--- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
--- @return #SET self
-function SET:FilterCoalitions( Coalitions )
-  if not self.Filter.Coalitions then
-    self.Filter.Coalitions = {}
-  end
-  if type( Coalitions ) ~= "table" then
-    Coalitions = { Coalitions }
-  end
-  for CoalitionID, Coalition in pairs( Coalitions ) do
-    self.Filter.Coalitions[Coalition] = Coalition
-  end
-  return self
-end
-
---- Builds a set of units out of categories.
--- Possible current categories are plane, helicopter, ground, ship.
--- @param #SET self
--- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
--- @return #SET self
-function SET:FilterCategories( Categories )
-  if not self.Filter.Categories then
-    self.Filter.Categories = {}
-  end
-  if type( Categories ) ~= "table" then
-    Categories = { Categories }
-  end
-  for CategoryID, Category in pairs( Categories ) do
-    self.Filter.Categories[Category] = Category
-  end
-  return self
-end
-
---- Builds a set of units of defined unit types.
--- Possible current types are those types known within DCS world.
--- @param #SET self
--- @param #string Types Can take those type strings known within DCS world.
--- @return #SET self
-function SET:FilterTypes( Types )
-  if not self.Filter.Types then
-    self.Filter.Types = {}
-  end
-  if type( Types ) ~= "table" then
-    Types = { Types }
-  end
-  for TypeID, Type in pairs( Types ) do
-    self.Filter.Types[Type] = Type
-  end
-  return self
-end
-
---- Builds a set of units of defined countries.
--- Possible current countries are those known within DCS world.
--- @param #SET self
--- @param #string Countries Can take those country strings known within DCS world.
--- @return #SET self
-function SET:FilterCountries( Countries )
-  if not self.Filter.Countries then
-    self.Filter.Countries = {}
-  end
-  if type( Countries ) ~= "table" then
-    Countries = { Countries }
-  end
-  for CountryID, Country in pairs( Countries ) do
-    self.Filter.Countries[Country] = Country
-  end
-  return self
-end
-
---- Builds a set of units of defined unit prefixes.
--- All the units starting with the given prefixes will be included within the set.
--- @param #SET self
--- @param #string Prefixes The prefix of which the unit name starts with.
--- @return #SET self
-function SET:FilterUnitPrefixes( Prefixes )
-  if not self.Filter.UnitPrefixes then
-    self.Filter.UnitPrefixes = {}
-  end
-  if type( Prefixes ) ~= "table" then
-    Prefixes = { Prefixes }
-  end
-  for PrefixID, Prefix in pairs( Prefixes ) do
-    self.Filter.UnitPrefixes[Prefix] = Prefix
-  end
-  return self
-end
-
---- Builds a set of units of defined group prefixes.
--- All the units starting with the given group prefixes will be included within the set.
--- @param #SET self
--- @param #string Prefixes The prefix of which the group name where the unit belongs to starts with.
--- @return #SET self
-function SET:FilterGroupPrefixes( Prefixes )
-  if not self.Filter.GroupPrefixes then
-    self.Filter.GroupPrefixes = {}
-  end
-  if type( Prefixes ) ~= "table" then
-    Prefixes = { Prefixes }
-  end
-  for PrefixID, Prefix in pairs( Prefixes ) do
-    self.Filter.GroupPrefixes[Prefix] = Prefix
-  end
-  return self
-end
-
---- Starts the filtering.
+--- Starts the filtering for the defined collection.
 -- @param #SET self
 -- @return #SET self
-function SET:FilterStart()
+function SET:_FilterStart()
 
-  if _DATABASE then
-    -- OK, we have a _DATABASE
-    -- Now use the different filters to build the set.
-    -- We first take ALL of the Units of the _DATABASE.
-    
-    self:E( { "Adding Set Datapoints with filters" } )
-    for DCSUnitName, DCSUnit in pairs( _DATABASE.DCSUnits ) do
+  for ObjectName, Object in pairs( self.Collection ) do
 
-      if self:_IsIncludeDCSUnit( DCSUnit ) then
-
-        self:E( { "Adding Unit:", DCSUnitName } )
-        self.DCSUnits[DCSUnitName] = _DATABASE.DCSUnits[DCSUnitName]
-        self.Units[DCSUnitName] = _DATABASE:FindUnit( DCSUnitName )
-        
-        if _DATABASE.DCSUnitsAlive[DCSUnitName] then
-          self.DCSUnitsAlive[DCSUnitName] = _DATABASE.DCSUnitsAlive[DCSUnitName]
-          self.UnitsAlive[DCSUnitName] = _DATABASE.UnitsAlive[DCSUnitName]
-        end
-        
-      end
+    if self:IsIncludeObject( Object ) then
+      self:E( { "Adding Object:", ObjectName } )
+      self:_Add( ObjectName, Object )
     end
-    
-    for DCSGroupName, DCSGroup in pairs( _DATABASE.DCSGroups ) do
-      
-      --if self:_IsIncludeDCSGroup( DCSGroup ) then
-      self:E( { "Adding Group:", DCSGroupName } )
-      self.DCSGroups[DCSGroupName] = _DATABASE.DCSGroups[DCSGroupName]
-      self.Groups[DCSGroupName] = _DATABASE:FindGroups( DCSGroupName )
-      --end
-      
-      if _DATABASE.DCSGroupsAlive[DCSGroupName] then
-        self.DCSGroupsAlive[DCSGroupName] = _DATABASE.DCSGroupsAlive[DCSGroupName]
-        self.GroupsAlive[DCSGroupName] = _DATABASE.GroupsAlive[DCSGroupName]
-      end
-    end
-
-    for DCSUnitName, Client in pairs( _DATABASE.CLIENTS ) do
-      self:E( { "Adding Client for Unit:", DCSUnitName } )
-      self.Clients[DCSUnitName] = _DATABASE.Clients[DCSUnitName]
-    end
-    
-  else
-    self:E( "There is a structural error in MOOSE. No _DATABASE has been defined! Cannot build this custom SET." )
   end
   
   return self
@@ -368,78 +225,19 @@ function SET:_RegisterPlayers()
   return self
 end
 
---- Private method that registers all datapoints within in the mission.
--- @param #SET self
--- @return #SET self
-function SET:_RegisterDatabase()
-
-  local CoalitionsData = { AlivePlayersRed = coalition.getGroups( coalition.side.RED ), AlivePlayersBlue = coalition.getGroups( coalition.side.BLUE ) }
-  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-    for DCSGroupId, DCSGroup in pairs( CoalitionData ) do
-
-      if DCSGroup:isExist() then
-        local DCSGroupName = DCSGroup:getName()
-  
-        self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-        self.DCSGroups[DCSGroupName] = DCSGroup
-        self.Groups[DCSGroupName] = GROUP:New( DCSGroup )
-  
-        if self:_IsAliveDCSGroup(DCSGroup) then
-          self:E( { "Register Alive Group:", DCSGroup, DCSGroupName } )
-          self.DCSGroupsAlive[DCSGroupName] = DCSGroup
-          self.GroupsAlive[DCSGroupName] = self.Groups[DCSGroupName]  
-        end
-  
-        for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
-  
-          local DCSUnitName = DCSUnit:getName()
-          self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-  
-          self.DCSUnits[DCSUnitName] = DCSUnit
-          self:AddUnit( UNIT:Find( DCSUnit ) )
-          --self.Units[DCSUnitName] = UNIT:Register( DCSUnit )
-  
-          if self:_IsAliveDCSUnit(DCSUnit) then
-            self:E( { "Register Alive Unit:", DCSUnit, DCSUnitName } )
-            self.DCSUnitsAlive[DCSUnitName] = DCSUnit
-            self.UnitsAlive[DCSUnitName] = self.Units[DCSUnitName]  
-          end
-        end
-      else
-        self:E( "Group does not exist: " .. DCSGroup )
-      end
-      
-      for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-        self.Clients[ClientName] = CLIENT:Find( ClientName )
-      end
-    end
-  end
-  
-  return self
-end
-
-
 --- Events
 
---- Handles the OnBirth event for the alive units set.
+--- Handles the OnBirth event for the Set.
 -- @param #SET self
 -- @param Event#EVENTDATA Event
 function SET:_EventOnBirth( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      self.DCSUnits[Event.IniDCSUnitName] = Event.IniDCSUnit 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = Event.IniDCSUnit
-      self:AddUnit( UNIT:Register( Event.IniDCSUnit ) )
-      --self.Units[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnit )
-      
-      --if not self.DCSGroups[Event.IniDCSGroupName] then
-      --  self.DCSGroups[Event.IniDCSGroupName] = Event.IniDCSGroupName
-      --  self.DCSGroupsAlive[Event.IniDCSGroupName] = Event.IniDCSGroupName
-      --  self.Groups[Event.IniDCSGroupName] = GROUP:New( Event.IniDCSGroup )
-      --end
-      self:_EventOnPlayerEnterUnit( Event )
+    local ObjectName, Object = self:AddInDatabase( Event )
+    if self:IsIncludeObject( Object ) then
+      self:_Add( ObjectName, Object )
+      --self:_EventOnPlayerEnterUnit( Event )
     end
   end
 end
@@ -451,46 +249,46 @@ function SET:_EventOnDeadOrCrash( Event )
   self:F( { Event } )
 
   if Event.IniDCSUnit then
-    if self.DCSUnitsAlive[Event.IniDCSUnitName] then
-      self.DCSUnits[Event.IniDCSUnitName] = nil 
-      self.DCSUnitsAlive[Event.IniDCSUnitName] = nil
+    local ObjectName, Object = self:FindInDatabase( Event )
+    if ObjectName and Object then
+      self:_Delete( ObjectName )
     end
   end
 end
 
---- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
--- @param #SET self
--- @param Event#EVENTDATA Event
-function SET:_EventOnPlayerEnterUnit( Event )
-  self:F( { Event } )
-
-  if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      if not self.PlayersAlive[Event.IniDCSUnitName] then
-        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
-        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
-        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
-      end
-    end
-  end
-end
-
---- Handles the OnPlayerLeaveUnit event to clean the active players table.
--- @param #SET self
--- @param Event#EVENTDATA Event
-function SET:_EventOnPlayerLeaveUnit( Event )
-  self:F( { Event } )
-
-  if Event.IniDCSUnit then
-    if self:_IsIncludeDCSUnit( Event.IniDCSUnit ) then
-      if self.PlayersAlive[Event.IniDCSUnitName] then
-        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
-        self.PlayersAlive[Event.IniDCSUnitName] = nil
-        self.ClientsAlive[Event.IniDCSUnitName] = nil
-      end
-    end
-  end
-end
+----- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
+---- @param #SET self
+---- @param Event#EVENTDATA Event
+--function SET:_EventOnPlayerEnterUnit( Event )
+--  self:F( { Event } )
+--
+--  if Event.IniDCSUnit then
+--    if self:IsIncludeObject( Event.IniDCSUnit ) then
+--      if not self.PlayersAlive[Event.IniDCSUnitName] then
+--        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+--        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
+--        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
+--      end
+--    end
+--  end
+--end
+--
+----- Handles the OnPlayerLeaveUnit event to clean the active players table.
+---- @param #SET self
+---- @param Event#EVENTDATA Event
+--function SET:_EventOnPlayerLeaveUnit( Event )
+--  self:F( { Event } )
+--
+--  if Event.IniDCSUnit then
+--    if self:IsIncludeObject( Event.IniDCSUnit ) then
+--      if self.PlayersAlive[Event.IniDCSUnitName] then
+--        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
+--        self.PlayersAlive[Event.IniDCSUnitName] = nil
+--        self.ClientsAlive[Event.IniDCSUnitName] = nil
+--      end
+--    end
+--  end
+--end
 
 --- Iterators
 
@@ -575,142 +373,16 @@ function SET:ForEachClient( IteratorFunction, ... )
 end
 
 
-function SET:ScanEnvironment()
-  self:F()
-
-  self.Navpoints = {}
-  self.Units = {}
-  --Build routines.db.units and self.Navpoints
-  for coa_name, coa_data in pairs(env.mission.coalition) do
-
-    if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
-      --self.Units[coa_name] = {}
-
-      ----------------------------------------------
-      -- build nav points DB
-      self.Navpoints[coa_name] = {}
-      if coa_data.nav_points then --navpoints
-        for nav_ind, nav_data in pairs(coa_data.nav_points) do
-
-          if type(nav_data) == 'table' then
-            self.Navpoints[coa_name][nav_ind] = routines.utils.deepCopy(nav_data)
-
-            self.Navpoints[coa_name][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
-            self.Navpoints[coa_name][nav_ind]['point'] = {}  -- point is used by SSE, support it.
-            self.Navpoints[coa_name][nav_ind]['point']['x'] = nav_data.x
-            self.Navpoints[coa_name][nav_ind]['point']['y'] = 0
-            self.Navpoints[coa_name][nav_ind]['point']['z'] = nav_data.y
-          end
-      end
-      end
-      -------------------------------------------------
-      if coa_data.country then --there is a country table
-        for cntry_id, cntry_data in pairs(coa_data.country) do
-
-          local countryName = string.lower(cntry_data.name)
-          --self.Units[coa_name][countryName] = {}
-          --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
-
-          if type(cntry_data) == 'table' then  --just making sure
-
-            for obj_type_name, obj_type_data in pairs(cntry_data) do
-
-              if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then --should be an unncessary check
-
-                local category = obj_type_name
-
-                if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
-
-                  --self.Units[coa_name][countryName][category] = {}
-
-                  for group_num, GroupTemplate in pairs(obj_type_data.group) do
-
-                    if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterGroup( GroupTemplate )
-                    end --if GroupTemplate and GroupTemplate.units then
-                  end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
-                end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then
-              end --if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then
-          end --for obj_type_name, obj_type_data in pairs(cntry_data) do
-          end --if type(cntry_data) == 'table' then
-      end --for cntry_id, cntry_data in pairs(coa_data.country) do
-      end --if coa_data.country then --there is a country table
-    end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
-  end --for coa_name, coa_data in pairs(mission.coalition) do
-
-  self:_RegisterDatabase()
-  self:_RegisterPlayers()
-
-  return self
-end
-
-
----
+--- Decides whether to include the Object
 -- @param #SET self
--- @param DCSUnit#Unit DCSUnit
+-- @param #table Object
 -- @return #SET self
-function SET:_IsIncludeDCSUnit( DCSUnit )
-  self:F( DCSUnit )
-  local DCSUnitInclude = true
-
-  if self.Filter.Coalitions then
-    local DCSUnitCoalition = false
-    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-      self:T( { "Coalition:", DCSUnit:getCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCSUnit:getCoalition() then
-        DCSUnitCoalition = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCoalition
-  end
+function SET:IsIncludeObject( Object )
+  self:F( Object )
   
-  if self.Filter.Categories then
-    local DCSUnitCategory = false
-    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-      self:T( { "Category:", DCSUnit:getDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
-      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == DCSUnit:getDesc().category then
-        DCSUnitCategory = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCategory
-  end
-  
-  if self.Filter.Types then
-    local DCSUnitType = false
-    for TypeID, TypeName in pairs( self.Filter.Types ) do
-      self:T( { "Type:", DCSUnit:getTypeName(), TypeName } )
-      if TypeName == DCSUnit:getTypeName() then
-        DCSUnitType = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitType
-  end
-  
-  if self.Filter.Countries then
-    local DCSUnitCountry = false
-    for CountryID, CountryName in pairs( self.Filter.Countries ) do
-      self:T( { "Country:", DCSUnit:getCountry(), CountryName } )
-      if country.id[CountryName] == DCSUnit:getCountry() then
-        DCSUnitCountry = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitCountry
-  end
-
-  if self.Filter.UnitPrefixes then
-    local DCSUnitPrefix = false
-    for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-      self:T( { "Unit Prefix:", string.find( DCSUnit:getName(), UnitPrefix, 1 ), UnitPrefix } )
-      if string.find( DCSUnit:getName(), UnitPrefix, 1 ) then
-        DCSUnitPrefix = true
-      end
-    end
-    DCSUnitInclude = DCSUnitInclude and DCSUnitPrefix
-  end
-
-  self:T( DCSUnitInclude )
-  return DCSUnitInclude
+  return true
 end
+
 
 ---
 -- @param #SET self
