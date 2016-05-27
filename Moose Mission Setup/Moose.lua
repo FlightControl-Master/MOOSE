@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160527_1352' ) 
+env.info( 'Moose Generation Timestamp: 20160527_1422' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
