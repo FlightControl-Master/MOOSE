@@ -200,7 +200,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEngageTargets">GROUP:EnRouteTaskEngageTargets(Distance, <, Priority, TargetTypes)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEngageTargets">GROUP:EnRouteTaskEngageTargets(Distance, TargetTypes, Priority)</a></td>
 		<td class="summary">
 <p>(AIR) Engaging targets of defined types.</p>
 </td>
@@ -628,7 +628,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCombo">GROUP:TaskCombo(<, DCSTasks)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCombo">GROUP:TaskCombo(DCSTasks)</a></td>
 		<td class="summary">
 <p>Return a Combo Task taking an array of Tasks</p>
 </td>
@@ -658,7 +658,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEscort">GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, <, FollowGroup, EngagementDistance, TargetTypes)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEscort">GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowGroup, EngagementDistance)</a></td>
 		<td class="summary">
 <p>(AIR) Escort another airborne group.</p>
 </td>
@@ -670,7 +670,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFireAtPoint">GROUP:TaskFireAtPoint(The, Radius, PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFireAtPoint">GROUP:TaskFireAtPoint(PointVec2, Radius)</a></td>
 		<td class="summary">
 <p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
 </td>
@@ -766,7 +766,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointExecute">GROUP:WayPointExecute(WayPoint, The, WaitTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointExecute">GROUP:WayPointExecute(WayPoint, WaitTime)</a></td>
 		<td class="summary">
 <p>Executes the WayPoint plan.</p>
 </td>
@@ -1162,7 +1162,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(GROUP).EnRouteTaskEngageTargets" >
-<strong>GROUP:EnRouteTaskEngageTargets(Distance, <, Priority, TargetTypes)</strong>
+<strong>GROUP:EnRouteTaskEngageTargets(Distance, TargetTypes, Priority)</strong>
 </a>
 </dt>
 <dd>
@@ -1179,19 +1179,14 @@ Maximal distance from the target to a route leg. If the target is on a greater d
 				</li>
 				<li>
 				
-<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
-DCSTypes#AttributeName> TargetTypes Array of target categories allowed to engage. </p>
+<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of target categories allowed to engage. </p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number Priority </em></code>: 
 All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TargetTypes </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2973,24 +2968,19 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(GROUP).TaskCombo" >
-<strong>GROUP:TaskCombo(<, DCSTasks)</strong>
+<strong>GROUP:TaskCombo(DCSTasks)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Return a Combo Task taking an array of Tasks</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
-CSTask#Task> DCSTasks</p>
-
-				</li>
-				<li>
-				
-<p><code><em> DCSTasks </em></code>: </p>
+<p><code><em><a href="DCSTask.html##(TaskArray)">DCSTask#TaskArray</a> DCSTasks </em></code>: 
+Array of <a href="DCSTask.html##(Task)">DCSTask#Task</a></p>
 
 				</li>
 		</ul>
@@ -3155,7 +3145,7 @@ The DCS task structure</p>
 <dt>
 
 <a id="#(GROUP).TaskEscort" >
-<strong>GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, <, FollowGroup, EngagementDistance, TargetTypes)</strong>
+<strong>GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowGroup, EngagementDistance)</strong>
 </a>
 </dt>
 <dd>
@@ -3194,8 +3184,8 @@ Maximal distance from escorted group to threat. If the threat is already engaged
 				</li>
 				<li>
 				
-<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
-CSTypes#AttributeName> TargetTypes Array of AttributeName that is contains threat categories allowed to engage. </p>
+<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of AttributeName that is contains threat categories allowed to engage. </p>
 
 				</li>
 				<li>
@@ -3206,11 +3196,6 @@ CSTypes#AttributeName> TargetTypes Array of AttributeName that is contains threa
 				<li>
 				
 <p><code><em> EngagementDistance </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TargetTypes </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3274,7 +3259,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(GROUP).TaskFireAtPoint" >
-<strong>GROUP:TaskFireAtPoint(The, Radius, PointVec2)</strong>
+<strong>GROUP:TaskFireAtPoint(PointVec2, Radius)</strong>
 </a>
 </dt>
 <dd>
@@ -3285,19 +3270,14 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> The </em></code>: 
-point to fire at.</p>
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The point to fire at.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
 The radius of the zone to deploy the fire at.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> PointVec2 </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3799,7 +3779,7 @@ The formation string.</p>
 <dt>
 
 <a id="#(GROUP).WayPointExecute" >
-<strong>GROUP:WayPointExecute(WayPoint, The, WaitTime)</strong>
+<strong>GROUP:WayPointExecute(WayPoint, WaitTime)</strong>
 </a>
 </dt>
 <dd>
@@ -3820,13 +3800,8 @@ The WayPoint from where to execute the mission.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(WaitTime)">#WaitTime</a> The </em></code>: 
-amount seconds to wait before initiating the mission.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> WaitTime </em></code>: </p>
+<p><code><em>#number WaitTime </em></code>: 
+The amount seconds to wait before initiating the mission.</p>
 
 				</li>
 		</ul>
@@ -3951,10 +3926,6 @@ The waypoint function to be called when the group moves over the waypoint. The w
 </dd>
 </dl>
 
-			<h2><a id="#(WaitTime)" >Type <code>WaitTime</code></a></h2>
-			
-			<h2><a id="#(list)" >Type <code>list</code></a></h2>
-			
 </div>
 
 </div>
