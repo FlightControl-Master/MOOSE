@@ -1,39 +1,52 @@
-Include.File( 'Database' )
+
+Include.File( 'UnitSet' )
+Include.File( 'GroupSet' )
 Include.File( 'Spawn' )
 
-DBBluePlanes = DATABASE:New()
+DBBluePlanes = UNITSET:New()
   :FilterCoalitions( "blue" )
   :FilterCategories( "plane" )
   :FilterStart()
 
-DBRedVehicles = DATABASE:New()
+DBRedVehicles = UNITSET:New()
   :FilterCoalitions( "red" )
   :FilterCategories( "ground" )
   :FilterStart()
 
-DBShips = DATABASE:New()
+DBShips = UNITSET:New()
   :FilterCategories( "ship" )
   :FilterStart()
   
-DBBelgium = DATABASE:New()
+DBBelgium = UNITSET:New()
   :FilterCategories( "helicopter" )
   :FilterCountries( "BELGIUM" )
   :FilterStart()
   
-DBNorthKorea = DATABASE:New()
+DBNorthKorea = UNITSET:New()
   :FilterCountries( "NORTH_KOREA" )
   :FilterStart()
   
-DBKA50Vinson = DATABASE:New()
+DBKA50Vinson = UNITSET:New()
   :FilterTypes( { "Ka-50", "VINSON" } )
   :FilterStart()
+  
+DBBluePlanesGroup = GROUPSET:New()
+  :FilterCoalitions( "blue" )
+  :FilterCategories( "plane" )
+  :FilterStart()
+  
+DBNorthKoreaGroup = GROUPSET:New()
+  :FilterCountries( "NORTH_KOREA" )
+  :FilterStart()
 
-DBBluePlanes:TraceDatabase()
-DBRedVehicles:TraceDatabase()
-DBShips:TraceDatabase()
-DBBelgium:TraceDatabase()
-DBNorthKorea:TraceDatabase()
-DBKA50Vinson:TraceDatabase()
+DBBluePlanes:Flush()
+DBRedVehicles:Flush()
+DBShips:Flush()
+DBBelgium:Flush()
+DBNorthKorea:Flush()
+DBKA50Vinson:Flush()
+DBBluePlanesGroup:Flush()
+DBNorthKoreaGroup:Flush()
 
 
 SpawnUS_Plane = SPAWN:New( 'Database Spawn Test USA Plane')
@@ -54,21 +67,42 @@ GroupRU_Ship = SpawnRU_Ship:Spawn()
 SpawnUS_AttackVehicle = SPAWN:New( 'Database Spawn Test USA Attack Vehicle' )
 SpawnRU_AttackVehicle = SPAWN:New( 'Database Spawn Test RUSSIA Attack Vehicle' )
 
-for i = 1, 10 do
+for i = 1, 2 do
   GroupRU_AttackVehicle = SpawnRU_AttackVehicle:SpawnInZone( ZONE:New("Spawn Zone RU"), true)
   GroupUS_AttackVehicle = SpawnUS_AttackVehicle:SpawnInZone( ZONE:New("Spawn Zone US"), true)
 end
 
 
 --DBBlue:TraceDatabase()
-routines.scheduleFunction( DBBluePlanes.TraceDatabase, { DBBluePlanes }, 1 )
-routines.scheduleFunction( DBRedVehicles.TraceDatabase, { DBRedVehicles }, 1 )
-routines.scheduleFunction( DBShips.TraceDatabase, { DBShips }, 1 )
-routines.scheduleFunction( DBBelgium.TraceDatabase, { DBBelgium }, 1 )
-routines.scheduleFunction( DBNorthKorea.TraceDatabase, { DBNorthKorea }, 1 )
-routines.scheduleFunction( DBKA50Vinson.TraceDatabase, { DBKA50Vinson }, 1 )
+SCHEDULER:New( DBBluePlanes, DBBluePlanes.Flush, {  }, 1 )
+SCHEDULER:New( DBRedVehicles, DBRedVehicles.Flush, {  }, 1 )
+SCHEDULER:New( DBShips, DBShips.Flush, {  }, 1 )
+SCHEDULER:New( DBBelgium, DBBelgium.Flush, {  }, 1 )
+SCHEDULER:New( DBNorthKorea, DBNorthKorea.Flush, {  }, 1 )
+SCHEDULER:New( DBKA50Vinson, DBKA50Vinson.Flush, {  }, 1 )
+
+SCHEDULER:New( DBBluePlanesGroup, DBBluePlanesGroup.Flush, { }, 1 )
+SCHEDULER:New( DBNorthKoreaGroup, DBNorthKoreaGroup.Flush, { }, 1 )
 
 DBRedVehicles
-  :ForEachAliveUnit( function( DCSUnit ) 
-    DBRedVehicles:T( DCSUnit:getName() )
+  :ForEachUnit( function( MooseUnit ) 
+    DBRedVehicles:T( MooseUnit:GetName() )
   end )
+
+local function FlushPlayers()
+
+  _DATABASE:E( "FlushPlayers" )
+  _DATABASE
+    :ForEachPlayerAlive( function( Player )
+      _DATABASE:E( Player )
+      MESSAGE:New( Player, "Test", 5, "Player Test" ):ToAll()
+      return true
+    end )
+  return true
+end
+
+_DATABASE:E( "Schedule" )
+local PlayerShow = SCHEDULER:New( nil, FlushPlayers, {}, 1, 10 )
+  
+  
+  
