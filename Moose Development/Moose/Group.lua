@@ -438,7 +438,7 @@ end
 -- Note that when the WayPoint parameter is used, the new start mission waypoint of the group will be 1!
 -- @param #GROUP self
 -- @param #number WayPoint The WayPoint from where to execute the mission.
--- @param #WaitTime The amount seconds to wait before initiating the mission.
+-- @param #number WaitTime The amount seconds to wait before initiating the mission.
 -- @return #GROUP
 function GROUP:WayPointExecute( WayPoint, WaitTime )
 
@@ -807,7 +807,7 @@ end
 
 --- Return a Combo Task taking an array of Tasks
 -- @param #GROUP self
--- @param #list<DCSTask#Task> DCSTasks
+-- @param DCSTask#TaskArray DCSTasks Array of @{DCSTask#Task}
 -- @return DCSTask#Task
 function GROUP:TaskCombo( DCSTasks )
   self:F2( { DCSTasks } )
@@ -1323,7 +1323,7 @@ end
 -- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the group relative lead unit of another group in frame reference oriented by course of lead unit of another group. If another group is on land the unit / group will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another group. Once reached the unit / group Follow task is finished.
 -- @param #number EngagementDistanceMax Maximal distance from escorted group to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
--- @param #list<DCSTypes#AttributeName> TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskEscort( FollowGroup, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes )
   self:F2( { self.GroupName, FollowGroup, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
@@ -1366,7 +1366,7 @@ end
 
 --- (GROUND) Fire at a VEC2 point until ammunition is finished.
 -- @param #GROUP self
--- @param DCSTypes#Vec2 The point to fire at.
+-- @param DCSTypes#Vec2 PointVec2 The point to fire at.
 -- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskFireAtPoint( PointVec2, Radius )
@@ -1457,7 +1457,7 @@ end
 --- (AIR) Engaging targets of defined types.
 -- @param #GROUP self
 -- @param DCSTypes#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored. 
--- @param #list<#DCSTypes#AttributeName> TargetTypes Array of target categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
@@ -1490,7 +1490,7 @@ end
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the zone. 
 -- @param DCSTypes#Distance Radius Radius of the zone. 
--- @param #list<#DCSTypes#AttributeName> TargetTypes Array of target categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priority )
