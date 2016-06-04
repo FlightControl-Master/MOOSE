@@ -71,12 +71,75 @@
 	<div id="content">
    <h1>Module <code>Zone</code></h1>
    
-<p>ZONE Classes</p>
+<h1>ZONE Classes</h1>
+<p>This module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
+
+   
+<p>There are essentially two core functions that zones accomodate:</p>
+
+<ul>
+    <li>Test if an object is within the zone boundaries.</li>
+    <li>Provide the zone behaviour. Some zones are static, while others are moveable.</li>
+</ul>
+
+<p>The object classes are using the zone classes to test the zone boundaries, which can take various forms:</p>
+
+<ul>
+    <li>Test if completely within the zone.</li>
+    <li>Test if partly within the zone (for <a href="Group.html##(GROUP)">Group#GROUP</a> objects).</li>
+    <li>Test if not in the zone.</li>
+    <li>Distance to the nearest intersecting point of the zone.</li>
+    <li>Distance to the center of the zone.</li>
+    <li>...</li>
+</ul>
+
+<p>Each of these ZONE classes have a zone name, and specific parameters defining the zone type:</p>
+
+<ul>
+    <li><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>: The ZONE_BASE class defining the base for all other zone classes.</li>
+    <li><a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a>: The ZONE_RADIUS class defined by a zone name, a location and a radius.</li>
+    <li><a href="Zone.html##(ZONE)">Zone#ZONE</a>: The ZONE class, defined by the zone name as defined within the Mission Editor.</li>
+    <li><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>: The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</li>
+    <li><a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
+</ul>
+
+<h1>Polymorphic methods</h1>
+<p>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</p>
+
+<ul>
+    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>: Returns if a location is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>: Returns if a point is within the zone.</li>
+</ul>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#ZONE">ZONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_BASE">ZONE_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_POLYGON">ZONE_POLYGON</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_RADIUS">ZONE_RADIUS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_UNIT">ZONE_UNIT</a></td>
 		<td class="summary">
 
 </td>
@@ -91,31 +154,161 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE).GetPointVec2">ZONE:GetPointVec2()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE).GetPointVec3">ZONE:GetPointVec3(Height)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE).GetRadius">ZONE:GetRadius()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE).GetRandomPointVec2">ZONE:GetRandomPointVec2()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE).New">ZONE:New(ZoneName)</a></td>
+		<td class="summary">
+<p>Constructor of ZONE, taking the zone name.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_BASE)">Type <code>ZONE_BASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ClassName">ZONE_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE:IsPointVec3InZone(PointVec3)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).New">ZONE_BASE:New(ZoneName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_POLYGON)">Type <code>ZONE_POLYGON</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).ClassName">ZONE_POLYGON.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).IsPointVec2InZone">ZONE_POLYGON:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_RADIUS)">Type <code>ZONE_RADIUS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ClassName">ZONE_RADIUS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetPointVec2">ZONE_RADIUS:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Returns the location of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetPointVec3">ZONE_RADIUS:GetPointVec3(Height)</a></td>
+		<td class="summary">
+<p>Returns the point of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRadius">ZONE_RADIUS:GetRadius()</a></td>
+		<td class="summary">
+<p>Returns the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomPointVec2">ZONE_RADIUS:GetRandomPointVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec2InZone">ZONE_RADIUS:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec3InZone">ZONE_RADIUS:IsPointVec3InZone(PointVec3)</a></td>
+		<td class="summary">
+<p>Returns if a point is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(PointVec2, Radius, ZoneName)</a></td>
+		<td class="summary">
+<p>Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).PointVec2">ZONE_RADIUS.PointVec2</a></td>
+		<td class="summary">
+<p>The current location of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Radius">ZONE_RADIUS.Radius</a></td>
+		<td class="summary">
+<p>The radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetPointVec2">ZONE_RADIUS:SetPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Sets the location of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetRadius">ZONE_RADIUS:SetRadius(Radius)</a></td>
+		<td class="summary">
+<p>Sets the radius of the zone.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_UNIT)">Type <code>ZONE_UNIT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).ClassName">ZONE_UNIT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetPointVec2">ZONE_UNIT:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).New">ZONE_UNIT:New(ZoneName, ZoneUNIT, Radius)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).ZoneUNIT">ZONE_UNIT.ZoneUNIT</a></td>
 		<td class="summary">
 
 </td>
@@ -137,11 +330,70 @@
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_BASE)">#ZONE_BASE</a></em>
+<a id="ZONE_BASE" >
+<strong>ZONE_BASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a></em>
+<a id="ZONE_POLYGON" >
+<strong>ZONE_POLYGON</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a></em>
+<a id="ZONE_RADIUS" >
+<strong>ZONE_RADIUS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_UNIT)">#ZONE_UNIT</a></em>
+<a id="ZONE_UNIT" >
+<strong>ZONE_UNIT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 	<h2><a id="#(Zone)" >Type <code>Zone</code></a></h2>
 	
 			<h2><a id="#(ZONE)" >Type <code>ZONE</code></a></h2>
 				
-<p>The ZONE class</p>
+<p>The ZONE class, defined by the zone name as defined within the Mission Editor.</p>
+
+	
+<p>The location and the radius are automatically collected from the mission settings.</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -161,8 +413,42 @@
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE).GetPointVec2" >
-<strong>ZONE:GetPointVec2()</strong>
+<a id="#(ZONE).New" >
+<strong>ZONE:New(ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor of ZONE, taking the zone name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+The name of the zone as defined within the mission editor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE)">#ZONE</a>:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_BASE)" >Type <code>ZONE_BASE</code></a></h2>
+				
+<p>The ZONE_BASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_BASE).ClassName" >
+<strong>ZONE_BASE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -174,8 +460,8 @@
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE).GetPointVec3" >
-<strong>ZONE:GetPointVec3(Height)</strong>
+<a id="#(ZONE_BASE).IsPointVec2InZone" >
+<strong>ZONE_BASE:IsPointVec2InZone(PointVec2)</strong>
 </a>
 </dt>
 <dd>
@@ -186,7 +472,7 @@
 		<ul>
 				<li>
 				
-<p><code><em> Height </em></code>: </p>
+<p><code><em> PointVec2 </em></code>: </p>
 
 				</li>
 		</ul>
@@ -195,34 +481,29 @@
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE).GetRadius" >
-<strong>ZONE:GetRadius()</strong>
+<a id="#(ZONE_BASE).IsPointVec3InZone" >
+<strong>ZONE_BASE:IsPointVec3InZone(PointVec3)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PointVec3 </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE).GetRandomPointVec2" >
-<strong>ZONE:GetRandomPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE).New" >
-<strong>ZONE:New(ZoneName)</strong>
+<a id="#(ZONE_BASE).New" >
+<strong>ZONE_BASE:New(ZoneName)</strong>
 </a>
 </dt>
 <dd>
@@ -237,6 +518,455 @@
 
 				</li>
 		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
+				
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_POLYGON).ClassName" >
+<strong>ZONE_POLYGON.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).IsPointVec2InZone" >
+<strong>ZONE_POLYGON:IsPointVec2InZone(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).New" >
+<strong>ZONE_POLYGON:New(ZoneName, ZoneGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+
+	
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> ZoneGroup </em></code>: 
+The GROUP waypoints as defined within the Mission Editor define the polygon shape.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_RADIUS)" >Type <code>ZONE_RADIUS</code></a></h2>
+				
+<p>The ZONE_RADIUS class, defined by a zone name, a location and a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_RADIUS).ClassName" >
+<strong>ZONE_RADIUS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetPointVec2" >
+<strong>ZONE_RADIUS:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the location of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetPointVec3" >
+<strong>ZONE_RADIUS:GetPointVec3(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the point of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+The point of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRadius" >
+<strong>ZONE_RADIUS:GetRadius()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the radius of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomPointVec2" >
+<strong>ZONE_RADIUS:GetRandomPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The random location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsPointVec2InZone" >
+<strong>ZONE_RADIUS:IsPointVec2InZone(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsPointVec3InZone" >
+<strong>ZONE_RADIUS:IsPointVec3InZone(PointVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a point is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+The point to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the point is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).New" >
+<strong>ZONE_RADIUS:New(PointVec2, Radius, ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The location of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ZoneName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
+<a id="#(ZONE_RADIUS).PointVec2" >
+<strong>ZONE_RADIUS.PointVec2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The current location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(ZONE_RADIUS).Radius" >
+<strong>ZONE_RADIUS.Radius</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SetPointVec2" >
+<strong>ZONE_RADIUS:SetPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the location of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The new location of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The new location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SetRadius" >
+<strong>ZONE_RADIUS:SetRadius(Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the radius of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The radius of the zone.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_UNIT)" >Type <code>ZONE_UNIT</code></a></h2>
+				
+<p>The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_UNIT).ClassName" >
+<strong>ZONE_UNIT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetPointVec2" >
+<strong>ZONE_UNIT:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).New" >
+<strong>ZONE_UNIT:New(ZoneName, ZoneUNIT, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ZoneUNIT </em></code>: 
+The unit as the center of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_UNIT)">#ZONE_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+<a id="#(ZONE_UNIT).ZoneUNIT" >
+<strong>ZONE_UNIT.ZoneUNIT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 

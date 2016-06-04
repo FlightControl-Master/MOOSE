@@ -526,6 +526,24 @@ end
 
 -- Is Functions
 
+--- Returns if all units of the group are within a @{Zone#ZONE}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE}
+function GROUP:IsCompletelyInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    else
+      return false
+    end
+  end
+  
+  return true
+end
+
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
 -- @param #GROUP self
@@ -2488,7 +2506,7 @@ end
 --- Returns a message for a coalition or a client.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
 function GROUP:Message( Message, Duration )
   self:F2( { Message, Duration } )
@@ -2505,7 +2523,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToAll( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2521,7 +2539,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTYpes#Duration Duration The duration of the message.
 function GROUP:MessageToRed( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2537,7 +2555,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToBlue( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2553,7 +2571,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @param Client#CLIENT Client The client object receiving the message.
 function GROUP:MessageToClient( Message, Duration, Client )
   self:F2( { Message, Duration } )
