@@ -338,9 +338,10 @@ function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
        ) then
        c = not c
     end
-    self:T( { "c = ", c } )
+    self:T2( { "c = ", c } )
   end
 
+  self:T( { "c = ", c } )
   return c
 end
 
