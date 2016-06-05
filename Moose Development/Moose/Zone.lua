@@ -26,25 +26,37 @@
 --   * @{#ZONE_BASE.IsPointVec2InZone}: Returns if a location is within the zone.
 --   * @{#ZONE_BASE.IsPointVec3InZone}: Returns if a point is within the zone.
 -- 
+-- ===
+-- 
 -- 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
 -- ================================================
 -- The ZONE_BASE class defining the base for all other zone classes.
+-- 
+-- ===
 -- 
 -- 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
 -- =======================================================
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
 -- 
+-- ===
+-- 
 -- 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
 -- ==========================================
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
+-- 
+-- ===
 -- 
 -- 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
 -- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- 
+-- ===
+-- 
 -- 5) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- 
+-- ===
 -- 
 -- @module Zone
 -- @author FlightControl
