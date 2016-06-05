@@ -71,7 +71,6 @@
 	<div id="content">
    <h1>Module <code>Zone</code></h1>
    
-<h1>ZONE Classes</h1>
 <p>This module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
 
    
@@ -103,13 +102,27 @@
     <li><a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
 </ul>
 
-<h1>Polymorphic methods</h1>
 <p>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</p>
 
 <ul>
     <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>: Returns if a location is within the zone.</li>
     <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>: Returns if a point is within the zone.</li>
 </ul>
+
+<h1>1) <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The ZONE_BASE class defining the base for all other zone classes.</p>
+
+<h1>2) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+<p>The ZONE_RADIUS class defined by a zone name, a location and a radius.</p>
+
+<h1>3) <a href="Zone.html##(ZONE)">Zone#ZONE</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE class, defined by the zone name as defined within the Mission Editor.</p>
+
+<h1>4) <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</p>
+
+<h1>5) <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
 
 
 	<h2>Global(s)</h2>
@@ -172,13 +185,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(PointVec2)</a></td>
 		<td class="summary">
-
+<p>Returns if a location is within the zone.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE:IsPointVec3InZone(PointVec3)</a></td>
 		<td class="summary">
-
+<p>Returns if a point is within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -466,16 +479,22 @@ The name of the zone as defined within the mission editor.</p>
 </dt>
 <dd>
 	
-
+<p>Returns if a location is within the zone.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> PointVec2 </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The location to test.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -487,16 +506,22 @@ The name of the zone as defined within the mission editor.</p>
 </dt>
 <dd>
 	
-
+<p>Returns if a point is within the zone.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> PointVec3 </em></code>: </p>
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+The point to test.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the point is within the zone.</p>
+
 </dd>
 </dl>
 		<dl class="function">

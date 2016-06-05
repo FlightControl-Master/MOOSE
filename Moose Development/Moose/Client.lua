@@ -1,10 +1,10 @@
---- The CLIENT models client units in multi player missions.
+--- This module contains the CLIENT class.
 -- 
--- @{#CLIENT} class
--- ================
+-- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
+-- ===============================================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -15,8 +15,8 @@
 -- 
 -- Clients are being used by the @{MISSION} class to follow players and register their successes.
 --  
--- CLIENT reference methods
--- ======================= 
+-- 1.1) CLIENT reference methods
+-- -----------------------------
 -- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
