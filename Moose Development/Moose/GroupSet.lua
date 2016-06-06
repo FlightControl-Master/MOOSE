@@ -57,7 +57,6 @@ Include.File( "Set" )
 -- @extends Set#SET
 GROUPSET = {
   ClassName = "GROUPSET",
-  Units = {},
   Filter = {
     Coalitions = nil,
     Categories = nil,
@@ -100,7 +99,7 @@ end
 -- @param #GROUPSET self
 -- @param #string GroupName
 -- @return Group#GROUP The found Group.
-function GROUPSET:FindUnit( GroupName )
+function GROUPSET:FindGroup( GroupName )
 
   local GroupFound = self.Set[GroupName]
   return GroupFound
@@ -228,7 +227,7 @@ end
 -- @param #GROUPSET self
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the GROUPSET. The function needs to accept a GROUP parameter.
 -- @return #GROUPSET self
-function GROUPSET:ForEachUnit( IteratorFunction, ... )
+function GROUPSET:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set )

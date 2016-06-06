@@ -17,6 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -50,6 +51,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -57,6 +59,7 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li>Spawn</li>
+					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -70,11 +73,11 @@
 	<div id="content">
    <h1>Module <code>Spawn</code></h1>
    
-<p>Dynamic spawning of groups (and units).</p>
+<p>This module contains the SPAWN class.</p>
 
    
 
-<h1><a href="##(SPAWN)">#SPAWN</a> class</h1>
+<h1>1) <a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
 A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
@@ -101,7 +104,7 @@ Groups will follow the following naming structure when spawned at run-time:</p>
     <li>When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.</li>
 </ul>
 
-<h1>SPAWN construction methods:</h1>
+<h2>1.1) SPAWN construction methods</h2>
 <p>Create a new SPAWN object with the <a href="##(SPAWN).New">SPAWN.New</a> or the <a href="##(SPAWN).NewWithAlias">SPAWN.NewWithAlias</a> methods:</p>
 
 <ul>
@@ -112,7 +115,7 @@ Groups will follow the following naming structure when spawned at run-time:</p>
 The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.</p>
 
-<h1>SPAWN initialization methods: </h1>
+<h2>1.2) SPAWN initialization methods</h2>
 <p>A spawn object will behave differently based on the usage of initialization methods:  </p>
 
 <ul>
@@ -124,7 +127,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).InitRepeat">SPAWN.InitRepeat</a>: Re-spawn groups when they land at the home base. Similar functions are <a href="##(SPAWN).InitRepeatOnLanding">SPAWN.InitRepeatOnLanding</a> and <a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN.InitRepeatOnEngineShutDown</a>.</li>
 </ul>
 
-<h1>SPAWN spawning methods:</h1>
+<h2>1.3) SPAWN spawning methods</h2>
 <p>Groups can be spawned at different times and methods:</p>
 
 <ul>
@@ -138,7 +141,7 @@ So in principle, the group list will contain all parameters and configurations a
 <p>Note that <a href="##(SPAWN).Spawn">SPAWN.Spawn</a> and <a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a> return a <a href="GROUP.html##(GROUP).New">GROUP#GROUP.New</a> object, that contains a reference to the DCSGroup object. 
 You can use the <a href="GROUP.html">GROUP</a> object to do further actions with the DCSGroup.</p>
 
-<h1>SPAWN object cleaning:</h1>
+<h2>1.4) SPAWN object cleaning</h2>
 <p>Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 and it may occur that no new groups are or can be spawned as limits are reached.
@@ -149,7 +152,7 @@ In such a case, when the inactive group is cleaned, a new group will Re-spawned 
 This models AI that has succesfully returned to their airbase, to restart their combat activities.
 Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 
-<hr/>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">

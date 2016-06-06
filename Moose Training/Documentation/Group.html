@@ -17,6 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -50,6 +51,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -57,6 +59,7 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -70,12 +73,12 @@
 	<div id="content">
    <h1>Module <code>Group</code></h1>
    
-<p>GROUP class.</p>
+<p>This module contains the GROUP class.</p>
 
    
 
-<h1><a href="GROUP.html">GROUP</a> class</h1>
-<p>The <a href="GROUP.html">GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
+<h1>1) <a href="Group.html##(GROUP)">Group#GROUP</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
 
 <ul>
     <li>Support all DCS Group APIs.</li>
@@ -84,15 +87,16 @@
     <li>Manage the "state" of the DCS Group.</li>
 </ul>
 
+<p><strong>IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).</strong></p>
 
-<h1>GROUP reference methods</h1>
+<h2>1.1) GROUP reference methods</h2>
 <p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
 This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
 
 <p>The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
 using the DCS Group or the DCS GroupName.</p>
 
-<p>Another thing to know is that GROUP objects do not "contain" the DCS Group object. 
+<p>Another thing to know is that GROUP objects do not "contain" the DCS Group object.
 The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
 If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.</p>
 
@@ -103,7 +107,136 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
     <li><a href="##(GROUP).FindByName">GROUP.FindByName</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group name.</li>
 </ul>
 
-<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).</p>
+<h2>1.2) GROUP task methods</h2>
+<p>Several group task methods are available that help you to prepare tasks. 
+These methods return a string consisting of the task description, which can then be given to either a <a href="Group.html##(GROUP).PushTask">Group#GROUP.PushTask</a> or <a href="Group.html##(SetTask)">Group#SetTask</a> method to assign the task to the GROUP.
+Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
+Each task description where applicable indicates for which group category the task is valid.
+There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
+
+<h3>1.2.1) Assigned task methods</h3>
+
+<p>Assigned task methods make the group execute the task where the location of the (possible) targets of the task are known before being detected.
+This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.</p>
+
+<p>Find below a list of the <strong>assigned task</strong> methods:</p>
+
+<ul>
+    <li><a href="##(GROUP).TaskAttackGroup">GROUP.TaskAttackGroup</a>: (AIR) Attack a Group.</li>
+    <li><a href="##(GROUP).TaskAttackMapObject">GROUP.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
+    <li><a href="##(GROUP).TaskAttackUnit">GROUP.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
+    <li><a href="##(GROUP).TaskBombing">GROUP.TaskBombing</a>: (AIR) Delivering weapon at the point on the ground.</li>
+    <li><a href="##(GROUP).TaskBombingRunway">GROUP.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
+    <li><a href="##(GROUP).TaskEmbarking">GROUP.TaskEmbarking</a>: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</li>
+    <li><a href="##(GROUP).TaskEmbarkToTransport">GROUP.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
+    <li><a href="##(GROUP).TaskEscort">GROUP.TaskEscort</a>: (AIR) Escort another airborne group. </li>
+    <li><a href="##(GROUP).TaskFAC_AttackGroup">GROUP.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</li>
+    <li><a href="##(GROUP).TaskFireAtPoint">GROUP.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
+    <li><a href="##(GROUP).TaskFollow">GROUP.TaskFollow</a>: (AIR) Following another airborne group.</li>
+    <li><a href="##(GROUP).TaskHold">GROUP.TaskHold</a>: (GROUND) Hold ground group from moving.</li>
+    <li><a href="##(GROUP).TaskHoldPosition">GROUP.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the group.</li>
+    <li><a href="##(GROUP).TaskLand">GROUP.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
+    <li><a href="##(GROUP).TaskLandAtZone">GROUP.TaskLandAtZone</a>: (AIR) Land the group at a <a href="##(GROUP).TaskOrbitCircle">GROUP.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.</li>
+    <li><a href="##(GROUP).TaskOrbitCircleAtVec2">GROUP.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
+    <li><a href="##(GROUP).TaskRefueling">GROUP.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
+    <li><a href="##(GROUP).TaskRoute">GROUP.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
+    <li><a href="##(GROUP).TaskRouteToVec2">GROUP.TaskRouteToVec2</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="##(GROUP).TaskRouteToVec3">GROUP.TaskRouteToVec3</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="##(GROUP).TaskRouteToZone">GROUP.TaskRouteToZone</a>: (AIR + GROUND) Route the group to a given zone.</li>
+</ul>
+
+<h3>1.2.2) EnRoute task methods</h3>
+
+<p>EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:</p>
+
+<ul>
+    <li><a href="##(GROUP).EnRouteTaskAWACS">GROUP.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
+    <li><a href="##(GROUP).EnRouteTaskEngageGroup">GROUP.EnRouteTaskEngageGroup</a>: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.</li>
+    <li><a href="##(GROUP).EnRouteTaskEngageTargets">GROUP.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
+    <li><a href="##(GROUP).EnRouteTaskEWR">GROUP.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
+    <li><a href="##(GROUP).EnRouteTaskFAC">GROUP.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</li>
+    <li><a href="##(GROUP).EnRouteTaskFAC_EngageGroup">GROUP.EnRouteTaskFAC_EngageGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</li>
+    <li><a href="##(GROUP).EnRouteTaskTanker">GROUP.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
+</ul>
+
+<h3>1.2.3) Preparation task methods</h3>
+
+<p>There are certain task methods that allow to tailor the task behaviour:</p>
+
+<ul>
+    <li><a href="##(GROUP).TaskWrappedAction">GROUP.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
+    <li><a href="##(GROUP).TaskCombo">GROUP.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
+    <li><a href="##(GROUP).TaskCondition">GROUP.TaskCondition</a>: Return a condition section for a controlled task.</li>
+    <li><a href="##(GROUP).TaskControlled">GROUP.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
+</ul>
+
+<h3>1.2.4) Obtain the mission from group templates</h3>
+
+<p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
+
+<ul>
+    <li><a href="##(GROUP).TaskMission">GROUP.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+</ul>
+
+<h2>1.3) GROUP Command methods</h2>
+<p>Group <strong>command methods</strong> prepare the execution of commands using the <a href="##(GROUP).SetCommand">GROUP.SetCommand</a> method:</p>
+
+<ul>
+    <li><a href="##(GROUP).CommandDoScript">GROUP.CommandDoScript</a>: Do Script command.</li>
+    <li><a href="##(GROUP).CommandSwitchWayPoint">GROUP.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
+</ul>
+
+<h2>1.4) GROUP Option methods</h2>
+<p>Group <strong>Option methods</strong> change the behaviour of the Group while being alive.</p>
+
+<h3>1.4.1) Rule of Engagement:</h3>
+
+<ul>
+    <li><a href="##(GROUP).OptionROEWeaponFree">GROUP.OptionROEWeaponFree</a> </li>
+    <li><a href="##(GROUP).OptionROEOpenFire">GROUP.OptionROEOpenFire</a></li>
+    <li><a href="##(GROUP).OptionROEReturnFire">GROUP.OptionROEReturnFire</a></li>
+    <li><a href="##(GROUP).OptionROEEvadeFire">GROUP.OptionROEEvadeFire</a></li>
+</ul>
+
+<p>To check whether an ROE option is valid for a specific group, use:</p>
+
+<ul>
+    <li><a href="##(GROUP).OptionROEWeaponFreePossible">GROUP.OptionROEWeaponFreePossible</a> </li>
+    <li><a href="##(GROUP).OptionROEOpenFirePossible">GROUP.OptionROEOpenFirePossible</a></li>
+    <li><a href="##(GROUP).OptionROEReturnFirePossible">GROUP.OptionROEReturnFirePossible</a></li>
+    <li><a href="##(GROUP).OptionROEEvadeFirePossible">GROUP.OptionROEEvadeFirePossible</a></li>
+</ul>
+
+<h3>1.4.2) Rule on thread:</h3>
+
+<ul>
+    <li><a href="##(GROUP).OptionROTNoReaction">GROUP.OptionROTNoReaction</a></li>
+    <li><a href="##(GROUP).OptionROTPassiveDefense">GROUP.OptionROTPassiveDefense</a></li>
+    <li><a href="##(GROUP).OptionROTEvadeFire">GROUP.OptionROTEvadeFire</a></li>
+    <li><a href="##(GROUP).OptionROTVertical">GROUP.OptionROTVertical</a></li>
+</ul>
+
+<p>To test whether an ROT option is valid for a specific group, use:</p>
+
+<ul>
+    <li><a href="##(GROUP).OptionROTNoReactionPossible">GROUP.OptionROTNoReactionPossible</a></li>
+    <li><a href="##(GROUP).OptionROTPassiveDefensePossible">GROUP.OptionROTPassiveDefensePossible</a></li>
+    <li><a href="##(GROUP).OptionROTEvadeFirePossible">GROUP.OptionROTEvadeFirePossible</a></li>
+    <li><a href="##(GROUP).OptionROTVerticalPossible">GROUP.OptionROTVerticalPossible</a></li>
+</ul>
+
+<h2>1.5) GROUP Zone validation methods</h2>
+<p>The group can be validated whether it is completely, partly or not within a <a href="Zone.html">Zone</a>.
+Use the following Zone validation methods on the group:</p>
+
+<ul>
+    <li><a href="##(GROUP).IsCompletelyInZone">GROUP.IsCompletelyInZone</a>: Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsPartlyInZone">GROUP.IsPartlyInZone</a>: Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsNotInZone">GROUP.IsNotInZone</a>: Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</li>
+</ul>
+
+<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -181,6 +314,54 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskAWACS">GROUP:EnRouteTaskAWACS()</a></td>
+		<td class="summary">
+<p>(AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEWR">GROUP:EnRouteTaskEWR()</a></td>
+		<td class="summary">
+<p>(GROUND) Ground unit (EW-radar) will act as an EWR for friendly units (will provide them with information about contacts).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEngageGroup">GROUP:EnRouteTaskEngageGroup(AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
+		<td class="summary">
+<p>(AIR) Engaging a group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEngageTargets">GROUP:EnRouteTaskEngageTargets(Distance, TargetTypes, Priority)</a></td>
+		<td class="summary">
+<p>(AIR) Engaging targets of defined types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskEngageUnit">GROUP:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, GroupAttack)</a></td>
+		<td class="summary">
+<p>(AIR) Attack the Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskFAC">GROUP:EnRouteTaskFAC(Radius, Priority)</a></td>
+		<td class="summary">
+<p>(AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskFAC_EngageGroup">GROUP:EnRouteTaskFAC_EngageGroup(AttackGroup, Priority, WeaponType, Designation, Datalink)</a></td>
+		<td class="summary">
+<p>(AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).EnRouteTaskTanker">GROUP:EnRouteTaskTanker()</a></td>
+		<td class="summary">
+<p>(AIR) Aircraft will act as a tanker for friendly units.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Find">GROUP:Find(DCSGroup)</a></td>
 		<td class="summary">
 <p>Find the GROUP wrapper class instance using the DCS Group.</p>
@@ -201,7 +382,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCategory">GROUP:GetCategory()</a></td>
 		<td class="summary">
-<p>Returns category of the DCS Group. </p>
+<p>Returns category of the DCS Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -363,6 +544,12 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsCompletelyInZone">GROUP:IsCompletelyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsGround">GROUP:IsGround()</a></td>
 		<td class="summary">
 <p>Returns if the DCS Group contains Ground troops.</p>
@@ -372,6 +559,18 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsHelicopter">GROUP:IsHelicopter()</a></td>
 		<td class="summary">
 <p>Returns if the DCS Group contains Helicopters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsNotInZone">GROUP:IsNotInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsPartlyInZone">GROUP:IsPartlyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -549,51 +748,87 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackGroup">GROUP:TaskAttackGroup(AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackGroup">GROUP:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
 		<td class="summary">
-<p>Attack a Group.</p>
+<p>(AIR) Attack a Group.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackUnit">GROUP:TaskAttackUnit(The, AttackUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackMapObject">GROUP:TaskAttackMapObject(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</a></td>
 		<td class="summary">
-<p>Attack the Unit.</p>
+<p>(AIR) Attacking the map object (building, structure, e.t.c).</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCombo">GROUP:TaskCombo(<, DCSTasks)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskAttackUnit">GROUP:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, GroupAttack)</a></td>
 		<td class="summary">
-<p>Return a Combo Task taking an array of Tasks</p>
+<p>(AIR) Attack the Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskBombing">GROUP:TaskBombing(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</a></td>
+		<td class="summary">
+<p>(AIR) Delivering weapon at the point on the ground. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskBombingRunway">GROUP:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</a></td>
+		<td class="summary">
+<p>(AIR) Delivering weapon on the runway.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCombo">GROUP:TaskCombo(DCSTasks)</a></td>
+		<td class="summary">
+<p>Return a Combo Task taking an array of Tasks.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskCondition">GROUP:TaskCondition(time, userFlag, userFlagValue, condition, duration, lastWayPoint)</a></td>
 		<td class="summary">
-<p>Return a condition section for a controlled task</p>
+<p>Return a condition section for a controlled task.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskControlled">GROUP:TaskControlled(DCSTask, DCSStopCondition)</a></td>
 		<td class="summary">
-<p>Return a Controlled Task taking a Task and a TaskCondition</p>
+<p>Return a Controlled Task taking a Task and a TaskCondition.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEmbarkToTransportAtVec2">GROUP:TaskEmbarkToTransportAtVec2(Point, Radius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEmbarkToTransport">GROUP:TaskEmbarkToTransport(Point, Radius)</a></td>
 		<td class="summary">
 <p>Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEmbarkingAtVec2">GROUP:TaskEmbarkingAtVec2(Point, Duration, EmbarkingGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEmbarking">GROUP:TaskEmbarking(Point, Duration, EmbarkingGroup)</a></td>
 		<td class="summary">
-<p>Move the group to a Vec2 Point, wait for a defined duration and embark a group.</p>
+<p>(AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFireAtPoint">GROUP:TaskFireAtPoint(The, Radius, PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskEscort">GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowGroup, EngagementDistance)</a></td>
 		<td class="summary">
-<p>Fires at a VEC2 point.</p>
+<p>(AIR) Escort another airborne group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFAC_AttackGroup">GROUP:TaskFAC_AttackGroup(AttackGroup, WeaponType, Designation, Datalink)</a></td>
+		<td class="summary">
+<p>(AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFireAtPoint">GROUP:TaskFireAtPoint(PointVec2, Radius)</a></td>
+		<td class="summary">
+<p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskFollow">GROUP:TaskFollow(FollowGroup, PointVec3, LastWaypointIndex)</a></td>
+		<td class="summary">
+<p>(AIR) Following another airborne group.</p>
 </td>
 		</tr>
 		<tr>
@@ -603,39 +838,51 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskHold">GROUP:TaskHold()</a></td>
+		<td class="summary">
+<p>(GROUND) Hold ground group from moving.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskHoldPosition">GROUP:TaskHoldPosition(Duration)</a></td>
 		<td class="summary">
-<p>Hold position at the current position of the first unit of the group.</p>
+<p>(AIR) Hold position at the current position of the first unit of the group.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskLandAtVec2">GROUP:TaskLandAtVec2(Point, Duration)</a></td>
 		<td class="summary">
-<p>Land the group at a Vec2Point.</p>
+<p>(AIR HELICOPTER) Landing at the ground.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskLandAtZone">GROUP:TaskLandAtZone(Zone, Duration, RandomPoint)</a></td>
 		<td class="summary">
-<p>Land the group at a @{Zone#ZONE).</p>
+<p>(AIR) Land the group at a @{Zone#ZONE_RADIUS).</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskMission">GROUP:TaskMission(TaskMission)</a></td>
 		<td class="summary">
-<p>Return a Misson task from a mission template.</p>
+<p>(AIR + GROUND) Return a mission task from a mission template.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskOrbitCircle">GROUP:TaskOrbitCircle(Altitude, Speed)</a></td>
 		<td class="summary">
-<p>Orbit at the current position of the first unit of the group at a specified alititude</p>
+<p>(AIR) Orbit at the current position of the first unit of the group at a specified alititude.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskOrbitCircleAtVec2">GROUP:TaskOrbitCircleAtVec2(Point, Altitude, Speed)</a></td>
 		<td class="summary">
-<p>Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</p>
+<p>(AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRefueling">GROUP:TaskRefueling()</a></td>
+		<td class="summary">
+<p>(AIR) Refueling from the nearest tanker.</p>
 </td>
 		</tr>
 		<tr>
@@ -647,29 +894,29 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRouteToVec2">GROUP:TaskRouteToVec2(Point, Speed)</a></td>
 		<td class="summary">
-<p>Make the DCS Group to fly to a given point and hover.</p>
+<p>(AIR + GROUND) Make the Group move to fly to a given point.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRouteToVec3">GROUP:TaskRouteToVec3(Point, Speed)</a></td>
 		<td class="summary">
-<p>Make the DCS Group to fly to a given point and hover.</p>
+<p>(AIR + GROUND) Make the Group move to a given point.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskRouteToZone">GROUP:TaskRouteToZone(Zone, Randomize, Speed, Formation)</a></td>
 		<td class="summary">
-<p>Route the group to a given zone.</p>
+<p>(AIR + GROUND) Route the group to a given zone.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).TaskWrappedAction">GROUP:TaskWrappedAction(DCSCommand, Index)</a></td>
 		<td class="summary">
-<p>Return a WrappedAction Task taking a Command </p>
+<p>Return a WrappedAction Task taking a Command.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointExecute">GROUP:WayPointExecute(WayPoint, The, WaitTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointExecute">GROUP:WayPointExecute(WayPoint, WaitTime)</a></td>
 		<td class="summary">
 <p>Executes the WayPoint plan.</p>
 </td>
@@ -745,8 +992,6 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 </dl>
 
 			<h2><a id="#(DCSStopCondition)" >Type <code>DCSStopCondition</code></a></h2>
-			
-			<h2><a id="#(Duration)" >Type <code>Duration</code></a></h2>
 			
 			<h2><a id="#(GROUP)" >Type <code>GROUP</code></a></h2>
 				
@@ -910,7 +1155,7 @@ Randomization of the route, when true.</p>
 				<li>
 				
 <p><code><em>#number Radius </em></code>: 
-When randomization is on, the randomization is within the radius. </p>
+When randomization is on, the randomization is within the radius.</p>
 
 				</li>
 		</ul>
@@ -944,6 +1189,341 @@ When randomization is on, the randomization is within the radius. </p>
 	
 <p>Note that this destroy method also raises a destroy event at run-time.
 So all event listeners will catch the destroy event of this DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskAWACS" >
+<strong>GROUP:EnRouteTaskAWACS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts).</p>
+
+	
+<p>No parameters.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskEWR" >
+<strong>GROUP:EnRouteTaskEWR()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Ground unit (EW-radar) will act as an EWR for friendly units (will provide them with information about contacts).</p>
+
+	
+<p>No parameters.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskEngageGroup" >
+<strong>GROUP:EnRouteTaskEngageGroup(AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Engaging a group.</p>
+
+	
+<p>The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> AttackGroup </em></code>: 
+The Group to be attacked.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Altitude </em></code>: 
+(optional) Desired attack start altitude. Group/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/group will choose closest altitude to the desired attack start altitude. If the desired altitude is defined group/aircraft will not attack from safe altitude.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean AttackQtyLimit </em></code>: 
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskEngageTargets" >
+<strong>GROUP:EnRouteTaskEngageTargets(Distance, TargetTypes, Priority)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Engaging targets of defined types.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Distance </em></code>: 
+Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of target categories allowed to engage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskEngageUnit" >
+<strong>GROUP:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, GroupAttack)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Attack the Unit.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> AttackUnit </em></code>: 
+The UNIT.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean AttackQtyLimit </em></code>: 
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskFAC" >
+<strong>GROUP:EnRouteTaskFAC(Radius, Priority)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</p>
+
+	
+<p>The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
+If the task is assigned to the group lead unit will be a FAC. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+ The maximal distance from the FAC to a target.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskFAC_EngageGroup" >
+<strong>GROUP:EnRouteTaskFAC_EngageGroup(AttackGroup, Priority, WeaponType, Designation, Datalink)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</p>
+
+	
+<p>The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
+If the task is assigned to the group lead unit will be a FAC. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> AttackGroup </em></code>: 
+Target GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.Designation)">DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
+(optional) Designation type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Datalink </em></code>: 
+(optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).EnRouteTaskTanker" >
+<strong>GROUP:EnRouteTaskTanker()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Aircraft will act as a tanker for friendly units.</p>
+
+	
+<p>No parameters.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
 
 </dd>
 </dl>
@@ -1028,7 +1608,7 @@ The CallSign of the first DCS Unit of the DCS Group.</p>
 </dt>
 <dd>
 	
-<p>Returns category of the DCS Group. </p>
+<p>Returns category of the DCS Group.</p>
 
 		<h3>Return value</h3>
 				
@@ -1095,7 +1675,7 @@ The country identifier.</p>
 				<li>
 				
 <p><em>#nil:</em>
-The DCS Group is not existing or alive.  </p>
+The DCS Group is not existing or alive.</p>
 
 				</li>
 			</ol>
@@ -1212,7 +1792,7 @@ The identifier of the DCS Group.</p>
 </ul>
 
 	
-<p>If some of the DCS Units of the DCS Group are destroyed, the initial size of the DCS Group is unchanged. </p>
+<p>If some of the DCS Units of the DCS Group are destroyed, the initial size of the DCS Group is unchanged.</p>
 
 		<h3>Return value</h3>
 				
@@ -1350,7 +1930,7 @@ Current Vec3 point of the first DCS Unit of the DCS Group.</p>
 <p>Returns current size of the DCS Group.</p>
 
 	
-<p>If some of the DCS Units of the DCS Group are destroyed the size of the DCS Group is changed. </p>
+<p>If some of the DCS Units of the DCS Group are destroyed the size of the DCS Group is changed.</p>
 
 		<h3>Return value</h3>
 				
@@ -1552,6 +2132,33 @@ true if the DCS Group is alive.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).IsCompletelyInZone" >
+<strong>GROUP:IsCompletelyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).IsGround" >
 <strong>GROUP:IsGround()</strong>
 </a>
@@ -1582,6 +2189,60 @@ true if DCS Group contains Ground troops.</p>
 				
 <p><em>#boolean:</em>
 true if DCS Group contains Helicopters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsNotInZone" >
+<strong>GROUP:IsNotInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsPartlyInZone" >
+<strong>GROUP:IsPartlyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1645,7 +2306,7 @@ The message text</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(Duration)">#Duration</a> Duration </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
 
 				</li>
@@ -1681,7 +2342,7 @@ The message text</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(Duration)">#Duration</a> Duration </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
 
 				</li>
@@ -1712,7 +2373,7 @@ The message text</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(Duration)">#Duration</a> Duration </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
 
 				</li>
@@ -1743,7 +2404,7 @@ The message text</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(Duration)">#Duration</a> Duration </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
 
 				</li>
@@ -1780,7 +2441,7 @@ The message text</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(Duration)">#Duration</a> Duration </em></code>: 
+<p><code><em><a href="DCSTYpes.html##(Duration)">DCSTYpes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
 
 				</li>
@@ -2174,7 +2835,7 @@ A table of Route Points.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em>
-self </p>
+self</p>
 
 </dd>
 </dl>
@@ -2239,19 +2900,112 @@ self</p>
 <dt>
 
 <a id="#(GROUP).TaskAttackGroup" >
-<strong>GROUP:TaskAttackGroup(AttackGroup)</strong>
+<strong>GROUP:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Attack a Group.</p>
+<p>(AIR) Attack a Group.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> AttackGroup </em></code>: 
 The Group to be attacked.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Altitude </em></code>: 
+(optional) Desired attack start altitude. Group/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/group will choose closest altitude to the desired attack start altitude. If the desired altitude is defined group/aircraft will not attack from safe altitude.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean AttackQtyLimit </em></code>: 
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskAttackMapObject" >
+<strong>GROUP:TaskAttackMapObject(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Attacking the map object (building, structure, e.t.c).</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
 
 				</li>
 		</ul>
@@ -2266,24 +3020,169 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(GROUP).TaskAttackUnit" >
-<strong>GROUP:TaskAttackUnit(The, AttackUnit)</strong>
+<strong>GROUP:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, GroupAttack)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Attack the Unit.</p>
+<p>(AIR) Attack the Unit.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> The </em></code>: 
-unit.</p>
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> AttackUnit </em></code>: 
+The unit.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> AttackUnit </em></code>: </p>
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean AttackQtyLimit </em></code>: 
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskBombing" >
+<strong>GROUP:TaskBombing(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Delivering weapon at the point on the ground. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+2D-coordinates of the point to deliver weapon at.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskBombingRunway" >
+<strong>GROUP:TaskBombingRunway(Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Delivering weapon on the runway.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> Airbase </em></code>: 
+Airbase to attack.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / group will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/group will not make more attack than allowed even if the target group not destroyed and the aicraft/group still have ammo. If not defined the aircraft/group will attack target until it will be destroyed or until the aircraft/group will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Group/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain group/aircraft will choose another direction.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
 
 				</li>
 		</ul>
@@ -2298,24 +3197,19 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(GROUP).TaskCombo" >
-<strong>GROUP:TaskCombo(<, DCSTasks)</strong>
+<strong>GROUP:TaskCombo(DCSTasks)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Return a Combo Task taking an array of Tasks</p>
+<p>Return a Combo Task taking an array of Tasks.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
-CSTask#Task> DCSTasks</p>
-
-				</li>
-				<li>
-				
-<p><code><em> DCSTasks </em></code>: </p>
+<p><code><em><a href="DCSTask.html##(TaskArray)">DCSTask#TaskArray</a> DCSTasks </em></code>: 
+Array of <a href="DCSTask.html##(Task)">DCSTask#Task</a></p>
 
 				</li>
 		</ul>
@@ -2335,7 +3229,7 @@ CSTask#Task> DCSTasks</p>
 </dt>
 <dd>
 	
-<p>Return a condition section for a controlled task</p>
+<p>Return a condition section for a controlled task.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2366,9 +3260,8 @@ CSTask#Task> DCSTasks</p>
 				</li>
 				<li>
 				
-<p><code><em>#number lastWayPoint </em></code>: </p>
-
-<p>return DCSTask#Task</p>
+<p><code><em>#number lastWayPoint </em></code>: 
+return DCSTask#Task</p>
 
 				</li>
 		</ul>
@@ -2383,7 +3276,7 @@ CSTask#Task> DCSTasks</p>
 </dt>
 <dd>
 	
-<p>Return a Controlled Task taking a Task and a TaskCondition</p>
+<p>Return a Controlled Task taking a Task and a TaskCondition.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2408,8 +3301,8 @@ CSTask#Task> DCSTasks</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).TaskEmbarkToTransportAtVec2" >
-<strong>GROUP:TaskEmbarkToTransportAtVec2(Point, Radius)</strong>
+<a id="#(GROUP).TaskEmbarkToTransport" >
+<strong>GROUP:TaskEmbarkToTransport(Point, Radius)</strong>
 </a>
 </dt>
 <dd>
@@ -2441,13 +3334,13 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).TaskEmbarkingAtVec2" >
-<strong>GROUP:TaskEmbarkingAtVec2(Point, Duration, EmbarkingGroup)</strong>
+<a id="#(GROUP).TaskEmbarking" >
+<strong>GROUP:TaskEmbarking(Point, Duration, EmbarkingGroup)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Move the group to a Vec2 Point, wait for a defined duration and embark a group.</p>
+<p>(AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2480,20 +3373,134 @@ The DCS task structure</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).TaskFireAtPoint" >
-<strong>GROUP:TaskFireAtPoint(The, Radius, PointVec2)</strong>
+<a id="#(GROUP).TaskEscort" >
+<strong>GROUP:TaskEscort(EscortGroup, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowGroup, EngagementDistance)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Fires at a VEC2 point.</p>
+<p>(AIR) Escort another airborne group.</p>
+
+	
+<p>The unit / group will follow lead unit of another group, wingmens of both groups will continue following their leaders. 
+The unit / group will also protect that group from threats of specified types.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> The </em></code>: 
-point to fire at.</p>
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> EscortGroup </em></code>: 
+The group to be escorted.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+Position of the unit / lead unit of the group relative lead unit of another group in frame reference oriented by course of lead unit of another group. If another group is on land the unit / group will orbit around.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number LastWaypointIndex </em></code>: 
+Detach waypoint of another group. Once reached the unit / group Follow task is finished.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngagementDistanceMax </em></code>: 
+Maximal distance from escorted group to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of AttributeName that is contains threat categories allowed to engage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FollowGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EngagementDistance </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskFAC_AttackGroup" >
+<strong>GROUP:TaskFAC_AttackGroup(AttackGroup, WeaponType, Designation, Datalink)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</p>
+
+	
+<p>The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
+If the task is assigned to the group lead unit will be a FAC. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> AttackGroup </em></code>: 
+Target GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(AI.Task.Designation)">DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
+(optional) Designation type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Datalink </em></code>: 
+(optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskFireAtPoint" >
+<strong>GROUP:TaskFireAtPoint(PointVec2, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The point to fire at.</p>
 
 				</li>
 				<li>
@@ -2502,9 +3509,47 @@ point to fire at.</p>
 The radius of the zone to deploy the fire at.</p>
 
 				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskFollow" >
+<strong>GROUP:TaskFollow(FollowGroup, PointVec3, LastWaypointIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Following another airborne group.</p>
+
+	
+<p>The unit / group will follow lead unit of another group, wingmens of both groups will continue following their leaders. 
+If another group is on land the unit / group will orbit around. </p>
+
+		<h3>Parameters</h3>
+		<ul>
 				<li>
 				
-<p><code><em> PointVec2 </em></code>: </p>
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> FollowGroup </em></code>: 
+The group to be followed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+Position of the unit / lead unit of the group relative lead unit of another group in frame reference oriented by course of lead unit of another group. If another group is on land the unit / group will orbit around.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number LastWaypointIndex </em></code>: 
+Detach waypoint of another group. Once reached the unit / group Follow task is finished.</p>
 
 				</li>
 		</ul>
@@ -2554,13 +3599,31 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).TaskHold" >
+<strong>GROUP:TaskHold()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Hold ground group from moving.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).TaskHoldPosition" >
 <strong>GROUP:TaskHoldPosition(Duration)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Hold position at the current position of the first unit of the group.</p>
+<p>(AIR) Hold position at the current position of the first unit of the group.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2587,7 +3650,10 @@ self</p>
 </dt>
 <dd>
 	
-<p>Land the group at a Vec2Point.</p>
+<p>(AIR HELICOPTER) Landing at the ground.</p>
+
+	
+<p>For helicopters only.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2620,7 +3686,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Land the group at a @{Zone#ZONE).</p>
+<p>(AIR) Land the group at a @{Zone#ZONE_RADIUS).</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2658,7 +3724,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Return a Misson task from a mission template.</p>
+<p>(AIR + GROUND) Return a mission task from a mission template.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2685,7 +3751,7 @@ A table containing the mission task.</p>
 </dt>
 <dd>
 	
-<p>Orbit at the current position of the first unit of the group at a specified alititude</p>
+<p>(AIR) Orbit at the current position of the first unit of the group at a specified alititude.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2718,7 +3784,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</p>
+<p>(AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2745,6 +3811,27 @@ The speed flying when holding the position.</p>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).TaskRefueling" >
+<strong>GROUP:TaskRefueling()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Refueling from the nearest tanker.</p>
+
+	
+<p>No parameters.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+The DCS task structure.</p>
 
 </dd>
 </dl>
@@ -2784,7 +3871,7 @@ A table of route points.</p>
 </dt>
 <dd>
 	
-<p>Make the DCS Group to fly to a given point and hover.</p>
+<p>(AIR + GROUND) Make the Group move to fly to a given point.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2817,7 +3904,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Make the DCS Group to fly to a given point and hover.</p>
+<p>(AIR + GROUND) Make the Group move to a given point.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2850,7 +3937,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Route the group to a given zone.</p>
+<p>(AIR + GROUND) Route the group to a given zone.</p>
 
 	
 <p>The group final destination point can be randomized.
@@ -2895,7 +3982,7 @@ The formation string.</p>
 </dt>
 <dd>
 	
-<p>Return a WrappedAction Task taking a Command </p>
+<p>Return a WrappedAction Task taking a Command.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2921,7 +4008,7 @@ The formation string.</p>
 <dt>
 
 <a id="#(GROUP).WayPointExecute" >
-<strong>GROUP:WayPointExecute(WayPoint, The, WaitTime)</strong>
+<strong>GROUP:WayPointExecute(WayPoint, WaitTime)</strong>
 </a>
 </dt>
 <dd>
@@ -2942,13 +4029,8 @@ The WayPoint from where to execute the mission.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="##(WaitTime)">#WaitTime</a> The </em></code>: 
-amount seconds to wait before initiating the mission.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> WaitTime </em></code>: </p>
+<p><code><em>#number WaitTime </em></code>: 
+The amount seconds to wait before initiating the mission.</p>
 
 				</li>
 		</ul>
@@ -3073,10 +4155,6 @@ The waypoint function to be called when the group moves over the waypoint. The w
 </dd>
 </dl>
 
-			<h2><a id="#(WaitTime)" >Type <code>WaitTime</code></a></h2>
-			
-			<h2><a id="#(list)" >Type <code>list</code></a></h2>
-			
 </div>
 
 </div>

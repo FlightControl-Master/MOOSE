@@ -60,6 +60,16 @@
 -- @type TypeName
 -- @extends #string
 
+--- AttributeName = string 
+-- Each object type may have attributes.
+-- Attributes are enlisted in ./Scripts/Database/db_attributes.Lua.
+-- To know what attributes the object type has, look for the unit type script in sub-directories planes/, helicopter/s, vehicles, navy/ of ./Scripts/Database/ directory. 
+-- @type AttributeName
+-- @extends #string
+
+--- List of @{#AttributeName}
+-- @type AttributeNameArray 
+-- @list <#AttributeName>
 
 --- @type AI
 -- @field #AI.Skill Skill

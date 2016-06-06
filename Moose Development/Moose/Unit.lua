@@ -1,8 +1,8 @@
---- UNIT Class
+--- This module contains the UNIT class.
 -- 
--- @{UNIT} class
--- ==============
--- The @{UNIT} class is a wrapper class to handle the DCS Unit objects:
+-- 1) @{Unit#UNIT} class, extends @{Base#BASE}
+-- ===========================================
+-- The @{Unit#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
 --  * Enhance with Unit specific APIs not in the DCS Unit API set.
@@ -10,8 +10,8 @@
 --  * Manage the "state" of the DCS Unit.
 --  
 --  
--- UNIT reference methods
--- ====================== 
+-- 1.1) UNIT reference methods
+-- ----------------------
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
@@ -29,19 +29,15 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
--- DCS UNIT APIs
--- =============
+-- 1.2) DCS UNIT APIs
+-- ------------------
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSUnit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
--- Additional UNIT APIs
--- ====================
--- The UNIT class comes with additional methods. Find below a summary.
--- 
--- Smoke, Flare Units
--- ------------------
+-- 1.3) Smoke, Flare Units
+-- -----------------------
 -- The UNIT class provides methods to smoke or flare units easily. 
 -- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
 -- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
@@ -49,26 +45,25 @@
 -- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
 -- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
 -- 
--- Position, Point
--- ---------------
+-- 1.4) Location Position, Point
+-- -----------------------------
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
--- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current location of the DCS Unit in a Vec2 (2D) or a Vec3 (3D) vector respectively.
--- If you want to obtain the complete 3D position including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
+-- If you want to obtain the complete **3D position** including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
--- Alive
--- -----
+-- 1.5) Test if alive
+-- ------------------
 -- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
 -- 
--- Test for other units in radius
--- ------------------------------
--- One can test if another DCS Unit is within a given radius of the current DCS Unit, by using the @{#UNIT.OtherUnitInRadius}() method.
+-- 1.6) Test for proximity
+-- -----------------------
+-- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- More functions will be added
--- ----------------------------
--- During the MOOSE development, more functions will be added. A complete list of the current functions is below.
+-- ### 1.6.1) Zones
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- 
--- 
+-- ### 1.6.2) Units
+-- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
 -- 
 -- @module Unit
 -- @author FlightControl
@@ -540,7 +535,7 @@ function UNIT:GetPointVec2()
   	UnitPointVec2.x = UnitPointVec3.x
   	UnitPointVec2.y = UnitPointVec3.z
   
-  	self:T3( UnitPointVec2 )
+  	self:T2( UnitPointVec2 )
   	return UnitPointVec2
   end
   
@@ -601,7 +596,35 @@ function UNIT:GetVelocity()
   
   return nil
 end
- 
+
+-- Is functions
+
+--- Returns true if the unit is within a @{Zone}.
+-- @param #UNIT self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
+function UNIT:IsInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+  
+  self:T( { IsInZone } )
+  return IsInZone 
+end
+
+--- Returns true if the unit is not within a @{Zone}.
+-- @param #UNIT self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
+function UNIT:IsNotInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+  
+  self:T( { IsInZone } )
+  return IsInZone 
+end
+
 --- Returns true if the DCS Unit is in the air.
 -- @param Unit#UNIT self
 -- @return #boolean true if in the air.
