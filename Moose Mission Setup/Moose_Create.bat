@@ -46,7 +46,9 @@ COPY /b Moose.lua + %1\Group.lua                 Moose.lua
 COPY /b Moose.lua + %1\Unit.lua                  Moose.lua
 COPY /b Moose.lua + %1\Zone.lua                  Moose.lua
 COPY /b Moose.lua + %1\Client.lua                Moose.lua
+COPY /b Moose.lua + %1\Static.lua                Moose.lua
 COPY /b Moose.lua + %1\Database.lua              Moose.lua
+COPY /b Moose.lua + %1\Point.lua                 Moose.lua
 COPY /b Moose.lua + %1\Moose.lua                 Moose.lua
 COPY /b Moose.lua + %1\Scoring.lua               Moose.lua
 COPY /b Moose.lua + %1\Cargo.lua                 Moose.lua
