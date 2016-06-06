@@ -51,6 +51,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -58,6 +59,7 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -209,7 +211,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).New">ZONE_BASE:New(ZoneName)</a></td>
 		<td class="summary">
-
+<p>ZONE_BASE constructor</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SmokeZone">ZONE_BASE:SmokeZone(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
 </td>
 		</tr>
 	</table>
@@ -234,6 +242,12 @@
 <p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).SmokeZone">ZONE_POLYGON:SmokeZone(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(ZONE_RADIUS)">Type <code>ZONE_RADIUS</code></a></h2>
@@ -242,6 +256,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ClassName">ZONE_RADIUS.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
+		<td class="summary">
+<p>Flares the zone boundaries in a color.</p>
 </td>
 		</tr>
 		<tr>
@@ -281,7 +301,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(PointVec2, Radius, ZoneName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(ZoneName, PointVec2, Radius)</a></td>
 		<td class="summary">
 <p>Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.</p>
 </td>
@@ -308,6 +328,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetRadius">ZONE_RADIUS:SetRadius(Radius)</a></td>
 		<td class="summary">
 <p>Sets the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
 </td>
 		</tr>
 	</table>
@@ -413,6 +439,10 @@
 </dl>
 	<h2><a id="#(Zone)" >Type <code>Zone</code></a></h2>
 	
+			<h2><a id="#(POINT_VEC3.FlareColor)" >Type <code>POINT_VEC3.FlareColor</code></a></h2>
+			
+			<h2><a id="#(POINT_VEC3.SmokeColor)" >Type <code>POINT_VEC3.SmokeColor</code></a></h2>
+			
 			<h2><a id="#(ZONE)" >Type <code>ZONE</code></a></h2>
 				
 <p>The ZONE class, defined by the zone name as defined within the Mission Editor.</p>
@@ -545,13 +575,41 @@ true if the point is within the zone.</p>
 </dt>
 <dd>
 	
-
+<p>ZONE_BASE constructor</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> ZoneName </em></code>: </p>
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_BASE)">#ZONE_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).SmokeZone" >
+<strong>ZONE_BASE:SmokeZone(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SmokeColor </em></code>: 
+The smoke color.</p>
 
 				</li>
 		</ul>
@@ -640,6 +698,33 @@ self</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).SmokeZone" >
+<strong>ZONE_POLYGON:SmokeZone(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.SmokeColor)">#POINT_VEC3.SmokeColor</a> SmokeColor </em></code>: 
+The smoke color.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
 
 			<h2><a id="#(ZONE_RADIUS)" >Type <code>ZONE_RADIUS</code></a></h2>
 				
@@ -657,6 +742,45 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).FlareZone" >
+<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flares the zone boundaries in a color.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.FlareColor)">#POINT_VEC3.FlareColor</a> FlareColor </em></code>: 
+The flare color.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Points </em></code>: 
+(optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Azimuth </em></code>: 
+(optional) Azimuth The azimuth of the flare.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -799,7 +923,7 @@ true if the point is within the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).New" >
-<strong>ZONE_RADIUS:New(PointVec2, Radius, ZoneName)</strong>
+<strong>ZONE_RADIUS:New(ZoneName, PointVec2, Radius)</strong>
 </a>
 </dt>
 <dd>
@@ -808,6 +932,12 @@ true if the point is within the zone.</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
@@ -820,16 +950,11 @@ The location of the zone.</p>
 The radius of the zone.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> ZoneName </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em></p>
-
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -912,6 +1037,39 @@ The radius of the zone.</p>
 				
 <p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
 The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SmokeZone" >
+<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.SmokeColor)">#POINT_VEC3.SmokeColor</a> SmokeColor </em></code>: 
+The smoke color.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Points </em></code>: 
+(optional) The amount of points in the circle.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
 
 </dd>
 </dl>

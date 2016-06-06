@@ -1,0 +1,826 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="GroupSet.html">GroupSet</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li>Point</li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UnitSet.html">UnitSet</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Point</code></h1>
+   
+<p>This module contains the POINT classes.</p>
+
+   
+
+<h1>1) <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class defines a 3D point in the simulator.</p>
+
+<h2>1.1) POINT_VEC3 constructor</h2>
+
+<p>A new POINT instance can be created with:</p>
+
+<ul>
+    <li><a href="##(POINT_VEC3).New">POINT_VEC3.New</a>(): a 3D point.</li>
+</ul>
+
+<h1>2) <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
+<p>The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.</p>
+
+<h2>2.1) POINT_VEC2 constructor</h2>
+
+<p>A new POINT instance can be created with:</p>
+
+<ul>
+    <li><a href="##(POINT_VEC2).New">POINT_VEC2.New</a>(): a 2D point.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#POINT_VEC2">POINT_VEC2</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#POINT_VEC3">POINT_VEC3</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(POINT_VEC2)">Type <code>POINT_VEC2</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).ClassName">POINT_VEC2.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).New">POINT_VEC2:New(x, y, LandHeightAdd)</a></td>
+		<td class="summary">
+<p>Create a new POINT_VEC2 object.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3)">Type <code>POINT_VEC3</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ClassName">POINT_VEC3.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Flare">POINT_VEC3:Flare(Point, (, FlareColor, Azimuth)</a></td>
+		<td class="summary">
+<p>Flares the point in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).FlareColor">POINT_VEC3.FlareColor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3:FlareGreen((, Azimuth)</a></td>
+		<td class="summary">
+<p>Flare the POINT_VEC3 Green.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).FlareRed">POINT_VEC3:FlareRed(Azimuth)</a></td>
+		<td class="summary">
+<p>Flare the POINT_VEC3 Red.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).FlareWhite">POINT_VEC3:FlareWhite((, Azimuth)</a></td>
+		<td class="summary">
+<p>Flare the POINT_VEC3 White.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).FlareYellow">POINT_VEC3:FlareYellow((, Azimuth)</a></td>
+		<td class="summary">
+<p>Flare the POINT_VEC3 Yellow.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).New">POINT_VEC3:New(x, y, z)</a></td>
+		<td class="summary">
+<p>Create a new POINT_VEC3 object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Smoke">POINT_VEC3:Smoke(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smokes the point in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeBlue">POINT_VEC3:SmokeBlue()</a></td>
+		<td class="summary">
+<p>Smoke the POINT_VEC3 Blue.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeColor">POINT_VEC3.SmokeColor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3:SmokeGreen()</a></td>
+		<td class="summary">
+<p>Smoke the POINT_VEC3 Green.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeOrange">POINT_VEC3:SmokeOrange()</a></td>
+		<td class="summary">
+<p>Smoke the POINT_VEC3 Orange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeRed">POINT_VEC3:SmokeRed()</a></td>
+		<td class="summary">
+<p>Smoke the POINT_VEC3 Red.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3:SmokeWhite()</a></td>
+		<td class="summary">
+<p>Smoke the POINT_VEC3 White.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3.FlareColor)">Type <code>POINT_VEC3.FlareColor</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.FlareColor).Green">POINT_VEC3.FlareColor.Green</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.FlareColor).Red">POINT_VEC3.FlareColor.Red</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.FlareColor).White">POINT_VEC3.FlareColor.White</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.FlareColor).Yellow">POINT_VEC3.FlareColor.Yellow</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3.SmokeColor)">Type <code>POINT_VEC3.SmokeColor</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.SmokeColor).Blue">POINT_VEC3.SmokeColor.Blue</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.SmokeColor).Green">POINT_VEC3.SmokeColor.Green</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.SmokeColor).Orange">POINT_VEC3.SmokeColor.Orange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.SmokeColor).Red">POINT_VEC3.SmokeColor.Red</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.SmokeColor).White">POINT_VEC3.SmokeColor.White</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC2)">#POINT_VEC2</a></em>
+<a id="POINT_VEC2" >
+<strong>POINT_VEC2</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3)">#POINT_VEC3</a></em>
+<a id="POINT_VEC3" >
+<strong>POINT_VEC3</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Point)" >Type <code>Point</code></a></h2>
+	
+			<h2><a id="#(POINT_VEC2)" >Type <code>POINT_VEC2</code></a></h2>
+				
+<p>The POINT_VEC2 class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(POINT_VEC2).ClassName" >
+<strong>POINT_VEC2.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).New" >
+<strong>POINT_VEC2:New(x, y, LandHeightAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POINT_VEC2 object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> x </em></code>: 
+The x coordinate of the Vec3 point, pointing to the North.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> y </em></code>: 
+The y coordinate of the Vec3 point, pointing to the Right.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> LandHeightAdd </em></code>: 
+(optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3)" >Type <code>POINT_VEC3</code></a></h2>
+				
+<p>The POINT_VEC3 class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(POINT_VEC3).ClassName" >
+<strong>POINT_VEC3.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).Flare" >
+<strong>POINT_VEC3:Flare(Point, (, FlareColor, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flares the point in a color.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Point </em></code>: 
+POINT_VEC3.FlareColor</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> ( </em></code>: 
+ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FlareColor </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Azimuth </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3.FlareColor)">#POINT_VEC3.FlareColor</a></em>
+<a id="#(POINT_VEC3).FlareColor" >
+<strong>POINT_VEC3.FlareColor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).FlareGreen" >
+<strong>POINT_VEC3:FlareGreen((, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the POINT_VEC3 Green.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> ( </em></code>: 
+ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Azimuth </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).FlareRed" >
+<strong>POINT_VEC3:FlareRed(Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the POINT_VEC3 Red.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Azimuth </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).FlareWhite" >
+<strong>POINT_VEC3:FlareWhite((, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the POINT_VEC3 White.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> ( </em></code>: 
+ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Azimuth </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).FlareYellow" >
+<strong>POINT_VEC3:FlareYellow((, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the POINT_VEC3 Yellow.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> ( </em></code>: 
+ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Azimuth </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).New" >
+<strong>POINT_VEC3:New(x, y, z)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POINT_VEC3 object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> x </em></code>: 
+The x coordinate of the Vec3 point, pointing to the North.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> y </em></code>: 
+The y coordinate of the Vec3 point, pointing Upwards.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> z </em></code>: 
+The z coordinate of the Vec3 point, pointing to the Right.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).Smoke" >
+<strong>POINT_VEC3:Smoke(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the point in a color.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC3.SmokeColor)">Point#POINT_VEC3.SmokeColor</a> SmokeColor </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SmokeBlue" >
+<strong>POINT_VEC3:SmokeBlue()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the POINT_VEC3 Blue.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3.SmokeColor)">#POINT_VEC3.SmokeColor</a></em>
+<a id="#(POINT_VEC3).SmokeColor" >
+<strong>POINT_VEC3.SmokeColor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SmokeGreen" >
+<strong>POINT_VEC3:SmokeGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the POINT_VEC3 Green.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SmokeOrange" >
+<strong>POINT_VEC3:SmokeOrange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the POINT_VEC3 Orange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SmokeRed" >
+<strong>POINT_VEC3:SmokeRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the POINT_VEC3 Red.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SmokeWhite" >
+<strong>POINT_VEC3:SmokeWhite()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the POINT_VEC3 White.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3.FlareColor)" >Type <code>POINT_VEC3.FlareColor</code></a></h2>
+				
+<p>FlareColor</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.FlareColor).Green" >
+<strong>POINT_VEC3.FlareColor.Green</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.FlareColor).Red" >
+<strong>POINT_VEC3.FlareColor.Red</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.FlareColor).White" >
+<strong>POINT_VEC3.FlareColor.White</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.FlareColor).Yellow" >
+<strong>POINT_VEC3.FlareColor.Yellow</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3.SmokeColor)" >Type <code>POINT_VEC3.SmokeColor</code></a></h2>
+				
+<p>SmokeColor</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.SmokeColor).Blue" >
+<strong>POINT_VEC3.SmokeColor.Blue</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.SmokeColor).Green" >
+<strong>POINT_VEC3.SmokeColor.Green</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.SmokeColor).Orange" >
+<strong>POINT_VEC3.SmokeColor.Orange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.SmokeColor).Red" >
+<strong>POINT_VEC3.SmokeColor.Red</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.SmokeColor).White" >
+<strong>POINT_VEC3.SmokeColor.White</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

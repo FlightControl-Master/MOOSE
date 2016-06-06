@@ -36,9 +36,11 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Static" )
 Include.File( "Unit" )
 Include.File( "Event" )
 Include.File( "Client" )
+Include.File( "Scheduler" )
 
 
 --- DATABASE class
@@ -54,7 +56,9 @@ DATABASE = {
   },
   DCSUnits = {},
   DCSGroups = {},
+  DCSStatics = {},
   UNITS = {},
+  STATICS = {},
   GROUPS = {},
   PLAYERS = {},
   PLAYERSALIVE = {},
@@ -100,7 +104,8 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
   
   self:_RegisterTemplates()
-  self:_RegisterDatabase()
+  self:_RegisterGroupsAndUnits()
+  self:_RegisterStatics()
   self:_RegisterPlayers()
   
   return self
@@ -131,6 +136,32 @@ end
 function DATABASE:DeleteUnit( DCSUnitName )
 
   self.DCSUnits[DCSUnitName] = nil 
+end
+
+--- Adds a Static based on the Static Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddStatic( DCSStatic, DCSStaticName )
+
+  self.DCSStatics[DCSStaticName] = DCSStatic 
+  self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+end
+
+
+--- Deletes a Static from the DATABASE based on the Static Name.
+-- @param #DATABASE self
+function DATABASE:DeleteStatic( DCSStaticName )
+
+  self.DCSStatics[DCSStaticName] = nil 
+end
+
+--- Finds a STATIC based on the StaticName.
+-- @param #DATABASE self
+-- @param #string StaticName
+-- @return Static#STATIC The found STATIC.
+function DATABASE:FindStatic( StaticName )
+
+  local StaticFound = self.STATICS[StaticName]
+  return StaticFound
 end
 
 
@@ -220,13 +251,14 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCategoryID = nil
 
   self:_RegisterTemplate( SpawnTemplate )
+
+  self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
   SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
   SpawnTemplate.SpawnCountryID = SpawnCountryID
   SpawnTemplate.SpawnCategoryID = SpawnCategoryID
-
 
   local SpawnGroup = GROUP:Register( SpawnTemplate.name )
   return SpawnGroup
@@ -320,10 +352,10 @@ function DATABASE:_RegisterPlayers()
 end
 
 
---- Private method that registers all datapoints within in the mission.
+--- Private method that registers all Groups and Units within in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
-function DATABASE:_RegisterDatabase()
+function DATABASE:_RegisterGroupsAndUnits()
 
   local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
@@ -355,6 +387,27 @@ function DATABASE:_RegisterDatabase()
   
   return self
 end
+
+function DATABASE:_RegisterStatics()
+
+  local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
+
+      if DCSStatic:isExist() then
+        local DCSStaticName = DCSStatic:getName()
+  
+        self:E( { "Register Static:", DCSStatic, DCSStaticName } )
+        self:AddStatic( DCSStatic, DCSStaticName )
+      else
+        self:E( { "Static does not exist: ",  DCSStatic } )
+      end
+    end
+  end
+
+  return self
+end
+
 
 --- Events
 

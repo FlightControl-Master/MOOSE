@@ -535,7 +535,7 @@ function UNIT:GetPointVec2()
   	UnitPointVec2.x = UnitPointVec3.x
   	UnitPointVec2.y = UnitPointVec3.z
   
-  	self:T3( UnitPointVec2 )
+  	self:T2( UnitPointVec2 )
   	return UnitPointVec2
   end
   

@@ -59,8 +59,8 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="Static.html">Static</a></li>
-					<li>StaticObject</li>
+					<li>Static</li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="UnitSet.html">UnitSet</a></li>
@@ -71,49 +71,76 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>StaticObject</code></h1>
+   <h1>Module <code>Static</code></h1>
    
+<p>This module contains the STATIC class.</p>
+
+   
+
+<h1>1) <a href="Static.html##(STATIC)">Static#STATIC</a> class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
+<p>Statics are <strong>Static Units</strong> defined within the Mission Editor.
+Note that Statics are almost the same as Units, but they don't have a controller.
+The <a href="Static.html##(STATIC)">Static#STATIC</a> class is a wrapper class to handle the DCS Static objects:</p>
+
+<ul>
+    <li>Wraps the DCS Static objects.</li>
+    <li>Support all DCS Static APIs.</li>
+    <li>Enhance with Static specific APIs not in the DCS API set.</li>
+</ul>
+
+<h2>1.1) STATIC reference methods</h2>
+<p>For each DCS Static will have a STATIC wrapper object (instance) within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The STATIC class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the Static Name.</p>
+
+<p>Another thing to know is that STATIC objects do not "contain" the DCS Static object. 
+The STATIc methods will reference the DCS Static object by name when it is needed during API execution.
+If the DCS Static object does not exist or is nil, the STATIC methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The STATIc class provides the following functions to retrieve quickly the relevant STATIC instance:</p>
+
+<ul>
+    <li><a href="##(STATIC).FindByName">STATIC.FindByName</a>(): Find a STATIC instance from the _DATABASE object using a DCS Static name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).</p>
 
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#StaticObject">StaticObject</a></td>
+		<td class="name" nowrap="nowrap"><a href="#STATIC">STATIC</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(StaticObject)">Type <code>StaticObject</code></a></h2>
+			<h2><a id="#(STATIC)">Type <code>STATIC</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(StaticObject).Desc">StaticObject.Desc</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATIC).ClassName">STATIC.ClassName</a></td>
 		<td class="summary">
-<p>Descriptor of StaticObject and Unit are equal. StaticObject is just a passive variant of Unit. </p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(StaticObject).ID">StaticObject.ID</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATIC).FindByName">STATIC:FindByName(StaticName)</a></td>
 		<td class="summary">
-<p>Identifier of a StaticObject. It assigned to an StaticObject by the Mission Editor automatically.</p>
+<p>Finds a STATIC from the _DATABASE using the relevant Static Name.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(StaticObject).getByName">StaticObject.getByName(name)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATIC).GetDCSUnit">STATIC:GetDCSUnit()</a></td>
 		<td class="summary">
-<p>Returns static object by its name.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(StaticObject).getDesc">StaticObject:getDesc()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATIC).Register">STATIC:Register(StaticName)</a></td>
 		<td class="summary">
-<p>Returns descriptor of the StaticObject. </p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(StaticObject).getID">StaticObject:getID()</a></td>
-		<td class="summary">
-<p>returns identifier of the static object.</p>
+
 </td>
 		</tr>
 	</table>
@@ -122,9 +149,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(StaticObject)">#StaticObject</a></em>
-<a id="StaticObject" >
-<strong>StaticObject</strong>
+		<em><a href="##(STATIC)">#STATIC</a></em>
+<a id="STATIC" >
+<strong>STATIC</strong>
 </a>
 </dt>
 <dd>
@@ -133,67 +160,53 @@
 
 </dd>
 </dl>
-	<h2><a id="#(DCSStaticObject)" >Type <code>DCSStaticObject</code></a></h2>
+	<h2><a id="#(Static)" >Type <code>Static</code></a></h2>
 	
-			<h2><a id="#(StaticObject)" >Type <code>StaticObject</code></a></h2>
+			<h2><a id="#(STATIC)" >Type <code>STATIC</code></a></h2>
 				
-<p>Represents static object added in the Mission Editor.</p>
+<p>The STATIC class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(StaticObject.Desc)">#StaticObject.Desc</a></em>
-<a id="#(StaticObject).Desc" >
-<strong>StaticObject.Desc</strong>
+		<em>#string</em>
+<a id="#(STATIC).ClassName" >
+<strong>STATIC.ClassName</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Descriptor of StaticObject and Unit are equal. StaticObject is just a passive variant of Unit. </p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(StaticObject.ID)">#StaticObject.ID</a></em>
-<a id="#(StaticObject).ID" >
-<strong>StaticObject.ID</strong>
+<a id="#(STATIC).FindByName" >
+<strong>STATIC:FindByName(StaticName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Identifier of a StaticObject. It assigned to an StaticObject by the Mission Editor automatically.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(StaticObject).getByName" >
-<strong>StaticObject.getByName(name)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns static object by its name.</p>
+<p>Finds a STATIC from the _DATABASE using the relevant Static Name.</p>
 
 	
-<p>If no static object found nil will be returned. </p>
+<p>As an optional parameter, a briefing text can be given also.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string name </em></code>: 
-Name of static object to find. </p>
+<p><code><em>#string StaticName </em></code>: 
+Name of the DCS <strong>Static</strong> as defined within the Mission Editor.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(StaticObject)">#StaticObject</a>:</em></p>
+<p><em><a href="##(STATIC)">#STATIC</a>:</em></p>
 
 
 </dd>
@@ -201,17 +214,12 @@ Name of static object to find. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(StaticObject).getDesc" >
-<strong>StaticObject:getDesc()</strong>
+<a id="#(STATIC).GetDCSUnit" >
+<strong>STATIC:GetDCSUnit()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns descriptor of the StaticObject. </p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(StaticObject.Desc)">#StaticObject.Desc</a>:</em></p>
 
 
 </dd>
@@ -219,32 +227,25 @@ Name of static object to find. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(StaticObject).getID" >
-<strong>StaticObject:getID()</strong>
+<a id="#(STATIC).Register" >
+<strong>STATIC:Register(StaticName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>returns identifier of the static object.</p>
 
-		<h3>Return value</h3>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(StaticObject.ID)">#StaticObject.ID</a>:</em></p>
+<p><code><em> StaticName </em></code>: </p>
 
-
+				</li>
+		</ul>
 </dd>
 </dl>
 
-			<h2><a id="#(StaticObject.Desc)" >Type <code>StaticObject.Desc</code></a></h2>
-				
-<p>StaticObject descriptor.</p>
-
-	
-<p>Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. </p>
-
-
-			<h2><a id="#(StaticObject.ID)" >Type <code>StaticObject.ID</code></a></h2>
-			
 </div>
 
 </div>

@@ -65,16 +65,21 @@
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
+Include.File( "Point" )
 
 
 
 --- The ZONE_BASE class
 -- @type ZONE_BASE
--- @Extends Base#BASE
+-- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
   }
-  
+
+--- ZONE_BASE constructor
+-- @param #ZONE_BASE self
+-- @param #string ZoneName Name of the zone.
+-- @return #ZONE_BASE self
 function ZONE_BASE:New( ZoneName )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( ZoneName )
@@ -106,21 +111,30 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   return InZone
 end
 
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_BASE self
+-- @param SmokeColor The smoke color.
+function ZONE_BASE:SmokeZone( SmokeColor )
+  self:F2( SmokeColor )
+
+end
+
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
 -- @field DCSTypes#Vec2 PointVec2 The current location of the zone.
 -- @field DCSTypes#Distance Radius The radius of the zone.
--- @Extends Zone#ZONE_BASE
+-- @extends Zone#ZONE_BASE
 ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
 
 --- Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
+-- @param #string ZoneName Name of the zone.
 -- @param DCSTypes#Vec2 PointVec2 The location of the zone.
 -- @param DCSTypes#Distance Radius The radius of the zone.
--- @return #ZONE_RADIUS
+-- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, PointVec2, Radius )
 	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
 	self:F( { ZoneName, PointVec2, Radius } )
@@ -131,6 +145,59 @@ function ZONE_RADIUS:New( ZoneName, PointVec2, Radius )
 	return self
 end
 
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_RADIUS self
+-- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @param #number Points (optional) The amount of points in the circle.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
+  self:F2( SmokeColor )
+
+  local Point = {}
+  local PointVec2 = self:GetPointVec2()
+
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  for Angle = 0, 360, 360 / Points do
+    local Radial = Angle * RadialBase / 360
+    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    POINT_VEC2:New( Point.x, Point.y ):Smoke( SmokeColor )
+  end
+
+  return self
+end
+
+
+--- Flares the zone boundaries in a color.
+-- @param #ZONE_RADIUS self
+-- @param #POINT_VEC3.FlareColor FlareColor The flare color.
+-- @param #number Points (optional) The amount of points in the circle.
+-- @param DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
+  self:F2( { FlareColor, Azimuth } )
+
+  local Point = {}
+  local PointVec2 = self:GetPointVec2()
+  
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  for Angle = 0, 360, 360 / Points do
+    local Radial = Angle * RadialBase / 360
+    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    POINT_VEC2:New( Point.x, Point.y ):Flare( FlareColor, Azimuth )
+  end
+
+  return self
+end
 
 --- Returns the radius of the zone.
 -- @param #ZONE_RADIUS self
@@ -197,14 +264,17 @@ function ZONE_RADIUS:GetPointVec3( Height )
   return PointVec3  
 end
 
+
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_RADIUS:IsPointVec2InZone( PointVec2 )
   self:F2( PointVec2 )
+  
+  local ZonePointVec2 = self:GetPointVec2()
 
-  if (( PointVec2.x - self.PointVec2.x )^2 + ( PointVec2.y - self.PointVec2.y ) ^2 ) ^ 0.5 <= self.Radius then
+  if (( PointVec2.x - ZonePointVec2.x )^2 + ( PointVec2.y - ZonePointVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
     return true
   end
   
@@ -218,7 +288,7 @@ end
 function ZONE_RADIUS:IsPointVec3InZone( PointVec3 )
   self:F2( PointVec3 )
 
-  local InZone = self:IsPointVec3InZone( { x = PointVec3.x, y = PointVec3.z } )
+  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
 
   return InZone
 end
@@ -230,10 +300,11 @@ function ZONE_RADIUS:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
+	local PointVec2 = self:GetPointVec2()
 
 	local angle = math.random() * math.pi*2;
-	Point.x = self.PointVec2.x + math.cos( angle ) * math.random() * self.Radius;
-	Point.y = self.PointVec2.y + math.sin( angle ) * math.random() * self.Radius;
+	Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+	Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 	
 	self:T( { Point } )
 	
@@ -244,7 +315,7 @@ end
 
 --- The ZONE class, defined by the zone name as defined within the Mission Editor. The location and the radius are automatically collected from the mission settings.
 -- @type ZONE
--- @Extends Zone#ZONE_RADIUS
+-- @extends Zone#ZONE_RADIUS
 ZONE = {
   ClassName="ZONE",
   }
@@ -263,7 +334,7 @@ function ZONE:New( ZoneName )
     return nil
   end
 
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, { x = Zone.x, y = Zone.y }, Zone.radius ) )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, { x = Zone.point.x, y = Zone.point.z }, Zone.radius ) )
   self:F( ZoneName )
 
   self.Zone = Zone
@@ -272,11 +343,10 @@ function ZONE:New( ZoneName )
 end
 
 
-
 --- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- @type ZONE_UNIT
 -- @field Unit#UNIT ZoneUNIT
--- @Extends Zone#ZONE_RADIUS
+-- @extends Zone#ZONE_RADIUS
 ZONE_UNIT = {
   ClassName="ZONE_UNIT",
   }
@@ -313,7 +383,7 @@ end
 
 --- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- @type ZONE_POLYGON
--- @Extends Zone#ZONE_BASE
+-- @extends Zone#ZONE_BASE
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
@@ -341,6 +411,40 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
 
   return self
 end
+
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_POLYGON self
+-- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:SmokeZone( SmokeColor )
+  self:F2( SmokeColor )
+
+  local i 
+  local j 
+  local Segments = 10
+  
+  i = 1
+  j = #self.Polygon
+  
+  while i <= #self.Polygon do
+    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+    
+    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
+    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    
+    for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
+      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
+    end
+    j = i
+    i = i + 1
+  end
+
+  return self
+end
+
+
 
 
 --- Returns if a location is within the zone.

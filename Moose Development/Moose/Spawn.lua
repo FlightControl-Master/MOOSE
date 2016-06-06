@@ -473,6 +473,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		end
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
+		
+		local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Group#GROUP
+		local Route = SpawnGroup:GetTaskRoute()
+		SpawnGroup:Route(Route)
+		
+		
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
 		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
@@ -980,11 +986,12 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil
-	SpawnTemplate.lateActivation = false
+	--SpawnTemplate.lateActivation = false
+  SpawnTemplate.lateActivation = false -- TODO BUGFIX 
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
 	  self:T( "For ground units, visible needs to be false..." )
-		SpawnTemplate.visible = false
+		SpawnTemplate.visible = false -- TODO BUGFIX
 	end
 	
 	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
@@ -1032,7 +1039,7 @@ end
 -- @param #number SpawnIndex
 -- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
+	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeTemplate } )
 
   if self.SpawnRandomizeTemplate then
     self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefixTable[ math.random( 1, #self.SpawnTemplatePrefixTable ) ]
