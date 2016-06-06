@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160602_1448' ) 
+env.info( 'Moose Generation Timestamp: 20160606_1343' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -2930,12 +2930,12 @@ end
 --- Trace a function call. Must be at the beginning of the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:F( Arguments )
+function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
   if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
-    local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
     
     local Function = "function"
     if DebugInfoCurrent.name then
@@ -2958,8 +2958,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 2 then
-    self:F( Arguments )
+    self:F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -2969,8 +2972,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 3 then
-    self:F( Arguments )
+    self:F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -2978,12 +2984,12 @@ end
 --- Trace a function logic. Can be anywhere within the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:T( Arguments )
+function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
 	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
-		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-		local DebugInfoFrom = debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
 		
 		local Function = "function"
 		if DebugInfoCurrent.name then
@@ -3006,8 +3012,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 2 then
-    self:T( Arguments )
+    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -3017,8 +3026,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 3 then
-    self:T( Arguments )
+    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -3170,7 +3182,7 @@ function SCHEDULER:_Scheduler()
   
   self:T( { Status, Result } )
   
-  if Status and Status == true and Result and Result == true then
+  if Status and ( ( not Result ) or ( Result and Result ~= false ) ) then
     if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
       timer.scheduleFunction(
         self._Scheduler,
@@ -4071,20 +4083,21 @@ function MENU_COALITION_COMMAND:Remove()
   self.ParentMenu.Menus[self.MenuPath] = nil
   return nil
 end
---- GROUP class.
---
--- @{GROUP} class
--- ==============
--- The @{GROUP} class is a wrapper class to handle the DCS Group objects:
+--- This module contains the GROUP class.
+-- 
+-- 1) @{Group#GROUP} class, extends @{Base#BASE}
+-- =============================================
+-- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
 --  * Handle local Group Controller.
 --  * Manage the "state" of the DCS Group.
 --
+-- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
--- GROUP reference methods
--- =======================
+-- 1.1) GROUP reference methods
+-- -----------------------
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
 --
@@ -4100,7 +4113,121 @@ end
 --  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
 --
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).
+-- 1.2) GROUP task methods
+-- -----------------------
+-- Several group task methods are available that help you to prepare tasks. 
+-- These methods return a string consisting of the task description, which can then be given to either a @{Group#GROUP.PushTask} or @{Group#SetTask} method to assign the task to the GROUP.
+-- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
+-- Each task description where applicable indicates for which group category the task is valid.
+-- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
+-- 
+-- ### 1.2.1) Assigned task methods
+-- 
+-- Assigned task methods make the group execute the task where the location of the (possible) targets of the task are known before being detected.
+-- This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.
+-- 
+-- Find below a list of the **assigned task** methods:
+-- 
+--   * @{#GROUP.TaskAttackGroup}: (AIR) Attack a Group.
+--   * @{#GROUP.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
+--   * @{#GROUP.TaskAttackUnit}: (AIR) Attack the Unit.
+--   * @{#GROUP.TaskBombing}: (AIR) Delivering weapon at the point on the ground.
+--   * @{#GROUP.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
+--   * @{#GROUP.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--   * @{#GROUP.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
+--   * @{#GROUP.TaskEscort}: (AIR) Escort another airborne group. 
+--   * @{#GROUP.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
+--   * @{#GROUP.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{#GROUP.TaskFollow}: (AIR) Following another airborne group.
+--   * @{#GROUP.TaskHold}: (GROUND) Hold ground group from moving.
+--   * @{#GROUP.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
+--   * @{#GROUP.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{#GROUP.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
+--   * @{#GROUP.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
+--   * @{#GROUP.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{#GROUP.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{#GROUP.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--
+-- ### 1.2.2) EnRoute task methods
+-- 
+-- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
+-- 
+--   * @{#GROUP.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+--   * @{#GROUP.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{#GROUP.EnRouteTaskEWR}: (AIR) Attack the Unit.
+--   * @{#GROUP.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+-- 
+-- ### 1.2.3) Preparation task methods
+-- 
+-- There are certain task methods that allow to tailor the task behaviour:
+--
+--   * @{#GROUP.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
+--   * @{#GROUP.TaskCombo}: Return a Combo Task taking an array of Tasks.
+--   * @{#GROUP.TaskCondition}: Return a condition section for a controlled task.
+--   * @{#GROUP.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
+-- 
+-- ### 1.2.4) Obtain the mission from group templates
+-- 
+-- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
+-- 
+--   * @{#GROUP.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--
+-- 1.3) GROUP Command methods
+-- --------------------------
+-- Group **command methods** prepare the execution of commands using the @{#GROUP.SetCommand} method:
+-- 
+--   * @{#GROUP.CommandDoScript}: Do Script command.
+--   * @{#GROUP.CommandSwitchWayPoint}: Perform a switch waypoint command.
+-- 
+-- 1.4) GROUP Option methods
+-- -------------------------
+-- Group **Option methods** change the behaviour of the Group while being alive.
+-- 
+-- ### 1.4.1) Rule of Engagement:
+-- 
+--   * @{#GROUP.OptionROEWeaponFree} 
+--   * @{#GROUP.OptionROEOpenFire}
+--   * @{#GROUP.OptionROEReturnFire}
+--   * @{#GROUP.OptionROEEvadeFire}
+-- 
+-- To check whether an ROE option is valid for a specific group, use:
+-- 
+--   * @{#GROUP.OptionROEWeaponFreePossible} 
+--   * @{#GROUP.OptionROEOpenFirePossible}
+--   * @{#GROUP.OptionROEReturnFirePossible}
+--   * @{#GROUP.OptionROEEvadeFirePossible}
+-- 
+-- ### 1.4.2) Rule on thread:
+-- 
+--   * @{#GROUP.OptionROTNoReaction}
+--   * @{#GROUP.OptionROTPassiveDefense}
+--   * @{#GROUP.OptionROTEvadeFire}
+--   * @{#GROUP.OptionROTVertical}
+-- 
+-- To test whether an ROT option is valid for a specific group, use:
+-- 
+--   * @{#GROUP.OptionROTNoReactionPossible}
+--   * @{#GROUP.OptionROTPassiveDefensePossible}
+--   * @{#GROUP.OptionROTEvadeFirePossible}
+--   * @{#GROUP.OptionROTVerticalPossible}
+-- 
+-- 1.5) GROUP Zone validation methods
+-- ----------------------------------
+-- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- Use the following Zone validation methods on the group:
+-- 
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- 
 -- @module Group
 -- @author FlightControl
 
@@ -4511,7 +4638,7 @@ end
 -- Note that when the WayPoint parameter is used, the new start mission waypoint of the group will be 1!
 -- @param #GROUP self
 -- @param #number WayPoint The WayPoint from where to execute the mission.
--- @param #WaitTime The amount seconds to wait before initiating the mission.
+-- @param #number WaitTime The amount seconds to wait before initiating the mission.
 -- @return #GROUP
 function GROUP:WayPointExecute( WayPoint, WaitTime )
 
@@ -4597,7 +4724,59 @@ end
 
 
 
--- Is Functions
+-- Is Zone Functions
+
+--- Returns true if all units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsCompletelyInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    else
+      return false
+    end
+  end
+  
+  return true
+end
+
+--- Returns true if some units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsPartlyInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+      return true
+    end
+  end
+  
+  return false
+end
+
+--- Returns true if none of the group units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsNotInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+      return false
+    end
+  end
+  
+  return true
+end
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
@@ -4832,7 +5011,7 @@ function GROUP:SetTask( DCSTask, WaitTime )
 end
 
 
---- Return a condition section for a controlled task
+--- Return a condition section for a controlled task.
 -- @param #GROUP self
 -- @param DCSTime#Time time
 -- @param #string userFlag
@@ -4856,7 +5035,7 @@ function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration
   return DCSStopCondition
 end
 
---- Return a Controlled Task taking a Task and a TaskCondition
+--- Return a Controlled Task taking a Task and a TaskCondition.
 -- @param #GROUP self
 -- @param DCSTask#Task DCSTask
 -- @param #DCSStopCondition DCSStopCondition
@@ -4878,9 +5057,9 @@ function GROUP:TaskControlled( DCSTask, DCSStopCondition )
   return DCSTaskControlled
 end
 
---- Return a Combo Task taking an array of Tasks
+--- Return a Combo Task taking an array of Tasks.
 -- @param #GROUP self
--- @param #list<DCSTask#Task> DCSTasks
+-- @param DCSTask#TaskArray DCSTasks Array of @{DCSTask#Task}
 -- @return DCSTask#Task
 function GROUP:TaskCombo( DCSTasks )
   self:F2( { DCSTasks } )
@@ -4898,7 +5077,7 @@ function GROUP:TaskCombo( DCSTasks )
   return DCSTaskCombo
 end
 
---- Return a WrappedAction Task taking a Command
+--- Return a WrappedAction Task taking a Command.
 -- @param #GROUP self
 -- @param DCSCommand#Command DCSCommand
 -- @return DCSTask#Task
@@ -5150,7 +5329,7 @@ function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   return DCSTask
 end
 
---- (AIR) Orbit at the current position of the first unit of the group at a specified alititude
+--- (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
 -- @param #GROUP self
 -- @param #number Altitude The altitude to hold the position.
 -- @param #number Speed The speed flying when holding the position.
@@ -5326,7 +5505,7 @@ function GROUP:TaskLandAtVec2( Point, Duration )
   return DCSTask
 end
 
---- (AIR) Land the group at a @{Zone#ZONE).
+--- (AIR) Land the group at a @{Zone#ZONE_RADIUS).
 -- @param #GROUP self
 -- @param Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
@@ -5346,6 +5525,8 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
   self:T3( DCSTask )
   return DCSTask
 end
+
+
 
 --- (AIR) Following another airborne group. 
 -- The unit / group will follow lead unit of another group, wingmens of both groups will continue following their leaders. 
@@ -5396,7 +5577,7 @@ end
 -- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the group relative lead unit of another group in frame reference oriented by course of lead unit of another group. If another group is on land the unit / group will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another group. Once reached the unit / group Follow task is finished.
 -- @param #number EngagementDistanceMax Maximal distance from escorted group to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
--- @param #list<DCSTypes#AttributeName> TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskEscort( FollowGroup, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes )
   self:F2( { self.GroupName, FollowGroup, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
@@ -5439,7 +5620,7 @@ end
 
 --- (GROUND) Fire at a VEC2 point until ammunition is finished.
 -- @param #GROUP self
--- @param DCSTypes#Vec2 The point to fire at.
+-- @param DCSTypes#Vec2 PointVec2 The point to fire at.
 -- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:TaskFireAtPoint( PointVec2, Radius )
@@ -5487,6 +5668,7 @@ function GROUP:TaskHold()
   return DCSTask
 end
 
+
 -- TASKS FOR AIRBORNE AND GROUND UNITS/GROUPS
 
 --- (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction. 
@@ -5530,7 +5712,7 @@ end
 --- (AIR) Engaging targets of defined types.
 -- @param #GROUP self
 -- @param DCSTypes#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored. 
--- @param #list<#DCSTypes#AttributeName> TargetTypes Array of target categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
@@ -5559,11 +5741,12 @@ function GROUP:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
 end
 
 
+
 --- (AIR) Engaging a targets of defined types at circle-shaped zone.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the zone. 
 -- @param DCSTypes#Distance Radius Radius of the zone. 
--- @param #list<#DCSTypes#AttributeName> TargetTypes Array of target categories allowed to engage. 
+-- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
 function GROUP:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priority )
@@ -5592,6 +5775,7 @@ function GROUP:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priorit
   self:T3( { DCSTask } )
   return DCSTask
 end
+
 
 --- (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
 -- @param #GROUP self
@@ -5699,6 +5883,7 @@ function GROUP:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, WeaponEx
   self:T3( { DCSTask } )
   return DCSTask
 end
+
 
 
 --- (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
@@ -5847,13 +6032,13 @@ end
 
 
 
---- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--- (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
 -- @param #GROUP EmbarkingGroup The group to be embarked.
 -- @return DCSTask#Task The DCS task structure
-function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
+function GROUP:TaskEmbarking( Point, Duration, EmbarkingGroup )
   self:F2( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
   local DCSTask
@@ -5872,12 +6057,14 @@ function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
   return DCSTask
 end
 
+--- (GROUND) Embark to a Transport landed at a location.
+
 --- Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
 -- @return DCSTask#Task The DCS task structure.
-function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
+function GROUP:TaskEmbarkToTransport( Point, Radius )
   self:F2( { self.GroupName, Point, Radius } )
 
   local DCSTask --DCSTask#Task
@@ -5892,7 +6079,9 @@ function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
   return DCSTask
 end
 
---- Return a Misson task from a mission template.
+
+
+--- (AIR + GROUND) Return a mission task from a mission template.
 -- @param #GROUP self
 -- @param #table TaskMission A table containing the mission task.
 -- @return DCSTask#Task
@@ -5920,7 +6109,7 @@ function GROUP:TaskRoute( Points )
   return DCSTask
 end
 
---- Make the DCS Group to fly to a given point and hover.
+--- (AIR + GROUND) Make the Group move to fly to a given point.
 -- @param #GROUP self
 -- @param DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
@@ -5971,7 +6160,7 @@ function GROUP:TaskRouteToVec2( Point, Speed )
   return self
 end
 
---- Make the DCS Group to fly to a given point and hover.
+--- (AIR + GROUND) Make the Group move to a given point.
 -- @param #GROUP self
 -- @param DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
@@ -6052,7 +6241,7 @@ end
 
 
 
---- Route the group to a given zone.
+--- (AIR + GROUND) Route the group to a given zone.
 -- The group final destination point can be randomized.
 -- A speed can be given in km/h.
 -- A given formation can be given.
@@ -6561,7 +6750,7 @@ end
 --- Returns a message for a coalition or a client.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
 function GROUP:Message( Message, Duration )
   self:F2( { Message, Duration } )
@@ -6578,7 +6767,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToAll( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -6594,7 +6783,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTYpes#Duration Duration The duration of the message.
 function GROUP:MessageToRed( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -6610,7 +6799,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToBlue( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -6626,7 +6815,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @param Client#CLIENT Client The client object receiving the message.
 function GROUP:MessageToClient( Message, Duration, Client )
   self:F2( { Message, Duration } )
@@ -6638,11 +6827,11 @@ function GROUP:MessageToClient( Message, Duration, Client )
 
   return nil
 end
---- UNIT Class
+--- This module contains the UNIT class.
 -- 
--- @{UNIT} class
--- ==============
--- The @{UNIT} class is a wrapper class to handle the DCS Unit objects:
+-- 1) @{Unit#UNIT} class, extends @{Base#BASE}
+-- ===========================================
+-- The @{Unit#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
 --  * Enhance with Unit specific APIs not in the DCS Unit API set.
@@ -6650,8 +6839,8 @@ end
 --  * Manage the "state" of the DCS Unit.
 --  
 --  
--- UNIT reference methods
--- ====================== 
+-- 1.1) UNIT reference methods
+-- ----------------------
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
@@ -6669,19 +6858,15 @@ end
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
--- DCS UNIT APIs
--- =============
+-- 1.2) DCS UNIT APIs
+-- ------------------
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSUnit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
--- Additional UNIT APIs
--- ====================
--- The UNIT class comes with additional methods. Find below a summary.
--- 
--- Smoke, Flare Units
--- ------------------
+-- 1.3) Smoke, Flare Units
+-- -----------------------
 -- The UNIT class provides methods to smoke or flare units easily. 
 -- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
 -- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
@@ -6689,26 +6874,25 @@ end
 -- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
 -- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
 -- 
--- Position, Point
--- ---------------
+-- 1.4) Location Position, Point
+-- -----------------------------
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
--- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current location of the DCS Unit in a Vec2 (2D) or a Vec3 (3D) vector respectively.
--- If you want to obtain the complete 3D position including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
+-- If you want to obtain the complete **3D position** including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
--- Alive
--- -----
+-- 1.5) Test if alive
+-- ------------------
 -- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
 -- 
--- Test for other units in radius
--- ------------------------------
--- One can test if another DCS Unit is within a given radius of the current DCS Unit, by using the @{#UNIT.OtherUnitInRadius}() method.
+-- 1.6) Test for proximity
+-- -----------------------
+-- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- More functions will be added
--- ----------------------------
--- During the MOOSE development, more functions will be added. A complete list of the current functions is below.
+-- ### 1.6.1) Zones
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- 
--- 
+-- ### 1.6.2) Units
+-- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
 -- 
 -- @module Unit
 -- @author FlightControl
@@ -7180,7 +7364,7 @@ function UNIT:GetPointVec2()
   	UnitPointVec2.x = UnitPointVec3.x
   	UnitPointVec2.y = UnitPointVec3.z
   
-  	self:T3( UnitPointVec2 )
+  	self:T2( UnitPointVec2 )
   	return UnitPointVec2
   end
   
@@ -7241,7 +7425,35 @@ function UNIT:GetVelocity()
   
   return nil
 end
- 
+
+-- Is functions
+
+--- Returns true if the unit is within a @{Zone}.
+-- @param #UNIT self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
+function UNIT:IsInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+  
+  self:T( { IsInZone } )
+  return IsInZone 
+end
+
+--- Returns true if the unit is not within a @{Zone}.
+-- @param #UNIT self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
+function UNIT:IsNotInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+  
+  self:T( { IsInZone } )
+  return IsInZone 
+end
+
 --- Returns true if the DCS Unit is in the air.
 -- @param Unit#UNIT self
 -- @return #boolean true if in the air.
@@ -7413,92 +7625,492 @@ function UNIT:IsAir()
   return IsAirResult
 end
 
---- ZONE Classes
+--- This module contains the ZONE classes, inherited from @{Zone#ZONE_BASE}.
+-- There are essentially two core functions that zones accomodate:
+-- 
+--   * Test if an object is within the zone boundaries.
+--   * Provide the zone behaviour. Some zones are static, while others are moveable.
+-- 
+-- The object classes are using the zone classes to test the zone boundaries, which can take various forms:
+-- 
+--   * Test if completely within the zone.
+--   * Test if partly within the zone (for @{Group#GROUP} objects).
+--   * Test if not in the zone.
+--   * Distance to the nearest intersecting point of the zone.
+--   * Distance to the center of the zone.
+--   * ...
+-- 
+-- Each of these ZONE classes have a zone name, and specific parameters defining the zone type:
+--   
+--   * @{Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
+--   * @{Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
+--   * @{Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
+--   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+--   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- 
+-- Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- 
+--   * @{#ZONE_BASE.IsPointVec2InZone}: Returns if a location is within the zone.
+--   * @{#ZONE_BASE.IsPointVec3InZone}: Returns if a point is within the zone.
+-- 
+-- ===
+-- 
+-- 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
+-- ================================================
+-- The ZONE_BASE class defining the base for all other zone classes.
+-- 
+-- ===
+-- 
+-- 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
+-- =======================================================
+-- The ZONE_RADIUS class defined by a zone name, a location and a radius.
+-- 
+-- ===
+-- 
+-- 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
+-- ==========================================
+-- The ZONE class, defined by the zone name as defined within the Mission Editor.
+-- 
+-- ===
+-- 
+-- 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
+-- =======================================================
+-- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- 
+-- ===
+-- 
+-- 5) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
+-- ========================================================
+-- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- 
+-- ===
+-- 
 -- @module Zone
+-- @author FlightControl
+
 
 Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Message" )
+Include.File( "Point" )
 
---- The ZONE class
--- @type ZONE
--- @Extends Base#BASE
-ZONE = {
-	ClassName="ZONE",
+
+
+--- The ZONE_BASE class
+-- @type ZONE_BASE
+-- @extends Base#BASE
+ZONE_BASE = {
+  ClassName = "ZONE_BASE",
+  }
+
+--- ZONE_BASE constructor
+-- @param #ZONE_BASE self
+-- @param #string ZoneName Name of the zone.
+-- @return #ZONE_BASE self
+function ZONE_BASE:New( ZoneName )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( ZoneName )
+
+  self.ZoneName = ZoneName
+  
+  return self
+end
+
+--- Returns if a location is within the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @return #boolean true if the location is within the zone.
+function ZONE_BASE:IsPointVec2InZone( PointVec2 )
+  self:F2( PointVec2 )
+
+  return false
+end
+
+--- Returns if a point is within the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @return #boolean true if the point is within the zone.
+function ZONE_BASE:IsPointVec3InZone( PointVec3 )
+  self:F2( PointVec3 )
+
+  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
+
+  return InZone
+end
+
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_BASE self
+-- @param SmokeColor The smoke color.
+function ZONE_BASE:SmokeZone( SmokeColor )
+  self:F2( SmokeColor )
+
+end
+
+
+--- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
+-- @type ZONE_RADIUS
+-- @field DCSTypes#Vec2 PointVec2 The current location of the zone.
+-- @field DCSTypes#Distance Radius The radius of the zone.
+-- @extends Zone#ZONE_BASE
+ZONE_RADIUS = {
+	ClassName="ZONE_RADIUS",
 	}
-	
-function ZONE:New( ZoneName )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( ZoneName )
 
-	local Zone = trigger.misc.getZone( ZoneName )
-	
-	if not Zone then
-		error( "Zone " .. ZoneName .. " does not exist." )
-		return nil
-	end
-	
-	self.Zone = Zone
-	self.ZoneName = ZoneName
+--- Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.
+-- @param #ZONE_RADIUS self
+-- @param #string ZoneName Name of the zone.
+-- @param DCSTypes#Vec2 PointVec2 The location of the zone.
+-- @param DCSTypes#Distance Radius The radius of the zone.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:New( ZoneName, PointVec2, Radius )
+	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+	self:F( { ZoneName, PointVec2, Radius } )
+
+	self.Radius = Radius
+	self.PointVec2 = PointVec2
 	
 	return self
 end
 
-function ZONE:GetPointVec2()
-	self:F( self.ZoneName )
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_RADIUS self
+-- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @param #number Points (optional) The amount of points in the circle.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
+  self:F2( SmokeColor )
 
-	local Zone = trigger.misc.getZone( self.ZoneName )
-	local Point = { x = Zone.point.x, y = Zone.point.z }
+  local Point = {}
+  local PointVec2 = self:GetPointVec2()
 
-	self:T( { Zone, Point } )
-	
-	return Point	
-end
+  Points = Points and Points or 360
 
-function ZONE:GetPointVec3( Height )
-  self:F( self.ZoneName )
-
-  local Zone = trigger.misc.getZone( self.ZoneName )
-  local Point = { x = Zone.point.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = Zone.point.z }
-
-  self:T( { Zone, Point } )
+  local Angle
+  local RadialBase = math.pi*2
   
-  return Point  
+  for Angle = 0, 360, 360 / Points do
+    local Radial = Angle * RadialBase / 360
+    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    POINT_VEC2:New( Point.x, Point.y ):Smoke( SmokeColor )
+  end
+
+  return self
 end
 
-function ZONE:GetRandomPointVec2()
+
+--- Flares the zone boundaries in a color.
+-- @param #ZONE_RADIUS self
+-- @param #POINT_VEC3.FlareColor FlareColor The flare color.
+-- @param #number Points (optional) The amount of points in the circle.
+-- @param DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
+  self:F2( { FlareColor, Azimuth } )
+
+  local Point = {}
+  local PointVec2 = self:GetPointVec2()
+  
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  for Angle = 0, 360, 360 / Points do
+    local Radial = Angle * RadialBase / 360
+    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    POINT_VEC2:New( Point.x, Point.y ):Flare( FlareColor, Azimuth )
+  end
+
+  return self
+end
+
+--- Returns the radius of the zone.
+-- @param #ZONE_RADIUS self
+-- @return DCSTypes#Distance The radius of the zone.
+function ZONE_RADIUS:GetRadius()
+  self:F2( self.ZoneName )
+
+  self:T2( { self.Radius } )
+
+  return self.Radius
+end
+
+--- Sets the radius of the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Distance Radius The radius of the zone.
+-- @return DCSTypes#Distance The radius of the zone.
+function ZONE_RADIUS:SetRadius( Radius )
+  self:F2( self.ZoneName )
+
+  self.Radius = Radius
+  self:T2( { self.Radius } )
+
+  return self.Radius
+end
+
+--- Returns the location of the zone.
+-- @param #ZONE_RADIUS self
+-- @return DCSTypes#Vec2 The location of the zone.
+function ZONE_RADIUS:GetPointVec2()
+	self:F2( self.ZoneName )
+
+	self:T2( { self.PointVec2 } )
+	
+	return self.PointVec2	
+end
+
+--- Sets the location of the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Vec2 PointVec2 The new location of the zone.
+-- @return DCSTypes#Vec2 The new location of the zone.
+function ZONE_RADIUS:SetPointVec2( PointVec2 )
+  self:F2( self.ZoneName )
+  
+  self.PointVec2 = PointVec2
+
+  self:T2( { self.PointVec2 } )
+  
+  return self.PointVec2 
+end
+
+--- Returns the point of the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCSTypes#Vec3 The point of the zone.
+function ZONE_RADIUS:GetPointVec3( Height )
+  self:F2( self.ZoneName )
+  
+  local PointVec2 = self:GetPointVec2()
+
+  local PointVec3 = { x = PointVec2.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = PointVec2.y }
+
+  self:T2( { PointVec3 } )
+  
+  return PointVec3  
+end
+
+
+--- Returns if a location is within the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @return #boolean true if the location is within the zone.
+function ZONE_RADIUS:IsPointVec2InZone( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local ZonePointVec2 = self:GetPointVec2()
+
+  if (( PointVec2.x - ZonePointVec2.x )^2 + ( PointVec2.y - ZonePointVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
+    return true
+  end
+  
+  return false
+end
+
+--- Returns if a point is within the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @return #boolean true if the point is within the zone.
+function ZONE_RADIUS:IsPointVec3InZone( PointVec3 )
+  self:F2( PointVec3 )
+
+  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
+
+  return InZone
+end
+
+--- Returns a random location within the zone.
+-- @param #ZONE_RADIUS self
+-- @return DCSTypes#Vec2 The random location within the zone.
+function ZONE_RADIUS:GetRandomPointVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
+	local PointVec2 = self:GetPointVec2()
 
-	local Zone = trigger.misc.getZone( self.ZoneName )
-	
 	local angle = math.random() * math.pi*2;
-	Point.x = Zone.point.x + math.cos( angle ) * math.random() * Zone.radius;
-	Point.y = Zone.point.z + math.sin( angle ) * math.random() * Zone.radius;
+	Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+	Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 	
-	self:T( { Zone, Point } )
+	self:T( { Point } )
 	
 	return Point
 end
 
-function ZONE:GetRadius()
-	self:F( self.ZoneName )
 
-	local Zone = trigger.misc.getZone( self.ZoneName )
 
-	self:T( { Zone } )
+--- The ZONE class, defined by the zone name as defined within the Mission Editor. The location and the radius are automatically collected from the mission settings.
+-- @type ZONE
+-- @extends Zone#ZONE_RADIUS
+ZONE = {
+  ClassName="ZONE",
+  }
 
-	return Zone.radius
+
+--- Constructor of ZONE, taking the zone name.
+-- @param #ZONE self
+-- @param #string ZoneName The name of the zone as defined within the mission editor.
+-- @return #ZONE
+function ZONE:New( ZoneName )
+
+  local Zone = trigger.misc.getZone( ZoneName )
+  
+  if not Zone then
+    error( "Zone " .. ZoneName .. " does not exist." )
+    return nil
+  end
+
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, { x = Zone.point.x, y = Zone.point.z }, Zone.radius ) )
+  self:F( ZoneName )
+
+  self.Zone = Zone
+  
+  return self
 end
 
---- The CLIENT models client units in multi player missions.
+
+--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- @type ZONE_UNIT
+-- @field Unit#UNIT ZoneUNIT
+-- @extends Zone#ZONE_RADIUS
+ZONE_UNIT = {
+  ClassName="ZONE_UNIT",
+  }
+  
+--- Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.
+-- @param #ZONE_UNIT self
+-- @param #string ZoneName Name of the zone.
+-- @param Unit#UNIT ZoneUNIT The unit as the center of the zone.
+-- @param DCSTypes#Distance Radius The radius of the zone.
+-- @return #ZONE_UNIT self
+function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetPointVec2(), Radius ) )
+  self:F( { ZoneName, ZoneUNIT:GetPointVec2(), Radius } )
+
+  self.ZoneUNIT = ZoneUNIT
+  
+  return self
+end
+
+
+--- Returns the current location of the @{Unit#UNIT}.
+-- @param #ZONE_UNIT self
+-- @return DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
+function ZONE_UNIT:GetPointVec2()
+  self:F( self.ZoneName )
+  
+  local ZonePointVec2 = self.ZoneUNIT:GetPointVec2()
+
+  self:T( { ZonePointVec2 } )
+  
+  return ZonePointVec2
+end
+
+
+--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- @type ZONE_POLYGON
+-- @extends Zone#ZONE_BASE
+ZONE_POLYGON = {
+  ClassName="ZONE_POLYGON",
+  }
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+  self:F( { ZoneName, ZoneGroup } )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+  local i = 0
+  
+  self.Polygon = {}
+  
+  for i = 1, #GroupPoints do
+    self.Polygon[i] = {}
+    self.Polygon[i].x = GroupPoints[i].x
+    self.Polygon[i].y = GroupPoints[i].y
+  end
+
+  return self
+end
+
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_POLYGON self
+-- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:SmokeZone( SmokeColor )
+  self:F2( SmokeColor )
+
+  local i 
+  local j 
+  local Segments = 10
+  
+  i = 1
+  j = #self.Polygon
+  
+  while i <= #self.Polygon do
+    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+    
+    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
+    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    
+    for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
+      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
+    end
+    j = i
+    i = i + 1
+  end
+
+  return self
+end
+
+
+
+
+--- Returns if a location is within the zone.
+-- @param #ZONE_POLYGON self
+-- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @return #boolean true if the location is within the zone.
+function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
+  self:F2( PointVec2 )
+
+  local i 
+  local j 
+  local c = false
+  
+  i = 1
+  j = #self.Polygon
+  
+  while i < #self.Polygon do
+    j = i
+    i = i + 1
+    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+    if ( ( ( self.Polygon[i].y > PointVec2.y ) ~= ( self.Polygon[j].y > PointVec2.y ) ) and
+         ( PointVec2.x < ( self.Polygon[j].x - self.Polygon[i].x ) * ( PointVec2.y - self.Polygon[i].y ) / ( self.Polygon[j].y - self.Polygon[i].y ) + self.Polygon[i].x ) 
+       ) then
+       c = not c
+    end
+    self:T2( { "c = ", c } )
+  end
+
+  self:T( { "c = ", c } )
+  return c
+end
+
+--- This module contains the CLIENT class.
 -- 
--- @{#CLIENT} class
--- ================
+-- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
+-- ===============================================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -7509,8 +8121,8 @@ end
 -- 
 -- Clients are being used by the @{MISSION} class to follow players and register their successes.
 --  
--- CLIENT reference methods
--- ======================= 
+-- 1.1) CLIENT reference methods
+-- -----------------------------
 -- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
@@ -8010,9 +8622,11 @@ Include.File( "Routines" )
 Include.File( "Base" )
 Include.File( "Menu" )
 Include.File( "Group" )
+Include.File( "Static" )
 Include.File( "Unit" )
 Include.File( "Event" )
 Include.File( "Client" )
+Include.File( "Scheduler" )
 
 
 --- DATABASE class
@@ -8028,7 +8642,9 @@ DATABASE = {
   },
   DCSUnits = {},
   DCSGroups = {},
+  DCSStatics = {},
   UNITS = {},
+  STATICS = {},
   GROUPS = {},
   PLAYERS = {},
   PLAYERSALIVE = {},
@@ -8074,7 +8690,8 @@ function DATABASE:New()
   _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
   
   self:_RegisterTemplates()
-  self:_RegisterDatabase()
+  self:_RegisterGroupsAndUnits()
+  self:_RegisterStatics()
   self:_RegisterPlayers()
   
   return self
@@ -8105,6 +8722,32 @@ end
 function DATABASE:DeleteUnit( DCSUnitName )
 
   self.DCSUnits[DCSUnitName] = nil 
+end
+
+--- Adds a Static based on the Static Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddStatic( DCSStatic, DCSStaticName )
+
+  self.DCSStatics[DCSStaticName] = DCSStatic 
+  self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+end
+
+
+--- Deletes a Static from the DATABASE based on the Static Name.
+-- @param #DATABASE self
+function DATABASE:DeleteStatic( DCSStaticName )
+
+  self.DCSStatics[DCSStaticName] = nil 
+end
+
+--- Finds a STATIC based on the StaticName.
+-- @param #DATABASE self
+-- @param #string StaticName
+-- @return Static#STATIC The found STATIC.
+function DATABASE:FindStatic( StaticName )
+
+  local StaticFound = self.STATICS[StaticName]
+  return StaticFound
 end
 
 
@@ -8194,13 +8837,14 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCategoryID = nil
 
   self:_RegisterTemplate( SpawnTemplate )
+
+  self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
   SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
   SpawnTemplate.SpawnCountryID = SpawnCountryID
   SpawnTemplate.SpawnCategoryID = SpawnCategoryID
-
 
   local SpawnGroup = GROUP:Register( SpawnTemplate.name )
   return SpawnGroup
@@ -8294,10 +8938,10 @@ function DATABASE:_RegisterPlayers()
 end
 
 
---- Private method that registers all datapoints within in the mission.
+--- Private method that registers all Groups and Units within in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
-function DATABASE:_RegisterDatabase()
+function DATABASE:_RegisterGroupsAndUnits()
 
   local CoalitionsData = { GroupsRed = coalition.getGroups( coalition.side.RED ), GroupsBlue = coalition.getGroups( coalition.side.BLUE ) }
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
@@ -8329,6 +8973,27 @@ function DATABASE:_RegisterDatabase()
   
   return self
 end
+
+function DATABASE:_RegisterStatics()
+
+  local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
+
+      if DCSStatic:isExist() then
+        local DCSStaticName = DCSStatic:getName()
+  
+        self:E( { "Register Static:", DCSStatic, DCSStaticName } )
+        self:AddStatic( DCSStatic, DCSStaticName )
+      else
+        self:E( { "Static does not exist: ",  DCSStatic } )
+      end
+    end
+  end
+
+  return self
+end
+
 
 --- Events
 
@@ -13835,10 +14500,10 @@ function CLEANUP:_CleanUpScheduler()
 	return true
 end
 
---- Dynamic spawning of groups (and units).
+--- This module contains the SPAWN class.
 -- 
--- @{#SPAWN} class
--- ===============
+-- 1) @{Spawn#SPAWN} class, extends @{Base#BASE}
+-- =============================================
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
@@ -13861,8 +14526,8 @@ end
 --   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
 --   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
 --   
--- SPAWN construction methods:
--- =========================== 
+-- 1.1) SPAWN construction methods
+-- -------------------------------
 -- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
 -- 
 --   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
@@ -13871,8 +14536,8 @@ end
 -- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
--- SPAWN initialization methods: 
--- =============================
+-- 1.2) SPAWN initialization methods
+-- ---------------------------------
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
@@ -13882,8 +14547,8 @@ end
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
--- SPAWN spawning methods:
--- =======================
+-- 1.3) SPAWN spawning methods
+-- ---------------------------
 -- Groups can be spawned at different times and methods:
 -- 
 --   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
@@ -13895,8 +14560,8 @@ end
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- SPAWN object cleaning:
--- =========================
+-- 1.4) SPAWN object cleaning
+-- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
@@ -13907,7 +14572,7 @@ end
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- ====
+-- 
 -- @module Spawn
 -- @author FlightControl
 
@@ -14310,6 +14975,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		end
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
+		
+		local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Group#GROUP
+		local Route = SpawnGroup:GetTaskRoute()
+		SpawnGroup:Route(Route)
+		
+		
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
 		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
@@ -14817,11 +15488,12 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil
-	SpawnTemplate.lateActivation = false
+	--SpawnTemplate.lateActivation = false
+  SpawnTemplate.lateActivation = false -- TODO BUGFIX 
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
 	  self:T( "For ground units, visible needs to be false..." )
-		SpawnTemplate.visible = false
+		SpawnTemplate.visible = false -- TODO BUGFIX
 	end
 	
 	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
@@ -14869,7 +15541,7 @@ end
 -- @param #number SpawnIndex
 -- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
+	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeTemplate } )
 
   if self.SpawnRandomizeTemplate then
     self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefixTable[ math.random( 1, #self.SpawnTemplatePrefixTable ) ]

@@ -1,17 +1,18 @@
---- GROUP class.
---
--- @{GROUP} class
--- ==============
--- The @{GROUP} class is a wrapper class to handle the DCS Group objects:
+--- This module contains the GROUP class.
+-- 
+-- 1) @{Group#GROUP} class, extends @{Base#BASE}
+-- =============================================
+-- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
 --  * Handle local Group Controller.
 --  * Manage the "state" of the DCS Group.
 --
+-- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
--- GROUP reference methods
--- =======================
+-- 1.1) GROUP reference methods
+-- -----------------------
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
 --
@@ -27,7 +28,121 @@
 --  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
 --
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).
+-- 1.2) GROUP task methods
+-- -----------------------
+-- Several group task methods are available that help you to prepare tasks. 
+-- These methods return a string consisting of the task description, which can then be given to either a @{Group#GROUP.PushTask} or @{Group#SetTask} method to assign the task to the GROUP.
+-- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
+-- Each task description where applicable indicates for which group category the task is valid.
+-- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
+-- 
+-- ### 1.2.1) Assigned task methods
+-- 
+-- Assigned task methods make the group execute the task where the location of the (possible) targets of the task are known before being detected.
+-- This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.
+-- 
+-- Find below a list of the **assigned task** methods:
+-- 
+--   * @{#GROUP.TaskAttackGroup}: (AIR) Attack a Group.
+--   * @{#GROUP.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
+--   * @{#GROUP.TaskAttackUnit}: (AIR) Attack the Unit.
+--   * @{#GROUP.TaskBombing}: (AIR) Delivering weapon at the point on the ground.
+--   * @{#GROUP.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
+--   * @{#GROUP.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--   * @{#GROUP.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
+--   * @{#GROUP.TaskEscort}: (AIR) Escort another airborne group. 
+--   * @{#GROUP.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
+--   * @{#GROUP.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{#GROUP.TaskFollow}: (AIR) Following another airborne group.
+--   * @{#GROUP.TaskHold}: (GROUND) Hold ground group from moving.
+--   * @{#GROUP.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
+--   * @{#GROUP.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{#GROUP.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
+--   * @{#GROUP.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
+--   * @{#GROUP.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{#GROUP.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{#GROUP.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--
+-- ### 1.2.2) EnRoute task methods
+-- 
+-- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
+-- 
+--   * @{#GROUP.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+--   * @{#GROUP.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{#GROUP.EnRouteTaskEWR}: (AIR) Attack the Unit.
+--   * @{#GROUP.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
+--   * @{#GROUP.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+-- 
+-- ### 1.2.3) Preparation task methods
+-- 
+-- There are certain task methods that allow to tailor the task behaviour:
+--
+--   * @{#GROUP.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
+--   * @{#GROUP.TaskCombo}: Return a Combo Task taking an array of Tasks.
+--   * @{#GROUP.TaskCondition}: Return a condition section for a controlled task.
+--   * @{#GROUP.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
+-- 
+-- ### 1.2.4) Obtain the mission from group templates
+-- 
+-- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
+-- 
+--   * @{#GROUP.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--
+-- 1.3) GROUP Command methods
+-- --------------------------
+-- Group **command methods** prepare the execution of commands using the @{#GROUP.SetCommand} method:
+-- 
+--   * @{#GROUP.CommandDoScript}: Do Script command.
+--   * @{#GROUP.CommandSwitchWayPoint}: Perform a switch waypoint command.
+-- 
+-- 1.4) GROUP Option methods
+-- -------------------------
+-- Group **Option methods** change the behaviour of the Group while being alive.
+-- 
+-- ### 1.4.1) Rule of Engagement:
+-- 
+--   * @{#GROUP.OptionROEWeaponFree} 
+--   * @{#GROUP.OptionROEOpenFire}
+--   * @{#GROUP.OptionROEReturnFire}
+--   * @{#GROUP.OptionROEEvadeFire}
+-- 
+-- To check whether an ROE option is valid for a specific group, use:
+-- 
+--   * @{#GROUP.OptionROEWeaponFreePossible} 
+--   * @{#GROUP.OptionROEOpenFirePossible}
+--   * @{#GROUP.OptionROEReturnFirePossible}
+--   * @{#GROUP.OptionROEEvadeFirePossible}
+-- 
+-- ### 1.4.2) Rule on thread:
+-- 
+--   * @{#GROUP.OptionROTNoReaction}
+--   * @{#GROUP.OptionROTPassiveDefense}
+--   * @{#GROUP.OptionROTEvadeFire}
+--   * @{#GROUP.OptionROTVertical}
+-- 
+-- To test whether an ROT option is valid for a specific group, use:
+-- 
+--   * @{#GROUP.OptionROTNoReactionPossible}
+--   * @{#GROUP.OptionROTPassiveDefensePossible}
+--   * @{#GROUP.OptionROTEvadeFirePossible}
+--   * @{#GROUP.OptionROTVerticalPossible}
+-- 
+-- 1.5) GROUP Zone validation methods
+-- ----------------------------------
+-- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- Use the following Zone validation methods on the group:
+-- 
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- 
 -- @module Group
 -- @author FlightControl
 
@@ -524,7 +639,59 @@ end
 
 
 
--- Is Functions
+-- Is Zone Functions
+
+--- Returns true if all units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsCompletelyInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    else
+      return false
+    end
+  end
+  
+  return true
+end
+
+--- Returns true if some units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsPartlyInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+      return true
+    end
+  end
+  
+  return false
+end
+
+--- Returns true if none of the group units of the group are within a @{Zone}.
+-- @param #GROUP self
+-- @param Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+function GROUP:IsNotInZone( Zone )
+  self:F2( { self.GroupName, Zone } )
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Unit#UNIT
+    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+      return false
+    end
+  end
+  
+  return true
+end
 
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
@@ -759,7 +926,7 @@ function GROUP:SetTask( DCSTask, WaitTime )
 end
 
 
---- Return a condition section for a controlled task
+--- Return a condition section for a controlled task.
 -- @param #GROUP self
 -- @param DCSTime#Time time
 -- @param #string userFlag
@@ -783,7 +950,7 @@ function GROUP:TaskCondition( time, userFlag, userFlagValue, condition, duration
   return DCSStopCondition
 end
 
---- Return a Controlled Task taking a Task and a TaskCondition
+--- Return a Controlled Task taking a Task and a TaskCondition.
 -- @param #GROUP self
 -- @param DCSTask#Task DCSTask
 -- @param #DCSStopCondition DCSStopCondition
@@ -805,7 +972,7 @@ function GROUP:TaskControlled( DCSTask, DCSStopCondition )
   return DCSTaskControlled
 end
 
---- Return a Combo Task taking an array of Tasks
+--- Return a Combo Task taking an array of Tasks.
 -- @param #GROUP self
 -- @param DCSTask#TaskArray DCSTasks Array of @{DCSTask#Task}
 -- @return DCSTask#Task
@@ -825,7 +992,7 @@ function GROUP:TaskCombo( DCSTasks )
   return DCSTaskCombo
 end
 
---- Return a WrappedAction Task taking a Command
+--- Return a WrappedAction Task taking a Command.
 -- @param #GROUP self
 -- @param DCSCommand#Command DCSCommand
 -- @return DCSTask#Task
@@ -1077,7 +1244,7 @@ function GROUP:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
   return DCSTask
 end
 
---- (AIR) Orbit at the current position of the first unit of the group at a specified alititude
+--- (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
 -- @param #GROUP self
 -- @param #number Altitude The altitude to hold the position.
 -- @param #number Speed The speed flying when holding the position.
@@ -1253,7 +1420,7 @@ function GROUP:TaskLandAtVec2( Point, Duration )
   return DCSTask
 end
 
---- (AIR) Land the group at a @{Zone#ZONE).
+--- (AIR) Land the group at a @{Zone#ZONE_RADIUS).
 -- @param #GROUP self
 -- @param Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
@@ -1273,6 +1440,8 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
   self:T3( DCSTask )
   return DCSTask
 end
+
+
 
 --- (AIR) Following another airborne group. 
 -- The unit / group will follow lead unit of another group, wingmens of both groups will continue following their leaders. 
@@ -1414,6 +1583,7 @@ function GROUP:TaskHold()
   return DCSTask
 end
 
+
 -- TASKS FOR AIRBORNE AND GROUND UNITS/GROUPS
 
 --- (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction. 
@@ -1486,6 +1656,7 @@ function GROUP:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
 end
 
 
+
 --- (AIR) Engaging a targets of defined types at circle-shaped zone.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the zone. 
@@ -1519,6 +1690,7 @@ function GROUP:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priorit
   self:T3( { DCSTask } )
   return DCSTask
 end
+
 
 --- (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
 -- @param #GROUP self
@@ -1626,6 +1798,7 @@ function GROUP:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, WeaponEx
   self:T3( { DCSTask } )
   return DCSTask
 end
+
 
 
 --- (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
@@ -1774,13 +1947,13 @@ end
 
 
 
---- Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--- (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 Point The point where to wait.
 -- @param #number Duration The duration in seconds to wait.
 -- @param #GROUP EmbarkingGroup The group to be embarked.
 -- @return DCSTask#Task The DCS task structure
-function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
+function GROUP:TaskEmbarking( Point, Duration, EmbarkingGroup )
   self:F2( { self.GroupName, Point, Duration, EmbarkingGroup.DCSGroup } )
 
   local DCSTask
@@ -1799,12 +1972,14 @@ function GROUP:TaskEmbarkingAtVec2( Point, Duration, EmbarkingGroup )
   return DCSTask
 end
 
+--- (GROUND) Embark to a Transport landed at a location.
+
 --- Move to a defined Vec2 Point, and embark to a group when arrived within a defined Radius.
 -- @param #GROUP self
 -- @param DCSTypes#Vec2 Point The point where to wait.
 -- @param #number Radius The radius of the embarking zone around the Point.
 -- @return DCSTask#Task The DCS task structure.
-function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
+function GROUP:TaskEmbarkToTransport( Point, Radius )
   self:F2( { self.GroupName, Point, Radius } )
 
   local DCSTask --DCSTask#Task
@@ -1819,7 +1994,9 @@ function GROUP:TaskEmbarkToTransportAtVec2( Point, Radius )
   return DCSTask
 end
 
---- Return a Misson task from a mission template.
+
+
+--- (AIR + GROUND) Return a mission task from a mission template.
 -- @param #GROUP self
 -- @param #table TaskMission A table containing the mission task.
 -- @return DCSTask#Task
@@ -1847,7 +2024,7 @@ function GROUP:TaskRoute( Points )
   return DCSTask
 end
 
---- Make the DCS Group to fly to a given point and hover.
+--- (AIR + GROUND) Make the Group move to fly to a given point.
 -- @param #GROUP self
 -- @param DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
@@ -1898,7 +2075,7 @@ function GROUP:TaskRouteToVec2( Point, Speed )
   return self
 end
 
---- Make the DCS Group to fly to a given point and hover.
+--- (AIR + GROUND) Make the Group move to a given point.
 -- @param #GROUP self
 -- @param DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
@@ -1979,7 +2156,7 @@ end
 
 
 
---- Route the group to a given zone.
+--- (AIR + GROUND) Route the group to a given zone.
 -- The group final destination point can be randomized.
 -- A speed can be given in km/h.
 -- A given formation can be given.
@@ -2488,7 +2665,7 @@ end
 --- Returns a message for a coalition or a client.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
 function GROUP:Message( Message, Duration )
   self:F2( { Message, Duration } )
@@ -2505,7 +2682,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToAll( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2521,7 +2698,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTYpes#Duration Duration The duration of the message.
 function GROUP:MessageToRed( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2537,7 +2714,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 function GROUP:MessageToBlue( Message, Duration )
   self:F2( { Message, Duration } )
 
@@ -2553,7 +2730,7 @@ end
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
 -- @param #string Message The message text
--- @param #Duration Duration The duration of the message.
+-- @param DCSTypes#Duration Duration The duration of the message.
 -- @param Client#CLIENT Client The client object receiving the message.
 function GROUP:MessageToClient( Message, Duration, Client )
   self:F2( { Message, Duration } )

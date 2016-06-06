@@ -380,12 +380,12 @@ end
 --- Trace a function call. Must be at the beginning of the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:F( Arguments )
+function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
   if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
-    local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
     
     local Function = "function"
     if DebugInfoCurrent.name then
@@ -408,8 +408,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 2 then
-    self:F( Arguments )
+    self:F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -419,8 +422,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 3 then
-    self:F( Arguments )
+    self:F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -428,12 +434,12 @@ end
 --- Trace a function logic. Can be anywhere within the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:T( Arguments )
+function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
 	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
-		local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-		local DebugInfoFrom = debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
 		
 		local Function = "function"
 		if DebugInfoCurrent.name then
@@ -456,8 +462,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 2 then
-    self:T( Arguments )
+    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -467,8 +476,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
   if _TraceLevel >= 3 then
-    self:T( Arguments )
+    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end

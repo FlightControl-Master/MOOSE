@@ -1,7 +1,7 @@
---- Dynamic spawning of groups (and units).
+--- This module contains the SPAWN class.
 -- 
--- @{#SPAWN} class
--- ===============
+-- 1) @{Spawn#SPAWN} class, extends @{Base#BASE}
+-- =============================================
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
@@ -24,8 +24,8 @@
 --   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
 --   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
 --   
--- SPAWN construction methods:
--- =========================== 
+-- 1.1) SPAWN construction methods
+-- -------------------------------
 -- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
 -- 
 --   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
@@ -34,8 +34,8 @@
 -- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
--- SPAWN initialization methods: 
--- =============================
+-- 1.2) SPAWN initialization methods
+-- ---------------------------------
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
@@ -45,8 +45,8 @@
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
--- SPAWN spawning methods:
--- =======================
+-- 1.3) SPAWN spawning methods
+-- ---------------------------
 -- Groups can be spawned at different times and methods:
 -- 
 --   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
@@ -58,8 +58,8 @@
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- SPAWN object cleaning:
--- =========================
+-- 1.4) SPAWN object cleaning
+-- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
@@ -70,7 +70,7 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- ====
+-- 
 -- @module Spawn
 -- @author FlightControl
 
@@ -473,6 +473,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		end
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
+		
+		local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Group#GROUP
+		local Route = SpawnGroup:GetTaskRoute()
+		SpawnGroup:Route(Route)
+		
+		
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
 		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
@@ -980,11 +986,12 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil
-	SpawnTemplate.lateActivation = false
+	--SpawnTemplate.lateActivation = false
+  SpawnTemplate.lateActivation = false -- TODO BUGFIX 
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
 	  self:T( "For ground units, visible needs to be false..." )
-		SpawnTemplate.visible = false
+		SpawnTemplate.visible = false -- TODO BUGFIX
 	end
 	
 	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
@@ -1032,7 +1039,7 @@ end
 -- @param #number SpawnIndex
 -- @return #SPAWN self
 function SPAWN:_RandomizeTemplate( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
+	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeTemplate } )
 
   if self.SpawnRandomizeTemplate then
     self.SpawnGroups[SpawnIndex].SpawnTemplatePrefix = self.SpawnTemplatePrefixTable[ math.random( 1, #self.SpawnTemplatePrefixTable ) ]
