@@ -288,7 +288,11 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
         self:T2( Object )
-        if Function( unpack( FunctionArguments ), Object ) == true then
+        if Function then
+          if Function( unpack( FunctionArguments ), Object ) == true then
+            IteratorFunction( Object, unpack( arg ) )
+          end
+        else
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1

@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160607_1223' ) 
+env.info( 'Moose Generation Timestamp: 20160607_1320' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -9628,7 +9628,11 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
         self:T2( Object )
-        if Function( unpack( FunctionArguments ), Object ) == true then
+        if Function then
+          if Function( unpack( FunctionArguments ), Object ) == true then
+            IteratorFunction( Object, unpack( arg ) )
+          end
+        else
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1
