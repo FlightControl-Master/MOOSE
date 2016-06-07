@@ -474,11 +474,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
 		
-		local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Group#GROUP
-		local Route = SpawnGroup:GetTaskRoute()
-		SpawnGroup:Route(Route)
-		
-		
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
 		--self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
