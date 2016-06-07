@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160606_1516' ) 
+env.info( 'Moose Generation Timestamp: 20160607_0846' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -15251,11 +15251,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		end
 		
 		self.SpawnGroups[self.SpawnIndex].Spawned = true
-		
-		local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Group#GROUP
-		local Route = SpawnGroup:GetTaskRoute()
-		SpawnGroup:Route(Route)
-		
 		
 		return self.SpawnGroups[self.SpawnIndex].Group
 	else
