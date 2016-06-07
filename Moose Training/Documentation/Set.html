@@ -239,7 +239,7 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).ForEach">SET_BASE:ForEach(IteratorFunction, arg, Set)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).ForEach">SET_BASE:ForEach(IteratorFunction, arg, Set, Function, FunctionArguments)</a></td>
 		<td class="summary">
 <p>Interate the SET_BASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 </td>
@@ -365,7 +365,25 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).ForEachGroup">SET_GROUP:ForEachGroup(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the SET_GROUP and call an interator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP:ForEachGroupCompletelyInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP:ForEachGroupNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP:ForEachGroupPartlyInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
 </td>
 		</tr>
 		<tr>
@@ -585,7 +603,7 @@ A string with the names of the objects.</p>
 <dt>
 
 <a id="#(SET_BASE).ForEach" >
-<strong>SET_BASE:ForEach(IteratorFunction, arg, Set)</strong>
+<strong>SET_BASE:ForEach(IteratorFunction, arg, Set, Function, FunctionArguments)</strong>
 </a>
 </dt>
 <dd>
@@ -608,6 +626,16 @@ The function that will be called when there is an alive player in the SET_BASE.<
 				<li>
 				
 <p><code><em> Set </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Function </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FunctionArguments </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1104,10 +1132,124 @@ The GROUP</p>
 </dt>
 <dd>
 	
-<p>Interate the SET_GROUP and call an interator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).ForEachGroupCompletelyInZone" >
+<strong>SET_GROUP:ForEachGroupCompletelyInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).ForEachGroupNotInZone" >
+<strong>SET_GROUP:ForEachGroupNotInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).ForEachGroupPartlyInZone" >
+<strong>SET_GROUP:ForEachGroupPartlyInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
