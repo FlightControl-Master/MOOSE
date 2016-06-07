@@ -275,20 +275,22 @@ end
 --  end
 --end
 
---- Iterators
+-- Iterators
 
 --- Interate the SET_BASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
 -- @param #SET_BASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE.
 -- @return #SET_BASE self
-function SET_BASE:ForEach( IteratorFunction, arg, Set )
+function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
   self:F3( arg )
   
   local function CoRoutine()
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
         self:T2( Object )
-        IteratorFunction( Object, unpack( arg ) )
+        if Function( unpack( FunctionArguments ), Object ) == true then
+          IteratorFunction( Object, unpack( arg ) )
+        end
         Count = Count + 1
         if Count % 10 == 0 then
           coroutine.yield( false )
@@ -314,7 +316,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set )
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 30, 0 )
+  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
   return self
 end
@@ -556,7 +558,7 @@ function SET_GROUP:FindInDatabase( Event )
   return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
 end
 
---- Interate the SET_GROUP and call an interator function for each **alive** GROUP, providing the GROUP and optional parameters.
+--- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
 -- @param #SET_GROUP self
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
 -- @return #SET_GROUP self
@@ -564,6 +566,72 @@ function SET_GROUP:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+-- @param #SET_GROUP self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+-- @return #SET_GROUP self
+function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Group#GROUP GroupObject
+    function( ZoneObject, GroupObject )
+      if GroupObject:IsCompletelyInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+--- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
+-- @param #SET_GROUP self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+-- @return #SET_GROUP self
+function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Group#GROUP GroupObject
+    function( ZoneObject, GroupObject )
+      if GroupObject:IsPartlyInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+--- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+-- @param #SET_GROUP self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+-- @return #SET_GROUP self
+function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Group#GROUP GroupObject
+    function( ZoneObject, GroupObject )
+      if GroupObject:IsNotInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
 
   return self
 end

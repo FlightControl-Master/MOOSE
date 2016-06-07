@@ -200,7 +200,7 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#SET">SET</a></td>
+		<td class="name" nowrap="nowrap"><a href="#SET_BASE">SET_BASE</a></td>
 		<td class="summary">
 
 </td>
@@ -218,76 +218,76 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(SET)">Type <code>SET</code></a></h2>
+			<h2><a id="#(SET_BASE)">Type <code>SET_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).ClassName">SET.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).ClassName">SET_BASE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).Database">SET.Database</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Database">SET_BASE.Database</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).Flush">SET:Flush()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Flush">SET_BASE:Flush()</a></td>
 		<td class="summary">
-<p>Flushes the current SET contents in the log ...</p>
+<p>Flushes the current SET_BASE contents in the log ...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).ForEach">SET:ForEach(IteratorFunction, arg, Set)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).ForEach">SET_BASE:ForEach(IteratorFunction, arg, Set)</a></td>
 		<td class="summary">
-<p>Interate the SET and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+<p>Interate the SET_BASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).IsIncludeObject">SET:IsIncludeObject(Object)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).IsIncludeObject">SET_BASE:IsIncludeObject(Object)</a></td>
 		<td class="summary">
 <p>Decides whether to include the Object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).New">SET:New(Database)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).New">SET_BASE:New(Database)</a></td>
 		<td class="summary">
-<p>Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+<p>Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET).Set">SET.Set</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Set">SET_BASE.Set</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET)._Add">SET:_Add(ObjectName, Object)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._Add">SET_BASE:_Add(ObjectName, Object)</a></td>
 		<td class="summary">
 <p>Adds a Object based on the Object Name.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnBirth">SET:_EventOnBirth(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnBirth">SET_BASE:_EventOnBirth(Event)</a></td>
 		<td class="summary">
 <p>Handles the OnBirth event for the Set.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET)._EventOnDeadOrCrash">SET:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnDeadOrCrash">SET_BASE:_EventOnDeadOrCrash(Event)</a></td>
 		<td class="summary">
 <p>Handles the OnDead or OnCrash event for alive units set.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET)._FilterStart">SET:_FilterStart()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._FilterStart">SET_BASE:_FilterStart()</a></td>
 		<td class="summary">
 <p>Starts the filtering for the defined collection.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET)._Find">SET:_Find(ObjectName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._Find">SET_BASE:_Find(ObjectName)</a></td>
 		<td class="summary">
 <p>Finds an Object based on the Object Name.</p>
 </td>
@@ -486,9 +486,9 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 		<dl class="function">
 <dt>
 
-		<em><a href="##(SET)">#SET</a></em>
-<a id="SET" >
-<strong>SET</strong>
+		<em><a href="##(SET_BASE)">#SET_BASE</a></em>
+<a id="SET_BASE" >
+<strong>SET_BASE</strong>
 </a>
 </dt>
 <dd>
@@ -527,17 +527,17 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 </dl>
 	<h2><a id="#(Set)" >Type <code>Set</code></a></h2>
 	
-			<h2><a id="#(SET)" >Type <code>SET</code></a></h2>
+			<h2><a id="#(SET_BASE)" >Type <code>SET_BASE</code></a></h2>
 				
-<p>SET class</p>
+<p>SET_BASE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(SET).ClassName" >
-<strong>SET.ClassName</strong>
+<a id="#(SET_BASE).ClassName" >
+<strong>SET_BASE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -550,8 +550,8 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 <dt>
 
 		<em></em>
-<a id="#(SET).Database" >
-<strong>SET.Database</strong>
+<a id="#(SET_BASE).Database" >
+<strong>SET_BASE.Database</strong>
 </a>
 </dt>
 <dd>
@@ -563,13 +563,13 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 		<dl class="function">
 <dt>
 
-<a id="#(SET).Flush" >
-<strong>SET:Flush()</strong>
+<a id="#(SET_BASE).Flush" >
+<strong>SET_BASE:Flush()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Flushes the current SET contents in the log ...</p>
+<p>Flushes the current SET_BASE contents in the log ...</p>
 
 	
 <p>(for debug reasons).</p>
@@ -584,20 +584,20 @@ A string with the names of the objects.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET).ForEach" >
-<strong>SET:ForEach(IteratorFunction, arg, Set)</strong>
+<a id="#(SET_BASE).ForEach" >
+<strong>SET_BASE:ForEach(IteratorFunction, arg, Set)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Interate the SET and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+<p>Interate the SET_BASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive player in the SET.</p>
+The function that will be called when there is an alive player in the SET_BASE.</p>
 
 				</li>
 				<li>
@@ -613,7 +613,7 @@ The function that will be called when there is an alive player in the SET.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SET)">#SET</a>:</em>
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
 self</p>
 
 </dd>
@@ -621,8 +621,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET).IsIncludeObject" >
-<strong>SET:IsIncludeObject(Object)</strong>
+<a id="#(SET_BASE).IsIncludeObject" >
+<strong>SET_BASE:IsIncludeObject(Object)</strong>
 </a>
 </dt>
 <dd>
@@ -639,7 +639,7 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SET)">#SET</a>:</em>
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
 self</p>
 
 </dd>
@@ -647,13 +647,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET).New" >
-<strong>SET:New(Database)</strong>
+<a id="#(SET_BASE).New" >
+<strong>SET_BASE:New(Database)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new SET object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+<p>Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -665,12 +665,12 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SET)">#SET</a>:</em></p>
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em></p>
 
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new SET Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
-DBObject = SET:New()</code></pre>
+		<pre class="example"><code>-- Define a new SET_BASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
+DBObject = SET_BASE:New()</code></pre>
 
 </dd>
 </dl>
@@ -678,8 +678,8 @@ DBObject = SET:New()</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(SET).Set" >
-<strong>SET.Set</strong>
+<a id="#(SET_BASE).Set" >
+<strong>SET_BASE.Set</strong>
 </a>
 </dt>
 <dd>
@@ -691,8 +691,8 @@ DBObject = SET:New()</code></pre>
 		<dl class="function">
 <dt>
 
-<a id="#(SET)._Add" >
-<strong>SET:_Add(ObjectName, Object)</strong>
+<a id="#(SET_BASE)._Add" >
+<strong>SET_BASE:_Add(ObjectName, Object)</strong>
 </a>
 </dt>
 <dd>
@@ -722,8 +722,8 @@ The added Object.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET)._EventOnBirth" >
-<strong>SET:_EventOnBirth(Event)</strong>
+<a id="#(SET_BASE)._EventOnBirth" >
+<strong>SET_BASE:_EventOnBirth(Event)</strong>
 </a>
 </dt>
 <dd>
@@ -743,8 +743,8 @@ The added Object.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET)._EventOnDeadOrCrash" >
-<strong>SET:_EventOnDeadOrCrash(Event)</strong>
+<a id="#(SET_BASE)._EventOnDeadOrCrash" >
+<strong>SET_BASE:_EventOnDeadOrCrash(Event)</strong>
 </a>
 </dt>
 <dd>
@@ -764,8 +764,8 @@ The added Object.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET)._FilterStart" >
-<strong>SET:_FilterStart()</strong>
+<a id="#(SET_BASE)._FilterStart" >
+<strong>SET_BASE:_FilterStart()</strong>
 </a>
 </dt>
 <dd>
@@ -774,7 +774,7 @@ The added Object.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SET)">#SET</a>:</em>
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
 self</p>
 
 </dd>
@@ -782,8 +782,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SET)._Find" >
-<strong>SET:_Find(ObjectName)</strong>
+<a id="#(SET_BASE)._Find" >
+<strong>SET_BASE:_Find(ObjectName)</strong>
 </a>
 </dt>
 <dd>
@@ -823,7 +823,7 @@ The Object found.</p>
 <p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
 
 	
-<p>This is required, because sometimes the _DATABASE birth event gets called later than the SET birth event!</p>
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1068,7 +1068,7 @@ The found Group.</p>
 <p>Handles the Database to check on any event that Object exists in the Database.</p>
 
 	
-<p>This is required, because sometimes the _DATABASE event gets called later than the SET event or vise versa!</p>
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1193,7 +1193,7 @@ DBObject = SET_GROUP:New()</code></pre>
 <p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
 
 	
-<p>This is required, because sometimes the _DATABASE birth event gets called later than the SET birth event!</p>
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1442,7 +1442,7 @@ self</p>
 <p>Handles the Database to check on any event that Object exists in the Database.</p>
 
 	
-<p>This is required, because sometimes the _DATABASE event gets called later than the SET event or vise versa!</p>
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
 
 		<h3>Parameter</h3>
 		<ul>

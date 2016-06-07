@@ -121,7 +121,7 @@ function SCHEDULER:_Scheduler()
   
   self:T( { Status, Result } )
   
-  if Status and ( ( not Result ) or ( Result and Result ~= false ) ) then
+  if Status and ( ( not Result == nil ) or ( Result and Result ~= false ) ) then
     if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
       timer.scheduleFunction(
         self._Scheduler,
