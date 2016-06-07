@@ -51,6 +51,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -58,6 +59,7 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -71,14 +73,14 @@
 	<div id="content">
    <h1>Module <code>Client</code></h1>
    
-<p>The CLIENT models client units in multi player missions.</p>
+<p>This module contains the CLIENT class.</p>
 
    
 
-<h1><a href="##(CLIENT)">#CLIENT</a> class</h1>
+<h1>1) <a href="Client.html##(CLIENT)">Client#CLIENT</a> class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
 <p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.
 Note that clients are NOT the same as Units, they are NOT necessarily alive.
-The <a href="CLIENT.html">CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
+The <a href="Client.html##(CLIENT)">Client#CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
 
 <ul>
     <li>Wraps the DCS Unit objects with skill level set to Player or Client.</li>
@@ -91,7 +93,7 @@ The <a href="CLIENT.html">CLIENT</a> class is a wrapper class to handle the DCS 
 
 <p>Clients are being used by the <a href="MISSION.html">MISSION</a> class to follow players and register their successes.</p>
 
-<h1>CLIENT reference methods</h1>
+<h2>1.1) CLIENT reference methods</h2>
 <p>For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
 This is done at the beginning of the mission (when the mission starts).</p>
 
