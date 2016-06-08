@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160607_1320' ) 
+env.info( 'Moose Generation Timestamp: 20160608_1752' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -2607,27 +2607,8 @@ Include.File( "Routines" )
 
 local _TraceOn = true
 local _TraceLevel = 1
-local _TraceClass = {
-	--DATABASE = true,
-	--SEAD = true,
-	--DESTROYBASETASK = true,
-	--MOVEMENT = true,
-	--SPAWN = true,
-	--STAGE = true,
-	--ZONE = true,
-	--GROUP = true,
-	--UNIT = true,
-  --CLIENT = true,
-	--CARGO = true,
-	--CARGO_GROUP = true,
-	--CARGO_PACKAGE = true,
-	--CARGO_SLINGLOAD = true,
-	--CARGO_ZONE = true,
-	--CLEANUP = true,
-	--MENU_CLIENT = true,
-	--MENU_CLIENT_COMMAND = true,
-	--ESCORT = true,
-	}
+local _TraceAll = false
+local _TraceClass = {}
 local _TraceClassMethod = {}
 
 --- The BASE Class
@@ -2905,6 +2886,20 @@ function BASE:TraceLevel( Level )
   self:E( "Tracing level " .. Level )
 end
 
+--- Trace all methods in MOOSE
+-- @param #BASE self
+-- @param #boolean TraceAll true = trace all methods in MOOSE.
+function BASE:TraceAll( TraceAll )
+  
+  _TraceAll = TraceAll
+  
+  if _TraceAll then
+    self:E( "Tracing all methods in MOOSE " )
+  else
+    self:E( "Switched off tracing all methods in MOOSE" )
+  end
+end
+
 --- Set tracing for a class
 -- @param #BASE self
 -- @param #string Class
@@ -2932,7 +2927,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+  if _TraceOn and ( ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -2942,7 +2937,7 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       Function = DebugInfoCurrent.name
     end
     
-    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
       local LineCurrent = DebugInfoCurrent.currentline
       local LineFrom = 0
       if DebugInfoFrom then
@@ -2986,7 +2981,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+	if _TraceOn and ( ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -2996,7 +2991,7 @@ function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 			Function = DebugInfoCurrent.name
 		end
 
-    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
   		local LineCurrent = DebugInfoCurrent.currentline
   		local LineFrom = 0
   		if DebugInfoFrom then
@@ -9342,13 +9337,26 @@ end
 -- 
 -- ===
 -- 
--- 1) @{Set#SET_BASE} class, extending @{Base#BASE}
+-- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
 -- ================================================
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
+-- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
+-- In this way, large loops can be done while not blocking the simulator main processing loop.
+-- The default **"yield interval"** is after 10 objects processed.
+-- The default **"time interval"** is after 0.001 seconds.
+-- 
+-- 1.1) Add or remove objects from the SET
+-- ---------------------------------------
+-- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- 
+-- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**.
+-- -------------------------------------------------------------------------------------
+-- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
+-- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
--- 2) @{Set#SET_GROUP} class, extending @{Set#SET_BASE}
+-- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
 -- ====================================================
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
@@ -9357,13 +9365,18 @@ end
 --  * Countries
 --  * Starting with certain prefix strings.
 --  
--- 2.1) SET_GROUP construction methods:
--- ------------------------------------
+-- 2.1) SET_GROUP construction method:
+-- -----------------------------------
 -- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
 -- 
 --    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
 -- 
--- 2.2) SET_GROUP filter criteria: 
+-- 2.2) Add or Remove GROUP(s) from SET_GROUP: 
+-- -------------------------------------------
+-- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUPS.RemoveGroupsByName} respectively. 
+-- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
+-- 
+-- 2.3) SET_GROUP filter criteria: 
 -- -------------------------------
 -- You can set filter criteria to define the set of groups within the SET_GROUP.
 -- Filter criteria are defined by:
@@ -9375,24 +9388,26 @@ end
 --   
 -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
 -- 
---    * @{#SET_GROUP.FilterStart}: Starts the filtering of the groups within the SET_GROUP.
+--    * @{#SET_GROUP.FilterStart}: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects **dynamically**.
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
 --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
 -- 
--- 
--- 2.3) SET_GROUP iterators:
+-- 2.4) SET_GROUP iterators:
 -- -------------------------
 -- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
 -- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the SET_GROUP:
 -- 
 --   * @{#SET_GROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_GROUP.
+--   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 -- 
 -- ====
 -- 
--- 3) @{Set#SET_UNIT} class, extending @{Set#SET_BASE}
+-- 3) @{Set#SET_UNIT} class, extends @{Set#SET_BASE}
 -- ===================================================
 -- Mission designers can use the @{Set#SET_UNIT} class to build sets of units belonging to certain:
 -- 
@@ -9402,8 +9417,8 @@ end
 --  * Unit types
 --  * Starting with certain prefix strings.
 --  
--- 3.1) SET_UNIT construction methods:
--- -----------------------------------
+-- 3.1) SET_UNIT construction method:
+-- ----------------------------------
 -- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
 -- 
 --    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
@@ -9476,29 +9491,56 @@ function SET_BASE:New( Database )
   local self = BASE:Inherit( self, BASE:New() )
   
   self.Database = Database
+  
+  self.YieldInterval = 10
+  self.TimeInterval = 0.001
 
   return self
 end
 
---- Finds an Object based on the Object Name.
+--- Finds an @{Base#BASE} object based on the object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
--- @return #table The Object found.
+-- @return Base#BASE The Object found.
 function SET_BASE:_Find( ObjectName )
 
   local ObjectFound = self.Set[ObjectName]
   return ObjectFound
 end
 
---- Adds a Object based on the Object Name.
+
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
--- @param #table Object
--- @return #table The added Object.
-function SET_BASE:_Add( ObjectName, Object )
+-- @param Base#BASE Object
+-- @return Base#BASE The added BASE Object.
+function SET_BASE:Add( ObjectName, Object )
 
   self.Set[ObjectName] = Object
 end
+
+--- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+-- @param #SET_BASE self
+-- @param #string ObjectName
+function SET_BASE:Remove( ObjectName )
+
+  self.Set[ObjectName] = nil
+end
+
+--- Define the SET iterator **"yield interval"** and the **"time interval"**.
+-- @param #SET_BASE self
+-- @param #number YieldInterval Sets the frequency when the iterator loop will yield after the number of objects processed. The default frequency is 10 objects processed.
+-- @param #number TimeInterval Sets the time in seconds when the main logic will resume the iterator loop. The default time is 0.001 seconds.
+-- @return #SET_BASE self
+function SET_BASE:SetIteratorIntervals( YieldInterval, TimeInterval )
+
+  self.YieldInterval = YieldInterval
+  self.TimeInterval = TimeInterval
+  
+  return self
+end
+
+
 
 --- Starts the filtering for the defined collection.
 -- @param #SET_BASE self
@@ -9509,7 +9551,7 @@ function SET_BASE:_FilterStart()
 
     if self:IsIncludeObject( Object ) then
       self:E( { "Adding Object:", ObjectName } )
-      self:_Add( ObjectName, Object )
+      self:Add( ObjectName, Object )
     end
   end
   
@@ -9561,7 +9603,7 @@ function SET_BASE:_EventOnBirth( Event )
     local ObjectName, Object = self:AddInDatabase( Event )
     self:T3( ObjectName, Object )
     if self:IsIncludeObject( Object ) then
-      self:_Add( ObjectName, Object )
+      self:Add( ObjectName, Object )
       --self:_EventOnPlayerEnterUnit( Event )
     end
   end
@@ -9576,7 +9618,7 @@ function SET_BASE:_EventOnDeadOrCrash( Event )
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
     if ObjectName and Object then
-      self:_Delete( ObjectName )
+      self:Remove( ObjectName )
     end
   end
 end
@@ -9617,9 +9659,9 @@ end
 
 -- Iterators
 
---- Interate the SET_BASE and call an interator function for the given set, providing the Object for each element within the set and optional parameters.
+--- Iterate the SET_BASE and derived classes and call an iterator function for the given SET_BASE, providing the Object for each element within the set and optional parameters.
 -- @param #SET_BASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE.
+-- @param #function IteratorFunction The function that will be called.
 -- @return #SET_BASE self
 function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
   self:F3( arg )
@@ -9636,7 +9678,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1
-        if Count % 10 == 0 then
+        if Count % self.YieldInterval == 0 then
           coroutine.yield( false )
         end    
     end
@@ -9660,7 +9702,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
+  local Scheduler = SCHEDULER:New( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
   
   return self
 end
@@ -9772,6 +9814,38 @@ function SET_GROUP:New()
 
   return self
 end
+
+--- Add GROUP(s) to SET_GROUP.
+-- @param Set#SET_GROUP self
+-- @param #string AddGroupNames A single name or an array of GROUP names.
+-- @return self
+function SET_GROUP:AddGroupsByName( AddGroupNames )
+
+  local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
+  
+  for AddGroupID, AddGroupName in pairs( AddGroupNamesArray ) do
+    self:Add( AddGroupName, GROUP:FindByName( AddGroupName ) )
+  end
+    
+  return self
+end
+
+--- Remove GROUP(s) to SET_GROUP.
+-- @param Set#SET_GROUP self
+-- @param Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
+-- @return self
+function SET_GROUP:RemoveGroupsByName( RemoveGroupNames )
+
+  local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
+  
+  for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
+    self:Remove( RemoveGroupName.GroupName )
+  end
+    
+  return self
+end
+
+
 
 
 --- Finds a Group based on the Group Name.
