@@ -8,16 +8,16 @@
 -- 
 -- 1.1) MESSAGE construction methods
 -- ---------------------------------
--- Messages are created with MESSAGE:@{New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
 -- 1.2) Send messages with MESSAGE To methods
 -- ------------------------------------------
 -- Messages are sent to:
 --
---   * Clients with MESSAGE:@{ToClient}().
---   * Coalitions with MESSAGE:@{ToCoalition}().
---   * All Players with MESSAGE:@{ToAll}().
+--   * Clients with @{Message#MESSAGE.ToClient}.
+--   * Coalitions with @{Message#MESSAGE.ToCoalition}.
+--   * All Players with @{Message#MESSAGE.ToAll}.
 --   
 -- @module Message
 -- @author FlightControl
