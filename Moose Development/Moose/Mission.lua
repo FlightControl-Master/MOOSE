@@ -2,11 +2,6 @@
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
 -- @module Mission
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Client" )
-Include.File( "Task" )
-
 --- The MISSION class
 -- @type MISSION
 -- @extends Base#BASE
@@ -191,7 +186,7 @@ function MISSION:ReportToAll()
 	for TaskID, TaskData in pairs( Tasks ) do
 		TaskText = TaskText .. "         - Task " .. TaskID .. ": " .. TaskData.Name .. ": " .. TaskData:GetGoalProgress() .. "\n"
 	end
-	MESSAGE:New( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. ' ( ' .. self.MissionPriority .. ' mission )' .. AlivePlayers .. "\n" .. TaskText:gsub("\n$",""), "Mission Command: Mission Report", 10,  self.Name .. '/Status'):ToAll()
+	MESSAGE:New( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. ' ( ' .. self.MissionPriority .. ' mission )' .. AlivePlayers .. "\n" .. TaskText:gsub("\n$",""), 10, "Mission Command: Mission Report" ):ToAll()
 end
 
 
@@ -650,7 +645,7 @@ function MISSIONSCHEDULER:TimeShow()
 	self.TimeIntervalCount = self.TimeIntervalCount + 1
 	if self.TimeIntervalCount >= self.TimeTriggerShow then
 		local TimeMsg = string.format("%00d", ( self.TimeSeconds / 60 ) - ( timer.getTime() / 60 )) .. ' minutes left until mission reload.'
-		MESSAGE:New( TimeMsg, "Mission time", self.TimeShow, '/TimeMsg' ):ToAll()
+		MESSAGE:New( TimeMsg, self.TimeShow, "Mission time" ):ToAll()
 		self.TimeIntervalCount = 0
 	end
 end

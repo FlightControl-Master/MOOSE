@@ -70,9 +70,6 @@
 -- @author FlightControl
 
 
-Include.File( "Client" )
-Include.File( "Scheduler" )
-
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
 -- @extends Base#BASE
@@ -217,9 +214,9 @@ function MISSILETRAINER:InitMessagesOnOff( MessagesOnOff )
 
   self.MessagesOnOff = MessagesOnOff
   if self.MessagesOnOff == true then
-    MESSAGE:New( "Messages ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Messages ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Messages OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Messages OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -234,9 +231,9 @@ function MISSILETRAINER:InitTrackingToAll( TrackingToAll )
 
   self.TrackingToAll = TrackingToAll
   if self.TrackingToAll == true then
-    MESSAGE:New( "Missile tracking to all players ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking to all players ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Missile tracking to all players OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking to all players OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -251,9 +248,9 @@ function MISSILETRAINER:InitTrackingOnOff( TrackingOnOff )
 
   self.TrackingOnOff = TrackingOnOff
   if self.TrackingOnOff == true then
-    MESSAGE:New( "Missile tracking ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Missile tracking OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -272,7 +269,7 @@ function MISSILETRAINER:InitTrackingFrequency( TrackingFrequency )
     self.TrackingFrequency = 0.5
   end
   if self.TrackingFrequency then
-    MESSAGE:New( "Missile tracking frequency is " .. self.TrackingFrequency .. " seconds.", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking frequency is " .. self.TrackingFrequency .. " seconds.", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -287,9 +284,9 @@ function MISSILETRAINER:InitAlertsToAll( AlertsToAll )
 
   self.AlertsToAll = AlertsToAll
   if self.AlertsToAll == true then
-    MESSAGE:New( "Alerts to all players ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts to all players ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts to all players OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts to all players OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -304,9 +301,9 @@ function MISSILETRAINER:InitAlertsHitsOnOff( AlertsHitsOnOff )
 
   self.AlertsHitsOnOff = AlertsHitsOnOff
   if self.AlertsHitsOnOff == true then
-    MESSAGE:New( "Alerts Hits ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Hits ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts Hits OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Hits OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -321,9 +318,9 @@ function MISSILETRAINER:InitAlertsLaunchesOnOff( AlertsLaunchesOnOff )
 
   self.AlertsLaunchesOnOff = AlertsLaunchesOnOff
   if self.AlertsLaunchesOnOff == true then
-    MESSAGE:New( "Alerts Launches ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Launches ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts Launches OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Launches OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -338,9 +335,9 @@ function MISSILETRAINER:InitRangeOnOff( DetailsRangeOnOff )
 
   self.DetailsRangeOnOff = DetailsRangeOnOff
   if self.DetailsRangeOnOff == true then
-    MESSAGE:New( "Range display ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Range display ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Range display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Range display OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -355,9 +352,9 @@ function MISSILETRAINER:InitBearingOnOff( DetailsBearingOnOff )
 
   self.DetailsBearingOnOff = DetailsBearingOnOff
   if self.DetailsBearingOnOff == true then
-    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Bearing display OFF", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Bearing display OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -372,9 +369,9 @@ function MISSILETRAINER:InitMenusOnOff( MenusOnOff )
 
   self.MenusOnOff = MenusOnOff
   if self.MenusOnOff == true then
-    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Menus are DISABLED", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Menus are DISABLED", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -425,7 +422,7 @@ function MISSILETRAINER._MenuMessages( MenuParameters )
 
   if MenuParameters.Distance ~= nil then
     self.Distance = MenuParameters.Distance
-    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", 15, "Menu" ):ToAll()
   end
 
 end
@@ -461,7 +458,7 @@ function MISSILETRAINER:_EventShot( Event )
         string.format( "%s launched a %s",
           TrainerSourceUnit:GetTypeName(),
           TrainerWeaponName
-        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ),"Launch Alert", 5, "ID" )
+        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ), 5, "Launch Alert" )
 
       if self.AlertsToAll then
         Message:ToAll()
@@ -576,7 +573,7 @@ function MISSILETRAINER:_TrackMissiles()
                 TrainerWeapon:getTypeName(),
                 TrainerSourceUnit:GetTypeName(),
                 TrainerTargetUnit:GetPlayerName()
-              ),"Hit Alert", 15, "ID" )
+              ), 15, "Hit Alert" )
   
             if self.AlertsToAll == true then
               Message:ToAll()
@@ -597,7 +594,7 @@ function MISSILETRAINER:_TrackMissiles()
               string.format( "%s launched by %s self destructed!",
                 TrainerWeaponTypeName,
                 TrainerSourceUnit:GetTypeName()
-              ),"Tracking", 5, "ID" )
+              ), 5, "Tracking" )
   
             if self.AlertsToAll == true then
               Message:ToAll()
@@ -671,7 +668,7 @@ function MISSILETRAINER:_TrackMissiles()
   
       -- Once the Player Client and the Other Player Client tracking messages are prepared, show them.
       if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
-        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )
+        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, 1, "Tracking" ):ToClient( Client )
       end
     end
   end

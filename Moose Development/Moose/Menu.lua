@@ -1,9 +1,6 @@
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
 -- @module Menu
 
-Include.File( "Routines" )
-Include.File( "Base" )
-
 --- The MENU class
 -- @type MENU
 -- @extends Base#BASE

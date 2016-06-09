@@ -2,9 +2,6 @@
 -- @module PICKUPTASK
 -- @parent TASK
 
-Include.File("Task")
-Include.File("Cargo")
-
 --- The PICKUPTASK class
 -- @type
 PICKUPTASK = {

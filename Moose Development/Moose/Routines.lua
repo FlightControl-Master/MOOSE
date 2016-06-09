@@ -2,10 +2,6 @@
 -- @module routines
 -- @author Flightcontrol
 
---Include.File( "Trace" )
---Include.File( "Message" )
-
-
 env.setErrorMessageBoxEnabled(false)
 
 --- Extract of MIST functions.
@@ -2310,19 +2306,19 @@ end
 function MessageToAll( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "Message", MsgTime, MsgName ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
+	MESSAGE:New( MsgText, MsgTime, "Message" ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
 end
 
 function MessageToRed( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "To Red Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
+	MESSAGE:New( MsgText, MsgTime, "To Red Coalition" ):ToCoalition( coalition.side.RED )
 end
 
 function MessageToBlue( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "To Blue Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
+	MESSAGE:New( MsgText, MsgTime, "To Blue Coalition" ):ToCoalition( coalition.side.RED )
 end
 
 function getCarrierHeight( CarrierGroup )

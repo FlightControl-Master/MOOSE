@@ -74,14 +74,6 @@
 -- @module Spawn
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Database" )
-Include.File( "Group" )
-Include.File( "Zone" )
-Include.File( "Event" )
-Include.File( "Scheduler" )
-
 --- SPAWN Class
 -- @type SPAWN
 -- @extends Base#BASE
@@ -783,7 +775,7 @@ end
 -- If no index is given, it will return the first group in the list.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to return.
--- @return Group#GROUP
+-- @return Group#GROUP self
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	

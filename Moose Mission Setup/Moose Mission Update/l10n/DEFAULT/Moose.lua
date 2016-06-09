@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160608_1752' ) 
+env.info( 'Moose Generation Timestamp: 20160609_1242' ) 
 local base = _G
 env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
@@ -27,10 +27,6 @@ env.info("Loaded MOOSE Include Engine")
 --- Various routines
 -- @module routines
 -- @author Flightcontrol
-
---Include.File( "Trace" )
---Include.File( "Message" )
-
 
 env.setErrorMessageBoxEnabled(false)
 
@@ -2336,19 +2332,19 @@ end
 function MessageToAll( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "Message", MsgTime, MsgName ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
+	MESSAGE:New( MsgText, MsgTime, "Message" ):ToCoalition( coalition.side.RED ):ToCoalition( coalition.side.BLUE )
 end
 
 function MessageToRed( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "To Red Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
+	MESSAGE:New( MsgText, MsgTime, "To Red Coalition" ):ToCoalition( coalition.side.RED )
 end
 
 function MessageToBlue( MsgText, MsgTime, MsgName )
 --trace.f()
 
-	MESSAGE:New( MsgText, "To Blue Coalition", MsgTime, MsgName ):ToCoalition( coalition.side.RED )
+	MESSAGE:New( MsgText, MsgTime, "To Blue Coalition" ):ToCoalition( coalition.side.RED )
 end
 
 function getCarrierHeight( CarrierGroup )
@@ -2603,7 +2599,7 @@ env.info(( 'Init: Scripts Loaded v1.1' ))
 -- @module Base
 -- @author FlightControl
 
-Include.File( "Routines" )
+
 
 local _TraceOn = true
 local _TraceLevel = 1
@@ -3076,10 +3072,6 @@ end
 -- @module Scheduler
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-
-
 --- The SCHEDULER class
 -- @type SCHEDULER
 -- @extends Base#BASE
@@ -3199,9 +3191,6 @@ end
 --- The EVENT class models an efficient event handling process between other classes and its units, weapons.
 -- @module Event
 -- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
 
 --- The EVENT structure
 -- @type EVENT
@@ -3709,9 +3698,6 @@ end
 
 --- Encapsulation of DCS World Menu system in a set of MENU classes.
 -- @module Menu
-
-Include.File( "Routines" )
-Include.File( "Base" )
 
 --- The MENU class
 -- @type MENU
@@ -4225,11 +4211,6 @@ end
 -- 
 -- @module Group
 -- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
-Include.File( "Unit" )
 
 --- The GROUP class
 -- @type GROUP
@@ -6752,7 +6733,7 @@ function GROUP:Message( Message, Duration )
 
   local DCSGroup = self:GetDCSGroup()
   if DCSGroup then
-    return MESSAGE:New( Message, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
   end
 
   return nil
@@ -6892,9 +6873,9 @@ end
 -- @module Unit
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
+
+
+
 
 --- The UNIT class
 -- @type UNIT
@@ -7684,10 +7665,10 @@ end
 -- @author FlightControl
 
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
-Include.File( "Point" )
+
+
+
+
 
 
 
@@ -8138,10 +8119,10 @@ end
 -- @module Client
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
+
+
+
+
 
 
 --- The CLIENT class
@@ -8563,16 +8544,16 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 			else
 				self.Messages[MessageId].MessageInterval = MessageInterval
 			end
-			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
 		else
 			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
 				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()
 				end
 			else
 				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()
 				end
 			end
@@ -8612,9 +8593,9 @@ end
 -- @module Static
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
+
+
+
 
 
 --- The STATIC class
@@ -8694,15 +8675,15 @@ end
 -- @module Database
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Static" )
-Include.File( "Unit" )
-Include.File( "Event" )
-Include.File( "Client" )
-Include.File( "Scheduler" )
+
+
+
+
+
+
+
+
+
 
 
 --- DATABASE class
@@ -9461,14 +9442,6 @@ end
 -- 
 -- @module Set
 -- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Unit" )
-Include.File( "Event" )
-Include.File( "Client" )
 
 --- SET_BASE class
 -- @type SET_BASE
@@ -10465,10 +10438,6 @@ end
 -- @module Point
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Point" )
-
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
 -- @extends Base#BASE
@@ -10637,8 +10606,73 @@ end
 
 Include.File( "Routines" )
 Include.File( "Base" )
-Include.File( "Database" )
+Include.File( "Scheduler" )
 Include.File( "Event" )
+Include.File( "Menu" )
+Include.File( "Group" )
+Include.File( "Unit" )
+Include.File( "Zone" )
+Include.File( "Client" )
+Include.File( "Static" )
+Include.File( "Database" )
+Include.File( "Set" )
+Include.File( "Point" )
+Include.File( "Moose" )
+Include.File( "Scoring" )
+Include.File( "Cargo" )
+Include.File( "Message" )
+Include.File( "Stage" )
+Include.File( "Task" )
+Include.File( "GoHomeTask" )
+Include.File( "DestroyBaseTask" )
+Include.File( "DestroyGroupsTask" )
+Include.File( "DestroyRadarsTask" )
+Include.File( "DestroyUnitTypesTask" )
+Include.File( "PickupTask" )
+Include.File( "DeployTask" )
+Include.File( "NoTask" )
+Include.File( "RouteTask" )
+Include.File( "Mission" )
+Include.File( "CleanUp" )
+Include.File( "Spawn" )
+Include.File( "Movement" )
+Include.File( "Sead" )
+Include.File( "Escort" )
+Include.File( "MissileTrainer" )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- The order of the declarations is important here. Don't touch it.
 
@@ -10655,13 +10689,6 @@ _DATABASE = DATABASE:New() -- Database#DATABASE
 -- to a database or a BI tool to publish the scoring results to the player community.
 -- @module Scoring
 -- @author FlightControl
-
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Event" )
 
 
 --- The Scoring class
@@ -10826,7 +10853,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
           MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
             PlayerData.Kill[TargetCategory][TargetType].PenaltyKill .. " times. Penalty: -" .. PlayerData.Kill[TargetCategory][TargetType].Penalty ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
-            "", 5, "/PENALTY" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+            5 ):ToAll()
           self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         else
           PlayerData.Score = PlayerData.Score + 10
@@ -10835,7 +10862,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
           MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
             PlayerData.Kill[TargetCategory][TargetType].ScoreKill .. " times. Score: " .. PlayerData.Kill[TargetCategory][TargetType].Score ..
             ".  Score Total:" .. PlayerData.Score - PlayerData.Penalty,
-            "", 5, "/SCORE" .. PlayerName .. "/" .. InitUnitName ):ToAll()
+            5 ):ToAll()
           self:ScoreCSV( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         end
         end
@@ -10886,9 +10913,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
         MESSAGE:New( "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
           "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
-          "",
-          2,
-          "/PENALTYCOALITION" .. PlayerName
+          2
         ):ToAll()
         self:ScoreCSV( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:getTypeName() )
@@ -10902,9 +10927,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     if self.Players[PlayerName].Penalty > 100 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
         MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than 150, you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
-          "",
-          30,
-          "/PENALTYCOALITION" .. PlayerName
+          30
         ):ToAll()
         self.Players[PlayerName].PenaltyWarning = self.Players[PlayerName].PenaltyWarning + 1
       end
@@ -10914,9 +10937,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       ClientGroup = GROUP:NewFromDCSUnit( UnitData )
       ClientGroup:Destroy()
       MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
-        "",
-        10,
-        "/PENALTYCOALITION" .. PlayerName
+        10
       ):ToAll()
     end
 
@@ -10944,7 +10965,7 @@ function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
 
   MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..
     Score .. " Score points added.",
-    "", 20, "/SCORETASK" .. PlayerName ):ToAll()
+    20 ):ToAll()
 
   self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
 end
@@ -10961,7 +10982,7 @@ function SCORING:_AddMissionScore( MissionName, Score )
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
       MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..
         Score .. " Score points added.",
-        "", 20, "/SCOREMISSION" .. PlayerName ):ToAll()
+        20 ):ToAll()
       self:ScoreCSV( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
   end
@@ -11071,9 +11092,7 @@ function SCORING:_EventOnHit( Event )
         MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
           self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].PenaltyHit .. " times. Penalty: -" .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Penalty ..
           ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty,
-          "",
-          2,
-          "/PENALTY" .. InitPlayerName .. "/" .. InitUnitName
+          2
         ):ToAll()
         self:ScoreCSV( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       else
@@ -11083,9 +11102,7 @@ function SCORING:_EventOnHit( Event )
         MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
           self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].ScoreHit .. " times. Score: " .. self.Players[InitPlayerName].Hit[TargetCategory][TargetUnitName].Score ..
           ".  Score Total:" .. self.Players[InitPlayerName].Score - self.Players[InitPlayerName].Penalty,
-          "",
-          2,
-          "/SCORE" .. InitPlayerName .. "/" .. InitUnitName
+          2
         ):ToAll()
         self:ScoreCSV( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
       end
@@ -11206,7 +11223,7 @@ function SCORING:ReportScoreAll()
       PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score:%d (%d Score -%d Penalties)%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
     end
   end
-  MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
+  MESSAGE:New( PlayerMessage, 30, "Player Scores" ):ToAll()
 end
 
 
@@ -11319,7 +11336,7 @@ function SCORING:ReportScorePlayer()
       PlayerMessage = PlayerMessage .. string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties ):%s", PlayerName, PlayerScore - PlayerPenalty, PlayerScore, PlayerPenalty, ScoreMessage )
     end
   end
-  MESSAGE:New( PlayerMessage, "Player Scores", 30, "AllPlayerScores"):ToAll()
+  MESSAGE:New( PlayerMessage, 30, "Player Scores" ):ToAll()
 
 end
 
@@ -11469,10 +11486,10 @@ end
 --- CARGO Classes
 -- @module CARGO
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
-Include.File( "Scheduler" )
+
+
+
+
 
 
 --- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
@@ -12546,20 +12563,32 @@ function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
 
 	return Cargo
 end
---- Message System to display Messages for Clients and Coalitions or All.
--- Messages are grouped on the display panel per Category to improve readability for the players.
+--- This module contains the MESSAGE class.
+-- 
+-- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
+-- =================================================
+-- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
--- Messages are identified by an ID. The messages with the same ID belonging to the same category will be overwritten if they were still being displayed on the display panel.
--- Messages are created with MESSAGE:@{New}().
--- Messages are sent to Clients with MESSAGE:@{ToClient}().
--- Messages are sent to Coalitions with MESSAGE:@{ToCoalition}().
--- Messages are sent to All Players with MESSAGE:@{ToAll}().
+-- Messages can contain a category which is indicating the category of the message.
+-- 
+-- 1.1) MESSAGE construction methods
+-- ---------------------------------
+-- Messages are created with MESSAGE:@{New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- To send messages, you need to use the To functions.
+-- 
+-- 1.2) Send messages with MESSAGE To methods
+-- ------------------------------------------
+-- Messages are sent to:
+--   * Clients with MESSAGE:@{ToClient}().
+--   * Coalitions with MESSAGE:@{ToCoalition}().
+--   * All Players with MESSAGE:@{ToAll}().
+--   
 -- @module Message
-
-Include.File( "Base" )
+-- @author FlightControl
 
 --- The MESSAGE class
 -- @type MESSAGE
+-- @extends Base#BASE
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -12570,9 +12599,8 @@ MESSAGE = {
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
 -- @param self
 -- @param #string MessageText is the text of the Message.
--- @param #string MessageCategory is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.
 -- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @param #string MessageID is a string expressing the ID of the Message.
+-- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
 -- @return #MESSAGE
 -- @usage
 -- -- Create a series of new Messages.
@@ -12580,15 +12608,15 @@ MESSAGE = {
 -- -- MessageRED is meant to be sent to the RED players only, for 10 seconds, and is classified as "End of Mission", with ID "Win".
 -- -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
 -- -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
--- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
--- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
--- MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" )
--- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
-function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
+-- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!",  25, "End of Mission" )
+-- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty" )
+-- MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target",  25, "Score" )
+-- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")
+function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F( { MessageText, MessageCategory, MessageDuration, MessageID } )
+	self:F( { MessageText, MessageDuration, MessageCategory } )
 
-  -- When no messagecategory is given, we don't show it as a title...	
+  -- When no MessageCategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
     self.MessageCategory = MessageCategory .. ": "
   else
@@ -12596,7 +12624,6 @@ function MESSAGE:New( MessageText, MessageCategory, MessageDuration, MessageID )
   end
 
 	self.MessageDuration = MessageDuration
-	self.MessageID = MessageID
 	self.MessageTime = timer.getTime()
 	self.MessageText = MessageText
 	
@@ -12722,89 +12749,89 @@ end
 
 
 
---- The MESSAGEQUEUE class
--- @type MESSAGEQUEUE
-MESSAGEQUEUE = {
-	ClientGroups = {},
-	CoalitionSides = {}
-}
-
-function MESSAGEQUEUE:New( RefreshInterval )
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F( { RefreshInterval } )
-	
-	self.RefreshInterval = RefreshInterval
-
-	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
-  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
-
-	return self
-end
-
---- This function is called automatically by the MESSAGEQUEUE scheduler.
-function MESSAGEQUEUE:_DisplayMessages()
-
-	-- First we display all messages that a coalition needs to receive... Also those who are not in a client (CA module clients...).
-	for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
-		for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
-			if MessageData.MessageSent == false then
-				--trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
-				MessageData.MessageSent = true
-			end
-			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
-			if MessageTimeLeft <= 0 then
-				MessageData = nil
-			end
-		end
-	end
-
-	-- Then we send the messages for each individual client, but also to be included are those Coalition messages for the Clients who belong to a coalition.
-	-- Because the Client messages will overwrite the Coalition messages (for that Client).
-	for ClientGroupName, ClientGroupData in pairs( self.ClientGroups ) do
-		for MessageID, MessageData in pairs( ClientGroupData.Messages ) do
-			if MessageData.MessageGroup == false then
-				trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
-				MessageData.MessageGroup = true
-			end
-			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
-			if MessageTimeLeft <= 0 then
-				MessageData = nil
-			end
-		end
-		
-		-- Now check if the Client also has messages that belong to the Coalition of the Client...
-		for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
-			for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
-				local CoalitionGroup = Group.getByName( ClientGroupName )
-				if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
-					if MessageData.MessageCoalition == false then
-						trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
-						MessageData.MessageCoalition = true
-					end
-				end
-				local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
-				if MessageTimeLeft <= 0 then
-					MessageData = nil
-				end
-			end
-		end
-	end
-	
-	return true
-end
-
---- The _MessageQueue object is created when the MESSAGE class module is loaded.
---_MessageQueue = MESSAGEQUEUE:New( 0.5 )
-
+----- The MESSAGEQUEUE class
+---- @type MESSAGEQUEUE
+--MESSAGEQUEUE = {
+--	ClientGroups = {},
+--	CoalitionSides = {}
+--}
+--
+--function MESSAGEQUEUE:New( RefreshInterval )
+--	local self = BASE:Inherit( self, BASE:New() )
+--	self:F( { RefreshInterval } )
+--	
+--	self.RefreshInterval = RefreshInterval
+--
+--	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
+--  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
+--
+--	return self
+--end
+--
+----- This function is called automatically by the MESSAGEQUEUE scheduler.
+--function MESSAGEQUEUE:_DisplayMessages()
+--
+--	-- First we display all messages that a coalition needs to receive... Also those who are not in a client (CA module clients...).
+--	for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
+--		for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
+--			if MessageData.MessageSent == false then
+--				--trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
+--				MessageData.MessageSent = true
+--			end
+--			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
+--			if MessageTimeLeft <= 0 then
+--				MessageData = nil
+--			end
+--		end
+--	end
+--
+--	-- Then we send the messages for each individual client, but also to be included are those Coalition messages for the Clients who belong to a coalition.
+--	-- Because the Client messages will overwrite the Coalition messages (for that Client).
+--	for ClientGroupName, ClientGroupData in pairs( self.ClientGroups ) do
+--		for MessageID, MessageData in pairs( ClientGroupData.Messages ) do
+--			if MessageData.MessageGroup == false then
+--				trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
+--				MessageData.MessageGroup = true
+--			end
+--			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
+--			if MessageTimeLeft <= 0 then
+--				MessageData = nil
+--			end
+--		end
+--		
+--		-- Now check if the Client also has messages that belong to the Coalition of the Client...
+--		for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
+--			for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
+--				local CoalitionGroup = Group.getByName( ClientGroupName )
+--				if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
+--					if MessageData.MessageCoalition == false then
+--						trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
+--						MessageData.MessageCoalition = true
+--					end
+--				end
+--				local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
+--				if MessageTimeLeft <= 0 then
+--					MessageData = nil
+--				end
+--			end
+--		end
+--	end
+--	
+--	return true
+--end
+--
+----- The _MessageQueue object is created when the MESSAGE class module is loaded.
+----_MessageQueue = MESSAGEQUEUE:New( 0.5 )
+--
 --- Stages within a @{TASK} within a @{MISSION}. All of the STAGE functionality is considered internally administered and not to be used by any Mission designer.
 -- @module STAGE
 -- @author Flightcontrol
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "Task" )
+
+
+
+
+
 
 --- The STAGE class
 -- @type
@@ -13766,11 +13793,11 @@ _TransportStageAction = {
 --- The TASK Classes define major end-to-end activities within a MISSION. The TASK Class is the Master Class to orchestrate these activities. From this class, many concrete TASK classes are inherited.
 -- @module TASK
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "Stage" )
+
+
+
+
+
 
 --- The TASK class
 -- @type TASK
@@ -14231,8 +14258,6 @@ end
 --- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
 -- @module GOHOMETASK
 
-Include.File("Task")
-
 --- The GOHOMETASK class
 -- @type
 GOHOMETASK = {
@@ -14269,7 +14294,7 @@ end
 -- @see DESTROYUNITTYPESTASK
 -- @see DESTROY_RADARS_TASK
 
-Include.File("Task")
+
 
 --- The DESTROYBASETASK class
 -- @type DESTROYBASETASK
@@ -14347,7 +14372,7 @@ end
 --- DESTROYGROUPSTASK
 -- @module DESTROYGROUPSTASK
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYGROUPSTASK class
 -- @type
@@ -14404,7 +14429,7 @@ end
 --- Task class to destroy radar installations.
 -- @module DESTROYRADARSTASK 
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYRADARS class
 -- @type
@@ -14445,7 +14470,7 @@ end
 --- Set TASK to destroy certain unit types.
 -- @module DESTROYUNITTYPESTASK
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYUNITTYPESTASK class
 -- @type
@@ -14497,9 +14522,6 @@ end
 --- A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.
 -- @module PICKUPTASK
 -- @parent TASK
-
-Include.File("Task")
-Include.File("Cargo")
 
 --- The PICKUPTASK class
 -- @type
@@ -14653,7 +14675,7 @@ end
 --- A DEPLOYTASK orchestrates the deployment of CARGO within a specific landing zone.
 -- @module DEPLOYTASK
 
-Include.File( "Task" )
+
 
 --- A DeployTask
 -- @type DEPLOYTASK
@@ -14811,8 +14833,6 @@ end
 --- A NOTASK is a dummy activity... But it will show a Mission Briefing...
 -- @module NOTASK
 
-Include.File("Task")
-
 --- The NOTASK class
 -- @type
 NOTASK = {
@@ -14879,11 +14899,6 @@ end
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
 -- @module Mission
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Client" )
-Include.File( "Task" )
 
 --- The MISSION class
 -- @type MISSION
@@ -15069,7 +15084,7 @@ function MISSION:ReportToAll()
 	for TaskID, TaskData in pairs( Tasks ) do
 		TaskText = TaskText .. "         - Task " .. TaskID .. ": " .. TaskData.Name .. ": " .. TaskData:GetGoalProgress() .. "\n"
 	end
-	MESSAGE:New( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. ' ( ' .. self.MissionPriority .. ' mission )' .. AlivePlayers .. "\n" .. TaskText:gsub("\n$",""), "Mission Command: Mission Report", 10,  self.Name .. '/Status'):ToAll()
+	MESSAGE:New( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. ' ( ' .. self.MissionPriority .. ' mission )' .. AlivePlayers .. "\n" .. TaskText:gsub("\n$",""), 10, "Mission Command: Mission Report" ):ToAll()
 end
 
 
@@ -15528,7 +15543,7 @@ function MISSIONSCHEDULER:TimeShow()
 	self.TimeIntervalCount = self.TimeIntervalCount + 1
 	if self.TimeIntervalCount >= self.TimeTriggerShow then
 		local TimeMsg = string.format("%00d", ( self.TimeSeconds / 60 ) - ( timer.getTime() / 60 )) .. ' minutes left until mission reload.'
-		MESSAGE:New( TimeMsg, "Mission time", self.TimeShow, '/TimeMsg' ):ToAll()
+		MESSAGE:New( TimeMsg, self.TimeShow, "Mission time" ):ToAll()
 		self.TimeIntervalCount = 0
 	end
 end
@@ -15551,11 +15566,11 @@ end
 -- @module CleanUp
 -- @author Flightcontrol
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "Task" )
+
+
+
+
+
 
 --- The CLEANUP class.
 -- @type CLEANUP
@@ -15607,7 +15622,6 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:F( { GroupObject, CleanUpGroupName } )
 
 	if GroupObject then -- and GroupObject:isExist() then
-		--MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
 		trigger.action.deactivateGroup(GroupObject)
 		self:T( { "GroupObject Destroyed", GroupObject } )
 	end
@@ -15621,7 +15635,6 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	if CleanUpUnit then
-		--MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
 		local CleanUpGroup = Unit.getGroup(CleanUpUnit)
     -- TODO Client bug in 1.5.3
 		if CleanUpGroup and CleanUpGroup:isExist() then
@@ -15691,7 +15704,6 @@ function CLEANUP:_EventCrash( Event )
 	self:F( { Event } )
 
   --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
-	--MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
 	-- self:T("before getGroup")
 	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
 	-- self:T("after getGroup")
@@ -15826,7 +15838,6 @@ function CLEANUP:_CleanUpScheduler()
 				--self:T( CleanUpUnitVec2 )
 				local CleanUpSurfaceType = land.getSurfaceType(CleanUpUnitVec2)
 				--self:T( CleanUpSurfaceType )
-				--MESSAGE:New( "Surface " .. CleanUpUnitName .. " = " .. CleanUpSurfaceTypeText[CleanUpSurfaceType], CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
 				
 				if CleanUpUnit and CleanUpUnit:getLife() <= CleanUpUnit:getLife0() * 0.95 then
 					if CleanUpSurfaceType == land.SurfaceType.RUNWAY then
@@ -15858,7 +15869,6 @@ function CLEANUP:_CleanUpScheduler()
 					else
 						UnitData.CleanUpTime = timer.getTime()
 						UnitData.CleanUpMoved = true
-						--MESSAGE:New( "Moved " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
 					end
 				end
 				
@@ -15951,14 +15961,6 @@ end
 -- 
 -- @module Spawn
 -- @author FlightControl
-
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Database" )
-Include.File( "Group" )
-Include.File( "Zone" )
-Include.File( "Event" )
-Include.File( "Scheduler" )
 
 --- SPAWN Class
 -- @type SPAWN
@@ -16661,7 +16663,7 @@ end
 -- If no index is given, it will return the first group in the list.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to return.
--- @return Group#GROUP
+-- @return Group#GROUP self
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
@@ -17147,8 +17149,6 @@ end
 -- on defined intervals (currently every minute).
 -- @module MOVEMENT
 
-Include.File( "Routines" )
-
 --- the MOVEMENT class
 -- @type
 MOVEMENT = {
@@ -17274,13 +17274,6 @@ end
 -- @module Sead
 -- @author to be searched on the forum
 -- @author (co) Flightcontrol (Modified and enriched with functionality)
-
-Include.File( "Routines" )
-Include.File( "Event" )
-Include.File( "Base" )
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "Task" )
 
 --- The SEAD class
 -- @type SEAD
@@ -17511,11 +17504,11 @@ end
 -- @module Escort
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Database" )
-Include.File( "Group" )
-Include.File( "Zone" )
+
+
+
+
+
 
 --- 
 -- @type ESCORT
@@ -18764,9 +18757,6 @@ end
 -- @author FlightControl
 
 
-Include.File( "Client" )
-Include.File( "Scheduler" )
-
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
 -- @extends Base#BASE
@@ -18911,9 +18901,9 @@ function MISSILETRAINER:InitMessagesOnOff( MessagesOnOff )
 
   self.MessagesOnOff = MessagesOnOff
   if self.MessagesOnOff == true then
-    MESSAGE:New( "Messages ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Messages ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Messages OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Messages OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -18928,9 +18918,9 @@ function MISSILETRAINER:InitTrackingToAll( TrackingToAll )
 
   self.TrackingToAll = TrackingToAll
   if self.TrackingToAll == true then
-    MESSAGE:New( "Missile tracking to all players ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking to all players ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Missile tracking to all players OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking to all players OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -18945,9 +18935,9 @@ function MISSILETRAINER:InitTrackingOnOff( TrackingOnOff )
 
   self.TrackingOnOff = TrackingOnOff
   if self.TrackingOnOff == true then
-    MESSAGE:New( "Missile tracking ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Missile tracking OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -18966,7 +18956,7 @@ function MISSILETRAINER:InitTrackingFrequency( TrackingFrequency )
     self.TrackingFrequency = 0.5
   end
   if self.TrackingFrequency then
-    MESSAGE:New( "Missile tracking frequency is " .. self.TrackingFrequency .. " seconds.", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Missile tracking frequency is " .. self.TrackingFrequency .. " seconds.", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -18981,9 +18971,9 @@ function MISSILETRAINER:InitAlertsToAll( AlertsToAll )
 
   self.AlertsToAll = AlertsToAll
   if self.AlertsToAll == true then
-    MESSAGE:New( "Alerts to all players ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts to all players ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts to all players OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts to all players OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -18998,9 +18988,9 @@ function MISSILETRAINER:InitAlertsHitsOnOff( AlertsHitsOnOff )
 
   self.AlertsHitsOnOff = AlertsHitsOnOff
   if self.AlertsHitsOnOff == true then
-    MESSAGE:New( "Alerts Hits ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Hits ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts Hits OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Hits OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -19015,9 +19005,9 @@ function MISSILETRAINER:InitAlertsLaunchesOnOff( AlertsLaunchesOnOff )
 
   self.AlertsLaunchesOnOff = AlertsLaunchesOnOff
   if self.AlertsLaunchesOnOff == true then
-    MESSAGE:New( "Alerts Launches ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Launches ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Alerts Launches OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Alerts Launches OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -19032,9 +19022,9 @@ function MISSILETRAINER:InitRangeOnOff( DetailsRangeOnOff )
 
   self.DetailsRangeOnOff = DetailsRangeOnOff
   if self.DetailsRangeOnOff == true then
-    MESSAGE:New( "Range display ON", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Range display ON", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Range display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Range display OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -19049,9 +19039,9 @@ function MISSILETRAINER:InitBearingOnOff( DetailsBearingOnOff )
 
   self.DetailsBearingOnOff = DetailsBearingOnOff
   if self.DetailsBearingOnOff == true then
-    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Bearing display OFF", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Bearing display OFF", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Bearing display OFF", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -19066,9 +19056,9 @@ function MISSILETRAINER:InitMenusOnOff( MenusOnOff )
 
   self.MenusOnOff = MenusOnOff
   if self.MenusOnOff == true then
-    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Menus are ENABLED (only when a player rejoins a slot)", 15, "Menu" ):ToAll()
   else
-    MESSAGE:New( "Menus are DISABLED", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Menus are DISABLED", 15, "Menu" ):ToAll()
   end
 
   return self
@@ -19119,7 +19109,7 @@ function MISSILETRAINER._MenuMessages( MenuParameters )
 
   if MenuParameters.Distance ~= nil then
     self.Distance = MenuParameters.Distance
-    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", "Menu", 15, "ID" ):ToAll()
+    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", 15, "Menu" ):ToAll()
   end
 
 end
@@ -19155,7 +19145,7 @@ function MISSILETRAINER:_EventShot( Event )
         string.format( "%s launched a %s",
           TrainerSourceUnit:GetTypeName(),
           TrainerWeaponName
-        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ),"Launch Alert", 5, "ID" )
+        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ), 5, "Launch Alert" )
 
       if self.AlertsToAll then
         Message:ToAll()
@@ -19270,7 +19260,7 @@ function MISSILETRAINER:_TrackMissiles()
                 TrainerWeapon:getTypeName(),
                 TrainerSourceUnit:GetTypeName(),
                 TrainerTargetUnit:GetPlayerName()
-              ),"Hit Alert", 15, "ID" )
+              ), 15, "Hit Alert" )
   
             if self.AlertsToAll == true then
               Message:ToAll()
@@ -19291,7 +19281,7 @@ function MISSILETRAINER:_TrackMissiles()
               string.format( "%s launched by %s self destructed!",
                 TrainerWeaponTypeName,
                 TrainerSourceUnit:GetTypeName()
-              ),"Tracking", 5, "ID" )
+              ), 5, "Tracking" )
   
             if self.AlertsToAll == true then
               Message:ToAll()
@@ -19365,7 +19355,7 @@ function MISSILETRAINER:_TrackMissiles()
   
       -- Once the Player Client and the Other Player Client tracking messages are prepared, show them.
       if ClientData.MessageToClient ~= "" or ClientData.MessageToAll ~= "" then
-        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, "Tracking", 1, "ID" ):ToClient( Client )
+        local Message = MESSAGE:New( ClientData.MessageToClient .. ClientData.MessageToAll, 1, "Tracking" ):ToClient( Client )
       end
     end
   end

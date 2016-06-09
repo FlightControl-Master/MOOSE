@@ -1,13 +1,3 @@
--- MOOSE include files.
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "DestroyGroupsTask" )
-Include.File( "DestroyRadarsTask" )
-Include.File( "DestroyUnitTypesTask" )
-Include.File( "Group" )
-Include.File( "Unit" )
-Include.File( "Zone" )
-Include.File( "Event" )
 
 do
   local Mission = MISSION:New( 'Destroy Gound', 'Ground', 'Briefing', 'CCCP'  )

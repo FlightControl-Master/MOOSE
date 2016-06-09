@@ -4,7 +4,7 @@
 -- @see DESTROYUNITTYPESTASK
 -- @see DESTROY_RADARS_TASK
 
-Include.File("Task")
+
 
 --- The DESTROYBASETASK class
 -- @type DESTROYBASETASK

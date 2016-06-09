@@ -71,27 +71,30 @@
 	<div id="content">
    <h1>Module <code>Message</code></h1>
    
-<p>Message System to display Messages for Clients and Coalitions or All.</p>
+<p>This module contains the MESSAGE class.</p>
 
    
-<p>Messages are grouped on the display panel per Category to improve readability for the players.
+
+<h1>1) <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>Message System to display Messages to Clients, Coalitions or All.
 Messages are shown on the display panel for an amount of seconds, and will then disappear.
-Messages are identified by an ID. The messages with the same ID belonging to the same category will be overwritten if they were still being displayed on the display panel.
-Messages are created with MESSAGE:<a href="New.html">New</a>().
-Messages are sent to Clients with MESSAGE:<a href="ToClient.html">ToClient</a>().
-Messages are sent to Coalitions with MESSAGE:<a href="ToCoalition.html">ToCoalition</a>().
-Messages are sent to All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().</p>
+Messages can contain a category which is indicating the category of the message.</p>
+
+<h2>1.1) MESSAGE construction methods</h2>
+<p>Messages are created with MESSAGE:<a href="New.html">New</a>. Note that when the MESSAGE object is created, no message is sent yet.
+To send messages, you need to use the To functions.</p>
+
+<h2>1.2) Send messages with MESSAGE To methods</h2>
+<p>Messages are sent to:
+  * Clients with MESSAGE:<a href="ToClient.html">ToClient</a>().
+  * Coalitions with MESSAGE:<a href="ToCoalition.html">ToCoalition</a>().
+  * All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().
+  </p>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MESSAGE">MESSAGE</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#MESSAGEQUEUE">MESSAGEQUEUE</a></td>
 		<td class="summary">
 
 </td>
@@ -118,7 +121,7 @@ Messages are sent to All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().<
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).New">MESSAGE:New(MessageText, MessageCategory, MessageDuration, MessageID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).New">MESSAGE:New(MessageText, MessageDuration, MessageCategory)</a></td>
 		<td class="summary">
 <p>Creates a new MESSAGE object.</p>
 </td>
@@ -155,34 +158,6 @@ Messages are sent to All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().<
 		</tr>
 	</table>
 
-			<h2><a id="#(MESSAGEQUEUE)">Type <code>MESSAGEQUEUE</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGEQUEUE).ClientGroups">MESSAGEQUEUE.ClientGroups</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGEQUEUE).CoalitionSides">MESSAGEQUEUE.CoalitionSides</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGEQUEUE).New">MESSAGEQUEUE:New(RefreshInterval)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGEQUEUE)._DisplayMessages">MESSAGEQUEUE:_DisplayMessages()</a></td>
-		<td class="summary">
-<p>This function is called automatically by the MESSAGEQUEUE scheduler.</p>
-</td>
-		</tr>
-	</table>
-
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -190,20 +165,6 @@ Messages are sent to All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().<
 		<em><a href="##(MESSAGE)">#MESSAGE</a></em>
 <a id="MESSAGE" >
 <strong>MESSAGE</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(MESSAGEQUEUE)">#MESSAGEQUEUE</a></em>
-<a id="MESSAGEQUEUE" >
-<strong>MESSAGEQUEUE</strong>
 </a>
 </dt>
 <dd>
@@ -265,7 +226,7 @@ Messages are sent to All Players with MESSAGE:<a href="ToAll.html">ToAll</a>().<
 <dt>
 
 <a id="#(MESSAGE).New" >
-<strong>MESSAGE:New(MessageText, MessageCategory, MessageDuration, MessageID)</strong>
+<strong>MESSAGE:New(MessageText, MessageDuration, MessageCategory)</strong>
 </a>
 </dt>
 <dd>
@@ -285,20 +246,14 @@ is the text of the Message.</p>
 				</li>
 				<li>
 				
-<p><code><em>#string MessageCategory </em></code>: 
-is a string expressing the Category of the Message. Messages are grouped on the display panel per Category to improve readability.</p>
-
-				</li>
-				<li>
-				
 <p><code><em>#number MessageDuration </em></code>: 
 is a number in seconds of how long the MESSAGE should be shown on the display panel.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string MessageID </em></code>: 
-is a string expressing the ID of the Message.</p>
+<p><code><em>#string MessageCategory </em></code>: 
+(optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".</p>
 
 				</li>
 		</ul>
@@ -313,10 +268,10 @@ is a string expressing the ID of the Message.</p>
 -- MessageRED is meant to be sent to the RED players only, for 10 seconds, and is classified as "End of Mission", with ID "Win".
 -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
 -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
-MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
-MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
-MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" )
-MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )</code></pre>
+MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!",  25, "End of Mission" )
+MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty" )
+MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target",  25, "Score" )
+MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")</code></pre>
 
 </dd>
 </dl>
@@ -480,74 +435,6 @@ MESSAGE:New( "To the RED Players: You receive a penalty because you've killed on
 or
 MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 MessageRED:ToRed()</code></pre>
-
-</dd>
-</dl>
-
-			<h2><a id="#(MESSAGEQUEUE)" >Type <code>MESSAGEQUEUE</code></a></h2>
-				
-<p>The MESSAGEQUEUE class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(MESSAGEQUEUE).ClientGroups" >
-<strong>MESSAGEQUEUE.ClientGroups</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(MESSAGEQUEUE).CoalitionSides" >
-<strong>MESSAGEQUEUE.CoalitionSides</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MESSAGEQUEUE).New" >
-<strong>MESSAGEQUEUE:New(RefreshInterval)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> RefreshInterval </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MESSAGEQUEUE)._DisplayMessages" >
-<strong>MESSAGEQUEUE:_DisplayMessages()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>This function is called automatically by the MESSAGEQUEUE scheduler.</p>
 
 </dd>
 </dl>

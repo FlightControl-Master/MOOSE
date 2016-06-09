@@ -25,10 +25,6 @@
 -- @module Point
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Point" )
-
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
 -- @extends Base#BASE
