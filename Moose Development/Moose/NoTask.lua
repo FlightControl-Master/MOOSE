@@ -1,8 +1,6 @@
 --- A NOTASK is a dummy activity... But it will show a Mission Briefing...
 -- @module NOTASK
 
-Include.File("Task")
-
 --- The NOTASK class
 -- @type
 NOTASK = {

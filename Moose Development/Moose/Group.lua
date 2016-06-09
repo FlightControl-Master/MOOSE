@@ -146,11 +146,6 @@
 -- @module Group
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Message" )
-Include.File( "Unit" )
-
 --- The GROUP class
 -- @type GROUP
 -- @extends Base#BASE
@@ -2672,7 +2667,7 @@ function GROUP:Message( Message, Duration )
 
   local DCSGroup = self:GetDCSGroup()
   if DCSGroup then
-    return MESSAGE:New( Message, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")", Duration, self:GetClassNameAndID() )
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
   end
 
   return nil

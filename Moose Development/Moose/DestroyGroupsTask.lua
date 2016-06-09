@@ -1,7 +1,7 @@
 --- DESTROYGROUPSTASK
 -- @module DESTROYGROUPSTASK
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYGROUPSTASK class
 -- @type

@@ -2,11 +2,11 @@
 -- @module CleanUp
 -- @author Flightcontrol
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "Task" )
+
+
+
+
+
 
 --- The CLEANUP class.
 -- @type CLEANUP
@@ -58,7 +58,6 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:F( { GroupObject, CleanUpGroupName } )
 
 	if GroupObject then -- and GroupObject:isExist() then
-		--MESSAGE:New( "Destroy Group " .. CleanUpGroupName, CleanUpGroupName, 1, CleanUpGroupName ):ToAll()
 		trigger.action.deactivateGroup(GroupObject)
 		self:T( { "GroupObject Destroyed", GroupObject } )
 	end
@@ -72,7 +71,6 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	if CleanUpUnit then
-		--MESSAGE:New( "Destroy " .. CleanUpUnitName, CleanUpUnitName, 1, CleanUpUnitName ):ToAll()
 		local CleanUpGroup = Unit.getGroup(CleanUpUnit)
     -- TODO Client bug in 1.5.3
 		if CleanUpGroup and CleanUpGroup:isExist() then
@@ -142,7 +140,6 @@ function CLEANUP:_EventCrash( Event )
 	self:F( { Event } )
 
   --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
-	--MESSAGE:New( "Crash ", "Crash", 10, "Crash" ):ToAll()
 	-- self:T("before getGroup")
 	-- local _grp = Unit.getGroup(event.initiator)-- Identify the group that fired 
 	-- self:T("after getGroup")
@@ -277,7 +274,6 @@ function CLEANUP:_CleanUpScheduler()
 				--self:T( CleanUpUnitVec2 )
 				local CleanUpSurfaceType = land.getSurfaceType(CleanUpUnitVec2)
 				--self:T( CleanUpSurfaceType )
-				--MESSAGE:New( "Surface " .. CleanUpUnitName .. " = " .. CleanUpSurfaceTypeText[CleanUpSurfaceType], CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
 				
 				if CleanUpUnit and CleanUpUnit:getLife() <= CleanUpUnit:getLife0() * 0.95 then
 					if CleanUpSurfaceType == land.SurfaceType.RUNWAY then
@@ -309,7 +305,6 @@ function CLEANUP:_CleanUpScheduler()
 					else
 						UnitData.CleanUpTime = timer.getTime()
 						UnitData.CleanUpMoved = true
-						--MESSAGE:New( "Moved " .. CleanUpUnitName, CleanUpUnitName, 10, CleanUpUnitName ):ToAll()
 					end
 				end
 				

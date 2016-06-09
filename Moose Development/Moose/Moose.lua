@@ -2,8 +2,73 @@
 
 Include.File( "Routines" )
 Include.File( "Base" )
-Include.File( "Database" )
+Include.File( "Scheduler" )
 Include.File( "Event" )
+Include.File( "Menu" )
+Include.File( "Group" )
+Include.File( "Unit" )
+Include.File( "Zone" )
+Include.File( "Client" )
+Include.File( "Static" )
+Include.File( "Database" )
+Include.File( "Set" )
+Include.File( "Point" )
+Include.File( "Moose" )
+Include.File( "Scoring" )
+Include.File( "Cargo" )
+Include.File( "Message" )
+Include.File( "Stage" )
+Include.File( "Task" )
+Include.File( "GoHomeTask" )
+Include.File( "DestroyBaseTask" )
+Include.File( "DestroyGroupsTask" )
+Include.File( "DestroyRadarsTask" )
+Include.File( "DestroyUnitTypesTask" )
+Include.File( "PickupTask" )
+Include.File( "DeployTask" )
+Include.File( "NoTask" )
+Include.File( "RouteTask" )
+Include.File( "Mission" )
+Include.File( "CleanUp" )
+Include.File( "Spawn" )
+Include.File( "Movement" )
+Include.File( "Sead" )
+Include.File( "Escort" )
+Include.File( "MissileTrainer" )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 -- The order of the declarations is important here. Don't touch it.
 

@@ -1,7 +1,7 @@
 --- Provides a logging of statistics in a running DCS Mission.
 -- @script eStatHandler
 
-Include.File( "Routines" )
+
 
 
 --Handler table

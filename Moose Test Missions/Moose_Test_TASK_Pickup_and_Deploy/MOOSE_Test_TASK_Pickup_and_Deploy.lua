@@ -1,15 +1,15 @@
-Include.File( "Mission" )
-Include.File( "Client" )
-Include.File( "DeployTask" )
-Include.File( "PickupTask" )
-Include.File( "DestroyGroupsTask" )
-Include.File( "DestroyRadarsTask" )
-Include.File( "DestroyUnitTypesTask" )
-Include.File( "GoHomeTask" )
-Include.File( "Spawn" )
-Include.File( "Movement" )
-Include.File( "Sead" )
-Include.File( "CleanUp" )
+
+
+
+
+
+
+
+
+
+
+
+
 
 do
 	local Mission = MISSION:New( 'Pickup', 'Operational', 'Pickup Troops', 'NATO' )
