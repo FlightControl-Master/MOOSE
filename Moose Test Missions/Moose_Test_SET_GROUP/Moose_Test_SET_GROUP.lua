@@ -2,6 +2,22 @@
 Include.File( 'Set' )
 Include.File( 'Spawn' )
 
+SetVehicles = SET_GROUP:New()
+
+SetVehicles:AddGroupsByName( { "Vehicle A", "Vehicle B", "Vehicle C" } )
+
+SetVehicles:ForEachGroup( 
+  --- @param Group#GROUP MooseGroup
+  function( MooseGroup ) 
+    for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
+      local UnitAction = UnitData -- Unit#UNIT
+      UnitAction:SmokeGreen()
+    end
+  end 
+)
+
+
+
 SetBluePlanesGroup = SET_GROUP:New()
   :FilterCoalitions( "blue" )
   :FilterCategories( "plane" )
@@ -14,6 +30,7 @@ SetNorthKoreaGroup = SET_GROUP:New()
 SetSAMGroup = SET_GROUP:New()
   :FilterPrefixes( "SAM" )
   :FilterStart()
+  :SetIteratorIntervals( 5, 10 )
 
 SpawnUS_Plane = SPAWN:New( 'Spawn Test USA Plane')
 GroupUS_Plane = SpawnUS_Plane:Spawn()

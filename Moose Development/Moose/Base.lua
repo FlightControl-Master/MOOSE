@@ -57,27 +57,8 @@ Include.File( "Routines" )
 
 local _TraceOn = true
 local _TraceLevel = 1
-local _TraceClass = {
-	--DATABASE = true,
-	--SEAD = true,
-	--DESTROYBASETASK = true,
-	--MOVEMENT = true,
-	--SPAWN = true,
-	--STAGE = true,
-	--ZONE = true,
-	--GROUP = true,
-	--UNIT = true,
-  --CLIENT = true,
-	--CARGO = true,
-	--CARGO_GROUP = true,
-	--CARGO_PACKAGE = true,
-	--CARGO_SLINGLOAD = true,
-	--CARGO_ZONE = true,
-	--CLEANUP = true,
-	--MENU_CLIENT = true,
-	--MENU_CLIENT_COMMAND = true,
-	--ESCORT = true,
-	}
+local _TraceAll = false
+local _TraceClass = {}
 local _TraceClassMethod = {}
 
 --- The BASE Class
@@ -355,6 +336,20 @@ function BASE:TraceLevel( Level )
   self:E( "Tracing level " .. Level )
 end
 
+--- Trace all methods in MOOSE
+-- @param #BASE self
+-- @param #boolean TraceAll true = trace all methods in MOOSE.
+function BASE:TraceAll( TraceAll )
+  
+  _TraceAll = TraceAll
+  
+  if _TraceAll then
+    self:E( "Tracing all methods in MOOSE " )
+  else
+    self:E( "Switched off tracing all methods in MOOSE" )
+  end
+end
+
 --- Set tracing for a class
 -- @param #BASE self
 -- @param #string Class
@@ -382,7 +377,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+  if _TraceOn and ( ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -392,7 +387,7 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       Function = DebugInfoCurrent.name
     end
     
-    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
       local LineCurrent = DebugInfoCurrent.currentline
       local LineFrom = 0
       if DebugInfoFrom then
@@ -436,7 +431,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-	if _TraceOn and ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+	if _TraceOn and ( ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -446,7 +441,7 @@ function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 			Function = DebugInfoCurrent.name
 		end
 
-    if _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
   		local LineCurrent = DebugInfoCurrent.currentline
   		local LineFrom = 0
   		if DebugInfoFrom then
