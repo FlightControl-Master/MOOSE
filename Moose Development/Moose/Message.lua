@@ -14,6 +14,7 @@
 -- 1.2) Send messages with MESSAGE To methods
 -- ------------------------------------------
 -- Messages are sent to:
+--
 --   * Clients with MESSAGE:@{ToClient}().
 --   * Coalitions with MESSAGE:@{ToCoalition}().
 --   * All Players with MESSAGE:@{ToAll}().
