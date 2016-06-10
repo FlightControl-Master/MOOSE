@@ -160,7 +160,8 @@ function UNIT:GetDCSUnit()
   if DCSUnit then
     return DCSUnit
   end
-    
+  
+  self:E( "Unit " .. self.UnitName .. " not found!" )
   return nil
 end
 
@@ -470,9 +471,11 @@ function UNIT:GetDesc()
   
   if DCSUnit then
     local UnitDesc = DCSUnit:getDesc()
+    self:T2( UnitDesc )
     return UnitDesc
   end
   
+  self:E( "Unit " .. self.UnitName .. "not found!" )
   return nil
 end
 
