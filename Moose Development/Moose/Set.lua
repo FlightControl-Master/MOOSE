@@ -38,7 +38,7 @@
 -- 
 -- 2.2) Add or Remove GROUP(s) from SET_GROUP: 
 -- -------------------------------------------
--- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUPS.RemoveGroupsByName} respectively. 
+-- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
 -- 2.3) SET_GROUP filter criteria: 
@@ -88,8 +88,12 @@
 -- 
 --    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
 --   
+-- 3.2) Add or Remove UNIT(s) from SET_UNIT: 
+-- -----------------------------------------
+-- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+-- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
 -- 
--- 3.2) SET_UNIT filter criteria: 
+-- 3.3) SET_UNIT filter criteria: 
 -- ------------------------------
 -- You can set filter criteria to define the set of units within the SET_UNIT.
 -- Filter criteria are defined by:
@@ -108,19 +112,69 @@
 -- 
 --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
 -- 
--- 3.3) SET_UNIT iterators:
+-- 3.4) SET_UNIT iterators:
 -- ------------------------
 -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
 -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the SET_UNIT:
 -- 
 --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
+--   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   
 -- Planned iterators methods in development are (so these are not yet available):
 -- 
---   * @{#SET_UNIT.ForEachUnitInGroup}: Calls a function for each group contained within the SET_UNIT.
---   * @{#SET_UNIT.ForEachUnitInZone}: Calls a function for each unit within a certain zone contained within the SET_UNIT.
+--   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
+--   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+--   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- 
+-- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
+-- ===================================================
+-- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
+-- 
+--  * Coalitions
+--  * Categories
+--  * Countries
+--  * Client types
+--  * Starting with certain prefix strings.
+--  
+-- 4.1) SET_CLIENT construction method:
+-- ----------------------------------
+-- Create a new SET_CLIENT object with the @{#SET_CLIENT.New} method:
+-- 
+--    * @{#SET_CLIENT.New}: Creates a new SET_CLIENT object.
+--   
+-- 4.2) Add or Remove CLIENT(s) from SET_CLIENT: 
+-- -----------------------------------------
+-- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
+-- 
+-- 4.3) SET_CLIENT filter criteria: 
+-- ------------------------------
+-- You can set filter criteria to define the set of clients within the SET_CLIENT.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_CLIENT.FilterCoalitions}: Builds the SET_CLIENT with the clients belonging to the coalition(s).
+--    * @{#SET_CLIENT.FilterCategories}: Builds the SET_CLIENT with the clients belonging to the category(ies).
+--    * @{#SET_CLIENT.FilterTypes}: Builds the SET_CLIENT with the clients belonging to the client type(s).
+--    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
+--    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients starting with the same prefix string(s).
+--   
+-- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
+-- 
+--   * @{#SET_CLIENT.FilterStart}: Starts the filtering of the clients within the SET_CLIENT.
+-- 
+-- Planned filter criteria within development are (so these are not yet available):
+-- 
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
+-- 
+-- 4.4) SET_CLIENT iterators:
+-- ------------------------
+-- Once the filters have been defined and the SET_CLIENT has been built, you can iterate the SET_CLIENT with the available iterator methods.
+-- The iterator methods will walk the SET_CLIENT set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_CLIENT:
+-- 
+--   * @{#SET_CLIENT.ForEachClient}: Calls a function for each alive client it finds within the SET_CLIENT.
 -- 
 -- ====
 -- 
@@ -495,7 +549,7 @@ function SET_GROUP:AddGroupsByName( AddGroupNames )
   return self
 end
 
---- Remove GROUP(s) to SET_GROUP.
+--- Remove GROUP(s) from SET_GROUP.
 -- @param Set#SET_GROUP self
 -- @param Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
 -- @return self
@@ -846,6 +900,36 @@ function SET_UNIT:New()
   return self
 end
 
+--- Add UNIT(s) to SET_UNIT.
+-- @param Set#SET_UNIT self
+-- @param #string AddUnitNames A single name or an array of UNIT names.
+-- @return self
+function SET_UNIT:AddUnitsByName( AddUnitNames )
+
+  local AddUnitNamesArray = ( type( AddUnitNames ) == "table" ) and AddUnitNames or { AddUnitNames }
+  
+  for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
+    self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
+  end
+    
+  return self
+end
+
+--- Remove UNIT(s) from SET_UNIT.
+-- @param Set#SET_UNIT self
+-- @param Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
+-- @return self
+function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
+
+  local RemoveUnitNamesArray = ( type( RemoveUnitNames ) == "table" ) and RemoveUnitNames or { RemoveUnitNames }
+  
+  for RemoveUnitID, RemoveUnitName in pairs( RemoveUnitNamesArray ) do
+    self:Remove( RemoveUnitName.UnitName )
+  end
+    
+  return self
+end
+
 
 --- Finds a Unit based on the Unit Name.
 -- @param #SET_UNIT self
@@ -1009,6 +1093,51 @@ function SET_UNIT:ForEachUnit( IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+-- @param #SET_UNIT self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+-- @return #SET_UNIT self
+function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Unit#UNIT UnitObject
+    function( ZoneObject, UnitObject )
+      if UnitObject:IsCompletelyInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+--- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+-- @param #SET_UNIT self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+-- @return #SET_UNIT self
+function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Unit#UNIT UnitObject
+    function( ZoneObject, UnitObject )
+      if UnitObject:IsNotInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+
 
 ----- Interate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_UNIT self
@@ -1101,5 +1230,384 @@ function SET_UNIT:IsIncludeObject( MUnit )
 
   self:T2( MUnitInclude )
   return MUnitInclude
+end
+
+
+--- SET_CLIENT
+
+--- SET_CLIENT class
+-- @type SET_CLIENT
+-- @extends Set#SET_BASE
+SET_CLIENT = {
+  ClassName = "SET_CLIENT",
+  Clients = {},
+  Filter = {
+    Coalitions = nil,
+    Categories = nil,
+    Types = nil,
+    Countries = nil,
+    ClientPrefixes = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      plane = Client.Category.AIRPLANE,
+      helicopter = Client.Category.HELICOPTER,
+      ground = Client.Category.GROUND_CLIENT,
+      ship = Client.Category.SHIP,
+      structure = Client.Category.STRUCTURE,
+    },
+  },
+}
+
+
+--- Creates a new SET_CLIENT object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.
+-- @param #SET_CLIENT self
+-- @return #SET_CLIENT
+-- @usage
+-- -- Define a new SET_CLIENT Object. This DBObject will contain a reference to all Clients.
+-- DBObject = SET_CLIENT:New()
+function SET_CLIENT:New()
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CLIENTS ) )
+
+  return self
+end
+
+--- Add CLIENT(s) to SET_CLIENT.
+-- @param Set#SET_CLIENT self
+-- @param #string AddClientNames A single name or an array of CLIENT names.
+-- @return self
+function SET_CLIENT:AddClientsByName( AddClientNames )
+
+  local AddClientNamesArray = ( type( AddClientNames ) == "table" ) and AddClientNames or { AddClientNames }
+  
+  for AddClientID, AddClientName in pairs( AddClientNamesArray ) do
+    self:Add( AddClientName, CLIENT:FindByName( AddClientName ) )
+  end
+    
+  return self
+end
+
+--- Remove CLIENT(s) from SET_CLIENT.
+-- @param Set#SET_CLIENT self
+-- @param Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
+-- @return self
+function SET_CLIENT:RemoveClientsByName( RemoveClientNames )
+
+  local RemoveClientNamesArray = ( type( RemoveClientNames ) == "table" ) and RemoveClientNames or { RemoveClientNames }
+  
+  for RemoveClientID, RemoveClientName in pairs( RemoveClientNamesArray ) do
+    self:Remove( RemoveClientName.ClientName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Client based on the Client Name.
+-- @param #SET_CLIENT self
+-- @param #string ClientName
+-- @return Client#CLIENT The found Client.
+function SET_CLIENT:FindClient( ClientName )
+
+  local ClientFound = self.Set[ClientName]
+  return ClientFound
+end
+
+
+
+--- Builds a set of clients of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_CLIENT self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+
+--- Builds a set of clients out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET_CLIENT self
+-- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined client types.
+-- Possible current types are those types known within DCS world.
+-- @param #SET_CLIENT self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterTypes( Types )
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #SET_CLIENT self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterCountries( Countries )
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined client prefixes.
+-- All the clients starting with the given prefixes will be included within the set.
+-- @param #SET_CLIENT self
+-- @param #string Prefixes The prefix of which the client name starts with.
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterPrefixes( Prefixes )
+  if not self.Filter.ClientPrefixes then
+    self.Filter.ClientPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.ClientPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+
+
+--- Starts the filtering.
+-- @param #SET_CLIENT self
+-- @return #SET_CLIENT self
+function SET_CLIENT:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+  
+  return self
+end
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_CLIENT self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the CLIENT
+-- @return #table The CLIENT
+function SET_CLIENT:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  if not self.Database[Event.IniDCSClientName] then
+    self.Database[Event.IniDCSClientName] = CLIENT:Register( Event.IniDCSClientName )
+    self:T3( self.Database[Event.IniDCSClientName] )
+  end
+  
+  return Event.IniDCSClientName, self.Database[Event.IniDCSClientName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_CLIENT self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the CLIENT
+-- @return #table The CLIENT
+function SET_CLIENT:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSClientName, self.Database[Event.IniDCSClientName]
+end
+
+--- Interate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+-- @param #SET_CLIENT self
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
+-- @return #SET_CLIENT self
+function SET_CLIENT:ForEachClient( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+-- @param #SET_CLIENT self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
+-- @return #SET_CLIENT self
+function SET_CLIENT:ForEachClientCompletelyInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Client#CLIENT ClientObject
+    function( ZoneObject, ClientObject )
+      if ClientObject:IsCompletelyInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+--- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+-- @param #SET_CLIENT self
+-- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
+-- @return #SET_CLIENT self
+function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set,
+    --- @param Zone#ZONE_BASE ZoneObject
+    -- @param Client#CLIENT ClientObject
+    function( ZoneObject, ClientObject )
+      if ClientObject:IsNotInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+
+
+----- Interate the SET_CLIENT and call an interator function for each **alive** player, providing the Client of the player and optional parameters.
+---- @param #SET_CLIENT self
+---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_CLIENT. The function needs to accept a CLIENT parameter.
+---- @return #SET_CLIENT self
+--function SET_CLIENT:ForEachPlayer( IteratorFunction, ... )
+--  self:F2( arg )
+--  
+--  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+--  
+--  return self
+--end
+--
+--
+----- Interate the SET_CLIENT and call an interator function for each client, providing the Client to the function and optional parameters.
+---- @param #SET_CLIENT self
+---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_CLIENT. The function needs to accept a CLIENT parameter.
+---- @return #SET_CLIENT self
+--function SET_CLIENT:ForEachClient( IteratorFunction, ... )
+--  self:F2( arg )
+--  
+--  self:ForEach( IteratorFunction, arg, self.Clients )
+--
+--  return self
+--end
+
+
+---
+-- @param #SET_CLIENT self
+-- @param Client#CLIENT MClient
+-- @return #SET_CLIENT self
+function SET_CLIENT:IsIncludeObject( MClient )
+  self:F2( MClient )
+  local MClientInclude = true
+
+  if self.Filter.Coalitions then
+    local MClientCoalition = false
+    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+      self:T3( { "Coalition:", MClient:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MClient:GetCoalition() then
+        MClientCoalition = true
+      end
+    end
+    MClientInclude = MClientInclude and MClientCoalition
+  end
+  
+  if self.Filter.Categories then
+    local MClientCategory = false
+    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+      self:T3( { "Category:", MClient:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MClient:GetDesc().category then
+        MClientCategory = true
+      end
+    end
+    MClientInclude = MClientInclude and MClientCategory
+  end
+  
+  if self.Filter.Types then
+    local MClientType = false
+    for TypeID, TypeName in pairs( self.Filter.Types ) do
+      self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
+      if TypeName == MClient:GetTypeName() then
+        MClientType = true
+      end
+    end
+    MClientInclude = MClientInclude and MClientType
+  end
+  
+  if self.Filter.Countries then
+    local MClientCountry = false
+    for CountryID, CountryName in pairs( self.Filter.Countries ) do
+      self:T3( { "Country:", MClient:GetCountry(), CountryName } )
+      if country.id[CountryName] == MClient:GetCountry() then
+        MClientCountry = true
+      end
+    end
+    MClientInclude = MClientInclude and MClientCountry
+  end
+
+  if self.Filter.ClientPrefixes then
+    local MClientPrefix = false
+    for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
+      self:T3( { "Prefix:", string.find( MClient:GetName(), ClientPrefix, 1 ), ClientPrefix } )
+      if string.find( MClient:GetName(), ClientPrefix, 1 ) then
+        MClientPrefix = true
+      end
+    end
+    MClientInclude = MClientInclude and MClientPrefix
+  end
+
+  self:T2( MClientInclude )
+  return MClientInclude
 end
 

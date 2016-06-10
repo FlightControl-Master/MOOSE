@@ -105,6 +105,7 @@ function DATABASE:New()
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
+  self:_RegisterClients()
   self:_RegisterStatics()
   self:_RegisterPlayers()
   
@@ -380,8 +381,16 @@ function DATABASE:_RegisterGroupsAndUnits()
     end
   end
 
+  return self
+end
+
+--- Private method that registers all Units of skill Client or Player within in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterClients()
+
   for ClientName, ClientTemplate in pairs( self.Templates.ClientsByName ) do
-    self:E( { "Adding Client:", ClientName } )
+    self:E( { "Register Client:", ClientName } )
     self:AddClient( ClientName )
   end
   
