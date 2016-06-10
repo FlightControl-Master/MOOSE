@@ -68,7 +68,8 @@ local _TraceClassMethod = {}
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
-  Events = {}
+  Events = {},
+  States = {}
 }
 
 --- The Formation Class
@@ -323,6 +324,36 @@ function BASE:onEvent(event)
 	end
 end
 
+function BASE:SetState( Object, StateName, State )
+
+  local ClassNameAndID = Object:GetClassNameAndID()
+  if not self.States[ClassNameAndID] then
+    self.States[ClassNameAndID] = {}
+  end
+  
+  self.States[ClassNameAndID][StateName] = State
+  
+  return self.States[ClassNameAndID][StateName]
+end
+  
+function BASE:GetState( Object, StateName )
+
+  local ClassNameAndID = Object:GetClassNameAndID()
+  if self.States[ClassNameAndID] then
+    return self.States[ClassNameAndID][StateName]
+  end
+  
+  return nil
+end
+
+function BASE:ClearState( Object, StateName )
+
+  local ClassNameAndID = Object:GetClassNameAndID()
+  if self.States[ClassNameAndID] then
+    self.States[ClassNameAndID][StateName] = nil
+  end
+end
+
 -- Trace section
 
 -- Log a trace (only shown when trace is on)
@@ -426,10 +457,10 @@ function BASE:F3( Arguments )
   
 end
 
---- Trace a function logic. Can be anywhere within the function logic.
+--- Trace a function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
+function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
 	if _TraceOn and ( ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) ) then
 
@@ -452,6 +483,21 @@ function BASE:T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 	end
 end
 
+--- Trace a function logic level 1. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
+function BASE:T( Arguments )
+
+  local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  local DebugInfoFrom = debug.getinfo( 3, "l" )
+
+  if _TraceLevel >= 1 then
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
+  end
+  
+end
+
+
 --- Trace a function logic level 2. Can be anywhere within the function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
@@ -461,7 +507,7 @@ function BASE:T2( Arguments )
   local DebugInfoFrom = debug.getinfo( 3, "l" )
 
   if _TraceLevel >= 2 then
-    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end
@@ -475,7 +521,7 @@ function BASE:T3( Arguments )
   local DebugInfoFrom = debug.getinfo( 3, "l" )
 
   if _TraceLevel >= 3 then
-    self:T( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
   
 end

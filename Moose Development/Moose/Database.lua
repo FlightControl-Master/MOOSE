@@ -288,7 +288,7 @@ end
 -- @param #DATABASE self
 -- @param #table GroupTemplate
 -- @return #DATABASE self
-function DATABASE:_RegisterTemplate( GroupTemplate )
+function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName, CountryName )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
 
@@ -307,6 +307,9 @@ function DATABASE:_RegisterTemplate( GroupTemplate )
   self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
   self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
+  self.Templates.Groups[GroupTemplateName].CategoryName = CategoryName
+  self.Templates.Groups[GroupTemplateName].CoalitionName = CoalitionName
+  self.Templates.Groups[GroupTemplateName].CountryName = CountryName
 
   self:T2( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
 
@@ -319,9 +322,15 @@ function DATABASE:_RegisterTemplate( GroupTemplate )
     self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
     self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
     self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplateName].CategoryName = CategoryName
+    self.Templates.Units[UnitTemplateName].CoalitionName = CoalitionName
+    self.Templates.Units[UnitTemplateName].CountryName = CountryName
     self:E( {"skill",UnitTemplate.skill})
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
       self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplateName].CategoryName = CategoryName
+      self.Templates.ClientsByName[UnitTemplateName].CoalitionName = CoalitionName
+      self.Templates.ClientsByName[UnitTemplateName].CountryName = CountryName
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
     self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
@@ -617,25 +626,25 @@ function DATABASE:_RegisterTemplates()
   self.Navpoints = {}
   self.UNITS = {}
   --Build routines.db.units and self.Navpoints
-  for coa_name, coa_data in pairs(env.mission.coalition) do
+  for CoalitionName, coa_data in pairs(env.mission.coalition) do
 
-    if (coa_name == 'red' or coa_name == 'blue') and type(coa_data) == 'table' then
+    if (CoalitionName == 'red' or CoalitionName == 'blue') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
 
       ----------------------------------------------
       -- build nav points DB
-      self.Navpoints[coa_name] = {}
+      self.Navpoints[CoalitionName] = {}
       if coa_data.nav_points then --navpoints
         for nav_ind, nav_data in pairs(coa_data.nav_points) do
 
           if type(nav_data) == 'table' then
-            self.Navpoints[coa_name][nav_ind] = routines.utils.deepCopy(nav_data)
+            self.Navpoints[CoalitionName][nav_ind] = routines.utils.deepCopy(nav_data)
 
-            self.Navpoints[coa_name][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
-            self.Navpoints[coa_name][nav_ind]['point'] = {}  -- point is used by SSE, support it.
-            self.Navpoints[coa_name][nav_ind]['point']['x'] = nav_data.x
-            self.Navpoints[coa_name][nav_ind]['point']['y'] = 0
-            self.Navpoints[coa_name][nav_ind]['point']['z'] = nav_data.y
+            self.Navpoints[CoalitionName][nav_ind]['name'] = nav_data.callsignStr  -- name is a little bit more self-explanatory.
+            self.Navpoints[CoalitionName][nav_ind]['point'] = {}  -- point is used by SSE, support it.
+            self.Navpoints[CoalitionName][nav_ind]['point']['x'] = nav_data.x
+            self.Navpoints[CoalitionName][nav_ind]['point']['y'] = 0
+            self.Navpoints[CoalitionName][nav_ind]['point']['z'] = nav_data.y
           end
       end
       end
@@ -643,7 +652,7 @@ function DATABASE:_RegisterTemplates()
       if coa_data.country then --there is a country table
         for cntry_id, cntry_data in pairs(coa_data.country) do
 
-          local countryName = string.lower(cntry_data.name)
+          local CountryName = string.upper(cntry_data.name)
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
@@ -653,7 +662,7 @@ function DATABASE:_RegisterTemplates()
 
               if obj_type_name == "helicopter" or obj_type_name == "ship" or obj_type_name == "plane" or obj_type_name == "vehicle" or obj_type_name == "static" then --should be an unncessary check
 
-                local category = obj_type_name
+                local CategoryName = obj_type_name
 
                 if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
 
@@ -662,7 +671,7 @@ function DATABASE:_RegisterTemplates()
                   for group_num, GroupTemplate in pairs(obj_type_data.group) do
 
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterTemplate( GroupTemplate )
+                      self:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName, CountryName )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
                 end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then

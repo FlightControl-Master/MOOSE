@@ -1,5 +1,4 @@
 local base = _G
-env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
 Include = {}
 
@@ -11,14 +10,4 @@ end
 Include.File = function( IncludeFile )
 end
 
-Include.ProgramPath = "Scripts/Moose/Moose/"
-Include.MissionPath = Include.Path()
-
-env.info( "Include.ProgramPath = " .. Include.ProgramPath)
-env.info( "Include.MissionPath = " .. Include.MissionPath)
-
 Include.Files = {}
-
-Include.File( "Moose" )
-
-env.info("Loaded MOOSE Include Engine")

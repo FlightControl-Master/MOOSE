@@ -1247,11 +1247,11 @@ SET_CLIENT = {
       neutral = coalition.side.NEUTRAL,
     },
     Categories = {
-      plane = Client.Category.AIRPLANE,
-      helicopter = Client.Category.HELICOPTER,
-      ground = Client.Category.GROUND_CLIENT,
-      ship = Client.Category.SHIP,
-      structure = Client.Category.STRUCTURE,
+      plane = "plane",
+      helicopter = "helicopter",
+      ground = "vehicle",
+      ship = "ship",
+      structure = "static",
     },
   },
 }
@@ -1432,12 +1432,7 @@ end
 function SET_CLIENT:AddInDatabase( Event )
   self:F3( { Event } )
 
-  if not self.Database[Event.IniDCSClientName] then
-    self.Database[Event.IniDCSClientName] = CLIENT:Register( Event.IniDCSClientName )
-    self:T3( self.Database[Event.IniDCSClientName] )
-  end
-  
-  return Event.IniDCSClientName, self.Database[Event.IniDCSClientName]
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
 --- Handles the Database to check on any event that Object exists in the Database.
@@ -1449,7 +1444,7 @@ end
 function SET_CLIENT:FindInDatabase( Event )
   self:F3( { Event } )
 
-  return Event.IniDCSClientName, self.Database[Event.IniDCSClientName]
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
 --- Interate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
@@ -1508,97 +1503,82 @@ function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
-
-
------ Interate the SET_CLIENT and call an interator function for each **alive** player, providing the Client of the player and optional parameters.
----- @param #SET_CLIENT self
----- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_CLIENT. The function needs to accept a CLIENT parameter.
----- @return #SET_CLIENT self
---function SET_CLIENT:ForEachPlayer( IteratorFunction, ... )
---  self:F2( arg )
---  
---  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
---  
---  return self
---end
---
---
------ Interate the SET_CLIENT and call an interator function for each client, providing the Client to the function and optional parameters.
----- @param #SET_CLIENT self
----- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_CLIENT. The function needs to accept a CLIENT parameter.
----- @return #SET_CLIENT self
---function SET_CLIENT:ForEachClient( IteratorFunction, ... )
---  self:F2( arg )
---  
---  self:ForEach( IteratorFunction, arg, self.Clients )
---
---  return self
---end
-
-
 ---
 -- @param #SET_CLIENT self
 -- @param Client#CLIENT MClient
 -- @return #SET_CLIENT self
 function SET_CLIENT:IsIncludeObject( MClient )
   self:F2( MClient )
+
   local MClientInclude = true
 
-  if self.Filter.Coalitions then
-    local MClientCoalition = false
-    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-      self:T3( { "Coalition:", MClient:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MClient:GetCoalition() then
-        MClientCoalition = true
+  if MClient then
+    local MClientName = MClient.UnitName
+  
+    if self.Filter.Coalitions then
+      local MClientCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local ClientCoalitionName = _DATABASE.Templates.ClientsByName[MClientName].CoalitionName
+        self:T3( { "Coalition:", ClientCoalitionName, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionName then
+          MClientCoalition = true
+        end
       end
+      self:T( { "Evaluated Coalition", MClientCoalition } )
+      MClientInclude = MClientInclude and MClientCoalition
     end
-    MClientInclude = MClientInclude and MClientCoalition
+    
+    if self.Filter.Categories then
+      local MClientCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        local ClientCategoryName = _DATABASE.Templates.ClientsByName[MClientName].CategoryName
+        self:T3( { "Category:", ClientCategoryName, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryName then
+          MClientCategory = true
+        end
+      end
+      self:T( { "Evaluated Category", MClientCategory } )
+      MClientInclude = MClientInclude and MClientCategory
+    end
+    
+    if self.Filter.Types then
+      local MClientType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
+        if TypeName == MClient:GetTypeName() then
+          MClientType = true
+        end
+      end
+      self:T( { "Evaluated Type", MClientType } )
+      MClientInclude = MClientInclude and MClientType
+    end
+    
+    if self.Filter.Countries then
+      local MClientCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        local ClientCountryName = _DATABASE.Templates.ClientsByName[MClientName].CountryName
+        self:T3( { "Country:", ClientCountryName, country.id[CountryName], CountryName } )
+        if country.id[CountryName] and country.id[ClientCountryName] and country.id[CountryName] == country.id[ClientCountryName] then
+          MClientCountry = true
+        end
+      end
+      self:T( { "Evaluated Country", MClientCountry } )
+      MClientInclude = MClientInclude and MClientCountry
+    end
+  
+    if self.Filter.ClientPrefixes then
+      local MClientPrefix = false
+      for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
+        self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
+        if string.find( MClient.UnitName, ClientPrefix, 1 ) then
+          MClientPrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MClientPrefix } )
+      MClientInclude = MClientInclude and MClientPrefix
+    end
   end
   
-  if self.Filter.Categories then
-    local MClientCategory = false
-    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-      self:T3( { "Category:", MClient:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
-      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MClient:GetDesc().category then
-        MClientCategory = true
-      end
-    end
-    MClientInclude = MClientInclude and MClientCategory
-  end
-  
-  if self.Filter.Types then
-    local MClientType = false
-    for TypeID, TypeName in pairs( self.Filter.Types ) do
-      self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
-      if TypeName == MClient:GetTypeName() then
-        MClientType = true
-      end
-    end
-    MClientInclude = MClientInclude and MClientType
-  end
-  
-  if self.Filter.Countries then
-    local MClientCountry = false
-    for CountryID, CountryName in pairs( self.Filter.Countries ) do
-      self:T3( { "Country:", MClient:GetCountry(), CountryName } )
-      if country.id[CountryName] == MClient:GetCountry() then
-        MClientCountry = true
-      end
-    end
-    MClientInclude = MClientInclude and MClientCountry
-  end
-
-  if self.Filter.ClientPrefixes then
-    local MClientPrefix = false
-    for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
-      self:T3( { "Prefix:", string.find( MClient:GetName(), ClientPrefix, 1 ), ClientPrefix } )
-      if string.find( MClient:GetName(), ClientPrefix, 1 ) then
-        MClientPrefix = true
-      end
-    end
-    MClientInclude = MClientInclude and MClientPrefix
-  end
-
   self:T2( MClientInclude )
   return MClientInclude
 end

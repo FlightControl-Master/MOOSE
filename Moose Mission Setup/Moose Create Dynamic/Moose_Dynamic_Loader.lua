@@ -1,6 +1,5 @@
 
 local base = _G
-env.info("Loading MOOSE " .. base.timer.getAbsTime() )
 
 Include = {}
 
@@ -39,5 +38,3 @@ env.info( "Include.MissionPath = " .. Include.MissionPath)
 Include.Files = {}
 
 Include.File( "Moose" )
-
-env.info("Loaded MOOSE Include Engine")
