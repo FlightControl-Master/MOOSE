@@ -1,4 +1,4 @@
-Include.File( "Spawn" )
+
 
 
 -- Tests Anapa: Spawn Basics

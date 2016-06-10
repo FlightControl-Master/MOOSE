@@ -2,7 +2,7 @@
 -- Only use Include.File when developing new MOOSE classes.
 -- When using Moose.lua in the DO SCIPTS FILE initialization box, 
 -- these Include.File statements are not needed, because all classes within Moose will be loaded.
-Include.File("MissileTrainer")
+
 
 -- This is an example of a global
 local Trainer = MISSILETRAINER

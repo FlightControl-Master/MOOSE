@@ -37,10 +37,10 @@
 -- @module Client
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Cargo" )
-Include.File( "Message" )
+
+
+
+
 
 
 --- The CLIENT class
@@ -462,16 +462,16 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 			else
 				self.Messages[MessageId].MessageInterval = MessageInterval
 			end
-			MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
 		else
 			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
 				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()
 				end
 			else
 				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageCategory, MessageDuration, MessageId ):ToClient( self )
+					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
 					self.Messages[MessageId].MessageTime = timer.getTime()
 				end
 			end

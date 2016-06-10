@@ -2,9 +2,6 @@
 -- @module Event
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-
 --- The EVENT structure
 -- @type EVENT
 -- @field #EVENT.Events Events

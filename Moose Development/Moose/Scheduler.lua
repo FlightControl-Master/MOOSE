@@ -20,10 +20,6 @@
 -- @module Scheduler
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-
-
 --- The SCHEDULER class
 -- @type SCHEDULER
 -- @extends Base#BASE

@@ -1,8 +1,6 @@
 --- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
 -- @module GOHOMETASK
 
-Include.File("Task")
-
 --- The GOHOMETASK class
 -- @type
 GOHOMETASK = {

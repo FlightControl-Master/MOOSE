@@ -1,7 +1,7 @@
 --- Set TASK to destroy certain unit types.
 -- @module DESTROYUNITTYPESTASK
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYUNITTYPESTASK class
 -- @type

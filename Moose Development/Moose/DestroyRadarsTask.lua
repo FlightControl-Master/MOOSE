@@ -1,7 +1,7 @@
 --- Task class to destroy radar installations.
 -- @module DESTROYRADARSTASK 
 
-Include.File("DestroyBaseTask")
+
 
 --- The DESTROYRADARS class
 -- @type

@@ -181,14 +181,6 @@
 -- @module Set
 -- @author FlightControl
 
-Include.File( "Routines" )
-Include.File( "Base" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Unit" )
-Include.File( "Event" )
-Include.File( "Client" )
-
 --- SET_BASE class
 -- @type SET_BASE
 -- @extends Base#BASE
