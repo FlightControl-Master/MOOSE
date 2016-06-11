@@ -72,10 +72,71 @@
 
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
+-- @field Set#SET_CLIENT DBClients
 -- @extends Base#BASE
 MISSILETRAINER = {
   ClassName = "MISSILETRAINER",
+  TrackingMissiles = {},
 }
+
+function MISSILETRAINER._Alive( Client, self )
+
+  if self.Briefing then
+    Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
+  end
+
+  if self.MenusOnOff == true then
+    Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+
+    Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
+
+    Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
+    Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
+    Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
+
+    Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
+    Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
+    Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
+    Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = true } )
+    Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = false } )
+    Client.MenuTrackIncrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Increase", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = -1 } )
+    Client.MenuTrackDecrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Decrease", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = 1 } )
+
+    Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
+    Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
+    Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
+    Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = true } )
+    Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = false } )
+    Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = true } )
+    Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = false } )
+
+    Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
+    Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = true } )
+    Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = false } )
+    Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = true } )
+    Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = false } )
+
+    Client.MenuDistance = MENU_CLIENT:New( Client, "Set distance to plane", Client.MainMenu )
+    Client.MenuDistance50 = MENU_CLIENT_COMMAND:New( Client, "50 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 50 / 1000 } )
+    Client.MenuDistance100 = MENU_CLIENT_COMMAND:New( Client, "100 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 100 / 1000 } )
+    Client.MenuDistance150 = MENU_CLIENT_COMMAND:New( Client, "150 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 150 / 1000 } )
+    Client.MenuDistance200 = MENU_CLIENT_COMMAND:New( Client, "200 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 200 / 1000 } )
+  else
+    if Client.MainMenu then
+      Client.MainMenu:Remove()
+    end
+  end
+
+  local ClientID = Client:GetID()
+  self:T( ClientID )
+  if not self.TrackingMissiles[ClientID] then
+    self.TrackingMissiles[ClientID] = {}
+  end
+  self.TrackingMissiles[ClientID].Client = Client
+  if not self.TrackingMissiles[ClientID].MissileData then
+    self.TrackingMissiles[ClientID].MissileData = {}
+  end
+end
 
 --- Creates the main object which is handling missile tracking.
 -- When a missile is fired a SCHEDULER is set off that follows the missile. When near a certain a client player, the missile will be destroyed.
@@ -101,76 +162,23 @@ function MISSILETRAINER:New( Distance, Briefing )
 
   _EVENTDISPATCHER:OnShot( self._EventShot, self )
 
-  self.DB = DATABASE:New():FilterStart()
-  self.DBClients = self.DB.Clients
-  self.DBUnits = self.DB.Units
-
-  for ClientID, Client in pairs( self.DBClients ) do
-
-    local function _Alive( Client )
-
-      if self.Briefing then
-        Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
-      end
-
-      if self.MenusOnOff == true then
-        Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
-  
-        Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
-  
-        Client.MenuMessages = MENU_CLIENT:New( Client, "Messages", Client.MainMenu )
-        Client.MenuOn = MENU_CLIENT_COMMAND:New( Client, "Messages On", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = true } )
-        Client.MenuOff = MENU_CLIENT_COMMAND:New( Client, "Messages Off", Client.MenuMessages, self._MenuMessages, { MenuSelf = self, MessagesOnOff = false } )
-  
-        Client.MenuTracking = MENU_CLIENT:New( Client, "Tracking", Client.MainMenu )
-        Client.MenuTrackingToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = true } )
-        Client.MenuTrackingToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingToAll = false } )
-        Client.MenuTrackOn = MENU_CLIENT_COMMAND:New( Client, "Tracking On", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = true } )
-        Client.MenuTrackOff = MENU_CLIENT_COMMAND:New( Client, "Tracking Off", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingOnOff = false } )
-        Client.MenuTrackIncrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Increase", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = -1 } )
-        Client.MenuTrackDecrease = MENU_CLIENT_COMMAND:New( Client, "Frequency Decrease", Client.MenuTracking, self._MenuMessages, { MenuSelf = self, TrackingFrequency = 1 } )
-  
-        Client.MenuAlerts = MENU_CLIENT:New( Client, "Alerts", Client.MainMenu )
-        Client.MenuAlertsToAll = MENU_CLIENT_COMMAND:New( Client, "To All", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = true } )
-        Client.MenuAlertsToTarget = MENU_CLIENT_COMMAND:New( Client, "To Target", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsToAll = false } )
-        Client.MenuHitsOn = MENU_CLIENT_COMMAND:New( Client, "Hits On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = true } )
-        Client.MenuHitsOff = MENU_CLIENT_COMMAND:New( Client, "Hits Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsHitsOnOff = false } )
-        Client.MenuLaunchesOn = MENU_CLIENT_COMMAND:New( Client, "Launches On", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = true } )
-        Client.MenuLaunchesOff = MENU_CLIENT_COMMAND:New( Client, "Launches Off", Client.MenuAlerts, self._MenuMessages, { MenuSelf = self, AlertsLaunchesOnOff = false } )
-  
-        Client.MenuDetails = MENU_CLIENT:New( Client, "Details", Client.MainMenu )
-        Client.MenuDetailsDistanceOn = MENU_CLIENT_COMMAND:New( Client, "Range On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = true } )
-        Client.MenuDetailsDistanceOff = MENU_CLIENT_COMMAND:New( Client, "Range Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsRangeOnOff = false } )
-        Client.MenuDetailsBearingOn = MENU_CLIENT_COMMAND:New( Client, "Bearing On", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = true } )
-        Client.MenuDetailsBearingOff = MENU_CLIENT_COMMAND:New( Client, "Bearing Off", Client.MenuDetails, self._MenuMessages, { MenuSelf = self, DetailsBearingOnOff = false } )
-  
-        Client.MenuDistance = MENU_CLIENT:New( Client, "Set distance to plane", Client.MainMenu )
-        Client.MenuDistance50 = MENU_CLIENT_COMMAND:New( Client, "50 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 50 / 1000 } )
-        Client.MenuDistance100 = MENU_CLIENT_COMMAND:New( Client, "100 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 100 / 1000 } )
-        Client.MenuDistance150 = MENU_CLIENT_COMMAND:New( Client, "150 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 150 / 1000 } )
-        Client.MenuDistance200 = MENU_CLIENT_COMMAND:New( Client, "200 meter", Client.MenuDistance, self._MenuMessages, { MenuSelf = self, Distance = 200 / 1000 } )
-      else
-        if Client.MainMenu then
-          Client.MainMenu:Remove()
-        end
-      end
+  self.DBClients = SET_CLIENT:New():FilterStart()
 
 
-      local ClientID = Client:GetID()
-      self:T( ClientID )
-      if not self.TrackingMissiles[ClientID] then
-        self.TrackingMissiles[ClientID] = {}
-      end
-      self.TrackingMissiles[ClientID].Client = Client
-      if not self.TrackingMissiles[ClientID].MissileData then
-        self.TrackingMissiles[ClientID].MissileData = {}
-      end
+--  for ClientID, Client in pairs( self.DBClients.Database ) do
+--      self:E( "ForEach:" .. Client.UnitName )
+--      Client:Alive( self._Alive, self )
+--  end
+--  
+  self.DBClients:ForEachClient( 
+    function( Client )
+      self:E( "ForEach:" .. Client.UnitName )
+      Client:Alive( self._Alive, self )
     end
+  )
 
-    Client:Alive( _Alive )
 
-  end
-  
+
 --  	self.DB:ForEachClient(
 --  	 --- @param Client#CLIENT Client
 --  	 function( Client )
@@ -203,6 +211,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 end
 
 -- Initialization methods.
+
 
 
 --- Sets by default the display of any message to be ON or OFF.
@@ -446,7 +455,7 @@ function MISSILETRAINER:_EventShot( Event )
 
   self:T(TrainerTargetDCSUnitName )
 
-  local Client = self.DBClients[TrainerTargetDCSUnitName]
+  local Client = self.DBClients:FindClient( TrainerTargetDCSUnitName )
   if Client then
 
     local TrainerSourceUnit = UNIT:Find( TrainerSourceDCSUnit )
@@ -468,6 +477,7 @@ function MISSILETRAINER:_EventShot( Event )
     end
 
     local ClientID = Client:GetID()
+    self:T( ClientID )
     local MissileData = {}
     MissileData.TrainerSourceUnit = TrainerSourceUnit
     MissileData.TrainerWeapon = TrainerWeapon

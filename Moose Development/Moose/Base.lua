@@ -116,7 +116,8 @@ end
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
-	local Parent = routines.utils.deepCopy( Parent )
+	--local Parent = routines.utils.deepCopy( Parent )
+  --local Parent = Parent
 	if Child ~= nil then
 		setmetatable( Child, Parent )
 		Child.__index = Child

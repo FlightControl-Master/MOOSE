@@ -75,11 +75,11 @@ local _DATABASECoalition =
 
 local _DATABASECategory =
   {
-    [Unit.Category.AIRPLANE] = "Plane",
-    [Unit.Category.HELICOPTER] = "Helicopter",
-    [Unit.Category.GROUND_UNIT] = "Vehicle",
-    [Unit.Category.SHIP] = "Ship",
-    [Unit.Category.STRUCTURE] = "Structure",
+    ["plane"] = Unit.Category.AIRPLANE,
+    ["helicopter"] = Unit.Category.HELICOPTER,
+    ["vehicle"] = Unit.Category.GROUND_UNIT,
+    ["ship"] = Unit.Category.SHIP,
+    ["static"] = Unit.Category.STRUCTURE,
   }
 
 
@@ -251,7 +251,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCountryID = nil
   SpawnTemplate.SpawnCategoryID = nil
 
-  self:_RegisterTemplate( SpawnTemplate )
+  self:_RegisterTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
 
   self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
@@ -283,14 +283,15 @@ function DATABASE:GetStatusGroup( GroupName )
   end
 end
 
-
 --- Private method that registers new Group Templates within the DATABASE Object.
 -- @param #DATABASE self
 -- @param #table GroupTemplate
 -- @return #DATABASE self
-function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName, CountryName )
+function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, CountryID )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
+  
+  local TraceTable = {}
 
   if not self.Templates.Groups[GroupTemplateName] then
     self.Templates.Groups[GroupTemplateName] = {}
@@ -307,11 +308,22 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName,
   self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
   self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
-  self.Templates.Groups[GroupTemplateName].CategoryName = CategoryName
-  self.Templates.Groups[GroupTemplateName].CoalitionName = CoalitionName
-  self.Templates.Groups[GroupTemplateName].CountryName = CountryName
+  self.Templates.Groups[GroupTemplateName].CategoryID = CategoryID
+  self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionID
+  self.Templates.Groups[GroupTemplateName].CountryID = CountryID
 
-  self:T2( { "Group", self.Templates.Groups[GroupTemplateName].GroupName, self.Templates.Groups[GroupTemplateName].UnitCount } )
+  
+  TraceTable[#TraceTable+1] = "Group"
+  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].GroupName
+
+  TraceTable[#TraceTable+1] = "Coalition"
+  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CoalitionID
+  TraceTable[#TraceTable+1] = "Category"
+  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CategoryID
+  TraceTable[#TraceTable+1] = "Country"
+  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CountryID
+
+  TraceTable[#TraceTable+1] = "Units"
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
@@ -322,21 +334,35 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName,
     self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
     self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
     self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
-    self.Templates.Units[UnitTemplateName].CategoryName = CategoryName
-    self.Templates.Units[UnitTemplateName].CoalitionName = CoalitionName
-    self.Templates.Units[UnitTemplateName].CountryName = CountryName
-    self:E( {"skill",UnitTemplate.skill})
+    self.Templates.Units[UnitTemplateName].CategoryID = CategoryID
+    self.Templates.Units[UnitTemplateName].CoalitionID = CoalitionID
+    self.Templates.Units[UnitTemplateName].CountryID = CountryID
+
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
       self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.Templates.ClientsByName[UnitTemplateName].CategoryName = CategoryName
-      self.Templates.ClientsByName[UnitTemplateName].CoalitionName = CoalitionName
-      self.Templates.ClientsByName[UnitTemplateName].CountryName = CountryName
+      self.Templates.ClientsByName[UnitTemplateName].CategoryID = CategoryID
+      self.Templates.ClientsByName[UnitTemplateName].CoalitionID = CoalitionID
+      self.Templates.ClientsByName[UnitTemplateName].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
-    self:E( { "Unit", self.Templates.Units[UnitTemplateName].UnitName } )
+    
+    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplateName].UnitName 
   end
+
+  self:E( TraceTable )
 end
 
+function DATABASE:GetCoalitionFromClientTemplate( ClientName )
+  return self.Templates.ClientsByName[ClientName].CoalitionID
+end
+
+function DATABASE:GetCategoryFromClientTemplate( ClientName )
+  return self.Templates.ClientsByName[ClientName].CategoryID
+end
+
+function DATABASE:GetCountryFromClientTemplate( ClientName )
+  return self.Templates.ClientsByName[ClientName].CountryID
+end
 
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
@@ -671,7 +697,12 @@ function DATABASE:_RegisterTemplates()
                   for group_num, GroupTemplate in pairs(obj_type_data.group) do
 
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterTemplate( GroupTemplate, CoalitionName, CategoryName, CountryName )
+                      self:_RegisterTemplate( 
+                        GroupTemplate, 
+                        coalition.side[string.upper(CoalitionName)], 
+                        _DATABASECategory[string.lower(CategoryName)], 
+                        country.id[string.upper(CountryName)] 
+                      )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
                 end --if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then

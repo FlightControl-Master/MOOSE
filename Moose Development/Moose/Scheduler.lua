@@ -49,8 +49,10 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
 
   if RepeatSecondsInterval then
     self.RepeatSecondsInterval = RepeatSecondsInterval
+    self.Repeat = true
   else
     self.RepeatSecondsInterval = 0
+    self.Repeat = false
   end
 
   if RandomizationFactor then
@@ -63,7 +65,6 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
     self.StopSeconds = StopSeconds
   end
   
-  self.Repeat = false
 
   self.StartTime = timer.getTime()
   
@@ -78,7 +79,6 @@ end
 function SCHEDULER:Start()
   self:F2( self.TimeEventObject )
   
-  self.Repeat = true
   timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
   
   return self
@@ -115,14 +115,16 @@ function SCHEDULER:_Scheduler()
     Status, Result = xpcall( function() return self.TimeEventFunction( unpack( self.TimeEventFunctionArguments ) ) end, ErrorHandler )
   end
   
-  self:T( { Status, Result } )
+  self:T( { Status, Result, self.StartTime, self.RepeatSecondsInterval, self.RandomizationFactor, self.StopSeconds } )
   
-  if Status and ( ( not Result == nil ) or ( Result and Result ~= false ) ) then
+  if Status and ( ( Result == nil ) or ( Result and Result ~= false ) ) then
     if self.Repeat and ( not self.StopSeconds or ( self.StopSeconds and timer.getTime() <= self.StartTime + self.StopSeconds ) ) then
+      local ScheduleTime = timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
+      self:T( { timer.getTime(), ScheduleTime } )
       timer.scheduleFunction(
         self._Scheduler,
         self,
-        timer.getTime() + self.RepeatSecondsInterval + math.random( - ( self.RandomizationFactor * self.RepeatSecondsInterval / 2 ), ( self.RandomizationFactor * self.RepeatSecondsInterval  / 2 ) ) + 0.01
+        ScheduleTime
       )
     end
   end

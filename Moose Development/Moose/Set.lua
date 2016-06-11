@@ -187,7 +187,6 @@
 SET_BASE = {
   ClassName = "SET_BASE",
   Set = {},
-  Database = {},
 }
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -198,11 +197,13 @@ SET_BASE = {
 -- DBObject = SET_BASE:New()
 function SET_BASE:New( Database )
 
+  env.info( tostring( Database ) )
+
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
   self.Database = Database
-  
+
   self.YieldInterval = 10
   self.TimeInterval = 0.001
 
@@ -1247,11 +1248,11 @@ SET_CLIENT = {
       neutral = coalition.side.NEUTRAL,
     },
     Categories = {
-      plane = "plane",
-      helicopter = "helicopter",
-      ground = "vehicle",
-      ship = "ship",
-      structure = "static",
+      plane = Unit.Category.AIRPLANE,
+      helicopter = Unit.Category.HELICOPTER,
+      ground = Unit.Category.GROUND_UNIT,
+      ship = Unit.Category.SHIP,
+      structure = Unit.Category.STRUCTURE,
     },
   },
 }
@@ -1264,7 +1265,6 @@ SET_CLIENT = {
 -- -- Define a new SET_CLIENT Object. This DBObject will contain a reference to all Clients.
 -- DBObject = SET_CLIENT:New()
 function SET_CLIENT:New()
-
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CLIENTS ) )
 
@@ -1518,9 +1518,9 @@ function SET_CLIENT:IsIncludeObject( MClient )
     if self.Filter.Coalitions then
       local MClientCoalition = false
       for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        local ClientCoalitionName = _DATABASE.Templates.ClientsByName[MClientName].CoalitionName
-        self:T3( { "Coalition:", ClientCoalitionName, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionName then
+        local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+        self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
           MClientCoalition = true
         end
       end
@@ -1531,9 +1531,9 @@ function SET_CLIENT:IsIncludeObject( MClient )
     if self.Filter.Categories then
       local MClientCategory = false
       for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        local ClientCategoryName = _DATABASE.Templates.ClientsByName[MClientName].CategoryName
-        self:T3( { "Category:", ClientCategoryName, self.FilterMeta.Categories[CategoryName], CategoryName } )
-        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryName then
+        local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+        self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
           MClientCategory = true
         end
       end
@@ -1556,9 +1556,9 @@ function SET_CLIENT:IsIncludeObject( MClient )
     if self.Filter.Countries then
       local MClientCountry = false
       for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        local ClientCountryName = _DATABASE.Templates.ClientsByName[MClientName].CountryName
-        self:T3( { "Country:", ClientCountryName, country.id[CountryName], CountryName } )
-        if country.id[CountryName] and country.id[ClientCountryName] and country.id[CountryName] == country.id[ClientCountryName] then
+        local ClientCountryID = _DATABASE:GetCountryFromClientTemplate(MClientName)
+        self:T3( { "Country:", ClientCountryID, country.id[CountryName], CountryName } )
+        if country.id[CountryName] and country.id[CountryName] == ClientCountryID then
           MClientCountry = true
         end
       end
