@@ -43,7 +43,7 @@ end
 --- @param #AIRBASEPOLICE self
 function AIRBASEPOLICE:_AirbaseMonitor()
 
-  for PolygonTaxiID, PolygonTaxi in pairs( self.PolygonsTaxi ) do
+  for PolygonTaxiID, PolygonTaxi in pairs( self.PolygonsTaxiways ) do
     self.SetClient:ForEachClientInZone( PolygonTaxi,
     
       --- @param Client#CLIENT Client
@@ -51,7 +51,6 @@ function AIRBASEPOLICE:_AirbaseMonitor()
         if Client:IsAlive() then
           local VelocityVec3 = Client:GetVelocity()
           local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z)
-          Client:Message( "Velocity:" .. Velocity,  1, "Test", "Police" )
           local IsAboveRunway = Client:IsAboveRunway()
           local IsOnGround = Client:InAir() == false
           self:T( IsAboveRunway, IsOnGround )
