@@ -256,6 +256,30 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Returns if the unit is located above a runway.
+-- @param Unit#UNIT self
+-- @return #boolean true if Unit is above a runway.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:IsAboveRunway()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+  
+    local PointVec2 = self:GetPointVec2()
+    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
+  
+    self:T2( IsAboveRunway )
+    return IsAboveRunway
+  end
+
+  return nil
+end
+
+
+
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param Unit#UNIT self
 -- @return #string Player Name
@@ -324,7 +348,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-    local UnitGroup = DCSUnit:getGroup()
+    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
     return UnitGroup
   end
 

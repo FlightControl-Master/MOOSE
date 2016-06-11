@@ -1464,14 +1464,14 @@ end
 -- @param Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
-function SET_CLIENT:ForEachClientCompletelyInZone( ZoneObject, IteratorFunction, ... )
+function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
     -- @param Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
-      if ClientObject:IsCompletelyInZone( ZoneObject ) then
+      if ClientObject:IsInZone( ZoneObject ) then
         return true
       else
         return false

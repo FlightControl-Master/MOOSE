@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160611_1029' ) 
+env.info( 'Moose Generation Timestamp: 20160611_2126' ) 
 local base = _G
 
 Include = {}
@@ -7099,6 +7099,30 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Returns if the unit is located above a runway.
+-- @param Unit#UNIT self
+-- @return #boolean true if Unit is above a runway.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:IsAboveRunway()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+  
+    local PointVec2 = self:GetPointVec2()
+    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
+  
+    self:T2( IsAboveRunway )
+    return IsAboveRunway
+  end
+
+  return nil
+end
+
+
+
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param Unit#UNIT self
 -- @return #string Player Name
@@ -7167,7 +7191,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-    local UnitGroup = DCSUnit:getGroup()
+    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
     return UnitGroup
   end
 
@@ -10871,14 +10895,14 @@ end
 -- @param Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
-function SET_CLIENT:ForEachClientCompletelyInZone( ZoneObject, IteratorFunction, ... )
+function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
     -- @param Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
-      if ClientObject:IsCompletelyInZone( ZoneObject ) then
+      if ClientObject:IsInZone( ZoneObject ) then
         return true
       else
         return false
@@ -11219,6 +11243,7 @@ Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
 Include.File( "AIBalancer" )
+Include.File( "AirbasePolice" )
 
 
 
@@ -20026,5 +20051,95 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
 end
 
 
+
+
+--- @type AIRBASEPOLICE
+-- @field Set#SET_CLIENT SetClient
+-- @extends Base#BASE
+
+AIRBASEPOLICE = {
+  ClassName = "AIRBASEPOLICE",
+  PolygonsTaxiways = {},
+  PolygonsRunways = {},
+}
+
+--- Creates a new AIRBASEPOLICE object.
+-- @param #AIRBASEPOLICE self
+-- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
+-- @return #AIRBASEPOLICE self
+function AIRBASEPOLICE:New( SetClient )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  self.SetClient = SetClient
+  
+  local PolygonBatumiTaxiwaysGroup1 = GROUP:FindByName( "Polygon Batumi Taxiway 1" )
+  self.PolygonsTaxiways[#self.PolygonsTaxiways+1] = ZONE_POLYGON:New( "Batumi Taxiway", PolygonBatumiTaxiwaysGroup1 ):SmokeZone(POINT_VEC3.SmokeColor.White)
+
+  local PolygonBatumiRunwaysGroup1 = GROUP:FindByName( "Polygon Batumi Runway 1" )
+  self.PolygonsRunways[#self.PolygonsRunways+1] = ZONE_POLYGON:New( "Batumi Runway", PolygonBatumiRunwaysGroup1 ):SmokeZone(POINT_VEC3.SmokeColor.Red)
+
+  self.SetClient:ForEachClient(
+  
+    --- @param Client#CLIENT Client
+    function( Client )
+      Client:SetState( self, "Speeding", false )
+      Client:SetState( self, "Warnings", 0)
+    end
+  
+  )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, {}, 0, 5, 0 ) 
+  
+  return self
+end
+
+--- @param #AIRBASEPOLICE self
+function AIRBASEPOLICE:_AirbaseMonitor()
+
+  for PolygonTaxiID, PolygonTaxi in pairs( self.PolygonsTaxi ) do
+    self.SetClient:ForEachClientInZone( PolygonTaxi,
+    
+      --- @param Client#CLIENT Client
+      function( Client )
+        if Client:IsAlive() then
+          local VelocityVec3 = Client:GetVelocity()
+          local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z)
+          Client:Message( "Velocity:" .. Velocity,  1, "Test", "Police" )
+          local IsAboveRunway = Client:IsAboveRunway()
+          local IsOnGround = Client:InAir() == false
+          self:T( IsAboveRunway, IsOnGround )
+          if IsAboveRunway and IsOnGround then
+            if Velocity > 10 then
+              local IsSpeeding = Client:GetState( self, "Speeding" )
+              if IsSpeeding == true then
+                local SpeedingWarnings = Client:GetState( self, "Warnings" )
+                self:T( SpeedingWarnings )
+                if SpeedingWarnings <= 5 then
+                  Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase!  Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Speeding", "Warning " .. SpeedingWarnings .. " / 5" )
+                  Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                else
+                  MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
+                  Client:GetGroup():Destroy()
+                  Client:SetState( self, "Speeding", false )
+                  Client:SetState( self, "Warnings", 0 )
+                end
+              else
+                Client:Message( "You are speeding on the taxiway! Slow down please ...! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Speeding", "Attention! " )
+                Client:SetState( self, "Speeding", true )
+                Client:SetState( self, "Warnings", 1 )
+              end
+            else
+              Client:SetState( self, "Speeding", false )
+              Client:SetState( self, "Warnings", 0 )
+            end
+          end
+        end
+      end
+  
+    )
+  end
+  return true
+end
 
 env.info( '*** MOOSE INCLUDE END *** ' ) 
