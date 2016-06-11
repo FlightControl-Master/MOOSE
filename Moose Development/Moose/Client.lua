@@ -133,6 +133,7 @@ function CLIENT:Register( ClientName )
   --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
   self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, {}, 1, 5 )
 
+  self:E( self )
   return self
 end
 
@@ -230,10 +231,10 @@ end
 -- @param #CLIENT self
 -- @param #function CallBack Function.
 -- @return #CLIENT
-function CLIENT:Alive( CallBack, ... )
+function CLIENT:Alive( CallBackFunction, ... )
   self:F()
   
-  self.ClientCallBack = CallBack
+  self.ClientCallBack = CallBackFunction
   self.ClientParameters = arg
 
   return self
@@ -241,7 +242,7 @@ end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2, self.ClientBriefingShown } )
+  self:F( { self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
   if self:IsAlive() then -- Polymorphic call of UNIT
     if self.ClientAlive2 == false then
