@@ -633,10 +633,14 @@ end
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+  if self:IsAlive() then
+    local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
   
-  self:T( { IsInZone } )
-  return IsInZone 
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the unit is not within a @{Zone}.
@@ -646,10 +650,14 @@ end
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
-  
-  self:T( { IsInZone } )
-  return IsInZone 
+  if self:IsAlive() then
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+    
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the DCS Unit is in the air.

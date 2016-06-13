@@ -333,6 +333,7 @@ function BASE:SetState( Object, StateName, State )
   end
   
   self.States[ClassNameAndID][StateName] = State
+  self:E( { "SetState " .. ClassNameAndID .. "." .. StateName, State } )
   
   return self.States[ClassNameAndID][StateName]
 end
@@ -341,6 +342,7 @@ function BASE:GetState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()
   if self.States[ClassNameAndID] then
+    self:E( { " GetState " .. ClassNameAndID .. "." .. StateName, self.States[ClassNameAndID][StateName] } )
     return self.States[ClassNameAndID][StateName]
   end
   

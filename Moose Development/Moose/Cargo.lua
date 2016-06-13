@@ -127,7 +127,7 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 			HostMessage = "No Cargo Available."
 		end
 
-		Client:Message( HostMessage, 20, Mission.Name .. "/StageHosts." .. SignalUnitTypeName, SignalUnitTypeName .. ": Reporting Cargo", 10 )
+		Client:Message( HostMessage, 20, SignalUnitTypeName .. ": Reporting Cargo", 10 )
 	end
 end
 
