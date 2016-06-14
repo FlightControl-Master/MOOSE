@@ -331,9 +331,8 @@ function BASE:SetState( Object, StateName, State )
   if not self.States[ClassNameAndID] then
     self.States[ClassNameAndID] = {}
   end
-  
   self.States[ClassNameAndID][StateName] = State
-  self:E( { "SetState " .. ClassNameAndID .. "." .. StateName, State } )
+  self:E( { ClassNameAndID, StateName, State } )
   
   return self.States[ClassNameAndID][StateName]
 end
@@ -341,9 +340,11 @@ end
 function BASE:GetState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()
+  self:E( { ClassNameAndID } )
   if self.States[ClassNameAndID] then
-    self:E( { " GetState " .. ClassNameAndID .. "." .. StateName, self.States[ClassNameAndID][StateName] } )
-    return self.States[ClassNameAndID][StateName]
+    local State = self.States[ClassNameAndID][StateName]
+    self:E( { ClassNameAndID, StateName, State } )
+    return State
   end
   
   return nil
@@ -422,7 +423,10 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
     end
     
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
       local LineFrom = 0
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
@@ -476,7 +480,10 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 		end
 
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-  		local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
   		local LineFrom = 0
   		if DebugInfoFrom then
   		  LineFrom = DebugInfoFrom.currentline

@@ -185,6 +185,7 @@ function GROUP:Find( DCSGroup )
 
   local GroupName = DCSGroup:getName() -- Group#GROUP
   local GroupFound = _DATABASE:FindGroup( GroupName )
+  GroupFound:E( { GroupName, GroupFound:GetClassNameAndID() } )
   return GroupFound
 end
 
@@ -517,13 +518,14 @@ end
 
 
 function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionArguments )
+  self:F2( { WayPoint, WayPointIndex, FunctionString, FunctionArguments } )
 
   local DCSTask
 
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionGroup = GROUP:Find( ... ) "
 
-  if FunctionArguments.n > 0 then
+  if FunctionArguments and #FunctionArguments > 0 then
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
   else
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup )"
