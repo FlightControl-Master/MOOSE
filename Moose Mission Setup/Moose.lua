@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160611_1029' ) 
+env.info( 'Moose Generation Timestamp: 20160614_1531' ) 
 local base = _G
 
 Include = {}
@@ -2866,8 +2866,8 @@ function BASE:SetState( Object, StateName, State )
   if not self.States[ClassNameAndID] then
     self.States[ClassNameAndID] = {}
   end
-  
   self.States[ClassNameAndID][StateName] = State
+  self:E( { ClassNameAndID, StateName, State } )
   
   return self.States[ClassNameAndID][StateName]
 end
@@ -2875,8 +2875,11 @@ end
 function BASE:GetState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()
+  self:E( { ClassNameAndID } )
   if self.States[ClassNameAndID] then
-    return self.States[ClassNameAndID][StateName]
+    local State = self.States[ClassNameAndID][StateName]
+    self:E( { ClassNameAndID, StateName, State } )
+    return State
   end
   
   return nil
@@ -2955,7 +2958,10 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
     end
     
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
       local LineFrom = 0
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
@@ -3009,7 +3015,10 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 		end
 
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-  		local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
   		local LineFrom = 0
   		if DebugInfoFrom then
   		  LineFrom = DebugInfoFrom.currentline
@@ -3134,13 +3143,12 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
   self.TimeEventFunction = TimeEventFunction
   self.TimeEventFunctionArguments = TimeEventFunctionArguments
   self.StartSeconds = StartSeconds
+  self.Repeat = false
 
   if RepeatSecondsInterval then
     self.RepeatSecondsInterval = RepeatSecondsInterval
-    self.Repeat = true
   else
     self.RepeatSecondsInterval = 0
-    self.Repeat = false
   end
 
   if RandomizationFactor then
@@ -3167,7 +3175,10 @@ end
 function SCHEDULER:Start()
   self:F2( self.TimeEventObject )
   
-  timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+   if self.RepeatSecondsInterval ~= 0 then
+     self.Repeat = true
+   end
+   timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
   
   return self
 end
@@ -3722,11 +3733,11 @@ function EVENT:onEvent( Event )
     self:E( { _EVENTCODES[Event.id], Event } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
+        self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
         EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
       else
         if Event.IniDCSUnit and not EventData.IniUnit then
-          self:T2( { "Calling event function for class ", ClassName } )
+          self:E( { "Calling event function for class ", ClassName } )
           EventData.EventFunction( EventData.EventSelf, Event )
         end
       end
@@ -4289,6 +4300,7 @@ function GROUP:Find( DCSGroup )
 
   local GroupName = DCSGroup:getName() -- Group#GROUP
   local GroupFound = _DATABASE:FindGroup( GroupName )
+  GroupFound:E( { GroupName, GroupFound:GetClassNameAndID() } )
   return GroupFound
 end
 
@@ -4621,13 +4633,14 @@ end
 
 
 function GROUP:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionArguments )
+  self:F2( { WayPoint, WayPointIndex, FunctionString, FunctionArguments } )
 
   local DCSTask
 
   local DCSScript = {}
   DCSScript[#DCSScript+1] = "local MissionGroup = GROUP:Find( ... ) "
 
-  if FunctionArguments.n > 0 then
+  if FunctionArguments and #FunctionArguments > 0 then
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup, " .. table.concat( FunctionArguments, "," ) .. ")"
   else
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionGroup )"
@@ -8739,9 +8752,6 @@ DATABASE = {
     ClientsByName = {},
     ClientsByID = {},
   },
-  DCSUnits = {},
-  DCSGroups = {},
-  DCSStatics = {},
   UNITS = {},
   STATICS = {},
   GROUPS = {},
@@ -8810,10 +8820,13 @@ end
 
 --- Adds a Unit based on the Unit Name in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddUnit( DCSUnit, DCSUnitName )
+function DATABASE:AddUnit( DCSUnitName )
 
-  self.DCSUnits[DCSUnitName] = DCSUnit 
-  self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+  if not  self.UNITS[DCSUnitName] then
+    self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+  end
+  
+  return self.UNITS[DCSUnitName]
 end
 
 
@@ -8821,15 +8834,16 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
 
-  self.DCSUnits[DCSUnitName] = nil 
+  --self.UNITS[DCSUnitName] = nil 
 end
 
 --- Adds a Static based on the Static Name in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddStatic( DCSStatic, DCSStaticName )
+function DATABASE:AddStatic( DCSStaticName )
 
-  self.DCSStatics[DCSStaticName] = DCSStatic 
-  self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+  if not self.STATICS[DCSStaticName] then
+    self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+  end
 end
 
 
@@ -8837,7 +8851,7 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteStatic( DCSStaticName )
 
-  self.DCSStatics[DCSStaticName] = nil 
+  --self.STATICS[DCSStaticName] = nil 
 end
 
 --- Finds a STATIC based on the StaticName.
@@ -8866,8 +8880,11 @@ end
 -- @param #DATABASE self
 function DATABASE:AddClient( ClientName )
 
-  self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
-  self:E( self.CLIENTS[ClientName]:GetClassNameAndID() )
+  if not self.CLIENTS[ClientName] then
+    self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
+  end
+
+  return self.CLIENTS[ClientName]
 end
 
 
@@ -8884,10 +8901,13 @@ end
 
 --- Adds a GROUP based on the GroupName in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddGroup( DCSGroup, GroupName )
+function DATABASE:AddGroup( GroupName )
 
-  self.DCSGroups[GroupName] = DCSGroup
-  self.GROUPS[GroupName] = GROUP:Register( GroupName )
+  if not self.GROUPS[GroupName] then
+    self.GROUPS[GroupName] = GROUP:Register( GroupName )
+  end  
+  
+  return self.GROUPS[GroupName] 
 end
 
 --- Adds a player based on the Player Name in the DATABASE.
@@ -8946,7 +8966,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCountryID = SpawnCountryID
   SpawnTemplate.SpawnCategoryID = SpawnCategoryID
 
-  local SpawnGroup = GROUP:Register( SpawnTemplate.name )
+  local SpawnGroup = self:AddGroup( SpawnTemplate.name )
   return SpawnGroup
 end
 
@@ -9085,14 +9105,14 @@ function DATABASE:_RegisterGroupsAndUnits()
       if DCSGroup:isExist() then
         local DCSGroupName = DCSGroup:getName()
   
-        self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-        self:AddGroup( DCSGroup, DCSGroupName )
+        self:E( { "Register Group:", DCSGroupName } )
+        self:AddGroup( DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
           local DCSUnitName = DCSUnit:getName()
-          self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-          self:AddUnit( DCSUnit, DCSUnitName )
+          self:E( { "Register Unit:", DCSUnitName } )
+          self:AddUnit( DCSUnitName )
         end
       else
         self:E( { "Group does not exist: ",  DCSGroup } )
@@ -9126,8 +9146,8 @@ function DATABASE:_RegisterStatics()
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
   
-        self:E( { "Register Static:", DCSStatic, DCSStaticName } )
-        self:AddStatic( DCSStatic, DCSStaticName )
+        self:E( { "Register Static:", DCSStaticName } )
+        self:AddStatic( DCSStaticName )
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
@@ -9147,8 +9167,8 @@ function DATABASE:_EventOnBirth( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     self:_EventOnPlayerEnterUnit( Event )
   end
 end
@@ -9161,7 +9181,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self.DCSUnits[Event.IniDCSUnitName] then
+    if self.UNITS[Event.IniDCSUnitName] then
       self:DeleteUnit( Event.IniDCSUnitName )
       -- add logic to correctly remove a group once all units are destroyed...
     end
@@ -9239,19 +9259,6 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
 
   local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
-  return self
-end
-
-
---- Iterate the DATABASE and call an iterator function for each **alive** unit, providing the DCSUnit and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a DCSUnit parameter.
--- @return #DATABASE self
-function DATABASE:ForEachDCSUnit( IteratorFunction, ... )
-  self:F2( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.DCSUnits )
-
   return self
 end
 
@@ -18082,23 +18089,31 @@ end
 -- * @{#ESCORT.MenuEvasion: Creates a menu structure to set the evasion techniques when the escort is under threat.
 -- * @{#ESCORT.MenuResumeMission}: Creates a menu structure so that the escort can resume from a waypoint.
 -- 
+-- 
+-- @usage
+-- -- Declare a new EscortPlanes object as follows:
+-- 
+-- -- First find the GROUP object and the CLIENT object.
+-- local EscortClient = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
+-- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
+-- 
+-- -- Now use these 2 objects to construct the new EscortPlanes object.
+-- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+-- 
+--
+--
 -- @module Escort
 -- @author FlightControl
 
-
-
-
-
-
-
---- 
+--- ESCORT class
 -- @type ESCORT
 -- @extends Base#BASE
 -- @field Client#CLIENT EscortClient
 -- @field Group#GROUP EscortGroup
 -- @field #string EscortName
 -- @field #ESCORT.MODE EscortMode The mode the escort is in.
--- @field #number FollowScheduler The id of the _FollowScheduler function.
+-- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+-- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
@@ -18108,7 +18123,7 @@ ESCORT = {
   EscortName = nil, -- The Escort Name
   EscortClient = nil,
   EscortGroup = nil,
-  EscortMode = nil,
+  EscortMode = 1,
   MODE = {
     FOLLOW = 1,
     MISSION = 2,
@@ -18118,6 +18133,7 @@ ESCORT = {
   ReportTargets = true,
   OptionROE = AI.Option.Air.val.ROE.OPEN_FIRE,
   OptionReactionOnThreat = AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION,
+  SmokeDirectionVector = false,
   TaskPoints = {}
 }
 
@@ -18139,6 +18155,15 @@ ESCORT = {
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
 -- @return #ESCORT self
+-- @usage
+-- -- Declare a new EscortPlanes object as follows:
+-- 
+-- -- First find the GROUP object and the CLIENT object.
+-- local EscortClient = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
+-- local EscortGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Escort Client.
+-- 
+-- -- Now use these 2 objects to construct the new EscortPlanes object.
+-- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { EscortClient, EscortGroup, EscortName } )
@@ -18147,8 +18172,6 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.EscortGroup = EscortGroup -- Group#GROUP
   self.EscortName = EscortName
   self.EscortBriefing = EscortBriefing
-
-  self:T( EscortGroup:GetClassNameAndID() )
 
   -- Set EscortGroup known at EscortClient.
   if not self.EscortClient._EscortGroups then
@@ -18160,9 +18183,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortGroup = self.EscortGroup
     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
     self.EscortClient._EscortGroups[EscortGroup:GetName()].Targets = {}
-    self.EscortMode = ESCORT.MODE.FOLLOW
   end
-
 
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
 
@@ -18177,7 +18198,22 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
     60, EscortClient
   )
 
+  self.FollowDistance = 100
+  self.CT1 = 0
+  self.GT1 = 0
+  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
+  self.EscortMode = ESCORT.MODE.MISSION
+  self.FollowScheduler:Stop()
+
   return self
+end
+
+--- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
+-- This allows to visualize where the escort is flying to.
+-- @param #ESCORT self
+-- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
+function ESCORT:TestSmokeDirectionVector( SmokeDirection )
+  self.SmokeDirectionVector = ( SmokeDirection == true ) and true or false
 end
 
 
@@ -18205,6 +18241,7 @@ function ESCORT:Menus()
   self:MenuROE()
   self:MenuEvasion()
   self:MenuResumeMission()
+
 
   return self
 end
@@ -18616,7 +18653,7 @@ function ESCORT._HoldPosition( MenuParam )
   local OrbitHeight = MenuParam.ParamHeight
   local OrbitSeconds = MenuParam.ParamSeconds -- Not implemented yet
 
-  routines.removeFunction( self.FollowScheduler )
+  self.FollowScheduler:Stop()
 
   local PointFrom = {}
   local GroupPoint = EscortGroup:GetUnit(1):GetPointVec3()
@@ -18645,6 +18682,7 @@ function ESCORT._HoldPosition( MenuParam )
 
   EscortGroup:SetTask( EscortGroup:TaskRoute( Points ) )
   EscortGroup:MessageToClient( "Orbiting at location.", 10, EscortClient )
+
 end
 
 --- @param #MENUPARAM MenuParam
@@ -18667,9 +18705,7 @@ end
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 
-  if self.FollowScheduler then
-    routines.removeFunction( self.FollowScheduler )
-  end
+  self.FollowScheduler:Stop()
 
   EscortGroup:OptionROEHoldFire()
   EscortGroup:OptionROTPassiveDefense()
@@ -18678,8 +18714,8 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
 
   self.CT1 = 0
   self.GT1 = 0
-  --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + 1, .5 )
-  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, { Distance }, 1, .5, .1 )
+  self.FollowScheduler:Start()
+
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
@@ -18751,11 +18787,7 @@ function ESCORT._ScanTargets( MenuParam )
 
   local ScanDuration = MenuParam.ParamScanDuration
 
-  if self.FollowScheduler then
-    routines.removeFunction( self.FollowScheduler )
-  end
-
-  self:T( { "FollowScheduler after removefunction: ", self.FollowScheduler } )
+  self.FollowScheduler:Stop()
 
   if EscortGroup:IsHelicopter() then
     SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
@@ -18780,16 +18812,16 @@ function ESCORT._ScanTargets( MenuParam )
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 
   if self.EscortMode == ESCORT.MODE.FOLLOW then
-    --self.FollowScheduler = routines.scheduleFunction( self._FollowScheduler, { self, Distance }, timer.getTime() + ScanDuration, 1 )
     self.FollowScheduler:Start()
   end
 
 end
 
+--- @param Group#GROUP EscortGroup
 function _Resume( EscortGroup )
   env.info( '_Resume' )
 
-  local Escort = EscortGroup.Escort -- #ESCORT
+  local Escort = EscortGroup:GetState( EscortGroup, "Escort" )
   env.info( "EscortMode = "  .. Escort.EscortMode )
   if Escort.EscortMode == ESCORT.MODE.FOLLOW then
     Escort:JoinUpAndFollow( EscortGroup, Escort.EscortClient, Escort.Distance )
@@ -18802,19 +18834,18 @@ function ESCORT._AttackTarget( MenuParam )
 
   local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
+  
   local EscortClient = self.EscortClient
   local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
 
-  if self.FollowScheduler then
-    routines.removeFunction( self.FollowScheduler )
-  end
+  self.FollowScheduler:Stop()
 
   self:T( AttackUnit )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
-    EscortGroup.Escort = self -- Need to do this trick to get the reference for the escort in the _Resume function.
+    EscortGroup:SetState( EscortGroup, "Escort", self )
 --    routines.scheduleFunction(
 --      EscortGroup.PushTask,
 --      { EscortGroup,
@@ -18829,7 +18860,7 @@ function ESCORT._AttackTarget( MenuParam )
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
           { EscortGroup:TaskAttackUnit( AttackUnit ),
-            EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
+            EscortGroup:TaskFunction( 1, 2, "_Resume", { "''" } )
           }
         )
       }, 10
@@ -18853,8 +18884,8 @@ function ESCORT._AttackTarget( MenuParam )
       }, 10
     )
   end
+  
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
-
 
 end
 
@@ -18867,10 +18898,7 @@ function ESCORT._AssistTarget( MenuParam )
   local EscortGroupAttack = MenuParam.ParamEscortGroup
   local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
 
-  if self.FollowScheduler then
-    routines.removeFunction( self.FollowScheduler )
-  end
-
+  self.FollowScheduler:Stop()
 
   self:T( AttackUnit )
 
@@ -18956,8 +18984,7 @@ function ESCORT._ResumeMission( MenuParam )
 
   local WayPoint = MenuParam.ParamWayPoint
 
-  routines.removeFunction( self.FollowScheduler )
-  self.FollowScheduler = nil
+  self.FollowScheduler:Stop()
 
   local WayPoints = EscortGroup:GetTaskRoute()
   self:T( WayPoint, WayPoints )
@@ -18988,16 +19015,21 @@ function ESCORT:RegisterRoute()
 end
 
 --- @param Escort#ESCORT self
-function ESCORT:_FollowScheduler( FollowDistance )
-  self:F( { FollowDistance })
+function ESCORT:_FollowScheduler()
+  self:F( { self.FollowDistance } )
 
+  self:T( {self.EscortClient.UnitName, self.EscortGroup.GroupName } )
   if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
 
     local ClientUnit = self.EscortClient:GetClientGroupUnit()
     local GroupUnit = self.EscortGroup:GetUnit( 1 )
+    local FollowDistance = self.FollowDistance
+    
+    self:T( {ClientUnit.UnitName, GroupUnit.UnitName } )
 
     if self.CT1 == 0 and self.GT1 == 0 then
       self.CV1 = ClientUnit:GetPointVec3()
+      self:T( { "self.CV1", self.CV1 } )
       self.CT1 = timer.getTime()
       self.GV1 = GroupUnit:GetPointVec3()
       self.GT1 = timer.getTime()
@@ -19057,7 +19089,10 @@ function ESCORT:_FollowScheduler( FollowDistance )
       -- Now we can calculate the group destination vector GDV.
       local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
       
-      --trigger.action.smoke( GDV, trigger.smokeColor.Red )
+      if self.SmokeDirectionVector == true then
+        trigger.action.smoke( GDV, trigger.smokeColor.Red )
+      end
+      
       self:T2( { "CV2:", CV2 } )
       self:T2( { "CVI:", CVI } )
       self:T2( { "GDV:", GDV } )
@@ -19075,11 +19110,12 @@ function ESCORT:_FollowScheduler( FollowDistance )
         Speed = 0
       end
 
-      self:T( { "Client Speed, Escort Speed, Speed, FlyDistance, Time:", CS, GS, Speed, Distance, Time } )
+      self:T( { "Client Speed, Escort Speed, Speed, FollowDistance, Time:", CS, GS, Speed, FollowDistance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
       self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
+
     return true
   end
 
@@ -19261,6 +19297,7 @@ function ESCORT:_ReportTargetsScheduler()
         MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
       end
     end
+
     return true
   end
   

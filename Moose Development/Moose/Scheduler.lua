@@ -46,13 +46,12 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
   self.TimeEventFunction = TimeEventFunction
   self.TimeEventFunctionArguments = TimeEventFunctionArguments
   self.StartSeconds = StartSeconds
+  self.Repeat = false
 
   if RepeatSecondsInterval then
     self.RepeatSecondsInterval = RepeatSecondsInterval
-    self.Repeat = true
   else
     self.RepeatSecondsInterval = 0
-    self.Repeat = false
   end
 
   if RandomizationFactor then
@@ -79,7 +78,10 @@ end
 function SCHEDULER:Start()
   self:F2( self.TimeEventObject )
   
-  timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+   if self.RepeatSecondsInterval ~= 0 then
+     self.Repeat = true
+   end
+   timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
   
   return self
 end

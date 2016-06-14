@@ -19,6 +19,11 @@ do
       :MenuReportTargets( 60, 20 )
       :MenuResumeMission()
       :MenuAssistedAttack()
+
+    local EscortGroupArtillery = SpawnEscortArtillery:ReSpawn(1)
+    local EscortArtillery = ESCORT
+      :New( Client, EscortGroupArtillery, "Escort Artillery" )
+      :Menus()
   end
   
   local function EventAlivePlane( Client )
@@ -52,6 +57,7 @@ do
   SpawnEscortPlane = SPAWN:New( "Escort Plane" )
   SpawnEscortGround = SPAWN:New( "Escort Ground" )
   SpawnEscortShip = SPAWN:New( "Escort Ship" )
+  SpawnEscortArtillery = SPAWN:New( "Ground Attack Assistance" )
 
   EscortClientHeli = CLIENT:FindByName( "Lead Helicopter", "Fly around and observe the behaviour of the escort helicopter" ):Alive( EventAliveHelicopter )  
   EscortClientPlane = CLIENT:FindByName( "Lead Plane", "Fly around and observe the behaviour of the escort airplane. Select Navigate->Joun-Up and airplane should follow you. Change speed and directions." )

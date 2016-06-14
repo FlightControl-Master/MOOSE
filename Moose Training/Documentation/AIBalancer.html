@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li>AIBalancer</li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
@@ -42,7 +42,7 @@
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li>GOHOMETASK</li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -70,31 +70,67 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>GOHOMETASK</code></h1>
+   <h1>Module <code>AIBalancer</code></h1>
    
-<p>A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.</p>
+<p>This module contains the AIBALANCER class.</p>
+
+   
+
+<hr/>
+
+<h1>1) <a href="AIBalancer.html##(AIBALANCER)">AIBalancer#AIBALANCER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="AIBalancer.html##(AIBALANCER)">AIBalancer#AIBALANCER</a> class controls the dynamic spawning of AI GROUPS depending on a SET<em>CLIENT.
+There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT not spawned.</p>
+
+<h2>1.1) AIBALANCER construction method:</h2>
+<p>Create a new AIBALANCER object with the <a href="##(AIBALANCER).New">AIBALANCER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(AIBALANCER).New">AIBALANCER.New</a>: Creates a new AIBALANCER object.</li>
+</ul>
+
+
+<hr/>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#GOHOMETASK">GOHOMETASK</a></td>
+		<td class="name" nowrap="nowrap"><a href="#AIBALANCER">AIBALANCER</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-	<h2><a id="#(GOHOMETASK)" >Type <code>GOHOMETASK</code></a></h2>
-		<table class="function_list">
+			<h2><a id="#(AIBALANCER)">Type <code>AIBALANCER</code></a></h2>
+				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GOHOMETASK).ClassName">GOHOMETASK.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ClassName">AIBALANCER.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GOHOMETASK).New">GOHOMETASK.New(table, self, LandingZones)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).New">AIBALANCER:New(SetClient, SpawnAI)</a></td>
 		<td class="summary">
-<p>Creates a new GOHOMETASK.</p>
+<p>Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SetClient">AIBALANCER.SetClient</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SpawnAI">AIBALANCER.SpawnAI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER)._ClientAliveMonitorScheduler">AIBALANCER:_ClientAliveMonitorScheduler()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -103,9 +139,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(GOHOMETASK)">#GOHOMETASK</a></em>
-<a id="GOHOMETASK" >
-<strong>GOHOMETASK</strong>
+		<em><a href="##(AIBALANCER)">#AIBALANCER</a></em>
+<a id="AIBALANCER" >
+<strong>AIBALANCER</strong>
 </a>
 </dt>
 <dd>
@@ -114,14 +150,19 @@
 
 </dd>
 </dl>
-	<h2><a id="#(GOHOMETASK)" >Type <code>GOHOMETASK</code></a></h2>
-		<h3>Field(s)</h3>
+	<h2><a id="#(AIBalancer)" >Type <code>AIBalancer</code></a></h2>
+	
+			<h2><a id="#(AIBALANCER)" >Type <code>AIBALANCER</code></a></h2>
+				
+<p>AIBALANCER class</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(GOHOMETASK).ClassName" >
-<strong>GOHOMETASK.ClassName</strong>
+<a id="#(AIBALANCER).ClassName" >
+<strong>AIBALANCER.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -133,37 +174,74 @@
 		<dl class="function">
 <dt>
 
-<a id="#(GOHOMETASK).New" >
-<strong>GOHOMETASK.New(table, self, LandingZones)</strong>
+<a id="#(AIBALANCER).New" >
+<strong>AIBALANCER:New(SetClient, SpawnAI)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new GOHOMETASK.</p>
+<p>Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> table </em></code>: 
-string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.</p>
+<p><code><em> SetClient </em></code>: 
+A SET_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).</p>
 
 				</li>
 				<li>
 				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> LandingZones </em></code>: </p>
+<p><code><em> SpawnAI </em></code>: 
+A SPAWN object that will spawn the AI units required, balancing the SetClient.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
+<p><em><a href="##(AIBALANCER)">#AIBALANCER</a>:</em>
+self</p>
 
-<p>GOHOMETASK</p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a></em>
+<a id="#(AIBALANCER).SetClient" >
+<strong>AIBALANCER.SetClient</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a></em>
+<a id="#(AIBALANCER).SpawnAI" >
+<strong>AIBALANCER.SpawnAI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIBALANCER)._ClientAliveMonitorScheduler" >
+<strong>AIBALANCER:_ClientAliveMonitorScheduler()</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
