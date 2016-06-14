@@ -61,7 +61,7 @@ AIRBASEPOLICE_BASE = {
 -- @param Airbases A table of Airbase Names.
 -- @return #AIRBASEPOLICE_BASE self
 function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
--- TEST JAMES
+
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   self:E( { self.ClassName, SetClient, Airbases } )
