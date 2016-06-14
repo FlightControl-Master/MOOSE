@@ -331,8 +331,8 @@ function BASE:SetState( Object, StateName, State )
   if not self.States[ClassNameAndID] then
     self.States[ClassNameAndID] = {}
   end
-  
   self.States[ClassNameAndID][StateName] = State
+  self:E( { ClassNameAndID, StateName, State } )
   
   return self.States[ClassNameAndID][StateName]
 end
@@ -340,8 +340,11 @@ end
 function BASE:GetState( Object, StateName )
 
   local ClassNameAndID = Object:GetClassNameAndID()
+  self:E( { ClassNameAndID } )
   if self.States[ClassNameAndID] then
-    return self.States[ClassNameAndID][StateName]
+    local State = self.States[ClassNameAndID][StateName]
+    self:E( { ClassNameAndID, StateName, State } )
+    return State
   end
   
   return nil

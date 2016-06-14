@@ -54,9 +54,6 @@ DATABASE = {
     ClientsByName = {},
     ClientsByID = {},
   },
-  DCSUnits = {},
-  DCSGroups = {},
-  DCSStatics = {},
   UNITS = {},
   STATICS = {},
   GROUPS = {},
@@ -125,10 +122,13 @@ end
 
 --- Adds a Unit based on the Unit Name in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddUnit( DCSUnit, DCSUnitName )
+function DATABASE:AddUnit( DCSUnitName )
 
-  self.DCSUnits[DCSUnitName] = DCSUnit 
-  self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+  if not  self.UNITS[DCSUnitName] then
+    self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+  end
+  
+  return self.UNITS[DCSUnitName]
 end
 
 
@@ -136,15 +136,16 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
 
-  self.DCSUnits[DCSUnitName] = nil 
+  --self.UNITS[DCSUnitName] = nil 
 end
 
 --- Adds a Static based on the Static Name in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddStatic( DCSStatic, DCSStaticName )
+function DATABASE:AddStatic( DCSStaticName )
 
-  self.DCSStatics[DCSStaticName] = DCSStatic 
-  self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+  if not self.STATICS[DCSStaticName] then
+    self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
+  end
 end
 
 
@@ -152,7 +153,7 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteStatic( DCSStaticName )
 
-  self.DCSStatics[DCSStaticName] = nil 
+  --self.STATICS[DCSStaticName] = nil 
 end
 
 --- Finds a STATIC based on the StaticName.
@@ -181,8 +182,11 @@ end
 -- @param #DATABASE self
 function DATABASE:AddClient( ClientName )
 
-  self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
-  self:E( self.CLIENTS[ClientName]:GetClassNameAndID() )
+  if not self.CLIENTS[ClientName] then
+    self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
+  end
+
+  return self.CLIENTS[ClientName]
 end
 
 
@@ -199,10 +203,13 @@ end
 
 --- Adds a GROUP based on the GroupName in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddGroup( DCSGroup, GroupName )
+function DATABASE:AddGroup( GroupName )
 
-  self.DCSGroups[GroupName] = DCSGroup
-  self.GROUPS[GroupName] = GROUP:Register( GroupName )
+  if not self.GROUPS[GroupName] then
+    self.GROUPS[GroupName] = GROUP:Register( GroupName )
+  end  
+  
+  return self.GROUPS[GroupName] 
 end
 
 --- Adds a player based on the Player Name in the DATABASE.
@@ -261,7 +268,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.SpawnCountryID = SpawnCountryID
   SpawnTemplate.SpawnCategoryID = SpawnCategoryID
 
-  local SpawnGroup = GROUP:Register( SpawnTemplate.name )
+  local SpawnGroup = self:AddGroup( SpawnTemplate.name )
   return SpawnGroup
 end
 
@@ -400,14 +407,14 @@ function DATABASE:_RegisterGroupsAndUnits()
       if DCSGroup:isExist() then
         local DCSGroupName = DCSGroup:getName()
   
-        self:E( { "Register Group:", DCSGroup, DCSGroupName } )
-        self:AddGroup( DCSGroup, DCSGroupName )
+        self:E( { "Register Group:", DCSGroupName } )
+        self:AddGroup( DCSGroupName )
 
         for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
   
           local DCSUnitName = DCSUnit:getName()
-          self:E( { "Register Unit:", DCSUnit, DCSUnitName } )
-          self:AddUnit( DCSUnit, DCSUnitName )
+          self:E( { "Register Unit:", DCSUnitName } )
+          self:AddUnit( DCSUnitName )
         end
       else
         self:E( { "Group does not exist: ",  DCSGroup } )
@@ -441,8 +448,8 @@ function DATABASE:_RegisterStatics()
       if DCSStatic:isExist() then
         local DCSStaticName = DCSStatic:getName()
   
-        self:E( { "Register Static:", DCSStatic, DCSStaticName } )
-        self:AddStatic( DCSStatic, DCSStaticName )
+        self:E( { "Register Static:", DCSStaticName } )
+        self:AddStatic( DCSStaticName )
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
@@ -462,8 +469,8 @@ function DATABASE:_EventOnBirth( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    self:AddUnit( Event.IniDCSUnit, Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroup, Event.IniDCSGroupName )
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     self:_EventOnPlayerEnterUnit( Event )
   end
 end
@@ -476,7 +483,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self.DCSUnits[Event.IniDCSUnitName] then
+    if self.UNITS[Event.IniDCSUnitName] then
       self:DeleteUnit( Event.IniDCSUnitName )
       -- add logic to correctly remove a group once all units are destroyed...
     end
@@ -554,19 +561,6 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
 
   local Scheduler = SCHEDULER:New( self, Schedule, {}, 0.001, 0.001, 0 )
   
-  return self
-end
-
-
---- Iterate the DATABASE and call an iterator function for each **alive** unit, providing the DCSUnit and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive unit in the database. The function needs to accept a DCSUnit parameter.
--- @return #DATABASE self
-function DATABASE:ForEachDCSUnit( IteratorFunction, ... )
-  self:F2( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.DCSUnits )
-
   return self
 end
 

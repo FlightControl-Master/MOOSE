@@ -494,11 +494,11 @@ function EVENT:onEvent( Event )
     self:E( { _EVENTCODES[Event.id], Event } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T2( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
+        self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
         EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
       else
         if Event.IniDCSUnit and not EventData.IniUnit then
-          self:T2( { "Calling event function for class ", ClassName } )
+          self:E( { "Calling event function for class ", ClassName } )
           EventData.EventFunction( EventData.EventSelf, Event )
         end
       end
