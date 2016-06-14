@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160614_1503' ) 
+env.info( 'Moose Generation Timestamp: 20160614_1531' ) 
 local base = _G
 
 Include = {}
@@ -2958,7 +2958,10 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
     end
     
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
       local LineFrom = 0
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
@@ -3012,7 +3015,10 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 		end
 
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-  		local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
   		local LineFrom = 0
   		if DebugInfoFrom then
   		  LineFrom = DebugInfoFrom.currentline

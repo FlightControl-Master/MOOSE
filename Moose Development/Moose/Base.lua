@@ -423,7 +423,10 @@ function BASE:F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
     end
     
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
       local LineFrom = 0
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
@@ -477,7 +480,10 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 		end
 
     if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-  		local LineCurrent = DebugInfoCurrent.currentline
+      local LineCurrent = 0
+      if DebugInfoCurrent.currentline then
+        LineCurrent = DebugInfoCurrent.currentline
+      end
   		local LineFrom = 0
   		if DebugInfoFrom then
   		  LineFrom = DebugInfoFrom.currentline
