@@ -152,7 +152,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
 
               if IsAboveRunway and IsOnGround then
 
-                if Velocity > 10 then
+                if Velocity > Airbase.MaximumSpeed then
                   local IsSpeeding = Client:GetState( self, "Speeding" )
 
                   if IsSpeeding == true then
@@ -219,11 +219,6 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       PointsRunways = {
         [1] = {
-          [1]={["y"]=242140.57142858,["x"]=-6478.8571428583,},
-          [2]={["y"]=242188.57142858,["x"]=-6522.0000000011,},
-          [3]={["y"]=244124.2857143,["x"]=-4344.0000000011,},
-          [4]={["y"]=244068.2857143,["x"]=-4296.5714285726,},
-          [5]={["y"]=242140.57142858,["x"]=-6480.0000000011,},
         },
       },
       ZoneBoundary = {},
@@ -241,7 +236,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       PointsRunways = {
         [1] = {
-          [1]={["y"]=616451.42857142,["x"]=-355103.14285715,},
+          [1]={["y"]=616442.28571429,["x"]=-355090.28571429,},
           [2]={["y"]=618450.57142857,["x"]=-356522,},
           [3]={["y"]=618407.71428571,["x"]=-356584.85714286,},
           [4]={["y"]=618361.99999999,["x"]=-356554.85714286,},
@@ -259,7 +254,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Beslan = {
       PointsBoundary = {
@@ -734,7 +729,7 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --    -- Batumi
   --    local BatumiBoundary = GROUP:FindByName( "Batumi Boundary" )
   --    self.Airbases.Batumi.ZoneBoundary = ZONE_POLYGON:New( "Batumi Boundary", BatumiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
+  -- 
   --    local BatumiRunway1 = GROUP:FindByName( "Batumi Runway 1" )
   --    self.Airbases.Batumi.ZoneRunways[1] = ZONE_POLYGON:New( "Batumi Runway 1", BatumiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
