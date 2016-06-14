@@ -223,7 +223,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Batumi = {
       PointsBoundary = {
@@ -277,7 +277,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Gelendzhik = {
       PointsBoundary = {
@@ -300,7 +300,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Gudauta = {
       PointsBoundary = {
@@ -323,7 +323,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Kobuleti = {
       PointsBoundary = {
@@ -403,7 +403,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 45,
+      MaximumSpeed = 50,
     },
     Krymsk = {
       PointsBoundary = {
@@ -424,7 +424,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Kutaisi = {
       PointsBoundary = {
@@ -445,7 +445,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     MaykopKhanskaya = {
       PointsBoundary = {
@@ -467,7 +467,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     MineralnyeVody = {
       PointsBoundary = {
@@ -492,7 +492,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Mozdok = {
       PointsBoundary = {
@@ -515,7 +515,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Nalchik = {
       PointsBoundary = {
@@ -538,7 +538,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Novorossiysk = {
       PointsBoundary = {
@@ -560,7 +560,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     SenakiKolkhi = {
       PointsBoundary = {
@@ -583,7 +583,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     SochiAdler = {
       PointsBoundary = {
@@ -613,7 +613,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Soganlug = {
       PointsBoundary = {
@@ -634,7 +634,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     SukhumiBabushara = {
       PointsBoundary = {
@@ -656,7 +656,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     TbilisiLochini = {
       PointsBoundary = {
@@ -679,7 +679,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
     Vaziani = {
       PointsBoundary = {
@@ -703,7 +703,7 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       ZoneBoundary = {},
       ZoneRunways = {},
-      MaximumSpeed = 40,
+      MaximumSpeed = 50,
     },
   },
 }
