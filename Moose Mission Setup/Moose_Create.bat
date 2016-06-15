@@ -74,6 +74,8 @@ COPY /b Moose.lua + %1\Sead.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Escort.lua                							Moose.lua
 COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
 COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
+COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
+COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 

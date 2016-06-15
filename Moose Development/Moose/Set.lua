@@ -197,8 +197,6 @@ SET_BASE = {
 -- DBObject = SET_BASE:New()
 function SET_BASE:New( Database )
 
-  env.info( tostring( Database ) )
-
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
@@ -894,13 +892,26 @@ function SET_UNIT:New()
 end
 
 --- Add UNIT(s) to SET_UNIT.
--- @param Set#SET_UNIT self
+-- @param #SET_UNIT self
+-- @param #string AddUnit A single UNIT.
+-- @return #SET_UNIT self
+function SET_UNIT:AddUnit( AddUnit )
+
+  self:Add( AddUnit:GetName(), AddUnit )
+    
+  return self
+end
+
+
+--- Add UNIT(s) to SET_UNIT.
+-- @param #SET_UNIT self
 -- @param #string AddUnitNames A single name or an array of UNIT names.
--- @return self
+-- @return #SET_UNIT self
 function SET_UNIT:AddUnitsByName( AddUnitNames )
 
   local AddUnitNamesArray = ( type( AddUnitNames ) == "table" ) and AddUnitNames or { AddUnitNames }
   
+  self:T( AddUnitNamesArray )
   for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
     self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
   end
