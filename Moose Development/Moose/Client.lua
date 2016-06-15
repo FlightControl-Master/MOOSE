@@ -37,12 +37,6 @@
 -- @module Client
 -- @author FlightControl
 
-
-
-
-
-
-
 --- The CLIENT class
 -- @type CLIENT
 -- @extends Unit#UNIT
@@ -131,7 +125,7 @@ function CLIENT:Register( ClientName )
   self.ClientAlive2 = false
   
   --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, {}, 1, 5 )
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5 )
 
   self:E( self )
   return self
@@ -241,10 +235,11 @@ function CLIENT:Alive( CallBackFunction, ... )
 end
 
 --- @param #CLIENT self
-function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
+function CLIENT:_AliveCheckScheduler( SchedulerName )
+  self:E( SchedulerName )
+  self:F( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
-  if self:IsAlive() then -- Polymorphic call of UNIT
+  if self:IsAlive() then 
     if self.ClientAlive2 == false then
       self:ShowBriefing()
       if self.ClientCallBack then

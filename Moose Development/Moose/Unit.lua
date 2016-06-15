@@ -155,13 +155,13 @@ function UNIT:FindByName( UnitName )
 end
 
 function UNIT:GetDCSUnit()
+
   local DCSUnit = Unit.getByName( self.UnitName )
-  
+
   if DCSUnit then
     return DCSUnit
   end
-  
-  self:E( "Unit " .. self.UnitName .. " not found!" )
+
   return nil
 end
 
