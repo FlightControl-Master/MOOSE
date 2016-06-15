@@ -10,8 +10,8 @@
 --
 --  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
--- SCHEDULER timer stop and start
--- ------------------------------
+-- 1.2) SCHEDULER timer stop and start
+-- -----------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
 --  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
