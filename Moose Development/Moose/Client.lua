@@ -37,12 +37,6 @@
 -- @module Client
 -- @author FlightControl
 
-
-
-
-
-
-
 --- The CLIENT class
 -- @type CLIENT
 -- @extends Unit#UNIT
@@ -131,7 +125,7 @@ function CLIENT:Register( ClientName )
   self.ClientAlive2 = false
   
   --self.AliveCheckScheduler = routines.scheduleFunction( self._AliveCheckScheduler, { self }, timer.getTime() + 1, 5 )
-  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, {}, 1, 5 )
+  self.AliveCheckScheduler = SCHEDULER:New( self, self._AliveCheckScheduler, { "Client Alive " .. ClientName }, 1, 5 )
 
   self:E( self )
   return self
@@ -173,7 +167,7 @@ function CLIENT:ShowBriefing()
       Briefing = Briefing .. self.ClientBriefing
     end
     Briefing = Briefing .. " Press [LEFT ALT]+[B] to view the complete mission briefing."
-    self:Message( Briefing, 60,  self.ClientName .. '/ClientBriefing', "Briefing" )
+    self:Message( Briefing, 60, "Briefing" )
   end
 
   return self
@@ -187,7 +181,7 @@ function CLIENT:ShowMissionBriefing( MissionBriefing )
   self:F( { self.ClientName } )
 
   if MissionBriefing then
-    self:Message( MissionBriefing, 60,  self.ClientName .. '/MissionBriefing', "Mission Briefing" )
+    self:Message( MissionBriefing, 60, "Mission Briefing" )
   end
 
   return self
@@ -241,10 +235,11 @@ function CLIENT:Alive( CallBackFunction, ... )
 end
 
 --- @param #CLIENT self
-function CLIENT:_AliveCheckScheduler()
-  self:F( { self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
+function CLIENT:_AliveCheckScheduler( SchedulerName )
+  self:E( SchedulerName )
+  self:F( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
-  if self:IsAlive() then -- Polymorphic call of UNIT
+  if self:IsAlive() then 
     if self.ClientAlive2 == false then
       self:ShowBriefing()
       if self.ClientCallBack then
@@ -420,7 +415,7 @@ function CLIENT:ShowCargo()
 		CargoMsg = "empty"
 	end
   
-	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
+	self:Message( CargoMsg, 15, "Co-Pilot: Cargo Status", 30 )
 
 end
 
@@ -435,11 +430,11 @@ end
 -- @param #CLIENT self
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
 -- @param #string MessageCategory is the category of the message (the title).
 -- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
-function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-	self:F( { Message, MessageDuration, MessageId, MessageCategory, MessageInterval } )
+-- @param #string MessageID is the identifier of the message when displayed with intervals.
+function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
+	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
@@ -453,29 +448,33 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 		if MessageCategory == nil then
 			MessageCategory = "Messages"
 		end
-		if self.Messages[MessageId] == nil then
-			self.Messages[MessageId] = {}
-			self.Messages[MessageId].MessageId = MessageId
-			self.Messages[MessageId].MessageTime = timer.getTime()
-			self.Messages[MessageId].MessageDuration = MessageDuration
-			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 600
-			else
-				self.Messages[MessageId].MessageInterval = MessageInterval
-			end
-			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+		if MessageID ~= nil then
+  		if self.Messages[MessageID] == nil then
+  			self.Messages[MessageID] = {}
+  			self.Messages[MessageID].MessageId = MessageID
+  			self.Messages[MessageID].MessageTime = timer.getTime()
+  			self.Messages[MessageID].MessageDuration = MessageDuration
+  			if MessageInterval == nil then
+  				self.Messages[MessageID].MessageInterval = 600
+  			else
+  				self.Messages[MessageID].MessageInterval = MessageInterval
+  			end
+  			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+  		else
+  			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
+  				if timer.getTime() - self.Messages[MessageID].MessageTime >= self.Messages[MessageID].MessageDuration + 10 then
+  					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
+  					self.Messages[MessageID].MessageTime = timer.getTime()
+  				end
+  			else
+  				if timer.getTime() - self.Messages[MessageID].MessageTime  >= self.Messages[MessageID].MessageDuration + self.Messages[MessageID].MessageInterval then
+  					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+  					self.Messages[MessageID].MessageTime = timer.getTime()
+  				end
+  			end
+  		end
 		else
-			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
-				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			else
-				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			end
-		end
+      MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+    end
 	end
 end

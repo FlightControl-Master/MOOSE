@@ -71,6 +71,7 @@
 
 --- The ZONE_BASE class
 -- @type ZONE_BASE
+-- @field #string ZoneName Name of the zone.
 -- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
@@ -380,43 +381,60 @@ function ZONE_UNIT:GetPointVec2()
   return ZonePointVec2
 end
 
+-- Polygons
 
---- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- @type ZONE_POLYGON
+--- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
+-- @type ZONE_POLYGON_BASE
+-- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
 -- @extends Zone#ZONE_BASE
-ZONE_POLYGON = {
-  ClassName="ZONE_POLYGON",
+ZONE_POLYGON_BASE = {
+  ClassName="ZONE_POLYGON_BASE",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
--- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
--- @param #ZONE_POLYGON self
--- @param #string ZoneName Name of the zone.
--- @param Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
--- @return #ZONE_POLYGON self
-function ZONE_POLYGON:New( ZoneName, ZoneGroup )
-  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
-  self:F( { ZoneName, ZoneGroup } )
+--- A points array.
+-- @type ZONE_POLYGON_BASE.ListVec2
+-- @list <DCSTypes#Vec2>
 
-  local GroupPoints = ZoneGroup:GetTaskRoute()
+--- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName Name of the zone.
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCSTypes#Vec2}, forming a polygon..
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
+  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+  self:F( { ZoneName, PointsArray } )
+
   local i = 0
   
   self.Polygon = {}
   
-  for i = 1, #GroupPoints do
+  for i = 1, #PointsArray do
     self.Polygon[i] = {}
-    self.Polygon[i].x = GroupPoints[i].x
-    self.Polygon[i].y = GroupPoints[i].y
+    self.Polygon[i].x = PointsArray[i].x
+    self.Polygon[i].y = PointsArray[i].y
   end
 
   return self
 end
 
+--- Flush polygon coordinates as a table in DCS.log.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:Flush()
+  self:F2()
+
+  self:E( { Polygon = self.ZoneName, Coordinates = self.Polygon } )
+
+  return self
+end
+
+
 --- Smokes the zone boundaries in a color.
--- @param #ZONE_POLYGON self
+-- @param #ZONE_POLYGON_BASE self
 -- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
--- @return #ZONE_POLYGON self
-function ZONE_POLYGON:SmokeZone( SmokeColor )
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
 
   local i 
@@ -448,10 +466,10 @@ end
 
 
 --- Returns if a location is within the zone.
--- @param #ZONE_POLYGON self
+-- @param #ZONE_POLYGON_BASE self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
+function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   self:F2( PointVec2 )
 
   local i 
@@ -475,5 +493,31 @@ function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
 
   self:T( { "c = ", c } )
   return c
+end
+
+
+
+
+--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- @type ZONE_POLYGON
+-- @extends Zone#ZONE_POLYGON_BASE
+ZONE_POLYGON = {
+  ClassName="ZONE_POLYGON",
+  }
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
+  self:F( { ZoneName, ZoneGroup, self.Polygon } )
+
+  return self
 end
 

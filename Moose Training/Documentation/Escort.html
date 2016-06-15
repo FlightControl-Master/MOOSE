@@ -19,6 +19,7 @@
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -580,6 +581,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).SmokeDirectionVector">ESCORT.SmokeDirectionVector</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).Targets">ESCORT.Targets</a></td>
 		<td class="summary">
 
@@ -589,6 +596,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).TaskPoints">ESCORT.TaskPoints</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).TestSmokeDirectionVector">ESCORT:TestSmokeDirectionVector(SmokeDirection)</a></td>
+		<td class="summary">
+<p>This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.</p>
 </td>
 		</tr>
 		<tr>
@@ -751,7 +764,7 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<ul>
 				<li>
 				
-<p><code><em> EscortGroup </em></code>: </p>
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> EscortGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -762,7 +775,10 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 			<h2><a id="#(Distance)" >Type <code>Distance</code></a></h2>
 			
 			<h2><a id="#(ESCORT)" >Type <code>ESCORT</code></a></h2>
-				<h3>Field(s)</h3>
+				
+<p>ESCORT class</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1915,6 +1931,19 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<dl class="function">
 <dt>
 
+<a id="#(ESCORT).SmokeDirectionVector" >
+<strong>ESCORT.SmokeDirectionVector</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(ESCORT).Targets" >
 <strong>ESCORT.Targets</strong>
@@ -1938,6 +1967,31 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ESCORT).TestSmokeDirectionVector" >
+<strong>ESCORT:TestSmokeDirectionVector(SmokeDirection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.</p>
+
+	
+<p>This allows to visualize where the escort is flying to.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean SmokeDirection </em></code>: 
+If true, then the direction vector will be smoked.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

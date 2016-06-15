@@ -82,11 +82,11 @@ MISSILETRAINER = {
 function MISSILETRAINER._Alive( Client, self )
 
   if self.Briefing then
-    Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
+    Client:Message( self.Briefing, 15, "Trainer" )
   end
 
   if self.MenusOnOff == true then
-    Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+    Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "Trainer" )
 
     Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
 

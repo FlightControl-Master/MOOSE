@@ -155,13 +155,13 @@ function UNIT:FindByName( UnitName )
 end
 
 function UNIT:GetDCSUnit()
+
   local DCSUnit = Unit.getByName( self.UnitName )
-  
+
   if DCSUnit then
     return DCSUnit
   end
-  
-  self:E( "Unit " .. self.UnitName .. " not found!" )
+
   return nil
 end
 
@@ -256,6 +256,30 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Returns if the unit is located above a runway.
+-- @param Unit#UNIT self
+-- @return #boolean true if Unit is above a runway.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:IsAboveRunway()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+  
+    local PointVec2 = self:GetPointVec2()
+    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
+  
+    self:T2( IsAboveRunway )
+    return IsAboveRunway
+  end
+
+  return nil
+end
+
+
+
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param Unit#UNIT self
 -- @return #string Player Name
@@ -324,7 +348,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-    local UnitGroup = DCSUnit:getGroup()
+    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
     return UnitGroup
   end
 
@@ -609,10 +633,14 @@ end
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+  if self:IsAlive() then
+    local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
   
-  self:T( { IsInZone } )
-  return IsInZone 
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the unit is not within a @{Zone}.
@@ -622,10 +650,14 @@ end
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
-  
-  self:T( { IsInZone } )
-  return IsInZone 
+  if self:IsAlive() then
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+    
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the DCS Unit is in the air.

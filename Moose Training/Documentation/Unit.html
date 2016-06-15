@@ -19,6 +19,7 @@
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -362,6 +363,12 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).InAir">UNIT:InAir()</a></td>
 		<td class="summary">
 <p>Returns true if the DCS Unit is in the air.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsAboveRunway">UNIT:IsAboveRunway()</a></td>
+		<td class="summary">
+<p>Returns if the unit is located above a runway.</p>
 </td>
 		</tr>
 		<tr>
@@ -1404,6 +1411,34 @@ The DCS Unit is not existing or alive.  </p>
 				
 <p><em>#boolean:</em>
 true if in the air.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsAboveRunway" >
+<strong>UNIT:IsAboveRunway()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is located above a runway.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if Unit is above a runway.</p>
 
 				</li>
 				<li>

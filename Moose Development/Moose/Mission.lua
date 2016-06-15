@@ -137,7 +137,7 @@ function MISSION:StatusToClients()
 	self:F()
 	if self.MissionReportFlash then
 		for ClientID, Client in pairs( self._Clients ) do
-			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10,  self.Name .. '/Status', "Mission Command: Mission Status")
+			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10, "Mission Command: Mission Status")
 		end
 	end
 end
