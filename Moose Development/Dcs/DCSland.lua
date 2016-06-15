@@ -17,4 +17,10 @@
 -- @param #Vec2 point point on the ground. 
 -- @return DCSTypes#Distance
 
+--- returns surface type at the given point.
+-- @function [parent=#land] getSurfaceType
+-- @param #Vec2 point Point on the land. 
+-- @return #land.SurfaceType
+
+
 land = {} --#land

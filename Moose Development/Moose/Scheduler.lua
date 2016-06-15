@@ -1,21 +1,21 @@
---- Models time events calling event handing functions.
+--- This module contains the SCHEDULER class.
 --
--- @{SCHEDULER} class
--- ===================
--- The @{SCHEDULER} class models time events calling given event handling functions.
+-- 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
+-- =====================================================
+-- The @{Scheduler#SCHEDULER} class models time events calling given event handling functions.
 --
--- SCHEDULER constructor
--- =====================
+-- 1.1) SCHEDULER constructor
+-- --------------------------
 -- The SCHEDULER class is quite easy to use:
 --
---  * @{#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
+--  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
--- SCHEDULER timer methods
--- =======================
+-- SCHEDULER timer stop and start
+-- ------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
---  * @{#SCHEDULER.Start}: (Re-)Start the scheduler.
---  * @{#SCHEDULER.Start}: Stop the scheduler.
+--  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
+--  * @{Scheduler#SCHEDULER.Stop}: Stop the scheduler.
 --
 -- @module Scheduler
 -- @author FlightControl
@@ -93,7 +93,9 @@ function SCHEDULER:Stop()
   self:F2( self.TimeEventObject )
 
   self.Repeat = false
-  timer.removeFunction( self.ScheduleID )
+  if self.ScheduleID then
+    timer.removeFunction( self.ScheduleID )
+  end
   self.ScheduleID = nil
 
   return self

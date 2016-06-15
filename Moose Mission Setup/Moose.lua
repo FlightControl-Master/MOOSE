@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160615_0552' ) 
+env.info( 'Moose Generation Timestamp: 20160615_0641' ) 
 local base = _G
 
 Include = {}
@@ -3138,24 +3138,24 @@ end
 
 
 
---- Models time events calling event handing functions.
+--- This module contains the SCHEDULER class.
 --
--- @{SCHEDULER} class
--- ===================
--- The @{SCHEDULER} class models time events calling given event handling functions.
+-- 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
+-- =====================================================
+-- The @{Scheduler#SCHEDULER} class models time events calling given event handling functions.
 --
--- SCHEDULER constructor
--- =====================
+-- 1.1) SCHEDULER constructor
+-- --------------------------
 -- The SCHEDULER class is quite easy to use:
 --
---  * @{#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
+--  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
--- SCHEDULER timer methods
--- =======================
+-- SCHEDULER timer stop and start
+-- ------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
---  * @{#SCHEDULER.Start}: (Re-)Start the scheduler.
---  * @{#SCHEDULER.Start}: Stop the scheduler.
+--  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
+--  * @{Scheduler#SCHEDULER.Stop}: Stop the scheduler.
 --
 -- @module Scheduler
 -- @author FlightControl
@@ -3233,7 +3233,9 @@ function SCHEDULER:Stop()
   self:F2( self.TimeEventObject )
 
   self.Repeat = false
-  timer.removeFunction( self.ScheduleID )
+  if self.ScheduleID then
+    timer.removeFunction( self.ScheduleID )
+  end
   self.ScheduleID = nil
 
   return self
@@ -7176,6 +7178,30 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Returns if the unit is located above a runway.
+-- @param Unit#UNIT self
+-- @return #boolean true if Unit is above a runway.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:IsAboveRunway()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSUnit()
+  
+  if DCSUnit then
+  
+    local PointVec2 = self:GetPointVec2()
+    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
+  
+    self:T2( IsAboveRunway )
+    return IsAboveRunway
+  end
+
+  return nil
+end
+
+
+
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
 -- @param Unit#UNIT self
 -- @return #string Player Name
@@ -7244,7 +7270,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSUnit()
   
   if DCSUnit then
-    local UnitGroup = DCSUnit:getGroup()
+    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
     return UnitGroup
   end
 
@@ -7529,10 +7555,14 @@ end
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+  if self:IsAlive() then
+    local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
   
-  self:T( { IsInZone } )
-  return IsInZone 
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the unit is not within a @{Zone}.
@@ -7542,10 +7572,14 @@ end
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
-  local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
-  
-  self:T( { IsInZone } )
-  return IsInZone 
+  if self:IsAlive() then
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+    
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
 end
 
 --- Returns true if the DCS Unit is in the air.
@@ -7792,6 +7826,7 @@ end
 
 --- The ZONE_BASE class
 -- @type ZONE_BASE
+-- @field #string ZoneName Name of the zone.
 -- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
@@ -8101,43 +8136,60 @@ function ZONE_UNIT:GetPointVec2()
   return ZonePointVec2
 end
 
+-- Polygons
 
---- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- @type ZONE_POLYGON
+--- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
+-- @type ZONE_POLYGON_BASE
+-- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
 -- @extends Zone#ZONE_BASE
-ZONE_POLYGON = {
-  ClassName="ZONE_POLYGON",
+ZONE_POLYGON_BASE = {
+  ClassName="ZONE_POLYGON_BASE",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
--- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
--- @param #ZONE_POLYGON self
--- @param #string ZoneName Name of the zone.
--- @param Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
--- @return #ZONE_POLYGON self
-function ZONE_POLYGON:New( ZoneName, ZoneGroup )
-  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
-  self:F( { ZoneName, ZoneGroup } )
+--- A points array.
+-- @type ZONE_POLYGON_BASE.ListVec2
+-- @list <DCSTypes#Vec2>
 
-  local GroupPoints = ZoneGroup:GetTaskRoute()
+--- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #string ZoneName Name of the zone.
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCSTypes#Vec2}, forming a polygon..
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
+  local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+  self:F( { ZoneName, PointsArray } )
+
   local i = 0
   
   self.Polygon = {}
   
-  for i = 1, #GroupPoints do
+  for i = 1, #PointsArray do
     self.Polygon[i] = {}
-    self.Polygon[i].x = GroupPoints[i].x
-    self.Polygon[i].y = GroupPoints[i].y
+    self.Polygon[i].x = PointsArray[i].x
+    self.Polygon[i].y = PointsArray[i].y
   end
 
   return self
 end
 
+--- Flush polygon coordinates as a table in DCS.log.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:Flush()
+  self:F2()
+
+  self:E( { Polygon = self.ZoneName, Coordinates = self.Polygon } )
+
+  return self
+end
+
+
 --- Smokes the zone boundaries in a color.
--- @param #ZONE_POLYGON self
+-- @param #ZONE_POLYGON_BASE self
 -- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
--- @return #ZONE_POLYGON self
-function ZONE_POLYGON:SmokeZone( SmokeColor )
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
 
   local i 
@@ -8169,10 +8221,10 @@ end
 
 
 --- Returns if a location is within the zone.
--- @param #ZONE_POLYGON self
+-- @param #ZONE_POLYGON_BASE self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
+function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   self:F2( PointVec2 )
 
   local i 
@@ -8196,6 +8248,32 @@ function ZONE_POLYGON:IsPointVec2InZone( PointVec2 )
 
   self:T( { "c = ", c } )
   return c
+end
+
+
+
+
+--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- @type ZONE_POLYGON
+-- @extends Zone#ZONE_POLYGON_BASE
+ZONE_POLYGON = {
+  ClassName="ZONE_POLYGON",
+  }
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
+  self:F( { ZoneName, ZoneGroup, self.Polygon } )
+
+  return self
 end
 
 --- This module contains the CLIENT class.
@@ -8367,7 +8445,7 @@ function CLIENT:ShowBriefing()
       Briefing = Briefing .. self.ClientBriefing
     end
     Briefing = Briefing .. " Press [LEFT ALT]+[B] to view the complete mission briefing."
-    self:Message( Briefing, 60,  self.ClientName .. '/ClientBriefing', "Briefing" )
+    self:Message( Briefing, 60, "Briefing" )
   end
 
   return self
@@ -8381,7 +8459,7 @@ function CLIENT:ShowMissionBriefing( MissionBriefing )
   self:F( { self.ClientName } )
 
   if MissionBriefing then
-    self:Message( MissionBriefing, 60,  self.ClientName .. '/MissionBriefing', "Mission Briefing" )
+    self:Message( MissionBriefing, 60, "Mission Briefing" )
   end
 
   return self
@@ -8615,7 +8693,7 @@ function CLIENT:ShowCargo()
 		CargoMsg = "empty"
 	end
   
-	self:Message( CargoMsg, 15, self.ClientName .. "/Cargo", "Co-Pilot: Cargo Status", 30 )
+	self:Message( CargoMsg, 15, "Co-Pilot: Cargo Status", 30 )
 
 end
 
@@ -8630,11 +8708,11 @@ end
 -- @param #CLIENT self
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
--- @param #string MessageId is a text identifying the Message in the MessageQueue. The Message system overwrites Messages with the same MessageId
 -- @param #string MessageCategory is the category of the message (the title).
 -- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
-function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, MessageInterval )
-	self:F( { Message, MessageDuration, MessageId, MessageCategory, MessageInterval } )
+-- @param #string MessageID is the identifier of the message when displayed with intervals.
+function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
+	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
 
 	if not self.MenuMessages then
 		if self:GetClientGroupID() then
@@ -8648,30 +8726,34 @@ function CLIENT:Message( Message, MessageDuration, MessageId, MessageCategory, M
 		if MessageCategory == nil then
 			MessageCategory = "Messages"
 		end
-		if self.Messages[MessageId] == nil then
-			self.Messages[MessageId] = {}
-			self.Messages[MessageId].MessageId = MessageId
-			self.Messages[MessageId].MessageTime = timer.getTime()
-			self.Messages[MessageId].MessageDuration = MessageDuration
-			if MessageInterval == nil then
-				self.Messages[MessageId].MessageInterval = 600
-			else
-				self.Messages[MessageId].MessageInterval = MessageInterval
-			end
-			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+		if MessageID ~= nil then
+  		if self.Messages[MessageID] == nil then
+  			self.Messages[MessageID] = {}
+  			self.Messages[MessageID].MessageId = MessageID
+  			self.Messages[MessageID].MessageTime = timer.getTime()
+  			self.Messages[MessageID].MessageDuration = MessageDuration
+  			if MessageInterval == nil then
+  				self.Messages[MessageID].MessageInterval = 600
+  			else
+  				self.Messages[MessageID].MessageInterval = MessageInterval
+  			end
+  			MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+  		else
+  			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
+  				if timer.getTime() - self.Messages[MessageID].MessageTime >= self.Messages[MessageID].MessageDuration + 10 then
+  					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
+  					self.Messages[MessageID].MessageTime = timer.getTime()
+  				end
+  			else
+  				if timer.getTime() - self.Messages[MessageID].MessageTime  >= self.Messages[MessageID].MessageDuration + self.Messages[MessageID].MessageInterval then
+  					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+  					self.Messages[MessageID].MessageTime = timer.getTime()
+  				end
+  			end
+  		end
 		else
-			if self:GetClientGroupDCSUnit() and not self:GetClientGroupDCSUnit():inAir() then
-				if timer.getTime() - self.Messages[MessageId].MessageTime >= self.Messages[MessageId].MessageDuration + 10 then
-					MESSAGE:New( Message, MessageDuration , MessageCategory):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			else
-				if timer.getTime() - self.Messages[MessageId].MessageTime  >= self.Messages[MessageId].MessageDuration + self.Messages[MessageId].MessageInterval then
-					MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
-					self.Messages[MessageId].MessageTime = timer.getTime()
-				end
-			end
-		end
+      MESSAGE:New( Message, MessageDuration, MessageCategory ):ToClient( self )
+    end
 	end
 end
 --- This module contains the STATIC class.
@@ -10937,14 +11019,14 @@ end
 -- @param Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
-function SET_CLIENT:ForEachClientCompletelyInZone( ZoneObject, IteratorFunction, ... )
+function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
     -- @param Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
-      if ClientObject:IsCompletelyInZone( ZoneObject ) then
+      if ClientObject:IsInZone( ZoneObject ) then
         return true
       else
         return false
@@ -11285,6 +11367,7 @@ Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
 Include.File( "AIBalancer" )
+Include.File( "AirbasePolice" )
 
 
 
@@ -12258,7 +12341,7 @@ function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
 			HostMessage = "No Cargo Available."
 		end
 
-		Client:Message( HostMessage, 20, Mission.Name .. "/StageHosts." .. SignalUnitTypeName, SignalUnitTypeName .. ": Reporting Cargo", 10 )
+		Client:Message( HostMessage, 20, SignalUnitTypeName .. ": Reporting Cargo", 10 )
 	end
 end
 
@@ -13585,9 +13668,9 @@ function STAGESTART:Execute( Mission, Client, Task )
 	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
 	if Task.TaskBriefing then
-		Client:Message( Task.TaskBriefing, 30,  Mission.Name .. "/Stage", "Command" )
+		Client:Message( Task.TaskBriefing, 30, "Command" )
 	else
-		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, Mission.Name .. "/Stage", "Command" )
+		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, "Command" )
 	end
 	self.StageStartTime = timer.getTime()
 	return Valid 
@@ -13714,9 +13797,9 @@ function STAGEROUTE:Execute( Mission, Client, Task )
 	end
 	
 	if Client:IsMultiSeated() then
-    Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Co-Pilot", 20 )
+    Client:Message( RouteMessage, self.MSG.TIME, "Co-Pilot", 20, "Route" )
 	else
-    Client:Message( RouteMessage, self.MSG.TIME, Mission.Name .. "/StageRoute", "Command", 20 )
+    Client:Message( RouteMessage, self.MSG.TIME, "Command", 20, "Route" )
   end	
 	
 
@@ -13779,9 +13862,9 @@ function STAGELANDING:Execute( Mission, Client, Task )
 	self:F()
  
   if Client:IsMultiSeated() then
-  	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Co-Pilot", 10 )
+  	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, "Co-Pilot" )
   else
-    Client:Message( "You have arrived at the landing zone.", self.MSG.TIME, Mission.Name .. "/StageArrived", "Command", 10 )
+    Client:Message( "You have arrived at the landing zone.", self.MSG.TIME, "Command" )
   end
 
  	Task.HostUnit = Task.CurrentCargoZone:GetHostUnit()
@@ -13835,7 +13918,7 @@ function STAGELANDING:Execute( Mission, Client, Task )
       end
     end
 		
-		Client:Message( HostMessage, self.MSG.TIME, Mission.Name .. "/STAGELANDING.EXEC." .. Host, Host, 10 )
+		Client:Message( HostMessage, self.MSG.TIME, Host )
 		
 	end
 end
@@ -13925,7 +14008,7 @@ function STAGELANDED:Execute( Mission, Client, Task )
     end
 
     Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-                    self.MSG.TIME,  Mission.Name .. "/STAGELANDED.EXEC" .. Host, Host )
+                    self.MSG.TIME, Host )
 
   	if not self.MenusAdded then
 			Task.Cargo = nil
@@ -14004,10 +14087,10 @@ function STAGEUNLOAD:Execute( Mission, Client, Task )
 	
 	if Client:IsMultiSeated() then
   	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-                    self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Co-Pilot" )
+                    "Co-Pilot" )
   else
     Client:Message( 'You are unloading the ' .. Task.CargoType .. ' ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-                    self.MSG.TIME,  Mission.Name .. "/StageUnLoad", "Command" )
+                    "Command" )
   end
 	Task:RemoveCargoMenus( Client )
 end
@@ -14047,10 +14130,10 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
     Task:RemoveCargoMenus( Client )
     if Client:IsMultiSeated() then
       Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-  	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot" )
+  	                _TransportStageMsgTime.DONE,  "Co-Pilot" )
   	else
       Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-                    _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Command" )
+                    _TransportStageMsgTime.DONE,  "Command" )
   	end
     return 1
   end
@@ -14061,19 +14144,19 @@ function STAGEUNLOAD:Validate( Mission, Client, Task )
     Task:RemoveCargoMenus( Client )
     if Client:IsMultiSeated() then
       Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-  	                _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Co-Pilot" )
+  	                _TransportStageMsgTime.DONE,  "Co-Pilot" )
 	  else
       Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-                    _TransportStageMsgTime.DONE,  Mission.Name .. "/StageFailure", "Command" )
+                    _TransportStageMsgTime.DONE,  "Command" )
 	  end
     return 1
   end
   
   if  Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
     if Client:IsMultiSeated() then
-      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Co-Pilot" )
+      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE, "Co-Pilot" )
     else
-      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE,  Mission.Name .. "/Stage", "Command" )
+      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE, "Command" )
     end
     Task:RemoveCargoMenus( Client )
     Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 ) -- We set the cargo as one more goal completed in the mission.
@@ -14111,7 +14194,7 @@ function STAGELOAD:Execute( Mission, Client, Task )
     end
 
 		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.EXEC." .. Host, Host )
+						_TransportStageMsgTime.EXECUTING, Host )
 
 		-- Route the cargo to the Carrier
 		
@@ -14146,14 +14229,14 @@ function STAGELOAD:Executing( Mission, Client, Task )
 		
 			-- Message to the pilot that cargo has been loaded.
 			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Mission.Name .. "/STAGELANDING.LOADING1."  .. Host, Host )
+							20, Host )
 			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 			
 			Client:ShowCargo()
 		end
 	else
 		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Mission.Name .. "/STAGELOAD.LOADING.1."  .. Host, Host , 10 )
+						_TransportStageMsgTime.EXECUTING,  Host )
 		for CargoID, Cargo in pairs( CARGOS ) do
 			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
 			
@@ -14169,7 +14252,7 @@ function STAGELOAD:Executing( Mission, Client, Task )
 						Cargo:StatusLoaded()
 						Task.Cargo = Cargo
 						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME,  Mission.Name .. "/STAGELANDING.LOADING.2."  .. Host, Host  )
+										self.MSG.TIME, Host  )
 						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
 						break
 					end
@@ -14202,7 +14285,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			Task.ExecuteStage = _TransportExecuteStage.FAILED
 			Task.CargoName = nil 
 			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+							self.MSG.TIME, Host )
       self:T( -1 )
 			return -1
 		end
@@ -14220,7 +14303,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
       Task.ExecuteStage = _TransportExecuteStage.FAILED
       Task.CargoName = nil 
       Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+              self.MSG.TIME, Host )
       self:T( -1 )
       return -1
     end
@@ -14231,7 +14314,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
       Task.ExecuteStage = _TransportExecuteStage.FAILED
       Task.CargoName = nil 
       Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-              self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.1." .. Host, Host )
+              self.MSG.TIME, Host )
       self:T( -1 )
       return -1
     end
@@ -14239,7 +14322,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
 			Task:RemoveCargoMenus( Client )
 			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.3." .. Host, Host )
+							self.MSG.TIME, Host )
 			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
       self:T( 1 )
 			return 1
@@ -14250,7 +14333,7 @@ function STAGELOAD:Validate( Mission, Client, Task )
 			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
 			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
 				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME,  Mission.Name .. "/STAGELANDING.VALIDATE.4." .. Host, Host )
+								self.MSG.TIME, Host )
 				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
         self:T( 1 )
 				return 1
@@ -14314,9 +14397,9 @@ function STAGEARRIVE:Execute( Mission, Client, Task )
 	self:F()
  
   if Client:IsMultiSeated() then
-    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Co-Pilot" )
+    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME, "Co-Pilot" )
   else
-    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME,  Mission.Name .. "/Stage", "Command" )
+    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME, "Command" )
   end  
 
 end
@@ -14570,7 +14653,7 @@ function TASK:ShowGoalProgress( Mission, Client )
 	end
 	
 	if Mission.MissionReportFlash or Mission.MissionReportShow then
-		Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+		Client:Message( GoalsText, 10, "Mission Command: Task Status", 30, "Task status" )
 	end
 end
 
@@ -15682,7 +15765,7 @@ function MISSION:StatusToClients()
 	self:F()
 	if self.MissionReportFlash then
 		for ClientID, Client in pairs( self._Clients ) do
-			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10,  self.Name .. '/Status', "Mission Command: Mission Status")
+			Client:Message( self.MissionCoalition .. ' "' .. self.Name .. '": ' .. self.MissionStatus .. '! ( ' .. self.MissionPriority .. ' mission ) ', 10, "Mission Command: Mission Status")
 		end
 	end
 end
@@ -19446,11 +19529,11 @@ MISSILETRAINER = {
 function MISSILETRAINER._Alive( Client, self )
 
   if self.Briefing then
-    Client:Message( self.Briefing, 15, "HELLO WORLD", "Trainer" )
+    Client:Message( self.Briefing, 15, "Trainer" )
   end
 
   if self.MenusOnOff == true then
-    Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "MENU", "Trainer" )
+    Client:Message( "Use the 'Radio Menu' -> 'Other (F10)' -> 'Missile Trainer' menu options to change the Missile Trainer settings (for all players).", 15, "Trainer" )
 
     Client.MainMenu = MENU_CLIENT:New( Client, "Missile Trainer", nil ) -- Menu#MENU_CLIENT
 

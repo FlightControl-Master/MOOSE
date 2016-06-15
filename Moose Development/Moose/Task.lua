@@ -131,7 +131,7 @@ function TASK:ShowGoalProgress( Mission, Client )
 	end
 	
 	if Mission.MissionReportFlash or Mission.MissionReportShow then
-		Client:Message( GoalsText, 10,  "/TASKPROGRESS" .. self.ClassName, "Mission Command: Task Status", 30 )
+		Client:Message( GoalsText, 10, "Mission Command: Task Status", 30, "Task status" )
 	end
 end
 

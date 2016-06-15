@@ -19,6 +19,7 @@
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -159,6 +160,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_POLYGON_BASE">ZONE_POLYGON_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#ZONE_RADIUS">ZONE_RADIUS</a></td>
 		<td class="summary">
 
@@ -219,6 +226,12 @@
 <p>Smokes the zone boundaries in a color.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneName">ZONE_BASE.ZoneName</a></td>
+		<td class="summary">
+<p>Name of the zone.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(ZONE_POLYGON)">Type <code>ZONE_POLYGON</code></a></h2>
@@ -230,19 +243,47 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).IsPointVec2InZone">ZONE_POLYGON:IsPointVec2InZone(PointVec2)</a></td>
-		<td class="summary">
-<p>Returns if a location is within the zone.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
 		<td class="summary">
 <p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_POLYGON_BASE)">Type <code>ZONE_POLYGON_BASE</code></a></h2>
+				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).SmokeZone">ZONE_POLYGON:SmokeZone(SmokeColor)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).ClassName">ZONE_POLYGON_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Flush">ZONE_POLYGON_BASE:Flush()</a></td>
+		<td class="summary">
+<p>Flush polygon coordinates as a table in DCS.log.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsPointVec2InZone">ZONE_POLYGON_BASE:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).New">ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Polygon">ZONE_POLYGON_BASE.Polygon</a></td>
+		<td class="summary">
+<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).SmokeZone">ZONE_POLYGON_BASE:SmokeZone(SmokeColor)</a></td>
 		<td class="summary">
 <p>Smokes the zone boundaries in a color.</p>
 </td>
@@ -400,6 +441,20 @@
 		<em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a></em>
 <a id="ZONE_POLYGON" >
 <strong>ZONE_POLYGON</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON_BASE)">#ZONE_POLYGON_BASE</a></em>
+<a id="ZONE_POLYGON_BASE" >
+<strong>ZONE_POLYGON_BASE</strong>
 </a>
 </dt>
 <dd>
@@ -614,6 +669,20 @@ The smoke color.</p>
 		</ul>
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_BASE).ZoneName" >
+<strong>ZONE_BASE.ZoneName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Name of the zone.</p>
+
+</dd>
+</dl>
 
 			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
 				
@@ -631,33 +700,6 @@ The smoke color.</p>
 <dd>
 	
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_POLYGON).IsPointVec2InZone" >
-<strong>ZONE_POLYGON:IsPointVec2InZone(PointVec2)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns if a location is within the zone.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
-The location to test.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em>
-true if the location is within the zone.</p>
 
 </dd>
 </dl>
@@ -697,11 +739,126 @@ self</p>
 
 </dd>
 </dl>
+
+			<h2><a id="#(ZONE_POLYGON_BASE)" >Type <code>ZONE_POLYGON_BASE</code></a></h2>
+				
+<p>The ZONE<em>POLYGON</em>BASE class defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_POLYGON).SmokeZone" >
-<strong>ZONE_POLYGON:SmokeZone(SmokeColor)</strong>
+		<em>#string</em>
+<a id="#(ZONE_POLYGON_BASE).ClassName" >
+<strong>ZONE_POLYGON_BASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).Flush" >
+<strong>ZONE_POLYGON_BASE:Flush()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flush polygon coordinates as a table in DCS.log.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).IsPointVec2InZone" >
+<strong>ZONE_POLYGON_BASE:IsPointVec2InZone(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).New" >
+<strong>ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
+
+	
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE<em>POLYGON</em>BASE.ListVec2</a> PointsArray </em></code>: 
+An array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon..</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE_POLYGON_BASE.ListVec2</a></em>
+<a id="#(ZONE_POLYGON_BASE).Polygon" >
+<strong>ZONE_POLYGON_BASE.Polygon</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).SmokeZone" >
+<strong>ZONE_POLYGON_BASE:SmokeZone(SmokeColor)</strong>
 </a>
 </dt>
 <dd>
@@ -719,11 +876,16 @@ The smoke color.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
 self</p>
 
 </dd>
 </dl>
+
+			<h2><a id="#(ZONE_POLYGON_BASE.ListVec2)" >Type <code>ZONE_POLYGON_BASE.ListVec2</code></a></h2>
+				
+<p>A points array.</p>
+
 
 			<h2><a id="#(ZONE_RADIUS)" >Type <code>ZONE_RADIUS</code></a></h2>
 				

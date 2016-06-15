@@ -32,8 +32,8 @@ GOTO End
 ECHO Static Moose.lua
 
 REM Create a timestamp with is logged in the DCS.log file.
-ECHO env.info( '*** MOOSE STATIC INCLUDE START *** ' ) > Moose.lua
-ECHO env.info( 'Moose Generation Timestamp: %2' ) >> Moose.lua
+ECHO env.info( '*** MOOSE STATIC INCLUDE START *** ' ) > 					Moose.lua
+ECHO env.info( 'Moose Generation Timestamp: %2' ) >> 						Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Static_Loader.lua"        	Moose.lua
 
