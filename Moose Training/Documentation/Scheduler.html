@@ -19,6 +19,7 @@
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -72,26 +73,26 @@
 	<div id="content">
    <h1>Module <code>Scheduler</code></h1>
    
-<p>Models time events calling event handing functions.</p>
+<p>This module contains the SCHEDULER class.</p>
 
    
 
-<h1><a href="SCHEDULER.html">SCHEDULER</a> class</h1>
-<p>The <a href="SCHEDULER.html">SCHEDULER</a> class models time events calling given event handling functions.</p>
+<h1>1) <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class models time events calling given event handling functions.</p>
 
-<h1>SCHEDULER constructor</h1>
+<h2>1.1) SCHEDULER constructor</h2>
 <p>The SCHEDULER class is quite easy to use:</p>
 
 <ul>
-    <li><a href="##(SCHEDULER).New">SCHEDULER.New</a>: Setup a new scheduler and start it with the specified parameters.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>: Setup a new scheduler and start it with the specified parameters.</li>
 </ul>
 
-<h1>SCHEDULER timer methods</h1>
+<h2>SCHEDULER timer stop and start</h2>
 <p>The SCHEDULER can be stopped and restarted with the following methods:</p>
 
 <ul>
-    <li><a href="##(SCHEDULER).Start">SCHEDULER.Start</a>: (Re-)Start the scheduler.</li>
-    <li><a href="##(SCHEDULER).Start">SCHEDULER.Start</a>: Stop the scheduler.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).Start">Scheduler#SCHEDULER.Start</a>: (Re-)Start the scheduler.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).Stop">Scheduler#SCHEDULER.Stop</a>: Stop the scheduler.</li>
 </ul>
 
 
@@ -115,13 +116,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).New">SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
 		<td class="summary">
-<p>Constructor.</p>
+<p>SCHEDULER constructor.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Repeat">SCHEDULER.Repeat</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).ScheduleID">SCHEDULER.ScheduleID</a></td>
+		<td class="summary">
+<p>the ID of the scheduler.</p>
 </td>
 		</tr>
 		<tr>
@@ -189,7 +196,7 @@
 </dt>
 <dd>
 	
-<p>Constructor.</p>
+<p>SCHEDULER constructor.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -254,6 +261,20 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SCHEDULER).ScheduleID" >
+<strong>SCHEDULER.ScheduleID</strong>
+</a>
+</dt>
+<dd>
+	
+<p>the ID of the scheduler.</p>
 
 </dd>
 </dl>
