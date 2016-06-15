@@ -106,8 +106,9 @@ Spawn_Templates_Visible = { "Spawn Vehicle Visible Template A",
 Spawn_Vehicle_Visible_RandomizeTemplate_Scheduled = SPAWN:New( "Spawn Vehicle Visible RandomizeTemplate Scheduled" )
                                                          :Limit( 80, 80 )
 													                               :RandomizeTemplate( Spawn_Templates_Visible )
+													                               :RandomizeRoute( 1, 1, 300 )
 													                               :Array( 49, 20, 8, 8 )
-													                               :SpawnScheduled( 10, 0.2 )
+													                               :SpawnScheduled( 1, 0.2 )
 
 -- Spawn_Infantry allows to spawn 10 Infantry groups.														   
 Spawn_Infantry = SPAWN:New( "Spawn Infantry" )
