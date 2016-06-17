@@ -1,7 +1,9 @@
---- Manage the mission database. 
+--- This module contains the DATABASE class, managing the database of mission objects. 
 -- 
--- @{#DATABASE} class
--- ==================
+-- ====
+-- 
+-- 1) @{Database#DATABASE} class, extends @{Base#BASE}
+-- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * UNITS
@@ -16,8 +18,8 @@
 -- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
 -- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 -- 
--- DATABASE iterators:
--- ===================
+-- 1.1) DATABASE iterators
+-- -----------------------
 -- You can iterate the database with the available iterator methods.
 -- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the DATABASE:
@@ -31,17 +33,6 @@
 --   
 -- @module Database
 -- @author FlightControl
-
-
-
-
-
-
-
-
-
-
-
 
 --- DATABASE class
 -- @type DATABASE
@@ -61,6 +52,7 @@ DATABASE = {
   PLAYERSALIVE = {},
   CLIENTS = {},
   CLIENTSALIVE = {},
+  AIRBASES = {},
   NavPoints = {},
 }
 
@@ -105,6 +97,7 @@ function DATABASE:New()
   self:_RegisterClients()
   self:_RegisterStatics()
   self:_RegisterPlayers()
+  self:_RegisterAirbases()
   
   return self
 end
@@ -164,6 +157,33 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
+end
+
+--- Adds a Airbase based on the Airbase Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddAirbase( DCSAirbaseName )
+
+  if not self.AIRBASES[DCSAirbaseName] then
+    self.AIRBASES[DCSAirbaseName] = AIRBASE:Register( DCSAirbaseName )
+  end
+end
+
+
+--- Deletes a Airbase from the DATABASE based on the Airbase Name.
+-- @param #DATABASE self
+function DATABASE:DeleteAirbase( DCSAirbaseName )
+
+  --self.AIRBASES[DCSAirbaseName] = nil 
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
 end
 
 
@@ -371,6 +391,18 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CountryID
 end
 
+--- Airbase
+
+function DATABASE:GetCoalitionFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCoalition()
+end
+
+function DATABASE:GetCategoryFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCategory()
+end
+
+
+
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
@@ -439,6 +471,7 @@ function DATABASE:_RegisterClients()
   return self
 end
 
+--- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
@@ -453,6 +486,23 @@ function DATABASE:_RegisterStatics()
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
+    end
+  end
+
+  return self
+end
+
+--- @param #DATABASE self
+function DATABASE:_RegisterAirbases()
+
+  local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
+
+      local DCSAirbaseName = DCSAirbase:getName()
+
+      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:AddAirbase( DCSAirbaseName )
     end
   end
 
@@ -526,7 +576,7 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEach( IteratorFunction, arg, Set )
+function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
   
   local function CoRoutine()
@@ -547,7 +597,7 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
   local function Schedule()
   
     local status, res = coroutine.resume( co )
-    self:T2( { status, res } )
+    self:T3( { status, res } )
     
     if status == false then
       error( res )
@@ -555,7 +605,9 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
     if res == false then
       return true -- resume next time the loop
     end
-    
+    if FinalizeFunction then
+      FinalizeFunction( unpack( arg ) )
+    end
     return false
   end
 
@@ -569,10 +621,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachUnit( IteratorFunction, ... )
+function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.UNITS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.UNITS )
 
   return self
 end

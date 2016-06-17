@@ -1,0 +1,1625 @@
+mission = 
+{
+    ["trig"] = 
+    {
+        ["actions"] = 
+        {
+            [1] = "a_do_script_file(getValueResourceByKey(\"ResKey_Action_5\"));",
+            [2] = "a_do_script(getValueDictByKey(\"DictKey_ActionText_17\"));",
+            [3] = "a_do_script_file(getValueResourceByKey(\"ResKey_Action_6\"));",
+        }, -- end of ["actions"]
+        ["events"] = 
+        {
+        }, -- end of ["events"]
+        ["custom"] = 
+        {
+        }, -- end of ["custom"]
+        ["func"] = 
+        {
+        }, -- end of ["func"]
+        ["flag"] = 
+        {
+            [1] = true,
+            [2] = true,
+            [3] = true,
+        }, -- end of ["flag"]
+        ["conditions"] = 
+        {
+            [1] = "return(true)",
+            [2] = "return(true)",
+            [3] = "return(true)",
+        }, -- end of ["conditions"]
+        ["customStartup"] = 
+        {
+        }, -- end of ["customStartup"]
+        ["funcStartup"] = 
+        {
+            [1] = "if mission.trig.conditions[1]() then mission.trig.actions[1]() end",
+            [2] = "if mission.trig.conditions[2]() then mission.trig.actions[2]() end",
+            [3] = "if mission.trig.conditions[3]() then mission.trig.actions[3]() end",
+        }, -- end of ["funcStartup"]
+    }, -- end of ["trig"]
+    ["result"] = 
+    {
+        ["offline"] = 
+        {
+            ["conditions"] = 
+            {
+            }, -- end of ["conditions"]
+            ["actions"] = 
+            {
+            }, -- end of ["actions"]
+            ["func"] = 
+            {
+            }, -- end of ["func"]
+        }, -- end of ["offline"]
+        ["total"] = 0,
+        ["blue"] = 
+        {
+            ["conditions"] = 
+            {
+            }, -- end of ["conditions"]
+            ["actions"] = 
+            {
+            }, -- end of ["actions"]
+            ["func"] = 
+            {
+            }, -- end of ["func"]
+        }, -- end of ["blue"]
+        ["red"] = 
+        {
+            ["conditions"] = 
+            {
+            }, -- end of ["conditions"]
+            ["actions"] = 
+            {
+            }, -- end of ["actions"]
+            ["func"] = 
+            {
+            }, -- end of ["func"]
+        }, -- end of ["red"]
+    }, -- end of ["result"]
+    ["maxDictId"] = 53,
+    ["groundControl"] = 
+    {
+        ["isPilotControlVehicles"] = false,
+        ["roles"] = 
+        {
+            ["artillery_commander"] = 
+            {
+                ["blue"] = 0,
+                ["red"] = 0,
+            }, -- end of ["artillery_commander"]
+            ["instructor"] = 
+            {
+                ["blue"] = 0,
+                ["red"] = 0,
+            }, -- end of ["instructor"]
+            ["observer"] = 
+            {
+                ["blue"] = 0,
+                ["red"] = 0,
+            }, -- end of ["observer"]
+            ["forward_observer"] = 
+            {
+                ["blue"] = 0,
+                ["red"] = 0,
+            }, -- end of ["forward_observer"]
+        }, -- end of ["roles"]
+    }, -- end of ["groundControl"]
+    ["usedModules"] = 
+    {
+        ["F-5E/E-3 by Belsimtek"] = true,
+        ["M-2000C by RAZBAM Sims"] = true,
+        ["SA342 AI by Polychop-Simulations"] = true,
+        ["Hawk T.1A by VEAO Simulations"] = true,
+        ["MiG-15bis AI by Eagle Dynamics"] = true,
+        ["C-101 Aviojet by AvioDev"] = true,
+        ["F-86F Sabre by Belsimtek"] = true,
+        ["F-15C"] = false,
+        ["M-2000C AI by RAZBAM Sims"] = true,
+        ["SA342 Gazelle by Polychop-Simulations"] = true,
+        ["Ka-50 Black Shark by Eagle Dynamics"] = true,
+        ["World War II AI Units by Eagle Dynamics"] = true,
+        ["MiG-21Bis by Leatherneck Simulations"] = false,
+        ["F-86F Sabre AI by Eagle Dynamics"] = true,
+        ["TF-51D Mustang by Eagle Dynamics"] = true,
+        ["Su-25T by Eagle Dynamics"] = true,
+        ["Mi-8MTV2 Hip by Belsimtek"] = true,
+        ["FW-190D9 Dora by Eagle Dynamics"] = true,
+        ["Su-27 Flanker by Eagle Dynamics"] = false,
+        ["L-39C"] = true,
+        ["UH-1H Huey by Belsimtek"] = true,
+        ["C-101 Aviojet"] = true,
+        ["./CoreMods/aircraft/MQ-9 Reaper"] = true,
+        ["Combined Arms by Eagle Dynamics"] = true,
+        ["Su-25A by Eagle Dynamics"] = false,
+        ["MiG-21Bis AI by Leatherneck Simulations"] = true,
+        ["L-39C/ZA by Eagle Dynamics"] = true,
+        ["Bf 109 K-4 by Eagle Dynamics"] = true,
+        ["Caucasus"] = true,
+        ["A-10A by Eagle Dynamics"] = false,
+        ["Hawk T.1A AI by VEAO Simulations"] = true,
+        ["P-51D Mustang by Eagle Dynamics"] = true,
+        ["MiG-15bis by Belsimtek"] = true,
+        ["A-10C Warthog by Eagle Dynamics"] = true,
+        ["Flaming Cliffs by Eagle Dynamics"] = true,
+    }, -- end of ["usedModules"]
+    ["triggers"] = 
+    {
+        ["zones"] = 
+        {
+        }, -- end of ["zones"]
+    }, -- end of ["triggers"]
+    ["weather"] = 
+    {
+        ["atmosphere_type"] = 0,
+        ["wind"] = 
+        {
+            ["at8000"] = 
+            {
+                ["speed"] = 0,
+                ["dir"] = 0,
+            }, -- end of ["at8000"]
+            ["atGround"] = 
+            {
+                ["speed"] = 0,
+                ["dir"] = 0,
+            }, -- end of ["atGround"]
+            ["at2000"] = 
+            {
+                ["speed"] = 0,
+                ["dir"] = 0,
+            }, -- end of ["at2000"]
+        }, -- end of ["wind"]
+        ["enable_fog"] = false,
+        ["turbulence"] = 
+        {
+            ["at8000"] = 0,
+            ["atGround"] = 0,
+            ["at2000"] = 0,
+        }, -- end of ["turbulence"]
+        ["season"] = 
+        {
+            ["iseason"] = 1,
+            ["temperature"] = 20,
+        }, -- end of ["season"]
+        ["type_weather"] = 0,
+        ["qnh"] = 760,
+        ["cyclones"] = 
+        {
+        }, -- end of ["cyclones"]
+        ["name"] = "Winter, clean sky",
+        ["fog"] = 
+        {
+            ["thickness"] = 0,
+            ["visibility"] = 25,
+            ["density"] = 7,
+        }, -- end of ["fog"]
+        ["visibility"] = 
+        {
+            ["distance"] = 80000,
+        }, -- end of ["visibility"]
+        ["clouds"] = 
+        {
+            ["thickness"] = 200,
+            ["density"] = 0,
+            ["base"] = 300,
+            ["iprecptns"] = 0,
+        }, -- end of ["clouds"]
+    }, -- end of ["weather"]
+    ["theatre"] = "Caucasus",
+    ["needModules"] = 
+    {
+        ["TF-51D Mustang by Eagle Dynamics"] = "TF-51D Mustang by Eagle Dynamics",
+    }, -- end of ["needModules"]
+    ["map"] = 
+    {
+        ["centerY"] = 332658.57142857,
+        ["zoom"] = 500000,
+        ["centerX"] = -9701.4285714281,
+    }, -- end of ["map"]
+    ["coalitions"] = 
+    {
+        ["blue"] = 
+        {
+            [1] = 11,
+            [2] = 4,
+            [3] = 6,
+            [4] = 16,
+            [5] = 13,
+            [6] = 15,
+            [7] = 9,
+            [8] = 8,
+            [9] = 12,
+            [10] = 2,
+            [11] = 3,
+            [12] = 5,
+            [13] = 10,
+            [14] = 20,
+            [15] = 21,
+            [16] = 40,
+            [17] = 26,
+            [18] = 45,
+            [19] = 28,
+        }, -- end of ["blue"]
+        ["neutrals"] = 
+        {
+            [1] = 7,
+            [2] = 17,
+            [3] = 22,
+            [4] = 23,
+            [5] = 25,
+            [6] = 29,
+            [7] = 30,
+            [8] = 31,
+            [9] = 32,
+            [10] = 33,
+            [11] = 35,
+            [12] = 36,
+            [13] = 39,
+            [14] = 41,
+            [15] = 42,
+            [16] = 44,
+            [17] = 46,
+        }, -- end of ["neutrals"]
+        ["red"] = 
+        {
+            [1] = 0,
+            [2] = 1,
+            [3] = 18,
+            [4] = 19,
+            [5] = 37,
+            [6] = 24,
+            [7] = 27,
+            [8] = 43,
+            [9] = 47,
+            [10] = 34,
+            [11] = 38,
+        }, -- end of ["red"]
+    }, -- end of ["coalitions"]
+    ["descriptionText"] = "DictKey_descriptionText_1",
+    ["pictureFileNameR"] = 
+    {
+    }, -- end of ["pictureFileNameR"]
+    ["descriptionBlueTask"] = "DictKey_descriptionBlueTask_3",
+    ["descriptionRedTask"] = "DictKey_descriptionRedTask_2",
+    ["pictureFileNameB"] = 
+    {
+    }, -- end of ["pictureFileNameB"]
+    ["trigrules"] = 
+    {
+        [1] = 
+        {
+            ["rules"] = 
+            {
+            }, -- end of ["rules"]
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["actions"] = 
+            {
+                [1] = 
+                {
+                    ["file"] = "ResKey_Action_5",
+                    ["predicate"] = "a_do_script_file",
+                    ["ai_task"] = 
+                    {
+                        [1] = "",
+                        [2] = "",
+                    }, -- end of ["ai_task"]
+                }, -- end of [1]
+            }, -- end of ["actions"]
+            ["comment"] = "Load Moose",
+        }, -- end of [1]
+        [2] = 
+        {
+            ["rules"] = 
+            {
+            }, -- end of ["rules"]
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["actions"] = 
+            {
+                [1] = 
+                {
+                    ["KeyDict_text"] = "DictKey_ActionText_17",
+                    ["text"] = "DictKey_ActionText_17",
+                    ["predicate"] = "a_do_script",
+                    ["ai_task"] = 
+                    {
+                        [1] = "",
+                        [2] = "",
+                    }, -- end of ["ai_task"]
+                }, -- end of [1]
+            }, -- end of ["actions"]
+            ["comment"] = "Trace",
+        }, -- end of [2]
+        [3] = 
+        {
+            ["rules"] = 
+            {
+            }, -- end of ["rules"]
+            ["eventlist"] = "",
+            ["predicate"] = "triggerStart",
+            ["actions"] = 
+            {
+                [1] = 
+                {
+                    ["file"] = "ResKey_Action_6",
+                    ["predicate"] = "a_do_script_file",
+                    ["ai_task"] = 
+                    {
+                        [1] = "",
+                        [2] = "",
+                    }, -- end of ["ai_task"]
+                }, -- end of [1]
+            }, -- end of ["actions"]
+            ["comment"] = "Load Mission",
+        }, -- end of [3]
+    }, -- end of ["trigrules"]
+    ["coalition"] = 
+    {
+        ["blue"] = 
+        {
+            ["bullseye"] = 
+            {
+                ["y"] = 617414,
+                ["x"] = -291014,
+            }, -- end of ["bullseye"]
+            ["nav_points"] = 
+            {
+            }, -- end of ["nav_points"]
+            ["name"] = "blue",
+            ["country"] = 
+            {
+                [1] = 
+                {
+                    ["id"] = 11,
+                    ["name"] = "Belgium",
+                }, -- end of [1]
+                [2] = 
+                {
+                    ["id"] = 4,
+                    ["name"] = "UK",
+                }, -- end of [2]
+                [3] = 
+                {
+                    ["id"] = 6,
+                    ["name"] = "Germany",
+                }, -- end of [3]
+                [4] = 
+                {
+                    ["id"] = 16,
+                    ["name"] = "Georgia",
+                }, -- end of [4]
+                [5] = 
+                {
+                    ["id"] = 13,
+                    ["name"] = "Denmark",
+                }, -- end of [5]
+                [6] = 
+                {
+                    ["id"] = 15,
+                    ["name"] = "Israel",
+                }, -- end of [6]
+                [7] = 
+                {
+                    ["id"] = 9,
+                    ["name"] = "Spain",
+                }, -- end of [7]
+                [8] = 
+                {
+                    ["id"] = 8,
+                    ["name"] = "Canada",
+                }, -- end of [8]
+                [9] = 
+                {
+                    ["id"] = 12,
+                    ["name"] = "Norway",
+                }, -- end of [9]
+                [10] = 
+                {
+                    ["id"] = 2,
+                    ["name"] = "USA",
+                    ["plane"] = 
+                    {
+                        ["group"] = 
+                        {
+                            [1] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "Reconnaissance",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 13,
+                                            ["y"] = 369029.71875,
+                                            ["x"] = 11250.362304688,
+                                            ["name"] = "DictKey_WptName_9",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 1,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "Bare Metal",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "3",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "TF-51D",
+                                        ["Radio"] = 
+                                        {
+                                            [1] = 
+                                            {
+                                                ["channels"] = 
+                                                {
+                                                    [1] = 124,
+                                                    [2] = 124,
+                                                    [4] = 139,
+                                                    [3] = 131,
+                                                }, -- end of ["channels"]
+                                            }, -- end of [1]
+                                        }, -- end of ["Radio"]
+                                        ["unitId"] = 1,
+                                        ["psi"] = 0,
+                                        ["y"] = 369029.71875,
+                                        ["x"] = 11250.362304688,
+                                        ["name"] = "DictKey_UnitName_8",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = 340.68,
+                                            ["flare"] = 0,
+                                            ["chaff"] = 0,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 
+                                        {
+                                            [1] = 1,
+                                            [2] = 1,
+                                            [3] = 1,
+                                            ["name"] = "Enfield11",
+                                        }, -- end of ["callsign"]
+                                        ["onboard_num"] = "010",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 369029.71875,
+                                ["x"] = 11250.362304688,
+                                ["name"] = "DictKey_GroupName_7",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [1]
+                            [2] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "Reconnaissance",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 13,
+                                            ["y"] = 369103.96875,
+                                            ["x"] = 11209.124023438,
+                                            ["name"] = "DictKey_WptName_12",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 2,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "Bare Metal",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "4",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "TF-51D",
+                                        ["Radio"] = 
+                                        {
+                                            [1] = 
+                                            {
+                                                ["channels"] = 
+                                                {
+                                                    [1] = 124,
+                                                    [2] = 124,
+                                                    [4] = 139,
+                                                    [3] = 131,
+                                                }, -- end of ["channels"]
+                                            }, -- end of [1]
+                                        }, -- end of ["Radio"]
+                                        ["unitId"] = 2,
+                                        ["psi"] = 0,
+                                        ["y"] = 369103.96875,
+                                        ["x"] = 11209.124023438,
+                                        ["name"] = "DictKey_UnitName_11",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = 340.68,
+                                            ["flare"] = 0,
+                                            ["chaff"] = 0,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 
+                                        {
+                                            [1] = 2,
+                                            [2] = 1,
+                                            [3] = 1,
+                                            ["name"] = "Springfield11",
+                                        }, -- end of ["callsign"]
+                                        ["onboard_num"] = "011",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 369103.96875,
+                                ["x"] = 11209.124023438,
+                                ["name"] = "DictKey_GroupName_10",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [2]
+                            [3] = 
+                            {
+                                ["lateActivation"] = true,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "Reconnaissance",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["routeRelativeTOT"] = true,
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParkingHot",
+                                            ["action"] = "From Parking Area Hot",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 13,
+                                            ["y"] = 369131.84375,
+                                            ["x"] = 11297.9140625,
+                                            ["name"] = "DictKey_WptName_16",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 3,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "Bare Metal",
+                                        ["skill"] = "High",
+                                        ["parking"] = "5",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "TF-51D",
+                                        ["unitId"] = 3,
+                                        ["psi"] = 0,
+                                        ["y"] = 369131.84375,
+                                        ["x"] = 11297.9140625,
+                                        ["name"] = "DictKey_UnitName_15",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = 340.68,
+                                            ["flare"] = 0,
+                                            ["chaff"] = 0,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 
+                                        {
+                                            [1] = 3,
+                                            [2] = 1,
+                                            [3] = 1,
+                                            ["name"] = "Uzi11",
+                                        }, -- end of ["callsign"]
+                                        ["onboard_num"] = "012",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 369131.84375,
+                                ["x"] = 11297.9140625,
+                                ["name"] = "DictKey_GroupName_14",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["modulation"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [3]
+                        }, -- end of ["group"]
+                    }, -- end of ["plane"]
+                }, -- end of [10]
+                [11] = 
+                {
+                    ["id"] = 3,
+                    ["name"] = "Turkey",
+                }, -- end of [11]
+                [12] = 
+                {
+                    ["id"] = 5,
+                    ["name"] = "France",
+                }, -- end of [12]
+                [13] = 
+                {
+                    ["id"] = 10,
+                    ["name"] = "The Netherlands",
+                }, -- end of [13]
+                [14] = 
+                {
+                    ["id"] = 20,
+                    ["name"] = "Italy",
+                }, -- end of [14]
+                [15] = 
+                {
+                    ["id"] = 21,
+                    ["name"] = "Australia",
+                }, -- end of [15]
+                [16] = 
+                {
+                    ["id"] = 40,
+                    ["name"] = "Poland",
+                }, -- end of [16]
+                [17] = 
+                {
+                    ["id"] = 26,
+                    ["name"] = "Czech Republic",
+                }, -- end of [17]
+                [18] = 
+                {
+                    ["id"] = 45,
+                    ["name"] = "South Korea",
+                }, -- end of [18]
+                [19] = 
+                {
+                    ["id"] = 28,
+                    ["name"] = "Croatia",
+                }, -- end of [19]
+            }, -- end of ["country"]
+        }, -- end of ["blue"]
+        ["red"] = 
+        {
+            ["bullseye"] = 
+            {
+                ["y"] = 371700,
+                ["x"] = 11557,
+            }, -- end of ["bullseye"]
+            ["nav_points"] = 
+            {
+            }, -- end of ["nav_points"]
+            ["name"] = "red",
+            ["country"] = 
+            {
+                [1] = 
+                {
+                    ["id"] = 0,
+                    ["name"] = "Russia",
+                    ["plane"] = 
+                    {
+                        ["group"] = 
+                        {
+                            [1] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 293785.125,
+                                            ["x"] = -7523.8505859375,
+                                            ["name"] = "DictKey_WptName_20",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 4,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "2",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 4,
+                                        ["psi"] = 0,
+                                        ["y"] = 293785.125,
+                                        ["x"] = -7523.8505859375,
+                                        ["name"] = "DictKey_UnitName_19",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 293785.125,
+                                ["x"] = -7523.8505859375,
+                                ["name"] = "DictKey_GroupName_18",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [1]
+                            [2] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 294994.1875,
+                                            ["x"] = -6702.66796875,
+                                            ["name"] = "DictKey_WptName_23",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 5,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "75",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 5,
+                                        ["psi"] = 0,
+                                        ["y"] = 294994.1875,
+                                        ["x"] = -6702.66796875,
+                                        ["name"] = "DictKey_UnitName_22",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 294994.1875,
+                                ["x"] = -6702.66796875,
+                                ["name"] = "DictKey_GroupName_21",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [2]
+                            [3] = 
+                            {
+                                ["lateActivation"] = true,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["routeRelativeTOT"] = true,
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 294155.125,
+                                            ["x"] = -7498.103515625,
+                                            ["name"] = "DictKey_WptName_26",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                        [2] = 
+                                        {
+                                            ["alt"] = 313,
+                                            ["type"] = "Turning Point",
+                                            ["action"] = "Turning Point",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 274.67610245895,
+                                            ["y"] = 279801.42857143,
+                                            ["x"] = -42844.285714285,
+                                            ["name"] = "DictKey_WptName_48",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = false,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [2]
+                                        [3] = 
+                                        {
+                                            ["alt"] = 144,
+                                            ["type"] = "Turning Point",
+                                            ["action"] = "Turning Point",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 653.69455551249,
+                                            ["y"] = 229515.71428572,
+                                            ["x"] = -27272.857142857,
+                                            ["name"] = "DictKey_WptName_49",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = false,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [3]
+                                        [4] = 
+                                        {
+                                            ["alt"] = 45,
+                                            ["type"] = "Land",
+                                            ["action"] = "Landing",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 527.81058817743,
+                                            ["airdromeId"] = 12,
+                                            ["y"] = 243127.2973737,
+                                            ["x"] = -5406.2803440839,
+                                            ["name"] = "DictKey_WptName_53",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = false,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [4]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 6,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "High",
+                                        ["parking"] = "91",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 6,
+                                        ["psi"] = 2.755848169059,
+                                        ["y"] = 294155.125,
+                                        ["x"] = -7498.103515625,
+                                        ["name"] = "DictKey_UnitName_25",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = -2.755848169059,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 294155.125,
+                                ["x"] = -7498.103515625,
+                                ["name"] = "DictKey_GroupName_24",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["modulation"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [3]
+                            [4] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 295139.9375,
+                                            ["x"] = -6351.4077148438,
+                                            ["name"] = "DictKey_WptName_41",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 11,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "107",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 11,
+                                        ["psi"] = 0,
+                                        ["y"] = 295139.9375,
+                                        ["x"] = -6351.4077148438,
+                                        ["name"] = "DictKey_UnitName_40",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 295139.9375,
+                                ["x"] = -6351.4077148438,
+                                ["name"] = "DictKey_GroupName_39",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [4]
+                            [5] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 295287.09375,
+                                            ["x"] = -6172.1333007813,
+                                            ["name"] = "DictKey_WptName_44",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 12,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "62",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 12,
+                                        ["psi"] = 0,
+                                        ["y"] = 295287.09375,
+                                        ["x"] = -6172.1333007813,
+                                        ["name"] = "DictKey_UnitName_43",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 295287.09375,
+                                ["x"] = -6172.1333007813,
+                                ["name"] = "DictKey_GroupName_42",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [5]
+                            [6] = 
+                            {
+                                ["modulation"] = 0,
+                                ["tasks"] = 
+                                {
+                                }, -- end of ["tasks"]
+                                ["radioSet"] = false,
+                                ["task"] = "CAS",
+                                ["uncontrolled"] = false,
+                                ["route"] = 
+                                {
+                                    ["points"] = 
+                                    {
+                                        [1] = 
+                                        {
+                                            ["alt"] = 88,
+                                            ["type"] = "TakeOffParking",
+                                            ["action"] = "From Parking Area",
+                                            ["alt_type"] = "BARO",
+                                            ["formation_template"] = "",
+                                            ["properties"] = 
+                                            {
+                                                ["vnav"] = 1,
+                                                ["scale"] = 0,
+                                                ["angle"] = 0,
+                                                ["vangle"] = 0,
+                                                ["steer"] = 2,
+                                            }, -- end of ["properties"]
+                                            ["ETA"] = 0,
+                                            ["airdromeId"] = 15,
+                                            ["y"] = 295051.375,
+                                            ["x"] = -6629.2661132813,
+                                            ["name"] = "DictKey_WptName_47",
+                                            ["speed"] = 138.88888888889,
+                                            ["ETA_locked"] = true,
+                                            ["task"] = 
+                                            {
+                                                ["id"] = "ComboTask",
+                                                ["params"] = 
+                                                {
+                                                    ["tasks"] = 
+                                                    {
+                                                        [1] = 
+                                                        {
+                                                            ["number"] = 1,
+                                                            ["key"] = "CAS",
+                                                            ["id"] = "EngageTargets",
+                                                            ["enabled"] = true,
+                                                            ["auto"] = true,
+                                                            ["params"] = 
+                                                            {
+                                                                ["targetTypes"] = 
+                                                                {
+                                                                    [1] = "Helicopters",
+                                                                    [2] = "Ground Units",
+                                                                    [3] = "Light armed ships",
+                                                                }, -- end of ["targetTypes"]
+                                                                ["priority"] = 0,
+                                                            }, -- end of ["params"]
+                                                        }, -- end of [1]
+                                                    }, -- end of ["tasks"]
+                                                }, -- end of ["params"]
+                                            }, -- end of ["task"]
+                                            ["speed_locked"] = true,
+                                        }, -- end of [1]
+                                    }, -- end of ["points"]
+                                }, -- end of ["route"]
+                                ["groupId"] = 13,
+                                ["hidden"] = false,
+                                ["units"] = 
+                                {
+                                    [1] = 
+                                    {
+                                        ["alt"] = 88,
+                                        ["alt_type"] = "BARO",
+                                        ["livery_id"] = "af standard 1",
+                                        ["skill"] = "Client",
+                                        ["parking"] = "76",
+                                        ["speed"] = 138.88888888889,
+                                        ["type"] = "Su-25T",
+                                        ["unitId"] = 13,
+                                        ["psi"] = 0,
+                                        ["y"] = 295051.375,
+                                        ["x"] = -6629.2661132813,
+                                        ["name"] = "DictKey_UnitName_46",
+                                        ["payload"] = 
+                                        {
+                                            ["pylons"] = 
+                                            {
+                                            }, -- end of ["pylons"]
+                                            ["fuel"] = "3790",
+                                            ["flare"] = 128,
+                                            ["chaff"] = 128,
+                                            ["gun"] = 100,
+                                        }, -- end of ["payload"]
+                                        ["heading"] = 0,
+                                        ["callsign"] = 101,
+                                        ["onboard_num"] = "013",
+                                    }, -- end of [1]
+                                }, -- end of ["units"]
+                                ["y"] = 295051.375,
+                                ["x"] = -6629.2661132813,
+                                ["name"] = "DictKey_GroupName_45",
+                                ["communication"] = true,
+                                ["start_time"] = 0,
+                                ["frequency"] = 124,
+                            }, -- end of [6]
+                        }, -- end of ["group"]
+                    }, -- end of ["plane"]
+                }, -- end of [1]
+                [2] = 
+                {
+                    ["id"] = 1,
+                    ["name"] = "Ukraine",
+                }, -- end of [2]
+                [3] = 
+                {
+                    ["id"] = 18,
+                    ["name"] = "Abkhazia",
+                }, -- end of [3]
+                [4] = 
+                {
+                    ["id"] = 19,
+                    ["name"] = "South Ossetia",
+                }, -- end of [4]
+                [5] = 
+                {
+                    ["id"] = 37,
+                    ["name"] = "Kazakhstan",
+                }, -- end of [5]
+                [6] = 
+                {
+                    ["id"] = 24,
+                    ["name"] = "Belarus",
+                }, -- end of [6]
+                [7] = 
+                {
+                    ["id"] = 27,
+                    ["name"] = "China",
+                }, -- end of [7]
+                [8] = 
+                {
+                    ["id"] = 43,
+                    ["name"] = "Serbia",
+                }, -- end of [8]
+                [9] = 
+                {
+                    ["id"] = 47,
+                    ["name"] = "Syria",
+                }, -- end of [9]
+                [10] = 
+                {
+                    ["id"] = 34,
+                    ["name"] = "Iran",
+                }, -- end of [10]
+                [11] = 
+                {
+                    ["id"] = 38,
+                    ["name"] = "North Korea",
+                }, -- end of [11]
+            }, -- end of ["country"]
+        }, -- end of ["red"]
+    }, -- end of ["coalition"]
+    ["sortie"] = "DictKey_sortie_4",
+    ["version"] = 11,
+    ["goals"] = 
+    {
+    }, -- end of ["goals"]
+    ["currentKey"] = 510,
+    ["start_time"] = 43200,
+    ["forcedOptions"] = 
+    {
+    }, -- end of ["forcedOptions"]
+    ["failures"] = 
+    {
+    }, -- end of ["failures"]
+} -- end of mission

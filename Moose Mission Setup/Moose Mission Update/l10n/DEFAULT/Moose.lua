@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160615_0641' ) 
+env.info( 'Moose Generation Timestamp: 20160617_2325' ) 
 local base = _G
 
 Include = {}
@@ -3150,8 +3150,8 @@ end
 --
 --  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
--- SCHEDULER timer stop and start
--- ------------------------------
+-- 1.2) SCHEDULER timer stop and start
+-- -----------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
 --  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
@@ -4246,6 +4246,7 @@ end
 --   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{#GROUP.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
@@ -5229,6 +5230,24 @@ function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
 
   self:T3( { CommandSwitchWayPoint } )
   return CommandSwitchWayPoint
+end
+
+--- Perform stop route command
+-- @param #GROUP self
+-- @param #boolean StopRoute
+-- @return DCSTask#Task
+function GROUP:CommandStopRoute( StopRoute, Index )
+  self:F2( { StopRoute, Index } )
+
+  local CommandStopRoute = {
+    id = 'StopRoute',
+    params = {
+      value = StopRoute,
+    },
+  }
+
+  self:T3( { CommandStopRoute } )
+  return CommandStopRoute
 end
 
 
@@ -6395,6 +6414,125 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   end
 
   return nil
+end
+
+--- (AIR) Return the Group to an @{Airbase#AIRBASE}
+-- A speed can be given in km/h.
+-- A given formation can be given.
+-- @param #GROUP self
+-- @param Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
+-- @param #number Speed (optional) The speed.
+-- @return #string The route
+function GROUP:RouteReturnToAirbase( ReturnAirbase, Speed )
+  self:F2( { ReturnAirbase, Speed } )
+
+-- Example
+--   [4] = 
+--    {
+--        ["alt"] = 45,
+--        ["type"] = "Land",
+--        ["action"] = "Landing",
+--        ["alt_type"] = "BARO",
+--        ["formation_template"] = "",
+--        ["properties"] = 
+--        {
+--            ["vnav"] = 1,
+--            ["scale"] = 0,
+--            ["angle"] = 0,
+--            ["vangle"] = 0,
+--            ["steer"] = 2,
+--        }, -- end of ["properties"]
+--        ["ETA"] = 527.81058817743,
+--        ["airdromeId"] = 12,
+--        ["y"] = 243127.2973737,
+--        ["x"] = -5406.2803440839,
+--        ["name"] = "DictKey_WptName_53",
+--        ["speed"] = 138.88888888889,
+--        ["ETA_locked"] = false,
+--        ["task"] = 
+--        {
+--            ["id"] = "ComboTask",
+--            ["params"] = 
+--            {
+--                ["tasks"] = 
+--                {
+--                }, -- end of ["tasks"]
+--            }, -- end of ["params"]
+--        }, -- end of ["task"]
+--        ["speed_locked"] = true,
+--    }, -- end of [4]
+ 
+
+  local DCSGroup = self:GetDCSGroup()
+
+  if DCSGroup then
+
+    local GroupPoint = self:GetPointVec2()
+    local GroupVelocity = self:GetMaxVelocity()
+
+    local PointFrom = {}
+    PointFrom.x = GroupPoint.x
+    PointFrom.y = GroupPoint.y
+    PointFrom.type = "Turning Point"
+    PointFrom.action = "Turning Point"
+    PointFrom.speed = GroupVelocity
+
+
+    local PointTo = {}
+    local AirbasePoint = ReturnAirbase:GetPointVec2()
+
+    PointTo.x = AirbasePoint.x
+    PointTo.y = AirbasePoint.y
+    PointTo.type = "Land"
+    PointTo.action = "Landing"
+    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
+    self:T(PointTo.airdromeId)
+    --PointTo.alt = 0
+
+    local Points = { PointFrom, PointTo }
+
+    self:T3( Points )
+
+    local Route = { points = Points, }
+
+    return Route
+  end
+
+  return nil
+end
+
+--- @param Group#GROUP self
+function GROUP:Respawn( Template )
+
+  local Vec3 = self:GetPointVec3()
+  --Template.x = Vec3.x
+  --Template.y = Vec3.z
+  Template.x = nil
+  Template.y = nil
+  
+  self:E( #Template.units )
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local GroupUnit = UnitData -- Unit#UNIT
+    self:E( GroupUnit:GetName() )
+    if GroupUnit:IsAlive() then
+      local GroupUnitVec3 = GroupUnit:GetPointVec3()
+      local GroupUnitHeading = GroupUnit:GetHeading()
+      Template.units[UnitID].alt = GroupUnitVec3.y
+      Template.units[UnitID].x = GroupUnitVec3.x
+      Template.units[UnitID].y = GroupUnitVec3.z
+      Template.units[UnitID].heading = GroupUnitHeading
+      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+    end
+  end
+  
+  _DATABASE:Spawn( Template )
+
+end
+
+function GROUP:GetTemplate()
+
+  return _DATABASE.Templates.Groups[self:GetName()].Template
+
 end
 
 -- Commands
@@ -7658,6 +7796,29 @@ function UNIT:GetCategoryName()
   return nil
 end
 
+--- Returns the DCS Unit heading.
+-- @param Unit#UNIT self
+-- @return #number The DCS Unit heading
+function UNIT:GetHeading()
+  local DCSUnit = self:GetDCSUnit()
+
+  if DCSUnit then
+
+    local UnitPosition = DCSUnit:getPosition()
+    if UnitPosition then
+      local UnitHeading = math.atan2( UnitPosition.x.z, UnitPosition.x.x )
+      if UnitHeading < 0 then
+        UnitHeading = UnitHeading + 2 * math.pi
+      end
+      self:T2( UnitHeading )
+      return UnitHeading
+    end
+  end
+  
+  return nil
+end
+
+
 --- Signal a flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
@@ -8514,7 +8675,6 @@ end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
-  self:E( SchedulerName )
   self:F( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
   if self:IsAlive() then 
@@ -8837,10 +8997,320 @@ function STATIC:GetDCSUnit()
     
   return nil
 end
---- Manage the mission database. 
+--- This module contains the AIRBASE classes.
 -- 
--- @{#DATABASE} class
--- ==================
+-- ===
+-- 
+-- 1) @{Airbase#AIRBASE} class, extends @{Base#BASE}
+-- =================================================
+-- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
+-- 
+--  * Support all DCS Airbase APIs.
+--  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
+--  
+--  
+-- 1.1) AIRBASE reference methods
+-- ------------------------------ 
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts).
+--  
+-- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
+-- using the DCS Airbase or the DCS AirbaseName.
+-- 
+-- Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+-- The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
+-- If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.
+--  
+-- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
+-- 
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
+-- 
+-- 1.2) DCS AIRBASE APIs
+-- ---------------------
+-- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
+-- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSAirbase#Airbase.getName}()
+-- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
+-- 
+-- More functions will be added
+-- ----------------------------
+-- During the MOOSE development, more functions will be added. 
+-- 
+-- @module Airbase
+-- @author FlightControl
+
+
+
+
+
+--- The AIRBASE class
+-- @type AIRBASE
+-- @extends Base#BASE
+AIRBASE = {
+  ClassName="AIRBASE",
+  CategoryName = { 
+    [Airbase.Category.AIRDROME]   = "Airdrome",
+    [Airbase.Category.HELIPAD]    = "Helipad",
+    [Airbase.Category.SHIP]       = "Ship",
+    },
+  }
+
+-- Registration.
+  
+--- Create a new AIRBASE from DCSAirbase.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase
+-- @param Database#DATABASE Database
+-- @return Airbase#AIRBASE
+function AIRBASE:Register( AirbaseName )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F2( AirbaseName )
+  self.AirbaseName = AirbaseName
+  return self
+end
+
+-- Reference methods.
+
+--- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @return Airbase#AIRBASE self
+function AIRBASE:Find( DCSAirbase )
+
+  local AirbaseName = DCSAirbase:getName()
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+--- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
+-- @param #AIRBASE self
+-- @param #string AirbaseName The Airbase Name.
+-- @return Airbase#AIRBASE self
+function AIRBASE:FindByName( AirbaseName )
+  
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+function AIRBASE:GetDCSAirbase()
+  local DCSAirbase = Airbase.getByName( self.AirbaseName )
+  
+  if DCSAirbase then
+    return DCSAirbase
+  end
+    
+  return nil
+end
+
+--- Returns coalition of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCSCoalitionObject#coalition.side The side of the coalition.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCoalition()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCoalition = DCSAirbase:getCoalition()
+    self:T3( AirbaseCoalition )
+    return AirbaseCoalition
+  end 
+  
+  return nil
+end
+
+--- Returns country of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCScountry#country.id The country identifier.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCountry()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCountry = DCSAirbase:getCountry()
+    self:T3( AirbaseCountry )
+    return AirbaseCountry
+  end 
+  
+  return nil
+end
+ 
+
+--- Returns DCS Airbase object name. 
+-- The function provides access to non-activated units too.
+-- @param Airbase#AIRBASE self
+-- @return #string The name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetName()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseName = self.AirbaseName
+    return AirbaseName
+  end 
+  
+  return nil
+end
+
+
+--- Returns if the airbase is alive.
+-- @param Airbase#AIRBASE self
+-- @return #boolean true if Airbase is alive.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:IsAlive()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseIsAlive = DCSAirbase:isExist()
+    return AirbaseIsAlive
+  end 
+  
+  return false
+end
+
+--- Returns the unit's unique identifier.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.ID Airbase ID
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetID()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseID = DCSAirbase:getID()
+    return AirbaseID
+  end 
+
+  return nil
+end
+
+--- Returns the Airbase's callsign - the localized string.
+-- @param Airbase#AIRBASE self
+-- @return #string The Callsign of the Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCallSign()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCallSign = DCSAirbase:getCallsign()
+    return AirbaseCallSign
+  end
+  
+  return nil
+end
+
+
+
+--- Returns unit descriptor. Descriptor type depends on unit category.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Desc The Airbase descriptor.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetDesc()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseDesc = DCSAirbase:getDesc()
+    return AirbaseDesc
+  end
+  
+  return nil
+end
+
+
+--- Returns the type name of the DCS Airbase.
+-- @param Airbase#AIRBASE self
+-- @return #string The type name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetTypeName()
+  self:F2( self.AirbaseName )
+  
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseTypeName = DCSAirbase:getTypeName()
+    self:T3( AirbaseTypeName )
+    return AirbaseTypeName
+  end
+
+  return nil
+end
+
+
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Airbase within the mission.
+-- @param Airbase#AIRBASE self
+-- @return DCSTypes#Vec2 The 2D point vector of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetPointVec2()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbasePointVec3 = DCSAirbase:getPosition().p
+    
+    local AirbasePointVec2 = {}
+    AirbasePointVec2.x = AirbasePointVec3.x
+    AirbasePointVec2.y = AirbasePointVec3.z
+  
+    self:T3( AirbasePointVec2 )
+    return AirbasePointVec2
+  end
+  
+  return nil
+end
+
+--- Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Category The DCS Airbase Category
+function AIRBASE:GetCategory()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategory = self:GetDesc().category
+    return AirbaseCategory
+  end
+  
+  return nil
+end
+
+
+--- Returns the DCS Airbase category name as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return #string The DCS Airbase Category Name
+function AIRBASE:GetCategoryName()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategoryName = self.CategoryName[ self:GetDesc().category ]
+    return AirbaseCategoryName
+  end
+  
+  return nil
+end
+
+
+--- This module contains the DATABASE class, managing the database of mission objects. 
+-- 
+-- ====
+-- 
+-- 1) @{Database#DATABASE} class, extends @{Base#BASE}
+-- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * UNITS
@@ -8855,8 +9325,8 @@ end
 -- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
 -- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 -- 
--- DATABASE iterators:
--- ===================
+-- 1.1) DATABASE iterators
+-- -----------------------
 -- You can iterate the database with the available iterator methods.
 -- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the DATABASE:
@@ -8870,17 +9340,6 @@ end
 --   
 -- @module Database
 -- @author FlightControl
-
-
-
-
-
-
-
-
-
-
-
 
 --- DATABASE class
 -- @type DATABASE
@@ -8900,6 +9359,7 @@ DATABASE = {
   PLAYERSALIVE = {},
   CLIENTS = {},
   CLIENTSALIVE = {},
+  AIRBASES = {},
   NavPoints = {},
 }
 
@@ -8944,6 +9404,7 @@ function DATABASE:New()
   self:_RegisterClients()
   self:_RegisterStatics()
   self:_RegisterPlayers()
+  self:_RegisterAirbases()
   
   return self
 end
@@ -9003,6 +9464,33 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
+end
+
+--- Adds a Airbase based on the Airbase Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddAirbase( DCSAirbaseName )
+
+  if not self.AIRBASES[DCSAirbaseName] then
+    self.AIRBASES[DCSAirbaseName] = AIRBASE:Register( DCSAirbaseName )
+  end
+end
+
+
+--- Deletes a Airbase from the DATABASE based on the Airbase Name.
+-- @param #DATABASE self
+function DATABASE:DeleteAirbase( DCSAirbaseName )
+
+  --self.AIRBASES[DCSAirbaseName] = nil 
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
 end
 
 
@@ -9210,6 +9698,18 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CountryID
 end
 
+--- Airbase
+
+function DATABASE:GetCoalitionFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCoalition()
+end
+
+function DATABASE:GetCategoryFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCategory()
+end
+
+
+
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
@@ -9278,6 +9778,7 @@ function DATABASE:_RegisterClients()
   return self
 end
 
+--- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
@@ -9292,6 +9793,23 @@ function DATABASE:_RegisterStatics()
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
+    end
+  end
+
+  return self
+end
+
+--- @param #DATABASE self
+function DATABASE:_RegisterAirbases()
+
+  local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
+
+      local DCSAirbaseName = DCSAirbase:getName()
+
+      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:AddAirbase( DCSAirbaseName )
     end
   end
 
@@ -9365,7 +9883,7 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEach( IteratorFunction, arg, Set )
+function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
   
   local function CoRoutine()
@@ -9386,7 +9904,7 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
   local function Schedule()
   
     local status, res = coroutine.resume( co )
-    self:T2( { status, res } )
+    self:T3( { status, res } )
     
     if status == false then
       error( res )
@@ -9394,7 +9912,9 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
     if res == false then
       return true -- resume next time the loop
     end
-    
+    if FinalizeFunction then
+      FinalizeFunction( unpack( arg ) )
+    end
     return false
   end
 
@@ -9408,10 +9928,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachUnit( IteratorFunction, ... )
+function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.UNITS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.UNITS )
 
   return self
 end
@@ -9558,7 +10078,7 @@ end
 -- ===
 -- 
 -- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
--- ================================================
+-- ==============================================
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
@@ -9569,15 +10089,15 @@ end
 -- ---------------------------------------
 -- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
--- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**.
--- -------------------------------------------------------------------------------------
+-- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- -----------------------------------------------------------------------------
 -- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
 -- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
--- ====================================================
+-- ==================================================
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
@@ -9683,6 +10203,8 @@ end
 --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- 
+-- ===
+-- 
 -- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
 -- ===================================================
 -- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
@@ -9733,8 +10255,47 @@ end
 -- 
 -- ====
 -- 
+-- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
+-- ====================================================
+-- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- 
+--  * Coalitions
+--  
+-- 5.1) SET_AIRBASE construction
+-- -----------------------------
+-- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
+-- 
+--    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
+--   
+-- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- --------------------------------------------
+-- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
+-- 
+-- 5.3) SET_AIRBASE filter criteria 
+-- --------------------------------
+-- You can set filter criteria to define the set of clients within the SET_AIRBASE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_AIRBASE.FilterCoalitions}: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).
+--   
+-- Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:
+-- 
+--   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
+-- 
+-- 5.4) SET_AIRBASE iterators:
+-- ---------------------------
+-- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
+-- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_AIRBASE:
+-- 
+--   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
+-- 
+-- ====
+-- 
 -- @module Set
 -- @author FlightControl
+
 
 --- SET_BASE class
 -- @type SET_BASE
@@ -9832,6 +10393,32 @@ function SET_BASE:_FilterStart()
   
   
   return self
+end
+
+--- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+-- @param #SET_BASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Base#BASE The closest object.
+function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestObject = nil
+  local ClosestDistance = nil
+  
+  for ObjectID, ObjectData in pairs( self.Set ) do
+    if NearestObject == nil then
+      NearestObject = ObjectData
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+    else
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+      if Distance < ClosestDistance then
+        NearestObject = ObjectData
+        ClosestDistance = Distance
+      end
+    end
+  end
+  
+  return NearestObject
 end
 
 
@@ -9975,7 +10562,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
 end
 
 
------ Interate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -9987,7 +10574,7 @@ end
 --  return self
 --end
 --
------ Interate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -10000,7 +10587,7 @@ end
 --end
 --
 --
------ Interate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
 ---- @return #SET_BASE self
@@ -10322,7 +10909,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
 end
 
 
------ Interate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
 ---- @return #SET_GROUP self
@@ -10335,7 +10922,7 @@ end
 --end
 --
 --
------ Interate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
 ---- @return #SET_GROUP self
@@ -10629,7 +11216,7 @@ function SET_UNIT:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+--- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #SET_UNIT self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
 -- @return #SET_UNIT self
@@ -10687,7 +11274,7 @@ end
 
 
 
------ Interate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
 ---- @return #SET_UNIT self
@@ -10700,7 +11287,7 @@ end
 --end
 --
 --
------ Interate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
 ---- @return #SET_UNIT self
@@ -11002,7 +11589,7 @@ function SET_CLIENT:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+--- Iterate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
 -- @param #SET_CLIENT self
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
@@ -11138,6 +11725,229 @@ function SET_CLIENT:IsIncludeObject( MClient )
   return MClientInclude
 end
 
+--- SET_AIRBASE
+
+--- SET_AIRBASE class
+-- @type SET_AIRBASE
+-- @extends Set#SET_BASE
+SET_AIRBASE = {
+  ClassName = "SET_AIRBASE",
+  Airbases = {},
+  Filter = {
+    Coalitions = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      airdrome = Airbase.Category.AIRDROME,
+      helipad = Airbase.Category.HELIPAD,
+      ship = Airbase.Category.SHIP,
+    },
+  },
+}
+
+
+--- Creates a new SET_AIRBASE object, building a set of airbases belonging to a coalitions and categories.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+-- @usage
+-- -- Define a new SET_AIRBASE Object. The DatabaseSet will contain a reference to all Airbases.
+-- DatabaseSet = SET_AIRBASE:New()
+function SET_AIRBASE:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.AIRBASES ) )
+
+  return self
+end
+
+--- Add AIRBASEs to SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
+
+  local AddAirbaseNamesArray = ( type( AddAirbaseNames ) == "table" ) and AddAirbaseNames or { AddAirbaseNames }
+  
+  for AddAirbaseID, AddAirbaseName in pairs( AddAirbaseNamesArray ) do
+    self:Add( AddAirbaseName, AIRBASE:FindByName( AddAirbaseName ) )
+  end
+    
+  return self
+end
+
+--- Remove AIRBASEs from SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:RemoveAirbasesByName( RemoveAirbaseNames )
+
+  local RemoveAirbaseNamesArray = ( type( RemoveAirbaseNames ) == "table" ) and RemoveAirbaseNames or { RemoveAirbaseNames }
+  
+  for RemoveAirbaseID, RemoveAirbaseName in pairs( RemoveAirbaseNamesArray ) do
+    self:Remove( RemoveAirbaseName.AirbaseName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Airbase based on the Airbase Name.
+-- @param #SET_AIRBASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.Set[AirbaseName]
+  return AirbaseFound
+end
+
+
+
+--- Builds a set of airbases of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_AIRBASE self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+
+--- Builds a set of airbases out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET_AIRBASE self
+-- @param #string Categories Can take the following values: "airdrome", "helipad", "ship".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+--- Starts the filtering.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+  
+  return self
+end
+
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.
+-- @param #SET_AIRBASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+-- @param #SET_AIRBASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
+-- @return Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestAirbase = self:FindNearestObjectFromPointVec2( PointVec2 )
+  return NearestAirbase
+end
+
+
+
+---
+-- @param #SET_AIRBASE self
+-- @param Airbase#AIRBASE MAirbase
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:IsIncludeObject( MAirbase )
+  self:F2( MAirbase )
+
+  local MAirbaseInclude = true
+
+  if MAirbase then
+    local MAirbaseName = MAirbase:GetName()
+  
+    if self.Filter.Coalitions then
+      local MAirbaseCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local AirbaseCoalitionID = _DATABASE:GetCoalitionFromAirbase( MAirbaseName )
+        self:T3( { "Coalition:", AirbaseCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == AirbaseCoalitionID then
+          MAirbaseCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MAirbaseCoalition } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MAirbaseCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase( MAirbaseName )
+        self:T3( { "Category:", AirbaseCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == AirbaseCategoryID then
+          MAirbaseCategory = true
+        end
+      end
+      self:T( { "Evaluated Category", MAirbaseCategory } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
+    end
+  end
+   
+  self:T2( MAirbaseInclude )
+  return MAirbaseInclude
+end
 --- This module contains the POINT classes.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
@@ -11304,6 +12114,7 @@ end
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
+-- @field DCSTypes#Vec2 PointVec2
 -- @extends Point#POINT_VEC3
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
@@ -11324,8 +12135,36 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
   self:F2( { x, y, LandHeightAdd } )
+  
+  self.PointVec2 = { x = x, y = y }
 
   return self
+end
+
+--- Calculate the distance from a reference @{Point#POINT_VEC2}.
+-- @param #POINT_VEC2 self
+-- @param #POINT_VEC2 PointVec2Reference The reference @{Point#POINT_VEC2}.
+-- @return DCSTypes#Distance The distance from the reference @{Point#POINT_VEC2} in meters.
+function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
+  self:F2( PointVec2Reference )
+  
+  local Distance = ( ( PointVec2Reference.PointVec2.x - self.PointVec2.x ) ^ 2 + ( PointVec2Reference.PointVec2.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
+end
+
+--- Calculate the distance from a reference @{DCSTypes#Vec2}.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+-- @return DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
+function POINT_VEC2:DistanceFromVec2( Vec2Reference )
+  self:F2( Vec2Reference )
+  
+  local Distance = ( ( Vec2Reference.x - self.PointVec2.x ) ^ 2 + ( Vec2Reference.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
 end
 
 
@@ -11341,6 +12180,7 @@ Include.File( "Unit" )
 Include.File( "Zone" )
 Include.File( "Client" )
 Include.File( "Static" )
+Include.File( "Airbase" )
 Include.File( "Database" )
 Include.File( "Set" )
 Include.File( "Point" )
@@ -11368,40 +12208,6 @@ Include.File( "Escort" )
 Include.File( "MissileTrainer" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 -- The order of the declarations is important here. Don't touch it.
 
@@ -20147,6 +20953,12 @@ end
 -- 
 --    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
 -- 
+-- 1.2) AIBALANCER return AI to Airbases:
+-- --------------------------------------
+-- You can configure to have the AI to return to:
+-- 
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- 
 -- ===
 -- @module AIBalancer
@@ -20156,6 +20968,10 @@ end
 -- @type AIBALANCER
 -- @field Set#SET_CLIENT SetClient
 -- @field Spawn#SPAWN SpawnAI
+-- @field #boolean ReturnToAirbase
+-- @field Set#SET_AIRBASE ReturnAirbaseSet
+-- @field DCSTypes#Distance ReturnTresholdRange
+-- @field #boolean ReturnToHomeAirbase
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
@@ -20172,11 +20988,53 @@ function AIBALANCER:New( SetClient, SpawnAI )
   local self = BASE:Inherit( self, BASE:New() )
   
   self.SetClient = SetClient
-  self.SpawnAI = SpawnAI
+  if type( SpawnAI ) == "table" then
+    if SpawnAI.ClassName and SpawnAI.ClassName == "SPAWN" then
+      self.SpawnAI = { SpawnAI }
+    else
+      local SpawnObjects = true
+      for SpawnObjectID, SpawnObject in pairs( SpawnAI ) do
+        if SpawnObject.ClassName and SpawnObject.ClassName == "SPAWN" then
+          self:E( SpawnObject.ClassName )
+        else
+          self:E( "other object" )
+          SpawnObjects = false
+        end
+      end
+      if SpawnObjects == true then
+        self.SpawnAI = SpawnAI
+      else
+        error( "No SPAWN object given in parameter SpawnAI, either as a single object or as a table of objects!" )
+      end
+    end
+  end
+
+  self.ReturnToAirbase = false
+  self.ReturnHomeAirbase = false
 
   self.AIMonitorSchedule = SCHEDULER:New( self, self._ClientAliveMonitorScheduler, {}, 1, 10, 0 ) 
   
   return self
+end
+
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+
+  self.ReturnToAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnAirbaseSet = ReturnAirbaseSet
+end
+
+--- Returns the AI to the home @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+
+  self.ReturnToHomeAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
 end
 
 --- @param #AIBALANCER self
@@ -20190,13 +21048,70 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
       if Client:IsAlive() then
         if ClientAIAliveState == true then
           Client:SetState( self, 'AIAlive', false )
+          
           local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
-          AIGroup:Destroy()
+          
+          if self.ReturnToAirbase == false and self.ReturnToHomeAirbase == false then
+            AIGroup:Destroy()
+          else
+            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
+            -- If there is a CLIENT, the AI stays engaged and will not return.
+            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
+
+            local ClientInZone = { Value = false }          
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetPointVec2(), self.ReturnTresholdRange )
+            
+            self:E( RangeZone )
+            
+            _DATABASE:ForEachUnit(
+              --- @param Unit#UNIT RangeTestUnit
+              function( RangeTestUnit, RangeZone, AIGroup, ClientInZone )
+                self:E( { ClientInZone, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                if RangeTestUnit:IsInZone( RangeZone ) == true then
+                  self:E( "in zone" )
+                  if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
+                    self:E( "in range" )
+                    ClientInZone.Value = true
+                  end
+                end
+              end,
+              
+              --- @param Zone#ZONE_RADIUS RangeZone
+              -- @param Group#GROUP AIGroup
+              function( RangeZone, AIGroup, ClientInZone )
+                local AIGroupTemplate = AIGroup:GetTemplate()
+                if ClientInZone.Value == false then
+                  if self.ReturnToHomeAirbase == true then
+                    local WayPointCount = #AIGroupTemplate.route.points
+                    local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
+                    AIGroup:SetCommand( SwitchWayPointCommand )
+                    AIGroup:MessageToRed( "Returning to home base ...", 30 )
+                  else
+                    -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
+                    --TODO: i need to rework the POINT_VEC2 thing.
+                    local PointVec2 = POINT_VEC2:New( AIGroup:GetPointVec2().x, AIGroup:GetPointVec2().y  )
+                    local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
+                    self:T( ClosestAirbase.AirbaseName )
+                    AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
+                    local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
+                    AIGroupTemplate.route = RTBRoute
+                    AIGroup:Respawn( AIGroupTemplate )
+                  end
+                end
+              end
+              , RangeZone, AIGroup, ClientInZone
+            )
+            
+          end
         end
       else
         if not ClientAIAliveState or ClientAIAliveState == false then
           Client:SetState( self, 'AIAlive', true )
-          Client:SetState( self, 'AIGroup', self.SpawnAI:Spawn() )
+          
+          -- OK, spawn a new group from the SpawnAI objects provided.
+          local SpawnAICount = #self.SpawnAI
+          local SpawnAIIndex = math.random( 1, SpawnAICount )
+          Client:SetState( self, 'AIGroup', self.SpawnAI[SpawnAIIndex]:Spawn() )
         end
       end
     end

@@ -89,7 +89,7 @@ The default <strong>"time interval"</strong> is after 0.001 seconds.</p>
 <h2>1.1) Add or remove objects from the SET</h2>
 <p>Some key core functions are <a href="Set.html##(SET_BASE).Add">Set#SET_BASE.Add</a> and <a href="Set.html##(SET_BASE).Remove">Set#SET_BASE.Remove</a> to add or remove objects from the SET in your logic.</p>
 
-<h2>1.2) Define the SET iterator <strong>"yield interval"</strong> and the <strong>"time interval"</strong>.</h2>
+<h2>1.2) Define the SET iterator <strong>"yield interval"</strong> and the <strong>"time interval"</strong></h2>
 <p>Modify the iterator intervals with the <a href="Set.html##(SET_BASE).SetInteratorIntervals">Set#SET_BASE.SetInteratorIntervals</a> method.
 You can set the <strong>"yield interval"</strong>, and the <strong>"time interval"</strong>. (See above).</p>
 
@@ -218,6 +218,8 @@ The following iterator methods are currently available within the SET</em>UNIT:<
     <li><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT.ForEachUnitNotInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</li>
 </ul>
 
+<hr/>
+
 <h1>4) <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
 <p>Mission designers can use the <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class to build sets of units belonging to certain:</p>
 
@@ -275,9 +277,58 @@ The following iterator methods are currently available within the SET</em>CLIENT
 
 <hr/>
 
+<h1>5) <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<p>Mission designers can use the <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class to build sets of airbases optionally belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+</ul>
+
+<h2>5.1) SET_AIRBASE construction</h2>
+<p>Create a new SET_AIRBASE object with the <a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a>: Creates a new SET_AIRBASE object.</li>
+</ul>
+
+<h2>5.2) Add or Remove AIRBASEs from SET_AIRBASE </h2>
+<p>AIRBASEs can be added and removed using the <a href="Set.html##(SET_AIRBASE).AddAirbasesByName">Set#SET_AIRBASE.AddAirbasesByName</a> and <a href="Set.html##(SET_AIRBASE).RemoveAirbasesByName">Set#SET_AIRBASE.RemoveAirbasesByName</a> respectively. 
+These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.</p>
+
+<h2>5.3) SET_AIRBASE filter criteria </h2>
+<p>You can set filter criteria to define the set of clients within the SET_AIRBASE.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).FilterCoalitions">SET_AIRBASE.FilterCoalitions</a>: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).FilterStart">SET_AIRBASE.FilterStart</a>: Starts the filtering of the airbases within the SET_AIRBASE.</li>
+</ul>
+
+<h2>5.4) SET_AIRBASE iterators:</h2>
+<p>Once the filters have been defined and the SET<em>AIRBASE has been built, you can iterate the SET</em>AIRBASE with the available iterator methods.
+The iterator methods will walk the SET<em>AIRBASE set, and call for each airbase within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>AIRBASE:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).ForEachAirbase">SET_AIRBASE.ForEachAirbase</a>: Calls a function for each airbase it finds within the SET_AIRBASE.</li>
+</ul>
+
+<hr/>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_AIRBASE">SET_AIRBASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SET_BASE">SET_BASE</a></td>
 		<td class="summary">
@@ -303,6 +354,106 @@ The following iterator methods are currently available within the SET</em>CLIENT
 </td>
 		</tr>
 	</table>
+			<h2><a id="#(SET_AIRBASE)">Type <code>SET_AIRBASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).AddAirbasesByName">SET_AIRBASE:AddAirbasesByName(AddAirbaseNames)</a></td>
+		<td class="summary">
+<p>Add AIRBASEs to SET_AIRBASE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).AddInDatabase">SET_AIRBASE:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).Airbases">SET_AIRBASE.Airbases</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).ClassName">SET_AIRBASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).Filter">SET_AIRBASE.Filter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FilterCategories">SET_AIRBASE:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of airbases out of categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FilterCoalitions">SET_AIRBASE:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of airbases of coalitions.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FilterMeta">SET_AIRBASE.FilterMeta</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FilterStart">SET_AIRBASE:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FindAirbase">SET_AIRBASE:FindAirbase(AirbaseName)</a></td>
+		<td class="summary">
+<p>Finds a Airbase based on the Airbase Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FindInDatabase">SET_AIRBASE:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FindNearestAirbaseFromPointVec2">SET_AIRBASE:FindNearestAirbaseFromPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).ForEachAirbase">SET_AIRBASE:ForEachAirbase(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).IsIncludeObject">SET_AIRBASE:IsIncludeObject(MAirbase)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).New">SET_AIRBASE:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_AIRBASE object, building a set of airbases belonging to a coalitions and categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).RemoveAirbasesByName">SET_AIRBASE:RemoveAirbasesByName(RemoveAirbaseNames)</a></td>
+		<td class="summary">
+<p>Remove AIRBASEs from SET_AIRBASE.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(SET_BASE)">Type <code>SET_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -315,6 +466,12 @@ The following iterator methods are currently available within the SET</em>CLIENT
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).ClassName">SET_BASE.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FindNearestObjectFromPointVec2">SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -486,7 +643,7 @@ The following iterator methods are currently available within the SET</em>CLIENT
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_CLIENT).ForEachClient">SET_CLIENT:ForEachClient(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the SET_CLIENT and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+<p>Iterate the SET_CLIENT and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -722,7 +879,7 @@ The following iterator methods are currently available within the SET</em>CLIENT
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnit">SET_UNIT:ForEachUnit(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Interate the SET_UNIT and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
+<p>Iterate the SET_UNIT and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -764,6 +921,20 @@ The following iterator methods are currently available within the SET</em>CLIENT
 	</table>
 
 	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a></em>
+<a id="SET_AIRBASE" >
+<strong>SET_AIRBASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -822,6 +993,411 @@ The following iterator methods are currently available within the SET</em>CLIENT
 </dl>
 	<h2><a id="#(Set)" >Type <code>Set</code></a></h2>
 	
+			<h2><a id="#(SET_AIRBASE)" >Type <code>SET_AIRBASE</code></a></h2>
+				
+<p>SET_AIRBASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).AddAirbasesByName" >
+<strong>SET_AIRBASE:AddAirbasesByName(AddAirbaseNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add AIRBASEs to SET_AIRBASE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddAirbaseNames </em></code>: 
+A single name or an array of AIRBASE names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).AddInDatabase" >
+<strong>SET_AIRBASE:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the AIRBASE</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The AIRBASE</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET_AIRBASE).Airbases" >
+<strong>SET_AIRBASE.Airbases</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(SET_AIRBASE).ClassName" >
+<strong>SET_AIRBASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET_AIRBASE).Filter" >
+<strong>SET_AIRBASE.Filter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FilterCategories" >
+<strong>SET_AIRBASE:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of airbases out of categories.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "airdrome", "helipad", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FilterCoalitions" >
+<strong>SET_AIRBASE:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of airbases of coalitions.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET_AIRBASE).FilterMeta" >
+<strong>SET_AIRBASE.FilterMeta</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FilterStart" >
+<strong>SET_AIRBASE:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FindAirbase" >
+<strong>SET_AIRBASE:FindAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Airbase based on the Airbase Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em>
+The found Airbase.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FindInDatabase" >
+<strong>SET_AIRBASE:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the AIRBASE</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The AIRBASE</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).FindNearestAirbaseFromPointVec2" >
+<strong>SET_AIRBASE:FindNearestAirbaseFromPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> PointVec2 </em></code>: 
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em>
+The closest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).ForEachAirbase" >
+<strong>SET_AIRBASE:ForEachAirbase(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).IsIncludeObject" >
+<strong>SET_AIRBASE:IsIncludeObject(MAirbase)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> MAirbase </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).New" >
+<strong>SET_AIRBASE:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_AIRBASE object, building a set of airbases belonging to a coalitions and categories.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_AIRBASE Object. The DatabaseSet will contain a reference to all Airbases.
+DatabaseSet = SET_AIRBASE:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_AIRBASE).RemoveAirbasesByName" >
+<strong>SET_AIRBASE:RemoveAirbasesByName(RemoveAirbaseNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove AIRBASEs from SET_AIRBASE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> RemoveAirbaseNames </em></code>: 
+A single name or an array of AIRBASE names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+
 			<h2><a id="#(SET_BASE)" >Type <code>SET_BASE</code></a></h2>
 				
 <p>SET_BASE class</p>
@@ -869,6 +1445,33 @@ The added BASE Object.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE).FindNearestObjectFromPointVec2" >
+<strong>SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> PointVec2 </em></code>: 
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest object in the set.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Base.html##(BASE)">Base#BASE</a>:</em>
+The closest object.</p>
 
 </dd>
 </dl>
@@ -1548,7 +2151,7 @@ The CLIENT</p>
 </dt>
 <dd>
 	
-<p>Interate the SET_CLIENT and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+<p>Iterate the SET_CLIENT and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2616,7 +3219,7 @@ The found Unit.</p>
 </dt>
 <dd>
 	
-<p>Interate the SET_UNIT and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
+<p>Iterate the SET_UNIT and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>

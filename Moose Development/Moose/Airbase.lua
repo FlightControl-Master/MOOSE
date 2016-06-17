@@ -1,15 +1,17 @@
---- AIRBASE Class
+--- This module contains the AIRBASE classes.
 -- 
--- @{AIRBASE} class
--- ==============
+-- ===
+-- 
+-- 1) @{Airbase#AIRBASE} class, extends @{Base#BASE}
+-- =================================================
 -- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
 -- 
 --  * Support all DCS Airbase APIs.
 --  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
 --  
 --  
--- AIRBASE reference methods
--- ====================== 
+-- 1.1) AIRBASE reference methods
+-- ------------------------------ 
 -- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
@@ -27,8 +29,8 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 -- 
--- DCS AIRBASE APIs
--- =============
+-- 1.2) DCS AIRBASE APIs
+-- ---------------------
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSAirbase#Airbase.getName}()
@@ -274,6 +276,21 @@ function AIRBASE:GetPointVec2()
   return nil
 end
 
+--- Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Category The DCS Airbase Category
+function AIRBASE:GetCategory()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategory = self:GetDesc().category
+    return AirbaseCategory
+  end
+  
+  return nil
+end
+
+
 --- Returns the DCS Airbase category name as defined within the DCS Airbase Descriptor.
 -- @param Airbase#AIRBASE self
 -- @return #string The DCS Airbase Category Name
@@ -287,4 +304,5 @@ function AIRBASE:GetCategoryName()
   
   return nil
 end
+
 
