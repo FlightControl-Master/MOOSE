@@ -73,11 +73,13 @@
 	<div id="content">
    <h1>Module <code>Database</code></h1>
    
-<p>Manage the mission database.</p>
+<p>This module contains the DATABASE class, managing the database of mission objects.</p>
 
    
 
-<h1><a href="##(DATABASE)">#DATABASE</a> class</h1>
+<hr/>
+
+<h1>1) <a href="Database.html##(DATABASE)">Database#DATABASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>Mission designers can use the DATABASE class to refer to:</p>
 
 <ul>
@@ -94,7 +96,7 @@
 <p>Moose will automatically create one instance of the DATABASE class into the <strong>global</strong> object _DATABASE.
 Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.</p>
 
-<h1>DATABASE iterators:</h1>
+<h2>1.1) DATABASE iterators</h2>
 <p>You can iterate the database with the available iterator methods.
 The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 The following iterator methods are currently available within the DATABASE:</p>
@@ -120,6 +122,18 @@ The following iterator methods are currently available within the DATABASE:</p>
 	</table>
 			<h2><a id="#(DATABASE)">Type <code>DATABASE</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AIRBASES">DATABASE.AIRBASES</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddAirbase">DATABASE:AddAirbase(DCSAirbaseName)</a></td>
+		<td class="summary">
+<p>Adds a Airbase based on the Airbase Name in the DATABASE.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddClient">DATABASE:AddClient(ClientName)</a></td>
 		<td class="summary">
@@ -169,6 +183,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteAirbase">DATABASE:DeleteAirbase(DCSAirbaseName)</a></td>
+		<td class="summary">
+<p>Deletes a Airbase from the DATABASE based on the Airbase Name.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeletePlayer">DATABASE:DeletePlayer(PlayerName)</a></td>
 		<td class="summary">
 <p>Deletes a player from the DATABASE based on the Player Name.</p>
@@ -184,6 +204,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteUnit">DATABASE:DeleteUnit(DCSUnitName)</a></td>
 		<td class="summary">
 <p>Deletes a Unit from the DATABASE based on the Unit Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FindAirbase">DATABASE:FindAirbase(AirbaseName)</a></td>
+		<td class="summary">
+<p>Finds a AIRBASE based on the AirbaseName.</p>
 </td>
 		</tr>
 		<tr>
@@ -211,7 +237,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEach">DATABASE:ForEach(IteratorFunction, arg, Set)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEach">DATABASE:ForEach(IteratorFunction, FinalizeFunction, arg, Set)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.</p>
 </td>
@@ -247,7 +273,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachUnit">DATABASE:ForEachUnit(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachUnit">DATABASE:ForEachUnit(IteratorFunction, FinalizeFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
 </td>
@@ -259,7 +285,19 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetCategoryFromAirbase">DATABASE:GetCategoryFromAirbase(AirbaseName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetCategoryFromClientTemplate">DATABASE:GetCategoryFromClientTemplate(ClientName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetCoalitionFromAirbase">DATABASE:GetCoalitionFromAirbase(AirbaseName)</a></td>
 		<td class="summary">
 
 </td>
@@ -361,6 +399,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterAirbases">DATABASE:_RegisterAirbases()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterClients">DATABASE:_RegisterClients()</a></td>
 		<td class="summary">
 <p>Private method that registers all Units of skill Client or Player within in the mission.</p>
@@ -420,6 +464,41 @@ The following iterator methods are currently available within the DATABASE:</p>
 <p>DATABASE class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).AIRBASES" >
+<strong>DATABASE.AIRBASES</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).AddAirbase" >
+<strong>DATABASE:AddAirbase(DCSAirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a Airbase based on the Airbase Name in the DATABASE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSAirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -575,6 +654,27 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).DeleteAirbase" >
+<strong>DATABASE:DeleteAirbase(DCSAirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Deletes a Airbase from the DATABASE based on the Airbase Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DCSAirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).DeletePlayer" >
 <strong>DATABASE:DeletePlayer(PlayerName)</strong>
 </a>
@@ -633,6 +733,32 @@ The following iterator methods are currently available within the DATABASE:</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FindAirbase" >
+<strong>DATABASE:FindAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a AIRBASE based on the AirbaseName.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em>
+The found AIRBASE.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -743,7 +869,7 @@ The found Unit.</p>
 <dt>
 
 <a id="#(DATABASE).ForEach" >
-<strong>DATABASE:ForEach(IteratorFunction, arg, Set)</strong>
+<strong>DATABASE:ForEach(IteratorFunction, FinalizeFunction, arg, Set)</strong>
 </a>
 </dt>
 <dd>
@@ -756,6 +882,11 @@ The found Unit.</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called when there is an alive player in the database.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
@@ -940,7 +1071,7 @@ self</p>
 <dt>
 
 <a id="#(DATABASE).ForEachUnit" >
-<strong>DATABASE:ForEachUnit(IteratorFunction, ...)</strong>
+<strong>DATABASE:ForEachUnit(IteratorFunction, FinalizeFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -953,6 +1084,11 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
@@ -985,6 +1121,27 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).GetCategoryFromAirbase" >
+<strong>DATABASE:GetCategoryFromAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).GetCategoryFromClientTemplate" >
 <strong>DATABASE:GetCategoryFromClientTemplate(ClientName)</strong>
 </a>
@@ -998,6 +1155,27 @@ self</p>
 				<li>
 				
 <p><code><em> ClientName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).GetCoalitionFromAirbase" >
+<strong>DATABASE:GetCoalitionFromAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AirbaseName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1311,6 +1489,19 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._RegisterAirbases" >
+<strong>DATABASE:_RegisterAirbases()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">

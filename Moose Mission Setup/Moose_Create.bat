@@ -48,6 +48,7 @@ COPY /b Moose.lua + %1\Unit.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Zone.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Client.lua                							Moose.lua
 COPY /b Moose.lua + %1\Static.lua                							Moose.lua
+COPY /b Moose.lua + %1\Airbase.lua              							Moose.lua
 COPY /b Moose.lua + %1\Database.lua              							Moose.lua
 COPY /b Moose.lua + %1\Set.lua                   							Moose.lua
 COPY /b Moose.lua + %1\Point.lua                 							Moose.lua

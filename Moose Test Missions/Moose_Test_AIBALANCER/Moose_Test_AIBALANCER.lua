@@ -11,5 +11,4 @@ local RU_AIBalancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 local RU_AirbasesSet = SET_AIRBASE:New():FilterCoalitions("red"):FilterStart()
 RU_AirbasesSet:Flush()
 RU_AIBalancer:ReturnToNearestAirbases( 10000, RU_AirbasesSet )
-
 --RU_AIBalancer:ReturnToHomeAirbase( 10000 )

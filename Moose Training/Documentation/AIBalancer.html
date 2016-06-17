@@ -90,6 +90,13 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
     <li><a href="##(AIBALANCER).New">AIBALANCER.New</a>: Creates a new AIBALANCER object.</li>
 </ul>
 
+<h2>1.2) AIBALANCER return AI to Airbases:</h2>
+<p>You can configure to have the AI to return to:</p>
+
+<ul>
+    <li><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER.ReturnToHomeAirbase</a>: Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AIBALANCER).ReturnToNearestAirbases">AIBALANCER.ReturnToNearestAirbases</a>: Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+</ul>
 
 <hr/>
 
@@ -114,6 +121,36 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).New">AIBALANCER:New(SetClient, SpawnAI)</a></td>
 		<td class="summary">
 <p>Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnAirbaseSet">AIBALANCER.ReturnAirbaseSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToAirbase">AIBALANCER.ReturnToAirbase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER.ReturnToHomeAirbase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToNearestAirbases">AIBALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
+		<td class="summary">
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnTresholdRange">AIBALANCER.ReturnTresholdRange</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -202,6 +239,90 @@ A SPAWN object that will spawn the AI units required, balancing the SetClient.</
 				
 <p><em><a href="##(AIBALANCER)">#AIBALANCER</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a></em>
+<a id="#(AIBALANCER).ReturnAirbaseSet" >
+<strong>AIBALANCER.ReturnAirbaseSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ReturnToAirbase" >
+<strong>AIBALANCER.ReturnToAirbase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ReturnToHomeAirbase" >
+<strong>AIBALANCER.ReturnToHomeAirbase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIBALANCER).ReturnToNearestAirbases" >
+<strong>AIBALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> ReturnAirbaseSet </em></code>: 
+The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate where to return to.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(AIBALANCER).ReturnTresholdRange" >
+<strong>AIBALANCER.ReturnTresholdRange</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

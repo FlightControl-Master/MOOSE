@@ -13,6 +13,12 @@
 -- 
 --    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
 -- 
+-- 1.2) AIBALANCER return AI to Airbases:
+-- --------------------------------------
+-- You can configure to have the AI to return to:
+-- 
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- 
 -- ===
 -- @module AIBalancer
@@ -71,6 +77,10 @@ function AIBALANCER:New( SetClient, SpawnAI )
   return self
 end
 
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
 function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ReturnToAirbase = true
@@ -78,6 +88,9 @@ function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseS
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
+--- Returns the AI to the home @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ReturnToHomeAirbase = true
