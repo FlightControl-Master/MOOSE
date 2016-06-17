@@ -139,7 +139,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
                     local PointVec2 = POINT_VEC2:New( AIGroup:GetPointVec2().x, AIGroup:GetPointVec2().y  )
                     local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
                     self:T( ClosestAirbase.AirbaseName )
-                    AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName() " ...", 30 )
+                    AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
                     local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
                     AIGroupTemplate.route = RTBRoute
                     AIGroup:Respawn( AIGroupTemplate )
