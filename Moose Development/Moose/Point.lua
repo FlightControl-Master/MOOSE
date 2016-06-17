@@ -164,6 +164,7 @@ end
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
+-- @field DCSTypes#Vec2 PointVec2
 -- @extends Point#POINT_VEC3
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
@@ -184,8 +185,36 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
   self:F2( { x, y, LandHeightAdd } )
+  
+  self.PointVec2 = { x = x, y = y }
 
   return self
+end
+
+--- Calculate the distance from a reference @{Point#POINT_VEC2}.
+-- @param #POINT_VEC2 self
+-- @param #POINT_VEC2 PointVec2Reference The reference @{Point#POINT_VEC2}.
+-- @return DCSTypes#Distance The distance from the reference @{Point#POINT_VEC2} in meters.
+function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
+  self:F2( PointVec2Reference )
+  
+  local Distance = ( ( PointVec2Reference.PointVec2.x - self.PointVec2.x ) ^ 2 + ( PointVec2Reference.PointVec2.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
+end
+
+--- Calculate the distance from a reference @{DCSTypes#Vec2}.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+-- @return DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
+function POINT_VEC2:DistanceFromVec2( Vec2Reference )
+  self:F2( Vec2Reference )
+  
+  local Distance = ( ( Vec2Reference.x - self.PointVec2.x ) ^ 2 + ( Vec2Reference.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
 end
 
 

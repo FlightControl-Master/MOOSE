@@ -736,6 +736,29 @@ function UNIT:GetCategoryName()
   return nil
 end
 
+--- Returns the DCS Unit heading.
+-- @param Unit#UNIT self
+-- @return #number The DCS Unit heading
+function UNIT:GetHeading()
+  local DCSUnit = self:GetDCSUnit()
+
+  if DCSUnit then
+
+    local UnitPosition = DCSUnit:getPosition()
+    if UnitPosition then
+      local UnitHeading = math.atan2( UnitPosition.x.z, UnitPosition.x.x )
+      if UnitHeading < 0 then
+        UnitHeading = UnitHeading + 2 * math.pi
+      end
+      self:T2( UnitHeading )
+      return UnitHeading
+    end
+  end
+  
+  return nil
+end
+
+
 --- Signal a flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )

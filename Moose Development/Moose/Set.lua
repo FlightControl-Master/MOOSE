@@ -3,7 +3,7 @@
 -- ===
 -- 
 -- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
--- ================================================
+-- ==============================================
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
@@ -14,15 +14,15 @@
 -- ---------------------------------------
 -- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
--- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**.
--- -------------------------------------------------------------------------------------
+-- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- -----------------------------------------------------------------------------
 -- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
 -- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
--- ====================================================
+-- ==================================================
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
@@ -128,6 +128,8 @@
 --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- 
+-- ===
+-- 
 -- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
 -- ===================================================
 -- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
@@ -178,8 +180,47 @@
 -- 
 -- ====
 -- 
+-- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
+-- ====================================================
+-- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- 
+--  * Coalitions
+--  
+-- 5.1) SET_AIRBASE construction
+-- -----------------------------
+-- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
+-- 
+--    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
+--   
+-- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- --------------------------------------------
+-- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
+-- 
+-- 5.3) SET_AIRBASE filter criteria 
+-- --------------------------------
+-- You can set filter criteria to define the set of clients within the SET_AIRBASE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_AIRBASE.FilterCoalitions}: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).
+--   
+-- Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:
+-- 
+--   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
+-- 
+-- 5.4) SET_AIRBASE iterators:
+-- ---------------------------
+-- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
+-- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_AIRBASE:
+-- 
+--   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
+-- 
+-- ====
+-- 
 -- @module Set
 -- @author FlightControl
+
 
 --- SET_BASE class
 -- @type SET_BASE
@@ -277,6 +318,32 @@ function SET_BASE:_FilterStart()
   
   
   return self
+end
+
+--- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+-- @param #SET_BASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Base#BASE The closest object.
+function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestObject = nil
+  local ClosestDistance = nil
+  
+  for ObjectID, ObjectData in pairs( self.Set ) do
+    if NearestObject == nil then
+      NearestObject = ObjectData
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+    else
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+      if Distance < ClosestDistance then
+        NearestObject = ObjectData
+        ClosestDistance = Distance
+      end
+    end
+  end
+  
+  return NearestObject
 end
 
 
@@ -420,7 +487,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
 end
 
 
------ Interate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -432,7 +499,7 @@ end
 --  return self
 --end
 --
------ Interate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -445,7 +512,7 @@ end
 --end
 --
 --
------ Interate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
 ---- @return #SET_BASE self
@@ -767,7 +834,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
 end
 
 
------ Interate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
 ---- @return #SET_GROUP self
@@ -780,7 +847,7 @@ end
 --end
 --
 --
------ Interate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
 ---- @return #SET_GROUP self
@@ -1074,7 +1141,7 @@ function SET_UNIT:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+--- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #SET_UNIT self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
 -- @return #SET_UNIT self
@@ -1132,7 +1199,7 @@ end
 
 
 
------ Interate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
 ---- @return #SET_UNIT self
@@ -1145,7 +1212,7 @@ end
 --end
 --
 --
------ Interate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
 ---- @return #SET_UNIT self
@@ -1447,7 +1514,7 @@ function SET_CLIENT:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+--- Iterate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
 -- @param #SET_CLIENT self
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
@@ -1583,3 +1650,226 @@ function SET_CLIENT:IsIncludeObject( MClient )
   return MClientInclude
 end
 
+--- SET_AIRBASE
+
+--- SET_AIRBASE class
+-- @type SET_AIRBASE
+-- @extends Set#SET_BASE
+SET_AIRBASE = {
+  ClassName = "SET_AIRBASE",
+  Airbases = {},
+  Filter = {
+    Coalitions = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      airdrome = Airbase.Category.AIRDROME,
+      helipad = Airbase.Category.HELIPAD,
+      ship = Airbase.Category.SHIP,
+    },
+  },
+}
+
+
+--- Creates a new SET_AIRBASE object, building a set of airbases belonging to a coalitions and categories.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+-- @usage
+-- -- Define a new SET_AIRBASE Object. The DatabaseSet will contain a reference to all Airbases.
+-- DatabaseSet = SET_AIRBASE:New()
+function SET_AIRBASE:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.AIRBASES ) )
+
+  return self
+end
+
+--- Add AIRBASEs to SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
+
+  local AddAirbaseNamesArray = ( type( AddAirbaseNames ) == "table" ) and AddAirbaseNames or { AddAirbaseNames }
+  
+  for AddAirbaseID, AddAirbaseName in pairs( AddAirbaseNamesArray ) do
+    self:Add( AddAirbaseName, AIRBASE:FindByName( AddAirbaseName ) )
+  end
+    
+  return self
+end
+
+--- Remove AIRBASEs from SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:RemoveAirbasesByName( RemoveAirbaseNames )
+
+  local RemoveAirbaseNamesArray = ( type( RemoveAirbaseNames ) == "table" ) and RemoveAirbaseNames or { RemoveAirbaseNames }
+  
+  for RemoveAirbaseID, RemoveAirbaseName in pairs( RemoveAirbaseNamesArray ) do
+    self:Remove( RemoveAirbaseName.AirbaseName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Airbase based on the Airbase Name.
+-- @param #SET_AIRBASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.Set[AirbaseName]
+  return AirbaseFound
+end
+
+
+
+--- Builds a set of airbases of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_AIRBASE self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+
+--- Builds a set of airbases out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET_AIRBASE self
+-- @param #string Categories Can take the following values: "airdrome", "helipad", "ship".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+--- Starts the filtering.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+  
+  return self
+end
+
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.
+-- @param #SET_AIRBASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+-- @param #SET_AIRBASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
+-- @return Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestAirbase = self:FindNearestObjectFromPointVec2( PointVec2 )
+  return NearestAirbase
+end
+
+
+
+---
+-- @param #SET_AIRBASE self
+-- @param Airbase#AIRBASE MAirbase
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:IsIncludeObject( MAirbase )
+  self:F2( MAirbase )
+
+  local MAirbaseInclude = true
+
+  if MAirbase then
+    local MAirbaseName = MAirbase:GetName()
+  
+    if self.Filter.Coalitions then
+      local MAirbaseCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local AirbaseCoalitionID = _DATABASE:GetCoalitionFromAirbase( MAirbaseName )
+        self:T3( { "Coalition:", AirbaseCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == AirbaseCoalitionID then
+          MAirbaseCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MAirbaseCoalition } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MAirbaseCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase( MAirbaseName )
+        self:T3( { "Category:", AirbaseCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == AirbaseCategoryID then
+          MAirbaseCategory = true
+        end
+      end
+      self:T( { "Evaluated Category", MAirbaseCategory } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
+    end
+  end
+   
+  self:T2( MAirbaseInclude )
+  return MAirbaseInclude
+end
