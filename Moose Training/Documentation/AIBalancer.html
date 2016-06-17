@@ -136,15 +136,9 @@ James has shared his ideas on balancing AI with air units, and together we made 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToAirbase">AIBALANCER.ReturnToAirbase</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER.ReturnToHomeAirbase</a></td>
-		<td class="summary">
-
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -167,6 +161,18 @@ James has shared his ideas on balancing AI with air units, and together we made 
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SpawnAI">AIBALANCER.SpawnAI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ToHomeAirbase">AIBALANCER.ToHomeAirbase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ToNearestAirbase">AIBALANCER.ToNearestAirbase</a></td>
 		<td class="summary">
 
 </td>
@@ -265,29 +271,23 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
-<a id="#(AIBALANCER).ReturnToAirbase" >
-<strong>AIBALANCER.ReturnToAirbase</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
 <a id="#(AIBALANCER).ReturnToHomeAirbase" >
-<strong>AIBALANCER.ReturnToHomeAirbase</strong>
+<strong>AIBALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -352,6 +352,34 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 		<em><a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a></em>
 <a id="#(AIBALANCER).SpawnAI" >
 <strong>AIBALANCER.SpawnAI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ToHomeAirbase" >
+<strong>AIBALANCER.ToHomeAirbase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ToNearestAirbase" >
+<strong>AIBALANCER.ToNearestAirbase</strong>
 </a>
 </dt>
 <dd>

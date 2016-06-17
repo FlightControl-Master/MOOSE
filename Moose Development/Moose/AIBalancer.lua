@@ -35,10 +35,10 @@
 -- @type AIBALANCER
 -- @field Set#SET_CLIENT SetClient
 -- @field Spawn#SPAWN SpawnAI
--- @field #boolean ReturnToAirbase
+-- @field #boolean ToNearestAirbase
 -- @field Set#SET_AIRBASE ReturnAirbaseSet
 -- @field DCSTypes#Distance ReturnTresholdRange
--- @field #boolean ReturnToHomeAirbase
+-- @field #boolean ToHomeAirbase
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
@@ -76,7 +76,7 @@ function AIBALANCER:New( SetClient, SpawnAI )
     end
   end
 
-  self.ReturnToAirbase = false
+  self.ToNearestAirbase = false
   self.ReturnHomeAirbase = false
 
   self.AIMonitorSchedule = SCHEDULER:New( self, self._ClientAliveMonitorScheduler, {}, 1, 10, 0 ) 
@@ -90,7 +90,7 @@ end
 -- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
 function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
-  self.ReturnToAirbase = true
+  self.ToNearestAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
@@ -100,7 +100,7 @@ end
 -- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
-  self.ReturnToHomeAirbase = true
+  self.ToHomeAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
@@ -118,7 +118,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
           
           local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
           
-          if self.ReturnToAirbase == false and self.ReturnToHomeAirbase == false then
+          if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             AIGroup:Destroy()
           else
             -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
@@ -148,7 +148,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
               function( RangeZone, AIGroup, ClientInZone )
                 local AIGroupTemplate = AIGroup:GetTemplate()
                 if ClientInZone.Value == false then
-                  if self.ReturnToHomeAirbase == true then
+                  if self.ToHomeAirbase == true then
                     local WayPointCount = #AIGroupTemplate.route.points
                     local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
                     AIGroup:SetCommand( SwitchWayPointCommand )
