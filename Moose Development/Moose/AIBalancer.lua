@@ -21,6 +21,13 @@
 --    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- 
 -- ===
+-- 
+-- CREDITS
+-- =======
+-- **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with James has resulted in the creation of the AIBALANCER class. 
+-- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
 -- @module AIBalancer
 -- @author FlightControl
 

@@ -1,7 +1,9 @@
---- Provides missile training functions.
+--- This module contains the MISSILETRAINER class.
+-- 
+-- ===
 --
--- @{#MISSILETRAINER} class
--- ========================
+-- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
+-- ===============================================================
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
 -- It suports the following functionality:
@@ -43,16 +45,16 @@
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
 --   
 --
--- MISSILETRAINER construction methods:
--- ====================================
+-- 1.1) MISSILETRAINER construction methods:
+-- -----------------------------------------
 -- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
 --
 --   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
 --
 -- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
 --
--- MISSILETRAINER initialization methods:
--- ======================================
+-- 1.2) MISSILETRAINER initialization methods:
+-- -------------------------------------------
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
@@ -66,6 +68,15 @@
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+-- ===
+-- 
+-- CREDITS
+-- =======
+-- **Stuka (Danny)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with Danny has resulted in the MISSILETRAINER class. 
+-- Danny has shared his ideas and together we made a design. 
+-- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
+-- 
 -- @module MissileTrainer
 -- @author FlightControl
 
