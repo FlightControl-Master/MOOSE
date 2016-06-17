@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160617_2325' ) 
+env.info( 'Moose Generation Timestamp: 20160618_0000' ) 
 local base = _G
 
 Include = {}
@@ -20251,10 +20251,12 @@ function ESCORT:_ReportTargetsScheduler()
   
   return false
 end
---- Provides missile training functions.
+--- This module contains the MISSILETRAINER class.
+-- 
+-- ===
 --
--- @{#MISSILETRAINER} class
--- ========================
+-- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
+-- ===============================================================
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
 -- It suports the following functionality:
@@ -20296,16 +20298,16 @@ end
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
 --   
 --
--- MISSILETRAINER construction methods:
--- ====================================
+-- 1.1) MISSILETRAINER construction methods:
+-- -----------------------------------------
 -- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
 --
 --   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
 --
 -- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
 --
--- MISSILETRAINER initialization methods:
--- ======================================
+-- 1.2) MISSILETRAINER initialization methods:
+-- -------------------------------------------
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
@@ -20319,6 +20321,15 @@ end
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+-- ===
+-- 
+-- CREDITS
+-- =======
+-- **Stuka (Danny)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with Danny has resulted in the MISSILETRAINER class. 
+-- Danny has shared his ideas and together we made a design. 
+-- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
+-- 
 -- @module MissileTrainer
 -- @author FlightControl
 
@@ -20961,6 +20972,13 @@ end
 --    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- 
 -- ===
+-- 
+-- CREDITS
+-- =======
+-- **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with James has resulted in the creation of the AIBALANCER class. 
+-- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
 -- @module AIBalancer
 -- @author FlightControl
 
@@ -20968,10 +20986,10 @@ end
 -- @type AIBALANCER
 -- @field Set#SET_CLIENT SetClient
 -- @field Spawn#SPAWN SpawnAI
--- @field #boolean ReturnToAirbase
+-- @field #boolean ToNearestAirbase
 -- @field Set#SET_AIRBASE ReturnAirbaseSet
 -- @field DCSTypes#Distance ReturnTresholdRange
--- @field #boolean ReturnToHomeAirbase
+-- @field #boolean ToHomeAirbase
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
@@ -21009,7 +21027,7 @@ function AIBALANCER:New( SetClient, SpawnAI )
     end
   end
 
-  self.ReturnToAirbase = false
+  self.ToNearestAirbase = false
   self.ReturnHomeAirbase = false
 
   self.AIMonitorSchedule = SCHEDULER:New( self, self._ClientAliveMonitorScheduler, {}, 1, 10, 0 ) 
@@ -21023,7 +21041,7 @@ end
 -- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
 function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
-  self.ReturnToAirbase = true
+  self.ToNearestAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
@@ -21033,7 +21051,7 @@ end
 -- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
-  self.ReturnToHomeAirbase = true
+  self.ToHomeAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
@@ -21051,7 +21069,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
           
           local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
           
-          if self.ReturnToAirbase == false and self.ReturnToHomeAirbase == false then
+          if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             AIGroup:Destroy()
           else
             -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
@@ -21081,7 +21099,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
               function( RangeZone, AIGroup, ClientInZone )
                 local AIGroupTemplate = AIGroup:GetTemplate()
                 if ClientInZone.Value == false then
-                  if self.ReturnToHomeAirbase == true then
+                  if self.ToHomeAirbase == true then
                     local WayPointCount = #AIGroupTemplate.route.points
                     local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
                     AIGroup:SetCommand( SwitchWayPointCommand )
