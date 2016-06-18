@@ -12,3 +12,8 @@ local RU_AirbasesSet = SET_AIRBASE:New():FilterCoalitions("red"):FilterStart()
 RU_AirbasesSet:Flush()
 RU_AIBalancer:ReturnToNearestAirbases( 10000, RU_AirbasesSet )
 --RU_AIBalancer:ReturnToHomeAirbase( 10000 )
+
+local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone" )
+local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
+local PatrolZone = PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 ):ManageFuel( 0.2, 60 )
+RU_AIBalancer:SetPatrolZone( PatrolZone )

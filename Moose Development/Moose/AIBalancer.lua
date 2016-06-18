@@ -22,14 +22,8 @@
 -- 
 -- 1.3) AIBALANCER allows AI to patrol specific zones:
 -- ---------------------------------------------------
--- Use @{AIBalancer#AIBALANCER.AddPatrolZone}() to specify zones where airplanes need patrol a zone ( @{Zone} ) for a specific time, at a specific altitude, with a specific speed.
--- Multiple zones can be patrolled, calling @{AIBalancer#AIBALANCER.AddPatrolZone}() multiple times. The AI will patrol at a random zone in the list. 
--- And when the PatrolTime is finished, it will patrol another zone.
+-- Use @{AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
 -- 
--- 1.4) AIRBALANCER manages AI out of fuel events:
--- -----------------------------------------------
--- Once an AI is out of fuel, it will contact the home base, so that on time, a new replacement AI is spawned, while the old will orbit for a specific time and RTB.
--- Use @{AIBalancer#AIBALANCER.GuardFuel}() to guard for each AI the fuel status.
 --
 -- ===
 -- 
@@ -40,8 +34,8 @@
 -- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
 -- **SNAFU**
--- Had a couple of mails with the guys to validate, if the same concept in the GTI/CAP script could be reworked within MOOSE.
--- Non of the script code has been used however within the new AIBALANCER moose class.
+-- Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
+-- None of the script code has been used however within the new AIBALANCER moose class.
 -- 
 -- @module AIBalancer
 -- @author FlightControl
@@ -54,6 +48,7 @@
 -- @field Set#SET_AIRBASE ReturnAirbaseSet
 -- @field DCSTypes#Distance ReturnTresholdRange
 -- @field #boolean ToHomeAirbase
+-- @field PatrolZone#PATROLZONE PatrolZone
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
@@ -119,6 +114,15 @@ function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
+--- Let the AI patrol a @{Zone} with a given Speed range and Altitude range.
+-- @param #AIBALANCER self
+-- @param PatrolZone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+-- @return PatrolZone#PATROLZONE self
+function AIBALANCER:SetPatrolZone( PatrolZone )
+
+  self.PatrolZone = PatrolZone
+end
+
 --- @param #AIBALANCER self
 function AIBALANCER:_ClientAliveMonitorScheduler()
 
@@ -132,6 +136,12 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
           Client:SetState( self, 'AIAlive', false )
           
           local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
+          
+          local PatrolZone = Client:GetState( self, "PatrolZone" )
+          if PatrolZone then
+            PatrolZone = nil
+            Client:ClearState( self, "PatrolZone" )
+          end
           
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             AIGroup:Destroy()
@@ -193,7 +203,27 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
           -- OK, spawn a new group from the SpawnAI objects provided.
           local SpawnAICount = #self.SpawnAI
           local SpawnAIIndex = math.random( 1, SpawnAICount )
-          Client:SetState( self, 'AIGroup', self.SpawnAI[SpawnAIIndex]:Spawn() )
+          local AIGroup = self.SpawnAI[SpawnAIIndex]:Spawn()
+          Client:SetState( self, 'AIGroup', AIGroup )
+          
+          --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
+          if self.PatrolZone then
+            local PatrolZone = PATROLZONE:New(
+              self.PatrolZone.PatrolZone,
+              self.PatrolZone.PatrolFloorAltitude,
+              self.PatrolZone.PatrolCeilingAltitude,
+              self.PatrolZone.PatrolMinSpeed,
+              self.PatrolPatrolMaxSpeed
+            )
+            
+            if self.PatrolZone.PatrolManageFuel == true then
+              PatrolZone:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
+            end 
+            
+            PatrolZone:SetGroup( AIGroup )
+
+            Client:SetState( self, "PatrolZone", PatrolZone )
+          end
         end
       end
     end
