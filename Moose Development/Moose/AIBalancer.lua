@@ -13,13 +13,24 @@
 -- 
 --    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
 -- 
--- 1.2) AIBALANCER return AI to Airbases:
--- --------------------------------------
+-- 1.2) AIBALANCER returns AI to Airbases:
+-- ---------------------------------------
 -- You can configure to have the AI to return to:
 -- 
 --    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
 --    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- 
+-- 1.3) AIBALANCER allows AI to patrol specific zones:
+-- ---------------------------------------------------
+-- Use @{AIBalancer#AIBALANCER.AddPatrolZone}() to specify zones where airplanes need patrol a zone ( @{Zone} ) for a specific time, at a specific altitude, with a specific speed.
+-- Multiple zones can be patrolled, calling @{AIBalancer#AIBALANCER.AddPatrolZone}() multiple times. The AI will patrol at a random zone in the list. 
+-- And when the PatrolTime is finished, it will patrol another zone.
+-- 
+-- 1.4) AIRBALANCER manages AI out of fuel events:
+-- -----------------------------------------------
+-- Once an AI is out of fuel, it will contact the home base, so that on time, a new replacement AI is spawned, while the old will orbit for a specific time and RTB.
+-- Use @{AIBalancer#AIBALANCER.GuardFuel}() to guard for each AI the fuel status.
+--
 -- ===
 -- 
 -- CREDITS
@@ -27,6 +38,10 @@
 -- **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.
 -- Working together with James has resulted in the creation of the AIBALANCER class. 
 -- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
+-- **SNAFU**
+-- Had a couple of mails with the guys to validate, if the same concept in the GTI/CAP script could be reworked within MOOSE.
+-- Non of the script code has been used however within the new AIBALANCER moose class.
 -- 
 -- @module AIBalancer
 -- @author FlightControl

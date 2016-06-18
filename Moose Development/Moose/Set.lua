@@ -238,8 +238,6 @@ SET_BASE = {
 -- DBObject = SET_BASE:New()
 function SET_BASE:New( Database )
 
-  env.info( tostring( Database ) )
-
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
