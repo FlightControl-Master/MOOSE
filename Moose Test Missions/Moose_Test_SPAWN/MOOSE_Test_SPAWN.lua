@@ -120,19 +120,24 @@ Spawn_Vehicle_Host = SPAWN:New( "Spawn Vehicle Host" )
 						              :Array( 0, 5, 8, 8 )
 						              :SpawnScheduled( 10, 0.2 )
 
--- Spawn_Vehicle_SpawnToZone allows to spawn 10 vehicle groups.									
+-- Spawn_Vehicle_SpawnToZone allows to spawn 10 vehicle groups.
+-- The vehicles will drive to waypoint 1, where it will spawn infantry that will walk to a certain point.
+-- ---------------------------------------------------------------------------------------------
+--      local InfantryGroup = Spawn_Infantry:SpawnFromUnit( GROUP:Find(...):GetUnit(1), 100, 5 )
+--      local InfantryRoute = InfantryGroup:CopyRoute( 1, 0, true, 1000 )
+--      InfantryGroup:Route( InfantryRoute )
+-- ---------------------------------------------------------------------------------------------									
 Spawn_Vehicle_SpawnToZone = SPAWN:New( "Spawn Vehicle SpawnToZone" )
 								                 :Limit( 10, 10 )
 
 -- Spawn_Helicopter_SpawnToZone will fly to a location, hover, and spawn one vehicle on the ground, the helicopter will land
 -- and the vehicle will drive to a random location within the defined zone.
 -- For this, the following code is activated within the mission on waypoint 3:
---
---   local InfantryDropGroup = Spawn_Vehicle_SpawnToZone:SpawnFromUnit( GROUP:Find( ... ):GetUnit(1) )
---   local InfantryDropRoute = InfantryDropGroup:CopyRoute( 1, 0 )
---   InfantryDropGroup:RouteToZone( ZONE:New( "Target Zone" ), true, 80 )
---
-
+-- ------------------------------------------------------------------------------------------------------
+--      local InfantryDropGroup = Spawn_Vehicle_SpawnToZone:SpawnFromUnit( GROUP:Find( ... ):GetUnit(1) )
+--      local InfantryDropRoute = InfantryDropGroup:CopyRoute( 1, 0 )
+--      InfantryDropGroup:TaskRouteToZone( ZONE:New( "Target Zone" ), true, 80 )
+-- ------------------------------------------------------------------------------------------------------
 Spawn_Helicopter_SpawnToZone = SPAWN:New( "Spawn Helicopter SpawnToZone" )
                                     :Limit( 10, 10 )
 						                        :SpawnScheduled( 60, 0.2 )

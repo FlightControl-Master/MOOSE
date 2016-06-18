@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160618_0000' ) 
+env.info( 'Moose Generation Timestamp: 20160618_1019' ) 
 local base = _G
 
 Include = {}
@@ -6617,6 +6617,8 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
       end
     end
     return Points
+  else
+    error( "Template not found for Group : " .. GroupName )
   end
 
   return nil

@@ -2436,6 +2436,8 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
       end
     end
     return Points
+  else
+    error( "Template not found for Group : " .. GroupName )
   end
 
   return nil
