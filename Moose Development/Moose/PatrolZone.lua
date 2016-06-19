@@ -83,7 +83,7 @@ function PATROLZONE:SetGroup( PatrolGroup )
   self:NewPatrolRoute()
 
   if not self.PatrolOutOfFuelMonitor then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 60, 120, 0.2 )
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
     self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
 
@@ -209,7 +209,7 @@ function PATROLZONE:NewPatrolRoute()
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the PatrolGroup...
     self.PatrolGroup:WayPointInitialize( PatrolRoute )
     
-    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroupin a temporary variable ...
+    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroup in a temporary variable ...
     self.PatrolGroup:SetState( self.PatrolGroup, "PatrolZone", self )
     self.PatrolGroup:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
@@ -234,14 +234,15 @@ function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrb
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   
   if self.PatrolGroup then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 60, 120, 0.2 )
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
     self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
   return self
 end
 
 --- @param #PATROLZONE self
-function PATROLZONE:_MonitorOutOfFuelScheduled()
+function _MonitorOutOfFuelScheduled( self )
+  self:F2( "_MonitorOutOfFuelScheduled" )
 
   if self.PatrolGroup and self.PatrolGroup:IsAlive() then
   

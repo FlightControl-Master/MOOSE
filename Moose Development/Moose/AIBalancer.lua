@@ -52,6 +52,8 @@
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
+  PatrolZones = {},
+  AIGroups = {},
 }
 
 --- Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -135,13 +137,13 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
         if ClientAIAliveState == true then
           Client:SetState( self, 'AIAlive', false )
           
-          local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
+          local AIGroup = self.AIGroups[Client.UnitName] -- Group#GROUP
           
-          local PatrolZone = Client:GetState( self, "PatrolZone" )
-          if PatrolZone then
-            PatrolZone = nil
-            Client:ClearState( self, "PatrolZone" )
-          end
+--          local PatrolZone = Client:GetState( self, "PatrolZone" )
+--          if PatrolZone then
+--            PatrolZone = nil
+--            Client:ClearState( self, "PatrolZone" )
+--          end
           
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             AIGroup:Destroy()
@@ -200,15 +202,18 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
         if not ClientAIAliveState or ClientAIAliveState == false then
           Client:SetState( self, 'AIAlive', true )
           
+          
           -- OK, spawn a new group from the SpawnAI objects provided.
           local SpawnAICount = #self.SpawnAI
           local SpawnAIIndex = math.random( 1, SpawnAICount )
           local AIGroup = self.SpawnAI[SpawnAIIndex]:Spawn()
-          Client:SetState( self, 'AIGroup', AIGroup )
+          AIGroup:E( "spawning new AIGroup" )
+          --TODO: need to rework UnitName thing ...
+          self.AIGroups[Client.UnitName] = AIGroup
           
           --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
           if self.PatrolZone then
-            local PatrolZone = PATROLZONE:New(
+            self.PatrolZones[#self.PatrolZones+1] = PATROLZONE:New(
               self.PatrolZone.PatrolZone,
               self.PatrolZone.PatrolFloorAltitude,
               self.PatrolZone.PatrolCeilingAltitude,
@@ -217,12 +222,13 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             )
             
             if self.PatrolZone.PatrolManageFuel == true then
-              PatrolZone:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
+              self.PatrolZones[#self.PatrolZones]:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
             end 
+            self.PatrolZones[#self.PatrolZones]:SetGroup( AIGroup )
             
-            PatrolZone:SetGroup( AIGroup )
-
-            Client:SetState( self, "PatrolZone", PatrolZone )
+            --self.PatrolZones[#self.PatrolZones+1] = PatrolZone
+            
+            --Client:SetState( self, "PatrolZone", PatrolZone )
           end
         end
       end

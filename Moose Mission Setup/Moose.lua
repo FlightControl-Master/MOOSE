@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160618_2312' ) 
+env.info( 'Moose Generation Timestamp: 20160619_1502' ) 
 local base = _G
 
 Include = {}
@@ -9972,18 +9972,20 @@ function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
         self:T2( Object )
         IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
-        if Count % 10 == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % 100 == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
     self:T3( { status, res } )
     
     if status == false then
@@ -10610,18 +10612,20 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1
-        if Count % self.YieldInterval == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % self.YieldInterval == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
     self:T3( { status, res } )
     
     if status == false then
@@ -21201,7 +21205,7 @@ function PATROLZONE:SetGroup( PatrolGroup )
   self:NewPatrolRoute()
 
   if not self.PatrolOutOfFuelMonitor then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 60, 120, 0.2 )
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
     self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
 
@@ -21327,7 +21331,7 @@ function PATROLZONE:NewPatrolRoute()
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the PatrolGroup...
     self.PatrolGroup:WayPointInitialize( PatrolRoute )
     
-    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroupin a temporary variable ...
+    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroup in a temporary variable ...
     self.PatrolGroup:SetState( self.PatrolGroup, "PatrolZone", self )
     self.PatrolGroup:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
@@ -21352,14 +21356,15 @@ function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrb
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   
   if self.PatrolGroup then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 60, 120, 0.2 )
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
     self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
   return self
 end
 
 --- @param #PATROLZONE self
-function PATROLZONE:_MonitorOutOfFuelScheduled()
+function _MonitorOutOfFuelScheduled( self )
+  self:F2( "_MonitorOutOfFuelScheduled" )
 
   if self.PatrolGroup and self.PatrolGroup:IsAlive() then
   
@@ -21433,6 +21438,8 @@ end--- This module contains the AIBALANCER class.
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
+  PatrolZones = {},
+  AIGroups = {},
 }
 
 --- Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -21516,13 +21523,13 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
         if ClientAIAliveState == true then
           Client:SetState( self, 'AIAlive', false )
           
-          local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
+          local AIGroup = self.AIGroups[Client.UnitName] -- Group#GROUP
           
-          local PatrolZone = Client:GetState( self, "PatrolZone" )
-          if PatrolZone then
-            PatrolZone = nil
-            Client:ClearState( self, "PatrolZone" )
-          end
+--          local PatrolZone = Client:GetState( self, "PatrolZone" )
+--          if PatrolZone then
+--            PatrolZone = nil
+--            Client:ClearState( self, "PatrolZone" )
+--          end
           
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             AIGroup:Destroy()
@@ -21581,15 +21588,18 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
         if not ClientAIAliveState or ClientAIAliveState == false then
           Client:SetState( self, 'AIAlive', true )
           
+          
           -- OK, spawn a new group from the SpawnAI objects provided.
           local SpawnAICount = #self.SpawnAI
           local SpawnAIIndex = math.random( 1, SpawnAICount )
           local AIGroup = self.SpawnAI[SpawnAIIndex]:Spawn()
-          Client:SetState( self, 'AIGroup', AIGroup )
+          AIGroup:E( "spawning new AIGroup" )
+          --TODO: need to rework UnitName thing ...
+          self.AIGroups[Client.UnitName] = AIGroup
           
           --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
           if self.PatrolZone then
-            local PatrolZone = PATROLZONE:New(
+            self.PatrolZones[#self.PatrolZones+1] = PATROLZONE:New(
               self.PatrolZone.PatrolZone,
               self.PatrolZone.PatrolFloorAltitude,
               self.PatrolZone.PatrolCeilingAltitude,
@@ -21598,12 +21608,13 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             )
             
             if self.PatrolZone.PatrolManageFuel == true then
-              PatrolZone:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
+              self.PatrolZones[#self.PatrolZones]:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
             end 
+            self.PatrolZones[#self.PatrolZones]:SetGroup( AIGroup )
             
-            PatrolZone:SetGroup( AIGroup )
-
-            Client:SetState( self, "PatrolZone", PatrolZone )
+            --self.PatrolZones[#self.PatrolZones+1] = PatrolZone
+            
+            --Client:SetState( self, "PatrolZone", PatrolZone )
           end
         end
       end
