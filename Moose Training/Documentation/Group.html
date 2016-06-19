@@ -52,6 +52,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -960,7 +961,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointInitialize">GROUP:WayPointInitialize()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).WayPointInitialize">GROUP:WayPointInitialize(WayPoints)</a></td>
 		<td class="summary">
 <p> Retrieve the group mission and allow to place function hooks within the mission waypoint plan.</p>
 </td>
@@ -4231,7 +4232,7 @@ The waypoint function to be called when the group moves over the waypoint. The w
 <dt>
 
 <a id="#(GROUP).WayPointInitialize" >
-<strong>GROUP:WayPointInitialize()</strong>
+<strong>GROUP:WayPointInitialize(WayPoints)</strong>
 </a>
 </dt>
 <dd>
@@ -4243,6 +4244,15 @@ The waypoint function to be called when the group moves over the waypoint. The w
  Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
  Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table WayPoints </em></code>: 
+If WayPoints is given, then use the route.</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(GROUP)">#GROUP</a>:</em></p>

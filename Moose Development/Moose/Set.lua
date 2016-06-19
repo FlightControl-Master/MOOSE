@@ -238,8 +238,6 @@ SET_BASE = {
 -- DBObject = SET_BASE:New()
 function SET_BASE:New( Database )
 
-  env.info( tostring( Database ) )
-
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
@@ -457,18 +455,20 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1
-        if Count % self.YieldInterval == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % self.YieldInterval == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
     self:T3( { status, res } )
     
     if status == false then

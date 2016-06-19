@@ -494,10 +494,15 @@ end
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!
 -- @param #GROUP self
+-- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #GROUP
-function GROUP:WayPointInitialize()
+function GROUP:WayPointInitialize( WayPoints )
 
-  self.WayPoints = self:GetTaskRoute()
+  if WayPoints then
+    self.WayPoints = WayPoints
+  else
+    self.WayPoints = self:GetTaskRoute()
+  end
 
   return self
 end

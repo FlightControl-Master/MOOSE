@@ -30,6 +30,9 @@
 -- @extends Base#BASE
 -- @field #POINT_VEC3.SmokeColor SmokeColor
 -- @field #POINT_VEC3.FlareColor FlareColor
+-- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
+-- @field #POINT_VEC3.RoutePointType RoutePointType
+-- @field #POINT_VEC3.RoutePointAction RoutePointAction
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   SmokeColor = {
@@ -38,14 +41,24 @@ POINT_VEC3 = {
     White = trigger.smokeColor.White,
     Orange = trigger.smokeColor.Orange,
     Blue = trigger.smokeColor.Blue
-    },
+  },
   FlareColor = {
     Green = trigger.flareColor.Green,
     Red = trigger.flareColor.Red,
     White = trigger.flareColor.White,
     Yellow = trigger.flareColor.Yellow
-    },
-  }
+  },
+  RoutePointAltType = {
+    BARO = "BARO",
+  },
+  RoutePointType = {
+    TurningPoint = "Turning Point",
+  },
+  RoutePointAction = {
+    TurningPoint = "Turning Point",
+  },
+}
+
 
 --- SmokeColor
 -- @type POINT_VEC3.SmokeColor
@@ -55,12 +68,34 @@ POINT_VEC3 = {
 -- @field Orange
 -- @field Blue
 
+
+
 --- FlareColor
 -- @type POINT_VEC3.FlareColor
 -- @field Green
 -- @field Red
 -- @field White
 -- @field Yellow
+
+
+
+--- RoutePoint AltTypes
+-- @type POINT_VEC3.RoutePointAltType
+-- @field BARO "BARO"
+
+
+
+--- RoutePoint Types
+-- @type POINT_VEC3.RoutePointType
+-- @field TurningPoint "Turning Point"
+
+
+
+--- RoutePoint Actions
+-- @type POINT_VEC3.RoutePointAction
+-- @field TurningPoint "Turning Point"
+
+
 
 -- Constructor.
   
@@ -69,14 +104,67 @@ POINT_VEC3 = {
 -- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
 -- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing Upwards.
 -- @param DCSTypes#Distance z The z coordinate of the Vec3 point, pointing to the Right.
--- @return Point#POINT_VEC3
+-- @return Point#POINT_VEC3 self
 function POINT_VEC3:New( x, y, z )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2( { x, y, z } )
   self.PointVec3 = { x = x, y = y, z = z }
+  self:F2( self.PointVec3 )
   return self
 end
+
+
+--- Build an air type route point.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3.RoutePointAltType AltType The altitude type.
+-- @param #POINT_VEC3.RoutePointType Type The route point type.
+-- @param #POINT_VEC3.RoutePointAction Action The route point action.
+-- @param DCSTypes#Speed Speed Airspeed in km/h.
+-- @param #boolean SpeedLocked true means the speed is locked.
+-- @return #table The route point.
+function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
+
+  local RoutePoint = {}
+  RoutePoint.x = self.PointVec3.x
+  RoutePoint.y = self.PointVec3.z
+  RoutePoint.alt = self.PointVec3.y
+  RoutePoint.alt_type = AltType
+  
+  RoutePoint.type = Type
+  RoutePoint.action = Action
+
+  RoutePoint.speed = Speed
+  RoutePoint.speed_locked = true
+
+  RoutePoint.properties = {
+    ["vnav"] = 1,
+    ["scale"] = 0,
+    ["angle"] = 0,
+    ["vangle"] = 0,
+    ["steer"] = 2,
+  }
+  
+--  ["task"] = 
+--  {
+--      ["id"] = "ComboTask",
+--      ["params"] = 
+--      {
+--          ["tasks"] = 
+--          {
+--          }, -- end of ["tasks"]
+--      }, -- end of ["params"]
+--  }, -- end of ["task"]
+
+
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = {}
+  
+  
+  return RoutePoint
+end
+
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
