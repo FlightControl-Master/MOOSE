@@ -45,10 +45,14 @@ local _EVENTCODES = {
 -- @field weapon
 -- @field IniDCSUnit
 -- @field IniDCSUnitName
+-- @field Unit#UNIT           IniUnit
+-- @field #string             IniUnitName
 -- @field IniDCSGroup
 -- @field IniDCSGroupName
 -- @field TgtDCSUnit
 -- @field TgtDCSUnitName
+-- @field Unit#UNIT           TgtUnit
+-- @field #string             TgtUnitName
 -- @field TgtDCSGroup
 -- @field TgtDCSGroupName
 -- @field Weapon
@@ -470,6 +474,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSUnit = Event.initiator
       Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
       Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+      Event.IniUnitName = Event.IniDCSUnitName
+      Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
@@ -480,6 +486,8 @@ function EVENT:onEvent( Event )
         Event.TgtDCSUnit = Event.target
         Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
         Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtUnitName = Event.TgtDCSUnitName
+        Event.TgtUnit = UNIT:FindByName( Event.TgtDCSUnitName )
         Event.TgtDCSGroupName = ""
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()

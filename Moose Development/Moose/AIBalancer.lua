@@ -152,29 +152,29 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             -- If there is a CLIENT, the AI stays engaged and will not return.
             -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
 
-            local ClientInZone = { Value = false }          
+            local PlayerInRange = { Value = false }          
             local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetPointVec2(), self.ReturnTresholdRange )
             
             self:E( RangeZone )
             
-            _DATABASE:ForEachUnit(
+            _DATABASE:ForEachPlayer(
               --- @param Unit#UNIT RangeTestUnit
-              function( RangeTestUnit, RangeZone, AIGroup, ClientInZone )
-                self:E( { ClientInZone, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+              function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
+                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
                   self:E( "in zone" )
                   if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
                     self:E( "in range" )
-                    ClientInZone.Value = true
+                    PlayerInRange.Value = true
                   end
                 end
               end,
               
               --- @param Zone#ZONE_RADIUS RangeZone
               -- @param Group#GROUP AIGroup
-              function( RangeZone, AIGroup, ClientInZone )
+              function( RangeZone, AIGroup, PlayerInRange )
                 local AIGroupTemplate = AIGroup:GetTemplate()
-                if ClientInZone.Value == false then
+                if PlayerInRange.Value == false then
                   if self.ToHomeAirbase == true then
                     local WayPointCount = #AIGroupTemplate.route.points
                     local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
@@ -193,7 +193,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
                   end
                 end
               end
-              , RangeZone, AIGroup, ClientInZone
+              , RangeZone, AIGroup, PlayerInRange
             )
             
           end

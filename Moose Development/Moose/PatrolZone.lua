@@ -202,7 +202,7 @@ function PATROLZONE:NewPatrolRoute()
       true 
     )
     
-    ToTargetPointVec3:SmokeRed()
+    --ToTargetPointVec3:SmokeRed()
 
     PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
     
