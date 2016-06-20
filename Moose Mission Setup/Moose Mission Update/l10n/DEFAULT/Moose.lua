@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160619_1502' ) 
+env.info( 'Moose Generation Timestamp: 20160620_1310' ) 
 local base = _G
 
 Include = {}
@@ -3350,10 +3350,14 @@ local _EVENTCODES = {
 -- @field weapon
 -- @field IniDCSUnit
 -- @field IniDCSUnitName
+-- @field Unit#UNIT           IniUnit
+-- @field #string             IniUnitName
 -- @field IniDCSGroup
 -- @field IniDCSGroupName
 -- @field TgtDCSUnit
 -- @field TgtDCSUnitName
+-- @field Unit#UNIT           TgtUnit
+-- @field #string             TgtUnitName
 -- @field TgtDCSGroup
 -- @field TgtDCSGroupName
 -- @field Weapon
@@ -3775,6 +3779,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSUnit = Event.initiator
       Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
       Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+      Event.IniUnitName = Event.IniDCSUnitName
+      Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
@@ -3785,6 +3791,8 @@ function EVENT:onEvent( Event )
         Event.TgtDCSUnit = Event.target
         Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
         Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtUnitName = Event.TgtDCSUnitName
+        Event.TgtUnit = UNIT:FindByName( Event.TgtDCSUnitName )
         Event.TgtDCSGroupName = ""
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
@@ -5632,7 +5640,7 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   local Point
   if RandomPoint then
-    Point = Zone:GetRandomPointVec2()
+    Point = Zone:GetRandomVec2()
   else
     Point = Zone:GetPointVec2()
   end
@@ -6388,7 +6396,7 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     local ZonePoint
 
     if Randomize then
-      ZonePoint = Zone:GetRandomPointVec2()
+      ZonePoint = Zone:GetRandomVec2()
     else
       ZonePoint = Zone:GetPointVec2()
     end
@@ -8244,7 +8252,7 @@ end
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomPointVec2()
+function ZONE_RADIUS:GetRandomVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
@@ -9395,12 +9403,12 @@ end
 -- 
 --  * UNITS
 --  * GROUPS
---  * players
---  * alive players
 --  * CLIENTS
---  * alive CLIENTS
+--  * AIRPORTS
+--  * PLAYERSJOINED
+--  * PLAYERS
 --  
--- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.
+-- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 -- 
 -- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
 -- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
@@ -9413,11 +9421,13 @@ end
 -- 
 --   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
 --   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayer}: Calls a function for each player it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayerAlive}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayer}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayerJoined}: Calls a function for each joined player it finds within the DATABASE.
 --   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
 --   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
---   
+-- 
+-- ===
+-- 
 -- @module Database
 -- @author FlightControl
 
@@ -9436,9 +9446,8 @@ DATABASE = {
   STATICS = {},
   GROUPS = {},
   PLAYERS = {},
-  PLAYERSALIVE = {},
+  PLAYERSJOINED = {},
   CLIENTS = {},
-  CLIENTSALIVE = {},
   AIRBASES = {},
   NavPoints = {},
 }
@@ -9625,9 +9634,8 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
-    self.PLAYERS[PlayerName] = PlayerName
-    self.PLAYERSALIVE[PlayerName] = PlayerName
-    self.CLIENTSALIVE[PlayerName] = self:FindClient( UnitName )
+    self.PLAYERS[PlayerName] = UNIT:FindByName( UnitName )
+    self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
 
@@ -9637,8 +9645,7 @@ function DATABASE:DeletePlayer( PlayerName )
 
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
-    self.PLAYERSALIVE[PlayerName] = nil
-    self.CLIENTSALIVE[PlayerName] = nil
+    self.PLAYERS[PlayerName] = nil
   end
 end
 
@@ -9934,10 +9941,10 @@ end
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if not self.PLAYERSALIVE[PlayerName] then
-      self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if not self.PLAYERS[PlayerName] then
+      self:AddPlayer( Event.IniUnitName, PlayerName )
     end
   end
 end
@@ -9949,9 +9956,9 @@ end
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if self.PLAYERSALIVE[PlayerName] then
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if self.PLAYERS[PlayerName] then
       self:DeletePlayer( PlayerName )
     end
   end
@@ -10031,7 +10038,7 @@ function DATABASE:ForEachGroup( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** player, providing the player name and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an player in the database. The function needs to accept the player name.
 -- @return #DATABASE self
@@ -10044,14 +10051,14 @@ function DATABASE:ForEachPlayer( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayerAlive( IteratorFunction, ... )
+function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERSALIVE )
+  self:ForEach( IteratorFunction, arg, self.PLAYERSJOINED )
   
   return self
 end
@@ -10064,18 +10071,6 @@ function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
-
-  return self
-end
-
---- Iterate the DATABASE and call an iterator function for each **ALIVE** CLIENT, providing the CLIENT to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachClientAlive( IteratorFunction, ... )
-  self:F2( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.CLIENTSALIVE )
 
   return self
 end
@@ -18239,7 +18234,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         local ZonePoint 
         
         if ZoneRandomize == true then
-          ZonePoint = Zone:GetRandomPointVec2()
+          ZonePoint = Zone:GetRandomVec2()
         else
           ZonePoint = Zone:GetPointVec2()
         end
@@ -18249,7 +18244,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          local ZonePointUnit = Zone:GetRandomPointVec2()
+          local ZonePointUnit = Zone:GetRandomVec2()
           SpawnTemplate.units[UnitID].x = ZonePointUnit.x
           SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
@@ -21324,7 +21319,7 @@ function PATROLZONE:NewPatrolRoute()
       true 
     )
     
-    ToTargetPointVec3:SmokeRed()
+    --ToTargetPointVec3:SmokeRed()
 
     PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
     
@@ -21538,29 +21533,29 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             -- If there is a CLIENT, the AI stays engaged and will not return.
             -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
 
-            local ClientInZone = { Value = false }          
+            local PlayerInRange = { Value = false }          
             local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetPointVec2(), self.ReturnTresholdRange )
             
             self:E( RangeZone )
             
-            _DATABASE:ForEachUnit(
+            _DATABASE:ForEachPlayer(
               --- @param Unit#UNIT RangeTestUnit
-              function( RangeTestUnit, RangeZone, AIGroup, ClientInZone )
-                self:E( { ClientInZone, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+              function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
+                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
                   self:E( "in zone" )
                   if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
                     self:E( "in range" )
-                    ClientInZone.Value = true
+                    PlayerInRange.Value = true
                   end
                 end
               end,
               
               --- @param Zone#ZONE_RADIUS RangeZone
               -- @param Group#GROUP AIGroup
-              function( RangeZone, AIGroup, ClientInZone )
+              function( RangeZone, AIGroup, PlayerInRange )
                 local AIGroupTemplate = AIGroup:GetTemplate()
-                if ClientInZone.Value == false then
+                if PlayerInRange.Value == false then
                   if self.ToHomeAirbase == true then
                     local WayPointCount = #AIGroupTemplate.route.points
                     local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
@@ -21579,7 +21574,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
                   end
                 end
               end
-              , RangeZone, AIGroup, ClientInZone
+              , RangeZone, AIGroup, PlayerInRange
             )
             
           end

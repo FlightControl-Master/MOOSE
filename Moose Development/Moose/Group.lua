@@ -1451,7 +1451,7 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   local Point
   if RandomPoint then
-    Point = Zone:GetRandomPointVec2()
+    Point = Zone:GetRandomVec2()
   else
     Point = Zone:GetPointVec2()
   end
@@ -2207,7 +2207,7 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     local ZonePoint
 
     if Randomize then
-      ZonePoint = Zone:GetRandomPointVec2()
+      ZonePoint = Zone:GetRandomVec2()
     else
       ZonePoint = Zone:GetPointVec2()
     end

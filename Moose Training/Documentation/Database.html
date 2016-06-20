@@ -86,13 +86,13 @@
 <ul>
     <li>UNITS</li>
     <li>GROUPS</li>
-    <li>players</li>
-    <li>alive players</li>
     <li>CLIENTS</li>
-    <li>alive CLIENTS</li>
+    <li>AIRPORTS</li>
+    <li>PLAYERSJOINED</li>
+    <li>PLAYERS</li>
 </ul>
 
-<p>On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.</p>
+<p>On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.</p>
 
 <p>Moose will automatically create one instance of the DATABASE class into the <strong>global</strong> object _DATABASE.
 Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.</p>
@@ -105,12 +105,14 @@ The following iterator methods are currently available within the DATABASE:</p>
 <ul>
     <li><a href="##(DATABASE).ForEachUnit">DATABASE.ForEachUnit</a>: Calls a function for each <a href="UNIT.html">UNIT</a> it finds within the DATABASE.</li>
     <li><a href="##(DATABASE).ForEachGroup">DATABASE.ForEachGroup</a>: Calls a function for each <a href="GROUP.html">GROUP</a> it finds within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachPlayer">DATABASE.ForEachPlayer</a>: Calls a function for each player it finds within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachPlayerAlive">DATABASE.ForEachPlayerAlive</a>: Calls a function for each alive player it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachPlayer">DATABASE.ForEachPlayer</a>: Calls a function for each alive player it finds within the DATABASE.</li>
+    <li><a href="##(DATABASE).ForEachPlayerJoined">DATABASE.ForEachPlayerJoined</a>: Calls a function for each joined player it finds within the DATABASE.</li>
     <li><a href="##(DATABASE).ForEachClient">DATABASE.ForEachClient</a>: Calls a function for each <a href="CLIENT.html">CLIENT</a> it finds within the DATABASE.</li>
-    <li><a href="##(DATABASE).ForEachClientAlive">DATABASE.ForEachClientAlive</a>: Calls a function for each alive <a href="CLIENT.html">CLIENT</a> it finds within the DATABASE.
-    </li>
+    <li><a href="##(DATABASE).ForEachClientAlive">DATABASE.ForEachClientAlive</a>: Calls a function for each alive <a href="CLIENT.html">CLIENT</a> it finds within the DATABASE.</li>
 </ul>
+
+<hr/>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -167,12 +169,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).CLIENTS">DATABASE.CLIENTS</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).CLIENTSALIVE">DATABASE.CLIENTSALIVE</a></td>
 		<td class="summary">
 
 </td>
@@ -250,12 +246,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachClientAlive">DATABASE:ForEachClientAlive(IteratorFunction, ...)</a></td>
-		<td class="summary">
-<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> CLIENT, providing the CLIENT to the function and optional parameters.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachGroup">DATABASE:ForEachGroup(IteratorFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
@@ -264,13 +254,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayer">DATABASE:ForEachPlayer(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> player, providing the player name and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerAlive">DATABASE:ForEachPlayerAlive(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerJoined">DATABASE:ForEachPlayerJoined(IteratorFunction, ...)</a></td>
 		<td class="summary">
-<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -340,7 +330,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERSALIVE">DATABASE.PLAYERSALIVE</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERSJOINED">DATABASE.PLAYERSJOINED</a></td>
 		<td class="summary">
 
 </td>
@@ -616,20 +606,6 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<em></em>
 <a id="#(DATABASE).CLIENTS" >
 <strong>DATABASE.CLIENTS</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(DATABASE).CLIENTSALIVE" >
-<strong>DATABASE.CLIENTSALIVE</strong>
 </a>
 </dt>
 <dd>
@@ -943,38 +919,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).ForEachClientAlive" >
-<strong>DATABASE:ForEachClientAlive(IteratorFunction, ...)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> CLIENT, providing the CLIENT to the function and optional parameters.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DATABASE).ForEachGroup" >
 <strong>DATABASE:ForEachGroup(IteratorFunction, ...)</strong>
 </a>
@@ -1013,7 +957,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> player, providing the player name and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1039,20 +983,20 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE).ForEachPlayerAlive" >
-<strong>DATABASE:ForEachPlayerAlive(IteratorFunction, ...)</strong>
+<a id="#(DATABASE).ForEachPlayerJoined" >
+<strong>DATABASE:ForEachPlayerJoined(IteratorFunction, ...)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> player, providing the Unit of the player and optional parameters.</p>
+<p>Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.</p>
+The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.</p>
 
 				</li>
 				<li>
@@ -1299,8 +1243,8 @@ DBObject = DATABASE:New()</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(DATABASE).PLAYERSALIVE" >
-<strong>DATABASE.PLAYERSALIVE</strong>
+<a id="#(DATABASE).PLAYERSJOINED" >
+<strong>DATABASE.PLAYERSJOINED</strong>
 </a>
 </dt>
 <dd>

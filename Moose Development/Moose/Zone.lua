@@ -321,7 +321,7 @@ end
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomPointVec2()
+function ZONE_RADIUS:GetRandomVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
