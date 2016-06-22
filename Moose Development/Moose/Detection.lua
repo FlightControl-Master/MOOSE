@@ -111,32 +111,34 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
     if self.DetectedUnits then
       for DetectedUnitName, DetectedUnitData in pairs( self.DetectedUnits ) do
         local DetectedUnit = DetectedUnitData.DetectedUnit -- Unit#UNIT
-        self:T( DetectedUnit:GetName() )
-        if #self.DetectedUnitSets == 0 then
-          self:T( { "Adding Unit Set #", 1 } )
-          self.DetectedUnitSets[1] = {}
-          self.DetectedUnitSets[1].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-          self.DetectedUnitSets[1].Set = SET_UNIT:New()
-          self.DetectedUnitSets[1].Set:AddUnit( DetectedUnit )
-        else
-          local AddedToSet = false
-          for DetectedUnitSetID, DetectedUnitSetData in pairs( self.DetectedUnitSets ) do
-            self:T( "Detected Unit Set #" .. DetectedUnitSetID )
-            local DetectedUnitSet = DetectedUnitSetData.Set -- Set#SET_UNIT
-            local DetectedZone = DetectedUnitSetData.Zone -- Zone#ZONE_UNIT
-            if DetectedUnit:IsInZone( DetectedZone ) then
-              self:T( "Adding to Unit Set #" .. DetectedUnitSetID )
-              self.DetectedUnitSets[DetectedUnitSetID].Set:AddUnit( DetectedUnit )
-              AddedToSet = true
+        if DetectedUnit and DetectedUnit:IsAlive() then
+          self:T( DetectedUnit:GetName() )
+          if #self.DetectedUnitSets == 0 then
+            self:T( { "Adding Unit Set #", 1 } )
+            self.DetectedUnitSets[1] = {}
+            self.DetectedUnitSets[1].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+            self.DetectedUnitSets[1].Set = SET_UNIT:New()
+            self.DetectedUnitSets[1].Set:AddUnit( DetectedUnit )
+          else
+            local AddedToSet = false
+            for DetectedUnitSetID, DetectedUnitSetData in pairs( self.DetectedUnitSets ) do
+              self:T( "Detected Unit Set #" .. DetectedUnitSetID )
+              local DetectedUnitSet = DetectedUnitSetData.Set -- Set#SET_UNIT
+              local DetectedZone = DetectedUnitSetData.Zone -- Zone#ZONE_UNIT
+              if DetectedUnit:IsInZone( DetectedZone ) then
+                self:T( "Adding to Unit Set #" .. DetectedUnitSetID )
+                self.DetectedUnitSets[DetectedUnitSetID].Set:AddUnit( DetectedUnit )
+                AddedToSet = true
+              end
             end
+            if AddedToSet == false then
+              self:T( "Adding new Unit Set #" .. #self.DetectedUnitSets+1 )
+              self.DetectedUnitSets[#self.DetectedUnitSets+1] = {}
+              self.DetectedUnitSets[#self.DetectedUnitSets].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+              self.DetectedUnitSets[#self.DetectedUnitSets].Set = SET_UNIT:New()
+              self.DetectedUnitSets[#self.DetectedUnitSets].Set:AddUnit( DetectedUnit )
+            end  
           end
-          if AddedToSet == false then
-            self:T( "Adding new Unit Set #" .. #self.DetectedUnitSets+1 )
-            self.DetectedUnitSets[#self.DetectedUnitSets+1] = {}
-            self.DetectedUnitSets[#self.DetectedUnitSets].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-            self.DetectedUnitSets[#self.DetectedUnitSets].Set = SET_UNIT:New()
-            self.DetectedUnitSets[#self.DetectedUnitSets].Set:AddUnit( DetectedUnit )
-          end  
         end
       end
     end

@@ -390,7 +390,7 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -957,6 +957,10 @@ function SET_UNIT:New()
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) )
 
+  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+
   return self
 end
 
@@ -965,6 +969,7 @@ end
 -- @param #string AddUnit A single UNIT.
 -- @return #SET_UNIT self
 function SET_UNIT:AddUnit( AddUnit )
+  self:F2( AddUnit:GetName() )
 
   self:Add( AddUnit:GetName(), AddUnit )
     
@@ -1151,6 +1156,7 @@ end
 function SET_UNIT:FindInDatabase( Event )
   self:F3( { Event } )
 
+  self:E( { Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName] } )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
