@@ -48,7 +48,6 @@ COPY /b Moose.lua + %1\Unit.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Zone.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Client.lua                							Moose.lua
 COPY /b Moose.lua + %1\Static.lua                							Moose.lua
-COPY /b Moose.lua + %1\Airbase.lua              							Moose.lua
 COPY /b Moose.lua + %1\Database.lua              							Moose.lua
 COPY /b Moose.lua + %1\Set.lua                   							Moose.lua
 COPY /b Moose.lua + %1\Point.lua                 							Moose.lua
@@ -74,9 +73,9 @@ COPY /b Moose.lua + %1\Movement.lua              							Moose.lua
 COPY /b Moose.lua + %1\Sead.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Escort.lua                							Moose.lua
 COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
-COPY /b Moose.lua + %1\PatrolZone.lua            							Moose.lua
 COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
-COPY /b Moose.lua + %1\AirbasePolice.lua           							Moose.lua
+COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
+COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 

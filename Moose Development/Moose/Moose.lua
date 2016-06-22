@@ -39,6 +39,7 @@ Include.File( "MissileTrainer" )
 Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
+Include.File( "Detection" )
 
 -- The order of the declarations is important here. Don't touch it.
 
