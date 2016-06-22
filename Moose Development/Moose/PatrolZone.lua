@@ -161,10 +161,9 @@ function PATROLZONE:NewPatrolRoute()
       --- Define Speed and Altitude.
       local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      self:T2( ToPatrolZoneSpeed )
       
       --- Obtain a 3D @{Point} from the 2D point + altitude.
-      self:T2( ToPatrolZoneVec2.x )
-      self:T2( ToPatrolZoneVec2.y )
       local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
       
       --- Create a route point of type air.
@@ -189,6 +188,7 @@ function PATROLZONE:NewPatrolRoute()
     --- Define Speed and Altitude.
     local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
     
     --- Obtain a 3D @{Point} from the 2D point + altitude.
     local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )

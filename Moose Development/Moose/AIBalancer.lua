@@ -218,7 +218,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
               self.PatrolZone.PatrolFloorAltitude,
               self.PatrolZone.PatrolCeilingAltitude,
               self.PatrolZone.PatrolMinSpeed,
-              self.PatrolPatrolMaxSpeed
+              self.PatrolZone.PatrolMaxSpeed
             )
             
             if self.PatrolZone.PatrolManageFuel == true then

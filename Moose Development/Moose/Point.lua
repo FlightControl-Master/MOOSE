@@ -123,6 +123,7 @@ end
 -- @param #boolean SpeedLocked true means the speed is locked.
 -- @return #table The route point.
 function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
+  self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
   RoutePoint.x = self.PointVec3.x
@@ -133,16 +134,8 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   RoutePoint.type = Type
   RoutePoint.action = Action
 
-  RoutePoint.speed = Speed
+  RoutePoint.speed = Speed / 3.6
   RoutePoint.speed_locked = true
-
-  RoutePoint.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
   
 --  ["task"] = 
 --  {

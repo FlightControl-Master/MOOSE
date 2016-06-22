@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160622_0930' ) 
+env.info( 'Moose Generation Timestamp: 20160622_1015' ) 
 local base = _G
 
 Include = {}
@@ -9086,6 +9086,314 @@ function STATIC:GetDCSUnit()
     
   return nil
 end
+--- This module contains the AIRBASE classes.
+-- 
+-- ===
+-- 
+-- 1) @{Airbase#AIRBASE} class, extends @{Base#BASE}
+-- =================================================
+-- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
+-- 
+--  * Support all DCS Airbase APIs.
+--  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
+--  
+--  
+-- 1.1) AIRBASE reference methods
+-- ------------------------------ 
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts).
+--  
+-- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
+-- using the DCS Airbase or the DCS AirbaseName.
+-- 
+-- Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+-- The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
+-- If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.
+--  
+-- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
+-- 
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
+-- 
+-- 1.2) DCS AIRBASE APIs
+-- ---------------------
+-- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
+-- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSAirbase#Airbase.getName}()
+-- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
+-- 
+-- More functions will be added
+-- ----------------------------
+-- During the MOOSE development, more functions will be added. 
+-- 
+-- @module Airbase
+-- @author FlightControl
+
+
+
+
+
+--- The AIRBASE class
+-- @type AIRBASE
+-- @extends Base#BASE
+AIRBASE = {
+  ClassName="AIRBASE",
+  CategoryName = { 
+    [Airbase.Category.AIRDROME]   = "Airdrome",
+    [Airbase.Category.HELIPAD]    = "Helipad",
+    [Airbase.Category.SHIP]       = "Ship",
+    },
+  }
+
+-- Registration.
+  
+--- Create a new AIRBASE from DCSAirbase.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase
+-- @param Database#DATABASE Database
+-- @return Airbase#AIRBASE
+function AIRBASE:Register( AirbaseName )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F2( AirbaseName )
+  self.AirbaseName = AirbaseName
+  return self
+end
+
+-- Reference methods.
+
+--- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @return Airbase#AIRBASE self
+function AIRBASE:Find( DCSAirbase )
+
+  local AirbaseName = DCSAirbase:getName()
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+--- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
+-- @param #AIRBASE self
+-- @param #string AirbaseName The Airbase Name.
+-- @return Airbase#AIRBASE self
+function AIRBASE:FindByName( AirbaseName )
+  
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+function AIRBASE:GetDCSAirbase()
+  local DCSAirbase = Airbase.getByName( self.AirbaseName )
+  
+  if DCSAirbase then
+    return DCSAirbase
+  end
+    
+  return nil
+end
+
+--- Returns coalition of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCSCoalitionObject#coalition.side The side of the coalition.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCoalition()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCoalition = DCSAirbase:getCoalition()
+    self:T3( AirbaseCoalition )
+    return AirbaseCoalition
+  end 
+  
+  return nil
+end
+
+--- Returns country of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCScountry#country.id The country identifier.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCountry()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCountry = DCSAirbase:getCountry()
+    self:T3( AirbaseCountry )
+    return AirbaseCountry
+  end 
+  
+  return nil
+end
+ 
+
+--- Returns DCS Airbase object name. 
+-- The function provides access to non-activated units too.
+-- @param Airbase#AIRBASE self
+-- @return #string The name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetName()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseName = self.AirbaseName
+    return AirbaseName
+  end 
+  
+  return nil
+end
+
+
+--- Returns if the airbase is alive.
+-- @param Airbase#AIRBASE self
+-- @return #boolean true if Airbase is alive.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:IsAlive()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseIsAlive = DCSAirbase:isExist()
+    return AirbaseIsAlive
+  end 
+  
+  return false
+end
+
+--- Returns the unit's unique identifier.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.ID Airbase ID
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetID()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseID = DCSAirbase:getID()
+    return AirbaseID
+  end 
+
+  return nil
+end
+
+--- Returns the Airbase's callsign - the localized string.
+-- @param Airbase#AIRBASE self
+-- @return #string The Callsign of the Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCallSign()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCallSign = DCSAirbase:getCallsign()
+    return AirbaseCallSign
+  end
+  
+  return nil
+end
+
+
+
+--- Returns unit descriptor. Descriptor type depends on unit category.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Desc The Airbase descriptor.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetDesc()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseDesc = DCSAirbase:getDesc()
+    return AirbaseDesc
+  end
+  
+  return nil
+end
+
+
+--- Returns the type name of the DCS Airbase.
+-- @param Airbase#AIRBASE self
+-- @return #string The type name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetTypeName()
+  self:F2( self.AirbaseName )
+  
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseTypeName = DCSAirbase:getTypeName()
+    self:T3( AirbaseTypeName )
+    return AirbaseTypeName
+  end
+
+  return nil
+end
+
+
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Airbase within the mission.
+-- @param Airbase#AIRBASE self
+-- @return DCSTypes#Vec2 The 2D point vector of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetPointVec2()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbasePointVec3 = DCSAirbase:getPosition().p
+    
+    local AirbasePointVec2 = {}
+    AirbasePointVec2.x = AirbasePointVec3.x
+    AirbasePointVec2.y = AirbasePointVec3.z
+  
+    self:T3( AirbasePointVec2 )
+    return AirbasePointVec2
+  end
+  
+  return nil
+end
+
+--- Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Category The DCS Airbase Category
+function AIRBASE:GetCategory()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategory = self:GetDesc().category
+    return AirbaseCategory
+  end
+  
+  return nil
+end
+
+
+--- Returns the DCS Airbase category name as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return #string The DCS Airbase Category Name
+function AIRBASE:GetCategoryName()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategoryName = self.CategoryName[ self:GetDesc().category ]
+    return AirbaseCategoryName
+  end
+  
+  return nil
+end
+
+
 --- This module contains the DATABASE class, managing the database of mission objects. 
 -- 
 -- ====
@@ -11862,6 +12170,7 @@ end
 -- @param #boolean SpeedLocked true means the speed is locked.
 -- @return #table The route point.
 function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
+  self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
   RoutePoint.x = self.PointVec3.x
@@ -11872,16 +12181,8 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   RoutePoint.type = Type
   RoutePoint.action = Action
 
-  RoutePoint.speed = Speed
+  RoutePoint.speed = Speed / 3.6
   RoutePoint.speed_locked = true
-
-  RoutePoint.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
   
 --  ["task"] = 
 --  {
@@ -20828,7 +21129,271 @@ function MISSILETRAINER:_TrackMissiles()
 
   return true
 end
---- This module contains the AIBALANCER class.
+--- This module contains the PATROLZONE class.
+-- 
+-- ===
+-- 
+-- 1) @{Patrol#PATROLZONE} class, extends @{Base#BASE}
+-- ===================================================
+-- The @{Patrol#PATROLZONE} class implements the core functions to patrol a @{Zone}.
+-- 
+-- 1.1) PATROLZONE constructor:
+-- ----------------------------
+-- @{PatrolZone#PATROLZONE.New}(): Creates a new PATROLZONE object.
+-- 
+-- 1.2) Modify the PATROLZONE parameters:
+-- --------------------------------------
+-- The following methods are available to modify the parameters of a PATROLZONE object:
+-- 
+--     * @{PatrolZone#PATROLZONE.SetGroup}(): Set the AI Patrol Group.
+--     * @{PatrolZone#PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
+--     * @{PatrolZone#PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+-- 
+-- 1.3) Manage the out of fuel in the PATROLZONE:
+-- ----------------------------------------------
+-- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
+-- Once the time is finished, the old PatrolGroup will return to the base.
+-- Use the method @{PatrolZone#PATROLZONE.ManageFuel}() to have this proces in place.
+-- 
+-- ===
+-- 
+-- @module PatrolZone
+-- @author FlightControl
+
+
+--- PATROLZONE class
+-- @type PATROLZONE
+-- @field Group#GROUP PatrolGroup The @{Group} patrolling.
+-- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @extends Base#BASE
+PATROLZONE = {
+  ClassName = "PATROLZONE",
+}
+
+--- Creates a new PATROLZONE object, taking a @{Group} object as a parameter. The GROUP needs to be alive.
+-- @param #PATROLZONE self
+-- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @return #PATROLZONE self
+-- @usage
+-- -- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- PatrolZone = ZONE:New( 'PatrolZone' )
+-- PatrolGroup = GROUP:FindByName( "Patrol Group" )
+-- PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )
+function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  self.PatrolZone = PatrolZone
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+
+  return self
+end
+
+--- Set the @{Group} to act as the Patroller.
+-- @param #PATROLZONE self
+-- @param Group#GROUP PatrolGroup The @{Group} patrolling.
+-- @return #PATROLZONE self
+function PATROLZONE:SetGroup( PatrolGroup )
+
+  self.PatrolGroup = PatrolGroup
+  self.PatrolGroupTemplateName = PatrolGroup:GetName()
+  self:NewPatrolRoute()
+
+  if not self.PatrolOutOfFuelMonitor then
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
+    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
+  end
+
+  return self  
+end
+
+--- Sets (modifies) the minimum and maximum speed of the patrol.
+-- @param #PATROLZONE self
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @return #PATROLZONE self
+function PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
+  self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
+  
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+end
+
+--- Sets the floor and ceiling altitude of the patrol.
+-- @param #PATROLZONE self
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @return #PATROLZONE self
+function PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
+  self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
+  
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+end
+
+
+
+--- @param Group#GROUP PatrolGroup
+function _NewPatrolRoute( PatrolGroup )
+
+  PatrolGroup:T( "NewPatrolRoute" )
+  local PatrolZone = PatrolGroup:GetState( PatrolGroup, "PatrolZone" ) -- PatrolZone#PATROLZONE
+  PatrolZone:NewPatrolRoute()
+end
+
+--- Defines a new patrol route using the @{PatrolZone} parameters and settings.
+-- @param #PATROLZONE self
+-- @return #PATROLZONE self
+function PATROLZONE:NewPatrolRoute()
+
+  self:F2()
+
+  local PatrolRoute = {}
+  
+  if self.PatrolGroup:IsAlive() then
+    --- Determine if the PatrolGroup is within the PatrolZone. 
+    -- If not, make a waypoint within the to that the PatrolGroup will fly at maximum speed to that point.
+    
+--    --- Calculate the current route point.
+--    local CurrentVec2 = self.PatrolGroup:GetPointVec2()
+--    local CurrentAltitude = self.PatrolGroup:GetUnit(1):GetAltitude()
+--    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+--    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+--        POINT_VEC3.RoutePointAltType.BARO, 
+--        POINT_VEC3.RoutePointType.TurningPoint, 
+--        POINT_VEC3.RoutePointAction.TurningPoint, 
+--        ToPatrolZoneSpeed, 
+--        true 
+--      )
+--    
+--    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    
+    self:T2( PatrolRoute )
+  
+    if self.PatrolGroup:IsNotInZone( self.PatrolZone ) then
+      --- Find a random 2D point in PatrolZone.
+      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
+      self:T2( ToPatrolZoneVec2 )
+      
+      --- Define Speed and Altitude.
+      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      self:T2( ToPatrolZoneSpeed )
+      
+      --- Obtain a 3D @{Point} from the 2D point + altitude.
+      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
+      
+      --- Create a route point of type air.
+      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToPatrolZoneSpeed, 
+        true 
+      )
+
+    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
+
+    end
+    
+    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    
+      --- Find a random 2D point in PatrolZone.
+    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Define Speed and Altitude.
+    local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
+    
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      POINT_VEC3.RoutePointAltType.BARO, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+    
+    --ToTargetPointVec3:SmokeRed()
+
+    PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the PatrolGroup...
+    self.PatrolGroup:WayPointInitialize( PatrolRoute )
+    
+    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroup in a temporary variable ...
+    self.PatrolGroup:SetState( self.PatrolGroup, "PatrolZone", self )
+    self.PatrolGroup:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
+
+    --- NOW ROUTE THE GROUP!
+    self.PatrolGroup:WayPointExecute( 1, 2 )
+  end
+  
+end
+
+--- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
+-- Once the time is finished, the old PatrolGroup will return to the base.
+-- @param #PATROLZONE self
+-- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the PatrolGroup is considered to get out of fuel.
+-- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel PatrolGroup will orbit before returning to the base.
+-- @return #PATROLZONE self
+function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+
+  self.PatrolManageFuel = true
+  self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
+  self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
+  
+  if self.PatrolGroup then
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
+    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
+  end
+  return self
+end
+
+--- @param #PATROLZONE self
+function _MonitorOutOfFuelScheduled( self )
+  self:F2( "_MonitorOutOfFuelScheduled" )
+
+  if self.PatrolGroup and self.PatrolGroup:IsAlive() then
+  
+    local Fuel = self.PatrolGroup:GetUnit(1):GetFuel()
+    if Fuel < self.PatrolFuelTresholdPercentage then
+      local OldPatrolGroup = self.PatrolGroup
+      local PatrolGroupTemplate = self.PatrolGroup:GetTemplate()
+      
+      local OrbitTask = OldPatrolGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+      local TimedOrbitTask = OldPatrolGroup:TaskControlled( OrbitTask, OldPatrolGroup:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
+      OldPatrolGroup:SetTask( TimedOrbitTask, 10 )
+      
+      local NewPatrolGroup = self.SpawnPatrolGroup:Spawn()
+      self.PatrolGroup = NewPatrolGroup
+      self:NewPatrolRoute()
+    end
+  else
+    self.PatrolOutOfFuelMonitor:Stop()
+  end
+end--- This module contains the AIBALANCER class.
 -- 
 -- ===
 -- 
@@ -21048,7 +21613,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
               self.PatrolZone.PatrolFloorAltitude,
               self.PatrolZone.PatrolCeilingAltitude,
               self.PatrolZone.PatrolMinSpeed,
-              self.PatrolPatrolMaxSpeed
+              self.PatrolZone.PatrolMaxSpeed
             )
             
             if self.PatrolZone.PatrolManageFuel == true then
