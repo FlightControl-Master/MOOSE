@@ -52,6 +52,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -203,6 +204,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetBoundingSquare">ZONE_BASE:GetBoundingSquare()</a></td>
+		<td class="summary">
+<p>Get the bounding square the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(PointVec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
@@ -230,6 +243,34 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneName">ZONE_BASE.ZoneName</a></td>
 		<td class="summary">
 <p>Name of the zone.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_BASE.BoundingSquare)">Type <code>ZONE_BASE.BoundingSquare</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).x1">ZONE_BASE.BoundingSquare.x1</a></td>
+		<td class="summary">
+<p>The lower x coordinate (left down)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).x2">ZONE_BASE.BoundingSquare.x2</a></td>
+		<td class="summary">
+<p>The higher x coordinate (right up)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).y1">ZONE_BASE.BoundingSquare.y1</a></td>
+		<td class="summary">
+<p>The lower y coordinate (left down)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).y2">ZONE_BASE.BoundingSquare.y2</a></td>
+		<td class="summary">
+<p>The higher y coordinate (right up)</p>
 </td>
 		</tr>
 	</table>
@@ -262,6 +303,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Flush">ZONE_POLYGON_BASE:Flush()</a></td>
 		<td class="summary">
 <p>Flush polygon coordinates as a table in DCS.log.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetBoundingSquare">ZONE_POLYGON_BASE:GetBoundingSquare()</a></td>
+		<td class="summary">
+<p>Get the bounding square the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomVec2">ZONE_POLYGON_BASE:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -323,7 +376,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomPointVec2">ZONE_RADIUS:GetRandomPointVec2()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2()</a></td>
 		<td class="summary">
 <p>Returns a random location within the zone.</p>
 </td>
@@ -569,6 +622,42 @@ The name of the zone as defined within the mission editor.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).GetBoundingSquare" >
+<strong>ZONE_BASE:GetBoundingSquare()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the bounding square the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_BASE.BoundingSquare)">#ZONE_BASE.BoundingSquare</a>:</em>
+The bounding square.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetRandomVec2" >
+<strong>ZONE_BASE:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The Vec2 coordinates.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).IsPointVec2InZone" >
 <strong>ZONE_BASE:IsPointVec2InZone(PointVec2)</strong>
 </a>
@@ -684,6 +773,68 @@ The smoke color.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(ZONE_BASE.BoundingSquare)" >Type <code>ZONE_BASE.BoundingSquare</code></a></h2>
+				
+<p>The ZONE_BASE.BoundingSquare</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).x1" >
+<strong>ZONE_BASE.BoundingSquare.x1</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The lower x coordinate (left down)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).x2" >
+<strong>ZONE_BASE.BoundingSquare.x2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The higher x coordinate (right up)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).y1" >
+<strong>ZONE_BASE.BoundingSquare.y1</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The lower y coordinate (left down)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).y2" >
+<strong>ZONE_BASE.BoundingSquare.y2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The higher y coordinate (right up)</p>
+
+</dd>
+</dl>
+
 			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
 				
 <p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
@@ -774,6 +925,42 @@ self</p>
 				
 <p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetBoundingSquare" >
+<strong>ZONE_POLYGON_BASE:GetBoundingSquare()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the bounding square the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE.BoundingSquare)">#ZONE<em>POLYGON</em>BASE.BoundingSquare</a>:</em>
+The bounding square.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetRandomVec2" >
+<strong>ZONE_POLYGON_BASE:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The Vec2 coordinate.</p>
 
 </dd>
 </dl>
@@ -882,6 +1069,8 @@ self</p>
 </dd>
 </dl>
 
+			<h2><a id="#(ZONE_POLYGON_BASE.BoundingSquare)" >Type <code>ZONE_POLYGON_BASE.BoundingSquare</code></a></h2>
+			
 			<h2><a id="#(ZONE_POLYGON_BASE.ListVec2)" >Type <code>ZONE_POLYGON_BASE.ListVec2</code></a></h2>
 				
 <p>A points array.</p>
@@ -1011,8 +1200,8 @@ The radius of the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_RADIUS).GetRandomPointVec2" >
-<strong>ZONE_RADIUS:GetRandomPointVec2()</strong>
+<a id="#(ZONE_RADIUS).GetRandomVec2" >
+<strong>ZONE_RADIUS:GetRandomVec2()</strong>
 </a>
 </dt>
 <dd>

@@ -52,6 +52,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li>Point</li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -124,9 +125,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromPointVec2">POINT_VEC2:DistanceFromPointVec2(PointVec2Reference)</a></td>
+		<td class="summary">
+<p>Calculate the distance from a reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromVec2">POINT_VEC2:DistanceFromVec2(Vec2Reference)</a></td>
+		<td class="summary">
+<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).New">POINT_VEC2:New(x, y, LandHeightAdd)</a></td>
 		<td class="summary">
 <p>Create a new POINT_VEC2 object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).PointVec2">POINT_VEC2.PointVec2</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -179,6 +198,30 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).New">POINT_VEC3:New(x, y, z)</a></td>
 		<td class="summary">
 <p>Create a new POINT_VEC3 object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointAction">POINT_VEC3.RoutePointAction</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointAir">POINT_VEC3:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</a></td>
+		<td class="summary">
+<p>Build an air type route point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointAltType">POINT_VEC3.RoutePointAltType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointType">POINT_VEC3.RoutePointType</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -249,6 +292,36 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.FlareColor).Yellow">POINT_VEC3.FlareColor.Yellow</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3.RoutePointAction)">Type <code>POINT_VEC3.RoutePointAction</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.RoutePointAction).TurningPoint">POINT_VEC3.RoutePointAction.TurningPoint</a></td>
+		<td class="summary">
+<p>"Turning Point"</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3.RoutePointAltType)">Type <code>POINT_VEC3.RoutePointAltType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.RoutePointAltType).BARO">POINT_VEC3.RoutePointAltType.BARO</a></td>
+		<td class="summary">
+<p>"BARO"</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POINT_VEC3.RoutePointType)">Type <code>POINT_VEC3.RoutePointType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3.RoutePointType).TurningPoint">POINT_VEC3.RoutePointType.TurningPoint</a></td>
+		<td class="summary">
+<p>"Turning Point"</p>
 </td>
 		</tr>
 	</table>
@@ -340,6 +413,60 @@
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC2).DistanceFromPointVec2" >
+<strong>POINT_VEC2:DistanceFromPointVec2(PointVec2Reference)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate the distance from a reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC2)">#POINT_VEC2</a> PointVec2Reference </em></code>: 
+The reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The distance from the reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).DistanceFromVec2" >
+<strong>POINT_VEC2:DistanceFromVec2(Vec2Reference)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2Reference </em></code>: 
+The reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC2).New" >
 <strong>POINT_VEC2:New(x, y, LandHeightAdd)</strong>
 </a>
@@ -372,6 +499,20 @@ The y coordinate of the Vec3 point, pointing to the Right.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
+<a id="#(POINT_VEC2).PointVec2" >
+<strong>POINT_VEC2.PointVec2</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -584,7 +725,100 @@ The z coordinate of the Vec3 point, pointing to the Right.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a>:</em></p>
+<p><em><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3.RoutePointAction)">#POINT_VEC3.RoutePointAction</a></em>
+<a id="#(POINT_VEC3).RoutePointAction" >
+<strong>POINT_VEC3.RoutePointAction</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).RoutePointAir" >
+<strong>POINT_VEC3:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an air type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.RoutePointAltType)">#POINT_VEC3.RoutePointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.RoutePointType)">#POINT_VEC3.RoutePointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.RoutePointAction)">#POINT_VEC3.RoutePointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean SpeedLocked </em></code>: 
+true means the speed is locked.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3.RoutePointAltType)">#POINT_VEC3.RoutePointAltType</a></em>
+<a id="#(POINT_VEC3).RoutePointAltType" >
+<strong>POINT_VEC3.RoutePointAltType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POINT_VEC3.RoutePointType)">#POINT_VEC3.RoutePointType</a></em>
+<a id="#(POINT_VEC3).RoutePointType" >
+<strong>POINT_VEC3.RoutePointType</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -744,6 +978,63 @@ The z coordinate of the Vec3 point, pointing to the Right.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3.RoutePointAction)" >Type <code>POINT_VEC3.RoutePointAction</code></a></h2>
+				
+<p>RoutePoint Actions</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.RoutePointAction).TurningPoint" >
+<strong>POINT_VEC3.RoutePointAction.TurningPoint</strong>
+</a>
+</dt>
+<dd>
+	
+<p>"Turning Point"</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3.RoutePointAltType)" >Type <code>POINT_VEC3.RoutePointAltType</code></a></h2>
+				
+<p>RoutePoint AltTypes</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.RoutePointAltType).BARO" >
+<strong>POINT_VEC3.RoutePointAltType.BARO</strong>
+</a>
+</dt>
+<dd>
+	
+<p>"BARO"</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(POINT_VEC3.RoutePointType)" >Type <code>POINT_VEC3.RoutePointType</code></a></h2>
+				
+<p>RoutePoint Types</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3.RoutePointType).TurningPoint" >
+<strong>POINT_VEC3.RoutePointType.TurningPoint</strong>
+</a>
+</dt>
+<dd>
+	
+<p>"Turning Point"</p>
 
 </dd>
 </dl>

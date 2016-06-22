@@ -10,6 +10,7 @@ Include.File( "Unit" )
 Include.File( "Zone" )
 Include.File( "Client" )
 Include.File( "Static" )
+Include.File( "Airbase" )
 Include.File( "Database" )
 Include.File( "Set" )
 Include.File( "Point" )
@@ -35,43 +36,10 @@ Include.File( "Movement" )
 Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
+Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
 Include.File( "Detection" )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 -- The order of the declarations is important here. Don't touch it.
 

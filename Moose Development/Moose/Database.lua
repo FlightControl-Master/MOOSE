@@ -1,47 +1,40 @@
---- Manage the mission database. 
+--- This module contains the DATABASE class, managing the database of mission objects. 
 -- 
--- @{#DATABASE} class
--- ==================
+-- ====
+-- 
+-- 1) @{Database#DATABASE} class, extends @{Base#BASE}
+-- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * UNITS
 --  * GROUPS
---  * players
---  * alive players
 --  * CLIENTS
---  * alive CLIENTS
+--  * AIRPORTS
+--  * PLAYERSJOINED
+--  * PLAYERS
 --  
--- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.
+-- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 -- 
 -- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
 -- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 -- 
--- DATABASE iterators:
--- ===================
+-- 1.1) DATABASE iterators
+-- -----------------------
 -- You can iterate the database with the available iterator methods.
 -- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
 -- The following iterator methods are currently available within the DATABASE:
 -- 
 --   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
 --   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayer}: Calls a function for each player it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayerAlive}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayer}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayerJoined}: Calls a function for each joined player it finds within the DATABASE.
 --   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
 --   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
---   
+-- 
+-- ===
+-- 
 -- @module Database
 -- @author FlightControl
-
-
-
-
-
-
-
-
-
-
-
 
 --- DATABASE class
 -- @type DATABASE
@@ -58,9 +51,9 @@ DATABASE = {
   STATICS = {},
   GROUPS = {},
   PLAYERS = {},
-  PLAYERSALIVE = {},
+  PLAYERSJOINED = {},
   CLIENTS = {},
-  CLIENTSALIVE = {},
+  AIRBASES = {},
   NavPoints = {},
 }
 
@@ -105,6 +98,7 @@ function DATABASE:New()
   self:_RegisterClients()
   self:_RegisterStatics()
   self:_RegisterPlayers()
+  self:_RegisterAirbases()
   
   return self
 end
@@ -166,6 +160,33 @@ function DATABASE:FindStatic( StaticName )
   return StaticFound
 end
 
+--- Adds a Airbase based on the Airbase Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddAirbase( DCSAirbaseName )
+
+  if not self.AIRBASES[DCSAirbaseName] then
+    self.AIRBASES[DCSAirbaseName] = AIRBASE:Register( DCSAirbaseName )
+  end
+end
+
+
+--- Deletes a Airbase from the DATABASE based on the Airbase Name.
+-- @param #DATABASE self
+function DATABASE:DeleteAirbase( DCSAirbaseName )
+
+  --self.AIRBASES[DCSAirbaseName] = nil 
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
+end
+
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
@@ -218,9 +239,8 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
-    self.PLAYERS[PlayerName] = PlayerName
-    self.PLAYERSALIVE[PlayerName] = PlayerName
-    self.CLIENTSALIVE[PlayerName] = self:FindClient( UnitName )
+    self.PLAYERS[PlayerName] = UNIT:FindByName( UnitName )
+    self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
 
@@ -230,8 +250,7 @@ function DATABASE:DeletePlayer( PlayerName )
 
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
-    self.PLAYERSALIVE[PlayerName] = nil
-    self.CLIENTSALIVE[PlayerName] = nil
+    self.PLAYERS[PlayerName] = nil
   end
 end
 
@@ -371,6 +390,18 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CountryID
 end
 
+--- Airbase
+
+function DATABASE:GetCoalitionFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCoalition()
+end
+
+function DATABASE:GetCategoryFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCategory()
+end
+
+
+
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
@@ -439,6 +470,7 @@ function DATABASE:_RegisterClients()
   return self
 end
 
+--- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
@@ -453,6 +485,23 @@ function DATABASE:_RegisterStatics()
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
+    end
+  end
+
+  return self
+end
+
+--- @param #DATABASE self
+function DATABASE:_RegisterAirbases()
+
+  local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
+
+      local DCSAirbaseName = DCSAirbase:getName()
+
+      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:AddAirbase( DCSAirbaseName )
     end
   end
 
@@ -497,10 +546,10 @@ end
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if not self.PLAYERSALIVE[PlayerName] then
-      self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if not self.PLAYERS[PlayerName] then
+      self:AddPlayer( Event.IniUnitName, PlayerName )
     end
   end
 end
@@ -512,9 +561,9 @@ end
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if self.PLAYERSALIVE[PlayerName] then
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if self.PLAYERS[PlayerName] then
       self:DeletePlayer( PlayerName )
     end
   end
@@ -526,7 +575,7 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEach( IteratorFunction, arg, Set )
+function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
   
   local function CoRoutine()
@@ -535,19 +584,21 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
         self:T2( Object )
         IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
-        if Count % 10 == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % 100 == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
-    self:T2( { status, res } )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
+    self:T3( { status, res } )
     
     if status == false then
       error( res )
@@ -555,7 +606,9 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
     if res == false then
       return true -- resume next time the loop
     end
-    
+    if FinalizeFunction then
+      FinalizeFunction( unpack( arg ) )
+    end
     return false
   end
 
@@ -569,10 +622,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachUnit( IteratorFunction, ... )
+function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.UNITS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.UNITS )
 
   return self
 end
@@ -590,7 +643,7 @@ function DATABASE:ForEachGroup( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** player, providing the player name and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an player in the database. The function needs to accept the player name.
 -- @return #DATABASE self
@@ -603,14 +656,14 @@ function DATABASE:ForEachPlayer( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayerAlive( IteratorFunction, ... )
+function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERSALIVE )
+  self:ForEach( IteratorFunction, arg, self.PLAYERSJOINED )
   
   return self
 end
@@ -623,18 +676,6 @@ function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
-
-  return self
-end
-
---- Iterate the DATABASE and call an iterator function for each **ALIVE** CLIENT, providing the CLIENT to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachClientAlive( IteratorFunction, ... )
-  self:F2( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.CLIENTSALIVE )
 
   return self
 end
