@@ -5,6 +5,7 @@ Include.File( "Base" )
 Include.File( "Scheduler" )
 Include.File( "Event" )
 Include.File( "Menu" )
+Include.File( "Controllable" )
 Include.File( "Group" )
 Include.File( "Unit" )
 Include.File( "Zone" )
@@ -40,6 +41,7 @@ Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
 Include.File( "Detection" )
+Include.File( "FAC" )
 
 -- The order of the declarations is important here. Don't touch it.
 

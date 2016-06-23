@@ -1,7 +1,7 @@
 --- This module contains the UNIT class.
 -- 
--- 1) @{Unit#UNIT} class, extends @{Base#BASE}
--- ===========================================
+-- 1) @{Unit#UNIT} class, extends @{Controllable#CONTROLLABLE}
+-- ===========================================================
 -- The @{Unit#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
@@ -74,7 +74,7 @@
 
 --- The UNIT class
 -- @type UNIT
--- @extends Base#BASE
+-- @extends Controllable#CONTROLLABLE
 -- @field #UNIT.FlareColor FlareColor
 -- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
@@ -125,7 +125,7 @@ UNIT = {
 -- @return Unit#UNIT
 function UNIT:Register( UnitName )
 
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, CONTROLLABLE:New() )
   self:F2( UnitName )
   self.UnitName = UnitName
   return self
@@ -154,7 +154,10 @@ function UNIT:FindByName( UnitName )
   return UnitFound
 end
 
-function UNIT:GetDCSUnit()
+
+--- @param #UNIT self
+-- @return DCSUnit#Unit
+function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
 
@@ -172,7 +175,7 @@ end
 function UNIT:GetCoalition()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitCoalition = DCSUnit:getCoalition()
@@ -190,7 +193,7 @@ end
 function UNIT:GetCountry()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitCountry = DCSUnit:getCountry()
@@ -210,7 +213,7 @@ end
 function UNIT:GetName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitName = self.UnitName
@@ -228,7 +231,7 @@ end
 function UNIT:IsAlive()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitIsAlive = DCSUnit:isExist()
@@ -245,7 +248,7 @@ end
 function UNIT:IsActive()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   
@@ -263,7 +266,7 @@ end
 function UNIT:IsAboveRunway()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   
@@ -287,7 +290,7 @@ end
 function UNIT:GetPlayerName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   
@@ -308,7 +311,7 @@ end
 function UNIT:GetID()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitID = DCSUnit:getID()
@@ -328,7 +331,7 @@ end
 function UNIT:GetNumber()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitNumber = DCSUnit:getNumber()
@@ -345,7 +348,7 @@ end
 function UNIT:GetGroup()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
@@ -363,7 +366,7 @@ end
 function UNIT:GetCallSign()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitCallSign = DCSUnit:getCallsign()
@@ -380,7 +383,7 @@ end
 function UNIT:GetLife()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitLife = DCSUnit:getLife()
@@ -397,7 +400,7 @@ end
 function UNIT:GetLife0()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitLife0 = DCSUnit:getLife0()
@@ -414,7 +417,7 @@ end
 function UNIT:GetFuel()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitFuel = DCSUnit:getFuel()
@@ -431,7 +434,7 @@ end
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitAmmo = DCSUnit:getAmmo()
@@ -448,7 +451,7 @@ end
 function UNIT:GetSensors()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitSensors = DCSUnit:getSensors()
@@ -472,7 +475,7 @@ end
 function UNIT:GetRadar()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitRadarOn, UnitRadarObject = DCSUnit:getRadar()
@@ -491,7 +494,7 @@ end
 function UNIT:GetDesc()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitDesc = DCSUnit:getDesc()
@@ -511,7 +514,7 @@ end
 function UNIT:GetTypeName()
 	self:F2( self.UnitName )
 	
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitTypeName = DCSUnit:getTypeName()
@@ -533,7 +536,7 @@ end
 function UNIT:GetPrefix()
 	self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
 	
   if DCSUnit then
   	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
@@ -553,7 +556,7 @@ end
 function UNIT:GetPointVec2()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
 	
   if DCSUnit then
   	local UnitPointVec3 = DCSUnit:getPosition().p
@@ -577,7 +580,7 @@ end
 function UNIT:GetPointVec3()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   	local UnitPointVec3 = DCSUnit:getPosition().p
@@ -595,7 +598,7 @@ end
 function UNIT:GetPositionVec3()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitPosition = DCSUnit:getPosition()
@@ -613,7 +616,7 @@ end
 function UNIT:GetVelocity()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitVelocityVec3 = DCSUnit:getVelocity()
@@ -667,7 +670,7 @@ end
 function UNIT:InAir()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitInAir = DCSUnit:inAir()
@@ -685,7 +688,7 @@ end
 function UNIT:GetAltitude()
   self:F2()
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitPointVec3 = DCSUnit:getPoint() --DCSTypes#Vec3
@@ -704,7 +707,7 @@ end
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   	local UnitPos = self:GetPointVec3()
@@ -726,7 +729,7 @@ end
 -- @param Unit#UNIT self
 -- @return #string The DCS Unit Category Name
 function UNIT:GetCategoryName()
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitCategoryName = self.CategoryName[ self:GetDesc().category ]
@@ -740,7 +743,7 @@ end
 -- @param Unit#UNIT self
 -- @return #number The DCS Unit heading
 function UNIT:GetHeading()
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
 
   if DCSUnit then
 

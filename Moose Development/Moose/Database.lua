@@ -239,7 +239,7 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
-    self.PLAYERS[PlayerName] = UNIT:FindByName( UnitName )
+    self.PLAYERS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
