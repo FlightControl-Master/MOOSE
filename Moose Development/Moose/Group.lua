@@ -65,6 +65,7 @@
 --   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{#GROUP.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
@@ -493,10 +494,15 @@ end
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!
 -- @param #GROUP self
+-- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #GROUP
-function GROUP:WayPointInitialize()
+function GROUP:WayPointInitialize( WayPoints )
 
-  self.WayPoints = self:GetTaskRoute()
+  if WayPoints then
+    self.WayPoints = WayPoints
+  else
+    self.WayPoints = self:GetTaskRoute()
+  end
 
   return self
 end
@@ -1050,6 +1056,24 @@ function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
   return CommandSwitchWayPoint
 end
 
+--- Perform stop route command
+-- @param #GROUP self
+-- @param #boolean StopRoute
+-- @return DCSTask#Task
+function GROUP:CommandStopRoute( StopRoute, Index )
+  self:F2( { StopRoute, Index } )
+
+  local CommandStopRoute = {
+    id = 'StopRoute',
+    params = {
+      value = StopRoute,
+    },
+  }
+
+  self:T3( { CommandStopRoute } )
+  return CommandStopRoute
+end
+
 
 -- TASKS FOR AIR GROUPS
 
@@ -1427,7 +1451,7 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   local Point
   if RandomPoint then
-    Point = Zone:GetRandomPointVec2()
+    Point = Zone:GetRandomVec2()
   else
     Point = Zone:GetPointVec2()
   end
@@ -2183,7 +2207,7 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     local ZonePoint
 
     if Randomize then
-      ZonePoint = Zone:GetRandomPointVec2()
+      ZonePoint = Zone:GetRandomVec2()
     else
       ZonePoint = Zone:GetPointVec2()
     end
@@ -2214,6 +2238,125 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   end
 
   return nil
+end
+
+--- (AIR) Return the Group to an @{Airbase#AIRBASE}
+-- A speed can be given in km/h.
+-- A given formation can be given.
+-- @param #GROUP self
+-- @param Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
+-- @param #number Speed (optional) The speed.
+-- @return #string The route
+function GROUP:RouteReturnToAirbase( ReturnAirbase, Speed )
+  self:F2( { ReturnAirbase, Speed } )
+
+-- Example
+--   [4] = 
+--    {
+--        ["alt"] = 45,
+--        ["type"] = "Land",
+--        ["action"] = "Landing",
+--        ["alt_type"] = "BARO",
+--        ["formation_template"] = "",
+--        ["properties"] = 
+--        {
+--            ["vnav"] = 1,
+--            ["scale"] = 0,
+--            ["angle"] = 0,
+--            ["vangle"] = 0,
+--            ["steer"] = 2,
+--        }, -- end of ["properties"]
+--        ["ETA"] = 527.81058817743,
+--        ["airdromeId"] = 12,
+--        ["y"] = 243127.2973737,
+--        ["x"] = -5406.2803440839,
+--        ["name"] = "DictKey_WptName_53",
+--        ["speed"] = 138.88888888889,
+--        ["ETA_locked"] = false,
+--        ["task"] = 
+--        {
+--            ["id"] = "ComboTask",
+--            ["params"] = 
+--            {
+--                ["tasks"] = 
+--                {
+--                }, -- end of ["tasks"]
+--            }, -- end of ["params"]
+--        }, -- end of ["task"]
+--        ["speed_locked"] = true,
+--    }, -- end of [4]
+ 
+
+  local DCSGroup = self:GetDCSGroup()
+
+  if DCSGroup then
+
+    local GroupPoint = self:GetPointVec2()
+    local GroupVelocity = self:GetMaxVelocity()
+
+    local PointFrom = {}
+    PointFrom.x = GroupPoint.x
+    PointFrom.y = GroupPoint.y
+    PointFrom.type = "Turning Point"
+    PointFrom.action = "Turning Point"
+    PointFrom.speed = GroupVelocity
+
+
+    local PointTo = {}
+    local AirbasePoint = ReturnAirbase:GetPointVec2()
+
+    PointTo.x = AirbasePoint.x
+    PointTo.y = AirbasePoint.y
+    PointTo.type = "Land"
+    PointTo.action = "Landing"
+    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
+    self:T(PointTo.airdromeId)
+    --PointTo.alt = 0
+
+    local Points = { PointFrom, PointTo }
+
+    self:T3( Points )
+
+    local Route = { points = Points, }
+
+    return Route
+  end
+
+  return nil
+end
+
+--- @param Group#GROUP self
+function GROUP:Respawn( Template )
+
+  local Vec3 = self:GetPointVec3()
+  --Template.x = Vec3.x
+  --Template.y = Vec3.z
+  Template.x = nil
+  Template.y = nil
+  
+  self:E( #Template.units )
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local GroupUnit = UnitData -- Unit#UNIT
+    self:E( GroupUnit:GetName() )
+    if GroupUnit:IsAlive() then
+      local GroupUnitVec3 = GroupUnit:GetPointVec3()
+      local GroupUnitHeading = GroupUnit:GetHeading()
+      Template.units[UnitID].alt = GroupUnitVec3.y
+      Template.units[UnitID].x = GroupUnitVec3.x
+      Template.units[UnitID].y = GroupUnitVec3.z
+      Template.units[UnitID].heading = GroupUnitHeading
+      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+    end
+  end
+  
+  _DATABASE:Spawn( Template )
+
+end
+
+function GROUP:GetTemplate()
+
+  return _DATABASE.Templates.Groups[self:GetName()].Template
+
 end
 
 -- Commands
@@ -2298,6 +2441,8 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
       end
     end
     return Points
+  else
+    error( "Template not found for Group : " .. GroupName )
   end
 
   return nil

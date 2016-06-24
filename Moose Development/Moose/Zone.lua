@@ -77,6 +77,15 @@ ZONE_BASE = {
   ClassName = "ZONE_BASE",
   }
 
+
+--- The ZONE_BASE.BoundingSquare
+-- @type ZONE_BASE.BoundingSquare
+-- @field DCSTypes#Distance x1 The lower x coordinate (left down)
+-- @field DCSTypes#Distance y1 The lower y coordinate (left down)
+-- @field DCSTypes#Distance x2 The higher x coordinate (right up)
+-- @field DCSTypes#Distance y2 The higher y coordinate (right up)
+
+
 --- ZONE_BASE constructor
 -- @param #ZONE_BASE self
 -- @param #string ZoneName Name of the zone.
@@ -91,7 +100,7 @@ function ZONE_BASE:New( ZoneName )
 end
 
 --- Returns if a location is within the zone.
--- @param #ZONE_RADIUS self
+-- @param #ZONE_BASE self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_BASE:IsPointVec2InZone( PointVec2 )
@@ -101,7 +110,7 @@ function ZONE_BASE:IsPointVec2InZone( PointVec2 )
 end
 
 --- Returns if a point is within the zone.
--- @param #ZONE_RADIUS self
+-- @param #ZONE_BASE self
 -- @param DCSTypes#Vec3 PointVec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_BASE:IsPointVec3InZone( PointVec3 )
@@ -111,6 +120,21 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
 
   return InZone
 end
+
+--- Define a random @{DCSTypes#Vec2} within the zone.
+-- @param #ZONE_BASE self
+-- @return DCSTypes#Vec2 The Vec2 coordinates.
+function ZONE_BASE:GetRandomVec2()
+  return { x = 0, y = 0 }
+end
+
+--- Get the bounding square the zone.
+-- @param #ZONE_BASE self
+-- @return #ZONE_BASE.BoundingSquare The bounding square.
+function ZONE_BASE:GetBoundingSquare()
+  return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
@@ -297,7 +321,7 @@ end
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomPointVec2()
+function ZONE_RADIUS:GetRandomVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
@@ -494,6 +518,55 @@ function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   self:T( { "c = ", c } )
   return c
 end
+
+--- Define a random @{DCSTypes#Vec2} within the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return DCSTypes#Vec2 The Vec2 coordinate.
+function ZONE_POLYGON_BASE:GetRandomVec2()
+  self:F2()
+
+  --- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
+  local Vec2Found = false
+  local Vec2
+  local BS = self:GetBoundingSquare()
+  
+  self:T2( BS )
+  
+  while Vec2Found == false do
+    Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
+    self:T2( Vec2 )
+    if self:IsPointVec2InZone( Vec2 ) then
+      Vec2Found = true
+    end
+  end
+  
+  self:T2( Vec2 )
+
+  return Vec2
+end
+
+--- Get the bounding square the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE.BoundingSquare The bounding square.
+function ZONE_POLYGON_BASE:GetBoundingSquare()
+
+  local x1 = self.Polygon[1].x
+  local y1 = self.Polygon[1].y
+  local x2 = self.Polygon[1].x
+  local y2 = self.Polygon[1].y
+  
+  for i = 2, #self.Polygon do
+    self:T2( { self.Polygon[i], x1, y1, x2, y2 } )
+    x1 = ( x1 > self.Polygon[i].x ) and self.Polygon[i].x or x1
+    x2 = ( x2 < self.Polygon[i].x ) and self.Polygon[i].x or x2
+    y1 = ( y1 > self.Polygon[i].y ) and self.Polygon[i].y or y1
+    y2 = ( y2 < self.Polygon[i].y ) and self.Polygon[i].y or y2
+    
+  end
+
+  return { x1 = x1, y1 = y1, x2 = x2, y2 = y2 }
+end
+
 
 
 

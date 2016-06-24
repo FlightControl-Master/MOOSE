@@ -52,6 +52,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -73,22 +74,22 @@
 	<div id="content">
    <h1>Module <code>Airbase</code></h1>
    
-<p>AIRBASE Class</p>
+<p>This module contains the AIRBASE classes.</p>
 
-<h1><a href="AIRBASE.html">AIRBASE</a> class</h1>
+   
+
+<hr/>
+
+<h1>1) <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>The <a href="AIRBASE.html">AIRBASE</a> class is a wrapper class to handle the DCS Airbase objects:</p>
 
 <ul>
     <li>Support all DCS Airbase APIs.</li>
-</ul>
-
-   
-<ul>
     <li>Enhance with Airbase specific APIs not in the DCS Airbase API set.</li>
 </ul>
 
 
-<h1>AIRBASE reference methods</h1>
+<h2>1.1) AIRBASE reference methods</h2>
 <p>For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
 This is done at the beginning of the mission (when the mission starts).</p>
 
@@ -108,7 +109,7 @@ If the DCS Airbase object does not exist or is nil, the AIRBASE methods will ret
 
 <p>IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).</p>
 
-<h1>DCS AIRBASE APIs</h1>
+<h2>1.2) DCS AIRBASE APIs</h2>
 <p>The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="DCSAirbase.html##(Airbase).getName">DCSAirbase#Airbase.getName</a>()
@@ -157,6 +158,12 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).GetCallSign">AIRBASE:GetCallSign()</a></td>
 		<td class="summary">
 <p>Returns the Airbase's callsign - the localized string.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).GetCategory">AIRBASE:GetCategory()</a></td>
+		<td class="summary">
+<p>Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.</p>
 </td>
 		</tr>
 		<tr>
@@ -357,6 +364,24 @@ The DCS Airbase is not existing or alive.  </p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASE).GetCategory" >
+<strong>AIRBASE:GetCategory()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSAirbase.html##(Airbase.Category)">DCSAirbase#Airbase.Category</a>:</em>
+The DCS Airbase Category</p>
+
 </dd>
 </dl>
 		<dl class="function">

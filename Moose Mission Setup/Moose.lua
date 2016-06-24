@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160615_0641' ) 
+env.info( 'Moose Generation Timestamp: 20160622_1015' ) 
 local base = _G
 
 Include = {}
@@ -3150,8 +3150,8 @@ end
 --
 --  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
--- SCHEDULER timer stop and start
--- ------------------------------
+-- 1.2) SCHEDULER timer stop and start
+-- -----------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
 --  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
@@ -3159,6 +3159,7 @@ end
 --
 -- @module Scheduler
 -- @author FlightControl
+
 
 --- The SCHEDULER class
 -- @type SCHEDULER
@@ -3350,10 +3351,14 @@ local _EVENTCODES = {
 -- @field weapon
 -- @field IniDCSUnit
 -- @field IniDCSUnitName
+-- @field Unit#UNIT           IniUnit
+-- @field #string             IniUnitName
 -- @field IniDCSGroup
 -- @field IniDCSGroupName
 -- @field TgtDCSUnit
 -- @field TgtDCSUnitName
+-- @field Unit#UNIT           TgtUnit
+-- @field #string             TgtUnitName
 -- @field TgtDCSGroup
 -- @field TgtDCSGroupName
 -- @field Weapon
@@ -3775,6 +3780,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSUnit = Event.initiator
       Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
       Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+      Event.IniUnitName = Event.IniDCSUnitName
+      Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
@@ -3785,6 +3792,8 @@ function EVENT:onEvent( Event )
         Event.TgtDCSUnit = Event.target
         Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
         Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtUnitName = Event.TgtDCSUnitName
+        Event.TgtUnit = UNIT:FindByName( Event.TgtDCSUnitName )
         Event.TgtDCSGroupName = ""
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
@@ -4246,6 +4255,7 @@ end
 --   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
 --   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{#GROUP.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
@@ -4674,10 +4684,15 @@ end
 -- Use the method @{Group@GROUP:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the group is RESTARTED!
 -- @param #GROUP self
+-- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #GROUP
-function GROUP:WayPointInitialize()
+function GROUP:WayPointInitialize( WayPoints )
 
-  self.WayPoints = self:GetTaskRoute()
+  if WayPoints then
+    self.WayPoints = WayPoints
+  else
+    self.WayPoints = self:GetTaskRoute()
+  end
 
   return self
 end
@@ -5231,6 +5246,24 @@ function GROUP:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
   return CommandSwitchWayPoint
 end
 
+--- Perform stop route command
+-- @param #GROUP self
+-- @param #boolean StopRoute
+-- @return DCSTask#Task
+function GROUP:CommandStopRoute( StopRoute, Index )
+  self:F2( { StopRoute, Index } )
+
+  local CommandStopRoute = {
+    id = 'StopRoute',
+    params = {
+      value = StopRoute,
+    },
+  }
+
+  self:T3( { CommandStopRoute } )
+  return CommandStopRoute
+end
+
 
 -- TASKS FOR AIR GROUPS
 
@@ -5608,7 +5641,7 @@ function GROUP:TaskLandAtZone( Zone, Duration, RandomPoint )
 
   local Point
   if RandomPoint then
-    Point = Zone:GetRandomPointVec2()
+    Point = Zone:GetRandomVec2()
   else
     Point = Zone:GetPointVec2()
   end
@@ -6364,7 +6397,7 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     local ZonePoint
 
     if Randomize then
-      ZonePoint = Zone:GetRandomPointVec2()
+      ZonePoint = Zone:GetRandomVec2()
     else
       ZonePoint = Zone:GetPointVec2()
     end
@@ -6395,6 +6428,125 @@ function GROUP:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   end
 
   return nil
+end
+
+--- (AIR) Return the Group to an @{Airbase#AIRBASE}
+-- A speed can be given in km/h.
+-- A given formation can be given.
+-- @param #GROUP self
+-- @param Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
+-- @param #number Speed (optional) The speed.
+-- @return #string The route
+function GROUP:RouteReturnToAirbase( ReturnAirbase, Speed )
+  self:F2( { ReturnAirbase, Speed } )
+
+-- Example
+--   [4] = 
+--    {
+--        ["alt"] = 45,
+--        ["type"] = "Land",
+--        ["action"] = "Landing",
+--        ["alt_type"] = "BARO",
+--        ["formation_template"] = "",
+--        ["properties"] = 
+--        {
+--            ["vnav"] = 1,
+--            ["scale"] = 0,
+--            ["angle"] = 0,
+--            ["vangle"] = 0,
+--            ["steer"] = 2,
+--        }, -- end of ["properties"]
+--        ["ETA"] = 527.81058817743,
+--        ["airdromeId"] = 12,
+--        ["y"] = 243127.2973737,
+--        ["x"] = -5406.2803440839,
+--        ["name"] = "DictKey_WptName_53",
+--        ["speed"] = 138.88888888889,
+--        ["ETA_locked"] = false,
+--        ["task"] = 
+--        {
+--            ["id"] = "ComboTask",
+--            ["params"] = 
+--            {
+--                ["tasks"] = 
+--                {
+--                }, -- end of ["tasks"]
+--            }, -- end of ["params"]
+--        }, -- end of ["task"]
+--        ["speed_locked"] = true,
+--    }, -- end of [4]
+ 
+
+  local DCSGroup = self:GetDCSGroup()
+
+  if DCSGroup then
+
+    local GroupPoint = self:GetPointVec2()
+    local GroupVelocity = self:GetMaxVelocity()
+
+    local PointFrom = {}
+    PointFrom.x = GroupPoint.x
+    PointFrom.y = GroupPoint.y
+    PointFrom.type = "Turning Point"
+    PointFrom.action = "Turning Point"
+    PointFrom.speed = GroupVelocity
+
+
+    local PointTo = {}
+    local AirbasePoint = ReturnAirbase:GetPointVec2()
+
+    PointTo.x = AirbasePoint.x
+    PointTo.y = AirbasePoint.y
+    PointTo.type = "Land"
+    PointTo.action = "Landing"
+    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
+    self:T(PointTo.airdromeId)
+    --PointTo.alt = 0
+
+    local Points = { PointFrom, PointTo }
+
+    self:T3( Points )
+
+    local Route = { points = Points, }
+
+    return Route
+  end
+
+  return nil
+end
+
+--- @param Group#GROUP self
+function GROUP:Respawn( Template )
+
+  local Vec3 = self:GetPointVec3()
+  --Template.x = Vec3.x
+  --Template.y = Vec3.z
+  Template.x = nil
+  Template.y = nil
+  
+  self:E( #Template.units )
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local GroupUnit = UnitData -- Unit#UNIT
+    self:E( GroupUnit:GetName() )
+    if GroupUnit:IsAlive() then
+      local GroupUnitVec3 = GroupUnit:GetPointVec3()
+      local GroupUnitHeading = GroupUnit:GetHeading()
+      Template.units[UnitID].alt = GroupUnitVec3.y
+      Template.units[UnitID].x = GroupUnitVec3.x
+      Template.units[UnitID].y = GroupUnitVec3.z
+      Template.units[UnitID].heading = GroupUnitHeading
+      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+    end
+  end
+  
+  _DATABASE:Spawn( Template )
+
+end
+
+function GROUP:GetTemplate()
+
+  return _DATABASE.Templates.Groups[self:GetName()].Template
+
 end
 
 -- Commands
@@ -6479,6 +6631,8 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
       end
     end
     return Points
+  else
+    error( "Template not found for Group : " .. GroupName )
   end
 
   return nil
@@ -7658,6 +7812,29 @@ function UNIT:GetCategoryName()
   return nil
 end
 
+--- Returns the DCS Unit heading.
+-- @param Unit#UNIT self
+-- @return #number The DCS Unit heading
+function UNIT:GetHeading()
+  local DCSUnit = self:GetDCSUnit()
+
+  if DCSUnit then
+
+    local UnitPosition = DCSUnit:getPosition()
+    if UnitPosition then
+      local UnitHeading = math.atan2( UnitPosition.x.z, UnitPosition.x.x )
+      if UnitHeading < 0 then
+        UnitHeading = UnitHeading + 2 * math.pi
+      end
+      self:T2( UnitHeading )
+      return UnitHeading
+    end
+  end
+  
+  return nil
+end
+
+
 --- Signal a flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
@@ -7832,6 +8009,15 @@ ZONE_BASE = {
   ClassName = "ZONE_BASE",
   }
 
+
+--- The ZONE_BASE.BoundingSquare
+-- @type ZONE_BASE.BoundingSquare
+-- @field DCSTypes#Distance x1 The lower x coordinate (left down)
+-- @field DCSTypes#Distance y1 The lower y coordinate (left down)
+-- @field DCSTypes#Distance x2 The higher x coordinate (right up)
+-- @field DCSTypes#Distance y2 The higher y coordinate (right up)
+
+
 --- ZONE_BASE constructor
 -- @param #ZONE_BASE self
 -- @param #string ZoneName Name of the zone.
@@ -7846,7 +8032,7 @@ function ZONE_BASE:New( ZoneName )
 end
 
 --- Returns if a location is within the zone.
--- @param #ZONE_RADIUS self
+-- @param #ZONE_BASE self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_BASE:IsPointVec2InZone( PointVec2 )
@@ -7856,7 +8042,7 @@ function ZONE_BASE:IsPointVec2InZone( PointVec2 )
 end
 
 --- Returns if a point is within the zone.
--- @param #ZONE_RADIUS self
+-- @param #ZONE_BASE self
 -- @param DCSTypes#Vec3 PointVec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_BASE:IsPointVec3InZone( PointVec3 )
@@ -7866,6 +8052,21 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
 
   return InZone
 end
+
+--- Define a random @{DCSTypes#Vec2} within the zone.
+-- @param #ZONE_BASE self
+-- @return DCSTypes#Vec2 The Vec2 coordinates.
+function ZONE_BASE:GetRandomVec2()
+  return { x = 0, y = 0 }
+end
+
+--- Get the bounding square the zone.
+-- @param #ZONE_BASE self
+-- @return #ZONE_BASE.BoundingSquare The bounding square.
+function ZONE_BASE:GetBoundingSquare()
+  return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
@@ -8052,7 +8253,7 @@ end
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomPointVec2()
+function ZONE_RADIUS:GetRandomVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
@@ -8249,6 +8450,55 @@ function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   self:T( { "c = ", c } )
   return c
 end
+
+--- Define a random @{DCSTypes#Vec2} within the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return DCSTypes#Vec2 The Vec2 coordinate.
+function ZONE_POLYGON_BASE:GetRandomVec2()
+  self:F2()
+
+  --- It is a bit tricky to find a random point within a polygon. Right now i am doing it the dirty and inefficient way...
+  local Vec2Found = false
+  local Vec2
+  local BS = self:GetBoundingSquare()
+  
+  self:T2( BS )
+  
+  while Vec2Found == false do
+    Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
+    self:T2( Vec2 )
+    if self:IsPointVec2InZone( Vec2 ) then
+      Vec2Found = true
+    end
+  end
+  
+  self:T2( Vec2 )
+
+  return Vec2
+end
+
+--- Get the bounding square the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE.BoundingSquare The bounding square.
+function ZONE_POLYGON_BASE:GetBoundingSquare()
+
+  local x1 = self.Polygon[1].x
+  local y1 = self.Polygon[1].y
+  local x2 = self.Polygon[1].x
+  local y2 = self.Polygon[1].y
+  
+  for i = 2, #self.Polygon do
+    self:T2( { self.Polygon[i], x1, y1, x2, y2 } )
+    x1 = ( x1 > self.Polygon[i].x ) and self.Polygon[i].x or x1
+    x2 = ( x2 < self.Polygon[i].x ) and self.Polygon[i].x or x2
+    y1 = ( y1 > self.Polygon[i].y ) and self.Polygon[i].y or y1
+    y2 = ( y2 < self.Polygon[i].y ) and self.Polygon[i].y or y2
+    
+  end
+
+  return { x1 = x1, y1 = y1, x2 = x2, y2 = y2 }
+end
+
 
 
 
@@ -8514,7 +8764,6 @@ end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
-  self:E( SchedulerName )
   self:F( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
   if self:IsAlive() then 
@@ -8837,50 +9086,351 @@ function STATIC:GetDCSUnit()
     
   return nil
 end
---- Manage the mission database. 
+--- This module contains the AIRBASE classes.
 -- 
--- @{#DATABASE} class
--- ==================
--- Mission designers can use the DATABASE class to refer to:
+-- ===
 -- 
---  * UNITS
---  * GROUPS
---  * players
---  * alive players
---  * CLIENTS
---  * alive CLIENTS
+-- 1) @{Airbase#AIRBASE} class, extends @{Base#BASE}
+-- =================================================
+-- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
+-- 
+--  * Support all DCS Airbase APIs.
+--  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
 --  
--- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Gruop templates as defined within the Mission Editor.
+--  
+-- 1.1) AIRBASE reference methods
+-- ------------------------------ 
+-- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts).
+--  
+-- The AIRBASE class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
+-- using the DCS Airbase or the DCS AirbaseName.
 -- 
--- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
--- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
+-- Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+-- The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
+-- If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.
+--  
+-- The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:
 -- 
--- DATABASE iterators:
--- ===================
--- You can iterate the database with the available iterator methods.
--- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the DATABASE:
+--  * @{#AIRBASE.Find}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.
+--  * @{#AIRBASE.FindByName}(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 -- 
---   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
---   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayer}: Calls a function for each player it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayerAlive}: Calls a function for each alive player it finds within the DATABASE.
---   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
---   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
---   
--- @module Database
+-- 1.2) DCS AIRBASE APIs
+-- ---------------------
+-- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
+-- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSAirbase#Airbase.getName}()
+-- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
+-- 
+-- More functions will be added
+-- ----------------------------
+-- During the MOOSE development, more functions will be added. 
+-- 
+-- @module Airbase
 -- @author FlightControl
 
 
 
 
 
+--- The AIRBASE class
+-- @type AIRBASE
+-- @extends Base#BASE
+AIRBASE = {
+  ClassName="AIRBASE",
+  CategoryName = { 
+    [Airbase.Category.AIRDROME]   = "Airdrome",
+    [Airbase.Category.HELIPAD]    = "Helipad",
+    [Airbase.Category.SHIP]       = "Ship",
+    },
+  }
+
+-- Registration.
+  
+--- Create a new AIRBASE from DCSAirbase.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase
+-- @param Database#DATABASE Database
+-- @return Airbase#AIRBASE
+function AIRBASE:Register( AirbaseName )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F2( AirbaseName )
+  self.AirbaseName = AirbaseName
+  return self
+end
+
+-- Reference methods.
+
+--- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
+-- @param #AIRBASE self
+-- @param DCSAirbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @return Airbase#AIRBASE self
+function AIRBASE:Find( DCSAirbase )
+
+  local AirbaseName = DCSAirbase:getName()
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+--- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
+-- @param #AIRBASE self
+-- @param #string AirbaseName The Airbase Name.
+-- @return Airbase#AIRBASE self
+function AIRBASE:FindByName( AirbaseName )
+  
+  local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )
+  return AirbaseFound
+end
+
+function AIRBASE:GetDCSAirbase()
+  local DCSAirbase = Airbase.getByName( self.AirbaseName )
+  
+  if DCSAirbase then
+    return DCSAirbase
+  end
+    
+  return nil
+end
+
+--- Returns coalition of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCSCoalitionObject#coalition.side The side of the coalition.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCoalition()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCoalition = DCSAirbase:getCoalition()
+    self:T3( AirbaseCoalition )
+    return AirbaseCoalition
+  end 
+  
+  return nil
+end
+
+--- Returns country of the Airbase.
+-- @param Airbase#AIRBASE self
+-- @return DCScountry#country.id The country identifier.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCountry()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCountry = DCSAirbase:getCountry()
+    self:T3( AirbaseCountry )
+    return AirbaseCountry
+  end 
+  
+  return nil
+end
+ 
+
+--- Returns DCS Airbase object name. 
+-- The function provides access to non-activated units too.
+-- @param Airbase#AIRBASE self
+-- @return #string The name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetName()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseName = self.AirbaseName
+    return AirbaseName
+  end 
+  
+  return nil
+end
+
+
+--- Returns if the airbase is alive.
+-- @param Airbase#AIRBASE self
+-- @return #boolean true if Airbase is alive.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:IsAlive()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseIsAlive = DCSAirbase:isExist()
+    return AirbaseIsAlive
+  end 
+  
+  return false
+end
+
+--- Returns the unit's unique identifier.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.ID Airbase ID
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetID()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseID = DCSAirbase:getID()
+    return AirbaseID
+  end 
+
+  return nil
+end
+
+--- Returns the Airbase's callsign - the localized string.
+-- @param Airbase#AIRBASE self
+-- @return #string The Callsign of the Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetCallSign()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCallSign = DCSAirbase:getCallsign()
+    return AirbaseCallSign
+  end
+  
+  return nil
+end
 
 
 
+--- Returns unit descriptor. Descriptor type depends on unit category.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Desc The Airbase descriptor.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetDesc()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseDesc = DCSAirbase:getDesc()
+    return AirbaseDesc
+  end
+  
+  return nil
+end
 
 
+--- Returns the type name of the DCS Airbase.
+-- @param Airbase#AIRBASE self
+-- @return #string The type name of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetTypeName()
+  self:F2( self.AirbaseName )
+  
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseTypeName = DCSAirbase:getTypeName()
+    self:T3( AirbaseTypeName )
+    return AirbaseTypeName
+  end
 
+  return nil
+end
+
+
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Airbase within the mission.
+-- @param Airbase#AIRBASE self
+-- @return DCSTypes#Vec2 The 2D point vector of the DCS Airbase.
+-- @return #nil The DCS Airbase is not existing or alive.  
+function AIRBASE:GetPointVec2()
+  self:F2( self.AirbaseName )
+
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbasePointVec3 = DCSAirbase:getPosition().p
+    
+    local AirbasePointVec2 = {}
+    AirbasePointVec2.x = AirbasePointVec3.x
+    AirbasePointVec2.y = AirbasePointVec3.z
+  
+    self:T3( AirbasePointVec2 )
+    return AirbasePointVec2
+  end
+  
+  return nil
+end
+
+--- Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return DCSAirbase#Airbase.Category The DCS Airbase Category
+function AIRBASE:GetCategory()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategory = self:GetDesc().category
+    return AirbaseCategory
+  end
+  
+  return nil
+end
+
+
+--- Returns the DCS Airbase category name as defined within the DCS Airbase Descriptor.
+-- @param Airbase#AIRBASE self
+-- @return #string The DCS Airbase Category Name
+function AIRBASE:GetCategoryName()
+  local DCSAirbase = self:GetDCSAirbase()
+  
+  if DCSAirbase then
+    local AirbaseCategoryName = self.CategoryName[ self:GetDesc().category ]
+    return AirbaseCategoryName
+  end
+  
+  return nil
+end
+
+
+--- This module contains the DATABASE class, managing the database of mission objects. 
+-- 
+-- ====
+-- 
+-- 1) @{Database#DATABASE} class, extends @{Base#BASE}
+-- ===================================================
+-- Mission designers can use the DATABASE class to refer to:
+-- 
+--  * UNITS
+--  * GROUPS
+--  * CLIENTS
+--  * AIRPORTS
+--  * PLAYERSJOINED
+--  * PLAYERS
+--  
+-- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
+-- 
+-- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
+-- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
+-- 
+-- 1.1) DATABASE iterators
+-- -----------------------
+-- You can iterate the database with the available iterator methods.
+-- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the DATABASE:
+-- 
+--   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayer}: Calls a function for each alive player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachPlayerJoined}: Calls a function for each joined player it finds within the DATABASE.
+--   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
+--   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
+-- 
+-- ===
+-- 
+-- @module Database
+-- @author FlightControl
 
 --- DATABASE class
 -- @type DATABASE
@@ -8897,9 +9447,9 @@ DATABASE = {
   STATICS = {},
   GROUPS = {},
   PLAYERS = {},
-  PLAYERSALIVE = {},
+  PLAYERSJOINED = {},
   CLIENTS = {},
-  CLIENTSALIVE = {},
+  AIRBASES = {},
   NavPoints = {},
 }
 
@@ -8944,6 +9494,7 @@ function DATABASE:New()
   self:_RegisterClients()
   self:_RegisterStatics()
   self:_RegisterPlayers()
+  self:_RegisterAirbases()
   
   return self
 end
@@ -9005,6 +9556,33 @@ function DATABASE:FindStatic( StaticName )
   return StaticFound
 end
 
+--- Adds a Airbase based on the Airbase Name in the DATABASE.
+-- @param #DATABASE self
+function DATABASE:AddAirbase( DCSAirbaseName )
+
+  if not self.AIRBASES[DCSAirbaseName] then
+    self.AIRBASES[DCSAirbaseName] = AIRBASE:Register( DCSAirbaseName )
+  end
+end
+
+
+--- Deletes a Airbase from the DATABASE based on the Airbase Name.
+-- @param #DATABASE self
+function DATABASE:DeleteAirbase( DCSAirbaseName )
+
+  --self.AIRBASES[DCSAirbaseName] = nil 
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
+end
+
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
@@ -9057,9 +9635,8 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
-    self.PLAYERS[PlayerName] = PlayerName
-    self.PLAYERSALIVE[PlayerName] = PlayerName
-    self.CLIENTSALIVE[PlayerName] = self:FindClient( UnitName )
+    self.PLAYERS[PlayerName] = UNIT:FindByName( UnitName )
+    self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
 
@@ -9069,8 +9646,7 @@ function DATABASE:DeletePlayer( PlayerName )
 
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
-    self.PLAYERSALIVE[PlayerName] = nil
-    self.CLIENTSALIVE[PlayerName] = nil
+    self.PLAYERS[PlayerName] = nil
   end
 end
 
@@ -9210,6 +9786,18 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CountryID
 end
 
+--- Airbase
+
+function DATABASE:GetCoalitionFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCoalition()
+end
+
+function DATABASE:GetCategoryFromAirbase( AirbaseName )
+  return self.AIRBASES[AirbaseName]:GetCategory()
+end
+
+
+
 --- Private method that registers all alive players in the mission.
 -- @param #DATABASE self
 -- @return #DATABASE self
@@ -9278,6 +9866,7 @@ function DATABASE:_RegisterClients()
   return self
 end
 
+--- @param #DATABASE self
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
@@ -9292,6 +9881,23 @@ function DATABASE:_RegisterStatics()
       else
         self:E( { "Static does not exist: ",  DCSStatic } )
       end
+    end
+  end
+
+  return self
+end
+
+--- @param #DATABASE self
+function DATABASE:_RegisterAirbases()
+
+  local CoalitionsData = { AirbasesRed = coalition.getAirbases( coalition.side.RED ), AirbasesBlue = coalition.getAirbases( coalition.side.BLUE ), AirbasesNeutral = coalition.getAirbases( coalition.side.NEUTRAL ) }
+  for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+    for DCSAirbaseId, DCSAirbase in pairs( CoalitionData ) do
+
+      local DCSAirbaseName = DCSAirbase:getName()
+
+      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:AddAirbase( DCSAirbaseName )
     end
   end
 
@@ -9336,10 +9942,10 @@ end
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if not self.PLAYERSALIVE[PlayerName] then
-      self:AddPlayer( Event.IniDCSUnitName, PlayerName )
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if not self.PLAYERS[PlayerName] then
+      self:AddPlayer( Event.IniUnitName, PlayerName )
     end
   end
 end
@@ -9351,9 +9957,9 @@ end
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniDCSUnit then
-    local PlayerName = Event.IniDCSUnit:getPlayerName()
-    if self.PLAYERSALIVE[PlayerName] then
+  if Event.IniUnit then
+    local PlayerName = Event.IniUnit:GetPlayerName()
+    if self.PLAYERS[PlayerName] then
       self:DeletePlayer( PlayerName )
     end
   end
@@ -9365,7 +9971,7 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive player in the database.
 -- @return #DATABASE self
-function DATABASE:ForEach( IteratorFunction, arg, Set )
+function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
   self:F2( arg )
   
   local function CoRoutine()
@@ -9374,19 +9980,21 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
         self:T2( Object )
         IteratorFunction( Object, unpack( arg ) )
         Count = Count + 1
-        if Count % 10 == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % 100 == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
-    self:T2( { status, res } )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
+    self:T3( { status, res } )
     
     if status == false then
       error( res )
@@ -9394,7 +10002,9 @@ function DATABASE:ForEach( IteratorFunction, arg, Set )
     if res == false then
       return true -- resume next time the loop
     end
-    
+    if FinalizeFunction then
+      FinalizeFunction( unpack( arg ) )
+    end
     return false
   end
 
@@ -9408,10 +10018,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachUnit( IteratorFunction, ... )
+function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.UNITS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.UNITS )
 
   return self
 end
@@ -9429,7 +10039,7 @@ function DATABASE:ForEachGroup( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each player, providing the player name and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** player, providing the player name and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called when there is an player in the database. The function needs to accept the player name.
 -- @return #DATABASE self
@@ -9442,14 +10052,14 @@ function DATABASE:ForEachPlayer( IteratorFunction, ... )
 end
 
 
---- Iterate the DATABASE and call an iterator function for each **alive** player, providing the Unit of the player and optional parameters.
+--- Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayerAlive( IteratorFunction, ... )
+function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERSALIVE )
+  self:ForEach( IteratorFunction, arg, self.PLAYERSJOINED )
   
   return self
 end
@@ -9462,18 +10072,6 @@ function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.CLIENTS )
-
-  return self
-end
-
---- Iterate the DATABASE and call an iterator function for each **ALIVE** CLIENT, providing the CLIENT to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachClientAlive( IteratorFunction, ... )
-  self:F2( arg )
-  
-  self:ForEach( IteratorFunction, arg, self.CLIENTSALIVE )
 
   return self
 end
@@ -9558,7 +10156,7 @@ end
 -- ===
 -- 
 -- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
--- ================================================
+-- ==============================================
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
@@ -9569,15 +10167,15 @@ end
 -- ---------------------------------------
 -- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
--- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**.
--- -------------------------------------------------------------------------------------
+-- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- -----------------------------------------------------------------------------
 -- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
 -- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
--- ====================================================
+-- ==================================================
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
@@ -9683,6 +10281,8 @@ end
 --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- 
+-- ===
+-- 
 -- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
 -- ===================================================
 -- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
@@ -9733,8 +10333,47 @@ end
 -- 
 -- ====
 -- 
+-- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
+-- ====================================================
+-- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- 
+--  * Coalitions
+--  
+-- 5.1) SET_AIRBASE construction
+-- -----------------------------
+-- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
+-- 
+--    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
+--   
+-- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- --------------------------------------------
+-- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
+-- 
+-- 5.3) SET_AIRBASE filter criteria 
+-- --------------------------------
+-- You can set filter criteria to define the set of clients within the SET_AIRBASE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_AIRBASE.FilterCoalitions}: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).
+--   
+-- Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:
+-- 
+--   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
+-- 
+-- 5.4) SET_AIRBASE iterators:
+-- ---------------------------
+-- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
+-- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_AIRBASE:
+-- 
+--   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
+-- 
+-- ====
+-- 
 -- @module Set
 -- @author FlightControl
+
 
 --- SET_BASE class
 -- @type SET_BASE
@@ -9751,8 +10390,6 @@ SET_BASE = {
 -- -- Define a new SET_BASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 -- DBObject = SET_BASE:New()
 function SET_BASE:New( Database )
-
-  env.info( tostring( Database ) )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -9834,6 +10471,32 @@ function SET_BASE:_FilterStart()
   return self
 end
 
+--- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+-- @param #SET_BASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Base#BASE The closest object.
+function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestObject = nil
+  local ClosestDistance = nil
+  
+  for ObjectID, ObjectData in pairs( self.Set ) do
+    if NearestObject == nil then
+      NearestObject = ObjectData
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+    else
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+      if Distance < ClosestDistance then
+        NearestObject = ObjectData
+        ClosestDistance = Distance
+      end
+    end
+  end
+  
+  return NearestObject
+end
+
 
 
 ----- Private method that registers all alive players in the mission.
@@ -9880,7 +10543,7 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F2( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -9945,18 +10608,20 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
           IteratorFunction( Object, unpack( arg ) )
         end
         Count = Count + 1
-        if Count % self.YieldInterval == 0 then
-          coroutine.yield( false )
-        end    
+--        if Count % self.YieldInterval == 0 then
+--          coroutine.yield( false )
+--        end    
     end
     return true
   end
   
-  local co = coroutine.create( CoRoutine )
+--  local co = coroutine.create( CoRoutine )
+  local co = CoRoutine
   
   local function Schedule()
   
-    local status, res = coroutine.resume( co )
+--    local status, res = coroutine.resume( co )
+    local status, res = co()
     self:T3( { status, res } )
     
     if status == false then
@@ -9975,7 +10640,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
 end
 
 
------ Interate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** unit, providing the Unit and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -9987,7 +10652,7 @@ end
 --  return self
 --end
 --
------ Interate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
 ---- @return #SET_BASE self
@@ -10000,7 +10665,7 @@ end
 --end
 --
 --
------ Interate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_BASE and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_BASE self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
 ---- @return #SET_BASE self
@@ -10322,7 +10987,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
 end
 
 
------ Interate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
 ---- @return #SET_GROUP self
@@ -10335,7 +11000,7 @@ end
 --end
 --
 --
------ Interate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_GROUP and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
 ---- @return #SET_GROUP self
@@ -10445,17 +11110,35 @@ function SET_UNIT:New()
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) )
 
+  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
+  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
+  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+
   return self
 end
 
 --- Add UNIT(s) to SET_UNIT.
--- @param Set#SET_UNIT self
+-- @param #SET_UNIT self
+-- @param #string AddUnit A single UNIT.
+-- @return #SET_UNIT self
+function SET_UNIT:AddUnit( AddUnit )
+  self:F2( AddUnit:GetName() )
+
+  self:Add( AddUnit:GetName(), AddUnit )
+    
+  return self
+end
+
+
+--- Add UNIT(s) to SET_UNIT.
+-- @param #SET_UNIT self
 -- @param #string AddUnitNames A single name or an array of UNIT names.
--- @return self
+-- @return #SET_UNIT self
 function SET_UNIT:AddUnitsByName( AddUnitNames )
 
   local AddUnitNamesArray = ( type( AddUnitNames ) == "table" ) and AddUnitNames or { AddUnitNames }
   
+  self:T( AddUnitNamesArray )
   for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
     self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
   end
@@ -10626,10 +11309,11 @@ end
 function SET_UNIT:FindInDatabase( Event )
   self:F3( { Event } )
 
+  self:E( { Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName] } )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+--- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #SET_UNIT self
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
 -- @return #SET_UNIT self
@@ -10687,7 +11371,7 @@ end
 
 
 
------ Interate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
 ---- @return #SET_UNIT self
@@ -10700,7 +11384,7 @@ end
 --end
 --
 --
------ Interate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
+----- Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
 ---- @param #SET_UNIT self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
 ---- @return #SET_UNIT self
@@ -11002,7 +11686,7 @@ function SET_CLIENT:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Interate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+--- Iterate the SET_CLIENT and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
 -- @param #SET_CLIENT self
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
@@ -11138,6 +11822,229 @@ function SET_CLIENT:IsIncludeObject( MClient )
   return MClientInclude
 end
 
+--- SET_AIRBASE
+
+--- SET_AIRBASE class
+-- @type SET_AIRBASE
+-- @extends Set#SET_BASE
+SET_AIRBASE = {
+  ClassName = "SET_AIRBASE",
+  Airbases = {},
+  Filter = {
+    Coalitions = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      airdrome = Airbase.Category.AIRDROME,
+      helipad = Airbase.Category.HELIPAD,
+      ship = Airbase.Category.SHIP,
+    },
+  },
+}
+
+
+--- Creates a new SET_AIRBASE object, building a set of airbases belonging to a coalitions and categories.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+-- @usage
+-- -- Define a new SET_AIRBASE Object. The DatabaseSet will contain a reference to all Airbases.
+-- DatabaseSet = SET_AIRBASE:New()
+function SET_AIRBASE:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.AIRBASES ) )
+
+  return self
+end
+
+--- Add AIRBASEs to SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
+
+  local AddAirbaseNamesArray = ( type( AddAirbaseNames ) == "table" ) and AddAirbaseNames or { AddAirbaseNames }
+  
+  for AddAirbaseID, AddAirbaseName in pairs( AddAirbaseNamesArray ) do
+    self:Add( AddAirbaseName, AIRBASE:FindByName( AddAirbaseName ) )
+  end
+    
+  return self
+end
+
+--- Remove AIRBASEs from SET_AIRBASE.
+-- @param Set#SET_AIRBASE self
+-- @param Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
+-- @return self
+function SET_AIRBASE:RemoveAirbasesByName( RemoveAirbaseNames )
+
+  local RemoveAirbaseNamesArray = ( type( RemoveAirbaseNames ) == "table" ) and RemoveAirbaseNames or { RemoveAirbaseNames }
+  
+  for RemoveAirbaseID, RemoveAirbaseName in pairs( RemoveAirbaseNamesArray ) do
+    self:Remove( RemoveAirbaseName.AirbaseName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Airbase based on the Airbase Name.
+-- @param #SET_AIRBASE self
+-- @param #string AirbaseName
+-- @return Airbase#AIRBASE The found Airbase.
+function SET_AIRBASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.Set[AirbaseName]
+  return AirbaseFound
+end
+
+
+
+--- Builds a set of airbases of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_AIRBASE self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+
+--- Builds a set of airbases out of categories.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET_AIRBASE self
+-- @param #string Categories Can take the following values: "airdrome", "helipad", "ship".
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+--- Starts the filtering.
+-- @param #SET_AIRBASE self
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+  
+  return self
+end
+
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_AIRBASE self
+-- @param Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_AIRBASE:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_AIRBASE and call an interator function for each AIRBASE, providing the AIRBASE and optional parameters.
+-- @param #SET_AIRBASE self
+-- @param #function IteratorFunction The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+-- @param #SET_AIRBASE self
+-- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
+-- @return Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestAirbase = self:FindNearestObjectFromPointVec2( PointVec2 )
+  return NearestAirbase
+end
+
+
+
+---
+-- @param #SET_AIRBASE self
+-- @param Airbase#AIRBASE MAirbase
+-- @return #SET_AIRBASE self
+function SET_AIRBASE:IsIncludeObject( MAirbase )
+  self:F2( MAirbase )
+
+  local MAirbaseInclude = true
+
+  if MAirbase then
+    local MAirbaseName = MAirbase:GetName()
+  
+    if self.Filter.Coalitions then
+      local MAirbaseCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local AirbaseCoalitionID = _DATABASE:GetCoalitionFromAirbase( MAirbaseName )
+        self:T3( { "Coalition:", AirbaseCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == AirbaseCoalitionID then
+          MAirbaseCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MAirbaseCoalition } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MAirbaseCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase( MAirbaseName )
+        self:T3( { "Category:", AirbaseCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == AirbaseCategoryID then
+          MAirbaseCategory = true
+        end
+      end
+      self:T( { "Evaluated Category", MAirbaseCategory } )
+      MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
+    end
+  end
+   
+  self:T2( MAirbaseInclude )
+  return MAirbaseInclude
+end
 --- This module contains the POINT classes.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
@@ -11170,6 +12077,9 @@ end
 -- @extends Base#BASE
 -- @field #POINT_VEC3.SmokeColor SmokeColor
 -- @field #POINT_VEC3.FlareColor FlareColor
+-- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
+-- @field #POINT_VEC3.RoutePointType RoutePointType
+-- @field #POINT_VEC3.RoutePointAction RoutePointAction
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   SmokeColor = {
@@ -11178,14 +12088,24 @@ POINT_VEC3 = {
     White = trigger.smokeColor.White,
     Orange = trigger.smokeColor.Orange,
     Blue = trigger.smokeColor.Blue
-    },
+  },
   FlareColor = {
     Green = trigger.flareColor.Green,
     Red = trigger.flareColor.Red,
     White = trigger.flareColor.White,
     Yellow = trigger.flareColor.Yellow
-    },
-  }
+  },
+  RoutePointAltType = {
+    BARO = "BARO",
+  },
+  RoutePointType = {
+    TurningPoint = "Turning Point",
+  },
+  RoutePointAction = {
+    TurningPoint = "Turning Point",
+  },
+}
+
 
 --- SmokeColor
 -- @type POINT_VEC3.SmokeColor
@@ -11195,12 +12115,34 @@ POINT_VEC3 = {
 -- @field Orange
 -- @field Blue
 
+
+
 --- FlareColor
 -- @type POINT_VEC3.FlareColor
 -- @field Green
 -- @field Red
 -- @field White
 -- @field Yellow
+
+
+
+--- RoutePoint AltTypes
+-- @type POINT_VEC3.RoutePointAltType
+-- @field BARO "BARO"
+
+
+
+--- RoutePoint Types
+-- @type POINT_VEC3.RoutePointType
+-- @field TurningPoint "Turning Point"
+
+
+
+--- RoutePoint Actions
+-- @type POINT_VEC3.RoutePointAction
+-- @field TurningPoint "Turning Point"
+
+
 
 -- Constructor.
   
@@ -11209,14 +12151,60 @@ POINT_VEC3 = {
 -- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
 -- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing Upwards.
 -- @param DCSTypes#Distance z The z coordinate of the Vec3 point, pointing to the Right.
--- @return Point#POINT_VEC3
+-- @return Point#POINT_VEC3 self
 function POINT_VEC3:New( x, y, z )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2( { x, y, z } )
   self.PointVec3 = { x = x, y = y, z = z }
+  self:F2( self.PointVec3 )
   return self
 end
+
+
+--- Build an air type route point.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3.RoutePointAltType AltType The altitude type.
+-- @param #POINT_VEC3.RoutePointType Type The route point type.
+-- @param #POINT_VEC3.RoutePointAction Action The route point action.
+-- @param DCSTypes#Speed Speed Airspeed in km/h.
+-- @param #boolean SpeedLocked true means the speed is locked.
+-- @return #table The route point.
+function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
+  self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
+
+  local RoutePoint = {}
+  RoutePoint.x = self.PointVec3.x
+  RoutePoint.y = self.PointVec3.z
+  RoutePoint.alt = self.PointVec3.y
+  RoutePoint.alt_type = AltType
+  
+  RoutePoint.type = Type
+  RoutePoint.action = Action
+
+  RoutePoint.speed = Speed / 3.6
+  RoutePoint.speed_locked = true
+  
+--  ["task"] = 
+--  {
+--      ["id"] = "ComboTask",
+--      ["params"] = 
+--      {
+--          ["tasks"] = 
+--          {
+--          }, -- end of ["tasks"]
+--      }, -- end of ["params"]
+--  }, -- end of ["task"]
+
+
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = {}
+  
+  
+  return RoutePoint
+end
+
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
@@ -11304,6 +12292,7 @@ end
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
+-- @field DCSTypes#Vec2 PointVec2
 -- @extends Point#POINT_VEC3
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
@@ -11324,8 +12313,36 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
   self:F2( { x, y, LandHeightAdd } )
+  
+  self.PointVec2 = { x = x, y = y }
 
   return self
+end
+
+--- Calculate the distance from a reference @{Point#POINT_VEC2}.
+-- @param #POINT_VEC2 self
+-- @param #POINT_VEC2 PointVec2Reference The reference @{Point#POINT_VEC2}.
+-- @return DCSTypes#Distance The distance from the reference @{Point#POINT_VEC2} in meters.
+function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
+  self:F2( PointVec2Reference )
+  
+  local Distance = ( ( PointVec2Reference.PointVec2.x - self.PointVec2.x ) ^ 2 + ( PointVec2Reference.PointVec2.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
+end
+
+--- Calculate the distance from a reference @{DCSTypes#Vec2}.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+-- @return DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
+function POINT_VEC2:DistanceFromVec2( Vec2Reference )
+  self:F2( Vec2Reference )
+  
+  local Distance = ( ( Vec2Reference.x - self.PointVec2.x ) ^ 2 + ( Vec2Reference.y - self.PointVec2.y ) ^2 ) ^0.5
+  
+  self:T2( Distance )
+  return Distance
 end
 
 
@@ -11341,6 +12358,7 @@ Include.File( "Unit" )
 Include.File( "Zone" )
 Include.File( "Client" )
 Include.File( "Static" )
+Include.File( "Airbase" )
 Include.File( "Database" )
 Include.File( "Set" )
 Include.File( "Point" )
@@ -11366,42 +12384,10 @@ Include.File( "Movement" )
 Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
+Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Include.File( "Detection" )
 
 -- The order of the declarations is important here. Don't touch it.
 
@@ -17262,7 +18248,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         local ZonePoint 
         
         if ZoneRandomize == true then
-          ZonePoint = Zone:GetRandomPointVec2()
+          ZonePoint = Zone:GetRandomVec2()
         else
           ZonePoint = Zone:GetPointVec2()
         end
@@ -17272,7 +18258,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         
         -- Apply SpawnFormation
         for UnitID = 1, #SpawnTemplate.units do
-          local ZonePointUnit = Zone:GetRandomPointVec2()
+          local ZonePointUnit = Zone:GetRandomVec2()
           SpawnTemplate.units[UnitID].x = ZonePointUnit.x
           SpawnTemplate.units[UnitID].y = ZonePointUnit.y
           self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
@@ -19445,10 +20431,12 @@ function ESCORT:_ReportTargetsScheduler()
   
   return false
 end
---- Provides missile training functions.
+--- This module contains the MISSILETRAINER class.
+-- 
+-- ===
 --
--- @{#MISSILETRAINER} class
--- ========================
+-- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
+-- ===============================================================
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
 -- It suports the following functionality:
@@ -19490,16 +20478,16 @@ end
 --     * **200 meter**: Destroys the missile when the distance to the aircraft is below or equal to 200 meter.
 --   
 --
--- MISSILETRAINER construction methods:
--- ====================================
+-- 1.1) MISSILETRAINER construction methods:
+-- -----------------------------------------
 -- Create a new MISSILETRAINER object with the @{#MISSILETRAINER.New} method:
 --
 --   * @{#MISSILETRAINER.New}: Creates a new MISSILETRAINER object taking the maximum distance to your aircraft to evaluate when a missile needs to be destroyed.
 --
 -- MISSILETRAINER will collect each unit declared in the mission with a skill level "Client" and "Player", and will monitor the missiles shot at those.
 --
--- MISSILETRAINER initialization methods:
--- ======================================
+-- 1.2) MISSILETRAINER initialization methods:
+-- -------------------------------------------
 -- A MISSILETRAINER object will behave differently based on the usage of initialization methods:
 --
 --  * @{#MISSILETRAINER.InitMessagesOnOff}: Sets by default the display of any message to be ON or OFF.
@@ -19513,6 +20501,15 @@ end
 --  * @{#MISSILETRAINER.InitBearingOnOff}: Sets by default the display of bearing information of missiles ON of OFF.
 --  * @{#MISSILETRAINER.InitMenusOnOff}: Allows to configure the options through the radio menu.
 --
+-- ===
+-- 
+-- CREDITS
+-- =======
+-- **Stuka (Danny)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with Danny has resulted in the MISSILETRAINER class. 
+-- Danny has shared his ideas and together we made a design. 
+-- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
+-- 
 -- @module MissileTrainer
 -- @author FlightControl
 
@@ -20132,7 +21129,271 @@ function MISSILETRAINER:_TrackMissiles()
 
   return true
 end
---- This module contains the AIBALANCER class.
+--- This module contains the PATROLZONE class.
+-- 
+-- ===
+-- 
+-- 1) @{Patrol#PATROLZONE} class, extends @{Base#BASE}
+-- ===================================================
+-- The @{Patrol#PATROLZONE} class implements the core functions to patrol a @{Zone}.
+-- 
+-- 1.1) PATROLZONE constructor:
+-- ----------------------------
+-- @{PatrolZone#PATROLZONE.New}(): Creates a new PATROLZONE object.
+-- 
+-- 1.2) Modify the PATROLZONE parameters:
+-- --------------------------------------
+-- The following methods are available to modify the parameters of a PATROLZONE object:
+-- 
+--     * @{PatrolZone#PATROLZONE.SetGroup}(): Set the AI Patrol Group.
+--     * @{PatrolZone#PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
+--     * @{PatrolZone#PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+-- 
+-- 1.3) Manage the out of fuel in the PATROLZONE:
+-- ----------------------------------------------
+-- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
+-- Once the time is finished, the old PatrolGroup will return to the base.
+-- Use the method @{PatrolZone#PATROLZONE.ManageFuel}() to have this proces in place.
+-- 
+-- ===
+-- 
+-- @module PatrolZone
+-- @author FlightControl
+
+
+--- PATROLZONE class
+-- @type PATROLZONE
+-- @field Group#GROUP PatrolGroup The @{Group} patrolling.
+-- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @extends Base#BASE
+PATROLZONE = {
+  ClassName = "PATROLZONE",
+}
+
+--- Creates a new PATROLZONE object, taking a @{Group} object as a parameter. The GROUP needs to be alive.
+-- @param #PATROLZONE self
+-- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @return #PATROLZONE self
+-- @usage
+-- -- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- PatrolZone = ZONE:New( 'PatrolZone' )
+-- PatrolGroup = GROUP:FindByName( "Patrol Group" )
+-- PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )
+function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  self.PatrolZone = PatrolZone
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+
+  return self
+end
+
+--- Set the @{Group} to act as the Patroller.
+-- @param #PATROLZONE self
+-- @param Group#GROUP PatrolGroup The @{Group} patrolling.
+-- @return #PATROLZONE self
+function PATROLZONE:SetGroup( PatrolGroup )
+
+  self.PatrolGroup = PatrolGroup
+  self.PatrolGroupTemplateName = PatrolGroup:GetName()
+  self:NewPatrolRoute()
+
+  if not self.PatrolOutOfFuelMonitor then
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
+    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
+  end
+
+  return self  
+end
+
+--- Sets (modifies) the minimum and maximum speed of the patrol.
+-- @param #PATROLZONE self
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @return #PATROLZONE self
+function PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
+  self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
+  
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+end
+
+--- Sets the floor and ceiling altitude of the patrol.
+-- @param #PATROLZONE self
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @return #PATROLZONE self
+function PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
+  self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
+  
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+end
+
+
+
+--- @param Group#GROUP PatrolGroup
+function _NewPatrolRoute( PatrolGroup )
+
+  PatrolGroup:T( "NewPatrolRoute" )
+  local PatrolZone = PatrolGroup:GetState( PatrolGroup, "PatrolZone" ) -- PatrolZone#PATROLZONE
+  PatrolZone:NewPatrolRoute()
+end
+
+--- Defines a new patrol route using the @{PatrolZone} parameters and settings.
+-- @param #PATROLZONE self
+-- @return #PATROLZONE self
+function PATROLZONE:NewPatrolRoute()
+
+  self:F2()
+
+  local PatrolRoute = {}
+  
+  if self.PatrolGroup:IsAlive() then
+    --- Determine if the PatrolGroup is within the PatrolZone. 
+    -- If not, make a waypoint within the to that the PatrolGroup will fly at maximum speed to that point.
+    
+--    --- Calculate the current route point.
+--    local CurrentVec2 = self.PatrolGroup:GetPointVec2()
+--    local CurrentAltitude = self.PatrolGroup:GetUnit(1):GetAltitude()
+--    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+--    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+--        POINT_VEC3.RoutePointAltType.BARO, 
+--        POINT_VEC3.RoutePointType.TurningPoint, 
+--        POINT_VEC3.RoutePointAction.TurningPoint, 
+--        ToPatrolZoneSpeed, 
+--        true 
+--      )
+--    
+--    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    
+    self:T2( PatrolRoute )
+  
+    if self.PatrolGroup:IsNotInZone( self.PatrolZone ) then
+      --- Find a random 2D point in PatrolZone.
+      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
+      self:T2( ToPatrolZoneVec2 )
+      
+      --- Define Speed and Altitude.
+      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      self:T2( ToPatrolZoneSpeed )
+      
+      --- Obtain a 3D @{Point} from the 2D point + altitude.
+      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
+      
+      --- Create a route point of type air.
+      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToPatrolZoneSpeed, 
+        true 
+      )
+
+    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
+
+    end
+    
+    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    
+      --- Find a random 2D point in PatrolZone.
+    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Define Speed and Altitude.
+    local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
+    
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      POINT_VEC3.RoutePointAltType.BARO, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+    
+    --ToTargetPointVec3:SmokeRed()
+
+    PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the PatrolGroup...
+    self.PatrolGroup:WayPointInitialize( PatrolRoute )
+    
+    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroup in a temporary variable ...
+    self.PatrolGroup:SetState( self.PatrolGroup, "PatrolZone", self )
+    self.PatrolGroup:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
+
+    --- NOW ROUTE THE GROUP!
+    self.PatrolGroup:WayPointExecute( 1, 2 )
+  end
+  
+end
+
+--- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
+-- Once the time is finished, the old PatrolGroup will return to the base.
+-- @param #PATROLZONE self
+-- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the PatrolGroup is considered to get out of fuel.
+-- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel PatrolGroup will orbit before returning to the base.
+-- @return #PATROLZONE self
+function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+
+  self.PatrolManageFuel = true
+  self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
+  self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
+  
+  if self.PatrolGroup then
+    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
+    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
+  end
+  return self
+end
+
+--- @param #PATROLZONE self
+function _MonitorOutOfFuelScheduled( self )
+  self:F2( "_MonitorOutOfFuelScheduled" )
+
+  if self.PatrolGroup and self.PatrolGroup:IsAlive() then
+  
+    local Fuel = self.PatrolGroup:GetUnit(1):GetFuel()
+    if Fuel < self.PatrolFuelTresholdPercentage then
+      local OldPatrolGroup = self.PatrolGroup
+      local PatrolGroupTemplate = self.PatrolGroup:GetTemplate()
+      
+      local OrbitTask = OldPatrolGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+      local TimedOrbitTask = OldPatrolGroup:TaskControlled( OrbitTask, OldPatrolGroup:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
+      OldPatrolGroup:SetTask( TimedOrbitTask, 10 )
+      
+      local NewPatrolGroup = self.SpawnPatrolGroup:Spawn()
+      self.PatrolGroup = NewPatrolGroup
+      self:NewPatrolRoute()
+    end
+  else
+    self.PatrolOutOfFuelMonitor:Stop()
+  end
+end--- This module contains the AIBALANCER class.
 -- 
 -- ===
 -- 
@@ -20147,8 +21408,30 @@ end
 -- 
 --    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
 -- 
+-- 1.2) AIBALANCER returns AI to Airbases:
+-- ---------------------------------------
+-- You can configure to have the AI to return to:
 -- 
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- 
+-- 1.3) AIBALANCER allows AI to patrol specific zones:
+-- ---------------------------------------------------
+-- Use @{AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
+-- 
+--
 -- ===
+-- 
+-- CREDITS
+-- =======
+-- **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.
+-- Working together with James has resulted in the creation of the AIBALANCER class. 
+-- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
+-- **SNAFU**
+-- Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
+-- None of the script code has been used however within the new AIBALANCER moose class.
+-- 
 -- @module AIBalancer
 -- @author FlightControl
 
@@ -20156,9 +21439,16 @@ end
 -- @type AIBALANCER
 -- @field Set#SET_CLIENT SetClient
 -- @field Spawn#SPAWN SpawnAI
+-- @field #boolean ToNearestAirbase
+-- @field Set#SET_AIRBASE ReturnAirbaseSet
+-- @field DCSTypes#Distance ReturnTresholdRange
+-- @field #boolean ToHomeAirbase
+-- @field PatrolZone#PATROLZONE PatrolZone
 -- @extends Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
+  PatrolZones = {},
+  AIGroups = {},
 }
 
 --- Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -20172,11 +21462,62 @@ function AIBALANCER:New( SetClient, SpawnAI )
   local self = BASE:Inherit( self, BASE:New() )
   
   self.SetClient = SetClient
-  self.SpawnAI = SpawnAI
+  if type( SpawnAI ) == "table" then
+    if SpawnAI.ClassName and SpawnAI.ClassName == "SPAWN" then
+      self.SpawnAI = { SpawnAI }
+    else
+      local SpawnObjects = true
+      for SpawnObjectID, SpawnObject in pairs( SpawnAI ) do
+        if SpawnObject.ClassName and SpawnObject.ClassName == "SPAWN" then
+          self:E( SpawnObject.ClassName )
+        else
+          self:E( "other object" )
+          SpawnObjects = false
+        end
+      end
+      if SpawnObjects == true then
+        self.SpawnAI = SpawnAI
+      else
+        error( "No SPAWN object given in parameter SpawnAI, either as a single object or as a table of objects!" )
+      end
+    end
+  end
+
+  self.ToNearestAirbase = false
+  self.ReturnHomeAirbase = false
 
   self.AIMonitorSchedule = SCHEDULER:New( self, self._ClientAliveMonitorScheduler, {}, 1, 10, 0 ) 
   
   return self
+end
+
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+
+  self.ToNearestAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnAirbaseSet = ReturnAirbaseSet
+end
+
+--- Returns the AI to the home @{Airbase#AIRBASE}.
+-- @param #AIBALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+
+  self.ToHomeAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
+end
+
+--- Let the AI patrol a @{Zone} with a given Speed range and Altitude range.
+-- @param #AIBALANCER self
+-- @param PatrolZone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+-- @return PatrolZone#PATROLZONE self
+function AIBALANCER:SetPatrolZone( PatrolZone )
+
+  self.PatrolZone = PatrolZone
 end
 
 --- @param #AIBALANCER self
@@ -20190,13 +21531,100 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
       if Client:IsAlive() then
         if ClientAIAliveState == true then
           Client:SetState( self, 'AIAlive', false )
-          local AIGroup = Client:GetState( self, 'AIGroup' ) -- Group#GROUP
-          AIGroup:Destroy()
+          
+          local AIGroup = self.AIGroups[Client.UnitName] -- Group#GROUP
+          
+--          local PatrolZone = Client:GetState( self, "PatrolZone" )
+--          if PatrolZone then
+--            PatrolZone = nil
+--            Client:ClearState( self, "PatrolZone" )
+--          end
+          
+          if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
+            AIGroup:Destroy()
+          else
+            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
+            -- If there is a CLIENT, the AI stays engaged and will not return.
+            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
+
+            local PlayerInRange = { Value = false }          
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetPointVec2(), self.ReturnTresholdRange )
+            
+            self:E( RangeZone )
+            
+            _DATABASE:ForEachPlayer(
+              --- @param Unit#UNIT RangeTestUnit
+              function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
+                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                if RangeTestUnit:IsInZone( RangeZone ) == true then
+                  self:E( "in zone" )
+                  if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
+                    self:E( "in range" )
+                    PlayerInRange.Value = true
+                  end
+                end
+              end,
+              
+              --- @param Zone#ZONE_RADIUS RangeZone
+              -- @param Group#GROUP AIGroup
+              function( RangeZone, AIGroup, PlayerInRange )
+                local AIGroupTemplate = AIGroup:GetTemplate()
+                if PlayerInRange.Value == false then
+                  if self.ToHomeAirbase == true then
+                    local WayPointCount = #AIGroupTemplate.route.points
+                    local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
+                    AIGroup:SetCommand( SwitchWayPointCommand )
+                    AIGroup:MessageToRed( "Returning to home base ...", 30 )
+                  else
+                    -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
+                    --TODO: i need to rework the POINT_VEC2 thing.
+                    local PointVec2 = POINT_VEC2:New( AIGroup:GetPointVec2().x, AIGroup:GetPointVec2().y  )
+                    local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
+                    self:T( ClosestAirbase.AirbaseName )
+                    AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
+                    local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
+                    AIGroupTemplate.route = RTBRoute
+                    AIGroup:Respawn( AIGroupTemplate )
+                  end
+                end
+              end
+              , RangeZone, AIGroup, PlayerInRange
+            )
+            
+          end
         end
       else
         if not ClientAIAliveState or ClientAIAliveState == false then
           Client:SetState( self, 'AIAlive', true )
-          Client:SetState( self, 'AIGroup', self.SpawnAI:Spawn() )
+          
+          
+          -- OK, spawn a new group from the SpawnAI objects provided.
+          local SpawnAICount = #self.SpawnAI
+          local SpawnAIIndex = math.random( 1, SpawnAICount )
+          local AIGroup = self.SpawnAI[SpawnAIIndex]:Spawn()
+          AIGroup:E( "spawning new AIGroup" )
+          --TODO: need to rework UnitName thing ...
+          self.AIGroups[Client.UnitName] = AIGroup
+          
+          --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
+          if self.PatrolZone then
+            self.PatrolZones[#self.PatrolZones+1] = PATROLZONE:New(
+              self.PatrolZone.PatrolZone,
+              self.PatrolZone.PatrolFloorAltitude,
+              self.PatrolZone.PatrolCeilingAltitude,
+              self.PatrolZone.PatrolMinSpeed,
+              self.PatrolZone.PatrolMaxSpeed
+            )
+            
+            if self.PatrolZone.PatrolManageFuel == true then
+              self.PatrolZones[#self.PatrolZones]:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
+            end 
+            self.PatrolZones[#self.PatrolZones]:SetGroup( AIGroup )
+            
+            --self.PatrolZones[#self.PatrolZones+1] = PatrolZone
+            
+            --Client:SetState( self, "PatrolZone", PatrolZone )
+          end
         end
       end
     end
@@ -20206,6 +21634,1092 @@ end
 
 
 
+--- This module contains the AIRBASEPOLICE classes.
+-- 
+-- ===
+-- 
+-- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
+-- ==================================================================
+-- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
+-- CLIENTS should not be allowed to:
+-- 
+--   * Don't taxi faster than 40 km/h.
+--   * Don't take-off on taxiways.
+--   * Avoid to hit other planes on the airbase.
+--   * Obey ground control orders.
+-- 
+-- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
+-- =============================================================================================
+-- All the airbases on the caucasus map can be monitored using this class.
+-- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
+-- The following names can be given:
+--   * AnapaVityazevo 
+--   * Batumi 
+--   * Beslan 
+--   * Gelendzhik 
+--   * Gudauta 
+--   * Kobuleti 
+--   * KrasnodarCenter 
+--   * KrasnodarPashkovsky 
+--   * Krymsk 
+--   * Kutaisi
+--   * MaykopKhanskaya
+--   * MineralnyeVody
+--   * Mozdok
+--   * Nalchik
+--   * Novorossiysk
+--   * SenakiKolkhi
+--   * SochiAdler
+--   * Soganlug
+--   * SukhumiBabushara
+--   * TbilisiLochini
+--   * Vaziani
+--   
+-- @module AirbasePolice
+-- @author FlightControl
 
+
+--- @type AIRBASEPOLICE_BASE
+-- @field Set#SET_CLIENT SetClient
+-- @extends Base#BASE
+
+AIRBASEPOLICE_BASE = {
+  ClassName = "AIRBASEPOLICE_BASE",
+  SetClient = nil,
+  Airbases = nil,
+  AirbaseNames = nil,
+}
+
+
+--- Creates a new AIRBASEPOLICE_BASE object.
+-- @param #AIRBASEPOLICE_BASE self
+-- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
+-- @param Airbases A table of Airbase Names.
+-- @return #AIRBASEPOLICE_BASE self
+function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  self:E( { self.ClassName, SetClient, Airbases } )
+
+  self.SetClient = SetClient
+  self.Airbases = Airbases
+
+  for AirbaseID, Airbase in pairs( self.Airbases ) do
+    Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary", Airbase.PointsBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+    for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
+      Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+    end
+  end
+
+  --  -- Template
+  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+
+  self.SetClient:ForEachClient(
+    --- @param Client#CLIENT Client
+    function( Client )
+      Client:SetState( self, "Speeding", false )
+      Client:SetState( self, "Warnings", 0)
+      Client:SetState( self, "Taxi", false )
+    end
+  )
+
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, {}, 0, 2, 0.05 )
+
+  return self
+end
+
+--- @type AIRBASEPOLICE_BASE.AirbaseNames
+-- @list <#string>
+
+--- Monitor a table of airbase names.
+-- @param #AIRBASEPOLICE_BASE self
+-- @param #AIRBASEPOLICE_BASE.AirbaseNames AirbaseNames A list of AirbaseNames to monitor. If this parameters is nil, then all airbases will be monitored.
+-- @return #AIRBASEPOLICE_BASE self
+function AIRBASEPOLICE_BASE:Monitor( AirbaseNames )
+
+  if AirbaseNames then
+    if type( AirbaseNames ) == "table" then
+      self.AirbaseNames = AirbaseNames
+    else
+      self.AirbaseNames = { AirbaseNames }
+    end
+  end
+end
+
+--- @param #AIRBASEPOLICE_BASE self
+function AIRBASEPOLICE_BASE:_AirbaseMonitor()
+
+  for AirbaseID, Airbase in pairs( self.Airbases ) do
+
+    if not self.AirbaseNames or self.AirbaseNames[AirbaseID] then
+      
+      self:E( AirbaseID )
+      
+      self.SetClient:ForEachClientInZone( Airbase.ZoneBoundary,
+
+        --- @param Client#CLIENT Client
+        function( Client )
+
+          self:E( Client.UnitName )
+          if Client:IsAlive() then
+            local NotInRunwayZone = true
+            for ZoneRunwayID, ZoneRunway in pairs( Airbase.ZoneRunways ) do
+              NotInRunwayZone = ( Client:IsNotInZone( ZoneRunway ) == true ) and NotInRunwayZone or false
+            end
+
+            if NotInRunwayZone then
+              local Taxi = self:GetState( self, "Taxi" )
+              self:E( Taxi )
+              if Taxi == false then
+                Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. Airbase.MaximumSpeed " km/h.", 20, "ATC" )
+                self:SetState( self, "Taxi", true )
+              end
+              
+              local VelocityVec3 = Client:GetVelocity()
+              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z)
+              local IsAboveRunway = Client:IsAboveRunway()
+              local IsOnGround = Client:InAir() == false
+              self:T( IsAboveRunway, IsOnGround )
+
+              if IsAboveRunway and IsOnGround then
+
+                if Velocity > Airbase.MaximumSpeed then
+                  local IsSpeeding = Client:GetState( self, "Speeding" )
+
+                  if IsSpeeding == true then
+                    local SpeedingWarnings = Client:GetState( self, "Warnings" )
+                    self:T( SpeedingWarnings )
+
+                    if SpeedingWarnings <= 5 then
+                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 5" )
+                      Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                    else
+                      MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
+                      Client:GetGroup():Destroy()
+                      Client:SetState( self, "Speeding", false )
+                      Client:SetState( self, "Warnings", 0 )
+                    end
+
+                  else
+                    Client:Message( "You are speeding on the taxiway! Slow down please ...! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Attention! " )
+                    Client:SetState( self, "Speeding", true )
+                    Client:SetState( self, "Warnings", 1 )
+                  end
+
+                else
+                  Client:SetState( self, "Speeding", false )
+                  Client:SetState( self, "Warnings", 0 )
+                end
+              end
+
+            else
+              Client:SetState( self, "Speeding", false )
+              Client:SetState( self, "Warnings", 0 )
+              local Taxi = self:GetState( self, "Taxi" )
+              if Taxi == true then
+                Client:Message( "You have progressed to the runway ... Await take-off clearance ...", 20, "ATC" )
+                self:SetState( self, "Taxi", false )
+              end
+            end
+          end
+        end
+      )
+    end
+  end
+
+  return true
+end
+
+
+--- @type AIRBASEPOLICE_CAUCASUS
+-- @field Set#SET_CLIENT SetClient
+-- @extends #AIRBASEPOLICE_BASE
+
+AIRBASEPOLICE_CAUCASUS = {
+  ClassName = "AIRBASEPOLICE_CAUCASUS",
+  Airbases = {
+    AnapaVityazevo = {
+      PointsBoundary = {
+        [1]={["y"]=242234.85714287,["x"]=-6616.5714285726,},
+        [2]={["y"]=241060.57142858,["x"]=-5585.142857144,},
+        [3]={["y"]=243806.2857143,["x"]=-3962.2857142868,},
+        [4]={["y"]=245240.57142858,["x"]=-4816.5714285726,},
+        [5]={["y"]=244783.42857144,["x"]=-5630.8571428583,},
+        [6]={["y"]=243800.57142858,["x"]=-5065.142857144,},
+        [7]={["y"]=242232.00000001,["x"]=-6622.2857142868,},
+      },
+      PointsRunways = {
+        [1] = {
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Batumi = {
+      PointsBoundary = {
+        [1]={["y"]=617567.14285714,["x"]=-355313.14285715,},
+        [2]={["y"]=616181.42857142,["x"]=-354800.28571429,},
+        [3]={["y"]=616007.14285714,["x"]=-355128.85714286,},
+        [4]={["y"]=618230,["x"]=-356914.57142858,},
+        [5]={["y"]=618727.14285714,["x"]=-356166,},
+        [6]={["y"]=617572.85714285,["x"]=-355308.85714286,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=616442.28571429,["x"]=-355090.28571429,},
+          [2]={["y"]=618450.57142857,["x"]=-356522,},
+          [3]={["y"]=618407.71428571,["x"]=-356584.85714286,},
+          [4]={["y"]=618361.99999999,["x"]=-356554.85714286,},
+          [5]={["y"]=618324.85714285,["x"]=-356599.14285715,},
+          [6]={["y"]=618250.57142856,["x"]=-356543.42857143,},
+          [7]={["y"]=618257.7142857,["x"]=-356496.28571429,},
+          [8]={["y"]=618237.7142857,["x"]=-356459.14285715,},
+          [9]={["y"]=616555.71428571,["x"]=-355258.85714286,},
+          [10]={["y"]=616486.28571428,["x"]=-355280.57142858,},
+          [11]={["y"]=616410.57142856,["x"]=-355227.71428572,},
+          [12]={["y"]=616441.99999999,["x"]=-355179.14285715,},
+          [13]={["y"]=616401.99999999,["x"]=-355147.71428572,},
+          [14]={["y"]=616441.42857142,["x"]=-355092.57142858,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Beslan = {
+      PointsBoundary = {
+        [1]={["y"]=842082.57142857,["x"]=-148445.14285715,},
+        [2]={["y"]=845237.71428572,["x"]=-148639.71428572,},
+        [3]={["y"]=845232,["x"]=-148765.42857143,},
+        [4]={["y"]=844220.57142857,["x"]=-149168.28571429,},
+        [5]={["y"]=843274.85714286,["x"]=-149125.42857143,},
+        [6]={["y"]=842077.71428572,["x"]=-148554,},
+        [7]={["y"]=842083.42857143,["x"]=-148445.42857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=842104.57142857,["x"]=-148460.57142857,},
+          [2]={["y"]=845225.71428572,["x"]=-148656,},
+          [3]={["y"]=845220.57142858,["x"]=-148750,},
+          [4]={["y"]=842098.85714286,["x"]=-148556.28571429,},
+          [5]={["y"]=842104,["x"]=-148460.28571429,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Gelendzhik = {
+      PointsBoundary = {
+        [1]={["y"]=297856.00000001,["x"]=-51151.428571429,},
+        [2]={["y"]=299044.57142858,["x"]=-49720.000000001,},
+        [3]={["y"]=298861.71428572,["x"]=-49580.000000001,},
+        [4]={["y"]=298198.85714286,["x"]=-49842.857142858,},
+        [5]={["y"]=297990.28571429,["x"]=-50151.428571429,},
+        [6]={["y"]=297696.00000001,["x"]=-51054.285714286,},
+        [7]={["y"]=297850.28571429,["x"]=-51160.000000001,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=297834.00000001,["x"]=-51107.428571429,},
+          [2]={["y"]=297786.57142858,["x"]=-51068.857142858,},
+          [3]={["y"]=298946.57142858,["x"]=-49686.000000001,},
+          [4]={["y"]=298993.14285715,["x"]=-49725.714285715,},
+          [5]={["y"]=297835.14285715,["x"]=-51107.714285715,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Gudauta = {
+      PointsBoundary = {
+        [1]={["y"]=517246.57142857,["x"]=-197850.28571429,},
+        [2]={["y"]=516749.42857142,["x"]=-198070.28571429,},
+        [3]={["y"]=515755.14285714,["x"]=-197598.85714286,},
+        [4]={["y"]=515369.42857142,["x"]=-196538.85714286,},
+        [5]={["y"]=515623.71428571,["x"]=-195618.85714286,},
+        [6]={["y"]=515946.57142857,["x"]=-195510.28571429,},
+        [7]={["y"]=517243.71428571,["x"]=-197858.85714286,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=517096.57142857,["x"]=-197804.57142857,},
+          [2]={["y"]=515880.85714285,["x"]=-195590.28571429,},
+          [3]={["y"]=515812.28571428,["x"]=-195628.85714286,},
+          [4]={["y"]=517036.57142857,["x"]=-197834.57142857,},
+          [5]={["y"]=517097.99999999,["x"]=-197807.42857143,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Kobuleti = {
+      PointsBoundary = {
+        [1]={["y"]=634427.71428571,["x"]=-318290.28571429,},
+        [2]={["y"]=635033.42857143,["x"]=-317550.2857143,},
+        [3]={["y"]=635864.85714286,["x"]=-317333.14285715,},
+        [4]={["y"]=636967.71428571,["x"]=-317261.71428572,},
+        [5]={["y"]=637144.85714286,["x"]=-317913.14285715,},
+        [6]={["y"]=634630.57142857,["x"]=-318687.42857144,},
+        [7]={["y"]=634424.85714286,["x"]=-318290.2857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=634509.71428571,["x"]=-318339.42857144,},
+          [2]={["y"]=636767.42857143,["x"]=-317516.57142858,},
+          [3]={["y"]=636790,["x"]=-317575.71428572,},
+          [4]={["y"]=634531.42857143,["x"]=-318398.00000001,},
+          [5]={["y"]=634510.28571429,["x"]=-318339.71428572,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    KrasnodarCenter = {
+      PointsBoundary = {
+        [1]={["y"]=366680.28571429,["x"]=11699.142857142,},
+        [2]={["y"]=366654.28571429,["x"]=11225.142857142,},
+        [3]={["y"]=367497.14285715,["x"]=11082.285714285,},
+        [4]={["y"]=368025.71428572,["x"]=10396.57142857,},
+        [5]={["y"]=369854.28571429,["x"]=11367.999999999,},
+        [6]={["y"]=369840.00000001,["x"]=11910.857142856,},
+        [7]={["y"]=366682.57142858,["x"]=11697.999999999,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=369205.42857144,["x"]=11789.142857142,},
+          [2]={["y"]=369209.71428572,["x"]=11714.857142856,},
+          [3]={["y"]=366699.71428572,["x"]=11581.714285713,},
+          [4]={["y"]=366698.28571429,["x"]=11659.142857142,},
+          [5]={["y"]=369208.85714286,["x"]=11788.57142857,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    KrasnodarPashkovsky = {
+      PointsBoundary = {
+        [1]={["y"]=386754,["x"]=6476.5714285703,},
+        [2]={["y"]=389182.57142858,["x"]=8722.2857142846,},
+        [3]={["y"]=388832.57142858,["x"]=9086.5714285703,},
+        [4]={["y"]=386961.14285715,["x"]=7707.9999999989,},
+        [5]={["y"]=385404,["x"]=9179.4285714274,},
+        [6]={["y"]=383239.71428572,["x"]=7386.5714285703,},
+        [7]={["y"]=383954,["x"]=6486.5714285703,},
+        [8]={["y"]=385775.42857143,["x"]=8097.9999999989,},
+        [9]={["y"]=386804,["x"]=7319.4285714274,},
+        [10]={["y"]=386375.42857143,["x"]=6797.9999999989,},
+        [11]={["y"]=386746.85714286,["x"]=6472.2857142846,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=385891.14285715,["x"]=8416.5714285703,},
+          [2]={["y"]=385842.28571429,["x"]=8467.9999999989,},
+          [3]={["y"]=384180.85714286,["x"]=6917.1428571417,},
+          [4]={["y"]=384228.57142858,["x"]=6867.7142857132,},
+          [5]={["y"]=385891.14285715,["x"]=8416.5714285703,},
+        },
+        [2] = {
+          [1]={["y"]=386714.85714286,["x"]=6674.857142856,},
+          [2]={["y"]=386757.71428572,["x"]=6627.7142857132,},
+          [3]={["y"]=389028.57142858,["x"]=8741.4285714275,},
+          [4]={["y"]=388981.71428572,["x"]=8790.5714285703,},
+          [5]={["y"]=386714.57142858,["x"]=6674.5714285703,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Krymsk = {
+      PointsBoundary = {
+        [1]={["y"]=293338.00000001,["x"]=-7575.4285714297,},
+        [2]={["y"]=295199.42857144,["x"]=-5434.0000000011,},
+        [3]={["y"]=295595.14285715,["x"]=-6239.7142857154,},
+        [4]={["y"]=294152.2857143,["x"]=-8325.4285714297,},
+        [5]={["y"]=293345.14285715,["x"]=-7596.8571428582,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=293522.00000001,["x"]=-7567.4285714297,},
+          [2]={["y"]=293578.57142858,["x"]=-7616.0000000011,},
+          [3]={["y"]=295246.00000001,["x"]=-5591.142857144,},
+          [4]={["y"]=295187.71428573,["x"]=-5546.0000000011,},
+          [5]={["y"]=293523.14285715,["x"]=-7568.2857142868,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Kutaisi = {
+      PointsBoundary = {
+        [1]={["y"]=682087.42857143,["x"]=-284512.85714286,},
+        [2]={["y"]=685387.42857143,["x"]=-283662.85714286,},
+        [3]={["y"]=685294.57142857,["x"]=-284977.14285715,},
+        [4]={["y"]=682744.57142857,["x"]=-286505.71428572,},
+        [5]={["y"]=682094.57142857,["x"]=-284527.14285715,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=682638,["x"]=-285202.28571429,},
+          [2]={["y"]=685050.28571429,["x"]=-284507.42857144,},
+          [3]={["y"]=685068.85714286,["x"]=-284578.85714286,},
+          [4]={["y"]=682657.42857143,["x"]=-285264.28571429,},
+          [5]={["y"]=682638.28571429,["x"]=-285202.85714286,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    MaykopKhanskaya = {
+      PointsBoundary = {
+        [1]={["y"]=456876.28571429,["x"]=-27665.42857143,},
+        [2]={["y"]=457800,["x"]=-28392.857142858,},
+        [3]={["y"]=459368.57142857,["x"]=-26378.571428573,},
+        [4]={["y"]=459425.71428572,["x"]=-25242.857142858,},
+        [5]={["y"]=458961.42857143,["x"]=-24964.285714287,},
+        [6]={["y"]=456878.57142857,["x"]=-27667.714285715,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=457005.42857143,["x"]=-27668.000000001,},
+          [2]={["y"]=459028.85714286,["x"]=-25168.857142858,},
+          [3]={["y"]=459082.57142857,["x"]=-25216.857142858,},
+          [4]={["y"]=457060,["x"]=-27714.285714287,},
+          [5]={["y"]=457004.57142857,["x"]=-27669.714285715,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    MineralnyeVody = {
+      PointsBoundary = {
+        [1]={["y"]=703857.14285714,["x"]=-50226.000000002,},
+        [2]={["y"]=707385.71428571,["x"]=-51911.714285716,},
+        [3]={["y"]=707595.71428571,["x"]=-51434.857142859,},
+        [4]={["y"]=707900,["x"]=-51568.857142859,},
+        [5]={["y"]=707542.85714286,["x"]=-52326.000000002,},
+        [6]={["y"]=706628.57142857,["x"]=-52568.857142859,},
+        [7]={["y"]=705142.85714286,["x"]=-51790.285714288,},
+        [8]={["y"]=703678.57142857,["x"]=-50611.714285716,},
+        [9]={["y"]=703857.42857143,["x"]=-50226.857142859,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=703904,["x"]=-50352.571428573,},
+          [2]={["y"]=707596.28571429,["x"]=-52094.571428573,},
+          [3]={["y"]=707560.57142858,["x"]=-52161.714285716,},
+          [4]={["y"]=703871.71428572,["x"]=-50420.571428573,},
+          [5]={["y"]=703902,["x"]=-50352.000000002,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Mozdok = {
+      PointsBoundary = {
+        [1]={["y"]=832123.42857143,["x"]=-83608.571428573,},
+        [2]={["y"]=835916.28571429,["x"]=-83144.285714288,},
+        [3]={["y"]=835474.28571429,["x"]=-84170.571428573,},
+        [4]={["y"]=832911.42857143,["x"]=-84470.571428573,},
+        [5]={["y"]=832487.71428572,["x"]=-85565.714285716,},
+        [6]={["y"]=831573.42857143,["x"]=-85351.42857143,},
+        [7]={["y"]=832123.71428572,["x"]=-83610.285714288,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=832201.14285715,["x"]=-83699.428571431,},
+          [2]={["y"]=832212.57142857,["x"]=-83780.571428574,},
+          [3]={["y"]=835730.28571429,["x"]=-83335.714285717,},
+          [4]={["y"]=835718.85714286,["x"]=-83246.571428574,},
+          [5]={["y"]=832200.57142857,["x"]=-83700.000000002,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Nalchik = {
+      PointsBoundary = {
+        [1]={["y"]=759370,["x"]=-125502.85714286,},
+        [2]={["y"]=761384.28571429,["x"]=-124177.14285714,},
+        [3]={["y"]=761472.85714286,["x"]=-124325.71428572,},
+        [4]={["y"]=761092.85714286,["x"]=-125048.57142857,},
+        [5]={["y"]=760295.71428572,["x"]=-125685.71428572,},
+        [6]={["y"]=759444.28571429,["x"]=-125734.28571429,},
+        [7]={["y"]=759375.71428572,["x"]=-125511.42857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=759454.28571429,["x"]=-125551.42857143,},
+          [2]={["y"]=759492.85714286,["x"]=-125610.85714286,},
+          [3]={["y"]=761406.28571429,["x"]=-124304.28571429,},
+          [4]={["y"]=761361.14285714,["x"]=-124239.71428572,},
+          [5]={["y"]=759456,["x"]=-125552.57142857,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Novorossiysk = {
+      PointsBoundary = {
+        [1]={["y"]=278677.71428573,["x"]=-41656.571428572,},
+        [2]={["y"]=278446.2857143,["x"]=-41453.714285715,},
+        [3]={["y"]=278989.14285716,["x"]=-40188.000000001,},
+        [4]={["y"]=279717.71428573,["x"]=-39968.000000001,},
+        [5]={["y"]=280020.57142859,["x"]=-40208.000000001,},
+        [6]={["y"]=278674.85714287,["x"]=-41660.857142858,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=278673.14285716,["x"]=-41615.142857144,},
+          [2]={["y"]=278625.42857144,["x"]=-41570.571428572,},
+          [3]={["y"]=279835.42857144,["x"]=-40226.000000001,},
+          [4]={["y"]=279882.2857143,["x"]=-40270.000000001,},
+          [5]={["y"]=278672.00000001,["x"]=-41614.857142858,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    SenakiKolkhi = {
+      PointsBoundary = {
+        [1]={["y"]=646036.57142857,["x"]=-281778.85714286,},
+        [2]={["y"]=646045.14285714,["x"]=-281191.71428571,},
+        [3]={["y"]=647032.28571429,["x"]=-280598.85714285,},
+        [4]={["y"]=647669.42857143,["x"]=-281273.14285714,},
+        [5]={["y"]=648323.71428571,["x"]=-281370.28571428,},
+        [6]={["y"]=648520.85714286,["x"]=-281978.85714285,},
+        [7]={["y"]=646039.42857143,["x"]=-281783.14285714,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=646060.85714285,["x"]=-281736,},
+          [2]={["y"]=646056.57142857,["x"]=-281631.71428571,},
+          [3]={["y"]=648442.28571428,["x"]=-281840.28571428,},
+          [4]={["y"]=648432.28571428,["x"]=-281918.85714286,},
+          [5]={["y"]=646063.71428571,["x"]=-281738.85714286,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    SochiAdler = {
+      PointsBoundary = {
+        [1]={["y"]=460642.28571428,["x"]=-164861.71428571,},
+        [2]={["y"]=462820.85714285,["x"]=-163368.85714286,},
+        [3]={["y"]=463649.42857142,["x"]=-163340.28571429,},
+        [4]={["y"]=463835.14285714,["x"]=-164040.28571429,},
+        [5]={["y"]=462535.14285714,["x"]=-165654.57142857,},
+        [6]={["y"]=460678,["x"]=-165247.42857143,},
+        [7]={["y"]=460635.14285714,["x"]=-164876,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=460831.42857143,["x"]=-165180,},
+          [2]={["y"]=460878.57142857,["x"]=-165257.14285714,},
+          [3]={["y"]=463663.71428571,["x"]=-163793.14285714,},
+          [4]={["y"]=463612.28571428,["x"]=-163697.42857143,},
+          [5]={["y"]=460831.42857143,["x"]=-165177.14285714,},
+        },
+        [2] = {
+          [1]={["y"]=460831.42857143,["x"]=-165180,},
+          [2]={["y"]=460878.57142857,["x"]=-165257.14285714,},
+          [3]={["y"]=463663.71428571,["x"]=-163793.14285714,},
+          [4]={["y"]=463612.28571428,["x"]=-163697.42857143,},
+          [5]={["y"]=460831.42857143,["x"]=-165177.14285714,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Soganlug = {
+      PointsBoundary = {
+        [1]={["y"]=894530.85714286,["x"]=-316928.28571428,},
+        [2]={["y"]=896422.28571428,["x"]=-318622.57142857,},
+        [3]={["y"]=896090.85714286,["x"]=-318934,},
+        [4]={["y"]=894019.42857143,["x"]=-317119.71428571,},
+        [5]={["y"]=894533.71428571,["x"]=-316925.42857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=894525.71428571,["x"]=-316964,},
+          [2]={["y"]=896363.14285714,["x"]=-318634.28571428,},
+          [3]={["y"]=896299.14285714,["x"]=-318702.85714286,},
+          [4]={["y"]=894464,["x"]=-317031.71428571,},
+          [5]={["y"]=894524.57142857,["x"]=-316963.71428571,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    SukhumiBabushara = {
+      PointsBoundary = {
+        [1]={["y"]=562541.14285714,["x"]=-219852.28571429,},
+        [2]={["y"]=562691.14285714,["x"]=-219395.14285714,},
+        [3]={["y"]=564326.85714286,["x"]=-219523.71428571,},
+        [4]={["y"]=566262.57142857,["x"]=-221166.57142857,},
+        [5]={["y"]=566069.71428571,["x"]=-221580.85714286,},
+        [6]={["y"]=562534,["x"]=-219873.71428571,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=562684,["x"]=-219779.71428571,},
+          [2]={["y"]=562717.71428571,["x"]=-219718,},
+          [3]={["y"]=566046.85714286,["x"]=-221376.57142857,},
+          [4]={["y"]=566012.28571428,["x"]=-221446.57142857,},
+          [5]={["y"]=562684.57142857,["x"]=-219782.57142857,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    TbilisiLochini = {
+      PointsBoundary = {
+        [1]={["y"]=895172.85714286,["x"]=-314667.42857143,},
+        [2]={["y"]=895337.42857143,["x"]=-314143.14285714,},
+        [3]={["y"]=895990.28571429,["x"]=-314036,},
+        [4]={["y"]=897730.28571429,["x"]=-315284.57142857,},
+        [5]={["y"]=897901.71428571,["x"]=-316284.57142857,},
+        [6]={["y"]=897684.57142857,["x"]=-316618.85714286,},
+        [7]={["y"]=895173.14285714,["x"]=-314667.42857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=895261.14285715,["x"]=-314652.28571428,},
+          [2]={["y"]=897654.57142857,["x"]=-316523.14285714,},
+          [3]={["y"]=897711.71428571,["x"]=-316450.28571429,},
+          [4]={["y"]=895327.42857143,["x"]=-314568.85714286,},
+          [5]={["y"]=895261.71428572,["x"]=-314656,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Vaziani = {
+      PointsBoundary = {
+        [1]={["y"]=902122,["x"]=-318163.71428572,},
+        [2]={["y"]=902678.57142857,["x"]=-317594,},
+        [3]={["y"]=903275.71428571,["x"]=-317405.42857143,},
+        [4]={["y"]=903418.57142857,["x"]=-317891.14285714,},
+        [5]={["y"]=904292.85714286,["x"]=-318748.28571429,},
+        [6]={["y"]=904542,["x"]=-319740.85714286,},
+        [7]={["y"]=904042,["x"]=-320166.57142857,},
+        [8]={["y"]=902121.42857143,["x"]=-318164.85714286,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=902239.14285714,["x"]=-318190.85714286,},
+          [2]={["y"]=904014.28571428,["x"]=-319994.57142857,},
+          [3]={["y"]=904064.85714285,["x"]=-319945.14285715,},
+          [4]={["y"]=902294.57142857,["x"]=-318146,},
+          [5]={["y"]=902247.71428571,["x"]=-318190.85714286,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+  },
+}
+
+--- Creates a new AIRBASEPOLICE_CAUCASUS object.
+-- @param #AIRBASEPOLICE_CAUCASUS self
+-- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
+-- @return #AIRBASEPOLICE_CAUCASUS self
+function AIRBASEPOLICE_CAUCASUS:New( SetClient )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases ) )
+
+  --    -- AnapaVityazevo
+  --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
+  --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
+  --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Batumi
+  --    local BatumiBoundary = GROUP:FindByName( "Batumi Boundary" )
+  --    self.Airbases.Batumi.ZoneBoundary = ZONE_POLYGON:New( "Batumi Boundary", BatumiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  -- 
+  --    local BatumiRunway1 = GROUP:FindByName( "Batumi Runway 1" )
+  --    self.Airbases.Batumi.ZoneRunways[1] = ZONE_POLYGON:New( "Batumi Runway 1", BatumiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Beslan
+  --    local BeslanBoundary = GROUP:FindByName( "Beslan Boundary" )
+  --    self.Airbases.Beslan.ZoneBoundary = ZONE_POLYGON:New( "Beslan Boundary", BeslanBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local BeslanRunway1 = GROUP:FindByName( "Beslan Runway 1" )
+  --    self.Airbases.Beslan.ZoneRunways[1] = ZONE_POLYGON:New( "Beslan Runway 1", BeslanRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Gelendzhik
+  --    local GelendzhikBoundary = GROUP:FindByName( "Gelendzhik Boundary" )
+  --    self.Airbases.Gelendzhik.ZoneBoundary = ZONE_POLYGON:New( "Gelendzhik Boundary", GelendzhikBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local GelendzhikRunway1 = GROUP:FindByName( "Gelendzhik Runway 1" )
+  --    self.Airbases.Gelendzhik.ZoneRunways[1] = ZONE_POLYGON:New( "Gelendzhik Runway 1", GelendzhikRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Gudauta
+  --    local GudautaBoundary = GROUP:FindByName( "Gudauta Boundary" )
+  --    self.Airbases.Gudauta.ZoneBoundary = ZONE_POLYGON:New( "Gudauta Boundary", GudautaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local GudautaRunway1 = GROUP:FindByName( "Gudauta Runway 1" )
+  --    self.Airbases.Gudauta.ZoneRunways[1] = ZONE_POLYGON:New( "Gudauta Runway 1", GudautaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Kobuleti
+  --    local KobuletiBoundary = GROUP:FindByName( "Kobuleti Boundary" )
+  --    self.Airbases.Kobuleti.ZoneBoundary = ZONE_POLYGON:New( "Kobuleti Boundary", KobuletiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local KobuletiRunway1 = GROUP:FindByName( "Kobuleti Runway 1" )
+  --    self.Airbases.Kobuleti.ZoneRunways[1] = ZONE_POLYGON:New( "Kobuleti Runway 1", KobuletiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- KrasnodarCenter
+  --    local KrasnodarCenterBoundary = GROUP:FindByName( "KrasnodarCenter Boundary" )
+  --    self.Airbases.KrasnodarCenter.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarCenter Boundary", KrasnodarCenterBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local KrasnodarCenterRunway1 = GROUP:FindByName( "KrasnodarCenter Runway 1" )
+  --    self.Airbases.KrasnodarCenter.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarCenter Runway 1", KrasnodarCenterRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- KrasnodarPashkovsky
+  --    local KrasnodarPashkovskyBoundary = GROUP:FindByName( "KrasnodarPashkovsky Boundary" )
+  --    self.Airbases.KrasnodarPashkovsky.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarPashkovsky Boundary", KrasnodarPashkovskyBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local KrasnodarPashkovskyRunway1 = GROUP:FindByName( "KrasnodarPashkovsky Runway 1" )
+  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 1", KrasnodarPashkovskyRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    local KrasnodarPashkovskyRunway2 = GROUP:FindByName( "KrasnodarPashkovsky Runway 2" )
+  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[2] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 2", KrasnodarPashkovskyRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Krymsk
+  --    local KrymskBoundary = GROUP:FindByName( "Krymsk Boundary" )
+  --    self.Airbases.Krymsk.ZoneBoundary = ZONE_POLYGON:New( "Krymsk Boundary", KrymskBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local KrymskRunway1 = GROUP:FindByName( "Krymsk Runway 1" )
+  --    self.Airbases.Krymsk.ZoneRunways[1] = ZONE_POLYGON:New( "Krymsk Runway 1", KrymskRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Kutaisi
+  --    local KutaisiBoundary = GROUP:FindByName( "Kutaisi Boundary" )
+  --    self.Airbases.Kutaisi.ZoneBoundary = ZONE_POLYGON:New( "Kutaisi Boundary", KutaisiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local KutaisiRunway1 = GROUP:FindByName( "Kutaisi Runway 1" )
+  --    self.Airbases.Kutaisi.ZoneRunways[1] = ZONE_POLYGON:New( "Kutaisi Runway 1", KutaisiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- MaykopKhanskaya
+  --    local MaykopKhanskayaBoundary = GROUP:FindByName( "MaykopKhanskaya Boundary" )
+  --    self.Airbases.MaykopKhanskaya.ZoneBoundary = ZONE_POLYGON:New( "MaykopKhanskaya Boundary", MaykopKhanskayaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local MaykopKhanskayaRunway1 = GROUP:FindByName( "MaykopKhanskaya Runway 1" )
+  --    self.Airbases.MaykopKhanskaya.ZoneRunways[1] = ZONE_POLYGON:New( "MaykopKhanskaya Runway 1", MaykopKhanskayaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- MineralnyeVody
+  --    local MineralnyeVodyBoundary = GROUP:FindByName( "MineralnyeVody Boundary" )
+  --    self.Airbases.MineralnyeVody.ZoneBoundary = ZONE_POLYGON:New( "MineralnyeVody Boundary", MineralnyeVodyBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local MineralnyeVodyRunway1 = GROUP:FindByName( "MineralnyeVody Runway 1" )
+  --    self.Airbases.MineralnyeVody.ZoneRunways[1] = ZONE_POLYGON:New( "MineralnyeVody Runway 1", MineralnyeVodyRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Mozdok
+  --    local MozdokBoundary = GROUP:FindByName( "Mozdok Boundary" )
+  --    self.Airbases.Mozdok.ZoneBoundary = ZONE_POLYGON:New( "Mozdok Boundary", MozdokBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local MozdokRunway1 = GROUP:FindByName( "Mozdok Runway 1" )
+  --    self.Airbases.Mozdok.ZoneRunways[1] = ZONE_POLYGON:New( "Mozdok Runway 1", MozdokRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Nalchik
+  --    local NalchikBoundary = GROUP:FindByName( "Nalchik Boundary" )
+  --    self.Airbases.Nalchik.ZoneBoundary = ZONE_POLYGON:New( "Nalchik Boundary", NalchikBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local NalchikRunway1 = GROUP:FindByName( "Nalchik Runway 1" )
+  --    self.Airbases.Nalchik.ZoneRunways[1] = ZONE_POLYGON:New( "Nalchik Runway 1", NalchikRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Novorossiysk
+  --    local NovorossiyskBoundary = GROUP:FindByName( "Novorossiysk Boundary" )
+  --    self.Airbases.Novorossiysk.ZoneBoundary = ZONE_POLYGON:New( "Novorossiysk Boundary", NovorossiyskBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local NovorossiyskRunway1 = GROUP:FindByName( "Novorossiysk Runway 1" )
+  --    self.Airbases.Novorossiysk.ZoneRunways[1] = ZONE_POLYGON:New( "Novorossiysk Runway 1", NovorossiyskRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- SenakiKolkhi
+  --    local SenakiKolkhiBoundary = GROUP:FindByName( "SenakiKolkhi Boundary" )
+  --    self.Airbases.SenakiKolkhi.ZoneBoundary = ZONE_POLYGON:New( "SenakiKolkhi Boundary", SenakiKolkhiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local SenakiKolkhiRunway1 = GROUP:FindByName( "SenakiKolkhi Runway 1" )
+  --    self.Airbases.SenakiKolkhi.ZoneRunways[1] = ZONE_POLYGON:New( "SenakiKolkhi Runway 1", SenakiKolkhiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- SochiAdler
+  --    local SochiAdlerBoundary = GROUP:FindByName( "SochiAdler Boundary" )
+  --    self.Airbases.SochiAdler.ZoneBoundary = ZONE_POLYGON:New( "SochiAdler Boundary", SochiAdlerBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local SochiAdlerRunway1 = GROUP:FindByName( "SochiAdler Runway 1" )
+  --    self.Airbases.SochiAdler.ZoneRunways[1] = ZONE_POLYGON:New( "SochiAdler Runway 1", SochiAdlerRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    local SochiAdlerRunway2 = GROUP:FindByName( "SochiAdler Runway 2" )
+  --    self.Airbases.SochiAdler.ZoneRunways[2] = ZONE_POLYGON:New( "SochiAdler Runway 2", SochiAdlerRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Soganlug
+  --    local SoganlugBoundary = GROUP:FindByName( "Soganlug Boundary" )
+  --    self.Airbases.Soganlug.ZoneBoundary = ZONE_POLYGON:New( "Soganlug Boundary", SoganlugBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local SoganlugRunway1 = GROUP:FindByName( "Soganlug Runway 1" )
+  --    self.Airbases.Soganlug.ZoneRunways[1] = ZONE_POLYGON:New( "Soganlug Runway 1", SoganlugRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- SukhumiBabushara
+  --    local SukhumiBabusharaBoundary = GROUP:FindByName( "SukhumiBabushara Boundary" )
+  --    self.Airbases.SukhumiBabushara.ZoneBoundary = ZONE_POLYGON:New( "SukhumiBabushara Boundary", SukhumiBabusharaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local SukhumiBabusharaRunway1 = GROUP:FindByName( "SukhumiBabushara Runway 1" )
+  --    self.Airbases.SukhumiBabushara.ZoneRunways[1] = ZONE_POLYGON:New( "SukhumiBabushara Runway 1", SukhumiBabusharaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- TbilisiLochini
+  --    local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
+  --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
+  --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+  --    -- Vaziani
+  --    local VazianiBoundary = GROUP:FindByName( "Vaziani Boundary" )
+  --    self.Airbases.Vaziani.ZoneBoundary = ZONE_POLYGON:New( "Vaziani Boundary", VazianiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --    local VazianiRunway1 = GROUP:FindByName( "Vaziani Runway 1" )
+  --    self.Airbases.Vaziani.ZoneRunways[1] = ZONE_POLYGON:New( "Vaziani Runway 1", VazianiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --
+  --
+  --
+
+
+  --  -- Template
+  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --
+  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+
+  return self
+  
+end
+
+--- This module contains the DETECTION classes.
+-- 
+-- ===
+-- 
+-- 1) @{Detection#DETECTION_BASE} class, extends @{Base#BASE}
+-- =====================================================
+-- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
+-- Detected objects are grouped in SETS of UNITS.
+-- 
+-- @module Detection
+-- @author Mechanic : Concept & Testing
+-- @author FlightControl : Design & Programming
+
+
+
+--- DETECTION_BASE class
+-- @type DETECTION_BASE
+-- @field Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+-- @field #DETECTION_BASE.DetectedUnitSets DetectedUnitSets A list of @{Set#SET_UNIT}s containing the units in each set that were detected within a DetectedZoneRange.
+-- @field #DETECTION_BASE.DetectedZones DetectedZones A list of @{Zone#ZONE_UNIT}s containing the zones of the reference detected units.
+-- @extends Set#SET_BASE
+DETECTION_BASE = {
+  ClassName = "DETECTION_BASE",
+  DetectedUnitSets = {},
+  DetectedUnits = {},
+  FACGroup = nil,
+  DetectionRange = nil,
+  DetectionZoneRange = nil,
+}
+
+--- @type DETECTION_BASE.DetectedUnitSets
+-- @list <Set#SET_UNIT>
+
+ 
+--- @type DETECTION_BASE.DetectedZones
+-- @list <Zone#ZONE_UNIT>
+
+
+--- DETECTION constructor.
+-- @param #DETECTION_BASE self
+-- @return #DETECTION_BASE self
+function DETECTION_BASE:New( FACGroup, DetectionRange, DetectionZoneRange )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  self.FACGroup = FACGroup
+  self.DetectionRange = DetectionRange
+  self.DetectionZoneRange = DetectionZoneRange
+  
+  self.DetectionScheduler = SCHEDULER:New(self, self._DetectionScheduler, { self, "Detection" }, 10, 30, 0.2 )
+end
+
+--- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_UNIT}s.
+-- @param #DETECTION_BASE self
+function DETECTION_BASE:_DetectionScheduler( SchedulerName )
+  self:F2( { SchedulerName } )
+  
+  self.DetectedUnitSets = {}
+  
+  if self.FACGroup:IsAlive() then
+    local FACGroupName = self.FACGroup:GetName()
+    local FACDetectedTargets = self.FACGroup:GetDetectedTargets()
+    
+    for FACDetectedTargetID, FACDetectedTarget in pairs( FACDetectedTargets ) do
+      local FACObject = FACDetectedTarget.object
+      self:T2( FACObject )
+      
+      if FACObject and FACObject:isExist() and FACObject.id_ < 50000000 then
+
+        local FACDetectedUnit = UNIT:Find( FACObject )
+        local FACDetectedUnitName = FACDetectedUnit:GetName()
+
+        local FACDetectedUnitPositionVec3 = FACDetectedUnit:GetPointVec3()
+        local FACGroupPositionVec3 = self.FACGroup:GetPointVec3()
+        local Distance = ( ( FACDetectedUnitPositionVec3.x - FACGroupPositionVec3.x )^2 +
+          ( FACDetectedUnitPositionVec3.y - FACGroupPositionVec3.y )^2 +
+          ( FACDetectedUnitPositionVec3.z - FACGroupPositionVec3.z )^2
+          ) ^ 0.5 / 1000
+
+        self:T( { FACGroupName, FACDetectedUnitName, Distance } )
+
+        if Distance <= self.DetectionRange then
+
+          if not self.DetectedUnits[FACDetectedUnitName] then
+            self.DetectedUnits[FACDetectedUnitName] = {}
+          end
+          self.DetectedUnits[FACDetectedUnitName].DetectedUnit = UNIT:FindByName( FACDetectedUnitName )
+          self.DetectedUnits[FACDetectedUnitName].Visible = FACDetectedTarget.visible
+          self.DetectedUnits[FACDetectedUnitName].Type = FACDetectedTarget.type
+          self.DetectedUnits[FACDetectedUnitName].Distance = FACDetectedTarget.distance
+        else
+          -- if beyond the DetectionRange then nullify...
+          if self.DetectedUnits[FACDetectedUnitName] then
+            self.DetectedUnits[FACDetectedUnitName] = nil
+          end
+        end
+      end
+    end
+
+    -- okay, now we have a list of detected unit names ...
+    -- Sort the table based on distance ...
+    self:T( { "Sorting DetectedUnits table:", self.DetectedUnits } )
+    table.sort( self.DetectedUnits, function( a, b ) return a.Distance < b.Distance end )
+    self:T( { "Sorted Targets Table:", self.DetectedUnits } )
+    
+    -- Now group the DetectedUnits table into SET_UNITs, evaluating the DetectionZoneRange.
+    
+    if self.DetectedUnits then
+      for DetectedUnitName, DetectedUnitData in pairs( self.DetectedUnits ) do
+        local DetectedUnit = DetectedUnitData.DetectedUnit -- Unit#UNIT
+        if DetectedUnit and DetectedUnit:IsAlive() then
+          self:T( DetectedUnit:GetName() )
+          if #self.DetectedUnitSets == 0 then
+            self:T( { "Adding Unit Set #", 1 } )
+            self.DetectedUnitSets[1] = {}
+            self.DetectedUnitSets[1].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+            self.DetectedUnitSets[1].Set = SET_UNIT:New()
+            self.DetectedUnitSets[1].Set:AddUnit( DetectedUnit )
+          else
+            local AddedToSet = false
+            for DetectedUnitSetID, DetectedUnitSetData in pairs( self.DetectedUnitSets ) do
+              self:T( "Detected Unit Set #" .. DetectedUnitSetID )
+              local DetectedUnitSet = DetectedUnitSetData.Set -- Set#SET_UNIT
+              local DetectedZone = DetectedUnitSetData.Zone -- Zone#ZONE_UNIT
+              if DetectedUnit:IsInZone( DetectedZone ) then
+                self:T( "Adding to Unit Set #" .. DetectedUnitSetID )
+                self.DetectedUnitSets[DetectedUnitSetID].Set:AddUnit( DetectedUnit )
+                AddedToSet = true
+              end
+            end
+            if AddedToSet == false then
+              self:T( "Adding new Unit Set #" .. #self.DetectedUnitSets+1 )
+              self.DetectedUnitSets[#self.DetectedUnitSets+1] = {}
+              self.DetectedUnitSets[#self.DetectedUnitSets].Zone = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+              self.DetectedUnitSets[#self.DetectedUnitSets].Set = SET_UNIT:New()
+              self.DetectedUnitSets[#self.DetectedUnitSets].Set:AddUnit( DetectedUnit )
+            end  
+          end
+        end
+      end
+    end
+
+    -- Now all the tests should have been build, now make some smoke and flares...
+    
+    for DetectedUnitSetID, DetectedUnitSetData in pairs( self.DetectedUnitSets ) do
+      local DetectedUnitSet = DetectedUnitSetData.Set -- Set#SET_UNIT
+      local DetectedZone = DetectedUnitSetData.Zone -- Zone#ZONE_UNIT
+      self:T( "Detected Set #" .. DetectedUnitSetID )
+      DetectedUnitSet:ForEachUnit(
+        --- @param Unit#UNIT DetectedUnit
+        function( DetectedUnit )
+          self:T( DetectedUnit:GetName() )
+          DetectedUnit:FlareRed()
+        end
+      )
+      DetectedZone:SmokeZone( POINT_VEC3.SmokeColor.White, 30 )
+    end
+  end
+end
 BASE:TraceOnOff( false )
 env.info( '*** MOOSE INCLUDE END *** ' ) 

@@ -52,6 +52,7 @@
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -90,8 +91,29 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
     <li><a href="##(AIBALANCER).New">AIBALANCER.New</a>: Creates a new AIBALANCER object.</li>
 </ul>
 
+<h2>1.2) AIBALANCER returns AI to Airbases:</h2>
+<p>You can configure to have the AI to return to:</p>
+
+<ul>
+    <li><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER.ReturnToHomeAirbase</a>: Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AIBALANCER).ReturnToNearestAirbases">AIBALANCER.ReturnToNearestAirbases</a>: Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+</ul>
+
+<h2>1.3) AIBALANCER allows AI to patrol specific zones:</h2>
+<p>Use <a href="AIBalancer.html##(AIBALANCER).SetPatrolZone">AIBalancer#AIBALANCER.SetPatrolZone</a>() to specify a zone where the AI needs to patrol.</p>
+
 
 <hr/>
+
+<h1>CREDITS</h1>
+<p><strong>Dutch_Baron (James)</strong> Who you can search on the Eagle Dynamics Forums.
+Working together with James has resulted in the creation of the AIBALANCER class. 
+James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p>
+
+<p><strong>SNAFU</strong>
+Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
+None of the script code has been used however within the new AIBALANCER moose class.</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -105,6 +127,12 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 			<h2><a id="#(AIBALANCER)">Type <code>AIBALANCER</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).AIGroups">AIBALANCER.AIGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ClassName">AIBALANCER.ClassName</a></td>
 		<td class="summary">
 
@@ -117,13 +145,67 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).PatrolZone">AIBALANCER.PatrolZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).PatrolZones">AIBALANCER.PatrolZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnAirbaseSet">AIBALANCER.ReturnAirbaseSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToHomeAirbase">AIBALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
+		<td class="summary">
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnToNearestAirbases">AIBALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
+		<td class="summary">
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ReturnTresholdRange">AIBALANCER.ReturnTresholdRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SetClient">AIBALANCER.SetClient</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SetPatrolZone">AIBALANCER:SetPatrolZone(PatrolZone)</a></td>
+		<td class="summary">
+<p>Let the AI patrol a <a href="Zone.html">Zone</a> with a given Speed range and Altitude range.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SpawnAI">AIBALANCER.SpawnAI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ToHomeAirbase">AIBALANCER.ToHomeAirbase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ToNearestAirbase">AIBALANCER.ToNearestAirbase</a></td>
 		<td class="summary">
 
 </td>
@@ -158,6 +240,20 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 <p>AIBALANCER class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AIBALANCER).AIGroups" >
+<strong>AIBALANCER.AIGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -208,6 +304,112 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a></em>
+<a id="#(AIBALANCER).PatrolZone" >
+<strong>AIBALANCER.PatrolZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AIBALANCER).PatrolZones" >
+<strong>AIBALANCER.PatrolZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a></em>
+<a id="#(AIBALANCER).ReturnAirbaseSet" >
+<strong>AIBALANCER.ReturnAirbaseSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIBALANCER).ReturnToHomeAirbase" >
+<strong>AIBALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIBALANCER).ReturnToNearestAirbases" >
+<strong>AIBALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> ReturnAirbaseSet </em></code>: 
+The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate where to return to.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(AIBALANCER).ReturnTresholdRange" >
+<strong>AIBALANCER.ReturnTresholdRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a></em>
 <a id="#(AIBALANCER).SetClient" >
 <strong>AIBALANCER.SetClient</strong>
@@ -222,9 +424,64 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AIBALANCER).SetPatrolZone" >
+<strong>AIBALANCER:SetPatrolZone(PatrolZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Let the AI patrol a <a href="Zone.html">Zone</a> with a given Speed range and Altitude range.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a> PatrolZone </em></code>: 
+The <a href="PatrolZone.html">PatrolZone</a> where the AI needs to patrol.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a></em>
 <a id="#(AIBALANCER).SpawnAI" >
 <strong>AIBALANCER.SpawnAI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ToHomeAirbase" >
+<strong>AIBALANCER.ToHomeAirbase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AIBALANCER).ToNearestAirbase" >
+<strong>AIBALANCER.ToNearestAirbase</strong>
 </a>
 </dt>
 <dd>
