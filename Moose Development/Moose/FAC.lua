@@ -40,11 +40,11 @@
 
 
 
---- FAC_BASE class
+--- FAC_BASE class.
 -- @type FAC_BASE
 -- @field Set#SET_CLIENT ClientSet The clients to which the FAC will report to.
 -- @field Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
--- @extends Set#SET_BASE
+-- @extends Base#BASE
 FAC_BASE = {
   ClassName = "FAC_BASE",
   ClientSet = nil,
@@ -80,6 +80,20 @@ function FAC_BASE:ReportDetected( DetectedSets )
 
 end
 
+--- Schedule the FAC reporting.
+-- @param #FAC_BASE self
+-- @param #number DelayTime The delay in seconds to wait the reporting.
+-- @param #number RepeatInterval The repeat interval in seconds for the reporting to happen repeatedly.
+-- @return #FAC_BASE self
+function FAC_BASE:Schedule( DelayTime, RepeatInterval )
+	self:F2()
+
+  self.ScheduleDelayTime = DelayTime
+  self.ScheduleRepeatInterval = RepeatInterval
+  
+  self.FacScheduler = SCHEDULER:New(self, self._FacScheduler, { self, "Fac" }, DelayTime, RepeatInterval )
+  return self
+end
 
 --- Report the detected @{Unit#UNIT}s detected within the @{DetectION#DETECTION_BASE} object to the @{Set#SET_CLIENT}s.
 -- @param #FAC_BASE self
@@ -105,10 +119,11 @@ end
 -- @type FAC_REPORTING
 -- @field Set#SET_CLIENT ClientSet The clients to which the FAC will report to.
 -- @field Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
--- @extends Set#SET_BASE
+-- @extends #FAC_BASE
 FAC_REPORTING = {
   ClassName = "FAC_REPORTING",
 }
+
 
 --- FAC_REPORTING constructor.
 -- @param #FAC_REPORTING self
@@ -118,10 +133,12 @@ FAC_REPORTING = {
 function FAC_REPORTING:New( ClientSet, Detection )
 
   -- Inherits from FAC_BASE
-  local self = BASE:Inherit( self, FAC_BASE:New( ClientSet, Detection ) )
+  local self = BASE:Inherit( self, FAC_BASE:New( ClientSet, Detection ) ) -- #FAC_REPORTING
   
+  self:Schedule( 5, 15 )
   return self
 end
+
 
 --- Reports the detected items to the @{Set#SET_CLIENT}.
 -- @param #FAC_REPORTING self
@@ -130,7 +147,6 @@ end
 -- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
 function FAC_REPORTING:ReportDetected( Client, DetectedSets )
   self:F2( Client )
-  DetectedSets:Flush()
 
   local DetectedMsg = {}
   for DetectedUnitSetID, DetectedUnitSet in pairs( DetectedSets ) do

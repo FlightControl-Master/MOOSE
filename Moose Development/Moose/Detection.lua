@@ -52,7 +52,7 @@
 -- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
 -- @field #DETECTION_BASE.DetectedSets DetectedSets A list of @{Set#SET_BASE}s containing the objects in each set that were detected within a DetectedZoneRange.
 -- @field #DETECTION_BASE.DetectedZones DetectedZones A list of @{Zone#ZONE_BASE}s containing the zones of the reference detected objects.
--- @extends Set#SET_BASE
+-- @extends Base#BASE
 DETECTION_BASE = {
   ClassName = "DETECTION_BASE",
   DetectedSets = {},
@@ -91,8 +91,6 @@ function DETECTION_BASE:New( FACGroup, DetectionRange, DetectionZoneRange )
   self:InitDetectRWR( false )
   self:InitDetectIRST( false )
   self:InitDetectDLINK( false )
-  
-  self.DetectionScheduler = SCHEDULER:New(self, self._DetectionScheduler, { self, "Detection" }, 10, 30, 0.2 )
   
   return self
 end
@@ -207,6 +205,22 @@ function DETECTION_BASE:CreateDetectionSets()
 
 end
 
+--- Schedule the DETECTION construction.
+-- @param #DETECTION_BASE self
+-- @param #number DelayTime The delay in seconds to wait the reporting.
+-- @param #number RepeatInterval The repeat interval in seconds for the reporting to happen repeatedly.
+-- @return #DETECTION_BASE self
+function DETECTION_BASE:Schedule( DelayTime, RepeatInterval )
+  self:F2()
+
+  self.ScheduleDelayTime = DelayTime
+  self.ScheduleRepeatInterval = RepeatInterval
+  
+  self.DetectionScheduler = SCHEDULER:New(self, self._DetectionScheduler, { self, "Detection" }, DelayTime, RepeatInterval )
+  return self
+end
+
+
 --- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
@@ -282,37 +296,41 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   end
 end
 
+--- @type DETECTION_UNITGROUPS.DetectedSets
+-- @list <Set#SET_UNIT>
+--
+
+ 
+--- @type DETECTION_UNITGROUPS.DetectedZones
+-- @list <Zone#ZONE_UNIT>
+--
 
 
 --- DETECTION_UNITGROUPS class
 -- @type DETECTION_UNITGROUPS
 -- @field #DETECTION_UNITGROUPS.DetectedSets DetectedSets A list of @{Set#SET_UNIT}s containing the units in each set that were detected within a DetectedZoneRange.
 -- @field #DETECTION_UNITGROUPS.DetectedZones DetectedZones A list of @{Zone#ZONE_UNIT}s containing the zones of the reference detected units.
--- @extends Set#SET_BASE
+-- @extends Detection#DETECTION_BASE
 DETECTION_UNITGROUPS = {
   ClassName = "DETECTION_UNITGROUPS",
   DetectedZones = {},
 }
 
---- @type DETECTION_UNITGROUPS.DetectedSets
--- @list <Set#SET_UNIT>
-
- 
---- @type DETECTION_UNITGROUPS.DetectedZones
--- @list <Zone#ZONE_UNIT>
 
 
 --- DETECTION_UNITGROUPS constructor.
--- @param #DETECTION_UNITGROUPS self
--- @field Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
--- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
--- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
--- @return #DETECTION_UNITGROUPS self
+-- @param Detection#DETECTION_UNITGROUPS self
+-- @param Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @param DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+-- @return Detection#DETECTION_UNITGROUPS self
 function DETECTION_UNITGROUPS:New( FACGroup, DetectionRange, DetectionZoneRange )
 
   -- Inherits from DETECTION_BASE
   local self = BASE:Inherit( self, DETECTION_BASE:New( FACGroup, DetectionRange, DetectionZoneRange ) )
   
+  self:Schedule( 10, 30 )
+
   return self
 end
 
@@ -324,13 +342,14 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
   self:F2()
 
   for DetectedUnitName, DetectedUnitData in pairs( self.DetectedObjects ) do
+    self:T( DetectedUnitData.Name )
     local DetectedUnit = UNIT:FindByName( DetectedUnitData.Name ) -- Unit#UNIT
     if DetectedUnit and DetectedUnit:IsAlive() then
       self:T( DetectedUnit:GetName() )
       if #self.DetectedSets == 0 then
         self:T( { "Adding Unit Set #", 1 } )
         self.DetectedZones[1] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-        self.DetectedSets[1] = SET_BASE:New()
+        self.DetectedSets[1] = SET_UNIT:New()
         self.DetectedSets[1]:AddUnit( DetectedUnit )
       else
         local AddedToSet = false
@@ -349,7 +368,7 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
           local DetectedZoneIndex = #self.DetectedZones + 1
           self:T( "Adding new zone #" .. DetectedZoneIndex )
           self.DetectedZones[DetectedZoneIndex] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-          self.DetectedSets[DetectedZoneIndex] = SET_BASE:New()
+          self.DetectedSets[DetectedZoneIndex] = SET_UNIT:New()
           self.DetectedSets[DetectedZoneIndex]:AddUnit( DetectedUnit )
         end  
       end
