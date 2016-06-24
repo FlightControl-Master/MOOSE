@@ -2,6 +2,10 @@
 
 Include.File( "Routines" )
 Include.File( "Base" )
+Include.File( "Object" )
+Include.File( "Identifiable" )
+Include.File( "Positionable" )
+Include.File( "Controllable" )
 Include.File( "Scheduler" )
 Include.File( "Event" )
 Include.File( "Menu" )

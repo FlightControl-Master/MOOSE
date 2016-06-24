@@ -7,17 +7,17 @@
 -- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
 -- Detected objects are grouped in SETS of UNITS.
 -- 
--- 1.1) DETECTION constructor:
--- ----------------------------
+-- 1.1) DETECTION_BASE constructor:
+-- --------------------------------
 --   * @{Detection#DETECTION.New}(): Create a new DETECTION object.
 -- 
--- 1.2) DETECTION initialization:
--- ------------------------------
--- By default, detection will return detected units with all the methods available.
--- However, you can specify which units it found with specific detection methods. 
--- If you use one of the below functions, the detection will work with the detection method specified.
+-- 1.2) DETECTION_BASE initialization:
+-- -----------------------------------
+-- By default, detection will return detected objects with all the methods available.
+-- However, you can ask how the objects were found with specific detection methods. 
+-- If you use one of the below methods, the detection will work with the detection method specified.
 -- You can specify to apply multiple detection methods.
--- Use the following functions to report the units it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
+-- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
 -- 
 --    * @{Detection#DETECTION.InitDetectVisual}(): Detected using Visual.
 --    * @{Detection#DETECTION.InitDetectOptical}(): Detected using Optical.
@@ -25,6 +25,17 @@
 --    * @{Detection#DETECTION.InitDetectIRST}(): Detected using IRST.
 --    * @{Detection#DETECTION.InitDetectRWR}(): Detected using RWR.
 --    * @{Detection#DETECTION.InitDetectDLINK}(): Detected using DLINK.
+-- 
+-- 1.3) Obtain objects detected by DETECTION_BASE:
+-- -----------------------------------------------
+-- DETECTION_BASE builds @{Set}s of objects detected. These @{Set#SET_BASE}s can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSets}().
+-- The method will return a list (table) of @{Set#SET_BASE} objects.
+-- 
+-- 2) @{Detection#DETECTION_UNITGROUPS} class, extends @{Detection#DETECTION_BASE}
+-- ===============================================================================
+-- The @{Detection#DETECTION_UNITGROUPS} class will detect units within the battle zone for a FAC group, 
+-- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+-- 
 -- 
 -- ===
 -- 
@@ -39,29 +50,31 @@
 -- @field Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
 -- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
--- @field #DETECTION_BASE.DetectedUnitSets DetectedUnitSets A list of @{Set#SET_UNIT}s containing the units in each set that were detected within a DetectedZoneRange.
--- @field #DETECTION_BASE.DetectedUnitZones DetectedUnitZones A list of @{Zone#ZONE_UNIT}s containing the zones of the reference detected units.
+-- @field #DETECTION_BASE.DetectedSets DetectedSets A list of @{Set#SET_BASE}s containing the objects in each set that were detected within a DetectedZoneRange.
+-- @field #DETECTION_BASE.DetectedZones DetectedZones A list of @{Zone#ZONE_BASE}s containing the zones of the reference detected objects.
 -- @extends Set#SET_BASE
 DETECTION_BASE = {
   ClassName = "DETECTION_BASE",
-  DetectedUnitSets = {},
-  DetectedUnitZones = {},
-  DetectedUnits = {},
+  DetectedSets = {},
+  DetectedObjects = {},
   FACGroup = nil,
   DetectionRange = nil,
   DetectionZoneRange = nil,
 }
 
---- @type DETECTION_BASE.DetectedUnitSets
--- @list <Set#SET_UNIT>
+--- @type DETECTION_BASE.DetectedSets
+-- @list <Set#SET_BASE>
 
  
---- @type DETECTION_BASE.DetectedUnitZones
--- @list <Zone#ZONE_UNIT>
+--- @type DETECTION_BASE.DetectedZones
+-- @list <Zone#ZONE_BASE>
 
 
 --- DETECTION constructor.
 -- @param #DETECTION_BASE self
+-- @param Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @param DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
 -- @return #DETECTION_BASE self
 function DETECTION_BASE:New( FACGroup, DetectionRange, DetectionZoneRange )
 
@@ -152,45 +165,56 @@ function DETECTION_BASE:GetFACGroup()
   return self.FACGroup
 end
 
---- Get the detected @{Set#SET_UNIT}s.
+--- Get the detected @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
--- @return #DETECTION_BASE.DetectedUnitSets DetectedUnitSets
-function DETECTION_BASE:GetDetectionUnitSets()
+-- @return #DETECTION_BASE.DetectedSets DetectedSets
+function DETECTION_BASE:GetDetectionSets()
 
-  local DetectionUnitSets = self.DetectedUnitSets
-  return DetectionUnitSets
+  local DetectionSets = self.DetectedSets
+  return DetectionSets
 end
 
---- Get the amount of SETs with detected units.
+--- Get the amount of SETs with detected objects.
 -- @param #DETECTION_BASE self
 -- @return #number Count
-function DETECTION_BASE:GetDetectionUnitSetCount()
+function DETECTION_BASE:GetDetectionSetCount()
 
-  local DetectionUnitSetCount = #self.DetectedUnitSets
-  return DetectionUnitSetCount
+  local DetectionSetCount = #self.DetectedSets
+  return DetectionSetCount
 end
 
---- Get a SET of detected units using a given numeric index.
+--- Get a SET of detected objects using a given numeric index.
 -- @param #DETECTION_BASE self
 -- @param #number Index
--- @return Set#SET_UNIT
-function DETECTION_BASE:GetDetectionUnitSet( Index )
+-- @return Set#SET_BASE
+function DETECTION_BASE:GetDetectionSet( Index )
 
-  local DetectionUnitSet = self.DetectedUnitSets[Index]
-  if DetectionUnitSet then
-    return DetectionUnitSet
+  local DetectionSet = self.DetectedSets[Index]
+  if DetectionSet then
+    return DetectionSet
   end
   
   return nil
 end
 
---- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_UNIT}s.
+--- Make a DetectionSet table. This function will be overridden in the derived clsses.
+-- @param #DETECTION_BASE self
+-- @return #DETECTION_BASE self
+function DETECTION_BASE:CreateDetectionSets()
+	self:F2()
+
+  self:E( "Error, in DETECTION_BASE class..." )
+
+end
+
+--- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:F2( { SchedulerName } )
   
-  self.DetectedUnitSets = {}
-  self.DetectedUnitZones = {}
+  self.DetectedObjects = {}
+  self.DetectedSets = {}
+  self.DetectedZones = {}
   
   if self.FACGroup:IsAlive() then
     local FACGroupName = self.FACGroup:GetName()
@@ -205,98 +229,149 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
     )
     
     for FACDetectedTargetID, FACDetectedTarget in pairs( FACDetectedTargets ) do
-      local FACObject = FACDetectedTarget.object
+      local FACObject = FACDetectedTarget.object -- DCSObject#Object
       self:T2( FACObject )
       
       if FACObject and FACObject:isExist() and FACObject.id_ < 50000000 then
 
-        local FACDetectedUnit = UNIT:Find( FACObject )
-        local FACDetectedUnitName = FACDetectedUnit:GetName()
+        local FACDetectedObjectName = FACObject:getName()
 
-        local FACDetectedUnitPositionVec3 = FACDetectedUnit:GetPointVec3()
+        local FACDetectedObjectPositionVec3 = FACObject:getPoint()
         local FACGroupPositionVec3 = self.FACGroup:GetPointVec3()
-        local Distance = ( ( FACDetectedUnitPositionVec3.x - FACGroupPositionVec3.x )^2 +
-          ( FACDetectedUnitPositionVec3.y - FACGroupPositionVec3.y )^2 +
-          ( FACDetectedUnitPositionVec3.z - FACGroupPositionVec3.z )^2
+
+        local Distance = ( ( FACDetectedObjectPositionVec3.x - FACGroupPositionVec3.x )^2 +
+          ( FACDetectedObjectPositionVec3.y - FACGroupPositionVec3.y )^2 +
+          ( FACDetectedObjectPositionVec3.z - FACGroupPositionVec3.z )^2
           ) ^ 0.5 / 1000
 
-        self:T( { FACGroupName, FACDetectedUnitName, Distance } )
+        self:T( { FACGroupName, FACDetectedObjectName, Distance } )
 
         if Distance <= self.DetectionRange then
 
-          if not self.DetectedUnits[FACDetectedUnitName] then
-            self.DetectedUnits[FACDetectedUnitName] = {}
+          if not self.DetectedObjects[FACDetectedObjectName] then
+            self.DetectedObjects[FACDetectedObjectName] = {}
           end
-          self.DetectedUnits[FACDetectedUnitName].DetectedUnit = UNIT:FindByName( FACDetectedUnitName )
-          self.DetectedUnits[FACDetectedUnitName].Visible = FACDetectedTarget.visible
-          self.DetectedUnits[FACDetectedUnitName].Type = FACDetectedTarget.type
-          self.DetectedUnits[FACDetectedUnitName].Distance = FACDetectedTarget.distance
+          self.DetectedObjects[FACDetectedObjectName].Name = FACDetectedObjectName
+          self.DetectedObjects[FACDetectedObjectName].Visible = FACDetectedTarget.visible
+          self.DetectedObjects[FACDetectedObjectName].Type = FACDetectedTarget.type
+          self.DetectedObjects[FACDetectedObjectName].Distance = FACDetectedTarget.distance
         else
           -- if beyond the DetectionRange then nullify...
-          if self.DetectedUnits[FACDetectedUnitName] then
-            self.DetectedUnits[FACDetectedUnitName] = nil
+          if self.DetectedObjects[FACDetectedObjectName] then
+            self.DetectedObjects[FACDetectedObjectName] = nil
           end
         end
       end
     end
+    
+    self:T2( self.DetectedObjects )
 
-    -- okay, now we have a list of detected unit names ...
+    -- okay, now we have a list of detected object names ...
     -- Sort the table based on distance ...
-    self:T( { "Sorting DetectedUnits table:", self.DetectedUnits } )
-    table.sort( self.DetectedUnits, function( a, b ) return a.Distance < b.Distance end )
-    self:T( { "Sorted Targets Table:", self.DetectedUnits } )
+    self:T( { "Sorting DetectedObjects table:", self.DetectedObjects } )
+    table.sort( self.DetectedObjects, function( a, b ) return a.Distance < b.Distance end )
+    self:T( { "Sorted Targets Table:", self.DetectedObjects } )
     
-    -- Now group the DetectedUnits table into SET_UNITs, evaluating the DetectionZoneRange.
+    -- Now group the DetectedObjects table into SET_BASEs, evaluating the DetectionZoneRange.
     
-    if self.DetectedUnits then
-      for DetectedUnitName, DetectedUnitData in pairs( self.DetectedUnits ) do
-        local DetectedUnit = DetectedUnitData.DetectedUnit -- Unit#UNIT
-        if DetectedUnit and DetectedUnit:IsAlive() then
-          self:T( DetectedUnit:GetName() )
-          if #self.DetectedUnitSets == 0 then
-            self:T( { "Adding Unit Set #", 1 } )
-            self.DetectedUnitZones[1] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-            self.DetectedUnitSets[1] = SET_UNIT:New()
-            self.DetectedUnitSets[1]:AddUnit( DetectedUnit )
-          else
-            local AddedToSet = false
-            for DetectedZoneIndex = 1, #self.DetectedUnitZones do
-              self:T( "Detected Unit Set #" .. DetectedZoneIndex )
-              local DetectedUnitSet = self.DetectedUnitSets[DetectedZoneIndex] -- Set#SET_UNIT
-              DetectedUnitSet:Flush()
-              local DetectedZone = self.DetectedUnitZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
-              if DetectedUnit:IsInZone( DetectedZone ) then
-                self:T( "Adding to Unit Set #" .. DetectedZoneIndex )
-                DetectedUnitSet:AddUnit( DetectedUnit )
-                AddedToSet = true
-              end
-            end
-            if AddedToSet == false then
-              local DetectedZoneIndex = #self.DetectedUnitZones + 1
-              self:T( "Adding new zone #" .. DetectedZoneIndex )
-              self.DetectedUnitZones[DetectedZoneIndex] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-              self.DetectedUnitSets[DetectedZoneIndex] = SET_UNIT:New()
-              self.DetectedUnitSets[DetectedZoneIndex]:AddUnit( DetectedUnit )
-            end  
-          end
-        end
-      end
+    if self.DetectedObjects then
+      self:CreateDetectionSets()
     end
 
-    -- Now all the tests should have been build, now make some smoke and flares...
-    
-    for DetectedZoneIndex = 1, #self.DetectedUnitZones do
-      local DetectedUnitSet = self.DetectedUnitSets[DetectedZoneIndex] -- Set#SET_UNIT
-      local DetectedZone = self.DetectedUnitZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
-      self:T( "Detected Set #" .. DetectedZoneIndex )
-      DetectedUnitSet:ForEachUnit(
-        --- @param Unit#UNIT DetectedUnit
-        function( DetectedUnit )
-          self:T( DetectedUnit:GetName() )
-          DetectedUnit:FlareRed()
-        end
-      )
-      DetectedZone:FlareZone( POINT_VEC3.SmokeColor.White, 30, math.random( 0,90 ) )
-    end
+
   end
 end
+
+
+
+--- DETECTION_UNITGROUPS class
+-- @type DETECTION_UNITGROUPS
+-- @field #DETECTION_UNITGROUPS.DetectedSets DetectedSets A list of @{Set#SET_UNIT}s containing the units in each set that were detected within a DetectedZoneRange.
+-- @field #DETECTION_UNITGROUPS.DetectedZones DetectedZones A list of @{Zone#ZONE_UNIT}s containing the zones of the reference detected units.
+-- @extends Set#SET_BASE
+DETECTION_UNITGROUPS = {
+  ClassName = "DETECTION_UNITGROUPS",
+  DetectedZones = {},
+}
+
+--- @type DETECTION_UNITGROUPS.DetectedSets
+-- @list <Set#SET_UNIT>
+
+ 
+--- @type DETECTION_UNITGROUPS.DetectedZones
+-- @list <Zone#ZONE_UNIT>
+
+
+--- DETECTION_UNITGROUPS constructor.
+-- @param #DETECTION_UNITGROUPS self
+-- @field Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+-- @return #DETECTION_UNITGROUPS self
+function DETECTION_UNITGROUPS:New( FACGroup, DetectionRange, DetectionZoneRange )
+
+  -- Inherits from DETECTION_BASE
+  local self = BASE:Inherit( self, DETECTION_BASE:New( FACGroup, DetectionRange, DetectionZoneRange ) )
+  
+  return self
+end
+
+
+--- Make a DetectionSet table. This function will be overridden in the derived clsses.
+-- @param #DETECTION_UNITGROUPS self
+-- @return #DETECTION_UNITGROUPS self
+function DETECTION_UNITGROUPS:CreateDetectionSets()
+  self:F2()
+
+  for DetectedUnitName, DetectedUnitData in pairs( self.DetectedObjects ) do
+    local DetectedUnit = UNIT:FindByName( DetectedUnitData.Name ) -- Unit#UNIT
+    if DetectedUnit and DetectedUnit:IsAlive() then
+      self:T( DetectedUnit:GetName() )
+      if #self.DetectedSets == 0 then
+        self:T( { "Adding Unit Set #", 1 } )
+        self.DetectedZones[1] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+        self.DetectedSets[1] = SET_BASE:New()
+        self.DetectedSets[1]:AddUnit( DetectedUnit )
+      else
+        local AddedToSet = false
+        for DetectedZoneIndex = 1, #self.DetectedZones do
+          self:T( "Detected Unit Set #" .. DetectedZoneIndex )
+          local DetectedUnitSet = self.DetectedSets[DetectedZoneIndex] -- Set#SET_BASE
+          DetectedUnitSet:Flush()
+          local DetectedZone = self.DetectedZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
+          if DetectedUnit:IsInZone( DetectedZone ) then
+            self:T( "Adding to Unit Set #" .. DetectedZoneIndex )
+            DetectedUnitSet:AddUnit( DetectedUnit )
+            AddedToSet = true
+          end
+        end
+        if AddedToSet == false then
+          local DetectedZoneIndex = #self.DetectedZones + 1
+          self:T( "Adding new zone #" .. DetectedZoneIndex )
+          self.DetectedZones[DetectedZoneIndex] = ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+          self.DetectedSets[DetectedZoneIndex] = SET_BASE:New()
+          self.DetectedSets[DetectedZoneIndex]:AddUnit( DetectedUnit )
+        end  
+      end
+    end
+  end
+  
+  -- Now all the tests should have been build, now make some smoke and flares...
+  
+  for DetectedZoneIndex = 1, #self.DetectedZones do
+    local DetectedUnitSet = self.DetectedSets[DetectedZoneIndex] -- Set#SET_BASE
+    local DetectedZone = self.DetectedZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
+    self:T( "Detected Set #" .. DetectedZoneIndex )
+    DetectedUnitSet:ForEachUnit(
+      --- @param Unit#UNIT DetectedUnit
+      function( DetectedUnit )
+        self:T( DetectedUnit:GetName() )
+        DetectedUnit:FlareRed()
+      end
+    )
+    DetectedZone:FlareZone( POINT_VEC3.SmokeColor.White, 30, math.random( 0,90 ) )
+  end
+
+end
+
+

@@ -1,6 +1,6 @@
 --- This module contains the CONTROLLABLE class.
 -- 
--- 1) @{Controllable#CONTROLLABLE} class, extends @{Base#BASE}
+-- 1) @{Controllable#CONTROLLABLE} class, extends @{Positionable#POSITIONABLE}
 -- ===========================================================
 -- The @{Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
 --
@@ -127,28 +127,21 @@
 
 --- The CONTROLLABLE class
 -- @type CONTROLLABLE
--- @extends Base#BASE
+-- @extends Positionable#POSITIONABLE
 -- @field DCSControllable#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
   ControllableName = "",
-  ControllableID = 0,
-  Controller = nil,
-  DCSControllable = nil,
   WayPointFunctions = {},
 }
-
---- A DCSControllable
--- @type DCSControllable
--- @field id_ The ID of the controllable in DCS
 
 --- Create a new CONTROLLABLE from a DCSControllable
 -- @param #CONTROLLABLE self
 -- @param DCSControllable#Controllable ControllableName The DCS Controllable name
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:New( ControllableName )
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
   self:F2( ControllableName )
   self.ControllableName = ControllableName
   return self

@@ -150,20 +150,10 @@
 --- The GROUP class
 -- @type GROUP
 -- @extends Controllable#CONTROLLABLE
--- @field DCSGroup#Group DCSGroup The DCS group class.
 -- @field #string GroupName The name of the group.
 GROUP = {
   ClassName = "GROUP",
-  GroupName = "",
-  GroupID = 0,
-  Controller = nil,
-  DCSGroup = nil,
-  WayPointFunctions = {},
 }
-
---- A DCSGroup
--- @type DCSGroup
--- @field id_ The ID of the group in DCS
 
 --- Create a new GROUP from a DCSGroup
 -- @param #GROUP self
@@ -327,40 +317,6 @@ function GROUP:GetCountry()
   return nil
 end
 
---- Returns the name of the DCS Group.
--- @param #GROUP self
--- @return #string The DCS Group name.
-function GROUP:GetName()
-  self:F2( self.GroupName )
-
-  local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    local GroupName = DCSGroup:getName()
-    self:T3( GroupName )
-    return GroupName
-  end
-
-  return nil
-end
-
---- Returns the DCS Group identifier.
--- @param #GROUP self
--- @return #number The identifier of the DCS Group.
-function GROUP:GetID()
-  self:F2( self.GroupName )
-
-  local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    local GroupID = DCSGroup:getID()
-    self:T3( GroupID )
-    return GroupID
-  end
-
-  return nil
-end
-
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
@@ -517,11 +473,14 @@ function GROUP:GetCallsign()
 end
 
 --- Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.
+-- @param #GROUP self
 -- @return DCSTypes#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
 function GROUP:GetPointVec2()
   self:F2( self.GroupName )
 
-  local GroupPointVec2 = self:GetUnit(1):GetPointVec2()
+  local UnitPoint = self:GetUnit(1)
+  UnitPoint:GetPointVec2()
+  local GroupPointVec2 = UnitPoint:GetPointVec2()
   self:T3( GroupPointVec2 )
   return GroupPointVec2
 end

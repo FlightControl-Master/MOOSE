@@ -1,7 +1,7 @@
 --- This module contains the STATIC class.
 -- 
--- 1) @{Static#STATIC} class, extends @{Unit#UNIT}
--- ===============================================
+-- 1) @{Static#STATIC} class, extends @{Positionable#POSITIONABLE}
+-- ===============================================================
 -- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
 -- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
@@ -38,7 +38,7 @@
 
 --- The STATIC class
 -- @type STATIC
--- @extends Unit#UNIT
+-- @extends Positionable#POSITIONABLE
 STATIC = {
 	ClassName = "STATIC",
 }
@@ -62,10 +62,7 @@ function STATIC:FindByName( StaticName )
 end
 
 function STATIC:Register( StaticName )
-  local self = BASE:Inherit( self, UNIT:Register( StaticName ) )
-
-  self:F( StaticName )
-
+  local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
   return self
 end
 
