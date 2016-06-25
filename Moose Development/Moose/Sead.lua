@@ -50,7 +50,6 @@ function SEAD:EventShot( Event )
 	local SEADUnitName = Event.IniDCSUnitName
 	local SEADWeapon = Event.Weapon -- Identify the weapon fired						
 	local SEADWeaponName = Event.WeaponName	-- return weapon type
-	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(SEADWeaponName)), 20) --debug message
 	-- Start of the 2nd loop
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
@@ -76,10 +75,10 @@ function SEAD:EventShot( Event )
 				local Skills = { "Average", "Good", "High", "Excellent" }
 				_targetskill = Skills[ math.random(1,4) ]
 			end
-			self:T( _targetskill ) -- debug message for skill check
+			self:T( _targetskill )
 			if self.TargetSkill[_targetskill] then
 				if (_evade > self.TargetSkill[_targetskill].Evade) then
-					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) ) --debug message
+					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) )
 					local _targetMim = Weapon.getTarget(SEADWeapon)
 					local _targetMimname = Unit.getName(_targetMim)
 					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))

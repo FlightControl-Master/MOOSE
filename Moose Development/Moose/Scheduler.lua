@@ -111,8 +111,10 @@ function SCHEDULER:_Scheduler()
   local ErrorHandler = function( errmsg )
 
     env.info( "Error in SCHEDULER function:" .. errmsg )
-    env.info( debug.traceback() )
-
+    if debug ~= nil then
+      env.info( debug.traceback() )
+    end
+    
     return errmsg
   end
 

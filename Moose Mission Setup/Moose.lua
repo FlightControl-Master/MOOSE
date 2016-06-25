@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160625_0851' ) 
+env.info( 'Moose Generation Timestamp: 20160625_1329' ) 
 local base = _G
 
 Include = {}
@@ -2969,7 +2969,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+  if debug and ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -2998,7 +2998,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3014,7 +3014,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3029,7 +3029,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3044,7 +3044,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-	if ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+	if debug and ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -3073,7 +3073,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3089,7 +3089,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3104,7 +3104,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -3119,21 +3119,24 @@ end
 -- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
-	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-	local DebugInfoFrom = debug.getinfo( 3, "l" )
-	
-	local Function = "function"
-	if DebugInfoCurrent.name then
-		Function = DebugInfoCurrent.name
-	end
-
-	local LineCurrent = DebugInfoCurrent.currentline
-  local LineFrom = -1 
-	if DebugInfoFrom then
-	  LineFrom = DebugInfoFrom.currentline
-	end
-
-	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  if debug then
+  	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  	local DebugInfoFrom = debug.getinfo( 3, "l" )
+  	
+  	local Function = "function"
+  	if DebugInfoCurrent.name then
+  		Function = DebugInfoCurrent.name
+  	end
+  
+  	local LineCurrent = DebugInfoCurrent.currentline
+    local LineFrom = -1 
+  	if DebugInfoFrom then
+  	  LineFrom = DebugInfoFrom.currentline
+  	end
+  
+  	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  end
+  
 end
 
 
@@ -6072,8 +6075,10 @@ function SCHEDULER:_Scheduler()
   local ErrorHandler = function( errmsg )
 
     env.info( "Error in SCHEDULER function:" .. errmsg )
-    env.info( debug.traceback() )
-
+    if debug ~= nil then
+      env.info( debug.traceback() )
+    end
+    
     return errmsg
   end
 
@@ -6592,7 +6597,8 @@ function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
 end
 
 
-
+--- @param #EVENT self
+-- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
   self:F2( { _EVENTCODES[Event.id], Event } )
 
@@ -6626,7 +6632,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event } )
+    self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
@@ -11078,7 +11084,7 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F2( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -11134,7 +11140,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
   local function CoRoutine()
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
-        self:T2( Object )
+        self:T3( Object )
         if Function then
           if Function( unpack( FunctionArguments ), Object ) == true then
             IteratorFunction( Object, unpack( arg ) )
@@ -11223,7 +11229,7 @@ function SET_BASE:IsIncludeObject( Object )
   return true
 end
 
---- Flushes the current SET_BASE contents in the log ... (for debug reasons).
+--- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
 -- @param #SET_BASE self
 -- @return #string A string with the names of the objects.
 function SET_BASE:Flush()
@@ -11844,7 +11850,6 @@ end
 function SET_UNIT:FindInDatabase( Event )
   self:F3( { Event } )
 
-  self:E( { Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName] } )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
@@ -19578,7 +19583,6 @@ function SEAD:EventShot( Event )
 	local SEADUnitName = Event.IniDCSUnitName
 	local SEADWeapon = Event.Weapon -- Identify the weapon fired						
 	local SEADWeaponName = Event.WeaponName	-- return weapon type
-	--trigger.action.outText( string.format("Alerte, depart missile " ..string.format(SEADWeaponName)), 20) --debug message
 	-- Start of the 2nd loop
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
@@ -19604,10 +19608,10 @@ function SEAD:EventShot( Event )
 				local Skills = { "Average", "Good", "High", "Excellent" }
 				_targetskill = Skills[ math.random(1,4) ]
 			end
-			self:T( _targetskill ) -- debug message for skill check
+			self:T( _targetskill )
 			if self.TargetSkill[_targetskill] then
 				if (_evade > self.TargetSkill[_targetskill].Evade) then
-					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) ) --debug message
+					self:T( string.format("Evading, target skill  " ..string.format(_targetskill)) )
 					local _targetMim = Weapon.getTarget(SEADWeapon)
 					local _targetMimname = Unit.getName(_targetMim)
 					local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
@@ -23109,7 +23113,7 @@ end
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
--- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION.New}() method.
+-- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION_BASE.New}() method.
 -- 
 -- 1.2) DETECTION_BASE initialization
 -- ----------------------------------
@@ -23495,15 +23499,17 @@ function DETECTION_UNITGROUPS:SmokeDetectedUnits()
   self:F2()
 
   self._SmokeDetectedUnits = true
+  return self
 end
 
 --- Flare the detected units
 -- @param #DETECTION_UNITGROUPS self
 -- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:SmokeDetectedUnits()
+function DETECTION_UNITGROUPS:FlareDetectedUnits()
   self:F2()
 
   self._FlareDetectedUnits = true
+  return self
 end
 
 --- Smoke the detected zones
@@ -23513,6 +23519,7 @@ function DETECTION_UNITGROUPS:SmokeDetectedZones()
   self:F2()
 
   self._SmokeDetectedZones = true
+  return self
 end
 
 --- Flare the detected zones
@@ -23522,6 +23529,7 @@ function DETECTION_UNITGROUPS:FlareDetectedZones()
   self:F2()
 
   self._FlareDetectedZones = true
+  return self
 end
 
 
@@ -23546,7 +23554,6 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
         for DetectedZoneIndex = 1, #self.DetectedZones do
           self:T( "Detected Unit Set #" .. DetectedZoneIndex )
           local DetectedUnitSet = self.DetectedSets[DetectedZoneIndex] -- Set#SET_BASE
-          DetectedUnitSet:Flush()
           local DetectedZone = self.DetectedZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
           if DetectedUnit:IsInZone( DetectedZone ) then
             self:T( "Adding to Unit Set #" .. DetectedZoneIndex )
