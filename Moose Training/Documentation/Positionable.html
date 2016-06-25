@@ -1,0 +1,518 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fac.html">Fac</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li>Positionable</li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Positionable</code></h1>
+   
+<p>This module contains the POSITIONABLE class.</p>
+
+   
+
+<h1>1) <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> class, extends <a href="Identifiable.html##(IDENTIFIABLE)">Identifiable#IDENTIFIABLE</a></h1>
+<p>The <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> class is a wrapper class to handle the DCS Positionable objects:</p>
+
+<ul>
+    <li>Support all DCS Positionable APIs.</li>
+    <li>Enhance with Positionable specific APIs not in the DCS Positionable API set.</li>
+    <li>Manage the "state" of the DCS Positionable.</li>
+</ul>
+
+<h2>1.1) POSITIONABLE constructor:</h2>
+<p>The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:</p>
+
+<ul>
+    <li><a href="Positionable.html##(POSITIONABLE).New">Positionable#POSITIONABLE.New</a>(): Create a POSITIONABLE instance.</li>
+</ul>
+
+<h2>1.2) POSITIONABLE methods:</h2>
+<p>The following methods can be used to identify an measurable object:</p>
+
+<ul>
+    <li><a href="Positionable.html##(POSITIONABLE).GetID">Positionable#POSITIONABLE.GetID</a>(): Returns the ID of the measurable object.</li>
+    <li><a href="Positionable.html##(POSITIONABLE).GetName">Positionable#POSITIONABLE.GetName</a>(): Returns the name of the measurable object.</li>
+</ul>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#POSITIONABLE">POSITIONABLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(DCSPositionable)">Type <code>DCSPositionable</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DCSPositionable).id_">DCSPositionable.id_</a></td>
+		<td class="summary">
+<p>The ID of the controllable in DCS</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(POSITIONABLE)">Type <code>POSITIONABLE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).ClassName">POSITIONABLE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetAltitude">POSITIONABLE:GetAltitude()</a></td>
+		<td class="summary">
+<p>Returns the altitude of the DCS Positionable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetHeading">POSITIONABLE:GetHeading()</a></td>
+		<td class="summary">
+<p>Returns the DCS Positionable heading.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec2">POSITIONABLE:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec3">POSITIONABLE:GetPointVec3()</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the point in 3D of the DCS Positionable within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPositionVec3">POSITIONABLE:GetPositionVec3()</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the DCS Positionable within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVelocity">POSITIONABLE:GetVelocity()</a></td>
+		<td class="summary">
+<p>Returns the DCS Positionable velocity vector.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).InAir">POSITIONABLE:InAir()</a></td>
+		<td class="summary">
+<p>Returns true if the DCS Positionable is in the air.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).IsAboveRunway">POSITIONABLE:IsAboveRunway()</a></td>
+		<td class="summary">
+<p>Returns if the Positionable is located above a runway.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).New">POSITIONABLE:New(PositionableName)</a></td>
+		<td class="summary">
+<p>Create a new POSITIONABLE from a DCSPositionable</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).PositionableName">POSITIONABLE.PositionableName</a></td>
+		<td class="summary">
+<p>The name of the measurable.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(POSITIONABLE)">#POSITIONABLE</a></em>
+<a id="POSITIONABLE" >
+<strong>POSITIONABLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Positionable)" >Type <code>Positionable</code></a></h2>
+	
+			<h2><a id="#(DCSPositionable)" >Type <code>DCSPositionable</code></a></h2>
+				
+<p>A DCSPositionable</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(DCSPositionable).id_" >
+<strong>DCSPositionable.id_</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The ID of the controllable in DCS</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(POSITIONABLE)" >Type <code>POSITIONABLE</code></a></h2>
+				
+<p>The POSITIONABLE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(POSITIONABLE).ClassName" >
+<strong>POSITIONABLE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetAltitude" >
+<strong>POSITIONABLE:GetAltitude()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the altitude of the DCS Positionable.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+The altitude of the DCS Positionable.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetHeading" >
+<strong>POSITIONABLE:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Positionable heading.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The DCS Positionable heading</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetPointVec2" >
+<strong>POSITIONABLE:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The 2D point vector of the DCS Positionable.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetPointVec3" >
+<strong>POSITIONABLE:GetPointVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the point in 3D of the DCS Positionable within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+The 3D point vector of the DCS Positionable.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetPositionVec3" >
+<strong>POSITIONABLE:GetPositionVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the DCS Positionable within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Position)">DCSTypes#Position</a>:</em>
+The 3D position vectors of the DCS Positionable.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetVelocity" >
+<strong>POSITIONABLE:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Positionable velocity vector.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+The velocity vector</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).InAir" >
+<strong>POSITIONABLE:InAir()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if the DCS Positionable is in the air.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if in the air.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).IsAboveRunway" >
+<strong>POSITIONABLE:IsAboveRunway()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the Positionable is located above a runway.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if Positionable is above a runway.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).New" >
+<strong>POSITIONABLE:New(PositionableName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POSITIONABLE from a DCSPositionable</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSPositionable.html##(Positionable)">DCSPositionable#Positionable</a> PositionableName </em></code>: 
+The DCS Positionable name</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POSITIONABLE)">#POSITIONABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(POSITIONABLE).PositionableName" >
+<strong>POSITIONABLE.PositionableName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The name of the measurable.</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

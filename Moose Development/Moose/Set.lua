@@ -260,6 +260,15 @@ function SET_BASE:_Find( ObjectName )
 end
 
 
+--- Gets the Set.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:GetSet()
+	self:F2()
+	
+  return self.Set
+end
+
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName

@@ -1,0 +1,523 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fac.html">Fac</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li>Object</li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Object</code></h1>
+   
+<p>This module contains the OBJECT class.</p>
+
+   
+
+<h1>1) <a href="Object.html##(OBJECT)">Object#OBJECT</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Object.html##(OBJECT)">Object#OBJECT</a> class is a wrapper class to handle the DCS Object objects:</p>
+
+<ul>
+    <li>Support all DCS Object APIs.</li>
+    <li>Enhance with Object specific APIs not in the DCS Object API set.</li>
+    <li>Manage the "state" of the DCS Object.</li>
+</ul>
+
+<h2>1.1) OBJECT constructor:</h2>
+<p>The OBJECT class provides the following functions to construct a OBJECT instance:</p>
+
+<ul>
+    <li><a href="Object.html##(OBJECT).New">Object#OBJECT.New</a>(): Create a OBJECT instance.</li>
+</ul>
+
+<h2>1.2) OBJECT methods:</h2>
+<p>The following methods can be used to identify an Object object:</p>
+
+<ul>
+    <li><a href="Object.html##(OBJECT).GetID">Object#OBJECT.GetID</a>(): Returns the ID of the Object object.</li>
+</ul>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#OBJECT">OBJECT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(DCSObject)">Type <code>DCSObject</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DCSObject).id_">DCSObject.id_</a></td>
+		<td class="summary">
+<p>The ID of the controllable in DCS</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(OBJECT)">Type <code>OBJECT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).ClassName">OBJECT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCallSign">OBJECT:GetCallSign()</a></td>
+		<td class="summary">
+<p>Returns the Object's callsign - the localized string.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCategoryName">OBJECT:GetCategoryName()</a></td>
+		<td class="summary">
+<p>Returns the DCS Object category name as defined within the DCS Object Descriptor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCoalition">OBJECT:GetCoalition()</a></td>
+		<td class="summary">
+<p>Returns coalition of the Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCountry">OBJECT:GetCountry()</a></td>
+		<td class="summary">
+<p>Returns country of the Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetDesc">OBJECT:GetDesc()</a></td>
+		<td class="summary">
+<p>Returns Object descriptor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetName">OBJECT:GetName()</a></td>
+		<td class="summary">
+<p>Returns DCS Object object name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetTypeName">OBJECT:GetTypeName()</a></td>
+		<td class="summary">
+<p>Returns the type name of the DCS Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).IsAlive">OBJECT:IsAlive()</a></td>
+		<td class="summary">
+<p>Returns if the Object is alive.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).New">OBJECT:New(ObjectName)</a></td>
+		<td class="summary">
+<p>Create a new OBJECT from a DCSObject</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).ObjectName">OBJECT.ObjectName</a></td>
+		<td class="summary">
+<p>The name of the Object.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(OBJECT)">#OBJECT</a></em>
+<a id="OBJECT" >
+<strong>OBJECT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Object)" >Type <code>Object</code></a></h2>
+	
+			<h2><a id="#(DCSObject)" >Type <code>DCSObject</code></a></h2>
+				
+<p>A DCSObject</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(DCSObject).id_" >
+<strong>DCSObject.id_</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The ID of the controllable in DCS</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(OBJECT)" >Type <code>OBJECT</code></a></h2>
+				
+<p>The OBJECT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(OBJECT).ClassName" >
+<strong>OBJECT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetCallSign" >
+<strong>OBJECT:GetCallSign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the Object's callsign - the localized string.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The Callsign of the Object.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetCategoryName" >
+<strong>OBJECT:GetCategoryName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Object category name as defined within the DCS Object Descriptor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The DCS Object Category Name</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetCoalition" >
+<strong>OBJECT:GetCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns coalition of the Object.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em>
+The side of the coalition.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetCountry" >
+<strong>OBJECT:GetCountry()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns country of the Object.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a>:</em>
+The country identifier.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetDesc" >
+<strong>OBJECT:GetDesc()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns Object descriptor.</p>
+
+	
+<p>Descriptor type depends on Object category.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSObject.html##(Object.Desc)">DCSObject#Object.Desc</a>:</em>
+The Object descriptor.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetName" >
+<strong>OBJECT:GetName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns DCS Object object name.</p>
+
+	
+<p>The function provides access to non-activated objects too.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the DCS Object.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).GetTypeName" >
+<strong>OBJECT:GetTypeName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the type name of the DCS Object.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The type name of the DCS Object.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).IsAlive" >
+<strong>OBJECT:IsAlive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the Object is alive.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if Object is alive.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Object is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(OBJECT).New" >
+<strong>OBJECT:New(ObjectName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new OBJECT from a DCSObject</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSObject.html##(Object)">DCSObject#Object</a> ObjectName </em></code>: 
+The Object name</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(OBJECT)">#OBJECT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(OBJECT).ObjectName" >
+<strong>OBJECT.ObjectName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The name of the Object.</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

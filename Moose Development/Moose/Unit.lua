@@ -1,7 +1,7 @@
 --- This module contains the UNIT class.
 -- 
--- 1) @{Unit#UNIT} class, extends @{Base#BASE}
--- ===========================================
+-- 1) @{Unit#UNIT} class, extends @{Controllable#CONTROLLABLE}
+-- ===========================================================
 -- The @{Unit#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
@@ -74,18 +74,11 @@
 
 --- The UNIT class
 -- @type UNIT
--- @extends Base#BASE
+-- @extends Controllable#CONTROLLABLE
 -- @field #UNIT.FlareColor FlareColor
 -- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
 	ClassName="UNIT",
-	CategoryName = { 
-    [Unit.Category.AIRPLANE]      = "Airplane",
-    [Unit.Category.HELICOPTER]    = "Helicoper",
-    [Unit.Category.GROUND_UNIT]   = "Ground Unit",
-    [Unit.Category.SHIP]          = "Ship",
-    [Unit.Category.STRUCTURE]     = "Structure",
-    },
   FlareColor = {
     Green = trigger.flareColor.Green,
     Red = trigger.flareColor.Red,
@@ -120,13 +113,10 @@ UNIT = {
 	
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
--- @param DCSUnit#Unit DCSUnit
--- @param Database#DATABASE Database
+-- @param #string UnitName The name of the DCS unit.
 -- @return Unit#UNIT
 function UNIT:Register( UnitName )
-
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F2( UnitName )
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
   self.UnitName = UnitName
   return self
 end
@@ -154,7 +144,10 @@ function UNIT:FindByName( UnitName )
   return UnitFound
 end
 
-function UNIT:GetDCSUnit()
+
+--- @param #UNIT self
+-- @return DCSUnit#Unit
+function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
 
@@ -165,78 +158,8 @@ function UNIT:GetDCSUnit()
   return nil
 end
 
---- Returns coalition of the Unit.
--- @param Unit#UNIT self
--- @return DCSCoalitionObject#coalition.side The side of the coalition.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetCoalition()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitCoalition = DCSUnit:getCoalition()
-    self:T3( UnitCoalition )
-    return UnitCoalition
-  end 
-  
-  return nil
-end
-
---- Returns country of the Unit.
--- @param Unit#UNIT self
--- @return DCScountry#country.id The country identifier.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetCountry()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitCountry = DCSUnit:getCountry()
-    self:T3( UnitCountry )
-    return UnitCountry
-  end 
-  
-  return nil
-end
- 
-
---- Returns DCS Unit object name. 
--- The function provides access to non-activated units too.
--- @param Unit#UNIT self
--- @return #string The name of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetName()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitName = self.UnitName
-    return UnitName
-  end 
-  
-  return nil
-end
 
 
---- Returns if the unit is alive.
--- @param Unit#UNIT self
--- @return #boolean true if Unit is alive.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:IsAlive()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitIsAlive = DCSUnit:isExist()
-    return UnitIsAlive
-  end	
-	
-	return false
-end
 
 --- Returns if the unit is activated.
 -- @param Unit#UNIT self
@@ -245,7 +168,7 @@ end
 function UNIT:IsActive()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   
@@ -256,28 +179,23 @@ function UNIT:IsActive()
   return nil
 end
 
---- Returns if the unit is located above a runway.
+--- Returns the Unit's callsign - the localized string.
 -- @param Unit#UNIT self
--- @return #boolean true if Unit is above a runway.
+-- @return #string The Callsign of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:IsAboveRunway()
+function UNIT:GetCallSign()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  
-    local PointVec2 = self:GetPointVec2()
-    local SurfaceType = land.getSurfaceType( PointVec2 )
-    local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
-  
-    self:T2( IsAboveRunway )
-    return IsAboveRunway
+    local UnitCallSign = DCSUnit:getCallsign()
+    return UnitCallSign
   end
-
+  
+  self:E( self.ClassName .. " " .. self.UnitName .. " not found!" )
   return nil
 end
-
 
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
@@ -287,7 +205,7 @@ end
 function UNIT:GetPlayerName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   
@@ -297,23 +215,6 @@ function UNIT:GetPlayerName()
     end
     return PlayerName
   end
-
-  return nil
-end
-
---- Returns the unit's unique identifier.
--- @param Unit#UNIT self
--- @return DCSUnit#Unit.ID Unit ID
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetID()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitID = DCSUnit:getID()
-    return UnitID
-  end	
 
   return nil
 end
@@ -328,7 +229,7 @@ end
 function UNIT:GetNumber()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitNumber = DCSUnit:getNumber()
@@ -345,7 +246,7 @@ end
 function UNIT:GetGroup()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
@@ -356,69 +257,23 @@ function UNIT:GetGroup()
 end
 
 
---- Returns the unit's callsign - the localized string.
+-- Need to add here functions to check if radar is on and which object etc.
+
+--- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
+-- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
+-- The spawn sequence number and unit number are contained within the name after the '#' sign. 
 -- @param Unit#UNIT self
--- @return #string The Callsign of the Unit.
+-- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetCallSign()
-  self:F2( self.UnitName )
+function UNIT:GetPrefix()
+	self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
-  
+  local DCSUnit = self:GetDCSObject()
+	
   if DCSUnit then
-    local UnitCallSign = DCSUnit:getCallsign()
-    return UnitCallSign
-  end
-  
-  return nil
-end
-
---- Returns the unit's health. Dead units has health <= 1.0.
--- @param Unit#UNIT self
--- @return #number The Unit's health value.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetLife()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitLife = DCSUnit:getLife()
-    return UnitLife
-  end
-  
-  return nil
-end
-
---- Returns the Unit's initial health.
--- @param Unit#UNIT self
--- @return #number The Unit's initial health value.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetLife0()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitLife0 = DCSUnit:getLife0()
-    return UnitLife0
-  end
-  
-  return nil
-end
-
---- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
--- @param Unit#UNIT self
--- @return #number The relative amount of fuel (from 0.0 to 1.0).
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetFuel()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitFuel = DCSUnit:getFuel()
-    return UnitFuel
+  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+  	self:T3( UnitPrefix )
+  	return UnitPrefix
   end
   
   return nil
@@ -431,7 +286,7 @@ end
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitAmmo = DCSUnit:getAmmo()
@@ -448,7 +303,7 @@ end
 function UNIT:GetSensors()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitSensors = DCSUnit:getSensors()
@@ -472,7 +327,7 @@ end
 function UNIT:GetRadar()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
     local UnitRadarOn, UnitRadarObject = DCSUnit:getRadar()
@@ -482,63 +337,52 @@ function UNIT:GetRadar()
   return nil, nil
 end
 
--- Need to add here functions to check if radar is on and which object etc.
-
---- Returns unit descriptor. Descriptor type depends on unit category.
+--- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @param Unit#UNIT self
--- @return DCSUnit#Unit.Desc The Unit descriptor.
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetDesc()
+function UNIT:GetFuel()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-    local UnitDesc = DCSUnit:getDesc()
-    self:T2( UnitDesc )
-    return UnitDesc
+    local UnitFuel = DCSUnit:getFuel()
+    return UnitFuel
   end
   
-  self:E( "Unit " .. self.UnitName .. "not found!" )
   return nil
 end
 
-
---- Returns the type name of the DCS Unit.
+--- Returns the unit's health. Dead units has health <= 1.0.
 -- @param Unit#UNIT self
--- @return #string The type name of the DCS Unit.
+-- @return #number The Unit's health value.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetTypeName()
-	self:F2( self.UnitName )
-	
-  local DCSUnit = self:GetDCSUnit()
+function UNIT:GetLife()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-    local UnitTypeName = DCSUnit:getTypeName()
-    self:T3( UnitTypeName )
-    return UnitTypeName
+    local UnitLife = DCSUnit:getLife()
+    return UnitLife
   end
-
-	return nil
+  
+  return nil
 end
 
-
-
---- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
--- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
--- The spawn sequence number and unit number are contained within the name after the '#' sign. 
+--- Returns the Unit's initial health.
 -- @param Unit#UNIT self
--- @return #string The name of the DCS Unit.
+-- @return #number The Unit's initial health value.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetPrefix()
-	self:F2( self.UnitName )
+function UNIT:GetLife0()
+  self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSUnit()
-	
+  local DCSUnit = self:GetDCSObject()
+  
   if DCSUnit then
-  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-  	self:T3( UnitPrefix )
-  	return UnitPrefix
+    local UnitLife0 = DCSUnit:getLife0()
+    return UnitLife0
   end
   
   return nil
@@ -546,83 +390,6 @@ end
 
 
 
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Unit within the mission.
--- @param Unit#UNIT self
--- @return DCSTypes#Vec2 The 2D point vector of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetPointVec2()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-	
-  if DCSUnit then
-  	local UnitPointVec3 = DCSUnit:getPosition().p
-  	
-  	local UnitPointVec2 = {}
-  	UnitPointVec2.x = UnitPointVec3.x
-  	UnitPointVec2.y = UnitPointVec3.z
-  
-  	self:T2( UnitPointVec2 )
-  	return UnitPointVec2
-  end
-  
-  return nil
-end
-
-
---- Returns the @{DCSTypes#Vec3} vector indicating the point in 3D of the DCS Unit within the mission.
--- @param Unit#UNIT self
--- @return DCSTypes#Vec3 The 3D point vector of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetPointVec3()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-  	local UnitPointVec3 = DCSUnit:getPosition().p
-  	self:T3( UnitPointVec3 )
-  	return UnitPointVec3
-  end
-	
-	return nil
-end
-
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the DCS Unit within the mission.
--- @param Unit#UNIT self
--- @return DCSTypes#Position The 3D position vectors of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetPositionVec3()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitPosition = DCSUnit:getPosition()
-    self:T3( UnitPosition )
-    return UnitPosition
-  end
-  
-  return nil
-end
-
---- Returns the DCS Unit velocity vector.
--- @param Unit#UNIT self
--- @return DCSTypes#Vec3 The velocity vector
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetVelocity()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitVelocityVec3 = DCSUnit:getVelocity()
-    self:T3( UnitVelocityVec3 )
-    return UnitVelocityVec3
-  end
-  
-  return nil
-end
 
 -- Is functions
 
@@ -660,40 +427,6 @@ function UNIT:IsNotInZone( Zone )
   end
 end
 
---- Returns true if the DCS Unit is in the air.
--- @param Unit#UNIT self
--- @return #boolean true if in the air.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:InAir()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitInAir = DCSUnit:inAir()
-    self:T3( UnitInAir )
-    return UnitInAir
-  end
-  
-  return nil
-end
- 
---- Returns the altitude of the DCS Unit.
--- @param Unit#UNIT self
--- @return DCSTypes#Distance The altitude of the DCS Unit.
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetAltitude()
-  self:F2()
-
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitPointVec3 = DCSUnit:getPoint() --DCSTypes#Vec3
-    return UnitPointVec3.y
-  end
-  
-  return nil
-end 
 
 --- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.
 -- @param Unit#UNIT self
@@ -704,7 +437,7 @@ end
 function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
-  local DCSUnit = self:GetDCSUnit()
+  local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
   	local UnitPos = self:GetPointVec3()
@@ -722,41 +455,6 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
 	return nil
 end
 
---- Returns the DCS Unit category name as defined within the DCS Unit Descriptor.
--- @param Unit#UNIT self
--- @return #string The DCS Unit Category Name
-function UNIT:GetCategoryName()
-  local DCSUnit = self:GetDCSUnit()
-  
-  if DCSUnit then
-    local UnitCategoryName = self.CategoryName[ self:GetDesc().category ]
-    return UnitCategoryName
-  end
-  
-  return nil
-end
-
---- Returns the DCS Unit heading.
--- @param Unit#UNIT self
--- @return #number The DCS Unit heading
-function UNIT:GetHeading()
-  local DCSUnit = self:GetDCSUnit()
-
-  if DCSUnit then
-
-    local UnitPosition = DCSUnit:getPosition()
-    if UnitPosition then
-      local UnitHeading = math.atan2( UnitPosition.x.z, UnitPosition.x.x )
-      if UnitHeading < 0 then
-        UnitHeading = UnitHeading + 2 * math.pi
-      end
-      self:T2( UnitHeading )
-      return UnitHeading
-    end
-  end
-  
-  return nil
-end
 
 
 --- Signal a flare at the position of the UNIT.

@@ -2,8 +2,8 @@
 -- 
 -- ===
 -- 
--- 1) @{Airbase#AIRBASE} class, extends @{Base#BASE}
--- =================================================
+-- 1) @{Airbase#AIRBASE} class, extends @{Positionable#POSITIONABLE}
+-- =================================================================
 -- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
 -- 
 --  * Support all DCS Airbase APIs.
@@ -49,7 +49,7 @@
 
 --- The AIRBASE class
 -- @type AIRBASE
--- @extends Base#BASE
+-- @extends Positionable#POSITIONABLE
 AIRBASE = {
   ClassName="AIRBASE",
   CategoryName = { 
@@ -63,13 +63,11 @@ AIRBASE = {
   
 --- Create a new AIRBASE from DCSAirbase.
 -- @param #AIRBASE self
--- @param DCSAirbase#Airbase DCSAirbase
--- @param Database#DATABASE Database
+-- @param #string AirbaseName The name of the airbase.
 -- @return Airbase#AIRBASE
 function AIRBASE:Register( AirbaseName )
 
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F2( AirbaseName )
+  local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
   self.AirbaseName = AirbaseName
   return self
 end
