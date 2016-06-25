@@ -8,7 +8,7 @@
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
--- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION.New}() method.
+-- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION_BASE.New}() method.
 -- 
 -- 1.2) DETECTION_BASE initialization
 -- ----------------------------------
