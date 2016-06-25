@@ -440,7 +440,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+  if debug and ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -469,7 +469,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -485,7 +485,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -500,7 +500,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -515,7 +515,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-	if ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+	if debug and ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
 
     local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or debug.getinfo( 2, "nl" )
     local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or debug.getinfo( 3, "l" )
@@ -544,7 +544,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -560,7 +560,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -575,7 +575,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if _TraceOnOff then
+  if debug and _TraceOnOff then
     local DebugInfoCurrent = debug.getinfo( 2, "nl" )
     local DebugInfoFrom = debug.getinfo( 3, "l" )
   
@@ -590,21 +590,24 @@ end
 -- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
-	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
-	local DebugInfoFrom = debug.getinfo( 3, "l" )
-	
-	local Function = "function"
-	if DebugInfoCurrent.name then
-		Function = DebugInfoCurrent.name
-	end
-
-	local LineCurrent = DebugInfoCurrent.currentline
-  local LineFrom = -1 
-	if DebugInfoFrom then
-	  LineFrom = DebugInfoFrom.currentline
-	end
-
-	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  if debug then
+  	local DebugInfoCurrent = debug.getinfo( 2, "nl" )
+  	local DebugInfoFrom = debug.getinfo( 3, "l" )
+  	
+  	local Function = "function"
+  	if DebugInfoCurrent.name then
+  		Function = DebugInfoCurrent.name
+  	end
+  
+  	local LineCurrent = DebugInfoCurrent.currentline
+    local LineFrom = -1 
+  	if DebugInfoFrom then
+  	  LineFrom = DebugInfoFrom.currentline
+  	end
+  
+  	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  end
+  
 end
 
 

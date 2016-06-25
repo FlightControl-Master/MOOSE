@@ -465,7 +465,8 @@ function EVENT:OnPlayerLeaveUnit( EventFunction, EventSelf )
 end
 
 
-
+--- @param #EVENT self
+-- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
   self:F2( { _EVENTCODES[Event.id], Event } )
 
@@ -499,7 +500,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event } )
+    self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )

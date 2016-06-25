@@ -399,7 +399,7 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F2( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -455,7 +455,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
   local function CoRoutine()
     local Count = 0
     for ObjectID, Object in pairs( Set ) do
-        self:T2( Object )
+        self:T3( Object )
         if Function then
           if Function( unpack( FunctionArguments ), Object ) == true then
             IteratorFunction( Object, unpack( arg ) )
@@ -544,7 +544,7 @@ function SET_BASE:IsIncludeObject( Object )
   return true
 end
 
---- Flushes the current SET_BASE contents in the log ... (for debug reasons).
+--- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
 -- @param #SET_BASE self
 -- @return #string A string with the names of the objects.
 function SET_BASE:Flush()
@@ -1165,7 +1165,6 @@ end
 function SET_UNIT:FindInDatabase( Event )
   self:F3( { Event } )
 
-  self:E( { Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName] } )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 

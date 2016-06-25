@@ -394,15 +394,17 @@ function DETECTION_UNITGROUPS:SmokeDetectedUnits()
   self:F2()
 
   self._SmokeDetectedUnits = true
+  return self
 end
 
 --- Flare the detected units
 -- @param #DETECTION_UNITGROUPS self
 -- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:SmokeDetectedUnits()
+function DETECTION_UNITGROUPS:FlareDetectedUnits()
   self:F2()
 
   self._FlareDetectedUnits = true
+  return self
 end
 
 --- Smoke the detected zones
@@ -412,6 +414,7 @@ function DETECTION_UNITGROUPS:SmokeDetectedZones()
   self:F2()
 
   self._SmokeDetectedZones = true
+  return self
 end
 
 --- Flare the detected zones
@@ -421,6 +424,7 @@ function DETECTION_UNITGROUPS:FlareDetectedZones()
   self:F2()
 
   self._FlareDetectedZones = true
+  return self
 end
 
 
@@ -445,7 +449,6 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
         for DetectedZoneIndex = 1, #self.DetectedZones do
           self:T( "Detected Unit Set #" .. DetectedZoneIndex )
           local DetectedUnitSet = self.DetectedSets[DetectedZoneIndex] -- Set#SET_BASE
-          DetectedUnitSet:Flush()
           local DetectedZone = self.DetectedZones[DetectedZoneIndex] -- Zone#ZONE_UNIT
           if DetectedUnit:IsInZone( DetectedZone ) then
             self:T( "Adding to Unit Set #" .. DetectedZoneIndex )
