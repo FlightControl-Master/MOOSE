@@ -887,7 +887,6 @@ function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
 	end
 	self:T( "Routing " .. CargoHostName )
 
-	--routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
 	SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
      
 	return Valid
