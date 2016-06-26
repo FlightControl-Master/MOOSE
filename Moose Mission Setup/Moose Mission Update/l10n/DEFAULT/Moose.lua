@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160626_0720' ) 
+env.info( 'Moose Generation Timestamp: 20160626_0740' ) 
 local base = _G
 
 Include = {}
@@ -447,22 +447,6 @@ routines.getNorthCorrection = function(point)  --gets the correction needed for 
 	local lat, lon = coord.LOtoLL(point)
 	local north_posit = coord.LLtoLO(lat + 1, lon)
 	return math.atan2(north_posit.z - point.z, north_posit.x - point.x)
-end
-
-
--- the main area
-do
-	-- THE MAIN FUNCTION --   Accessed 100 times/sec.
-	routines.main = function()
-		timer.scheduleFunction(routines.main, {}, timer.getTime() + 2)  --reschedule first in case of Lua error
-		----------------------------------------------------------------------------------------------------------
-		--area to add new stuff in
-
-		routines.do_scheduled_functions()
-	end -- end of routines.main
-
-	timer.scheduleFunction(routines.main, {}, timer.getTime() + 2)
-
 end
 
 
@@ -3976,7 +3960,6 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
 
     if WaitTime then
-      --routines.scheduleFunction( Controller.pushTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
       SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
@@ -4007,7 +3990,6 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       WaitTime = 1
     end
-    --routines.scheduleFunction( Controller.setTask, { Controller, DCSTask }, timer.getTime() + WaitTime )
     SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
 
     return self
@@ -5255,7 +5237,6 @@ function CONTROLLABLE:Route( GoPoints )
     local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
     local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-    --routines.scheduleFunction( Controller.setTask, { Controller, MissionTask}, timer.getTime() + 1 )
     SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
     return self
   end
@@ -14633,7 +14614,6 @@ function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
 	end
 	self:T( "Routing " .. CargoHostName )
 
-	--routines.scheduleFunction( routines.goRoute, { CargoHostName, Points}, timer.getTime() + 4 )
 	SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
      
 	return Valid
@@ -17869,7 +17849,6 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 	
 	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
 	
-	--self.CleanUpScheduler = routines.scheduleFunction( self._CleanUpScheduler, { self }, timer.getTime() + 1, TimeInterval )
   self.CleanUpScheduler = SCHEDULER:New( self, self._CleanUpScheduler, {}, 1, TimeInterval )
 	
 	return self
@@ -17994,7 +17973,6 @@ function CLEANUP:_EventShot( Event )
 	if  ( CurrentLandingZoneID ) then
 		-- Okay, the missile was fired within the CLEANUP.ZoneNames, destroy the fired weapon.
 		--_SEADmissile:destroy()
-		--routines.scheduleFunction( CLEANUP._DestroyMissile, { self, Event.Weapon }, timer.getTime() + 0.1)
     SCHEDULER:New( self, CLEANUP._DestroyMissile, { Event.Weapon }, 0.1 )
 	end
 end
@@ -18011,7 +17989,6 @@ function CLEANUP:_EventHitCleanUp( Event )
 			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniDCSUnit:getLife(), "/", Event.IniDCSUnit:getLife0() } )
 			if Event.IniDCSUnit:getLife() < Event.IniDCSUnit:getLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
-				--routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.IniDCSUnit }, timer.getTime() + 0.1)
         SCHEDULER:New( self, CLEANUP._DestroyUnit, { Event.IniDCSUnit }, 0.1 )
 			end
 		end
@@ -18022,7 +17999,6 @@ function CLEANUP:_EventHitCleanUp( Event )
 			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtDCSUnit:getLife(), "/", Event.TgtDCSUnit:getLife0() } )
 			if Event.TgtDCSUnit:getLife() < Event.TgtDCSUnit:getLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
-				--routines.scheduleFunction( CLEANUP._DestroyUnit, { self, Event.TgtDCSUnit }, timer.getTime() + 0.1 )
         SCHEDULER:New( self, CLEANUP._DestroyUnit, { Event.TgtDCSUnit }, 0.1 )
 			end
 		end
@@ -20220,7 +20196,6 @@ function ESCORT:MenuReportTargets( Seconds )
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
 
 
-  --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
   self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
@@ -20442,7 +20417,6 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
       self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
@@ -20519,16 +20493,6 @@ function ESCORT._AttackTarget( MenuParam )
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup:SetState( EscortGroup, "Escort", self )
---    routines.scheduleFunction(
---      EscortGroup.PushTask,
---      { EscortGroup,
---        EscortGroup:TaskCombo(
---          { EscortGroup:TaskAttackUnit( AttackUnit ),
---            EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
@@ -20539,15 +20503,6 @@ function ESCORT._AttackTarget( MenuParam )
       }, 10
     )
   else
---    routines.scheduleFunction(
---      EscortGroup.PushTask,
---      { EscortGroup,
---        EscortGroup:TaskCombo(
---          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
@@ -20578,16 +20533,6 @@ function ESCORT._AssistTarget( MenuParam )
   if EscortGroupAttack:IsAir() then
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
---    routines.scheduleFunction(
---      EscortGroupAttack.PushTask,
---      { EscortGroupAttack,
---        EscortGroupAttack:TaskCombo(
---          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
---            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
       { EscortGroupAttack:TaskCombo(
@@ -20598,15 +20543,6 @@ function ESCORT._AssistTarget( MenuParam )
       }, 10
     )
   else
---    routines.scheduleFunction(
---      EscortGroupAttack.PushTask,
---      { EscortGroupAttack,
---        EscortGroupAttack:TaskCombo(
---          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
       { EscortGroupAttack:TaskCombo(
@@ -20666,7 +20602,6 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
 
-  --routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
   SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
 
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )

@@ -441,22 +441,6 @@ routines.getNorthCorrection = function(point)  --gets the correction needed for 
 end
 
 
--- the main area
-do
-	-- THE MAIN FUNCTION --   Accessed 100 times/sec.
-	routines.main = function()
-		timer.scheduleFunction(routines.main, {}, timer.getTime() + 2)  --reschedule first in case of Lua error
-		----------------------------------------------------------------------------------------------------------
-		--area to add new stuff in
-
-		routines.do_scheduled_functions()
-	end -- end of routines.main
-
-	timer.scheduleFunction(routines.main, {}, timer.getTime() + 2)
-
-end
-
-
 do
 	local idNum = 0
 
