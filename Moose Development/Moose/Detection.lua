@@ -5,6 +5,7 @@
 -- 1) @{Detection#DETECTION_BASE} class, extends @{Base#BASE}
 -- ==========================================================
 -- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
+-- The @{Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
@@ -35,7 +36,7 @@
 -- 
 -- 2) @{Detection#DETECTION_UNITGROUPS} class, extends @{Detection#DETECTION_BASE}
 -- ===============================================================================
--- The @{Detection#DETECTION_UNITGROUPS} class will detect units within the battle zone for a FAC group, 
+-- The @{Detection#DETECTION_UNITGROUPS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
 -- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
 -- The class is group the detected units within zones given a DetectedZoneRange parameter.
 -- A set with multiple detected zones will be created as there are groups of units detected.
@@ -70,7 +71,7 @@
 
 --- DETECTION_BASE class
 -- @type DETECTION_BASE
--- @field Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @field Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
 -- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @field #DETECTION_BASE.DetectedSets DetectedSets A list of @{Set#SET_BASE}s containing the objects in each set that were detected. The base class will not build the detected sets, but will leave that to the derived classes.
 -- @extends Base#BASE
@@ -78,7 +79,7 @@ DETECTION_BASE = {
   ClassName = "DETECTION_BASE",
   DetectedSets = {},
   DetectedObjects = {},
-  FACGroup = nil,
+  DetectionGroups = nil,
   DetectionRange = nil,
 }
 
@@ -92,15 +93,15 @@ DETECTION_BASE = {
 
 --- DETECTION constructor.
 -- @param #DETECTION_BASE self
--- @param Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @param Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
 -- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @return #DETECTION_BASE self
-function DETECTION_BASE:New( FACGroup, DetectionRange )
+function DETECTION_BASE:New( DetectionGroups, DetectionRange )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
-  self.FACGroup = FACGroup
+  self.DetectionGroups = DetectionGroups
   self.DetectionRange = DetectionRange
   
   self:InitDetectVisual( false )
@@ -172,13 +173,13 @@ function DETECTION_BASE:InitDetectDLINK( DetectDLINK )
   self.DetectDLINK = DetectDLINK
 end
 
---- Gets the FAC group.
+--- Gets the Detection group.
 -- @param #DETECTION_BASE self
 -- @return Group#GROUP self
-function DETECTION_BASE:GetFACGroup()
+function DETECTION_BASE:GetDetectionGroups()
 	self:F2()
 
-  return self.FACGroup
+  return self.DetectionGroups
 end
 
 --- Get the detected @{Set#SET_BASE}s.
@@ -249,10 +250,10 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self.DetectedSets = {}
   self.DetectedZones = {}
   
-  if self.FACGroup:IsAlive() then
-    local FACGroupName = self.FACGroup:GetName()
+  if self.DetectionGroups:IsAlive() then
+    local DetectionGroupsName = self.DetectionGroups:GetName()
     
-    local FACDetectedTargets = self.FACGroup:GetDetectedTargets(
+    local DetectionDetectedTargets = self.DetectionGroups:GetDetectedTargets(
       self.DetectVisual,
       self.DetectOptical,
       self.DetectRadar,
@@ -261,37 +262,37 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
       self.DetectDLINK
     )
     
-    for FACDetectedTargetID, FACDetectedTarget in pairs( FACDetectedTargets ) do
-      local FACObject = FACDetectedTarget.object -- DCSObject#Object
-      self:T2( FACObject )
+    for DetectionDetectedTargetID, DetectionDetectedTarget in pairs( DetectionDetectedTargets ) do
+      local DetectionObject = DetectionDetectedTarget.object -- DCSObject#Object
+      self:T2( DetectionObject )
       
-      if FACObject and FACObject:isExist() and FACObject.id_ < 50000000 then
+      if DetectionObject and DetectionObject:isExist() and DetectionObject.id_ < 50000000 then
 
-        local FACDetectedObjectName = FACObject:getName()
+        local DetectionDetectedObjectName = DetectionObject:getName()
 
-        local FACDetectedObjectPositionVec3 = FACObject:getPoint()
-        local FACGroupPositionVec3 = self.FACGroup:GetPointVec3()
+        local DetectionDetectedObjectPositionVec3 = DetectionObject:getPoint()
+        local DetectionGroupsPositionVec3 = self.DetectionGroups:GetPointVec3()
 
-        local Distance = ( ( FACDetectedObjectPositionVec3.x - FACGroupPositionVec3.x )^2 +
-          ( FACDetectedObjectPositionVec3.y - FACGroupPositionVec3.y )^2 +
-          ( FACDetectedObjectPositionVec3.z - FACGroupPositionVec3.z )^2
+        local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupsPositionVec3.x )^2 +
+          ( DetectionDetectedObjectPositionVec3.y - DetectionGroupsPositionVec3.y )^2 +
+          ( DetectionDetectedObjectPositionVec3.z - DetectionGroupsPositionVec3.z )^2
           ) ^ 0.5 / 1000
 
-        self:T( { FACGroupName, FACDetectedObjectName, Distance } )
+        self:T( { DetectionGroupsName, DetectionDetectedObjectName, Distance } )
 
         if Distance <= self.DetectionRange then
 
-          if not self.DetectedObjects[FACDetectedObjectName] then
-            self.DetectedObjects[FACDetectedObjectName] = {}
+          if not self.DetectedObjects[DetectionDetectedObjectName] then
+            self.DetectedObjects[DetectionDetectedObjectName] = {}
           end
-          self.DetectedObjects[FACDetectedObjectName].Name = FACDetectedObjectName
-          self.DetectedObjects[FACDetectedObjectName].Visible = FACDetectedTarget.visible
-          self.DetectedObjects[FACDetectedObjectName].Type = FACDetectedTarget.type
-          self.DetectedObjects[FACDetectedObjectName].Distance = FACDetectedTarget.distance
+          self.DetectedObjects[DetectionDetectedObjectName].Name = DetectionDetectedObjectName
+          self.DetectedObjects[DetectionDetectedObjectName].Visible = DetectionDetectedTarget.visible
+          self.DetectedObjects[DetectionDetectedObjectName].Type = DetectionDetectedTarget.type
+          self.DetectedObjects[DetectionDetectedObjectName].Distance = DetectionDetectedTarget.distance
         else
           -- if beyond the DetectionRange then nullify...
-          if self.DetectedObjects[FACDetectedObjectName] then
-            self.DetectedObjects[FACDetectedObjectName] = nil
+          if self.DetectedObjects[DetectionDetectedObjectName] then
+            self.DetectedObjects[DetectionDetectedObjectName] = nil
           end
         end
       end
@@ -340,14 +341,14 @@ DETECTION_UNITGROUPS = {
 
 --- DETECTION_UNITGROUPS constructor.
 -- @param Detection#DETECTION_UNITGROUPS self
--- @param Group#GROUP FACGroup The GROUP in the Forward Air Controller role.
+-- @param Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
 -- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @param DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
 -- @return Detection#DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:New( FACGroup, DetectionRange, DetectionZoneRange )
+function DETECTION_UNITGROUPS:New( DetectionGroups, DetectionRange, DetectionZoneRange )
 
   -- Inherits from DETECTION_BASE
-  local self = BASE:Inherit( self, DETECTION_BASE:New( FACGroup, DetectionRange ) )
+  local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionGroups, DetectionRange ) )
   self.DetectionZoneRange = DetectionZoneRange
   
   self:Schedule( 10, 30 )
