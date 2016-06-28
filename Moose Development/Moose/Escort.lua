@@ -557,7 +557,6 @@ function ESCORT:MenuReportTargets( Seconds )
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
 
 
-  --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, Seconds )
   self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
@@ -779,7 +778,6 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      --self.ReportTargetsScheduler = routines.scheduleFunction( self._ReportTargetsScheduler, { self }, timer.getTime() + 1, 30 )
       self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
@@ -856,16 +854,6 @@ function ESCORT._AttackTarget( MenuParam )
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup:SetState( EscortGroup, "Escort", self )
---    routines.scheduleFunction(
---      EscortGroup.PushTask,
---      { EscortGroup,
---        EscortGroup:TaskCombo(
---          { EscortGroup:TaskAttackUnit( AttackUnit ),
---            EscortGroup:TaskFunction( 1, 2, "_Resume", {"''"} )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
@@ -876,15 +864,6 @@ function ESCORT._AttackTarget( MenuParam )
       }, 10
     )
   else
---    routines.scheduleFunction(
---      EscortGroup.PushTask,
---      { EscortGroup,
---        EscortGroup:TaskCombo(
---          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
@@ -915,16 +894,6 @@ function ESCORT._AssistTarget( MenuParam )
   if EscortGroupAttack:IsAir() then
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
---    routines.scheduleFunction(
---      EscortGroupAttack.PushTask,
---      { EscortGroupAttack,
---        EscortGroupAttack:TaskCombo(
---          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
---            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
       { EscortGroupAttack:TaskCombo(
@@ -935,15 +904,6 @@ function ESCORT._AssistTarget( MenuParam )
       }, 10
     )
   else
---    routines.scheduleFunction(
---      EscortGroupAttack.PushTask,
---      { EscortGroupAttack,
---        EscortGroupAttack:TaskCombo(
---          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
---          }
---        )
---      }, timer.getTime() + 10
---    )
     SCHEDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
       { EscortGroupAttack:TaskCombo(
@@ -1003,7 +963,6 @@ function ESCORT._ResumeMission( MenuParam )
     table.remove( WayPoints, 1 )
   end
 
-  --routines.scheduleFunction( EscortGroup.SetTask, {EscortGroup, EscortGroup:TaskRoute( WayPoints ) }, timer.getTime() + 1 )
   SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
 
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )

@@ -24,6 +24,7 @@
 					<li><a href="CARGO.html">CARGO</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
 					<li><a href="DCSCommand.html">DCSCommand</a></li>
@@ -41,19 +42,24 @@
 					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="Object.html">Object</a></li>
 					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -80,7 +86,7 @@
 
 <hr/>
 
-<h1>1) <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>1) <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
 <p>The <a href="AIRBASE.html">AIRBASE</a> class is a wrapper class to handle the DCS Airbase objects:</p>
 
 <ul>
@@ -227,7 +233,7 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).Register">AIRBASE:Register(DCSAirbase, Database, AirbaseName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).Register">AIRBASE:Register(AirbaseName)</a></td>
 		<td class="summary">
 <p>Create a new AIRBASE from DCSAirbase.</p>
 </td>
@@ -649,28 +655,19 @@ The DCS Airbase is not existing or alive.  </p>
 <dt>
 
 <a id="#(AIRBASE).Register" >
-<strong>AIRBASE:Register(DCSAirbase, Database, AirbaseName)</strong>
+<strong>AIRBASE:Register(AirbaseName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Create a new AIRBASE from DCSAirbase.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSAirbase.html##(Airbase)">DCSAirbase#Airbase</a> DCSAirbase </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Database.html##(DATABASE)">Database#DATABASE</a> Database </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> AirbaseName </em></code>: </p>
+<p><code><em>#string AirbaseName </em></code>: 
+The name of the airbase.</p>
 
 				</li>
 		</ul>

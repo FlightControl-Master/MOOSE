@@ -490,33 +490,34 @@ end
 
 
 --- Returns if a location is within the zone.
+-- Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 -- @param #ZONE_POLYGON_BASE self
 -- @param DCSTypes#Vec2 PointVec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   self:F2( PointVec2 )
 
-  local i 
-  local j 
-  local c = false
+  local Next 
+  local Prev 
+  local InPolygon = false
   
-  i = 1
-  j = #self.Polygon
+  Next = 1
+  Prev = #self.Polygon
   
-  while i < #self.Polygon do
-    j = i
-    i = i + 1
-    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
-    if ( ( ( self.Polygon[i].y > PointVec2.y ) ~= ( self.Polygon[j].y > PointVec2.y ) ) and
-         ( PointVec2.x < ( self.Polygon[j].x - self.Polygon[i].x ) * ( PointVec2.y - self.Polygon[i].y ) / ( self.Polygon[j].y - self.Polygon[i].y ) + self.Polygon[i].x ) 
+  while Next <= #self.Polygon do
+    self:T( { Next, Prev, self.Polygon[Next], self.Polygon[Prev] } )
+    if ( ( ( self.Polygon[Next].y > PointVec2.y ) ~= ( self.Polygon[Prev].y > PointVec2.y ) ) and
+         ( PointVec2.x < ( self.Polygon[Prev].x - self.Polygon[Next].x ) * ( PointVec2.y - self.Polygon[Next].y ) / ( self.Polygon[Prev].y - self.Polygon[Next].y ) + self.Polygon[Next].x ) 
        ) then
-       c = not c
+       InPolygon = not InPolygon
     end
-    self:T2( { "c = ", c } )
+    self:T2( { InPolygon = InPolygon } )
+    Prev = Next
+    Next = Next + 1
   end
 
-  self:T( { "c = ", c } )
-  return c
+  self:T( { InPolygon = InPolygon } )
+  return InPolygon
 end
 
 --- Define a random @{DCSTypes#Vec2} within the zone.

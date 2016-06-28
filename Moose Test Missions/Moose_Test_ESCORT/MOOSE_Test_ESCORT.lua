@@ -18,6 +18,7 @@ do
       :MenuSmoke()
       :MenuReportTargets( 60, 20 )
       :MenuResumeMission()
+      :MenuROE()
       :MenuAssistedAttack()
 
     local EscortGroupArtillery = SpawnEscortArtillery:ReSpawn(1)
