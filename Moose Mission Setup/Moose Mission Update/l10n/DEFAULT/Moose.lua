@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160626_0740' ) 
+env.info( 'Moose Generation Timestamp: 20160628_1157' ) 
 local base = _G
 
 Include = {}
@@ -3178,163 +3178,22 @@ function OBJECT:New( ObjectName )
 end
 
 
---- Returns if the Object is alive.
+--- Returns the unit's unique identifier.
 -- @param Object#OBJECT self
--- @return #boolean true if Object is alive.
+-- @return DCSObject#Object.ID ObjectID
 -- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:IsAlive()
+function OBJECT:GetID()
   self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
   
   if DCSObject then
-    local ObjectIsAlive = DCSObject:isExist()
-    return ObjectIsAlive
+    local ObjectID = DCSObject:getID()
+    return ObjectID
   end 
-  
-  return false
-end
 
-
-
-
---- Returns DCS Object object name. 
--- The function provides access to non-activated objects too.
--- @param Object#OBJECT self
--- @return #string The name of the DCS Object.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetName()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectName = self.ObjectName
-    return ObjectName
-  end 
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
   return nil
 end
-
-
---- Returns the type name of the DCS Object.
--- @param Object#OBJECT self
--- @return #string The type name of the DCS Object.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetTypeName()
-  self:F2( self.ObjectName )
-  
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectTypeName = DCSObject:getTypeName()
-    self:T3( ObjectTypeName )
-    return ObjectTypeName
-  end
-
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
-
---- Returns the Object's callsign - the localized string.
--- @param Object#OBJECT self
--- @return #string The Callsign of the Object.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetCallSign()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectCallSign = DCSObject:getCallsign()
-    return ObjectCallSign
-  end
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
-
-
---- Returns the DCS Object category name as defined within the DCS Object Descriptor.
--- @param Object#OBJECT self
--- @return #string The DCS Object Category Name
-function OBJECT:GetCategoryName()
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectCategoryName = _CategoryName[ self:GetDesc().category ]
-    return ObjectCategoryName
-  end
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
-
---- Returns coalition of the Object.
--- @param Object#OBJECT self
--- @return DCSCoalitionObject#coalition.side The side of the coalition.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetCoalition()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectCoalition = DCSObject:getCoalition()
-    self:T3( ObjectCoalition )
-    return ObjectCoalition
-  end 
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
-
---- Returns country of the Object.
--- @param Object#OBJECT self
--- @return DCScountry#country.id The country identifier.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetCountry()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectCountry = DCSObject:getCountry()
-    self:T3( ObjectCountry )
-    return ObjectCountry
-  end 
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
- 
-
-
---- Returns Object descriptor. Descriptor type depends on Object category.
--- @param Object#OBJECT self
--- @return DCSObject#Object.Desc The Object descriptor.
--- @return #nil The DCS Object is not existing or alive.  
-function OBJECT:GetDesc()
-  self:F2( self.ObjectName )
-
-  local DCSObject = self:GetDCSObject()
-  
-  if DCSObject then
-    local ObjectDesc = DCSObject:getDesc()
-    self:T2( ObjectDesc )
-    return ObjectDesc
-  end
-  
-  self:E( self.ClassName .. " " .. self.ObjectName .. " not found!" )
-  return nil
-end
-
-
-
-
-
-
 
 
 
@@ -3393,7 +3252,7 @@ local _CategoryName = {
 -- @param DCSIdentifiable#Identifiable IdentifiableName The DCS Identifiable name
 -- @return #IDENTIFIABLE self
 function IDENTIFIABLE:New( IdentifiableName )
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, OBJECT:New( IdentifiableName ) )
   self:F2( IdentifiableName )
   self.IdentifiableName = IdentifiableName
   return self
@@ -3459,6 +3318,21 @@ function IDENTIFIABLE:GetTypeName()
 end
 
 
+--- Returns category of the DCS Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return DCSObject#Object.Category The category ID
+function IDENTIFIABLE:GetCategory()
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    local ObjectCategory = DCSObject:getCategory()
+    self:T3( ObjectCategory )
+    return ObjectCategory
+  end
+
+  return nil
+end
 
 
 --- Returns the DCS Identifiable category name as defined within the DCS Identifiable Descriptor.
@@ -9697,7 +9571,7 @@ function AIRBASE:FindByName( AirbaseName )
   return AirbaseFound
 end
 
-function AIRBASE:GetDCSAirbase()
+function AIRBASE:GetDCSObject()
   local DCSAirbase = Airbase.getByName( self.AirbaseName )
   
   if DCSAirbase then
@@ -9707,203 +9581,6 @@ function AIRBASE:GetDCSAirbase()
   return nil
 end
 
---- Returns coalition of the Airbase.
--- @param Airbase#AIRBASE self
--- @return DCSCoalitionObject#coalition.side The side of the coalition.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetCoalition()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseCoalition = DCSAirbase:getCoalition()
-    self:T3( AirbaseCoalition )
-    return AirbaseCoalition
-  end 
-  
-  return nil
-end
-
---- Returns country of the Airbase.
--- @param Airbase#AIRBASE self
--- @return DCScountry#country.id The country identifier.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetCountry()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseCountry = DCSAirbase:getCountry()
-    self:T3( AirbaseCountry )
-    return AirbaseCountry
-  end 
-  
-  return nil
-end
- 
-
---- Returns DCS Airbase object name. 
--- The function provides access to non-activated units too.
--- @param Airbase#AIRBASE self
--- @return #string The name of the DCS Airbase.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetName()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseName = self.AirbaseName
-    return AirbaseName
-  end 
-  
-  return nil
-end
-
-
---- Returns if the airbase is alive.
--- @param Airbase#AIRBASE self
--- @return #boolean true if Airbase is alive.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:IsAlive()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseIsAlive = DCSAirbase:isExist()
-    return AirbaseIsAlive
-  end 
-  
-  return false
-end
-
---- Returns the unit's unique identifier.
--- @param Airbase#AIRBASE self
--- @return DCSAirbase#Airbase.ID Airbase ID
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetID()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseID = DCSAirbase:getID()
-    return AirbaseID
-  end 
-
-  return nil
-end
-
---- Returns the Airbase's callsign - the localized string.
--- @param Airbase#AIRBASE self
--- @return #string The Callsign of the Airbase.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetCallSign()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseCallSign = DCSAirbase:getCallsign()
-    return AirbaseCallSign
-  end
-  
-  return nil
-end
-
-
-
---- Returns unit descriptor. Descriptor type depends on unit category.
--- @param Airbase#AIRBASE self
--- @return DCSAirbase#Airbase.Desc The Airbase descriptor.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetDesc()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseDesc = DCSAirbase:getDesc()
-    return AirbaseDesc
-  end
-  
-  return nil
-end
-
-
---- Returns the type name of the DCS Airbase.
--- @param Airbase#AIRBASE self
--- @return #string The type name of the DCS Airbase.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetTypeName()
-  self:F2( self.AirbaseName )
-  
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseTypeName = DCSAirbase:getTypeName()
-    self:T3( AirbaseTypeName )
-    return AirbaseTypeName
-  end
-
-  return nil
-end
-
-
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Airbase within the mission.
--- @param Airbase#AIRBASE self
--- @return DCSTypes#Vec2 The 2D point vector of the DCS Airbase.
--- @return #nil The DCS Airbase is not existing or alive.  
-function AIRBASE:GetPointVec2()
-  self:F2( self.AirbaseName )
-
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbasePointVec3 = DCSAirbase:getPosition().p
-    
-    local AirbasePointVec2 = {}
-    AirbasePointVec2.x = AirbasePointVec3.x
-    AirbasePointVec2.y = AirbasePointVec3.z
-  
-    self:T3( AirbasePointVec2 )
-    return AirbasePointVec2
-  end
-  
-  return nil
-end
-
---- Returns the DCS Airbase category as defined within the DCS Airbase Descriptor.
--- @param Airbase#AIRBASE self
--- @return DCSAirbase#Airbase.Category The DCS Airbase Category
-function AIRBASE:GetCategory()
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseCategory = self:GetDesc().category
-    return AirbaseCategory
-  end
-  
-  return nil
-end
-
-
---- Returns the DCS Airbase category name as defined within the DCS Airbase Descriptor.
--- @param Airbase#AIRBASE self
--- @return #string The DCS Airbase Category Name
-function AIRBASE:GetCategoryName()
-  local DCSAirbase = self:GetDCSAirbase()
-  
-  if DCSAirbase then
-    local AirbaseCategoryName = self.CategoryName[ self:GetDesc().category ]
-    return AirbaseCategoryName
-  end
-  
-  return nil
-end
 
 
 --- This module contains the DATABASE class, managing the database of mission objects. 

@@ -53,7 +53,7 @@ local _CategoryName = {
 -- @param DCSIdentifiable#Identifiable IdentifiableName The DCS Identifiable name
 -- @return #IDENTIFIABLE self
 function IDENTIFIABLE:New( IdentifiableName )
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, OBJECT:New( IdentifiableName ) )
   self:F2( IdentifiableName )
   self.IdentifiableName = IdentifiableName
   return self
@@ -119,6 +119,21 @@ function IDENTIFIABLE:GetTypeName()
 end
 
 
+--- Returns category of the DCS Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return DCSObject#Object.Category The category ID
+function IDENTIFIABLE:GetCategory()
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    local ObjectCategory = DCSObject:getCategory()
+    self:T3( ObjectCategory )
+    return ObjectCategory
+  end
+
+  return nil
+end
 
 
 --- Returns the DCS Identifiable category name as defined within the DCS Identifiable Descriptor.
