@@ -1,12 +1,6 @@
 --- The TASK Classes define major end-to-end activities within a MISSION. The TASK Class is the Master Class to orchestrate these activities. From this class, many concrete TASK classes are inherited.
 -- @module TASK
 
-
-
-
-
-
-
 --- The TASK class
 -- @type TASK
 -- @extends Base#BASE
