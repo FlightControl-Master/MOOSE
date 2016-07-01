@@ -39,11 +39,12 @@ function MISSION:Meta()
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
--- @param string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @param string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
--- @return MISSION
+-- @param #MISSION self
+-- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param #string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @return #MISSION self
 -- @usage 
 -- -- Declare a few missions.
 -- local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
@@ -74,6 +75,28 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	end
 
 	return self
+end
+
+--- Gets the mission name.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:GetName()
+  return self.Name
+end
+
+--- Add a scoring to the mission.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:AddScoring( Scoring )
+  self.Scoring = Scoring
+  return self
+end
+
+--- Get the scoring object of a mission.
+-- @param #MISSION self
+-- @return #SCORING Scoring
+function MISSION:GetScoring()
+  return self.Scoring
 end
 
 --- Returns if a Mission has completed.

@@ -143,6 +143,8 @@ function STATEMACHINE_TASK:New( Task, options )
   setmetatable( FsmT, Parent )
   FsmT.__index = FsmT
 
+  env.info(tostring(Task.OnStateChange))
+  FsmT["onstatechange"] = Task.OnStateChange
   FsmT.Task = Task
 
   return FsmT

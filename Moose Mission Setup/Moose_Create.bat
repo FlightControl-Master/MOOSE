@@ -83,6 +83,9 @@ COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
 COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
 COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
 COPY /b Moose.lua + %1\FAC.lua          		  							Moose.lua
+COPY /b Moose.lua + %1\Task2.lua          		  							Moose.lua
+COPY /b Moose.lua + %1\TaskSead.lua       		  							Moose.lua
+COPY /b Moose.lua + %1\StateMachine.lua       	  							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 
