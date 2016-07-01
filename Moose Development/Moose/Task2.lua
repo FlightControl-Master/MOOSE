@@ -24,14 +24,14 @@ end
 --- @param #TASK2 self
 function TASK2:Schedule()
 
-  self.TaskScheduler = SCHEDULER:New( self.StateMachine, self.StateMachine.Assign, { self, self.Client }, 1)
+  self.TaskScheduler = SCHEDULER:New( self.Fsm, self.Fsm.Assign, { self, self.Client }, 1)
 end
 
 --- @param #TASK2 self
 function TASK2:NextEvent( NextEvent, ... )
   self:E( NextEvent )
 
-  self.TaskScheduler = SCHEDULER:New( self.StateMachine, NextEvent, { self, self.Client }, 1 )
+  self.TaskScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.Client, unpack( arg ) }, 1 )
 end
 
 

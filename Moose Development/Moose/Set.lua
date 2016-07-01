@@ -228,6 +228,7 @@
 SET_BASE = {
   ClassName = "SET_BASE",
   Set = {},
+  List = {},
 }
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -245,6 +246,10 @@ function SET_BASE:New( Database )
 
   self.YieldInterval = 10
   self.TimeInterval = 0.001
+
+  self.List = {}
+  self.List.__index = self.List
+  self.List = setmetatable( { Count = 0 }, self.List )
 
   return self
 end
@@ -275,17 +280,71 @@ end
 -- @param Base#BASE Object
 -- @return Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
+  self:E( ObjectName )
 
-  self.Set[ObjectName] = Object
+  local t = { _ = Object }
+
+  if self.List.last then
+    self.List.last._next = t
+    t._prev = self.List.last
+    self.List.last = t
+  else
+    -- this is the first node
+    self.List.first = t
+    self.List.last = t
+  end
+  
+  self.List.Count = self.List.Count + 1
+  
+  self.Set[ObjectName] = t
+  
 end
 
 --- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
+  self:E( ObjectName )
 
-  self.Set[ObjectName] = nil
+  local t = self.Set[ObjectName]
+
+  if t then  
+    if t._next then
+      if t._prev then
+        t._next._prev = t._prev
+        t._prev._next = t._next
+      else
+        -- this was the first node
+        t._next._prev = nil
+        self.List._first = t._next
+      end
+    elseif t._prev then
+      -- this was the last node
+      t._prev._next = nil
+      self.List._last = t._prev
+    else
+      -- this was the only node
+      self.List._first = nil
+      self.List._last = nil
+    end
+  
+    t._next = nil
+    t._prev = nil
+    self.List.Count = self.List.Count - 1
+    
+    self.Set[ObjectName] = nil
+  end
+  
 end
+
+--- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return #number Count
+function SET_BASE:Count()
+
+  return self.List.Count
+end
+
 
 --- Define the SET iterator **"yield interval"** and the **"time interval"**.
 -- @param #SET_BASE self
@@ -454,7 +513,8 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
   
   local function CoRoutine()
     local Count = 0
-    for ObjectID, Object in pairs( Set ) do
+    for ObjectID, ObjectData in pairs( Set ) do
+      local Object = ObjectData._
         self:T3( Object )
         if Function then
           if Function( unpack( FunctionArguments ), Object ) == true then
