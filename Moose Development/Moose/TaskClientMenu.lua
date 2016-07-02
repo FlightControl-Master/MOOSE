@@ -35,7 +35,7 @@ function TASK2_CLIENT_MENU:New( Client, Mission, MenuText )
       onMenu = self.OnMenu,
       onAssign =  self.OnAssign,
     },
-    finals = {
+    endstates = {
       'Assigned'
     },
   } )

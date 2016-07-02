@@ -56,7 +56,7 @@ function STATEMACHINE:New( options )
   end
   
   for name, endstate in pairs( options.endstates or {} ) do
-    self.endstates[name] = endstate
+    self.endstates[endstate] = endstate
   end
 
   return self
@@ -64,11 +64,12 @@ end
 
 
 function STATEMACHINE:_submap( subs, sub, name )
-  self:E( { subs = subs, sub = sub, name = name } )
+  self:E( { sub = sub, name = name } )
   subs[sub.onstateparent] = subs[sub.onstateparent] or {}
   subs[sub.onstateparent][sub.oneventparent] = subs[sub.onstateparent][sub.oneventparent] or {}
   subs[sub.onstateparent][sub.oneventparent].fsm = sub.fsm
   subs[sub.onstateparent][sub.oneventparent].event = sub.event
+  subs[sub.onstateparent][sub.oneventparent].returnevents = sub.returnevents -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
   subs[sub.onstateparent][sub.oneventparent].name = name
   subs[sub.onstateparent][sub.oneventparent].fsmparent = self
 end
@@ -83,8 +84,8 @@ end
 function STATEMACHINE:_create_transition(name)
   self:E( { name = name } )
   return function(self, ...)
-    self:E(name)
     local can, to = self:can(name)
+    self:E( { name, can, to } )
 
     if can then
       local from = self.current
@@ -101,12 +102,12 @@ function STATEMACHINE:_create_transition(name)
       if fsm and fsm[event] then
         self:E( "calling sub: " .. event )
         fsm.fsmparent = self
-        fsm.from = to
+        fsm.returnevents = self:_returnevents( to, name )
         fsm[event]( fsm )
       else
         
         local fsmparent, event = self:_isendstate( to )
-        if fsmparent then
+        if fsmparent and event then
           fsmparent[event]( fsmparent )
         else
           self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
@@ -130,13 +131,32 @@ function STATEMACHINE:_gosub( parentstate, parentevent )
   end
 end
 
-function STATEMACHINE:_isendstate( state )
-  if self.fsmparent then
-    return self.fsmparent, 
+function STATEMACHINE:_returnevents( parentstate, parentevent )
+  if self.subs[parentstate] and self.subs[parentstate][parentevent] then
+    self:E(self.subs[parentstate][parentevent].returnevents)
+    return self.subs[parentstate][parentevent].returnevents
   else
     return nil
   end
+end
 
+function STATEMACHINE:_isendstate( state )
+  local fsmparent = self.fsmparent
+  if fsmparent and self.endstates[state] then
+    self:E( { state = state, endstates = self.endstates, endstate = self.endstates[state] } )
+    local returnevent = nil
+    local fromstate = fsmparent.current
+    for _, eventname in pairs( self.returnevents ) do
+      local event = fsmparent.events[eventname]
+      self:E( event )
+      local to = event and event.map[fromstate] or event.map['*']
+      if to then
+        return fsmparent, eventname
+      end
+    end
+  end
+
+  return nil
 end
 
 function STATEMACHINE:_add_to_map(map, event)
