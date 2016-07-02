@@ -5,6 +5,7 @@
 -- @field Scheduler#SCHEDULER TaskScheduler
 -- @field Client#CLIENT Client
 -- @field Mission#MISSION Mission
+-- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @extends Base#BASE
 TASK2 = {
   ClassName = "TASK",

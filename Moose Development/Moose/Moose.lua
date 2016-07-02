@@ -45,9 +45,10 @@ Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
 Include.File( "Detection" )
 Include.File( "FAC" )
-Include.File( "Task2" )
-Include.File( "TaskSead" )
 Include.File( "StateMachine" )
+Include.File( "Task2" )
+Include.File( "TaskClientSead" )
+Include.File( "TaskClientMenu" )
 
 -- The order of the declarations is important here. Don't touch it.
 

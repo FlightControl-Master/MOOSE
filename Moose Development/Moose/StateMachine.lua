@@ -22,17 +22,23 @@ STATEMACHINE = {
 -- @return #STATEMACHINE
 function STATEMACHINE:New( options )
 
-  local self = routines.utils.deepCopy( self ) -- Create a new self instance
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() )
+
+
+  --local self = routines.utils.deepCopy( self ) -- Create a new self instance
 
   assert(options.events)
 
-  local MT = {}
-  setmetatable( self, MT )
-  self.__index = self
+  --local MT = {}
+  --setmetatable( self, MT )
+  --self.__index = self
 
   self.options = options
   self.current = options.initial or 'none'
   self.events = {}
+  self.subs = {}
+  self.endstates = {}
 
   for _, event in ipairs(options.events or {}) do
     local name = event.name
@@ -44,8 +50,27 @@ function STATEMACHINE:New( options )
   for name, callback in pairs(options.callbacks or {}) do
     self[name] = callback
   end
+  
+  for name, sub in pairs( options.subs or {} ) do
+    self:_submap( self.subs, sub, name )
+  end
+  
+  for name, endstate in pairs( options.endstates or {} ) do
+    self.endstates[name] = endstate
+  end
 
   return self
+end
+
+
+function STATEMACHINE:_submap( subs, sub, name )
+  self:E( { subs = subs, sub = sub, name = name } )
+  subs[sub.onstateparent] = subs[sub.onstateparent] or {}
+  subs[sub.onstateparent][sub.oneventparent] = subs[sub.onstateparent][sub.oneventparent] or {}
+  subs[sub.onstateparent][sub.oneventparent].fsm = sub.fsm
+  subs[sub.onstateparent][sub.oneventparent].event = sub.event
+  subs[sub.onstateparent][sub.oneventparent].name = name
+  subs[sub.onstateparent][sub.oneventparent].fsmparent = self
 end
 
 
@@ -56,7 +81,9 @@ function STATEMACHINE:_call_handler(handler, params)
 end
 
 function STATEMACHINE:_create_transition(name)
+  self:E( { name = name } )
   return function(self, ...)
+    self:E(name)
     local can, to = self:can(name)
 
     if can then
@@ -69,16 +96,47 @@ function STATEMACHINE:_create_transition(name)
       end
 
       self.current = to
-
-      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-      self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-      self:_call_handler(self["onstatechange"], params)
-
+      
+      local fsm, event = self:_gosub( to, name )
+      if fsm and fsm[event] then
+        self:E( "calling sub: " .. event )
+        fsm.fsmparent = self
+        fsm.from = to
+        fsm[event]( fsm )
+      else
+        
+        local fsmparent, event = self:_isendstate( to )
+        if fsmparent then
+          fsmparent[event]( fsmparent )
+        else
+          self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+          self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
+          self:_call_handler(self["onstatechange"], params)
+        end
+      end
+      
       return true
     end
 
     return false
   end
+end
+
+function STATEMACHINE:_gosub( parentstate, parentevent )
+  if self.subs[parentstate] and self.subs[parentstate][parentevent] then
+    return self.subs[parentstate][parentevent].fsm, self.subs[parentstate][parentevent].event
+  else
+    return nil
+  end
+end
+
+function STATEMACHINE:_isendstate( state )
+  if self.fsmparent then
+    return self.fsmparent, 
+  else
+    return nil
+  end
+
 end
 
 function STATEMACHINE:_add_to_map(map, event)
