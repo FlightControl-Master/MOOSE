@@ -43,7 +43,8 @@ function TASK2_SEAD:New( Client, Mission, TargetSet )
       onMoreTargets = self.OnMoreTargets,
       onDestroyed = self.OnDestroyed,
       onKilled = self.OnKilled,
-    }
+    },
+    endstates = { 'Success', 'Failed' }
   } )
 
 

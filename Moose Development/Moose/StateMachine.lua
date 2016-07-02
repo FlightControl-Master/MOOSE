@@ -108,6 +108,7 @@ function STATEMACHINE:_create_transition(name)
         
         local fsmparent, event = self:_isendstate( to )
         if fsmparent and event then
+          self:_call_handler(self["onstatechange"], params)
           fsmparent[event]( fsmparent )
         else
           self:_call_handler(self["onenter" .. to] or self["on" .. to], params)

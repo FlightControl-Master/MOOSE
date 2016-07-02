@@ -20,8 +20,8 @@ local Task_Sead = STATEMACHINE:New( {
       { name = 'Start',  from = 'None',  to = 'Unassigned' },
       { name = 'Next',  from = 'Unassigned',  to = 'Assigned' },
 --      { name = 'Route', from = 'Assigned', to = 'Arrived'    },
-      { name = 'Next',  from = 'Assigned',    to = 'Seading' },
-      { name = 'Destroyed', from = 'Destroy', to = 'Success' },      
+      { name = 'Next',  from = 'Assigned',    to = 'Success' },
+      { name = 'Failed', from = 'Assigned', to = 'Failed' },      
     },
     subs = {
       Menu = { onstateparent = 'Unassigned', oneventparent = 'Start', fsm = Task_Menu.Fsm, event = 'Menu', returnevents = { 'Next' } },
