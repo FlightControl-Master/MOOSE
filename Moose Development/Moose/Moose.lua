@@ -1,6 +1,7 @@
 --- The main include file for the MOOSE system.
 
 Include.File( "Routines" )
+Include.File( "Utils" )
 Include.File( "Base" )
 Include.File( "Object" )
 Include.File( "Identifiable" )
@@ -47,8 +48,9 @@ Include.File( "Detection" )
 Include.File( "FAC" )
 Include.File( "StateMachine" )
 Include.File( "Task2" )
-Include.File( "TaskClientSead" )
-Include.File( "TaskClientMenu" )
+Include.File( "TaskSead" )
+Include.File( "TaskMenu" )
+Include.File( "TaskRoute" )
 
 -- The order of the declarations is important here. Don't touch it.
 

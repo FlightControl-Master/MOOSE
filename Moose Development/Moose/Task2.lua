@@ -17,7 +17,7 @@ TASK2 = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #TASK2 self
 -- @return #TASK2 self
-function TASK2:New( Client, Mission )
+function TASK2:New( Mission, Client )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 

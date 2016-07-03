@@ -23,19 +23,19 @@ function TASK2_ROUTE_CLIENT:New( Mission, Client, TargetZone )
   
   self.TargetZone = TargetZone
   self.DisplayInterval = 30
-  self.DisplayCount = 1
+  self.DisplayCount = 30
   self.DisplayMessage = true
   self.DisplayTime = 10 -- 10 seconds is the default
   self.DisplayCategory = "Route" -- Route is the default display category
   
   self.Fsm = STATEMACHINE_TASK:New( self, {
-    initial = 'Unarrived',
+    initial = 'UnArrived',
     events = {
       { name = 'Route',  from = 'UnArrived',  to = 'Arrived' },
       { name = 'Fail',  from = 'UnArrived',  to = 'Failed' },
     },
     callbacks = {
-      onleaveUnarrived = self.OnBeforeRoute,
+      onleaveUnArrived = self.OnLeaveUnArrived,
       onFail = self.OnFail,
     },
     endstates = {
@@ -54,7 +54,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_ROUTE_CLIENT:OnBeforeRoute( Fsm, Event, From, To )
+function TASK2_ROUTE_CLIENT:OnLeaveUnArrived( Fsm, Event, From, To )
   self:E( { Event, From, To, self.Client.ClientName } )
 
   local IsInZone = self.Client:IsInZone( self.TargetZone )

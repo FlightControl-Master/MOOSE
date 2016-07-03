@@ -67,11 +67,13 @@ function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )
   subs[sub.onstateparent] = subs[sub.onstateparent] or {}
   subs[sub.onstateparent][sub.oneventparent] = subs[sub.onstateparent][sub.oneventparent] or {}
-  subs[sub.onstateparent][sub.oneventparent].fsm = sub.fsm
-  subs[sub.onstateparent][sub.oneventparent].event = sub.event
-  subs[sub.onstateparent][sub.oneventparent].returnevents = sub.returnevents -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
-  subs[sub.onstateparent][sub.oneventparent].name = name
-  subs[sub.onstateparent][sub.oneventparent].fsmparent = self
+  local Index = #subs[sub.onstateparent][sub.oneventparent] + 1
+  subs[sub.onstateparent][sub.oneventparent][Index] = {}
+  subs[sub.onstateparent][sub.oneventparent][Index].fsm = sub.fsm
+  subs[sub.onstateparent][sub.oneventparent][Index].event = sub.event
+  subs[sub.onstateparent][sub.oneventparent][Index].returnevents = sub.returnevents -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
+  subs[sub.onstateparent][sub.oneventparent][Index].name = name
+  subs[sub.onstateparent][sub.oneventparent][Index].fsmparent = self
 end
 
 
@@ -98,23 +100,28 @@ function STATEMACHINE:_create_transition(name)
 
       self.current = to
       
-      local fsm, event = self:_gosub( to, name )
-      if fsm and fsm[event] then
-        self:E( "calling sub: " .. event )
-        fsm.fsmparent = self
-        fsm.returnevents = self:_returnevents( to, name )
-        fsm[event]( fsm )
-      else
+      local execute = true
+      
+      local subtable = self:_gosub( to, name )
+      for _, sub in pairs( subtable ) do
+        self:E( "calling sub: " .. sub.event )
+        sub.fsm.fsmparent = self
+        sub.fsm.returnevents = sub.returnevents
+        sub.fsm[sub.event]( sub.fsm )
+        execute = false
+      end
         
-        local fsmparent, event = self:_isendstate( to )
-        if fsmparent and event then
-          self:_call_handler(self["onstatechange"], params)
-          fsmparent[event]( fsmparent )
-        else
-          self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-          self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-          self:_call_handler(self["onstatechange"], params)
-        end
+      local fsmparent, event = self:_isendstate( to )
+      if fsmparent and event then
+        self:_call_handler(self["onstatechange"], params)
+        fsmparent[event]( fsmparent )
+        execute = false
+      end
+
+      if execute then      
+        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
+        self:_call_handler(self["onstatechange"], params)
       end
       
       return true
@@ -125,19 +132,11 @@ function STATEMACHINE:_create_transition(name)
 end
 
 function STATEMACHINE:_gosub( parentstate, parentevent )
+  local fsmtable = {}
   if self.subs[parentstate] and self.subs[parentstate][parentevent] then
-    return self.subs[parentstate][parentevent].fsm, self.subs[parentstate][parentevent].event
+    return self.subs[parentstate][parentevent]
   else
-    return nil
-  end
-end
-
-function STATEMACHINE:_returnevents( parentstate, parentevent )
-  if self.subs[parentstate] and self.subs[parentstate][parentevent] then
-    self:E(self.subs[parentstate][parentevent].returnevents)
-    return self.subs[parentstate][parentevent].returnevents
-  else
-    return nil
+    return {}
   end
 end
 

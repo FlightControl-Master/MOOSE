@@ -1,28 +1,28 @@
 --- @module Task_SEAD
 
---- TASK2_SEAD class
--- @type TASK2_SEAD
+--- TASK2_SEAD_CLIENT class
+-- @type TASK2_SEAD_CLIENT
 -- @field Client#CLIENT Client
 -- @field Set#SET_UNIT TargetSet
 -- @field Menu#MENU_CLIENT_COMMAND MenuSEAD
 -- @extends Task2#TASK2
-TASK2_SEAD = { 
-  ClassName = "TASK2_SEAD",
+TASK2_SEAD_CLIENT = { 
+  ClassName = "TASK2_SEAD_CLIENT",
   Fsm = {},
   TargetSet = nil,
 }
 
 
 --- Creates a new SEAD task.
--- @param #TASK2_SEAD self
--- @param Client#CLIENT Client
+-- @param #TASK2_SEAD_CLIENT self
 -- @param Mission#MISSION Mission
+-- @param Client#CLIENT Client
 -- @param Set#SET_UNIT TargetSet
--- @return #TASK2_SEAD self
-function TASK2_SEAD:New( Client, Mission, TargetSet )
+-- @return #TASK2_SEAD_CLIENT self
+function TASK2_SEAD_CLIENT:New( Mission, Client, TargetSet )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Client, Mission ) ) -- #TASK2_SEAD
+  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_SEAD_CLIENT
   
   self.TargetSet = TargetSet
 
@@ -58,12 +58,12 @@ end
 --- Task Events
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_SEAD:OnAwait( Fsm, Event, From, To )
+function TASK2_SEAD_CLIENT:OnAwait( Fsm, Event, From, To )
   self:E( { Event, From, To, self.Client.ClientName} )
 
   self.Client:Message( "Waiting", 15 )
@@ -71,13 +71,13 @@ function TASK2_SEAD:OnAwait( Fsm, Event, From, To )
 end
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK2_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
+function TASK2_SEAD_CLIENT:OnHitTarget( Fsm, Event, From, To, Event )
 
   self.Client:Message( "Hit Target", 15 )
   if self.TargetSet:Count() > 0 then
@@ -88,25 +88,25 @@ function TASK2_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
 end
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_SEAD:OnMoreTargets( Fsm, Event, From, To )
+function TASK2_SEAD_CLIENT:OnMoreTargets( Fsm, Event, From, To )
 
     self.Client:Message( "More Targets", 15 )
 
 end
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA DCSEvent
-function TASK2_SEAD:OnKilled( Fsm, Event, From, To )
+function TASK2_SEAD_CLIENT:OnKilled( Fsm, Event, From, To )
 
   self.Client:Message( "Player got killed", 15 )
   self:NextEvent( Fsm.Restart )
@@ -114,12 +114,12 @@ function TASK2_SEAD:OnKilled( Fsm, Event, From, To )
 end
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_SEAD:OnRestart( Fsm, Event, From, To )
+function TASK2_SEAD_CLIENT:OnRestart( Fsm, Event, From, To )
 
   self.Client:Message( "Restart SEAD Task", 15 )
   self:NextEvent( Fsm.Menu )
@@ -127,12 +127,12 @@ function TASK2_SEAD:OnRestart( Fsm, Event, From, To )
 end
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_SEAD self
+-- @param #TASK2_SEAD_CLIENT self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_SEAD:OnDestroyed( Fsm, Event, From, To )
+function TASK2_SEAD_CLIENT:OnDestroyed( Fsm, Event, From, To )
 
     self.Client:Message( "Destroyed", 15 )
 
@@ -140,18 +140,18 @@ end
 
 --- DCS Events
 
---- @param #TASK2_SEAD self
+--- @param #TASK2_SEAD_CLIENT self
 -- @param Event#EVENTDATA Event
-function TASK2_SEAD:EventHit( Event )
+function TASK2_SEAD_CLIENT:EventHit( Event )
 
   if Event.IniUnit then
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
 end
 
---- @param #TASK2_SEAD self
+--- @param #TASK2_SEAD_CLIENT self
 -- @param Event#EVENTDATA Event
-function TASK2_SEAD:EventKilled( Event )
+function TASK2_SEAD_CLIENT:EventKilled( Event )
 
   if Event.IniUnit then
     if Event.IniUnitName == self.Client.ClientName then
