@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160628_1157' ) 
+env.info( 'Moose Generation Timestamp: 20160703_0754' ) 
 local base = _G
 
 Include = {}
@@ -8727,6 +8727,23 @@ function ZONE_UNIT:GetPointVec2()
   return ZonePointVec2
 end
 
+--- Returns a random location within the zone.
+-- @param #ZONE_UNIT self
+-- @return DCSTypes#Vec2 The random location within the zone.
+function ZONE_UNIT:GetRandomVec2()
+  self:F( self.ZoneName )
+
+  local Point = {}
+  local PointVec2 = self.ZoneUNIT:GetPointVec2()
+
+  local angle = math.random() * math.pi*2;
+  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  
+  self:T( { Point } )
+  
+  return Point
+end
 -- Polygons
 
 --- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
