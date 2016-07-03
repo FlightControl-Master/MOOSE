@@ -71,7 +71,7 @@ end
 -- @param Positionable#POSITIONABLE self
 -- @return DCSTypes#Vec2 The 2D point vector of the DCS Positionable.
 -- @return #nil The DCS Positionable is not existing or alive.  
-function POSITIONABLE:GetPointVec2()
+function POSITIONABLE:GetVec2()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
@@ -137,7 +137,7 @@ function POSITIONABLE:IsAboveRunway()
   
   if DCSPositionable then
   
-    local PointVec2 = self:GetPointVec2()
+    local PointVec2 = self:GetVec2()
     local SurfaceType = land.getSurfaceType( PointVec2 )
     local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
   

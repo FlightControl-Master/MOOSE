@@ -563,7 +563,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
     
       if SpawnTemplate then
 
-        local UnitPoint = HostUnit:GetPointVec2()
+        local UnitPoint = HostUnit:GetVec2()
         
         self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
         
@@ -646,7 +646,7 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
         if ZoneRandomize == true then
           ZonePoint = Zone:GetRandomVec2()
         else
-          ZonePoint = Zone:GetPointVec2()
+          ZonePoint = Zone:GetVec2()
         end
 
         SpawnTemplate.route.points[1].x = ZonePoint.x

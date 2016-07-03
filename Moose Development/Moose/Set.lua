@@ -399,9 +399,9 @@ function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
   for ObjectID, ObjectData in pairs( self.Set ) do
     if NearestObject == nil then
       NearestObject = ObjectData
-      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
     else
-      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetPointVec2() )
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
       if Distance < ClosestDistance then
         NearestObject = ObjectData
         ClosestDistance = Distance

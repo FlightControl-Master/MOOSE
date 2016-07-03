@@ -475,12 +475,12 @@ end
 --- Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.
 -- @param #GROUP self
 -- @return DCSTypes#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
-function GROUP:GetPointVec2()
+function GROUP:GetVec2()
   self:F2( self.GroupName )
 
   local UnitPoint = self:GetUnit(1)
-  UnitPoint:GetPointVec2()
-  local GroupPointVec2 = UnitPoint:GetPointVec2()
+  UnitPoint:GetVec2()
+  local GroupPointVec2 = UnitPoint:GetVec2()
   self:T3( GroupPointVec2 )
   return GroupPointVec2
 end

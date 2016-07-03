@@ -4,6 +4,9 @@
 -- ===============================================
 -- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
+-- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
+-- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
+-- 
 -- 1.1) POINT_VEC3 constructor
 -- ---------------------------
 --  
@@ -28,6 +31,7 @@
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
 -- @extends Base#BASE
+-- @field DCSTypes#Vec3 PointVec3 
 -- @field #POINT_VEC3.SmokeColor SmokeColor
 -- @field #POINT_VEC3.FlareColor FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
@@ -48,6 +52,7 @@ POINT_VEC3 = {
     White = trigger.flareColor.White,
     Yellow = trigger.flareColor.Yellow
   },
+  Metric = true,
   RoutePointAltType = {
     BARO = "BARO",
   },
@@ -112,6 +117,148 @@ function POINT_VEC3:New( x, y, z )
   self:F2( self.PointVec3 )
   return self
 end
+
+
+--- Return the coordinates of the POINT_VEC3 in Vec3 format.
+-- @param #POINT_VEC3 self
+-- @return DCSTypes#Vec3 The Vec3 coodinate.
+function POINT_VEC3:GetVec3()
+  return self.PointVec3
+end
+
+
+--- Return the x coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @return #number The x coodinate.
+function POINT_VEC3:GetX()
+  return self.PointVec3.x
+end
+
+--- Return the y coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @return #number The y coodinate.
+function POINT_VEC3:GetY()
+  return self.PointVec3.y
+end
+
+--- Return the z coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @return #number The z coodinate.
+function POINT_VEC3:GetZ()
+  return self.PointVec3.z
+end
+
+
+--- Return a direction vector Vec3 from POINT_VEC3 to the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @return DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
+function POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
+  return { x = TargetPointVec3:GetX() - self:GetX(), y = TargetPointVec3:GetY() - self:GetY(), z = TargetPointVec3:GetZ() - self:GetZ() }
+end
+
+--- Get a correction in radians of the real magnetic north of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @return #number CorrectionRadians The correction in radians.
+function POINT_VEC3:GetNorthCorrectionRadians()
+  local TargetVec3 = self:GetVec3()
+  local lat, lon = coord.LOtoLL(TargetVec3)
+  local north_posit = coord.LLtoLO(lat + 1, lon)
+  return math.atan2( north_posit.z - TargetVec3.z, north_posit.x - TargetVec3.x )
+end
+
+
+--- Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
+-- @return #number DirectionRadians The direction in radians.
+function POINT_VEC3:GetDirectionRadians( DirectionVec3 )
+  local DirectionRadians = math.atan2( DirectionVec3.z, DirectionVec3.x )
+  DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
+  if DirectionRadians < 0 then
+    DirectionRadians = DirectionRadians + 2 * math.pi  -- put dir in range of 0 to 2*pi ( the full circle )
+  end
+  return DirectionRadians
+end
+
+--- Return the 2D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @return DCSTypes#Distance Distance The distance in meters.
+function POINT_VEC3:Get2DDistance( TargetPointVec3 )
+  local TargetVec3 = TargetPointVec3:GetVec3()
+  local SourceVec3 = self:GetVec3()
+  return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+end
+
+--- Return the 3D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @return DCSTypes#Distance Distance The distance in meters.
+function POINT_VEC3:Get3DDistance( TargetPointVec3 )
+  local TargetVec3 = TargetPointVec3:GetVec3()
+  local SourceVec3 = self:GetVec3()
+  return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+end
+
+--- Provides a Bearing / Range string
+-- @param #POINT_VEC3 self
+-- @param #number AngleRadians The angle in randians
+-- @param #number Distance The distance
+-- @return #string The BR Text
+function POINT_VEC3:ToStringBR( AngleRadians, Distance )
+
+  AngleRadians = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 )
+  if self:IsMetric() then
+    Distance = UTILS.Round( Distance / 1000, 2 )
+  else
+    Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 2 )
+  end
+
+  local s = string.format( '%03d', AngleRadians ) .. ' for ' .. Distance
+
+  s = s .. self:GetAltitudeText() -- When the POINT is a VEC2, there will be no altitude shown.
+
+  return s
+end
+
+--- Return the altitude text of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @return #string Altitude text.
+function POINT_VEC3:GetAltitudeText()
+  if self:IsMetric() then
+    return ' at ' .. UTILS.Round( self:GetY(), 0 )
+  else
+    return ' at ' .. UTILS.Round( UTILS.MetersToFeet( self:GetY() ), 0 )
+  end
+end
+
+--- Return a BR string from a POINT_VEC3 to the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @return #string The BR text.
+function POINT_VEC3:GetBRText( TargetPointVec3 )
+    local DirectionVec3 = self:GetDirectionVec3( TargetPointVec3 )
+    local AngleRadians =  self:GetDirectionRadians( DirectionVec3 )
+    local Distance = self:Get2DDistance( TargetPointVec3 )
+    return self:ToStringBR( AngleRadians, Distance )
+end
+
+--- Sets the POINT_VEC3 metric or NM.
+-- @param #POINT_VEC3 self
+-- @param #boolean Metric true means metric, false means NM.
+function POINT_VEC3:SetMetric( Metric )
+  self.Metric = Metric
+end
+
+--- Gets if the POINT_VEC3 is metric or NM.
+-- @param #POINT_VEC3 self
+-- @return #boolean Metric true means metric, false means NM.
+function POINT_VEC3:IsMetric()
+  return self.Metric
+end
+
+
 
 
 --- Build an air type route point.
@@ -298,4 +445,11 @@ function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   return Distance
 end
 
+
+--- Return no text for the altitude of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @return #string Empty string.
+function POINT_VEC2:GetAltitudeText()
+  return ''
+end
 
