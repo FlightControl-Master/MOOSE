@@ -6,6 +6,7 @@
 -- @type MISSION
 -- @extends Base#BASE
 -- @field #MISSION.Clients _Clients
+-- @field Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
 MISSION = {
 	ClassName = "MISSION",
@@ -60,19 +61,12 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	self = MISSION:Meta()
 	self:T({ MissionName, MissionPriority, MissionBriefing, MissionCoalition })
   
-	local Valid = true
-  
-	Valid = routines.ValidateString( MissionName, "MissionName", Valid )
-	Valid = routines.ValidateString( MissionPriority, "MissionPriority", Valid )
-	Valid = routines.ValidateString( MissionBriefing, "MissionBriefing", Valid )
-	Valid = routines.ValidateString( MissionCoalition, "MissionCoalition", Valid )
-  
-	if Valid then
-		self.Name = MissionName
-		self.MissionPriority = MissionPriority
-		self.MissionBriefing = MissionBriefing
-		self.MissionCoalition = MissionCoalition
-	end
+	self.Name = MissionName
+	self.MissionPriority = MissionPriority
+	self.MissionBriefing = MissionBriefing
+	self.MissionCoalition = MissionCoalition
+
+  self:SetMissionMenu()
 
 	return self
 end
@@ -97,6 +91,29 @@ end
 -- @return #SCORING Scoring
 function MISSION:GetScoring()
   return self.Scoring
+end
+
+--- Sets the mission menu for the coalition.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:SetMissionMenu()
+  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self.Name )
+end
+
+--- Gets the mission menu for the coalition.
+-- @param #MISSION self
+-- @return Menu#MENU_COALITION self
+function MISSION:GetMissionMenu()
+  return self.MissionMenu
+end
+
+
+--- Clears the mission menu for the coalition.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:ClearMissionMenu()
+  self.MissionMenu:Remove()
+  self.MissionMenu = nil
 end
 
 --- Returns if a Mission has completed.
