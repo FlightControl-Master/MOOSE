@@ -380,6 +380,14 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
   self:E( TraceTable )
 end
 
+function DATABASE:GetGroupTemplate( GroupName )
+  local GroupTemplate = self.Templates.Groups[GroupName].Template
+  GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
+  GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
+  GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
+  return GroupTemplate
+end
+
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CoalitionID
 end

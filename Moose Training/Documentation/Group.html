@@ -35,6 +35,7 @@
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -406,7 +407,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTemplate">GROUP:GetTemplate()</a></td>
 		<td class="summary">
-
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
 </td>
 		</tr>
 		<tr>
@@ -526,7 +527,25 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Respawn">GROUP:Respawn(Template)</a></td>
 		<td class="summary">
-
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCoalition">GROUP:SetTemplateCoalition(CoalitionID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CoalitionID of the group in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateControlled">GROUP:SetTemplateControlled(Controlled, Template)</a></td>
+		<td class="summary">
+<p>Sets the controlled status in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCountry">GROUP:SetTemplateCountry(CountryID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CountryID of the group in a Template.</p>
 </td>
 		</tr>
 	</table>
@@ -1066,6 +1085,11 @@ The mission route defined by points.</p>
 </dt>
 <dd>
 	
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
 
 
 </dd>
@@ -1544,16 +1568,135 @@ self</p>
 </dt>
 <dd>
 	
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
 
+	
+<p>The template must be retrieved with the <a href="Group.html##(GROUP).GetTemplate">Group#GROUP.GetTemplate</a>() function.
+The template contains all the definitions as declared within the mission file.
+To understand templates, do the following: </p>
+
+<ul>
+    <li>unpack your .miz file into a directory using 7-zip.</li>
+    <li>browse in the directory created to the file <strong>mission</strong>.</li>
+    <li>open the file and search for the country group definitions.</li>
+</ul>
+
+<p>Your group template will contain the fields as described within the mission file.</p>
+
+<p>This function will:</p>
+
+<ul>
+    <li>Get the current position and heading of the group.</li>
+    <li>When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.</li>
+    <li>Then it will destroy the current alive group.</li>
+    <li>And it will respawn the group using your new template definition.</li>
+</ul>
 
 		<h3>Parameter</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#table Template </em></code>: 
+The template of the Group retrieved with GROUP:GetTemplate()</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCoalition" >
+<strong>GROUP:SetTemplateCoalition(CoalitionID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CoalitionID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a> CoalitionID </em></code>: 
+The coalition ID.</p>
+
+				</li>
 				<li>
 				
 <p><code><em> Template </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateControlled" >
+<strong>GROUP:SetTemplateControlled(Controlled, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the controlled status in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Controlled </em></code>: 
+true is controlled, false is uncontrolled.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCountry" >
+<strong>GROUP:SetTemplateCountry(CountryID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CountryID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a> CountryID </em></code>: 
+The country ID.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
 </dd>
 </dl>
 

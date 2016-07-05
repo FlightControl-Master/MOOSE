@@ -35,6 +35,7 @@
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -107,8 +108,9 @@
     <li><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>: The ZONE_BASE class defining the base for all other zone classes.</li>
     <li><a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a>: The ZONE_RADIUS class defined by a zone name, a location and a radius.</li>
     <li><a href="Zone.html##(ZONE)">Zone#ZONE</a>: The ZONE class, defined by the zone name as defined within the Mission Editor.</li>
-    <li><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>: The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</li>
-    <li><a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
+    <li><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>: The ZONE_UNIT class defines by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</li>
+    <li><a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a>: The ZONE_GROUP class defines by a zone around a <a href="Group.html##(GROUP)">Group#GROUP</a> with a radius.</li>
+    <li><a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defines by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
 </ul>
 
 <p>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</p>
@@ -140,7 +142,12 @@
 
 <hr/>
 
-<h1>5) <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+<h1>5) <a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_GROUP class defines by a zone around a <a href="Group.html##(GROUP)">Group#GROUP</a> with a radius. The current leader of the group defines the center of the zone.</p>
+
+<hr/>
+
+<h1>6) <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
 <p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
 
 <hr/>
@@ -156,6 +163,12 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#ZONE_BASE">ZONE_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_GROUP">ZONE_GROUP</a></td>
 		<td class="summary">
 
 </td>
@@ -277,6 +290,40 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).y2">ZONE_BASE.BoundingSquare.y2</a></td>
 		<td class="summary">
 <p>The higher y coordinate (right up)</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_GROUP)">Type <code>ZONE_GROUP</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).ClassName">ZONE_GROUP.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetPointVec2">ZONE_GROUP:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Returns the current location of the <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomVec2">ZONE_GROUP:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).New">ZONE_GROUP:New(ZoneName, ZoneGROUP, Radius)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Group.html##(GROUP)">Group#GROUP</a> and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).ZoneGROUP">ZONE_GROUP.ZoneGROUP</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -452,6 +499,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetRandomVec2">ZONE_UNIT:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).New">ZONE_UNIT:New(ZoneName, ZoneUNIT, Radius)</a></td>
 		<td class="summary">
 <p>Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.</p>
@@ -486,6 +539,20 @@
 		<em><a href="##(ZONE_BASE)">#ZONE_BASE</a></em>
 <a id="ZONE_BASE" >
 <strong>ZONE_BASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_GROUP)">#ZONE_GROUP</a></em>
+<a id="ZONE_GROUP" >
+<strong>ZONE_GROUP</strong>
 </a>
 </dt>
 <dd>
@@ -841,6 +908,115 @@ The smoke color.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(ZONE_GROUP)" >Type <code>ZONE_GROUP</code></a></h2>
+				
+<p>The ZONE_GROUP class defined by a zone around a <a href="Group.html">Group</a>, taking the average center point of all the units within the Group, with a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_GROUP).ClassName" >
+<strong>ZONE_GROUP.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).GetPointVec2" >
+<strong>ZONE_GROUP:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current location of the <a href="Group.html">Group</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The location of the zone based on the <a href="Group.html">Group</a> location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).GetRandomVec2" >
+<strong>ZONE_GROUP:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The random location of the zone based on the <a href="Group.html">Group</a> location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).New" >
+<strong>ZONE_GROUP:New(ZoneName, ZoneGROUP, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Group.html##(GROUP)">Group#GROUP</a> and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> ZoneGROUP </em></code>: 
+The <a href="Group.html">Group</a> as the center of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_GROUP)">#ZONE_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
+<a id="#(ZONE_GROUP).ZoneGROUP" >
+<strong>ZONE_GROUP.ZoneGROUP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
 			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
 				
 <p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
@@ -980,6 +1156,9 @@ The Vec2 coordinate.</p>
 <dd>
 	
 <p>Returns if a location is within the zone.</p>
+
+	
+<p>Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1464,6 +1643,24 @@ self</p>
 				
 <p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
 The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetRandomVec2" >
+<strong>ZONE_UNIT:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The random location within the zone.</p>
 
 </dd>
 </dl>
