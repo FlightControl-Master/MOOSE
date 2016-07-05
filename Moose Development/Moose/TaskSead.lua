@@ -2,7 +2,7 @@
 
 --- TASK2_SEAD_CLIENT class
 -- @type TASK2_SEAD_CLIENT
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Set#SET_UNIT TargetSet
 -- @field Menu#MENU_CLIENT_COMMAND MenuSEAD
 -- @extends Task2#TASK2
@@ -16,13 +16,13 @@ TASK2_SEAD_CLIENT = {
 --- Creates a new SEAD task.
 -- @param #TASK2_SEAD_CLIENT self
 -- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
+-- @param Unit#UNIT TaskUnit
 -- @param Set#SET_UNIT TargetSet
 -- @return #TASK2_SEAD_CLIENT self
-function TASK2_SEAD_CLIENT:New( Mission, Client, TargetSet )
+function TASK2_SEAD_CLIENT:New( Mission, TaskUnit, TargetSet )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_SEAD_CLIENT
+  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_SEAD_CLIENT
   
   self.TargetSet = TargetSet
 
@@ -64,9 +64,9 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnAwait( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName} )
 
-  self.Client:Message( "Waiting", 15 )
+  self.TaskUnit:Message( "Waiting", 15 )
   self:NextEvent( Fsm.Await )
 end
 
@@ -79,7 +79,7 @@ end
 -- @param Event#EVENTDATA Event
 function TASK2_SEAD_CLIENT:OnHitTarget( Fsm, Event, From, To, Event )
 
-  self.Client:Message( "Hit Target", 15 )
+  self.TaskUnit:Message( "Hit Target", 15 )
   if self.TargetSet:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else
@@ -95,7 +95,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnMoreTargets( Fsm, Event, From, To )
 
-    self.Client:Message( "More Targets", 15 )
+    self.TaskUnit:Message( "More Targets", 15 )
 
 end
 
@@ -108,7 +108,7 @@ end
 -- @param Event#EVENTDATA DCSEvent
 function TASK2_SEAD_CLIENT:OnKilled( Fsm, Event, From, To )
 
-  self.Client:Message( "Player got killed", 15 )
+  self.TaskUnit:Message( "Player got killed", 15 )
   self:NextEvent( Fsm.Restart )
 
 end
@@ -121,7 +121,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnRestart( Fsm, Event, From, To )
 
-  self.Client:Message( "Restart SEAD Task", 15 )
+  self.TaskUnit:Message( "Restart SEAD Task", 15 )
   self:NextEvent( Fsm.Menu )
 
 end
@@ -134,7 +134,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnDestroyed( Fsm, Event, From, To )
 
-    self.Client:Message( "Destroyed", 15 )
+    self.TaskUnit:Message( "Destroyed", 15 )
 
 end
 
@@ -154,7 +154,7 @@ end
 function TASK2_SEAD_CLIENT:EventKilled( Event )
 
   if Event.IniUnit then
-    if Event.IniUnitName == self.Client.ClientName then
+    if Event.IniUnitName == self.TaskUnit.UnitName then
       self:NextEvent( self.Fsm.Killed, Event )
     end
   end

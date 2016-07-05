@@ -819,7 +819,7 @@ end
 -- @param #string Message The message text
 -- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
-function GROUP:Message( Message, Duration )
+function GROUP:GetMessage( Message, Duration )
   self:F2( { Message, Duration } )
 
   local DCSGroup = self:GetDCSObject()
@@ -840,7 +840,7 @@ function GROUP:MessageToAll( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToAll()
+    self:GetMessage( Message, Duration ):ToAll()
   end
 
   return nil
@@ -856,7 +856,7 @@ function GROUP:MessageToRed( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToRed()
+    self:GetMessage( Message, Duration ):ToRed()
   end
 
   return nil
@@ -872,7 +872,7 @@ function GROUP:MessageToBlue( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToBlue()
+    self:GetMessage( Message, Duration ):ToBlue()
   end
 
   return nil
@@ -889,7 +889,23 @@ function GROUP:MessageToClient( Message, Duration, Client )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToClient( Client )
+    self:GetMessage( Message, Duration ):ToClient( Client )
+  end
+
+  return nil
+end
+
+--- Send a message to the players in the @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function GROUP:Message( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+    self:GetMessage( Message, Duration ):ToGroup( self )
   end
 
   return nil

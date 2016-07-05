@@ -253,11 +253,11 @@ MENU_COALITION = {
 
 --- Creates a new coalition menu item
 -- @param #MENU_COALITION self
--- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param DCSCoalition#coalition.side Coalition The coalition owning the menu.
 -- @param #string MenuText The text for the menu.
 -- @param #table ParentMenu The parent menu.
 -- @return #MENU_COALITION self
-function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
+function MENU_COALITION:New( Coalition, MenuText, ParentMenu )
 
   -- Arrange meta tables
   local MenuParentPath = {}
@@ -266,9 +266,9 @@ function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
   end
 
   local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-  self:F( { MenuCoalition, MenuText, ParentMenu } )
+  self:F( { Coalition, MenuText, ParentMenu } )
 
-  self.MenuCoalition = MenuCoalition
+  self.Coalition = Coalition
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
   self.ParentMenu = ParentMenu
@@ -277,7 +277,7 @@ function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
 
   self:T( { MenuParentPath, MenuText } )
 
-  self.MenuPath = missionCommands.addSubMenuForCoalition( self.MenuCoalition, MenuText, MenuParentPath )
+  self.MenuPath = missionCommands.addSubMenuForCoalition( self.Coalition, MenuText, MenuParentPath )
 
   self:T( { self.MenuPath } )
 

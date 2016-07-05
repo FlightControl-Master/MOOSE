@@ -3,7 +3,7 @@
 --- TASK2_ROUTE_CLIENT class
 -- @type TASK2_ROUTE_CLIENT
 -- @field Mission#MISSION Mission
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Zone#ZONE_BASE TargetZone
 -- @extends Task2#TASK2
 TASK2_ROUTE_CLIENT = { 
@@ -14,12 +14,12 @@ TASK2_ROUTE_CLIENT = {
 --- Creates a new routing state machine. The task will route a CLIENT to a ZONE until the CLIENT is within that ZONE.
 -- @param #TASK2_ROUTE_CLIENT self
 -- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
+-- @param Unit#UNIT Unit
 -- @return #TASK2_ROUTE_CLIENT self
-function TASK2_ROUTE_CLIENT:New( Mission, Client, TargetZone )
+function TASK2_ROUTE_CLIENT:New( Mission, TaskUnit, TargetZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_ROUTE_CLIENT
+  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_ROUTE_CLIENT
   
   self.TargetZone = TargetZone
   self.DisplayInterval = 30
@@ -55,18 +55,18 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_ROUTE_CLIENT:OnLeaveUnArrived( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName } )
+  self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
-  local IsInZone = self.Client:IsInZone( self.TargetZone )
+  local IsInZone = self.TaskUnit:IsInZone( self.TargetZone )
 
   if self.DisplayCount >= self.DisplayInterval then
     if not IsInZone then
       local ZoneVec2 = self.TargetZone:GetVec2()
       local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
-      local ClientVec2 = self.Client:GetVec2()
-      local ClientPointVec2 = POINT_VEC2:New( ClientVec2.x, ClientVec2.y )
-      local RouteText = ClientPointVec2:GetBRText( ZonePointVec2 )
-      self.Client:Message( RouteText, self.DisplayTime, self.DisplayCategory  )
+      local TaskUnitVec2 = self.TaskUnit:GetVec2()
+      local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
+      local RouteText = TaskUnitPointVec2:GetBRText( ZonePointVec2 )
+      self.TaskUnit:Message( RouteText, self.DisplayTime, self.DisplayCategory  )
     end
     self.DisplayCount = 1
   else

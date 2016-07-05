@@ -3,7 +3,7 @@
 --- The TASK2 class
 -- @type TASK2
 -- @field Scheduler#SCHEDULER TaskScheduler
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Mission#MISSION Mission
 -- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @extends Base#BASE
@@ -16,12 +16,13 @@ TASK2 = {
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #TASK2 self
+-- @param Unit#UNIT TaskUnit
 -- @return #TASK2 self
-function TASK2:New( Mission, Client )
+function TASK2:New( Mission, TaskUnit )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 
-  self.Client = Client
+  self.TaskUnit = TaskUnit
   self.Mission = Mission
   
   return self
@@ -31,7 +32,7 @@ end
 function TASK2:NextEvent( NextEvent, ... )
   self:E( NextEvent )
 
-  self.TaskScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.Client, unpack( arg ) }, 1 )
+  self.TaskScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.TaskUnit, unpack( arg ) }, 1 )
 end
 
 --- Adds a score for the TASK2 to be achieved.
@@ -56,13 +57,13 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2:OnStateChange( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
   if self.Scores[To] then
-    self.Client:Message( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 )
+    self.Unit:Message( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 )
     local Scoring = self.Mission:GetScoring()
     if Scoring then
-      Scoring:_AddMissionTaskScore( self.Client, self.Mission:GetName(), self.Scores[To].Score )
+      Scoring:_AddMissionTaskScore( self.TaskUnit, self.Mission:GetName(), self.Scores[To].Score )
     end
   end
 end
