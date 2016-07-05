@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160704_1648' ) 
+env.info( 'Moose Generation Timestamp: 20160705_0828' ) 
 local base = _G
 
 Include = {}
@@ -7580,14 +7580,34 @@ function GROUP:GetMaxHeight()
 
 end
 
---- @param Group#GROUP self
+-- SPAWNING
+
+--- Respawn the @{GROUP} using a (tweaked) template of the Group.
+-- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
+-- The template contains all the definitions as declared within the mission file.
+-- To understand templates, do the following: 
+-- 
+--   * unpack your .miz file into a directory using 7-zip.
+--   * browse in the directory created to the file **mission**.
+--   * open the file and search for the country group definitions.
+--   
+-- Your group template will contain the fields as described within the mission file.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will destroy the current alive group.
+--  * And it will respawn the group using your new template definition.
+-- @param Group#GROUP self
+-- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
   local Vec3 = self:GetPointVec3()
-  --Template.x = Vec3.x
-  --Template.y = Vec3.z
-  Template.x = nil
-  Template.y = nil
+  Template.x = Vec3.x
+  Template.y = Vec3.z
+  --Template.x = nil
+  --Template.y = nil
   
   self:E( #Template.units )
   for UnitID, UnitData in pairs( self:GetUnits() ) do
@@ -7604,15 +7624,48 @@ function GROUP:Respawn( Template )
     end
   end
   
+  self:Destroy()
   _DATABASE:Spawn( Template )
-
 end
 
+--- Returns the group template from the @{DATABASE} (_DATABASE object).
+-- @param #GROUP self
+-- @return #table 
 function GROUP:GetTemplate()
-
-  return _DATABASE.Templates.Groups[self:GetName()].Template
-
+  local GroupName = self:GetName()
+  self:E( GroupName )
+  return _DATABASE:GetGroupTemplate( GroupName )
 end
+
+--- Sets the controlled status in a Template.
+-- @param #GROUP self
+-- @param #boolean Controlled true is controlled, false is uncontrolled.
+-- @return #table 
+function GROUP:SetTemplateControlled( Template, Controlled )
+  Template.uncontrolled = not Controlled
+  return Template
+end
+
+--- Sets the CountryID of the group in a Template.
+-- @param #GROUP self
+-- @param DCScountry#country.id CountryID The country ID.
+-- @return #table 
+function GROUP:SetTemplateCountry( Template, CountryID )
+  Template.CountryID = CountryID
+  return Template
+end
+
+--- Sets the CoalitionID of the group in a Template.
+-- @param #GROUP self
+-- @param DCSCoalitionObject#coalition.side CoalitionID The coalition ID.
+-- @return #table 
+function GROUP:SetTemplateCoalition( Template, CoalitionID )
+  Template.CoalitionID = CoalitionID
+  return Template
+end
+
+
+
 
 --- Return the mission template of the group.
 -- @param #GROUP self
@@ -8340,8 +8393,9 @@ end
 --   * @{Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
 --   * @{Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
 --   * @{Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
---   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
---   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
+--   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
+--   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
 -- Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
@@ -8374,7 +8428,13 @@ end
 -- 
 -- ===
 -- 
--- 5) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
+-- 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
+-- =======================================================
+-- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- 
+-- ===
+-- 
+-- 6) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
@@ -8382,13 +8442,6 @@ end
 -- 
 -- @module Zone
 -- @author FlightControl
-
-
-
-
-
-
-
 
 
 --- The ZONE_BASE class
@@ -8744,6 +8797,64 @@ function ZONE_UNIT:GetRandomVec2()
   
   return Point
 end
+
+--- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
+-- @type ZONE_GROUP
+-- @field Group#GROUP ZoneGROUP
+-- @extends Zone#ZONE_RADIUS
+ZONE_GROUP = {
+  ClassName="ZONE_GROUP",
+  }
+  
+--- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Group#GROUP} and a radius.
+-- @param #ZONE_GROUP self
+-- @param #string ZoneName Name of the zone.
+-- @param Group#GROUP ZoneGROUP The @{Group} as the center of the zone.
+-- @param DCSTypes#Distance Radius The radius of the zone.
+-- @return #ZONE_GROUP self
+function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetPointVec2(), Radius ) )
+  self:F( { ZoneName, ZoneGROUP:GetPointVec2(), Radius } )
+
+  self.ZoneGROUP = ZoneGROUP
+  
+  return self
+end
+
+
+--- Returns the current location of the @{Group}.
+-- @param #ZONE_GROUP self
+-- @return DCSTypes#Vec2 The location of the zone based on the @{Group} location.
+function ZONE_GROUP:GetPointVec2()
+  self:F( self.ZoneName )
+  
+  local ZonePointVec2 = self.ZoneGROUP:GetPointVec2()
+
+  self:T( { ZonePointVec2 } )
+  
+  return ZonePointVec2
+end
+
+--- Returns a random location within the zone of the @{Group}.
+-- @param #ZONE_GROUP self
+-- @return DCSTypes#Vec2 The random location of the zone based on the @{Group} location.
+function ZONE_GROUP:GetRandomVec2()
+  self:F( self.ZoneName )
+
+  local Point = {}
+  local PointVec2 = self.ZoneGROUP:GetPointVec2()
+
+  local angle = math.random() * math.pi*2;
+  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  
+  self:T( { Point } )
+  
+  return Point
+end
+
+
+
 -- Polygons
 
 --- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
@@ -9980,6 +10091,14 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
   end
 
   self:E( TraceTable )
+end
+
+function DATABASE:GetGroupTemplate( GroupName )
+  local GroupTemplate = self.Templates.Groups[GroupName].Template
+  GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
+  GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
+  GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
+  return GroupTemplate
 end
 
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )

@@ -3,6 +3,7 @@
 
 --- @type country
 -- @field #country.id id
+country = country -- #country
 
 --- @type country.id
 -- @field RUSSIA

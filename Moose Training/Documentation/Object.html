@@ -35,6 +35,7 @@
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -138,51 +139,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCallSign">OBJECT:GetCallSign()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetID">OBJECT:GetID()</a></td>
 		<td class="summary">
-<p>Returns the Object's callsign - the localized string.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCategoryName">OBJECT:GetCategoryName()</a></td>
-		<td class="summary">
-<p>Returns the DCS Object category name as defined within the DCS Object Descriptor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCoalition">OBJECT:GetCoalition()</a></td>
-		<td class="summary">
-<p>Returns coalition of the Object.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetCountry">OBJECT:GetCountry()</a></td>
-		<td class="summary">
-<p>Returns country of the Object.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetDesc">OBJECT:GetDesc()</a></td>
-		<td class="summary">
-<p>Returns Object descriptor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetName">OBJECT:GetName()</a></td>
-		<td class="summary">
-<p>Returns DCS Object object name.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetTypeName">OBJECT:GetTypeName()</a></td>
-		<td class="summary">
-<p>Returns the type name of the DCS Object.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).IsAlive">OBJECT:IsAlive()</a></td>
-		<td class="summary">
-<p>Returns if the Object is alive.</p>
+<p>Returns the unit's unique identifier.</p>
 </td>
 		</tr>
 		<tr>
@@ -257,212 +216,20 @@
 		<dl class="function">
 <dt>
 
-<a id="#(OBJECT).GetCallSign" >
-<strong>OBJECT:GetCallSign()</strong>
+<a id="#(OBJECT).GetID" >
+<strong>OBJECT:GetID()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns the Object's callsign - the localized string.</p>
+<p>Returns the unit's unique identifier.</p>
 
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
-<p><em>#string:</em>
-The Callsign of the Object.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetCategoryName" >
-<strong>OBJECT:GetCategoryName()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the DCS Object category name as defined within the DCS Object Descriptor.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The DCS Object Category Name</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetCoalition" >
-<strong>OBJECT:GetCoalition()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns coalition of the Object.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em>
-The side of the coalition.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetCountry" >
-<strong>OBJECT:GetCountry()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns country of the Object.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a>:</em>
-The country identifier.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetDesc" >
-<strong>OBJECT:GetDesc()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns Object descriptor.</p>
-
-	
-<p>Descriptor type depends on Object category.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="DCSObject.html##(Object.Desc)">DCSObject#Object.Desc</a>:</em>
-The Object descriptor.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetName" >
-<strong>OBJECT:GetName()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns DCS Object object name.</p>
-
-	
-<p>The function provides access to non-activated objects too.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em>#string:</em>
-The name of the DCS Object.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).GetTypeName" >
-<strong>OBJECT:GetTypeName()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the type name of the DCS Object.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em>#string:</em>
-The type name of the DCS Object.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(OBJECT).IsAlive" >
-<strong>OBJECT:IsAlive()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns if the Object is alive.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em>#boolean:</em>
-true if Object is alive.</p>
+<p><em><a href="DCSObject.html##(Object.ID)">DCSObject#Object.ID</a>:</em>
+ObjectID</p>
 
 				</li>
 				<li>
