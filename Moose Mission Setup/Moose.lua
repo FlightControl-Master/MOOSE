@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160703_0933' ) 
+env.info( 'Moose Generation Timestamp: 20160706_0835' ) 
 local base = _G
 
 Include = {}
@@ -4145,8 +4145,20 @@ end
 -- @param #number FromWayPoint
 -- @param #number ToWayPoint
 -- @return DCSTask#Task
-function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
-  self:F2( { FromWayPoint, ToWayPoint, Index } )
+-- @usage
+-- --- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
+-- HeliGroup = GROUP:FindByName( "Helicopter" )
+-- 
+-- --- Route the helicopter back to the FARP after 60 seconds.
+-- -- We use the SCHEDULER class to do this.
+-- SCHEDULER:New( nil,
+--   function( HeliGroup )
+--    local CommandRTB = HeliGroup:CommandSwitchWayPoint( 2, 8 )
+--    HeliGroup:SetCommand( CommandRTB )
+--  end, { HeliGroup }, 90 
+-- )
+function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint )
+  self:F2( { FromWayPoint, ToWayPoint } )
 
   local CommandSwitchWayPoint = {
     id = 'SwitchWaypoint',
@@ -4184,7 +4196,7 @@ end
 
 --- (AIR) Attack a Controllable.
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable The Controllable to be attacked.
+-- @param Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
@@ -4192,8 +4204,8 @@ end
 -- @param DCSTypes#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackControllable( AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  AttackControllable = {
   --   id = 'AttackControllable',
@@ -4223,7 +4235,7 @@ function CONTROLLABLE:TaskAttackControllable( AttackControllable, WeaponType, We
   local DCSTask
   DCSTask = { id = 'AttackControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -4715,13 +4727,13 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC. 
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable Target CONTROLLABLE.
+-- @param Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. 
 -- @param DCSTypes#AI.Task.Designation Designation (optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFAC_AttackControllable( AttackControllable, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, Designation, Datalink } )
+function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, Designation, Datalink } )
 
 --  FAC_AttackControllable = { 
 --    id = 'FAC_AttackControllable', 
@@ -4736,7 +4748,7 @@ function CONTROLLABLE:TaskFAC_AttackControllable( AttackControllable, WeaponType
   local DCSTask
   DCSTask = { id = 'FAC_AttackControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,
@@ -4819,7 +4831,7 @@ end
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable The Controllable to be attacked.
+-- @param Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
@@ -4828,8 +4840,8 @@ end
 -- @param DCSTypes#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageControllable( AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
-  self:F2( { self.ControllableName, AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
+  self:F2( { self.ControllableName, AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  EngageControllable  = {
   --   id = 'EngageControllable ',
@@ -4860,7 +4872,7 @@ function CONTROLLABLE:EnRouteTaskEngageControllable( AttackControllable, Priorit
   local DCSTask
   DCSTask = { id = 'EngageControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -5003,14 +5015,14 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC. 
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable Target CONTROLLABLE.
+-- @param Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. 
 -- @param DCSTypes#AI.Task.Designation Designation (optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskFAC_EngageControllable( AttackControllable, Priority, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, Priority, Designation, Datalink } )
+function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, Priority, Designation, Datalink } )
 
 --  FAC_EngageControllable  = { 
 --    id = 'FAC_EngageControllable', 
@@ -5026,7 +5038,7 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageControllable( AttackControllable, Pri
   local DCSTask
   DCSTask = { id = 'FAC_EngageControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,
@@ -6917,11 +6929,11 @@ MENU_COALITION = {
 
 --- Creates a new coalition menu item
 -- @param #MENU_COALITION self
--- @param DCSCoalition#coalition.side MenuCoalition The coalition owning the menu.
+-- @param DCSCoalition#coalition.side Coalition The coalition owning the menu.
 -- @param #string MenuText The text for the menu.
 -- @param #table ParentMenu The parent menu.
 -- @return #MENU_COALITION self
-function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
+function MENU_COALITION:New( Coalition, MenuText, ParentMenu )
 
   -- Arrange meta tables
   local MenuParentPath = {}
@@ -6930,9 +6942,9 @@ function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
   end
 
   local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-  self:F( { MenuCoalition, MenuText, ParentMenu } )
+  self:F( { Coalition, MenuText, ParentMenu } )
 
-  self.MenuCoalition = MenuCoalition
+  self.Coalition = Coalition
   self.MenuParentPath = MenuParentPath
   self.MenuText = MenuText
   self.ParentMenu = ParentMenu
@@ -6941,7 +6953,7 @@ function MENU_COALITION:New( MenuCoalition, MenuText, ParentMenu )
 
   self:T( { MenuParentPath, MenuText } )
 
-  self.MenuPath = missionCommands.addSubMenuForCoalition( self.MenuCoalition, MenuText, MenuParentPath )
+  self.MenuPath = missionCommands.addSubMenuForCoalition( self.Coalition, MenuText, MenuParentPath )
 
   self:T( { self.MenuPath } )
 
@@ -7063,7 +7075,8 @@ end
 -- 1.2) GROUP task methods
 -- -----------------------
 -- Several group task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a @{Group#GROUP.PushTask} or @{Group#SetTask} method to assign the task to the GROUP.
+-- These methods return a string consisting of the task description, which can then be given to either a  
+-- @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#CONTROLLABLE.SetTask} method to assign the task to the GROUP.
 -- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which group category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -7075,63 +7088,63 @@ end
 -- 
 -- Find below a list of the **assigned task** methods:
 -- 
---   * @{#GROUP.TaskAttackGroup}: (AIR) Attack a Group.
---   * @{#GROUP.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
---   * @{#GROUP.TaskAttackUnit}: (AIR) Attack the Unit.
---   * @{#GROUP.TaskBombing}: (AIR) Delivering weapon at the point on the ground.
---   * @{#GROUP.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
---   * @{#GROUP.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
---   * @{#GROUP.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
---   * @{#GROUP.TaskEscort}: (AIR) Escort another airborne group. 
---   * @{#GROUP.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
---   * @{#GROUP.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
---   * @{#GROUP.TaskFollow}: (AIR) Following another airborne group.
---   * @{#GROUP.TaskHold}: (GROUND) Hold ground group from moving.
---   * @{#GROUP.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
---   * @{#GROUP.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{#GROUP.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
---   * @{#GROUP.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
---   * @{#GROUP.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
---   * @{#GROUP.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
---   * @{#GROUP.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
---   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
---   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
---   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
---   * @{#GROUP.TaskReturnToBase}: (AIR) Route the group to an airbase.
+--   * @{Controllable#CONTROLLABLE.TaskAttackGroup}: (AIR) Attack a Group.
+--   * @{Controllable#CONTROLLABLE.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
+--   * @{Controllable#CONTROLLABLE.TaskAttackUnit}: (AIR) Attack the Unit.
+--   * @{Controllable#CONTROLLABLE.TaskBombing}: (Controllable#CONTROLLABLEDelivering weapon at the point on the ground.
+--   * @{Controllable#CONTROLLABLE.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
+--   * @{Controllable#CONTROLLABLE.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--   * @{Controllable#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
+--   * @{Controllable#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne group. 
+--   * @{Controllable#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
+--   * @{Controllable#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{Controllable#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne group.
+--   * @{Controllable#CONTROLLABLE.TaskHold}: (GROUND) Hold ground group from moving.
+--   * @{Controllable#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
+--   * @{Controllable#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{Controllable#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
+--   * @{Controllable#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
+--   * @{Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{Controllable#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{Controllable#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{Controllable#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
 -- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
 -- 
---   * @{#GROUP.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
---   * @{#GROUP.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
---   * @{#GROUP.EnRouteTaskEWR}: (AIR) Attack the Unit.
---   * @{#GROUP.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- 
 -- ### 1.2.3) Preparation task methods
 -- 
 -- There are certain task methods that allow to tailor the task behaviour:
 --
---   * @{#GROUP.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
---   * @{#GROUP.TaskCombo}: Return a Combo Task taking an array of Tasks.
---   * @{#GROUP.TaskCondition}: Return a condition section for a controlled task.
---   * @{#GROUP.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
+--   * @{Controllable#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
+--   * @{Controllable#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
+--   * @{Controllable#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
+--   * @{Controllable#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
 -- ### 1.2.4) Obtain the mission from group templates
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{#GROUP.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- 1.3) GROUP Command methods
 -- --------------------------
--- Group **command methods** prepare the execution of commands using the @{#GROUP.SetCommand} method:
+-- Group **command methods** prepare the execution of commands using the @{Controllable#CONTROLLABLE.SetCommand} method:
 -- 
---   * @{#GROUP.CommandDoScript}: Do Script command.
---   * @{#GROUP.CommandSwitchWayPoint}: Perform a switch waypoint command.
+--   * @{Controllable#CONTROLLABLE.CommandDoScript}: Do Script command.
+--   * @{Controllable#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
 -- 1.4) GROUP Option methods
 -- -------------------------
@@ -7139,31 +7152,31 @@ end
 -- 
 -- ### 1.4.1) Rule of Engagement:
 -- 
---   * @{#GROUP.OptionROEWeaponFree} 
---   * @{#GROUP.OptionROEOpenFire}
---   * @{#GROUP.OptionROEReturnFire}
---   * @{#GROUP.OptionROEEvadeFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEWeaponFree} 
+--   * @{Controllable#CONTROLLABLE.OptionROEOpenFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEReturnFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEEvadeFire}
 -- 
 -- To check whether an ROE option is valid for a specific group, use:
 -- 
---   * @{#GROUP.OptionROEWeaponFreePossible} 
---   * @{#GROUP.OptionROEOpenFirePossible}
---   * @{#GROUP.OptionROEReturnFirePossible}
---   * @{#GROUP.OptionROEEvadeFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEWeaponFreePossible} 
+--   * @{Controllable#CONTROLLABLE.OptionROEOpenFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEReturnFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
 -- ### 1.4.2) Rule on thread:
 -- 
---   * @{#GROUP.OptionROTNoReaction}
---   * @{#GROUP.OptionROTPassiveDefense}
---   * @{#GROUP.OptionROTEvadeFire}
---   * @{#GROUP.OptionROTVertical}
+--   * @{Controllable#CONTROLLABLE.OptionROTNoReaction}
+--   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefense}
+--   * @{Controllable#CONTROLLABLE.OptionROTEvadeFire}
+--   * @{Controllable#CONTROLLABLE.OptionROTVertical}
 -- 
 -- To test whether an ROT option is valid for a specific group, use:
 -- 
---   * @{#GROUP.OptionROTNoReactionPossible}
---   * @{#GROUP.OptionROTPassiveDefensePossible}
---   * @{#GROUP.OptionROTEvadeFirePossible}
---   * @{#GROUP.OptionROTVerticalPossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTNoReactionPossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTEvadeFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTVerticalPossible}
 -- 
 -- 1.5) GROUP Zone validation methods
 -- ----------------------------------
@@ -7740,14 +7753,34 @@ function GROUP:GetMaxHeight()
 
 end
 
---- @param Group#GROUP self
+-- SPAWNING
+
+--- Respawn the @{GROUP} using a (tweaked) template of the Group.
+-- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
+-- The template contains all the definitions as declared within the mission file.
+-- To understand templates, do the following: 
+-- 
+--   * unpack your .miz file into a directory using 7-zip.
+--   * browse in the directory created to the file **mission**.
+--   * open the file and search for the country group definitions.
+--   
+-- Your group template will contain the fields as described within the mission file.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will destroy the current alive group.
+--  * And it will respawn the group using your new template definition.
+-- @param Group#GROUP self
+-- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
   local Vec3 = self:GetPointVec3()
-  --Template.x = Vec3.x
-  --Template.y = Vec3.z
-  Template.x = nil
-  Template.y = nil
+  Template.x = Vec3.x
+  Template.y = Vec3.z
+  --Template.x = nil
+  --Template.y = nil
   
   self:E( #Template.units )
   for UnitID, UnitData in pairs( self:GetUnits() ) do
@@ -7764,15 +7797,48 @@ function GROUP:Respawn( Template )
     end
   end
   
+  self:Destroy()
   _DATABASE:Spawn( Template )
-
 end
 
+--- Returns the group template from the @{DATABASE} (_DATABASE object).
+-- @param #GROUP self
+-- @return #table 
 function GROUP:GetTemplate()
-
-  return _DATABASE.Templates.Groups[self:GetName()].Template
-
+  local GroupName = self:GetName()
+  self:E( GroupName )
+  return _DATABASE:GetGroupTemplate( GroupName )
 end
+
+--- Sets the controlled status in a Template.
+-- @param #GROUP self
+-- @param #boolean Controlled true is controlled, false is uncontrolled.
+-- @return #table 
+function GROUP:SetTemplateControlled( Template, Controlled )
+  Template.uncontrolled = not Controlled
+  return Template
+end
+
+--- Sets the CountryID of the group in a Template.
+-- @param #GROUP self
+-- @param DCScountry#country.id CountryID The country ID.
+-- @return #table 
+function GROUP:SetTemplateCountry( Template, CountryID )
+  Template.CountryID = CountryID
+  return Template
+end
+
+--- Sets the CoalitionID of the group in a Template.
+-- @param #GROUP self
+-- @param DCSCoalitionObject#coalition.side CoalitionID The coalition ID.
+-- @return #table 
+function GROUP:SetTemplateCoalition( Template, CoalitionID )
+  Template.CoalitionID = CoalitionID
+  return Template
+end
+
+
+
 
 --- Return the mission template of the group.
 -- @param #GROUP self
@@ -7851,7 +7917,7 @@ end
 -- @param #string Message The message text
 -- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
-function GROUP:Message( Message, Duration )
+function GROUP:GetMessage( Message, Duration )
   self:F2( { Message, Duration } )
 
   local DCSGroup = self:GetDCSObject()
@@ -7872,7 +7938,7 @@ function GROUP:MessageToAll( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToAll()
+    self:GetMessage( Message, Duration ):ToAll()
   end
 
   return nil
@@ -7888,7 +7954,7 @@ function GROUP:MessageToRed( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToRed()
+    self:GetMessage( Message, Duration ):ToRed()
   end
 
   return nil
@@ -7904,7 +7970,7 @@ function GROUP:MessageToBlue( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToBlue()
+    self:GetMessage( Message, Duration ):ToBlue()
   end
 
   return nil
@@ -7921,7 +7987,23 @@ function GROUP:MessageToClient( Message, Duration, Client )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToClient( Client )
+    self:GetMessage( Message, Duration ):ToClient( Client )
+  end
+
+  return nil
+end
+
+--- Send a message to the players in the @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function GROUP:Message( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+    self:GetMessage( Message, Duration ):ToGroup( self )
   end
 
   return nil
@@ -8500,8 +8582,9 @@ end
 --   * @{Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
 --   * @{Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
 --   * @{Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
---   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
---   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
+--   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
+--   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
 -- Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
@@ -8534,7 +8617,13 @@ end
 -- 
 -- ===
 -- 
--- 5) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
+-- 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
+-- =======================================================
+-- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- 
+-- ===
+-- 
+-- 6) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
@@ -8542,13 +8631,6 @@ end
 -- 
 -- @module Zone
 -- @author FlightControl
-
-
-
-
-
-
-
 
 
 --- The ZONE_BASE class
@@ -8895,6 +8977,81 @@ function ZONE_UNIT:GetVec2()
   
   return ZoneVec2
 end
+
+--- Returns a random location within the zone.
+-- @param #ZONE_UNIT self
+-- @return DCSTypes#Vec2 The random location within the zone.
+function ZONE_UNIT:GetRandomVec2()
+  self:F( self.ZoneName )
+
+  local Point = {}
+  local PointVec2 = self.ZoneUNIT:GetPointVec2()
+
+  local angle = math.random() * math.pi*2;
+  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  
+  self:T( { Point } )
+  
+  return Point
+end
+
+--- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
+-- @type ZONE_GROUP
+-- @field Group#GROUP ZoneGROUP
+-- @extends Zone#ZONE_RADIUS
+ZONE_GROUP = {
+  ClassName="ZONE_GROUP",
+  }
+  
+--- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Group#GROUP} and a radius.
+-- @param #ZONE_GROUP self
+-- @param #string ZoneName Name of the zone.
+-- @param Group#GROUP ZoneGROUP The @{Group} as the center of the zone.
+-- @param DCSTypes#Distance Radius The radius of the zone.
+-- @return #ZONE_GROUP self
+function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetPointVec2(), Radius ) )
+  self:F( { ZoneName, ZoneGROUP:GetPointVec2(), Radius } )
+
+  self.ZoneGROUP = ZoneGROUP
+  
+  return self
+end
+
+
+--- Returns the current location of the @{Group}.
+-- @param #ZONE_GROUP self
+-- @return DCSTypes#Vec2 The location of the zone based on the @{Group} location.
+function ZONE_GROUP:GetPointVec2()
+  self:F( self.ZoneName )
+  
+  local ZonePointVec2 = self.ZoneGROUP:GetPointVec2()
+
+  self:T( { ZonePointVec2 } )
+  
+  return ZonePointVec2
+end
+
+--- Returns a random location within the zone of the @{Group}.
+-- @param #ZONE_GROUP self
+-- @return DCSTypes#Vec2 The random location of the zone based on the @{Group} location.
+function ZONE_GROUP:GetRandomVec2()
+  self:F( self.ZoneName )
+
+  local Point = {}
+  local PointVec2 = self.ZoneGROUP:GetPointVec2()
+
+  local angle = math.random() * math.pi*2;
+  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  
+  self:T( { Point } )
+  
+  return Point
+end
+
+
 
 -- Polygons
 
@@ -10132,6 +10289,14 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
   end
 
   self:E( TraceTable )
+end
+
+function DATABASE:GetGroupTemplate( GroupName )
+  local GroupTemplate = self.Templates.Groups[GroupName].Template
+  GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
+  GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
+  GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
+  return GroupTemplate
 end
 
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )
@@ -14978,6 +15143,21 @@ function MESSAGE:ToClient( Client )
 	return self
 end
 
+--- Sends a MESSAGE to a Group. 
+-- @param #MESSAGE self
+-- @param Group#GROUP Group is the Group.
+-- @return #MESSAGE
+function MESSAGE:ToGroup( Group )
+  self:F( Group.GroupName )
+
+  if Group then
+
+    self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+    trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  end
+  
+  return self
+end
 --- Sends a MESSAGE to the Blue coalition.
 -- @param #MESSAGE self 
 -- @return #MESSAGE
@@ -17210,6 +17390,7 @@ end
 -- @type MISSION
 -- @extends Base#BASE
 -- @field #MISSION.Clients _Clients
+-- @field Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
 MISSION = {
 	ClassName = "MISSION",
@@ -17264,19 +17445,12 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	self = MISSION:Meta()
 	self:T({ MissionName, MissionPriority, MissionBriefing, MissionCoalition })
   
-	local Valid = true
-  
-	Valid = routines.ValidateString( MissionName, "MissionName", Valid )
-	Valid = routines.ValidateString( MissionPriority, "MissionPriority", Valid )
-	Valid = routines.ValidateString( MissionBriefing, "MissionBriefing", Valid )
-	Valid = routines.ValidateString( MissionCoalition, "MissionCoalition", Valid )
-  
-	if Valid then
-		self.Name = MissionName
-		self.MissionPriority = MissionPriority
-		self.MissionBriefing = MissionBriefing
-		self.MissionCoalition = MissionCoalition
-	end
+	self.Name = MissionName
+	self.MissionPriority = MissionPriority
+	self.MissionBriefing = MissionBriefing
+	self.MissionCoalition = MissionCoalition
+
+  self:SetMissionMenu()
 
 	return self
 end
@@ -17301,6 +17475,29 @@ end
 -- @return #SCORING Scoring
 function MISSION:GetScoring()
   return self.Scoring
+end
+
+--- Sets the mission menu for the coalition.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:SetMissionMenu()
+  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self.Name )
+end
+
+--- Gets the mission menu for the coalition.
+-- @param #MISSION self
+-- @return Menu#MENU_COALITION self
+function MISSION:GetMissionMenu()
+  return self.MissionMenu
+end
+
+
+--- Clears the mission menu for the coalition.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:ClearMissionMenu()
+  self.MissionMenu:Remove()
+  self.MissionMenu = nil
 end
 
 --- Returns if a Mission has completed.
@@ -18629,7 +18826,7 @@ function SPAWN:ReSpawn( SpawnIndex )
 -- TODO: This logic makes DCS crash and i don't know why (yet).
 	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
 	if SpawnGroup then
-    local SpawnDCSGroup = SpawnGroup:GetDCSGroup()
+    local SpawnDCSGroup = SpawnGroup:GetDCSObject()
   	if SpawnDCSGroup then
       SpawnGroup:Destroy()
   	end
@@ -24157,7 +24354,7 @@ end
 --- The TASK2 class
 -- @type TASK2
 -- @field Scheduler#SCHEDULER TaskScheduler
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Mission#MISSION Mission
 -- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @extends Base#BASE
@@ -24170,12 +24367,13 @@ TASK2 = {
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #TASK2 self
+-- @param Unit#UNIT TaskUnit
 -- @return #TASK2 self
-function TASK2:New( Mission, Client )
+function TASK2:New( Mission, TaskUnit )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 
-  self.Client = Client
+  self.TaskUnit = TaskUnit
   self.Mission = Mission
   
   return self
@@ -24185,7 +24383,7 @@ end
 function TASK2:NextEvent( NextEvent, ... )
   self:E( NextEvent )
 
-  self.TaskScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.Client, unpack( arg ) }, 1 )
+  self.TaskScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.TaskUnit, unpack( arg ) }, 1 )
 end
 
 --- Adds a score for the TASK2 to be achieved.
@@ -24210,13 +24408,13 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2:OnStateChange( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
   if self.Scores[To] then
-    self.Client:Message( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 )
+    self.Unit:Message( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 )
     local Scoring = self.Mission:GetScoring()
     if Scoring then
-      Scoring:_AddMissionTaskScore( self.Client, self.Mission:GetName(), self.Scores[To].Score )
+      Scoring:_AddMissionTaskScore( self.TaskUnit, self.Mission:GetName(), self.Scores[To].Score )
     end
   end
 end
@@ -24226,9 +24424,9 @@ end
 
 --- TASK2_MENU_CLIENT class
 -- @type TASK2_MENU_CLIENT
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Set#SET_UNIT TargetSet
--- @field Menu#MENU_CLIENT_COMMAND MenuSEAD
+-- @field Menu#MENU_CLIENT_COMMAND MenuTask
 -- @extends Task2#TASK2
 TASK2_MENU_CLIENT = { 
   ClassName = "TASK2_MENU_CLIENT",
@@ -24239,13 +24437,13 @@ TASK2_MENU_CLIENT = {
 --- Creates a new MENU handling machine.
 -- @param #TASK2_MENU_CLIENT self
 -- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
+-- @param Unit#UNIT TaskUnit
 -- @param #string MenuText The text of the menu item.
 -- @return #TASK2_MENU_CLIENT self
-function TASK2_MENU_CLIENT:New( Mission, Client, MenuText )
+function TASK2_MENU_CLIENT:New( Mission, TaskUnit, MenuText )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_MENU_CLIENT
+  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_MENU_CLIENT
   
   self.MenuText = MenuText
 
@@ -24276,11 +24474,11 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_MENU_CLIENT:OnMenu( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName} )
 
-  self.Client:Message( "Press F10 for task menu", 15 )
-  self.Menu = MENU_CLIENT:New( self.Client, self.Mission:GetName(), nil )
-  self.MenuTask = MENU_CLIENT_COMMAND:New( self.Client, self.MenuText, self.Menu, self.MenuAssign, self )
+  self.TaskUnit:Message( "Press F10 for task menu", 15 )
+  self.Menu = MENU_CLIENT:New( self.TaskUnit, self.Mission:GetName(), nil )
+  self.MenuTask = MENU_CLIENT_COMMAND:New( self.TaskUnit, self.MenuText, self.Menu, self.MenuAssign, self )
 end
 
 --- Menu function.
@@ -24288,7 +24486,7 @@ end
 function TASK2_MENU_CLIENT:MenuAssign()
   self:E( )
 
-  self.Client:Message( "Menu Assign", 15 )
+  self.TaskUnit:Message( "Menu Assign", 15 )
 
   self:NextEvent( self.Fsm.Assign )
 end
@@ -24300,9 +24498,9 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_MENU_CLIENT:OnAssign( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName} )
 
-  self.Client:Message( "Assign Task", 15 )
+  self.TaskUnit:Message( "Assign Task", 15 )
   self.MenuTask:Remove()
 end
 
@@ -24311,7 +24509,7 @@ end
 --- TASK2_ROUTE_CLIENT class
 -- @type TASK2_ROUTE_CLIENT
 -- @field Mission#MISSION Mission
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Zone#ZONE_BASE TargetZone
 -- @extends Task2#TASK2
 TASK2_ROUTE_CLIENT = { 
@@ -24322,12 +24520,12 @@ TASK2_ROUTE_CLIENT = {
 --- Creates a new routing state machine. The task will route a CLIENT to a ZONE until the CLIENT is within that ZONE.
 -- @param #TASK2_ROUTE_CLIENT self
 -- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
+-- @param Unit#UNIT Unit
 -- @return #TASK2_ROUTE_CLIENT self
-function TASK2_ROUTE_CLIENT:New( Mission, Client, TargetZone )
+function TASK2_ROUTE_CLIENT:New( Mission, TaskUnit, TargetZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_ROUTE_CLIENT
+  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_ROUTE_CLIENT
   
   self.TargetZone = TargetZone
   self.DisplayInterval = 30
@@ -24363,18 +24561,18 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_ROUTE_CLIENT:OnLeaveUnArrived( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName } )
+  self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
-  local IsInZone = self.Client:IsInZone( self.TargetZone )
+  local IsInZone = self.TaskUnit:IsInZone( self.TargetZone )
 
   if self.DisplayCount >= self.DisplayInterval then
     if not IsInZone then
       local ZoneVec2 = self.TargetZone:GetVec2()
       local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
-      local ClientVec2 = self.Client:GetVec2()
-      local ClientPointVec2 = POINT_VEC2:New( ClientVec2.x, ClientVec2.y )
-      local RouteText = ClientPointVec2:GetBRText( ZonePointVec2 )
-      self.Client:Message( RouteText, self.DisplayTime, self.DisplayCategory  )
+      local TaskUnitVec2 = self.TaskUnit:GetVec2()
+      local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
+      local RouteText = TaskUnitPointVec2:GetBRText( ZonePointVec2 )
+      self.TaskUnit:Message( RouteText, self.DisplayTime, self.DisplayCategory  )
     end
     self.DisplayCount = 1
   else
@@ -24393,7 +24591,7 @@ end
 
 --- TASK2_SEAD_CLIENT class
 -- @type TASK2_SEAD_CLIENT
--- @field Client#CLIENT Client
+-- @field Unit#UNIT TaskUnit
 -- @field Set#SET_UNIT TargetSet
 -- @field Menu#MENU_CLIENT_COMMAND MenuSEAD
 -- @extends Task2#TASK2
@@ -24407,13 +24605,13 @@ TASK2_SEAD_CLIENT = {
 --- Creates a new SEAD task.
 -- @param #TASK2_SEAD_CLIENT self
 -- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
+-- @param Unit#UNIT TaskUnit
 -- @param Set#SET_UNIT TargetSet
 -- @return #TASK2_SEAD_CLIENT self
-function TASK2_SEAD_CLIENT:New( Mission, Client, TargetSet )
+function TASK2_SEAD_CLIENT:New( Mission, TaskUnit, TargetSet )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, Client ) ) -- #TASK2_SEAD_CLIENT
+  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_SEAD_CLIENT
   
   self.TargetSet = TargetSet
 
@@ -24455,9 +24653,9 @@ end
 -- @param #string From
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnAwait( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.Client.ClientName} )
+  self:E( { Event, From, To, self.TaskUnit.UnitName} )
 
-  self.Client:Message( "Waiting", 15 )
+  self.TaskUnit:Message( "Waiting", 15 )
   self:NextEvent( Fsm.Await )
 end
 
@@ -24470,7 +24668,7 @@ end
 -- @param Event#EVENTDATA Event
 function TASK2_SEAD_CLIENT:OnHitTarget( Fsm, Event, From, To, Event )
 
-  self.Client:Message( "Hit Target", 15 )
+  self.TaskUnit:Message( "Hit Target", 15 )
   if self.TargetSet:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else
@@ -24486,7 +24684,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnMoreTargets( Fsm, Event, From, To )
 
-    self.Client:Message( "More Targets", 15 )
+    self.TaskUnit:Message( "More Targets", 15 )
 
 end
 
@@ -24499,7 +24697,7 @@ end
 -- @param Event#EVENTDATA DCSEvent
 function TASK2_SEAD_CLIENT:OnKilled( Fsm, Event, From, To )
 
-  self.Client:Message( "Player got killed", 15 )
+  self.TaskUnit:Message( "Player got killed", 15 )
   self:NextEvent( Fsm.Restart )
 
 end
@@ -24512,7 +24710,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnRestart( Fsm, Event, From, To )
 
-  self.Client:Message( "Restart SEAD Task", 15 )
+  self.TaskUnit:Message( "Restart SEAD Task", 15 )
   self:NextEvent( Fsm.Menu )
 
 end
@@ -24525,7 +24723,7 @@ end
 -- @param #string To
 function TASK2_SEAD_CLIENT:OnDestroyed( Fsm, Event, From, To )
 
-    self.Client:Message( "Destroyed", 15 )
+    self.TaskUnit:Message( "Destroyed", 15 )
 
 end
 
@@ -24545,7 +24743,7 @@ end
 function TASK2_SEAD_CLIENT:EventKilled( Event )
 
   if Event.IniUnit then
-    if Event.IniUnitName == self.Client.ClientName then
+    if Event.IniUnitName == self.TaskUnit.UnitName then
       self:NextEvent( self.Fsm.Killed, Event )
     end
   end
