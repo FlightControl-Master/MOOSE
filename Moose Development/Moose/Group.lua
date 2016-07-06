@@ -31,7 +31,8 @@
 -- 1.2) GROUP task methods
 -- -----------------------
 -- Several group task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a @{Group#GROUP.PushTask} or @{Group#SetTask} method to assign the task to the GROUP.
+-- These methods return a string consisting of the task description, which can then be given to either a  
+-- @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#CONTROLLABLE.SetTask} method to assign the task to the GROUP.
 -- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which group category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -43,63 +44,63 @@
 -- 
 -- Find below a list of the **assigned task** methods:
 -- 
---   * @{#GROUP.TaskAttackGroup}: (AIR) Attack a Group.
---   * @{#GROUP.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
---   * @{#GROUP.TaskAttackUnit}: (AIR) Attack the Unit.
---   * @{#GROUP.TaskBombing}: (AIR) Delivering weapon at the point on the ground.
---   * @{#GROUP.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
---   * @{#GROUP.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
---   * @{#GROUP.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
---   * @{#GROUP.TaskEscort}: (AIR) Escort another airborne group. 
---   * @{#GROUP.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
---   * @{#GROUP.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
---   * @{#GROUP.TaskFollow}: (AIR) Following another airborne group.
---   * @{#GROUP.TaskHold}: (GROUND) Hold ground group from moving.
---   * @{#GROUP.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
---   * @{#GROUP.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{#GROUP.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
---   * @{#GROUP.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
---   * @{#GROUP.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
---   * @{#GROUP.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
---   * @{#GROUP.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
---   * @{#GROUP.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
---   * @{#GROUP.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
---   * @{#GROUP.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
---   * @{#GROUP.TaskReturnToBase}: (AIR) Route the group to an airbase.
+--   * @{Controllable#CONTROLLABLE.TaskAttackGroup}: (AIR) Attack a Group.
+--   * @{Controllable#CONTROLLABLE.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
+--   * @{Controllable#CONTROLLABLE.TaskAttackUnit}: (AIR) Attack the Unit.
+--   * @{Controllable#CONTROLLABLE.TaskBombing}: (Controllable#CONTROLLABLEDelivering weapon at the point on the ground.
+--   * @{Controllable#CONTROLLABLE.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
+--   * @{Controllable#CONTROLLABLE.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--   * @{Controllable#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
+--   * @{Controllable#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne group. 
+--   * @{Controllable#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
+--   * @{Controllable#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{Controllable#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne group.
+--   * @{Controllable#CONTROLLABLE.TaskHold}: (GROUND) Hold ground group from moving.
+--   * @{Controllable#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
+--   * @{Controllable#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{Controllable#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
+--   * @{Controllable#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
+--   * @{Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{Controllable#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{Controllable#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Controllable#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{Controllable#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
 -- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
 -- 
---   * @{#GROUP.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
---   * @{#GROUP.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
---   * @{#GROUP.EnRouteTaskEWR}: (AIR) Attack the Unit.
---   * @{#GROUP.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
---   * @{#GROUP.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
+--   * @{Controllable#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- 
 -- ### 1.2.3) Preparation task methods
 -- 
 -- There are certain task methods that allow to tailor the task behaviour:
 --
---   * @{#GROUP.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
---   * @{#GROUP.TaskCombo}: Return a Combo Task taking an array of Tasks.
---   * @{#GROUP.TaskCondition}: Return a condition section for a controlled task.
---   * @{#GROUP.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
+--   * @{Controllable#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
+--   * @{Controllable#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
+--   * @{Controllable#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
+--   * @{Controllable#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
 -- ### 1.2.4) Obtain the mission from group templates
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{#GROUP.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- 1.3) GROUP Command methods
 -- --------------------------
--- Group **command methods** prepare the execution of commands using the @{#GROUP.SetCommand} method:
+-- Group **command methods** prepare the execution of commands using the @{Controllable#CONTROLLABLE.SetCommand} method:
 -- 
---   * @{#GROUP.CommandDoScript}: Do Script command.
---   * @{#GROUP.CommandSwitchWayPoint}: Perform a switch waypoint command.
+--   * @{Controllable#CONTROLLABLE.CommandDoScript}: Do Script command.
+--   * @{Controllable#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
 -- 1.4) GROUP Option methods
 -- -------------------------
@@ -107,31 +108,31 @@
 -- 
 -- ### 1.4.1) Rule of Engagement:
 -- 
---   * @{#GROUP.OptionROEWeaponFree} 
---   * @{#GROUP.OptionROEOpenFire}
---   * @{#GROUP.OptionROEReturnFire}
---   * @{#GROUP.OptionROEEvadeFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEWeaponFree} 
+--   * @{Controllable#CONTROLLABLE.OptionROEOpenFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEReturnFire}
+--   * @{Controllable#CONTROLLABLE.OptionROEEvadeFire}
 -- 
 -- To check whether an ROE option is valid for a specific group, use:
 -- 
---   * @{#GROUP.OptionROEWeaponFreePossible} 
---   * @{#GROUP.OptionROEOpenFirePossible}
---   * @{#GROUP.OptionROEReturnFirePossible}
---   * @{#GROUP.OptionROEEvadeFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEWeaponFreePossible} 
+--   * @{Controllable#CONTROLLABLE.OptionROEOpenFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEReturnFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
 -- ### 1.4.2) Rule on thread:
 -- 
---   * @{#GROUP.OptionROTNoReaction}
---   * @{#GROUP.OptionROTPassiveDefense}
---   * @{#GROUP.OptionROTEvadeFire}
---   * @{#GROUP.OptionROTVertical}
+--   * @{Controllable#CONTROLLABLE.OptionROTNoReaction}
+--   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefense}
+--   * @{Controllable#CONTROLLABLE.OptionROTEvadeFire}
+--   * @{Controllable#CONTROLLABLE.OptionROTVertical}
 -- 
 -- To test whether an ROT option is valid for a specific group, use:
 -- 
---   * @{#GROUP.OptionROTNoReactionPossible}
---   * @{#GROUP.OptionROTPassiveDefensePossible}
---   * @{#GROUP.OptionROTEvadeFirePossible}
---   * @{#GROUP.OptionROTVerticalPossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTNoReactionPossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTEvadeFirePossible}
+--   * @{Controllable#CONTROLLABLE.OptionROTVerticalPossible}
 -- 
 -- 1.5) GROUP Zone validation methods
 -- ----------------------------------

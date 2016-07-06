@@ -254,7 +254,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE:CommandSwitchWayPoint(FromWayPoint, ToWayPoint, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE:CommandSwitchWayPoint(FromWayPoint, ToWayPoint)</a></td>
 		<td class="summary">
 <p>Perform a switch waypoint command</p>
 </td>
@@ -290,7 +290,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageControllable">CONTROLLABLE:EnRouteTaskEngageControllable(AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageGroup">CONTROLLABLE:EnRouteTaskEngageGroup(AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
 		<td class="summary">
 <p>(AIR) Engaging a controllable.</p>
 </td>
@@ -314,7 +314,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskFAC_EngageControllable">CONTROLLABLE:EnRouteTaskFAC_EngageControllable(AttackControllable, Priority, WeaponType, Designation, Datalink)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskFAC_EngageGroup">CONTROLLABLE:EnRouteTaskFAC_EngageGroup(AttackGroup, Priority, WeaponType, Designation, Datalink)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.</p>
 </td>
@@ -489,7 +489,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackControllable">CONTROLLABLE:TaskAttackControllable(AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackGroup">CONTROLLABLE:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
 		<td class="summary">
 <p>(AIR) Attack a Controllable.</p>
 </td>
@@ -555,7 +555,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFAC_AttackControllable">CONTROLLABLE:TaskFAC_AttackControllable(AttackControllable, WeaponType, Designation, Datalink)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFAC_AttackGroup">CONTROLLABLE:TaskFAC_AttackGroup(AttackGroup, WeaponType, Designation, Datalink)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</p>
 </td>
@@ -791,7 +791,7 @@ A speed can be given in km/h.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).CommandSwitchWayPoint" >
-<strong>CONTROLLABLE:CommandSwitchWayPoint(FromWayPoint, ToWayPoint, Index)</strong>
+<strong>CONTROLLABLE:CommandSwitchWayPoint(FromWayPoint, ToWayPoint)</strong>
 </a>
 </dt>
 <dd>
@@ -810,16 +810,24 @@ A speed can be given in km/h.</p>
 <p><code><em>#number ToWayPoint </em></code>: </p>
 
 				</li>
-				<li>
-				
-<p><code><em> Index </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
 
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>--- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
+HeliGroup = GROUP:FindByName( "Helicopter" )
+
+--- Route the helicopter back to the FARP after 60 seconds.
+-- We use the SCHEDULER class to do this.
+SCHEDULER:New( nil,
+  function( HeliGroup )
+   local CommandRTB = HeliGroup:CommandSwitchWayPoint( 2, 8 )
+   HeliGroup:SetCommand( CommandRTB )
+ end, { HeliGroup }, 90 
+)</code></pre>
 
 </dd>
 </dl>
@@ -936,8 +944,8 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).EnRouteTaskEngageControllable" >
-<strong>CONTROLLABLE:EnRouteTaskEngageControllable(AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
+<a id="#(CONTROLLABLE).EnRouteTaskEngageGroup" >
+<strong>CONTROLLABLE:EnRouteTaskEngageGroup(AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
 </a>
 </dt>
 <dd>
@@ -951,7 +959,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackControllable </em></code>: 
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 The Controllable to be attacked.</p>
 
 				</li>
@@ -1153,8 +1161,8 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).EnRouteTaskFAC_EngageControllable" >
-<strong>CONTROLLABLE:EnRouteTaskFAC_EngageControllable(AttackControllable, Priority, WeaponType, Designation, Datalink)</strong>
+<a id="#(CONTROLLABLE).EnRouteTaskFAC_EngageGroup" >
+<strong>CONTROLLABLE:EnRouteTaskFAC_EngageGroup(AttackGroup, Priority, WeaponType, Designation, Datalink)</strong>
 </a>
 </dt>
 <dd>
@@ -1169,7 +1177,7 @@ If the task is assigned to the controllable lead unit will be a FAC. </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackControllable </em></code>: 
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 Target CONTROLLABLE.</p>
 
 				</li>
@@ -1833,8 +1841,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).TaskAttackControllable" >
-<strong>CONTROLLABLE:TaskAttackControllable(AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
+<a id="#(CONTROLLABLE).TaskAttackGroup" >
+<strong>CONTROLLABLE:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
 </a>
 </dt>
 <dd>
@@ -1845,7 +1853,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackControllable </em></code>: 
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 The Controllable to be attacked.</p>
 
 				</li>
@@ -2372,8 +2380,8 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).TaskFAC_AttackControllable" >
-<strong>CONTROLLABLE:TaskFAC_AttackControllable(AttackControllable, WeaponType, Designation, Datalink)</strong>
+<a id="#(CONTROLLABLE).TaskFAC_AttackGroup" >
+<strong>CONTROLLABLE:TaskFAC_AttackGroup(AttackGroup, WeaponType, Designation, Datalink)</strong>
 </a>
 </dt>
 <dd>
@@ -2388,7 +2396,7 @@ If the task is assigned to the controllable lead unit will be a FAC. </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackControllable </em></code>: 
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 Target CONTROLLABLE.</p>
 
 				</li>
