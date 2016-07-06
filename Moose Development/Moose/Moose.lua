@@ -47,10 +47,11 @@ Include.File( "AirbasePolice" )
 Include.File( "Detection" )
 Include.File( "FAC" )
 Include.File( "StateMachine" )
-Include.File( "Task2" )
-Include.File( "TaskSead" )
-Include.File( "TaskMenu" )
-Include.File( "TaskRoute" )
+Include.File( "Process" )
+Include.File( "Process_SEAD" )
+Include.File( "Process_Route" )
+Include.File( "Task" )
+Include.File( "Task_SEAD" )
 
 -- The order of the declarations is important here. Don't touch it.
 

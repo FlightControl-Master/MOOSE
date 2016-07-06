@@ -6,8 +6,8 @@
 -- @field Unit#UNIT TaskUnit
 -- @field Zone#ZONE_BASE TargetZone
 -- @extends Task2#TASK2
-TASK2_ROUTE_CLIENT = { 
-  ClassName = "TASK2_ROUTE_CLIENT",
+PROCESS_ROUTE = { 
+  ClassName = "PROCESS_ROUTE",
 }
 
 
@@ -16,7 +16,7 @@ TASK2_ROUTE_CLIENT = {
 -- @param Mission#MISSION Mission
 -- @param Unit#UNIT Unit
 -- @return #TASK2_ROUTE_CLIENT self
-function TASK2_ROUTE_CLIENT:New( Mission, TaskUnit, TargetZone )
+function PROCESS_ROUTE:New( Mission, TaskUnit, TargetZone )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_ROUTE_CLIENT
@@ -54,7 +54,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK2_ROUTE_CLIENT:OnLeaveUnArrived( Fsm, Event, From, To )
+function PROCESS_ROUTE:OnLeaveUnArrived( Fsm, Event, From, To )
   self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
   local IsInZone = self.TaskUnit:IsInZone( self.TargetZone )

@@ -202,34 +202,33 @@ function STATEMACHINE:todot(filename)
   dotfile:close()
 end
 
---- STATEMACHINE_TASK class
--- @type STATEMACHINE_TASK
--- @field Task2#TASK2 Task
+--- STATEMACHINE_PROCESS class
+-- @type STATEMACHINE_PROCESS
+-- @field Process#PROCESS Process
 -- @extends StateMachine#STATEMACHINE
-STATEMACHINE_TASK = {
-  ClassName = "STATEMACHINE_TASK",
+STATEMACHINE_PROCESS = {
+  ClassName = "STATEMACHINE_PROCESS",
 }
 
---- Creates a new STATEMACHINE_TASK object.
--- @param #STATEMACHINE_TASK self
--- @return #STATEMACHINE_TASK
-function STATEMACHINE_TASK:New( Task, options )
+--- Creates a new STATEMACHINE_PROCESS object.
+-- @param #STATEMACHINE_PROCESS self
+-- @return #STATEMACHINE_PROCESS
+function STATEMACHINE_PROCESS:New( Process, options )
 
-  local FsmT = routines.utils.deepCopy( self ) -- Create a new self instance
+  local FsmProcess = routines.utils.deepCopy( self ) -- Create a new self instance
   local Parent = STATEMACHINE:New(options)
 
-  setmetatable( FsmT, Parent )
-  FsmT.__index = FsmT
+  setmetatable( FsmProcess, Parent )
+  FsmProcess.__index = FsmProcess
 
-  env.info(tostring(Task.OnStateChange))
-  FsmT["onstatechange"] = Task.OnStateChange
-  FsmT.Task = Task
+  FsmProcess["onstatechange"] = Process.OnStateChange
+  FsmProcess.Process = Process
 
-  return FsmT
+  return FsmProcess
 end
 
-function STATEMACHINE_TASK:_call_handler( handler, params )
+function STATEMACHINE_PROCESS:_call_handler( handler, params )
   if handler then
-    return handler( self.Task, unpack( params ) )
+    return handler( self.Process, unpack( params ) )
   end
 end
