@@ -353,8 +353,20 @@ end
 -- @param #number FromWayPoint
 -- @param #number ToWayPoint
 -- @return DCSTask#Task
-function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint, Index )
-  self:F2( { FromWayPoint, ToWayPoint, Index } )
+-- @usage
+-- --- This test demonstrates the use(s) of the SwitchWayPoint method of the GROUP class.
+-- HeliGroup = GROUP:FindByName( "Helicopter" )
+-- 
+-- --- Route the helicopter back to the FARP after 60 seconds.
+-- -- We use the SCHEDULER class to do this.
+-- SCHEDULER:New( nil,
+--   function( HeliGroup )
+--    local CommandRTB = HeliGroup:CommandSwitchWayPoint( 2, 8 )
+--    HeliGroup:SetCommand( CommandRTB )
+--  end, { HeliGroup }, 90 
+-- )
+function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint )
+  self:F2( { FromWayPoint, ToWayPoint } )
 
   local CommandSwitchWayPoint = {
     id = 'SwitchWaypoint',
@@ -392,7 +404,7 @@ end
 
 --- (AIR) Attack a Controllable.
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable The Controllable to be attacked.
+-- @param Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
@@ -400,8 +412,8 @@ end
 -- @param DCSTypes#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackControllable( AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  AttackControllable = {
   --   id = 'AttackControllable',
@@ -431,7 +443,7 @@ function CONTROLLABLE:TaskAttackControllable( AttackControllable, WeaponType, We
   local DCSTask
   DCSTask = { id = 'AttackControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -923,13 +935,13 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC. 
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable Target CONTROLLABLE.
+-- @param Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. 
 -- @param DCSTypes#AI.Task.Designation Designation (optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFAC_AttackControllable( AttackControllable, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, Designation, Datalink } )
+function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation, Datalink )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, Designation, Datalink } )
 
 --  FAC_AttackControllable = { 
 --    id = 'FAC_AttackControllable', 
@@ -944,7 +956,7 @@ function CONTROLLABLE:TaskFAC_AttackControllable( AttackControllable, WeaponType
   local DCSTask
   DCSTask = { id = 'FAC_AttackControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,
@@ -1027,7 +1039,7 @@ end
 
 --- (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable The Controllable to be attacked.
+-- @param Controllable#CONTROLLABLE AttackGroup The Controllable to be attacked.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
@@ -1036,8 +1048,8 @@ end
 -- @param DCSTypes#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageControllable( AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
-  self:F2( { self.ControllableName, AttackControllable, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit )
+  self:F2( { self.ControllableName, AttackGroup, Priority, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
 
   --  EngageControllable  = {
   --   id = 'EngageControllable ',
@@ -1068,7 +1080,7 @@ function CONTROLLABLE:EnRouteTaskEngageControllable( AttackControllable, Priorit
   local DCSTask
   DCSTask = { id = 'EngageControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -1211,14 +1223,14 @@ end
 -- The killer is player-controlled allied CAS-aircraft that is in contact with the FAC.
 -- If the task is assigned to the controllable lead unit will be a FAC. 
 -- @param #CONTROLLABLE self
--- @param Controllable#CONTROLLABLE AttackControllable Target CONTROLLABLE.
+-- @param Controllable#CONTROLLABLE AttackGroup Target CONTROLLABLE.
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @param #number WeaponType Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage. 
 -- @param DCSTypes#AI.Task.Designation Designation (optional) Designation type.
 -- @param #boolean Datalink (optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskFAC_EngageControllable( AttackControllable, Priority, WeaponType, Designation, Datalink )
-  self:F2( { self.ControllableName, AttackControllable, WeaponType, Priority, Designation, Datalink } )
+function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponType, Designation, Datalink )
+  self:F2( { self.ControllableName, AttackGroup, WeaponType, Priority, Designation, Datalink } )
 
 --  FAC_EngageControllable  = { 
 --    id = 'FAC_EngageControllable', 
@@ -1234,7 +1246,7 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageControllable( AttackControllable, Pri
   local DCSTask
   DCSTask = { id = 'FAC_EngageControllable',
     params = {
-      controllableId = AttackControllable:GetID(),
+      controllableId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,

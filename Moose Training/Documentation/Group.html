@@ -35,6 +35,7 @@
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -116,7 +117,8 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 
 <h2>1.2) GROUP task methods</h2>
 <p>Several group task methods are available that help you to prepare tasks. 
-These methods return a string consisting of the task description, which can then be given to either a <a href="Group.html##(GROUP).PushTask">Group#GROUP.PushTask</a> or <a href="Group.html##(SetTask)">Group#SetTask</a> method to assign the task to the GROUP.
+These methods return a string consisting of the task description, which can then be given to either a <br/>
+<a href="Controllable.html##(CONTROLLABLE).PushTask">Controllable#CONTROLLABLE.PushTask</a> or <a href="Controllable.html##(CONTROLLABLE).SetTask">Controllable#CONTROLLABLE.SetTask</a> method to assign the task to the GROUP.
 Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
 Each task description where applicable indicates for which group category the task is valid.
 There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
@@ -129,28 +131,28 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <p>Find below a list of the <strong>assigned task</strong> methods:</p>
 
 <ul>
-    <li><a href="##(GROUP).TaskAttackGroup">GROUP.TaskAttackGroup</a>: (AIR) Attack a Group.</li>
-    <li><a href="##(GROUP).TaskAttackMapObject">GROUP.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
-    <li><a href="##(GROUP).TaskAttackUnit">GROUP.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
-    <li><a href="##(GROUP).TaskBombing">GROUP.TaskBombing</a>: (AIR) Delivering weapon at the point on the ground.</li>
-    <li><a href="##(GROUP).TaskBombingRunway">GROUP.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
-    <li><a href="##(GROUP).TaskEmbarking">GROUP.TaskEmbarking</a>: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</li>
-    <li><a href="##(GROUP).TaskEmbarkToTransport">GROUP.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
-    <li><a href="##(GROUP).TaskEscort">GROUP.TaskEscort</a>: (AIR) Escort another airborne group. </li>
-    <li><a href="##(GROUP).TaskFAC_AttackGroup">GROUP.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</li>
-    <li><a href="##(GROUP).TaskFireAtPoint">GROUP.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
-    <li><a href="##(GROUP).TaskFollow">GROUP.TaskFollow</a>: (AIR) Following another airborne group.</li>
-    <li><a href="##(GROUP).TaskHold">GROUP.TaskHold</a>: (GROUND) Hold ground group from moving.</li>
-    <li><a href="##(GROUP).TaskHoldPosition">GROUP.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the group.</li>
-    <li><a href="##(GROUP).TaskLand">GROUP.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
-    <li><a href="##(GROUP).TaskLandAtZone">GROUP.TaskLandAtZone</a>: (AIR) Land the group at a <a href="##(GROUP).TaskOrbitCircle">GROUP.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.</li>
-    <li><a href="##(GROUP).TaskOrbitCircleAtVec2">GROUP.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
-    <li><a href="##(GROUP).TaskRefueling">GROUP.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
-    <li><a href="##(GROUP).TaskRoute">GROUP.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
-    <li><a href="##(GROUP).TaskRouteToVec2">GROUP.TaskRouteToVec2</a>: (AIR + GROUND) Make the Group move to a given point.</li>
-    <li><a href="##(GROUP).TaskRouteToVec3">GROUP.TaskRouteToVec3</a>: (AIR + GROUND) Make the Group move to a given point.</li>
-    <li><a href="##(GROUP).TaskRouteToZone">GROUP.TaskRouteToZone</a>: (AIR + GROUND) Route the group to a given zone.</li>
-    <li><a href="##(GROUP).TaskReturnToBase">GROUP.TaskReturnToBase</a>: (AIR) Route the group to an airbase.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskAttackGroup">Controllable#CONTROLLABLE.TaskAttackGroup</a>: (AIR) Attack a Group.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskAttackMapObject">Controllable#CONTROLLABLE.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskAttackUnit">Controllable#CONTROLLABLE.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskBombing">Controllable#CONTROLLABLE.TaskBombing</a>: (Controllable#CONTROLLABLEDelivering weapon at the point on the ground.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskBombingRunway">Controllable#CONTROLLABLE.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskEmbarking">Controllable#CONTROLLABLE.TaskEmbarking</a>: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskEmbarkToTransport">Controllable#CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskEscort">Controllable#CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne group. </li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskFAC_AttackGroup">Controllable#CONTROLLABLE.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskFireAtPoint">Controllable#CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskFollow">Controllable#CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne group.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskHold">Controllable#CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground group from moving.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskHoldPosition">Controllable#CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the group.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskLand">Controllable#CONTROLLABLE.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskLandAtZone">Controllable#CONTROLLABLE.TaskLandAtZone</a>: (AIR) Land the group at a <a href="Controllable.html##(CONTROLLABLE).TaskOrbitCircle">Controllable#CONTROLLABLE.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskOrbitCircleAtVec2">Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskRefueling">Controllable#CONTROLLABLE.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskRoute">Controllable#CONTROLLABLE.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskRouteToVec2">Controllable#CONTROLLABLE.TaskRouteToVec2</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskRouteToVec3">Controllable#CONTROLLABLE.TaskRouteToVec3</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskRouteToZone">Controllable#CONTROLLABLE.TaskRouteToZone</a>: (AIR + GROUND) Route the group to a given zone.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskReturnToBase">Controllable#CONTROLLABLE.TaskReturnToBase</a>: (AIR) Route the group to an airbase.</li>
 </ul>
 
 <h3>1.2.2) EnRoute task methods</h3>
@@ -158,13 +160,13 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <p>EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:</p>
 
 <ul>
-    <li><a href="##(GROUP).EnRouteTaskAWACS">GROUP.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
-    <li><a href="##(GROUP).EnRouteTaskEngageGroup">GROUP.EnRouteTaskEngageGroup</a>: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.</li>
-    <li><a href="##(GROUP).EnRouteTaskEngageTargets">GROUP.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
-    <li><a href="##(GROUP).EnRouteTaskEWR">GROUP.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
-    <li><a href="##(GROUP).EnRouteTaskFAC">GROUP.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</li>
-    <li><a href="##(GROUP).EnRouteTaskFAC_EngageGroup">GROUP.EnRouteTaskFAC_EngageGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</li>
-    <li><a href="##(GROUP).EnRouteTaskTanker">GROUP.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskAWACS">Controllable#CONTROLLABLE.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskEngageGroup">Controllable#CONTROLLABLE.EnRouteTaskEngageGroup</a>: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskEngageTargets">Controllable#CONTROLLABLE.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskEWR">Controllable#CONTROLLABLE.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskFAC">Controllable#CONTROLLABLE.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskFAC_EngageGroup">Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).EnRouteTaskTanker">Controllable#CONTROLLABLE.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
 </ul>
 
 <h3>1.2.3) Preparation task methods</h3>
@@ -172,10 +174,10 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <p>There are certain task methods that allow to tailor the task behaviour:</p>
 
 <ul>
-    <li><a href="##(GROUP).TaskWrappedAction">GROUP.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
-    <li><a href="##(GROUP).TaskCombo">GROUP.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
-    <li><a href="##(GROUP).TaskCondition">GROUP.TaskCondition</a>: Return a condition section for a controlled task.</li>
-    <li><a href="##(GROUP).TaskControlled">GROUP.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskWrappedAction">Controllable#CONTROLLABLE.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskCombo">Controllable#CONTROLLABLE.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskCondition">Controllable#CONTROLLABLE.TaskCondition</a>: Return a condition section for a controlled task.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskControlled">Controllable#CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
 </ul>
 
 <h3>1.2.4) Obtain the mission from group templates</h3>
@@ -183,15 +185,15 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
 
 <ul>
-    <li><a href="##(GROUP).TaskMission">GROUP.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskMission">Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
 </ul>
 
 <h2>1.3) GROUP Command methods</h2>
-<p>Group <strong>command methods</strong> prepare the execution of commands using the <a href="##(GROUP).SetCommand">GROUP.SetCommand</a> method:</p>
+<p>Group <strong>command methods</strong> prepare the execution of commands using the <a href="Controllable.html##(CONTROLLABLE).SetCommand">Controllable#CONTROLLABLE.SetCommand</a> method:</p>
 
 <ul>
-    <li><a href="##(GROUP).CommandDoScript">GROUP.CommandDoScript</a>: Do Script command.</li>
-    <li><a href="##(GROUP).CommandSwitchWayPoint">GROUP.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).CommandDoScript">Controllable#CONTROLLABLE.CommandDoScript</a>: Do Script command.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).CommandSwitchWayPoint">Controllable#CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
 </ul>
 
 <h2>1.4) GROUP Option methods</h2>
@@ -200,37 +202,37 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <h3>1.4.1) Rule of Engagement:</h3>
 
 <ul>
-    <li><a href="##(GROUP).OptionROEWeaponFree">GROUP.OptionROEWeaponFree</a> </li>
-    <li><a href="##(GROUP).OptionROEOpenFire">GROUP.OptionROEOpenFire</a></li>
-    <li><a href="##(GROUP).OptionROEReturnFire">GROUP.OptionROEReturnFire</a></li>
-    <li><a href="##(GROUP).OptionROEEvadeFire">GROUP.OptionROEEvadeFire</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEWeaponFree">Controllable#CONTROLLABLE.OptionROEWeaponFree</a> </li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEOpenFire">Controllable#CONTROLLABLE.OptionROEOpenFire</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEReturnFire">Controllable#CONTROLLABLE.OptionROEReturnFire</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEEvadeFire">Controllable#CONTROLLABLE.OptionROEEvadeFire</a></li>
 </ul>
 
 <p>To check whether an ROE option is valid for a specific group, use:</p>
 
 <ul>
-    <li><a href="##(GROUP).OptionROEWeaponFreePossible">GROUP.OptionROEWeaponFreePossible</a> </li>
-    <li><a href="##(GROUP).OptionROEOpenFirePossible">GROUP.OptionROEOpenFirePossible</a></li>
-    <li><a href="##(GROUP).OptionROEReturnFirePossible">GROUP.OptionROEReturnFirePossible</a></li>
-    <li><a href="##(GROUP).OptionROEEvadeFirePossible">GROUP.OptionROEEvadeFirePossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEWeaponFreePossible">Controllable#CONTROLLABLE.OptionROEWeaponFreePossible</a> </li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEOpenFirePossible">Controllable#CONTROLLABLE.OptionROEOpenFirePossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEReturnFirePossible">Controllable#CONTROLLABLE.OptionROEReturnFirePossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROEEvadeFirePossible">Controllable#CONTROLLABLE.OptionROEEvadeFirePossible</a></li>
 </ul>
 
 <h3>1.4.2) Rule on thread:</h3>
 
 <ul>
-    <li><a href="##(GROUP).OptionROTNoReaction">GROUP.OptionROTNoReaction</a></li>
-    <li><a href="##(GROUP).OptionROTPassiveDefense">GROUP.OptionROTPassiveDefense</a></li>
-    <li><a href="##(GROUP).OptionROTEvadeFire">GROUP.OptionROTEvadeFire</a></li>
-    <li><a href="##(GROUP).OptionROTVertical">GROUP.OptionROTVertical</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTNoReaction">Controllable#CONTROLLABLE.OptionROTNoReaction</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTPassiveDefense">Controllable#CONTROLLABLE.OptionROTPassiveDefense</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTEvadeFire">Controllable#CONTROLLABLE.OptionROTEvadeFire</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTVertical">Controllable#CONTROLLABLE.OptionROTVertical</a></li>
 </ul>
 
 <p>To test whether an ROT option is valid for a specific group, use:</p>
 
 <ul>
-    <li><a href="##(GROUP).OptionROTNoReactionPossible">GROUP.OptionROTNoReactionPossible</a></li>
-    <li><a href="##(GROUP).OptionROTPassiveDefensePossible">GROUP.OptionROTPassiveDefensePossible</a></li>
-    <li><a href="##(GROUP).OptionROTEvadeFirePossible">GROUP.OptionROTEvadeFirePossible</a></li>
-    <li><a href="##(GROUP).OptionROTVerticalPossible">GROUP.OptionROTVerticalPossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTNoReactionPossible">Controllable#CONTROLLABLE.OptionROTNoReactionPossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTPassiveDefensePossible">Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTEvadeFirePossible">Controllable#CONTROLLABLE.OptionROTEvadeFirePossible</a></li>
+    <li><a href="Controllable.html##(CONTROLLABLE).OptionROTVerticalPossible">Controllable#CONTROLLABLE.OptionROTVerticalPossible</a></li>
 </ul>
 
 <h2>1.5) GROUP Zone validation methods</h2>
@@ -406,7 +408,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTemplate">GROUP:GetTemplate()</a></td>
 		<td class="summary">
-
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
 </td>
 		</tr>
 		<tr>
@@ -526,7 +528,25 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Respawn">GROUP:Respawn(Template)</a></td>
 		<td class="summary">
-
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCoalition">GROUP:SetTemplateCoalition(CoalitionID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CoalitionID of the group in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateControlled">GROUP:SetTemplateControlled(Controlled, Template)</a></td>
+		<td class="summary">
+<p>Sets the controlled status in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCountry">GROUP:SetTemplateCountry(CountryID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CountryID of the group in a Template.</p>
 </td>
 		</tr>
 	</table>
@@ -1066,6 +1086,11 @@ The mission route defined by points.</p>
 </dt>
 <dd>
 	
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
 
 
 </dd>
@@ -1544,16 +1569,135 @@ self</p>
 </dt>
 <dd>
 	
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
 
+	
+<p>The template must be retrieved with the <a href="Group.html##(GROUP).GetTemplate">Group#GROUP.GetTemplate</a>() function.
+The template contains all the definitions as declared within the mission file.
+To understand templates, do the following: </p>
+
+<ul>
+    <li>unpack your .miz file into a directory using 7-zip.</li>
+    <li>browse in the directory created to the file <strong>mission</strong>.</li>
+    <li>open the file and search for the country group definitions.</li>
+</ul>
+
+<p>Your group template will contain the fields as described within the mission file.</p>
+
+<p>This function will:</p>
+
+<ul>
+    <li>Get the current position and heading of the group.</li>
+    <li>When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.</li>
+    <li>Then it will destroy the current alive group.</li>
+    <li>And it will respawn the group using your new template definition.</li>
+</ul>
 
 		<h3>Parameter</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#table Template </em></code>: 
+The template of the Group retrieved with GROUP:GetTemplate()</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCoalition" >
+<strong>GROUP:SetTemplateCoalition(CoalitionID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CoalitionID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a> CoalitionID </em></code>: 
+The coalition ID.</p>
+
+				</li>
 				<li>
 				
 <p><code><em> Template </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateControlled" >
+<strong>GROUP:SetTemplateControlled(Controlled, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the controlled status in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Controlled </em></code>: 
+true is controlled, false is uncontrolled.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCountry" >
+<strong>GROUP:SetTemplateCountry(CountryID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CountryID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a> CountryID </em></code>: 
+The country ID.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
 </dd>
 </dl>
 

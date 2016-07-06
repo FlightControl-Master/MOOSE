@@ -35,6 +35,7 @@
 					<li><a href="DCSTypes.html">DCSTypes</a></li>
 					<li><a href="DCSUnit.html">DCSUnit</a></li>
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
@@ -89,7 +90,7 @@
 <p> The <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class defines the core functions to administer detected objects.</p>
 
 <h2> 1.1) DETECTION_BASE constructor</h2>
-<p> Construct a new DETECTION_BASE instance using the <a href="Detection.html##(DETECTION).New">Detection#DETECTION.New</a>() method.</p>
+<p> Construct a new DETECTION_BASE instance using the <a href="Detection.html##(DETECTION_BASE).New">Detection#DETECTION_BASE.New</a>() method.</p>
 
 <h2> 1.2) DETECTION_BASE initialization</h2>
 <p> By default, detection will return detected objects with all the detection sensors available.
@@ -357,6 +358,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).DetectedZones">DETECTION_UNITGROUPS.DetectedZones</a></td>
 		<td class="summary">
 <p>A list of <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>s containing the zones of the reference detected units.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).FlareDetectedUnits">DETECTION_UNITGROUPS:FlareDetectedUnits()</a></td>
+		<td class="summary">
+<p>Flare the detected units</p>
 </td>
 		</tr>
 		<tr>
@@ -1087,6 +1094,24 @@ self</p>
 <dd>
 	
 <p>A list of <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>s containing the zones of the reference detected units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITGROUPS).FlareDetectedUnits" >
+<strong>DETECTION_UNITGROUPS:FlareDetectedUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the detected units</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
+self</p>
 
 </dd>
 </dl>
