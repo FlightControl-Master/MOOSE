@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160707_2143' ) 
+env.info( 'Moose Generation Timestamp: 20160707_2350' ) 
 local base = _G
 
 Include = {}
@@ -22673,11 +22673,11 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases ) )
 
   --    -- AnapaVityazevo
-  --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
-  --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --    local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
-  --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+      local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
+      self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  
+      local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
+      self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
   --
   --
@@ -22848,11 +22848,14 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --
   --
   --    -- TbilisiLochini
-  --    local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
-  --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --    local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
-  --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+      local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
+      self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  
+      local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
+      self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+      
+      local TbilisiLochiniRunway2 = GROUP:FindByName( "TbilisiLochini Runway 2" )
+      self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
   --
   --
@@ -22867,12 +22870,12 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --
 
 
-  --  -- Template
-  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+    -- Template
+    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  
+    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   return self
 
