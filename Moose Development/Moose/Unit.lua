@@ -179,6 +179,24 @@ function UNIT:IsActive()
   return nil
 end
 
+--- Destroys the @{Unit}.
+-- @param Unit#UNIT self
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:Destroy()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    DCSUnit:destroy()
+  end
+
+  return nil
+end
+
+
+
 --- Returns the Unit's callsign - the localized string.
 -- @param Unit#UNIT self
 -- @return #string The Callsign of the Unit.

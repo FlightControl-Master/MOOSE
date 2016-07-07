@@ -274,6 +274,19 @@ end
 
 --- Set a new listener for an S_EVENT_PILOT_DEAD event.
 -- @param #EVENT self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param Base#BASE EventSelf
+-- @return #EVENT
+function EVENT:OnPilotDead( EventFunction, EventSelf )
+  self:F2()
+  
+  self:OnEventGeneric( EventFunction, EventSelf, world.event.S_EVENT_PILOT_DEAD )
+  
+  return self
+end
+
+--- Set a new listener for an S_EVENT_PILOT_DEAD event.
+-- @param #EVENT self
 -- @param #string EventDCSUnitName
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
 -- @param Base#BASE EventSelf The self instance of the class for which the event is.
@@ -468,7 +481,6 @@ end
 --- @param #EVENT self
 -- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
-  self:F2( { _EVENTCODES[Event.id], Event } )
 
   if self and self.Events and self.Events[Event.id] then
     if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
@@ -500,18 +512,23 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
+    self:E( { _EVENTCODES[Event.id], Event } )
+    --self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
         EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
       else
         if Event.IniDCSUnit and not EventData.IniUnit then
-          self:E( { "Calling event function for class ", ClassName } )
-          EventData.EventFunction( EventData.EventSelf, Event )
+          if ClassName == EventData.EventSelf:GetClassNameAndID() then
+            self:E( { "Calling event function for class ", ClassName } )
+            EventData.EventFunction( EventData.EventSelf, Event )
+          end
         end
       end
     end
+  else
+    self:E( { _EVENTCODES[Event.id], Event } )    
   end
 end
 

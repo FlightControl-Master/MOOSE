@@ -70,179 +70,361 @@ function SUBMENU:New( MenuText, ParentMenu )
 	return Child
 end
 
--- This local variable is used to cache the menus registered under clients.
--- Menus don't dissapear when clients are destroyed and restarted.
--- So every menu for a client created must be tracked so that program logic accidentally does not create
--- the same menus twice during initialization logic.
--- These menu classes are handling this logic with this variable.
-local _MENUCLIENTS = {}
+do
 
---- The MENU_CLIENT class
--- @type MENU_CLIENT
--- @extends Menu#MENU
-MENU_CLIENT = {
-  ClassName = "MENU_CLIENT"
-}
-
---- Creates a new menu item for a group
--- @param self
--- @param Client#CLIENT MenuClient The Client owning the menu.
--- @param #string MenuText The text for the menu.
--- @param #table ParentMenu The parent menu.
--- @return #MENU_CLIENT self
-function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
-
-	-- Arrange meta tables
-	local MenuParentPath = {}
-	if ParentMenu ~= nil then
-	  MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-	self:F( { MenuClient, MenuText, ParentMenu } )
-
-  self.MenuClient = MenuClient
-  self.MenuClientGroupID = MenuClient:GetClientGroupID()
-  self.MenuParentPath = MenuParentPath
-  self.MenuText = MenuText
-  self.ParentMenu = ParentMenu
+  -- This local variable is used to cache the menus registered under clients.
+  -- Menus don't dissapear when clients are destroyed and restarted.
+  -- So every menu for a client created must be tracked so that program logic accidentally does not create
+  -- the same menus twice during initialization logic.
+  -- These menu classes are handling this logic with this variable.
+  local _MENUCLIENTS = {}
   
-  self.Menus = {}
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
+  --- The MENU_CLIENT class
+  -- @type MENU_CLIENT
+  -- @extends Menu#MENU
+  MENU_CLIENT = {
+    ClassName = "MENU_CLIENT"
+  }
+  
+  --- Creates a new menu item for a group
+  -- @param self
+  -- @param Client#CLIENT MenuClient The Client owning the menu.
+  -- @param #string MenuText The text for the menu.
+  -- @param #table ParentMenu The parent menu.
+  -- @return #MENU_CLIENT self
+  function MENU_CLIENT:New( MenuClient, MenuText, ParentMenu )
+  
+  	-- Arrange meta tables
+  	local MenuParentPath = {}
+  	if ParentMenu ~= nil then
+  	  MenuParentPath = ParentMenu.MenuPath
+  	end
+  
+  	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  	self:F( { MenuClient, MenuText, ParentMenu } )
+  
+    self.MenuClient = MenuClient
+    self.MenuClientGroupID = MenuClient:GetClientGroupID()
+    self.MenuParentPath = MenuParentPath
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+    
+    self.Menus = {}
+  
+    if not _MENUCLIENTS[self.MenuClientGroupID] then
+      _MENUCLIENTS[self.MenuClientGroupID] = {}
+    end
+    
+    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+  
+    self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
+  
+    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+    if MenuPath[MenuPathID] then
+      missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
+    end
+  
+  	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
+  	MenuPath[MenuPathID] = self.MenuPath
+  
+    self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
+  
+    if ParentMenu and ParentMenu.Menus then
+      ParentMenu.Menus[self.MenuPath] = self
+    end
+  	return self
   end
   
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
-
-  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-  if MenuPath[MenuPathID] then
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
+  --- Removes the sub menus recursively of this MENU_CLIENT.
+  -- @param #MENU_CLIENT self
+  -- @return #MENU_CLIENT self
+  function MENU_CLIENT:RemoveSubMenus()
+    self:F( self.MenuPath )
+  
+    for MenuID, Menu in pairs( self.Menus ) do
+      Menu:Remove()
+    end
+  
   end
+  
+  --- Removes the sub menus recursively of this MENU_CLIENT.
+  -- @param #MENU_CLIENT self
+  -- @return #MENU_CLIENT self
+  function MENU_CLIENT:Remove()
+    self:F( self.MenuPath )
+  
+    self:RemoveSubMenus()
+  
+    if not _MENUCLIENTS[self.MenuClientGroupID] then
+      _MENUCLIENTS[self.MenuClientGroupID] = {}
+    end
+    
+    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+  
+    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+    end
+    
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+    self.ParentMenu.Menus[self.MenuPath] = nil
+    return nil
+  end
+  
+  
+  --- The MENU_CLIENT_COMMAND class
+  -- @type MENU_CLIENT_COMMAND
+  -- @extends Menu#MENU
+  MENU_CLIENT_COMMAND = {
+    ClassName = "MENU_CLIENT_COMMAND"
+  }
+  
+  --- Creates a new radio command item for a group
+  -- @param self
+  -- @param Client#CLIENT MenuClient The Client owning the menu.
+  -- @param MenuText The text for the menu.
+  -- @param ParentMenu The parent menu.
+  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  -- @param CommandMenuArgument An argument for the function.
+  -- @return Menu#MENU_CLIENT_COMMAND self
+  function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+  
+  	-- Arrange meta tables
+  	
+  	local MenuParentPath = {}
+  	if ParentMenu ~= nil then
+  		MenuParentPath = ParentMenu.MenuPath
+  	end
+  
+  	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+  	
+    self.MenuClient = MenuClient
+    self.MenuClientGroupID = MenuClient:GetClientGroupID()
+    self.MenuParentPath = MenuParentPath
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+  
+    if not _MENUCLIENTS[self.MenuClientGroupID] then
+      _MENUCLIENTS[self.MenuClientGroupID] = {}
+    end
+    
+    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+  
+    self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+  
+    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+    if MenuPath[MenuPathID] then
+      missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
+    end
+    
+  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+    MenuPath[MenuPathID] = self.MenuPath
+   
+  	self.CommandMenuFunction = CommandMenuFunction
+  	self.CommandMenuArgument = CommandMenuArgument
+  	
+  	ParentMenu.Menus[self.MenuPath] = self
+  	
+  	return self
+  end
+  
+  function MENU_CLIENT_COMMAND:Remove()
+    self:F( self.MenuPath )
+  
+    if not _MENUCLIENTS[self.MenuClientGroupID] then
+      _MENUCLIENTS[self.MenuClientGroupID] = {}
+    end
+    
+    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
+  
+    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+    end
+    
+    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
+    self.ParentMenu.Menus[self.MenuPath] = nil
+    return nil
+  end
+end
 
-	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
-	MenuPath[MenuPathID] = self.MenuPath
+--- MENU_GROUP
 
-  self:T( { MenuClient:GetClientGroupName(), self.MenuPath } )
+do
+  -- This local variable is used to cache the menus registered under clients.
+  -- Menus don't dissapear when clients are destroyed and restarted.
+  -- So every menu for a client created must be tracked so that program logic accidentally does not create
+  -- the same menus twice during initialization logic.
+  -- These menu classes are handling this logic with this variable.
+  local _MENUGROUPS = {}
 
-  if ParentMenu and ParentMenu.Menus then
+  --- The MENU_GROUP class
+  -- @type MENU_GROUP
+  -- @extends Menu#MENU
+  MENU_GROUP = {
+    ClassName = "MENU_GROUP"
+  }
+  
+  --- Creates a new menu item for a group
+  -- @param self
+  -- @param Group#GROUP MenuGroup The Group owning the menu.
+  -- @param #string MenuText The text for the menu.
+  -- @param #table ParentMenu The parent menu.
+  -- @return #MENU_GROUP self
+  function MENU_GROUP:New( MenuGroup, MenuText, ParentMenu )
+  
+    -- Arrange meta tables
+    local MenuParentPath = {}
+    if ParentMenu ~= nil then
+      MenuParentPath = ParentMenu.MenuPath
+    end
+  
+    local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+    self:F( { MenuGroup, MenuText, ParentMenu } )
+  
+    self.MenuGroup = MenuGroup
+    self.MenuGroupID = MenuGroup:GetID()
+    self.MenuParentPath = MenuParentPath
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+    
+    self.Menus = {}
+  
+    if not _MENUGROUPS[self.MenuGroupID] then
+      _MENUGROUPS[self.MenuGroupID] = {}
+    end
+    
+    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+  
+    self:T( { MenuGroup:GetName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
+  
+    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+    if MenuPath[MenuPathID] then
+      missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
+    end
+  
+    self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, MenuParentPath )
+    MenuPath[MenuPathID] = self.MenuPath
+  
+    self:T( { self.MenuGroupID, self.MenuPath } )
+  
+    if ParentMenu and ParentMenu.Menus then
+      ParentMenu.Menus[self.MenuPath] = self
+    end
+    return self
+  end
+  
+  --- Removes the sub menus recursively of this MENU_GROUP.
+  -- @param #MENU_GROUP self
+  -- @return #MENU_GROUP self
+  function MENU_GROUP:RemoveSubMenus()
+    self:F( self.MenuPath )
+  
+    for MenuID, Menu in pairs( self.Menus ) do
+      Menu:Remove()
+    end
+  
+  end
+  
+  --- Removes the sub menus recursively of this MENU_GROUP.
+  -- @param #MENU_GROUP self
+  -- @return #MENU_GROUP self
+  function MENU_GROUP:Remove()
+    self:F( self.MenuPath )
+  
+    self:RemoveSubMenus()
+  
+    if not _MENUGROUPS[self.MenuGroupID] then
+      _MENUGROUPS[self.MenuGroupID] = {}
+    end
+    
+    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+  
+    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+    end
+    
+    missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+    if self.ParentMenu then
+      self.ParentMenu.Menus[self.MenuPath] = nil
+    end
+    return nil
+  end
+  
+  
+  --- The MENU_GROUP_COMMAND class
+  -- @type MENU_GROUP_COMMAND
+  -- @extends Menu#MENU
+  MENU_GROUP_COMMAND = {
+    ClassName = "MENU_GROUP_COMMAND"
+  }
+  
+  --- Creates a new radio command item for a group
+  -- @param #MENU_GROUP_COMMAND self
+  -- @param Group#GROUP MenuGroup The Group owning the menu.
+  -- @param MenuText The text for the menu.
+  -- @param ParentMenu The parent menu.
+  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  -- @param CommandMenuArgument An argument for the function.
+  -- @return Menu#MENU_GROUP_COMMAND self
+  function MENU_GROUP_COMMAND:New( MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
+  
+    -- Arrange meta tables
+    
+    local MenuParentPath = {}
+    if ParentMenu ~= nil then
+      MenuParentPath = ParentMenu.MenuPath
+    end
+  
+    local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
+    
+    self.MenuGroup = MenuGroup
+    self.MenuGroupID = MenuGroup:GetID()
+    self.MenuParentPath = MenuParentPath
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+  
+    if not _MENUGROUPS[self.MenuGroupID] then
+      _MENUGROUPS[self.MenuGroupID] = {}
+    end
+    
+    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+  
+    self:T( { MenuGroup:GetName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
+  
+    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+    if MenuPath[MenuPathID] then
+      missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
+    end
+    
+    self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
+    MenuPath[MenuPathID] = self.MenuPath
+   
+    self.CommandMenuFunction = CommandMenuFunction
+    self.CommandMenuArgument = CommandMenuArgument
+    
     ParentMenu.Menus[self.MenuPath] = self
+    
+    return self
   end
-	return self
+  
+  function MENU_GROUP_COMMAND:Remove()
+    self:F( self.MenuPath )
+  
+    if not _MENUGROUPS[self.MenuGroupID] then
+      _MENUGROUPS[self.MenuGroupID] = {}
+    end
+    
+    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+  
+    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
+      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+    end
+    
+    missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+    self.ParentMenu.Menus[self.MenuPath] = nil
+    return nil
+  end
+
 end
-
---- Removes the sub menus recursively of this MENU_CLIENT.
--- @param #MENU_CLIENT self
--- @return #MENU_CLIENT self
-function MENU_CLIENT:RemoveSubMenus()
-  self:F( self.MenuPath )
-
-  for MenuID, Menu in pairs( self.Menus ) do
-    Menu:Remove()
-  end
-
-end
-
---- Removes the sub menus recursively of this MENU_CLIENT.
--- @param #MENU_CLIENT self
--- @return #MENU_CLIENT self
-function MENU_CLIENT:Remove()
-  self:F( self.MenuPath )
-
-  self:RemoveSubMenus()
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-  end
-  
-  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-  self.ParentMenu.Menus[self.MenuPath] = nil
-  return nil
-end
-
-
---- The MENU_CLIENT_COMMAND class
--- @type MENU_CLIENT_COMMAND
--- @extends Menu#MENU
-MENU_CLIENT_COMMAND = {
-  ClassName = "MENU_CLIENT_COMMAND"
-}
-
---- Creates a new radio command item for a group
--- @param self
--- @param Client#CLIENT MenuClient The Client owning the menu.
--- @param MenuText The text for the menu.
--- @param ParentMenu The parent menu.
--- @param CommandMenuFunction A function that is called when the menu key is pressed.
--- @param CommandMenuArgument An argument for the function.
--- @return Menu#MENU_CLIENT_COMMAND self
-function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument )
-
-	-- Arrange meta tables
-	
-	local MenuParentPath = {}
-	if ParentMenu ~= nil then
-		MenuParentPath = ParentMenu.MenuPath
-	end
-
-	local self = BASE:Inherit( self, MENU:New( MenuText, MenuParentPath ) )
-	
-  self.MenuClient = MenuClient
-  self.MenuClientGroupID = MenuClient:GetClientGroupID()
-  self.MenuParentPath = MenuParentPath
-  self.MenuText = MenuText
-  self.ParentMenu = ParentMenu
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, CommandMenuArgument } )
-
-  local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-  if MenuPath[MenuPathID] then
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
-  end
-  
-	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
-  MenuPath[MenuPathID] = self.MenuPath
- 
-	self.CommandMenuFunction = CommandMenuFunction
-	self.CommandMenuArgument = CommandMenuArgument
-	
-	ParentMenu.Menus[self.MenuPath] = self
-	
-	return self
-end
-
-function MENU_CLIENT_COMMAND:Remove()
-  self:F( self.MenuPath )
-
-  if not _MENUCLIENTS[self.MenuClientGroupID] then
-    _MENUCLIENTS[self.MenuClientGroupID] = {}
-  end
-  
-  local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-
-  if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-    MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-  end
-  
-  missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-  self.ParentMenu.Menus[self.MenuPath] = nil
-  return nil
-end
-
 
 --- The MENU_COALITION class
 -- @type MENU_COALITION

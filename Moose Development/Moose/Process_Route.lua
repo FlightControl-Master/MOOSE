@@ -1,9 +1,9 @@
 --- @module Task_Route
 
---- TASK2_ROUTE_CLIENT class
--- @type TASK2_ROUTE_CLIENT
--- @field Mission#MISSION Mission
--- @field Unit#UNIT TaskUnit
+--- PROCESS_ROUTE class
+-- @type PROCESS_ROUTE
+-- @field Task#TASK TASK
+-- @field Unit#UNIT ProcessUnit
 -- @field Zone#ZONE_BASE TargetZone
 -- @extends Task2#TASK2
 PROCESS_ROUTE = { 
@@ -12,14 +12,14 @@ PROCESS_ROUTE = {
 
 
 --- Creates a new routing state machine. The task will route a CLIENT to a ZONE until the CLIENT is within that ZONE.
--- @param #TASK2_ROUTE_CLIENT self
--- @param Mission#MISSION Mission
+-- @param #PROCESS_ROUTE self
+-- @param Task#TASK Task
 -- @param Unit#UNIT Unit
--- @return #TASK2_ROUTE_CLIENT self
-function PROCESS_ROUTE:New( Mission, TaskUnit, TargetZone )
+-- @return #PROCESS_ROUTE self
+function PROCESS_ROUTE:New( Task, ProcessUnit, TargetZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, TASK2:New( Mission, TaskUnit ) ) -- #TASK2_ROUTE_CLIENT
+  local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_ROUTE
   
   self.TargetZone = TargetZone
   self.DisplayInterval = 30
@@ -28,7 +28,7 @@ function PROCESS_ROUTE:New( Mission, TaskUnit, TargetZone )
   self.DisplayTime = 10 -- 10 seconds is the default
   self.DisplayCategory = "Route" -- Route is the default display category
   
-  self.Fsm = STATEMACHINE_TASK:New( self, {
+  self.Fsm = STATEMACHINE_PROCESS:New( self, {
     initial = 'UnArrived',
     events = {
       { name = 'Route',  from = 'UnArrived',  to = 'Arrived' },
@@ -49,24 +49,23 @@ end
 --- Task Events
 
 --- StateMachine callback function for a TASK2
--- @param #TASK2_ROUTE_CLIENT self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param #PROCESS_ROUTE self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 function PROCESS_ROUTE:OnLeaveUnArrived( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.TaskUnit.UnitName } )
 
-  local IsInZone = self.TaskUnit:IsInZone( self.TargetZone )
+  local IsInZone = self.ProcessUnit:IsInZone( self.TargetZone )
 
   if self.DisplayCount >= self.DisplayInterval then
     if not IsInZone then
       local ZoneVec2 = self.TargetZone:GetVec2()
       local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
-      local TaskUnitVec2 = self.TaskUnit:GetVec2()
+      local TaskUnitVec2 = self.ProcessUnit:GetVec2()
       local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
       local RouteText = TaskUnitPointVec2:GetBRText( ZonePointVec2 )
-      self.TaskUnit:Message( RouteText, self.DisplayTime, self.DisplayCategory  )
+      MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( self.ProcessUnit:GetGroup() )
     end
     self.DisplayCount = 1
   else

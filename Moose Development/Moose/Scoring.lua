@@ -263,13 +263,16 @@ end
 
 --- Registers Scores the players completing a Mission Task.
 -- @param #SCORING self
+-- @param Mission#MISSION Mission
 -- @param Unit#UNIT PlayerUnit
--- @param #string MissionName
+-- @param #string Text
 -- @param #number Score
-function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
-  self:F( { PlayerUnit.UnitName, MissionName, Score } )
+function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
 
   local PlayerName = PlayerUnit:GetPlayerName()
+  local MissionName = Mission:GetName()
+
+  self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
 
   if not self.Players[PlayerName].Mission[MissionName] then
     self.Players[PlayerName].Mission[MissionName] = {}
@@ -283,9 +286,9 @@ function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score
   self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
-  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..
-    Score .. " Score points added.",
-    20 ):ToAll()
+  MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+    Score .. " points!",
+    30 ):ToAll()
 
   self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
 end

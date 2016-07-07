@@ -113,6 +113,8 @@ function STATEMACHINE:_create_transition(name)
         
       local fsmparent, event = self:_isendstate( to )
       if fsmparent and event then
+        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
         fsmparent[event]( fsmparent )
         execute = false
@@ -146,11 +148,13 @@ function STATEMACHINE:_isendstate( state )
     self:E( { state = state, endstates = self.endstates, endstate = self.endstates[state] } )
     local returnevent = nil
     local fromstate = fsmparent.current
+    self:E( fromstate )
+    self:E( self.returnevents )
     for _, eventname in pairs( self.returnevents ) do
       local event = fsmparent.events[eventname]
       self:E( event )
       local to = event and event.map[fromstate] or event.map['*']
-      if to then
+      if to and to == state then
         return fsmparent, eventname
       end
     end
@@ -230,5 +234,36 @@ end
 function STATEMACHINE_PROCESS:_call_handler( handler, params )
   if handler then
     return handler( self.Process, unpack( params ) )
+  end
+end
+
+--- STATEMACHINE_TASK class
+-- @type STATEMACHINE_TASK
+-- @field Task#TASK_BASE Task
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_TASK = {
+  ClassName = "STATEMACHINE_TASK",
+}
+
+--- Creates a new STATEMACHINE_TASK object.
+-- @param #STATEMACHINE_TASK self
+-- @return #STATEMACHINE_TASK
+function STATEMACHINE_TASK:New( Task, options )
+
+  local FsmTask = routines.utils.deepCopy( self ) -- Create a new self instance
+  local Parent = STATEMACHINE:New(options)
+
+  setmetatable( FsmTask, Parent )
+  FsmTask.__index = FsmTask
+
+  FsmTask["onstatechange"] = Task.OnStateChange
+  FsmTask.Task = Task
+
+  return FsmTask
+end
+
+function STATEMACHINE_TASK:_call_handler( handler, params )
+  if handler then
+    return handler( self.Task, unpack( params ) )
   end
 end

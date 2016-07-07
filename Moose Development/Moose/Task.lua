@@ -10,18 +10,22 @@ TASK_BASE = {
   ClassName = "TASK_BASE",
   TaskScheduler = nil,
   Processes = {},
+  Players = nil,
   Scores = {},
 }
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
 -- @param #TASK_BASE self
 -- @return #TASK_BASE self
-function TASK_BASE:New()
+function TASK_BASE:New( Mission, TaskName )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 
   self.Processes = {}
   self.Fsm = {}
+  self.Mission = Mission
+  self.TaskName = TaskName
+  self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
 
   return self
 end
@@ -31,7 +35,7 @@ end
 -- @param Group#GROUP TaskGroup
 -- @return #TASK_BASE self
 function TASK_BASE:AssignToGroup( TaskGroup )
-  self:FZ( TaskGroup:GetName() )
+  self:F2( TaskGroup:GetName() )
   
   local TaskUnits = TaskGroup:GetUnits()
   for UnitID, UnitData in pairs( TaskUnits ) do
@@ -43,6 +47,8 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   end
   return self
 end
+
+
 
 --- Add Process to @{Task} with key @{Unit}
 -- @param #TASK_BASE self
@@ -58,11 +64,19 @@ end
 --- Remove Processes from @{Task} with key @{Unit}
 -- @param #TASK_BASE self
 -- @return #TASK_BASE self
-function TASK_BASE:RemoveProcesses( TaskUnit )
+function TASK_BASE:RemoveProcesses( TaskUnit, FailProcesses )
   local TaskUnitName = TaskUnit:GetName()
-  for _, Process in pairs( self.Processes[TaskUnitName] ) do
+  for _, ProcessData in pairs( self.Processes[TaskUnitName] ) do
+    local Process = ProcessData -- Process#PROCESS
+    if FailProcesses then
+      Process.Fsm:Fail()
+    end
+    Process:StopEvents()
     Process = nil
+    self.Processes[TaskUnitName][_] = nil
+    self:E( self.Processes[TaskUnitName][_] )
   end
+  self.Processes[TaskUnitName] = nil
 end
 
 --- Add a FiniteStateMachine to @{Task} with key @{Unit}
@@ -83,7 +97,20 @@ function TASK_BASE:RemoveStateMachines( TaskUnit )
   local TaskUnitName = TaskUnit:GetName()
   for _, Fsm in pairs( self.Fsm[TaskUnitName] ) do
     Fsm = nil
+    self.Fsm[TaskUnitName][_] = nil
+    self:E( self.Fsm[TaskUnitName][_] )
   end
+  self.Fsm[TaskUnitName] = nil
+end
+
+--- Checks if there is a FiniteStateMachine assigned to @{Unit} for @{Task}
+-- @param #TASK_BASE self
+-- @param Unit#UNIT TaskUnit
+-- @return #TASK_BASE self
+function TASK_BASE:HasStateMachine( TaskUnit )
+  local TaskUnitName = TaskUnit:GetName()
+  self:F( { TaskUnitName, self.Fsm[TaskUnitName] ~= nil } )
+  return ( self.Fsm[TaskUnitName] ~= nil )
 end
 
 
@@ -94,9 +121,172 @@ end
 -- @param Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
 function TASK_BASE:AssignToUnit( TaskUnit )
+  self:F( TaskUnit:GetName() )
   
   return nil
 end
+
+--- UnAssign the @{Task} from an alive @{Unit}.
+-- @param #TASK_BASE self
+-- @param Unit#UNIT TaskUnit
+-- @return #TASK_BASE self
+function TASK_BASE:UnAssignFromUnit( TaskUnit, FailProcesses )
+  self:F( TaskUnit:GetName() )
+  
+  if self:HasStateMachine( TaskUnit ) == true then
+    self:RemoveStateMachines( TaskUnit )
+    self:RemoveProcesses( TaskUnit, FailProcesses )
+  end
+
+  return self
+end
+
+--- Register a potential new assignment for a new spawned @{Unit}.
+-- Tasks only get assigned if there are players in it.
+-- @param #TASK_BASE self
+-- @param Event#EVENTDATA Event
+-- @return #TASK_BASE self
+function TASK_BASE:_EventAssignUnit( Event )
+  if Event.IniUnit then
+    self:F( Event )
+    local TaskUnit = Event.IniUnit
+    if TaskUnit:IsAlive() then
+      local TaskPlayerName = TaskUnit:GetPlayerName()
+      if TaskPlayerName ~= nil then
+        if not self:HasStateMachine( TaskUnit ) then
+          self:AssignToUnit( TaskUnit )
+        end
+      end
+    end
+  end
+  return nil
+end
+
+--- UnAssigns a @{Unit} that is left by a player, crashed, dead, ....
+-- There are only assignments if there are players in it.
+-- @param #TASK_BASE self
+-- @param Event#EVENTDATA Event
+-- @return #TASK_BASE self
+function TASK_BASE:_EventUnAssignUnit( Event )
+  self:F( Event )
+  if Event.IniUnit then
+    local TaskUnit = Event.IniUnit
+    self:F( TaskUnit:GetName() )
+    self:UnAssignFromUnit( TaskUnit, true )
+  end
+  return nil
+end
+
+--- Gets the scoring of the task
+-- @param #TASK_BASE self
+-- @return Scoring#SCORING Scoring
+function TASK_BASE:GetScoring()
+  return self.Mission:GetScoring()
+end
+
+--- Sets the name of the task
+-- @param #TASK_BASE self
+-- @param #string TaskName
+-- @return Scoring#SCORING Scoring
+function TASK_BASE:SetName( TaskName )
+  self.TaskName = TaskName
+end
+
+--- Gets the name of the task
+-- @param #TASK_BASE self
+-- @return Scoring#SCORING Scoring
+function TASK_BASE:GetName()
+  return self.TaskName
+end
+
+
+--- Sets a @{Task} to status **Success**.
+-- @param #TASK_BASE self
+function TASK_BASE:StateSuccess()
+  self:SetState( self, "State", "Success" )
+end
+
+--- Is the @{Task} status **Success**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStateSuccess()
+  return self:GetStateString() == "Success"
+end
+
+--- Sets a @{Task} to status **Failed**.
+-- @param #TASK_BASE self
+function TASK_BASE:StateFailed()
+  self:SetState( self, "State", "Failed" )
+end
+
+--- Is the @{Task} status **Failed**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStateFailed()
+  return self:GetStateString() == "Failed"
+end
+
+--- Sets a @{Task} to status **Planned**.
+-- @param #TASK_BASE self
+function TASK_BASE:StatePlanned()
+  self:SetState( self, "State", "Planned" )
+end
+
+--- Is the @{Task} status **Planned**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStatePlanned()
+  return self:GetStateString() == "Planned"
+end
+
+--- Sets a @{Task} to status **Assigned**.
+-- @param #TASK_BASE self
+function TASK_BASE:StateAssigned()
+  self:SetState( self, "State", "Assigned" )
+end
+
+--- Is the @{Task} status **Assigned**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStateAssigned()
+  return self:GetStateString() == "Assigned"
+end
+
+--- Sets a @{Task} to status **Hold**.
+-- @param #TASK_BASE self
+function TASK_BASE:StateHold()
+  self:SetState( self, "State", "Hold" )
+end
+
+--- Is the @{Task} status **Hold**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStateHold()
+  return self:GetStateString() == "Hold"
+end
+
+--- Sets a @{Task} to status **Replanned**.
+-- @param #TASK_BASE self
+function TASK_BASE:StateReplanned()
+  self:SetState( self, "State", "Replanned" )
+end
+
+--- Is the @{Task} status **Replanned**.
+-- @param #TASK_BASE self
+function TASK_BASE:IsStateReplanned()
+  return self:GetStateString() == "Replanned"
+end
+
+--- Gets the @{Task} status.
+-- @param #TASK_BASE self
+function TASK_BASE:GetStateString()
+  return self:GetState( self, "State" )
+end
+
+--- Sets a @{Task} briefing.
+-- @param #TASK_BASE self
+-- @param #string TaskBriefing
+-- @return self
+function TASK_BASE:SetBriefing( TaskBriefing )
+  self.TaskBriefing = TaskBriefing
+  return self
+end
+
 
 
 --- @param #TASK_BASE self

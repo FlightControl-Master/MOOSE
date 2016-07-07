@@ -4,7 +4,7 @@
 -- @type PROCESS
 -- @field Scheduler#SCHEDULER ProcessScheduler
 -- @field Unit#UNIT ProcessUnit
--- @field Task#MISSION Task
+-- @field Task#TASK Task
 -- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @extends Base#BASE
 PROCESS = {
@@ -25,14 +25,28 @@ function PROCESS:New( Task, ProcessUnit )
   self.ProcessUnit = ProcessUnit
   self.Task = Task
   
+  self.AllowEvents = true
+  
   return self
 end
 
 --- @param #PROCESS self
 function PROCESS:NextEvent( NextEvent, ... )
-  self:E( NextEvent )
+  self:F2( arg )
+  if self.AllowEvents == true then
+    self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.ProcessUnit, unpack( arg ) }, 1 )
+  end
+end
 
-  self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.ProcessUnit, unpack( arg ) }, 1 )
+--- @param #PROCESS self
+function PROCESS:StopEvents( )
+  self:F2()
+  if self.ProcessScheduler then
+    self:E( "Stop" )
+    self.ProcessScheduler:Stop()
+    self.ProcessScheduler = nil
+    self.AllowEvents = false
+  end
 end
 
 --- Adds a score for the PROCESS to be achieved.
@@ -60,10 +74,11 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName } )
 
   if self.Scores[To] then
-    self.Unit:Message( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 )
+    
+    MESSAGE:New( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 ):ToGroup( self.ProcessUnit:GetGroup() )
     local Scoring = self.Task:GetScoring()
     if Scoring then
-      Scoring:_AddTaskProcessScore( self.ProcessUnit, self.Task:GetName(), self.Scores[To].Score )
+      Scoring:_AddMissionTaskScore( self.Task.Mission, self.ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
     end
   end
 end

@@ -3,38 +3,38 @@
 --- PROCESS_SEAD class
 -- @type PROCESS_SEAD
 -- @field Unit#UNIT ProcessUnit
--- @field Set#SET_UNIT TargetSet
+-- @field Set#SET_UNIT TargetSetUnit
 -- @extends Process#PROCESS
 PROCESS_SEAD = { 
   ClassName = "PROCESS_SEAD",
   Fsm = {},
-  TargetSet = nil,
+  TargetSetUnit = nil,
 }
 
 
 --- Creates a new SEAD task.
 -- @param #PROCESS_SEAD self
--- @param Task#MISSION Task
+-- @param Task#TASK Task
 -- @param Unit#UNIT ProcessUnit
--- @param Set#SET_UNIT TargetSet
+-- @param Set#SET_UNIT TargetSetUnit
 -- @return #PROCESS_SEAD self
-function PROCESS_SEAD:New( Task, ProcessUnit, TargetSet )
+function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_SEAD
   
-  self.TargetSet = TargetSet
+  self.TargetSetUnit = TargetSetUnit
 
-  self.Fsm = STATEMACHINE_TASK:New( self, {
+  self.Fsm = STATEMACHINE_PROCESS:New( self, {
     initial = 'Assigned',
     events = {
       { name = 'Await', from = 'Assigned', to = 'Waiting'    },
       { name = 'HitTarget',  from = 'Waiting',    to = 'Destroy' },
       { name = 'MoreTargets', from = 'Destroy', to = 'Waiting'  },
       { name = 'Destroyed', from = 'Destroy', to = 'Success' },      
-      { name = 'Killed', from = 'Assigned', to = 'Failed' },
-      { name = 'Killed', from = 'Waiting', to = 'Failed' },
-      { name = 'Killed', from = 'Destroy', to = 'Failed' },
+      { name = 'Fail', from = 'Assigned', to = 'Failed' },
+      { name = 'Fail', from = 'Waiting', to = 'Failed' },
+      { name = 'Fail', from = 'Destroy', to = 'Failed' },
     },
     callbacks = {
       onAwait =  self.OnAwait,
@@ -48,8 +48,6 @@ function PROCESS_SEAD:New( Task, ProcessUnit, TargetSet )
 
 
   _EVENTDISPATCHER:OnHit( self.EventHit, self )
-  _EVENTDISPATCHER:OnDead( self.EventKilled, self )
-  _EVENTDISPATCHER:OnCrash( self.EventKilled, self )
   
   return self
 end
@@ -58,28 +56,26 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 function PROCESS_SEAD:OnAwait( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName} )
 
-  self.ProcessUnit:Message( "Waiting", 15 )
   self:NextEvent( Fsm.Await )
 end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
 function PROCESS_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
 
-  self.ProcessUnit:Message( "Hit Target", 15 )
-  if self.TargetSet:Count() > 0 then
+  if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else
     self:NextEvent( Fsm.Destroyed )
@@ -88,46 +84,43 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 function PROCESS_SEAD:OnMoreTargets( Fsm, Event, From, To )
 
-    self.ProcessUnit:Message( "More Targets", 15 )
 
 end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA DCSEvent
 function PROCESS_SEAD:OnKilled( Fsm, Event, From, To )
 
-  self.ProcessUnit:Message( "Player got killed", 15 )
   self:NextEvent( Fsm.Restart )
 
 end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 function PROCESS_SEAD:OnRestart( Fsm, Event, From, To )
 
-  self.ProcessUnit:Message( "Restart SEAD Process", 15 )
   self:NextEvent( Fsm.Menu )
 
 end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_SEAD self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -148,14 +141,4 @@ function PROCESS_SEAD:EventHit( Event )
   end
 end
 
---- @param #PROCESS_SEAD self
--- @param Event#EVENTDATA Event
-function PROCESS_SEAD:EventKilled( Event )
-
-  if Event.IniUnit then
-    if Event.IniUnitName == self.ProcessUnit.UnitName then
-      self:NextEvent( self.Fsm.Killed, Event )
-    end
-  end
-end
 

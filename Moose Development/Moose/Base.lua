@@ -115,7 +115,6 @@ function BASE:New()
 	self.__index = self
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
-	self.ClassNameAndID = string.format( '%s#%09d', self.ClassName, self.ClassID )
 	return self
 end
 
@@ -152,7 +151,7 @@ end
 -- @param #BASE self
 -- @return #string The ClassName + ClassID of the class instance.
 function BASE:GetClassNameAndID()
-  return self.ClassNameAndID
+  return string.format( '%s#%09d', self.ClassName, self.ClassID )
 end
 
 --- Get the ClassName of the class instance.

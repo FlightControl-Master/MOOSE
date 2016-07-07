@@ -44,7 +44,7 @@ end
 -- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param #string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param DCSCoalitionObject#coalition DCSCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
 -- @usage 
 -- -- Declare a few missions.
@@ -56,15 +56,15 @@ end
 -- local Mission = MISSIONSCHEDULER.AddMission( 'SA-6 SAMs', 'Primary', 'Our intelligence reports that 3 SA-6 SAM defense batteries are located near Didmukha, Khetagurov and Berula. Eliminate the Russian SAMs.', 'NATO'  )
 -- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Sling Load', 'Operational', 'Fly to the cargo pickup zone at Dzegvi or Kaspi, and sling the cargo to Soganlug airbase.', 'NATO' )
 -- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 'In order to be in full control of the situation, we need you to rescue a secret agent from the woods behind enemy lines. Avoid the Russian defenses and rescue the agent. Keep south until Khasuri, and keep your eyes open for any SAM presence. The agent is located at waypoint 4 on your kneeboard.', 'NATO'  )
-function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoalition )
+function MISSION:New( MissionName, MissionPriority, MissionBriefing, DCSCoalition )
 
 	self = MISSION:Meta()
-	self:T({ MissionName, MissionPriority, MissionBriefing, MissionCoalition })
+	self:T( { MissionName, MissionPriority, MissionBriefing, DCSCoalition } )
   
 	self.Name = MissionName
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
-	self.MissionCoalition = MissionCoalition
+	self.DCSCoalition = DCSCoalition
 
   self:SetMissionMenu()
 
@@ -97,7 +97,7 @@ end
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:SetMissionMenu()
-  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self.Name )
+  self.MissionMenu = MENU_COALITION:New( self.DCSCoalition, self.Name )
 end
 
 --- Gets the mission menu for the coalition.
