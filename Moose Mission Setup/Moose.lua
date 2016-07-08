@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160708_1719' ) 
+env.info( 'Moose Generation Timestamp: 20160708_1720' ) 
 local base = _G
 
 Include = {}
@@ -22094,7 +22094,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
               local VelocityVec3 = Client:GetVelocity()
               local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
               local Velocity = Velocity * 3.6 -- now it is in km/h.
-              MESSAGE:New( "Velocity = " .. Velocity, 1 ):ToAll()
+              -- MESSAGE:New( "Velocity = " .. Velocity, 1 ):ToAll()
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
