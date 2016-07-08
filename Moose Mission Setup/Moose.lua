@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160708_0542' ) 
+env.info( 'Moose Generation Timestamp: 20160708_1720' ) 
 local base = _G
 
 Include = {}
@@ -22092,8 +22092,9 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
               end
 
               local VelocityVec3 = Client:GetVelocity()
-              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z) -- in meters / sec
+              local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
               local Velocity = Velocity * 3.6 -- now it is in km/h.
+              -- MESSAGE:New( "Velocity = " .. Velocity, 1 ):ToAll()
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
@@ -22108,7 +22109,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     self:T( SpeedingWarnings )
 
                     if SpeedingWarnings <= 3 then
-                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 5" )
+                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 3" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
