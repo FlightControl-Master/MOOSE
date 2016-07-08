@@ -102,6 +102,38 @@ function DETECTION_MANAGER:GetReportDisplayTime()
   return self._ReportDisplayTime
 end
 
+--- Creates a string of the detected items in a @{Set}.
+-- @param #DETECTION_MANAGER self
+-- @param Set#SET_BASE DetectedSets The detected Sets created by the @{Detection#DETECTION_BASE} object.
+-- @return #DETECTION_MANAGER self
+function DETECTION_MANAGER:GetDetectedItemsText( DetectedSet )
+  self:F2()
+
+  local MT = {} -- Message Text
+  local UnitTypes = {}
+
+  for DetectedUnitID, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
+    local DetectedUnit = DetectedUnitData -- Unit#UNIT
+    local UnitType = DetectedUnit:GetTypeName()
+
+    if not UnitTypes[UnitType] then
+      UnitTypes[UnitType] = 1
+    else
+      UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+    end
+  end
+
+  for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+  end
+
+  local MessageText = table.concat( MT, ", " )
+
+  return MessageText
+end
+
+
+
 --- Reports the detected items to the @{Set#SET_GROUP}.
 -- @param #DETECTION_MANAGER self
 -- @param Set#SET_BASE DetectedSets The detected Sets created by the @{Detection#DETECTION_BASE} object.
@@ -187,22 +219,7 @@ function FAC_REPORTING:ProcessDetected( Group, DetectedSets, DetectedZones )
   local DetectedMsg = {}
   for DetectedUnitSetID, DetectedUnitSet in pairs( DetectedSets ) do
     local UnitSet = DetectedUnitSet -- Set#SET_UNIT
-    local MT = {} -- Message Text
-    local UnitTypes = {}
-    for DetectedUnitID, DetectedUnitData in pairs( UnitSet:GetSet() ) do
-      local DetectedUnit = DetectedUnitData -- Unit#UNIT
-      local UnitType = DetectedUnit:GetTypeName()
-      if not UnitTypes[UnitType] then
-        UnitTypes[UnitType] = 1
-      else
-        UnitTypes[UnitType] = UnitTypes[UnitType] + 1
-      end
-    end
-    for UnitTypeID, UnitType in pairs( UnitTypes ) do
-      MT[#MT+1] = UnitType .. " of " .. UnitTypeID
-    end
-    local MessageText = table.concat( MT, ", " )
-    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedUnitSetID .. ": " .. MessageText
+    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedUnitSetID .. ": " .. self:GetDetectedItemsText( UnitSet )
   end  
   local FACGroup = self.Detection:GetDetectionGroups()
   FACGroup:MessageToGroup( "Reporting detected target groups:\n" .. table.concat( DetectedMsg, "\n" ), self:GetReportDisplayTime(), Group  )
@@ -286,8 +303,7 @@ function TASK_DISPATCHER:ProcessDetected( TaskGroup, DetectedSets, DetectedZones
       end
     end
 
-    local MessageText = table.concat( MT, ", " )
-    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedID .. ": " .. MessageText
+    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedID .. ": " .. self:GetDetectedItemsText( UnitSet ) .. ". " .. table.concat( MT, "," )
   end
   
   self.CommandCenter:MessageToGroup( "Reporting tasks for target groups:\n" .. table.concat( DetectedMsg, "\n" ), self:GetReportDisplayTime(), TaskGroup  )

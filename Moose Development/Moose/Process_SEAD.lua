@@ -47,7 +47,7 @@ function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
   } )
 
 
-  _EVENTDISPATCHER:OnHit( self.EventHit, self )
+  _EVENTDISPATCHER:OnDead( self.EventDead, self )
   
   return self
 end
@@ -126,15 +126,13 @@ end
 -- @param #string To
 function PROCESS_SEAD:OnDestroyed( Fsm, Event, From, To )
 
-    self.ProcessUnit:Message( "Destroyed", 15 )
-
 end
 
 --- DCS Events
 
 --- @param #PROCESS_SEAD self
 -- @param Event#EVENTDATA Event
-function PROCESS_SEAD:EventHit( Event )
+function PROCESS_SEAD:EventDead( Event )
 
   if Event.IniUnit then
     self:NextEvent( self.Fsm.HitTarget, Event )

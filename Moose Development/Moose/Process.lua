@@ -75,7 +75,6 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
 
   if self.Scores[To] then
     
-    MESSAGE:New( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 ):ToGroup( self.ProcessUnit:GetGroup() )
     local Scoring = self.Task:GetScoring()
     if Scoring then
       Scoring:_AddMissionTaskScore( self.Task.Mission, self.ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )

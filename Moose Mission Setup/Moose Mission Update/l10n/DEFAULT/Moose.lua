@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160708_1402' ) 
+env.info( 'Moose Generation Timestamp: 20160708_1802' ) 
 local base = _G
 
 Include = {}
@@ -22771,8 +22771,9 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
               end
 
               local VelocityVec3 = Client:GetVelocity()
-              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z) -- in meters / sec
+              local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
               local Velocity = Velocity * 3.6 -- now it is in km/h.
+              -- MESSAGE:New( "Velocity = " .. Velocity, 1 ):ToAll()
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
@@ -24413,6 +24414,38 @@ function DETECTION_MANAGER:GetReportDisplayTime()
   return self._ReportDisplayTime
 end
 
+--- Creates a string of the detected items in a @{Set}.
+-- @param #DETECTION_MANAGER self
+-- @param Set#SET_BASE DetectedSets The detected Sets created by the @{Detection#DETECTION_BASE} object.
+-- @return #DETECTION_MANAGER self
+function DETECTION_MANAGER:GetDetectedItemsText( DetectedSet )
+  self:F2()
+
+  local MT = {} -- Message Text
+  local UnitTypes = {}
+
+  for DetectedUnitID, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
+    local DetectedUnit = DetectedUnitData -- Unit#UNIT
+    local UnitType = DetectedUnit:GetTypeName()
+
+    if not UnitTypes[UnitType] then
+      UnitTypes[UnitType] = 1
+    else
+      UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+    end
+  end
+
+  for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+  end
+
+  local MessageText = table.concat( MT, ", " )
+
+  return MessageText
+end
+
+
+
 --- Reports the detected items to the @{Set#SET_GROUP}.
 -- @param #DETECTION_MANAGER self
 -- @param Set#SET_BASE DetectedSets The detected Sets created by the @{Detection#DETECTION_BASE} object.
@@ -24498,22 +24531,7 @@ function FAC_REPORTING:ProcessDetected( Group, DetectedSets, DetectedZones )
   local DetectedMsg = {}
   for DetectedUnitSetID, DetectedUnitSet in pairs( DetectedSets ) do
     local UnitSet = DetectedUnitSet -- Set#SET_UNIT
-    local MT = {} -- Message Text
-    local UnitTypes = {}
-    for DetectedUnitID, DetectedUnitData in pairs( UnitSet:GetSet() ) do
-      local DetectedUnit = DetectedUnitData -- Unit#UNIT
-      local UnitType = DetectedUnit:GetTypeName()
-      if not UnitTypes[UnitType] then
-        UnitTypes[UnitType] = 1
-      else
-        UnitTypes[UnitType] = UnitTypes[UnitType] + 1
-      end
-    end
-    for UnitTypeID, UnitType in pairs( UnitTypes ) do
-      MT[#MT+1] = UnitType .. " of " .. UnitTypeID
-    end
-    local MessageText = table.concat( MT, ", " )
-    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedUnitSetID .. ": " .. MessageText
+    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedUnitSetID .. ": " .. self:GetDetectedItemsText( UnitSet )
   end  
   local FACGroup = self.Detection:GetDetectionGroups()
   FACGroup:MessageToGroup( "Reporting detected target groups:\n" .. table.concat( DetectedMsg, "\n" ), self:GetReportDisplayTime(), Group  )
@@ -24597,8 +24615,7 @@ function TASK_DISPATCHER:ProcessDetected( TaskGroup, DetectedSets, DetectedZones
       end
     end
 
-    local MessageText = table.concat( MT, ", " )
-    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedID .. ": " .. MessageText
+    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedID .. ": " .. self:GetDetectedItemsText( UnitSet ) .. ". " .. table.concat( MT, "," )
   end
   
   self.CommandCenter:MessageToGroup( "Reporting tasks for target groups:\n" .. table.concat( DetectedMsg, "\n" ), self:GetReportDisplayTime(), TaskGroup  )
@@ -24952,7 +24969,6 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
 
   if self.Scores[To] then
     
-    MESSAGE:New( "Score:" .. self.Scores[To].ScoreText .. " " .. To , 15 ):ToGroup( self.ProcessUnit:GetGroup() )
     local Scoring = self.Task:GetScoring()
     if Scoring then
       Scoring:_AddMissionTaskScore( self.Task.Mission, self.ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
@@ -25197,7 +25213,7 @@ function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
   } )
 
 
-  _EVENTDISPATCHER:OnHit( self.EventHit, self )
+  _EVENTDISPATCHER:OnDead( self.EventDead, self )
   
   return self
 end
@@ -25276,15 +25292,13 @@ end
 -- @param #string To
 function PROCESS_SEAD:OnDestroyed( Fsm, Event, From, To )
 
-    self.ProcessUnit:Message( "Destroyed", 15 )
-
 end
 
 --- DCS Events
 
 --- @param #PROCESS_SEAD self
 -- @param Event#EVENTDATA Event
-function PROCESS_SEAD:EventHit( Event )
+function PROCESS_SEAD:EventDead( Event )
 
   if Event.IniUnit then
     self:NextEvent( self.Fsm.HitTarget, Event )
