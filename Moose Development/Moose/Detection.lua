@@ -214,6 +214,14 @@ function DETECTION_BASE:GetDetectedSet( Index )
   return nil
 end
 
+--- Get the detected @{Zone}s.
+-- @param #DETECTION_BASE self
+-- @return #DETECTION_BASE.DetectedZones DetectedZones
+function DETECTION_BASE:GetDetectedZones()
+
+  local DetectionZones = self.DetectedZones
+  return DetectionZones
+end
 
 --- Make a DetectionSet table. This function will be overridden in the derived clsses.
 -- @param #DETECTION_BASE self

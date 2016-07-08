@@ -109,6 +109,14 @@ UNIT = {
 -- @field Orange
 -- @field Blue
 
+--- Unit.SensorType
+-- @type Unit.SensorType
+-- @field OPTIC
+-- @field RADAR
+-- @field IRST
+-- @field RWR
+
+
 -- Registration.
 	
 --- Create a new UNIT from DCSUnit.
@@ -333,6 +341,23 @@ end
 
 -- Need to add here a function per sensortype
 --  unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
+
+--- Returns if the unit has sensors of a certain type.
+-- @param Unit#UNIT self
+-- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:HasSensors( ... )
+  self:F2( arg )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local HasSensors = DCSUnit:hasSensors( unpack( arg ) )
+    return HasSensors
+  end
+  
+  return nil
+end
 
 --- Returns two values:
 -- 

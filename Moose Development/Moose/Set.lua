@@ -296,7 +296,7 @@ function SET_BASE:Add( ObjectName, Object )
   
   self.List.Count = self.List.Count + 1
   
-  self.Set[ObjectName] = t
+  self.Set[ObjectName] = t._
   
 end
 
@@ -514,7 +514,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
   local function CoRoutine()
     local Count = 0
     for ObjectID, ObjectData in pairs( Set ) do
-      local Object = ObjectData._
+      local Object = ObjectData
         self:T3( Object )
         if Function then
           if Function( unpack( FunctionArguments ), Object ) == true then
@@ -1283,6 +1283,32 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
 
   return self
 end
+
+--- Returns if the @{Set} has targets having a radar (of a given type).
+-- @param #SET_UNIT self
+-- @param DCSUnit#Unit.RadarType RadarType
+-- @return #number The amount of radars in the Set with the given type
+function SET_UNIT:HasRadar( RadarType )
+  self:F2( RadarType )
+
+  local RadarCount = 0
+  for UnitID, UnitData in pairs( self:GetSet()) do
+    local UnitSensorTest = UnitData -- Unit#UNIT
+    local HasSensors
+    if RadarType then
+      HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR, RadarType )
+    else
+      HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR )
+    end
+    self:E(HasSensors)
+    if HasSensors then
+      RadarCount = RadarCount + 1
+    end
+  end
+
+  return RadarCount
+end
+
 
 
 

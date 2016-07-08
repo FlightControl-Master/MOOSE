@@ -14,7 +14,7 @@ TASK_SEAD = {
 -- @param Zone#ZONE_BASE TargetZone
 -- @return #TASK_SEAD self
 function TASK_SEAD:New( Mission, TargetSetUnit, TargetZone )
-  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "SEAD" ) )
+  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "SEAD Attack", "SEAD", "A2G" ) )
   self:F()
 
   self.TargetSetUnit = TargetSetUnit

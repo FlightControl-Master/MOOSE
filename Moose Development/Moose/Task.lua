@@ -14,10 +14,11 @@ TASK_BASE = {
   Scores = {},
 }
 
+
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
 -- @param #TASK_BASE self
 -- @return #TASK_BASE self
-function TASK_BASE:New( Mission, TaskName )
+function TASK_BASE:New( Mission, TaskName, TaskType, TaskCategory )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 
@@ -25,6 +26,9 @@ function TASK_BASE:New( Mission, TaskName )
   self.Fsm = {}
   self.Mission = Mission
   self.TaskName = TaskName
+  self.TaskType = TaskType
+  self.TaskCategory = TaskCategory
+  self.TaskID = 0
   self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
 
   return self
@@ -177,26 +181,67 @@ function TASK_BASE:_EventUnAssignUnit( Event )
   return nil
 end
 
---- Gets the scoring of the task
+--- Gets the Scoring of the task
 -- @param #TASK_BASE self
 -- @return Scoring#SCORING Scoring
 function TASK_BASE:GetScoring()
   return self.Mission:GetScoring()
 end
 
---- Sets the name of the task
+--- Sets the Name of the Task
 -- @param #TASK_BASE self
 -- @param #string TaskName
--- @return Scoring#SCORING Scoring
 function TASK_BASE:SetName( TaskName )
   self.TaskName = TaskName
 end
 
---- Gets the name of the task
+--- Gets the Name of the Task
 -- @param #TASK_BASE self
--- @return Scoring#SCORING Scoring
+-- @return #string The Task Name
 function TASK_BASE:GetName()
   return self.TaskName
+end
+
+--- Sets the Type of the Task
+-- @param #TASK_BASE self
+-- @param #string TaskType
+function TASK_BASE:SetType( TaskType )
+  self.TaskType = TaskType
+end
+
+--- Gets the Type of the Task
+-- @param #TASK_BASE self
+-- @return #string TaskType
+function TASK_BASE:GetType()
+  return self.TaskType
+end
+
+--- Sets the Category of the Task
+-- @param #TASK_BASE self
+-- @param #string TaskCategory
+function TASK_BASE:SetCategory( TaskCategory )
+  self.TaskCategory = TaskCategory
+end
+
+--- Gets the Category of the Task
+-- @param #TASK_BASE self
+-- @return #string TaskCategory
+function TASK_BASE:GetCategory()
+  return self.TaskCategory
+end
+
+--- Sets the ID of the Task
+-- @param #TASK_BASE self
+-- @param #string TaskID
+function TASK_BASE:SetID( TaskID )
+  self.TaskID = TaskID
+end
+
+--- Gets the ID of the Task
+-- @param #TASK_BASE self
+-- @return #string TaskID
+function TASK_BASE:GetID()
+  return self.TaskID
 end
 
 

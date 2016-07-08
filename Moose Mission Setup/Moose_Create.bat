@@ -85,10 +85,12 @@ COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
 COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
 COPY /b Moose.lua + %1\FAC.lua          		  							Moose.lua
 COPY /b Moose.lua + %1\StateMachine.lua       	  							Moose.lua
-COPY /b Moose.lua + %1\Task2.lua          		  							Moose.lua
-COPY /b Moose.lua + %1\TaskMenu.lua       		  							Moose.lua
-COPY /b Moose.lua + %1\TaskRoute.lua       		  							Moose.lua
-COPY /b Moose.lua + %1\TaskSead.lua       		  							Moose.lua
+COPY /b Moose.lua + %1\Process.lua              							Moose.lua
+COPY /b Moose.lua + %1\Process_Assign.lua    	  							Moose.lua
+COPY /b Moose.lua + %1\Process_Route.lua   		  							Moose.lua
+COPY /b Moose.lua + %1\Process_SEAD.lua    		  							Moose.lua
+COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
+COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 

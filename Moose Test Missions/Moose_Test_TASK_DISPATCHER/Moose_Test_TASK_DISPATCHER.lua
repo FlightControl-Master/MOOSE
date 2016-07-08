@@ -1,13 +1,11 @@
-local FACGroup = GROUP:FindByName( "FAC Group" )
+local FACGroup = GROUP:FindByName( "FAC" )
 
 local FACDetection = DETECTION_UNITGROUPS:New( FACGroup, 1000, 250 )
 
-local SeadClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
+local SEAD_Attack = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "SEAD Attack" ):FilterStart()
 
-local DestroyClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
+local Mission = MISSION:New( "SEAD Mission", "High", "SEAD Mission Briefing", coalition.side.RED )
+local CommandCenter = GROUP:FindByName( "HQ" )
 
-local Targets_SEAD_Set = SET_UNIT:New():FilterCoalitions( "red" ):FilterPrefixes( "RU Patriot" ):FilterStart()
-local Targets_SEAD = TARGETS:New( "SEAD", Targets_SEAD_Set )
-
-local TaskAssign = TASK_DISPATCHER:New( CommmandCenter, SeadClientSet, FACDetection, Targets_SEAD )
+local TaskAssign = TASK_DISPATCHER:New( Mission, CommandCenter, SEAD_Attack, FACDetection )
 

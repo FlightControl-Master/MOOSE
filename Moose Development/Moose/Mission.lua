@@ -13,7 +13,10 @@ MISSION = {
 	Name = "",
 	MissionStatus = "PENDING",
 	_Clients = {},
-	_Tasks = {},
+	Tasks = {},
+  TaskMenus = {},
+  TaskCategoryMenus = {},
+  TaskTypeMenus = {},
 	_ActiveTasks = {},
 	GoalFunction = nil,
 	MissionReportTrigger = 0,
@@ -44,27 +47,17 @@ end
 -- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param DCSCoalitionObject#coalition DCSCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param DCSCoalitionObject#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
--- @usage 
--- -- Declare a few missions.
--- local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Patriots', 'Primary', 'Our intelligence reports that 3 Patriot SAM defense batteries are located near Ruisi, Kvarhiti and Gori.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Package Delivery', 'Operational', 'In order to be in full control of the situation, we need you to deliver a very important package at a secret location. Fly undetected through the NATO defenses and deliver the secret package. The secret agent is located at waypoint 4.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue General', 'Tactical', 'Our intelligence has received a remote signal behind Gori. We believe it is a very important Russian General that was captured by Georgia. Go out there and rescue him! Ensure you stay out of the battle zone, keep south. Waypoint 4 is the location of our Russian General.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Transport Troops', 'Operational', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.', 'NATO' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'SA-6 SAMs', 'Primary', 'Our intelligence reports that 3 SA-6 SAM defense batteries are located near Didmukha, Khetagurov and Berula. Eliminate the Russian SAMs.', 'NATO'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Sling Load', 'Operational', 'Fly to the cargo pickup zone at Dzegvi or Kaspi, and sling the cargo to Soganlug airbase.', 'NATO' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 'In order to be in full control of the situation, we need you to rescue a secret agent from the woods behind enemy lines. Avoid the Russian defenses and rescue the agent. Keep south until Khasuri, and keep your eyes open for any SAM presence. The agent is located at waypoint 4 on your kneeboard.', 'NATO'  )
-function MISSION:New( MissionName, MissionPriority, MissionBriefing, DCSCoalition )
+function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
 	self = MISSION:Meta()
-	self:T( { MissionName, MissionPriority, MissionBriefing, DCSCoalition } )
+	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
 	self.Name = MissionName
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
-	self.DCSCoalition = DCSCoalition
+	self.MissionCoalition = MissionCoalition
 
   self:SetMissionMenu()
 
@@ -97,7 +90,7 @@ end
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:SetMissionMenu()
-  self.MissionMenu = MENU_COALITION:New( self.DCSCoalition, self.Name )
+  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self.Name )
 end
 
 --- Gets the mission menu for the coalition.
@@ -115,6 +108,83 @@ function MISSION:ClearMissionMenu()
   self.MissionMenu:Remove()
   self.MissionMenu = nil
 end
+
+--- Fill mission menu for the Group.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:FillMissionMenu( TaskGroup )
+
+  local MissionMenu = self:GetMissionMenu()
+  local TaskMenus = self.TaskMenus
+  local TaskCategoryMenus = self.TaskCategoryMenus
+  local TaskTypeMenus = self.TaskTypeMenus
+
+  for TaskIndex, TaskTable in pairs( self.Tasks ) do
+    for _, Task in pairs( TaskTable ) do
+      Task = Task -- Task#TASK_BASE
+      local TaskType = Task:GetType()
+      local TaskName = Task:GetName()
+      local TaskID = Task:GetID()
+      local TaskCategory = Task:GetCategory()
+      local TaskMenuID = TaskCategory .. "." ..TaskType .. "." .. TaskName .. "." .. TaskID
+      
+      if not TaskMenus[TaskMenuID] then
+        
+        TaskMenus[TaskMenuID] = {}
+        
+        if not TaskCategoryMenus[TaskCategory] then
+          TaskCategoryMenus[TaskCategory] = MENU_COALITION:New( self.MissionCoalition, TaskCategory, MissionMenu )
+        end
+        TaskMenus[TaskMenuID].MenuCategory = TaskCategoryMenus[TaskCategory]
+        
+        if not TaskTypeMenus[TaskType] then
+          TaskTypeMenus[TaskType] = MENU_COALITION:New( self.MissionCoalition, TaskType, TaskMenus[TaskMenuID].MenuCategory )
+        end
+        TaskMenus[TaskMenuID].MenuType = TaskTypeMenus[TaskType]
+  
+        TaskMenus[TaskMenuID].Menu = MENU_GROUP_COMMAND:New( TaskGroup, TaskName .. "." .. TaskID, TaskMenus[TaskMenuID].MenuType, self.AssignTaskToGroup, { self = self, Task = Task, TaskGroup = TaskGroup } )
+        
+      end
+    end
+  end  
+end
+
+function MISSION.AssignTaskToGroup( MenuParam )
+
+  local self = MenuParam.self
+  local Task = MenuParam.Task -- Task#TASK_BASE
+  local TaskGroup = MenuParam.TaskGroup
+  
+  Task:AssignToGroup( TaskGroup )
+  
+
+end
+
+--- Register a @{Task} to be completed within the @{Mission}. 
+-- Note that there can be multiple @{Task}s registered to be completed. 
+-- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return Task#TASK_BASE The task added.
+function MISSION:AddTask( Task )
+  self:F()
+
+  local TaskCategory = Task:GetCategory()
+  local TaskType = Task:GetType()
+  local TaskName = Task:GetName()
+  local TaskIndex = TaskCategory .. "." ..TaskType .. "." .. TaskName
+  
+  self.Tasks[TaskIndex] = self.Tasks[TaskIndex] or {}
+  local TaskID = #self.Tasks[TaskIndex] + 1
+  
+  self.Tasks[TaskIndex][TaskID] = Task
+  Task:SetID( TaskID )
+
+  return Task
+ end
+
+
+--- old stuff
 
 --- Returns if a Mission has completed.
 -- @return bool
@@ -303,41 +373,6 @@ function MISSION:FindClient( ClientName )
 	return self._Clients[ClientName]
 end
 
-
---- Register a @{TASK} to be completed within the @{MISSION}. Note that there can be multiple @{TASK}s registered to be completed. Each TASK can be set a certain Goal. The MISSION will not be completed until all Goals are reached.
--- @param TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
--- @param number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
--- @return TASK
--- @usage
--- -- Define a few tasks for the Mission.
---	PickupZones = { "NATO Gold Pickup Zone", "NATO Titan Pickup Zone" }
---	PickupSignalUnits = { "NATO Gold Coordination Center", "NATO Titan Coordination Center" }
---
---	-- Assign the Pickup Task
---	local PickupTask = PICKUPTASK:New( PickupZones, CARGO_TYPE.ENGINEERS, CLIENT.ONBOARDSIDE.LEFT )
---	PickupTask:AddSmokeBlue( PickupSignalUnits  )
---	PickupTask:SetGoalTotal( 3 )
---	Mission:AddTask( PickupTask, 1 )
---
---	-- Assign the Deploy Task
---	local PatriotActivationZones = { "US Patriot Battery 1 Activation", "US Patriot Battery 2 Activation", "US Patriot Battery 3 Activation" }
---	local PatriotActivationZonesSmokeUnits = { "US SAM Patriot - Battery 1 Control", "US SAM Patriot - Battery 2 Control", "US SAM Patriot - Battery 3 Control" }
---	local DeployTask = DEPLOYTASK:New( PatriotActivationZones, CARGO_TYPE.ENGINEERS )
---	--DeployTask:SetCargoTargetZoneName( 'US Troops Attack ' .. math.random(2) )
---	DeployTask:AddSmokeBlue( PatriotActivationZonesSmokeUnits )
---	DeployTask:SetGoalTotal( 3 )
---	DeployTask:SetGoalTotal( 3, "Patriots activated" )
---	Mission:AddTask( DeployTask, 2 )
-	
-function MISSION:AddTask( Task, TaskNumber )
-	self:F()
-
-	self._Tasks[TaskNumber] = Task
-	self._Tasks[TaskNumber]:EnableEvents()
-	self._Tasks[TaskNumber].ID = TaskNumber
-
-	return Task
- end
 
 --- Get the TASK idenified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
 -- @param number TaskNumber is the number of the @{TASK} within the @{MISSION}.

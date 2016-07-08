@@ -949,6 +949,23 @@ function GROUP:MessageToClient( Message, Duration, Client )
   return nil
 end
 
+--- Send a message to a @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+-- @param Group#GROUP MessageGroup The GROUP object receiving the message.
+function GROUP:MessageToGroup( Message, Duration, MsgGroup )
+  self:F2( { Message, Duration } )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+    self:GetMessage( Message, Duration ):ToGroup( MsgGroup )
+  end
+
+  return nil
+end
+
 --- Send a message to the players in the @{Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #GROUP self
