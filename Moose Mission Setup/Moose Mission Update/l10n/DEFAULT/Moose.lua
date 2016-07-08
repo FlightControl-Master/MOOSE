@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160707_2350' ) 
+env.info( 'Moose Generation Timestamp: 20160708_0526' ) 
 local base = _G
 
 Include = {}
@@ -9494,14 +9494,6 @@ end
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
-
-	if not self.MenuMessages then
-		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
-		end
-	end
 
 	if self.MessageSwitch == true then
 		if MessageCategory == nil then
@@ -22028,15 +22020,15 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
     Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary", Airbase.PointsBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
     for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
       Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
-    end
+      end
   end
 
-  --  -- Template
-  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+    -- Template
+    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  
+    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   self.SetClient:ForEachClient(
     --- @param Client#CLIENT Client
@@ -22100,7 +22092,8 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
               end
 
               local VelocityVec3 = Client:GetVelocity()
-              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z)
+              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z) -- in meters / sec
+              local Velocity = Velocity * 3.6 -- now it is in km/h.
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
@@ -22114,7 +22107,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     local SpeedingWarnings = Client:GetState( self, "Warnings" )
                     self:T( SpeedingWarnings )
 
-                    if SpeedingWarnings <= 5 then
+                    if SpeedingWarnings <= 3 then
                       Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 5" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
@@ -22125,7 +22118,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     end
 
                   else
-                    Client:Message( "You are speeding on the taxiway! Slow down please ...! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Attention! " )
+                    Client:Message( "You are speeding on the taxiway, slow down now! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Attention! " )
                     Client:SetState( self, "Speeding", true )
                     Client:SetState( self, "Warnings", 1 )
                   end
@@ -22174,6 +22167,11 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       PointsRunways = {
         [1] = {
+          [1]={["y"]=242140.57142858,["x"]=-6478.8571428583,},
+          [2]={["y"]=242188.57142858,["x"]=-6522.0000000011,},
+          [3]={["y"]=244124.2857143,["x"]=-4344.0000000011,},
+          [4]={["y"]=244068.2857143,["x"]=-4296.5714285726,},
+          [5]={["y"]=242140.57142858,["x"]=-6480.0000000011,}
         },
       },
       ZoneBoundary = {},
@@ -22631,6 +22629,13 @@ AIRBASEPOLICE_CAUCASUS = {
           [4]={["y"]=895327.42857143,["x"]=-314568.85714286,},
           [5]={["y"]=895261.71428572,["x"]=-314656,},
         },
+        [2] = {
+          [1]={["y"]=895605.71428572,["x"]=-314724.57142857,},
+          [2]={["y"]=897639.71428572,["x"]=-316148,},
+          [3]={["y"]=897683.42857143,["x"]=-316087.14285714,},
+          [4]={["y"]=895650,["x"]=-314660,},
+          [5]={["y"]=895606,["x"]=-314724.85714286,}
+        },
       },
       ZoneBoundary = {},
       ZoneRunways = {},
@@ -22673,12 +22678,12 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases ) )
 
   --    -- AnapaVityazevo
-      local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
-      self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  
-      local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
-      self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
-  --
+  --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
+  --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --  
+  --    local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
+  --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --  
   --
   --
   --    -- Batumi
@@ -22848,14 +22853,14 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --
   --
   --    -- TbilisiLochini
-      local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
-      self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  
-      local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
-      self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
-      
-      local TbilisiLochiniRunway2 = GROUP:FindByName( "TbilisiLochini Runway 2" )
-      self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
+  --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --  
+  --    local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
+  --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --      
+  --    local TbilisiLochiniRunway2 = GROUP:FindByName( "TbilisiLochini Runway 2" )
+  --    self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
   --
   --
@@ -22870,12 +22875,12 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --
 
 
-    -- Template
-    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  
-    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+        -- Template
+  --    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+  --    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --  
+  --    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+  --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   return self
 
