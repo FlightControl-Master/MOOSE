@@ -1,31 +1,31 @@
 --- This module contains the AIRBASEPOLICE classes.
--- 
+--
 -- ===
--- 
+--
 -- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
 -- ==================================================================
 -- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
 -- CLIENTS should not be allowed to:
--- 
+--
 --   * Don't taxi faster than 40 km/h.
 --   * Don't take-off on taxiways.
 --   * Avoid to hit other planes on the airbase.
 --   * Obey ground control orders.
--- 
+--
 -- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the caucasus map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
 -- The following names can be given:
---   * AnapaVityazevo 
---   * Batumi 
---   * Beslan 
---   * Gelendzhik 
---   * Gudauta 
---   * Kobuleti 
---   * KrasnodarCenter 
---   * KrasnodarPashkovsky 
---   * Krymsk 
+--   * AnapaVityazevo
+--   * Batumi
+--   * Beslan
+--   * Gelendzhik
+--   * Gudauta
+--   * Kobuleti
+--   * KrasnodarCenter
+--   * KrasnodarPashkovsky
+--   * Krymsk
 --   * Kutaisi
 --   * MaykopKhanskaya
 --   * MineralnyeVody
@@ -38,9 +38,22 @@
 --   * SukhumiBabushara
 --   * TbilisiLochini
 --   * Vaziani
---   
+--
+-- 3) @{AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
+-- =============================================================================================
+-- All the airbases on the NEVADA map can be monitored using this class.
+-- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
+-- The following names can be given:
+--   * Nellis
+--   * McCarran
+--   * Creech
+--   * Groom Lake
+--
 -- @module AirbasePolice
--- @author FlightControl
+-- @author Flight Control & DUTCH BARON
+
+
+
 
 
 --- @type AIRBASEPOLICE_BASE
@@ -73,15 +86,15 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
     Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary", Airbase.PointsBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
     for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
       Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
-    end
+      end
   end
 
-  --  -- Template
-  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--    -- Template
+--    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+--    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  
+--    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+--    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   self.SetClient:ForEachClient(
     --- @param Client#CLIENT Client
@@ -121,9 +134,9 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
   for AirbaseID, Airbase in pairs( self.Airbases ) do
 
     if not self.AirbaseNames or self.AirbaseNames[AirbaseID] then
-      
+
       self:E( AirbaseID )
-      
+
       self.SetClient:ForEachClientInZone( Airbase.ZoneBoundary,
 
         --- @param Client#CLIENT Client
@@ -143,9 +156,10 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                 Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. Airbase.MaximumSpeed " km/h.", 20, "ATC" )
                 self:SetState( self, "Taxi", true )
               end
-              
+
               local VelocityVec3 = Client:GetVelocity()
-              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z)
+              local Velocity = math.abs(VelocityVec3.x) + math.abs(VelocityVec3.y) + math.abs(VelocityVec3.z) -- in meters / sec
+              local Velocity = Velocity * 3.6 -- now it is in km/h.
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
@@ -159,8 +173,8 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     local SpeedingWarnings = Client:GetState( self, "Warnings" )
                     self:T( SpeedingWarnings )
 
-                    if SpeedingWarnings <= 5 then
-                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 5" )
+                    if SpeedingWarnings <= 3 then
+                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 3" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
@@ -170,7 +184,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     end
 
                   else
-                    Client:Message( "You are speeding on the taxiway! Slow down please ...! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Attention! " )
+                    Client:Message( "You are speeding on the taxiway, slow down now! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Attention! " )
                     Client:SetState( self, "Speeding", true )
                     Client:SetState( self, "Warnings", 1 )
                   end
@@ -219,6 +233,11 @@ AIRBASEPOLICE_CAUCASUS = {
       },
       PointsRunways = {
         [1] = {
+          [1]={["y"]=242140.57142858,["x"]=-6478.8571428583,},
+          [2]={["y"]=242188.57142858,["x"]=-6522.0000000011,},
+          [3]={["y"]=244124.2857143,["x"]=-4344.0000000011,},
+          [4]={["y"]=244068.2857143,["x"]=-4296.5714285726,},
+          [5]={["y"]=242140.57142858,["x"]=-6480.0000000011,}
         },
       },
       ZoneBoundary = {},
@@ -676,6 +695,13 @@ AIRBASEPOLICE_CAUCASUS = {
           [4]={["y"]=895327.42857143,["x"]=-314568.85714286,},
           [5]={["y"]=895261.71428572,["x"]=-314656,},
         },
+        [2] = {
+          [1]={["y"]=895605.71428572,["x"]=-314724.57142857,},
+          [2]={["y"]=897639.71428572,["x"]=-316148,},
+          [3]={["y"]=897683.42857143,["x"]=-316087.14285714,},
+          [4]={["y"]=895650,["x"]=-314660,},
+          [5]={["y"]=895606,["x"]=-314724.85714286,}
+        },
       },
       ZoneBoundary = {},
       ZoneRunways = {},
@@ -720,16 +746,16 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --    -- AnapaVityazevo
   --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
   --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
+  --  
   --    local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
   --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
-  --
+  --  
   --
   --
   --    -- Batumi
   --    local BatumiBoundary = GROUP:FindByName( "Batumi Boundary" )
   --    self.Airbases.Batumi.ZoneBoundary = ZONE_POLYGON:New( "Batumi Boundary", BatumiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  -- 
+  --
   --    local BatumiRunway1 = GROUP:FindByName( "Batumi Runway 1" )
   --    self.Airbases.Batumi.ZoneRunways[1] = ZONE_POLYGON:New( "Batumi Runway 1", BatumiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
@@ -895,9 +921,12 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --    -- TbilisiLochini
   --    local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
   --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
+  --  
   --    local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
   --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --      
+  --    local TbilisiLochiniRunway2 = GROUP:FindByName( "TbilisiLochini Runway 2" )
+  --    self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
   --
   --
   --
@@ -912,14 +941,252 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
   --
 
 
-  --  -- Template
-  --  local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-  --  self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  --
-  --  local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-  --  self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+        -- Template
+  --    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+  --    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --  
+  --    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+  --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   return self
-  
+
 end
 
+
+
+
+--- @type AIRBASEPOLICE_NEVADA
+-- @extends AirbasePolice#AIRBASEPOLICE_BASE
+AIRBASEPOLICE_NEVADA = {
+  ClassName = "AIRBASEPOLICE_NEVADA",
+  Airbases = {
+    Nellis = {
+      PointsBoundary = {
+        [1]={["y"]=-17814.714285714,["x"]=-399823.14285714,},
+        [2]={["y"]=-16875.857142857,["x"]=-398763.14285714,},
+        [3]={["y"]=-16251.571428571,["x"]=-398988.85714286,},
+        [4]={["y"]=-16163,["x"]=-398693.14285714,},
+        [5]={["y"]=-16328.714285714,["x"]=-398034.57142857,},
+        [6]={["y"]=-15943,["x"]=-397571.71428571,},
+        [7]={["y"]=-15711.571428571,["x"]=-397551.71428571,},
+        [8]={["y"]=-15748.714285714,["x"]=-396806,},
+        [9]={["y"]=-16288.714285714,["x"]=-396517.42857143,},
+        [10]={["y"]=-16751.571428571,["x"]=-396308.85714286,},
+        [11]={["y"]=-17263,["x"]=-396234.57142857,},
+        [12]={["y"]=-17577.285714286,["x"]=-396640.28571429,},
+        [13]={["y"]=-17614.428571429,["x"]=-397400.28571429,},
+        [14]={["y"]=-19405.857142857,["x"]=-399428.85714286,},
+        [15]={["y"]=-19234.428571429,["x"]=-399683.14285714,},
+        [16]={["y"]=-18708.714285714,["x"]=-399408.85714286,},
+        [17]={["y"]=-18397.285714286,["x"]=-399657.42857143,},
+        [18]={["y"]=-17814.428571429,["x"]=-399823.42857143,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=-18687,["x"]=-399380.28571429,},
+          [2]={["y"]=-18620.714285714,["x"]=-399436.85714286,},
+          [3]={["y"]=-16217.857142857,["x"]=-396596.85714286,},
+          [4]={["y"]=-16300.142857143,["x"]=-396530,},
+          [5]={["y"]=-18687,["x"]=-399380.85714286,},
+        },
+        [2] = {
+          [1]={["y"]=-18451.571428572,["x"]=-399580.57142857,},
+          [2]={["y"]=-18392.142857143,["x"]=-399628.57142857,},
+          [3]={["y"]=-16011,["x"]=-396806.85714286,},
+          [4]={["y"]=-16074.714285714,["x"]=-396751.71428572,},
+          [5]={["y"]=-18451.571428572,["x"]=-399580.85714285,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    McCarran = {
+      PointsBoundary = {
+        [1]={["y"]=-29455.285714286,["x"]=-416277.42857142,},
+        [2]={["y"]=-28860.142857143,["x"]=-416492,},
+        [3]={["y"]=-25044.428571429,["x"]=-416344.85714285,},
+        [4]={["y"]=-24580.142857143,["x"]=-415959.14285714,},
+        [5]={["y"]=-25073,["x"]=-415630.57142857,},
+        [6]={["y"]=-25087.285714286,["x"]=-415130.57142857,},
+        [7]={["y"]=-25830.142857143,["x"]=-414866.28571428,},
+        [8]={["y"]=-26658.714285715,["x"]=-414880.57142857,},
+        [9]={["y"]=-26973,["x"]=-415273.42857142,},
+        [10]={["y"]=-27380.142857143,["x"]=-415187.71428571,},
+        [11]={["y"]=-27715.857142857,["x"]=-414144.85714285,},
+        [12]={["y"]=-27551.571428572,["x"]=-413473.42857142,},
+        [13]={["y"]=-28630.142857143,["x"]=-413201.99999999,},
+        [14]={["y"]=-29494.428571429,["x"]=-415437.71428571,},
+        [15]={["y"]=-29455.571428572,["x"]=-416277.71428571,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=-29408.428571429,["x"]=-416016.28571428,},
+          [2]={["y"]=-29408.142857144,["x"]=-416105.42857142,},
+          [3]={["y"]=-24680.714285715,["x"]=-416003.14285713,},
+          [4]={["y"]=-24681.857142858,["x"]=-415926.57142856,},
+          [5]={["y"]=-29408.42857143,["x"]=-416016.57142856,},
+        },
+        [2] = {
+          [1]={["y"]=-28575.571428572,["x"]=-416303.14285713,},
+          [2]={["y"]=-28575.571428572,["x"]=-416382.57142856,},
+          [3]={["y"]=-25111.000000001,["x"]=-416309.7142857,},
+          [4]={["y"]=-25111.000000001,["x"]=-416249.14285713,},
+          [5]={["y"]=-28575.571428572,["x"]=-416303.7142857,},
+        },
+        [3] = {
+          [1]={["y"]=-29331.000000001,["x"]=-416275.42857141,},
+          [2]={["y"]=-29259.000000001,["x"]=-416306.85714284,},
+          [3]={["y"]=-28005.571428572,["x"]=-413449.7142857,},
+          [4]={["y"]=-28068.714285715,["x"]=-413422.85714284,},
+          [5]={["y"]=-29331.000000001,["x"]=-416275.7142857,},
+        },
+        [4] = {
+          [1]={["y"]=-29073.285714286,["x"]=-416386.57142856,},
+          [2]={["y"]=-28997.285714286,["x"]=-416417.42857141,},
+          [3]={["y"]=-27697.571428572,["x"]=-413464.57142856,},
+          [4]={["y"]=-27767.857142858,["x"]=-413434.28571427,},
+          [5]={["y"]=-29073.000000001,["x"]=-416386.85714284,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    Creech = {
+      PointsBoundary = {
+        [1]={["y"]=-74522.714285715,["x"]=-360887.99999998,},
+        [2]={["y"]=-74197,["x"]=-360556.57142855,},
+        [3]={["y"]=-74402.714285715,["x"]=-359639.42857141,},
+        [4]={["y"]=-74637,["x"]=-359279.42857141,},
+        [5]={["y"]=-75759.857142857,["x"]=-359005.14285712,},
+        [6]={["y"]=-75834.142857143,["x"]=-359045.14285712,},
+        [7]={["y"]=-75902.714285714,["x"]=-359782.28571427,},
+        [8]={["y"]=-76099.857142857,["x"]=-360399.42857141,},
+        [9]={["y"]=-77314.142857143,["x"]=-360219.42857141,},
+        [10]={["y"]=-77728.428571429,["x"]=-360445.14285713,},
+        [11]={["y"]=-77585.571428571,["x"]=-360585.14285713,},
+        [12]={["y"]=-76471.285714286,["x"]=-360819.42857141,},
+        [13]={["y"]=-76325.571428571,["x"]=-360942.28571427,},
+        [14]={["y"]=-74671.857142857,["x"]=-360927.7142857,},
+        [15]={["y"]=-74522.714285714,["x"]=-360888.85714284,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=-74237.571428571,["x"]=-360591.7142857,},
+          [2]={["y"]=-74234.428571429,["x"]=-360493.71428571,},
+          [3]={["y"]=-77605.285714286,["x"]=-360399.14285713,},
+          [4]={["y"]=-77608.714285715,["x"]=-360498.85714285,},
+          [5]={["y"]=-74237.857142857,["x"]=-360591.7142857,},
+        },
+        [2] = {
+          [1]={["y"]=-75807.571428572,["x"]=-359073.42857142,},
+          [2]={["y"]=-74770.142857144,["x"]=-360581.71428571,},
+          [3]={["y"]=-74641.285714287,["x"]=-360585.42857142,},
+          [4]={["y"]=-75734.142857144,["x"]=-359023.14285714,},
+          [5]={["y"]=-75807.285714287,["x"]=-359073.42857142,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+    GroomLake = {
+      PointsBoundary = {
+        [1]={["y"]=-88916.714285714,["x"]=-289102.28571425,},
+        [2]={["y"]=-87023.571428572,["x"]=-290388.57142857,},
+        [3]={["y"]=-85916.428571429,["x"]=-290674.28571428,},
+        [4]={["y"]=-87645.000000001,["x"]=-286567.14285714,},
+        [5]={["y"]=-88380.714285715,["x"]=-286388.57142857,},
+        [6]={["y"]=-89670.714285715,["x"]=-283524.28571428,},
+        [7]={["y"]=-89797.857142858,["x"]=-283567.14285714,},
+        [8]={["y"]=-88635.000000001,["x"]=-286749.99999999,},
+        [9]={["y"]=-89177.857142858,["x"]=-287207.14285714,},
+        [10]={["y"]=-89092.142857144,["x"]=-288892.85714285,},
+        [11]={["y"]=-88917.000000001,["x"]=-289102.85714285,},
+      },
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=-86039.000000001,["x"]=-290606.28571428,},
+          [2]={["y"]=-85965.285714287,["x"]=-290573.99999999,},
+          [3]={["y"]=-87692.714285715,["x"]=-286634.85714285,},
+          [4]={["y"]=-87756.714285715,["x"]=-286663.99999999,},
+          [5]={["y"]=-86038.714285715,["x"]=-290606.85714285,},
+        },
+        [2] = {
+          [1]={["y"]=-86808.428571429,["x"]=-290375.7142857,},
+          [2]={["y"]=-86732.714285715,["x"]=-290344.28571427,},
+          [3]={["y"]=-89672.714285714,["x"]=-283546.57142855,},
+          [4]={["y"]=-89772.142857143,["x"]=-283587.71428569,},
+          [5]={["y"]=-86808.142857143,["x"]=-290375.7142857,},
+        },
+      },
+      ZoneBoundary = {},
+      ZoneRunways = {},
+      MaximumSpeed = 50,
+    },
+  },
+}
+
+--- Creates a new AIRBASEPOLICE_NEVADA object.
+-- @param #AIRBASEPOLICE_NEVADA self
+-- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
+-- @return #AIRBASEPOLICE_NEVADA self
+function AIRBASEPOLICE_NEVADA:New( SetClient )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases ) )
+
+--  -- Nellis
+--  local NellisBoundary = GROUP:FindByName( "Nellis Boundary" )
+--  self.Airbases.Nellis.ZoneBoundary = ZONE_POLYGON:New( "Nellis Boundary", NellisBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--
+--  local NellisRunway1 = GROUP:FindByName( "Nellis Runway 1" )
+--  self.Airbases.Nellis.ZoneRunways[1] = ZONE_POLYGON:New( "Nellis Runway 1", NellisRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local NellisRunway2 = GROUP:FindByName( "Nellis Runway 2" )
+--  self.Airbases.Nellis.ZoneRunways[2] = ZONE_POLYGON:New( "Nellis Runway 2", NellisRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  -- McCarran
+--  local McCarranBoundary = GROUP:FindByName( "McCarran Boundary" )
+--  self.Airbases.McCarran.ZoneBoundary = ZONE_POLYGON:New( "McCarran Boundary", McCarranBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--
+--  local McCarranRunway1 = GROUP:FindByName( "McCarran Runway 1" )
+--  self.Airbases.McCarran.ZoneRunways[1] = ZONE_POLYGON:New( "McCarran Runway 1", McCarranRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local McCarranRunway2 = GROUP:FindByName( "McCarran Runway 2" )
+--  self.Airbases.McCarran.ZoneRunways[2] = ZONE_POLYGON:New( "McCarran Runway 2", McCarranRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local McCarranRunway3 = GROUP:FindByName( "McCarran Runway 3" )
+--  self.Airbases.McCarran.ZoneRunways[3] = ZONE_POLYGON:New( "McCarran Runway 3", McCarranRunway3 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local McCarranRunway4 = GROUP:FindByName( "McCarran Runway 4" )
+--  self.Airbases.McCarran.ZoneRunways[4] = ZONE_POLYGON:New( "McCarran Runway 4", McCarranRunway4 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  -- Creech
+--  local CreechBoundary = GROUP:FindByName( "Creech Boundary" )
+--  self.Airbases.Creech.ZoneBoundary = ZONE_POLYGON:New( "Creech Boundary", CreechBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--
+--  local CreechRunway1 = GROUP:FindByName( "Creech Runway 1" )
+--  self.Airbases.Creech.ZoneRunways[1] = ZONE_POLYGON:New( "Creech Runway 1", CreechRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local CreechRunway2 = GROUP:FindByName( "Creech Runway 2" )
+--  self.Airbases.Creech.ZoneRunways[2] = ZONE_POLYGON:New( "Creech Runway 2", CreechRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  -- Groom Lake
+--  local GroomLakeBoundary = GROUP:FindByName( "GroomLake Boundary" )
+--  self.Airbases.GroomLake.ZoneBoundary = ZONE_POLYGON:New( "GroomLake Boundary", GroomLakeBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--
+--  local GroomLakeRunway1 = GROUP:FindByName( "GroomLake Runway 1" )
+--  self.Airbases.GroomLake.ZoneRunways[1] = ZONE_POLYGON:New( "GroomLake Runway 1", GroomLakeRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--
+--  local GroomLakeRunway2 = GROUP:FindByName( "GroomLake Runway 2" )
+--  self.Airbases.GroomLake.ZoneRunways[2] = ZONE_POLYGON:New( "GroomLake Runway 2", GroomLakeRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+
+end
+
+
+     
+
+
+     
