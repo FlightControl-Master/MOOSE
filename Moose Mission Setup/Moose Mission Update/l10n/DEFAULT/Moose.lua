@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160708_0526' ) 
+env.info( 'Moose Generation Timestamp: 20160708_0542' ) 
 local base = _G
 
 Include = {}
@@ -22023,12 +22023,12 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
       end
   end
 
-    -- Template
-    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  
-    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--    -- Template
+--    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+--    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  
+--    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+--    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   self.SetClient:ForEachClient(
     --- @param Client#CLIENT Client

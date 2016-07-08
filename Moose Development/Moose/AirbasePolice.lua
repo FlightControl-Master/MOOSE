@@ -89,12 +89,12 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
       end
   end
 
-    -- Template
-    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
-  
-    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--    -- Template
+--    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
+--    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  
+--    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
+--    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   self.SetClient:ForEachClient(
     --- @param Client#CLIENT Client
@@ -174,7 +174,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     self:T( SpeedingWarnings )
 
                     if SpeedingWarnings <= 3 then
-                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 5" )
+                      Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 3" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
