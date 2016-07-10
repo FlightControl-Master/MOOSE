@@ -1454,7 +1454,8 @@ function SET_UNIT:IsIncludeObject( MUnit )
     local MUnitRadar = false
     for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
       self:E( { "Radar:", RadarType } )
-      if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) then
+      if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
+        self:E( "RADAR Found" )
         MUnitRadar = true
       end
     end

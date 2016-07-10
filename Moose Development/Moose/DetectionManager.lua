@@ -276,12 +276,14 @@ function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
   -- Determine if the set has radar targets. If it does, construct a SEAD task.
   local RadarCount = DetectedSet:HasRadar( Unit.RadarType.AS )
   DetectedArea.Tasks = DetectedArea.Tasks or {}
+  self:E(RadarCount)
   if RadarCount > 0 then
     if not DetectedArea.Tasks.SEADTask then
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with Radar units in it.
       local TargetSetUnit = SET_UNIT:New()
       TargetSetUnit:CopyFilter( DetectedSet )
       TargetSetUnit:FilterHasRadar( Unit.RadarType.AS )
+      self:E( TargetSetUnit.Filter )
       TargetSetUnit:FilterStart()
       local Task = TASK_SEAD:New( Mission, TargetSetUnit, DetectedZone )
       self.Mission:AddTask( Task )

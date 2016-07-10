@@ -352,6 +352,7 @@ function UNIT:HasSensors( ... )
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
+    self:E( arg )
     local HasSensors = DCSUnit:hasSensors( unpack( arg ) )
     return HasSensors
   end
