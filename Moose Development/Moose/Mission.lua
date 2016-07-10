@@ -112,7 +112,7 @@ end
 --- Fill mission menu for the Group.
 -- @param #MISSION self
 -- @return #MISSION self
-function MISSION:FillMissionMenu( TaskGroup )
+function MISSION:CreateTaskMenus( TaskGroup )
 
   local MissionMenu = self:GetMissionMenu()
   local TaskMenus = self.TaskMenus
@@ -142,6 +142,9 @@ function MISSION:FillMissionMenu( TaskGroup )
         end
         TaskMenus[TaskMenuID].MenuType = TaskTypeMenus[TaskType]
   
+        if TaskMenus[TaskMenuID].Menu then
+          TaskMenus[TaskMenuID].Menu:Remove()
+        end
         TaskMenus[TaskMenuID].Menu = MENU_GROUP_COMMAND:New( TaskGroup, TaskName .. "." .. TaskID, TaskMenus[TaskMenuID].MenuType, self.AssignTaskToGroup, { self = self, Task = Task, TaskGroup = TaskGroup } )
         
       end

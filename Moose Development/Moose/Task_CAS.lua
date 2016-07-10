@@ -1,20 +1,20 @@
---- @module Task_SEAD
+--- @module Task_CAS
 
---- The TASK_SEAD class
--- @type TASK_SEAD
+--- The TASK_CAS class
+-- @type TASK_CAS
 -- @extends Task#TASK_BASE
-TASK_SEAD = {
-  ClassName = "TASK_SEAD",
+TASK_CAS = {
+  ClassName = "TASK_CAS",
 }
 
---- Instantiates a new TASK_SEAD.
--- @param #TASK_SEAD self
+--- Instantiates a new TASK_CAS.
+-- @param #TASK_CAS self
 -- @param Mission#MISSION Mission
 -- @param Set#SET_UNIT UnitSetTargets
 -- @param Zone#ZONE_BASE TargetZone
--- @return #TASK_SEAD self
-function TASK_SEAD:New( Mission, TargetSetUnit, TargetZone )
-  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "SEAD Attack", "SEAD", "A2G" ) )
+-- @return #TASK_CAS self
+function TASK_CAS:New( Mission, TargetSetUnit, TargetZone )
+  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "CAS Attack", "CAS", "A2G" ) )
   self:F()
 
   self.TargetSetUnit = TargetSetUnit
@@ -31,10 +31,10 @@ function TASK_SEAD:New( Mission, TargetSetUnit, TargetZone )
 end
 
 --- Assign the @{Task} to a @{Unit}.
--- @param #TASK_SEAD self
+-- @param #TASK_CAS self
 -- @param Unit#UNIT TaskUnit
--- @return #TASK_SEAD self
-function TASK_SEAD:AssignToUnit( TaskUnit )
+-- @return #TASK_CAS self
+function TASK_CAS:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
 
   local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN:New( self, TaskUnit, self.TaskBriefing ) )
@@ -62,9 +62,9 @@ function TASK_SEAD:AssignToUnit( TaskUnit )
       }
     } ) )
   
-  ProcessRoute:AddScore( "Failed", "failed to destroy a radar", -100 )
-  ProcessSEAD:AddScore( "Destroy", "destroyed a radar", 25 )
-  ProcessSEAD:AddScore( "Failed", "failed to destroy a radar", -100 )
+  ProcessRoute:AddScore( "Failed", "failed to destroy a ground unit", -100 )
+  ProcessSEAD:AddScore( "Destroy", "destroyed a ground unit", 25 )
+  ProcessSEAD:AddScore( "Failed", "failed to destroy a ground unit", -100 )
   
   Process:Next()
 
@@ -72,20 +72,20 @@ function TASK_SEAD:AssignToUnit( TaskUnit )
 end
 
 --- StateMachine callback function for a TASK
--- @param #TASK_SEAD self
+-- @param #TASK_CAS self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_SEAD:OnNext( Fsm, Event, From, To, Event )
+function TASK_CAS:OnNext( Fsm, Event, From, To, Event )
 
   self:SetState( self, "State", To )
 
 end
 
---- @param #TASK_SEAD self
-function TASK_SEAD:_Schedule()
+--- @param #TASK_CAS self
+function TASK_CAS:_Schedule()
   self:F2()
 
   self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
@@ -93,8 +93,8 @@ function TASK_SEAD:_Schedule()
 end
 
 
---- @param #TASK_SEAD self
-function TASK_SEAD._Scheduler()
+--- @param #TASK_CAS self
+function TASK_CAS._Scheduler()
   self:F2()
 
   return true

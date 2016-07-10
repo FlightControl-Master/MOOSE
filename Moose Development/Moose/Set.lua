@@ -224,9 +224,13 @@
 
 --- SET_BASE class
 -- @type SET_BASE
+-- @field #table Filter
+-- @field #table Set
+-- @field #table List
 -- @extends Base#BASE
 SET_BASE = {
   ClassName = "SET_BASE",
+  Filter = {},
   Set = {},
   List = {},
 }
@@ -280,7 +284,7 @@ end
 -- @param Base#BASE Object
 -- @return Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:E( ObjectName )
+  self:F2( ObjectName )
 
   local t = { _ = Object }
 
@@ -304,7 +308,7 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:E( ObjectName )
+  self:F2( ObjectName )
 
   local t = self.Set[ObjectName]
 
@@ -344,6 +348,18 @@ function SET_BASE:Count()
 
   return self.List.Count
 end
+
+--- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
+-- @param #SET_BASE self
+-- @param #SET_BASE OtherSet
+-- @return #SET_BASE
+function SET_BASE:CopyFilter( OtherSet )
+
+  local OtherFilter = routines.utils.deepCopy( OtherSet.Filter )
+  self.Filter = OtherFilter
+  return self
+end
+
 
 
 --- Define the SET iterator **"yield interval"** and the **"time interval"**.
@@ -1184,6 +1200,22 @@ function SET_UNIT:FilterPrefixes( Prefixes )
   return self
 end
 
+--- Builds a set of units having a radar of give types.
+-- All the units having a radar of a given type will be included within the set.
+-- @param #SET_UNIT self
+-- @param #table RadarTypes The radar types.
+-- @return #SET_UNIT self
+function SET_UNIT:FilterHasRadar( RadarTypes )
+
+  self.Filter.RadarTypes = self.Filter.RadarTypes or {}
+  if type( RadarTypes ) ~= "table" then
+    RadarTypes = { RadarTypes }
+  end
+  for RadarTypeID, RadarType in pairs( RadarTypes ) do
+    self.Filter.RadarTypes[RadarType] = RadarType
+  end
+  return self
+end
 
 
 
@@ -1310,6 +1342,23 @@ function SET_UNIT:HasRadar( RadarType )
 end
 
 
+--- Returns if the @{Set} has ground targets.
+-- @param #SET_UNIT self
+-- @return #number The amount of ground targets in the Set.
+function SET_UNIT:HasGroundUnits()
+  self:F2()
+
+  local GroundUnitCount = 0
+  for UnitID, UnitData in pairs( self:GetSet()) do
+    local UnitTest = UnitData -- Unit#UNIT
+    if UnitTest:IsGround() then
+      GroundUnitCount = GroundUnitCount + 1
+    end
+  end
+
+  return GroundUnitCount
+end
+
 
 
 ----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
@@ -1399,6 +1448,17 @@ function SET_UNIT:IsIncludeObject( MUnit )
       end
     end
     MUnitInclude = MUnitInclude and MUnitPrefix
+  end
+
+  if self.Filter.RadarTypes then
+    local MUnitRadar = false
+    for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
+      self:T3( { "Radar:", RadarType } )
+      if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) then
+        MUnitRadar = true
+      end
+    end
+    MUnitInclude = MUnitInclude and MUnitRadar
   end
 
   self:T2( MUnitInclude )
