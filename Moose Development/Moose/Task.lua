@@ -332,6 +332,19 @@ function TASK_BASE:SetBriefing( TaskBriefing )
   return self
 end
 
+--- StateMachine callback function for a TASK
+-- @param #TASK_BASE self
+-- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Event#EVENTDATA Event
+function TASK_BASE:OnStateChange( Fsm, Event, From, To )
+
+  MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+  self:SetState( self, "State", To )
+
+end
 
 
 --- @param #TASK_BASE self

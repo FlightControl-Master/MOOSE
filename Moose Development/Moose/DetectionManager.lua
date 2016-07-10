@@ -278,7 +278,12 @@ function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
   DetectedArea.Tasks = DetectedArea.Tasks or {}
   if RadarCount > 0 then
     if not DetectedArea.Tasks.SEADTask then
-      local Task = TASK_SEAD:New( Mission, DetectedSet, DetectedZone )
+      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with Radar units in it.
+      local TargetSetUnit = SET_UNIT:New()
+      TargetSetUnit:CopyFilter( DetectedSet )
+      TargetSetUnit:FilterHasRadar( Unit.RadarType.AS )
+      TargetSetUnit:FilterStart()
+      local Task = TASK_SEAD:New( Mission, TargetSetUnit, DetectedZone )
       self.Mission:AddTask( Task )
       MT[#MT+1] = "SEAD"
       DetectedArea.Tasks.SEADTask = Task
@@ -288,8 +293,12 @@ function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
       -- Abort Task
     end
   end
-
-  return table.concat( MT, "," )
+  
+  if MT ~= {} then
+    return table.concat( MT, "," )
+  else
+    return ""
+  end
 end
 
 --- Creates a CAS task when there are targets for it.
@@ -321,7 +330,11 @@ function TASK_DISPATCHER:EvaluateTaskCAS( Mission, DetectedArea )
     end    
   end
 
-  return table.concat( MT, "," )
+  if MT ~= {} then
+    return table.concat( MT, "," )
+  else
+    return ""
+  end
 end
 
 --- Creates a string of the detected items in a @{Detection}.

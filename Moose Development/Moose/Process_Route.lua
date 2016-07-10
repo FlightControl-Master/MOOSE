@@ -19,7 +19,7 @@ PROCESS_ROUTE = {
 function PROCESS_ROUTE:New( Task, ProcessUnit, TargetZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_ROUTE
+  local self = BASE:Inherit( self, PROCESS:New( "ROUTE", Task, ProcessUnit ) ) -- #PROCESS_ROUTE
   
   self.TargetZone = TargetZone
   self.DisplayInterval = 30

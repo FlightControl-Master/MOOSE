@@ -21,7 +21,7 @@ PROCESS_SEAD = {
 function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_SEAD
+  local self = BASE:Inherit( self, PROCESS:New( "SEAD", Task, ProcessUnit ) ) -- #PROCESS_SEAD
   
   self.TargetSetUnit = TargetSetUnit
 
@@ -75,6 +75,7 @@ end
 -- @param Event#EVENTDATA Event
 function PROCESS_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
 
+  MESSAGE:New( "TargetCount = " .. self.TargetSetUnit:Count(), 15 ):ToAll()
   if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else

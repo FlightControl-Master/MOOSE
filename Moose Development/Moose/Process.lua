@@ -6,6 +6,7 @@
 -- @field Unit#UNIT ProcessUnit
 -- @field Task#TASK Task
 -- @field StateMachine#STATEMACHINE_TASK Fsm
+-- @field #string ProcessName
 -- @extends Base#BASE
 PROCESS = {
   ClassName = "TASK",
@@ -16,14 +17,17 @@ PROCESS = {
 
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #PROCESS self
+-- @param #string ProcessName
+-- @param Task#TASK_BASE Task
 -- @param Unit#UNIT ProcessUnit
 -- @return #PROCESS self
-function PROCESS:New( Task, ProcessUnit )
+function PROCESS:New( ProcessName, Task, ProcessUnit )
   local self = BASE:Inherit( self, BASE:New() )
   self:F()
 
   self.ProcessUnit = ProcessUnit
   self.Task = Task
+  self.ProcessName = ProcessName
   
   self.AllowEvents = true
   
@@ -66,12 +70,14 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 function PROCESS:OnStateChange( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName } )
+
+  MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
 
   if self.Scores[To] then
     

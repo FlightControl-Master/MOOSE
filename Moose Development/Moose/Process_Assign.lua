@@ -19,7 +19,7 @@ PROCESS_ASSIGN = {
 function PROCESS_ASSIGN:New( Task, ProcessUnit, TaskBriefing )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_ASSIGN
+  local self = BASE:Inherit( self, PROCESS:New( "ASSIGN", Task, ProcessUnit ) ) -- #PROCESS_ASSIGN
   
   self.TaskBriefing = TaskBriefing
   

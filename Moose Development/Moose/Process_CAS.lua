@@ -21,7 +21,7 @@ PROCESS_CAS = {
 function PROCESS_CAS:New( Task, ProcessUnit, TargetSetUnit )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, PROCESS:New( Task, ProcessUnit ) ) -- #PROCESS_CAS
+  local self = BASE:Inherit( self, PROCESS:New( "CAS", Task, ProcessUnit ) ) -- #PROCESS_CAS
   
   self.TargetSetUnit = TargetSetUnit
 

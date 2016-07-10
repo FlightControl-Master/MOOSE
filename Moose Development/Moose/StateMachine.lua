@@ -1,4 +1,9 @@
 --- This module contains the STATEMACHINE class.
+-- This development is based on a state machine implementation made by Conroy Kyle.  
+-- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  
+-- 
+-- I've taken the development and enhanced it to make the state machine hierarchical... 
+-- It is a fantastic development, this module.
 -- 
 -- ===
 -- 

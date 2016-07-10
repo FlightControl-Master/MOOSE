@@ -59,7 +59,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
     self.MessageCategory = ""
   end
 
-	self.MessageDuration = MessageDuration
+	self.MessageDuration = MessageDuration or 5
 	self.MessageTime = timer.getTime()
 	self.MessageText = MessageText
 	
