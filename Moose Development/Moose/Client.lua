@@ -435,14 +435,6 @@ end
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
 
-	if not self.MenuMessages then
-		if self:GetClientGroupID() then
-			self.MenuMessages = MENU_CLIENT:New( self, 'Messages' )
-			self.MenuRouteMessageOn = MENU_CLIENT_COMMAND:New( self, 'Messages On', self.MenuMessages, CLIENT.SwitchMessages, { self, true } )
-			self.MenuRouteMessageOff = MENU_CLIENT_COMMAND:New( self,'Messages Off', self.MenuMessages, CLIENT.SwitchMessages, { self, false } )
-		end
-	end
-
 	if self.MessageSwitch == true then
 		if MessageCategory == nil then
 			MessageCategory = "Messages"
