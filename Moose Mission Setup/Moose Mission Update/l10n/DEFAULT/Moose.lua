@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160708_1720' ) 
+env.info( 'Moose Generation Timestamp: 20160712_0855' ) 
 local base = _G
 
 Include = {}
@@ -6502,7 +6502,7 @@ function EVENT:onEvent( Event )
     self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniDCSUnitName } )
+        self:E( { "Calling event function for class ", ClassName, " unit ", Event.IniUnitName } )
         EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
       else
         if Event.IniDCSUnit and not EventData.IniUnit then
@@ -18024,6 +18024,10 @@ end
 -- @field ClassName
 -- @field #string SpawnTemplatePrefix
 -- @field #string SpawnAliasPrefix
+-- @field #number AliveUnits
+-- @field #number MaxAliveUnits
+-- @field #number SpawnIndex
+-- @field #number MaxAliveGroups
 SPAWN = {
   ClassName = "SPAWN",
   SpawnTemplatePrefix = nil,
@@ -18340,7 +18344,7 @@ end
 -- @param #SPAWN self
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
-	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex, self.AliveUnits } )
 
 	return self:SpawnWithIndex( self.SpawnIndex + 1 )
 end
@@ -18374,14 +18378,13 @@ end
 -- @param #SPAWN self
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups } )
+	self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
 	
 	if self:_GetSpawnIndex( SpawnIndex ) then
 		
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
-			self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
       _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
       _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
       _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
@@ -18393,8 +18396,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
       end
-      
-      self:T( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+      self:T3( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
 			
@@ -18739,19 +18741,17 @@ end
 -- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param DCSUnit The DCS unit to be searched.
+-- @param DCSUnit#Unit DCSUnit The @{DCSUnit} to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
 function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
+	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
-	if DCSUnit and DCSUnit:getName() then
-		local IndexString = string.match( DCSUnit:getName(), "#.*-" ):sub( 2, -2 )
-		self:T( IndexString )
-		
+  local SpawnUnitName = ( DCSUnit and DCSUnit:getName() ) or nil
+	if SpawnUnitName then
+		local IndexString = string.match( SpawnUnitName, "#.*-" ):sub( 2, -2 )
 		if IndexString then
 			local Index = tonumber( IndexString )
-			self:T( { "Index:", IndexString, Index } )
 			return Index
 		end
 	end
@@ -18759,22 +18759,22 @@ function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
 	return nil
 end
 
---- Return the prefix of a DCSUnit.
+--- Return the prefix of a SpawnUnit.
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param DCSUnit The DCS unit to be searched.
+-- @param DCSUnit#UNIT DCSUnit The @{DCSUnit} to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
 function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
+	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
-	if DCSUnit and DCSUnit:getName() then
-		local SpawnPrefix = string.match( DCSUnit:getName(), ".*#" )
+  local DCSUnitName = ( DCSUnit and DCSUnit:getName() ) or nil
+	if DCSUnitName then
+		local SpawnPrefix = string.match( DCSUnitName, ".*#" )
 		if SpawnPrefix then
 			SpawnPrefix = SpawnPrefix:sub( 1, -2 )
 		end
-		self:T( SpawnPrefix )
 		return SpawnPrefix
 	end
 	
@@ -18782,18 +18782,20 @@ function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
 end
 
 --- Return the group within the SpawnGroups collection with input a DCSUnit.
+-- @param #SPAWN self
+-- @param DCSUnit#Unit DCSUnit The @{DCSUnit} to be searched.
+-- @return Group#GROUP The Group
+-- @return #nil Nothing found
 function SPAWN:_GetGroupFromDCSUnit( DCSUnit )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
+	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 	
-	if DCSUnit then
-		local SpawnPrefix = self:_GetPrefixFromDCSUnit( DCSUnit )
-		
-		if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
-			local SpawnGroupIndex = self:_GetGroupIndexFromDCSUnit( DCSUnit )
-			local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
-			self:T( SpawnGroup )
-			return SpawnGroup
-		end
+	local SpawnPrefix = self:_GetPrefixFromDCSUnit( DCSUnit )
+	
+	if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
+		local SpawnGroupIndex = self:_GetGroupIndexFromDCSUnit( DCSUnit )
+		local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
+		self:T( SpawnGroup )
+		return SpawnGroup
 	end
 
 	return nil
@@ -18803,12 +18805,12 @@ end
 --- Get the index from a given group.
 -- The function will search the name of the group for a #, and will return the number behind the #-mark.
 function SPAWN:GetSpawnIndexFromGroup( SpawnGroup )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
+	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 	
 	local IndexString = string.match( SpawnGroup:GetName(), "#.*$" ):sub( 2 )
 	local Index = tonumber( IndexString )
 	
-	self:T( IndexString, Index )
+	self:T3( IndexString, Index )
 	return Index
 	
 end
@@ -18822,7 +18824,7 @@ end
 
 --- Initalize the SpawnGroups collection.
 function SPAWN:_InitializeSpawnGroups( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
+	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 
 	if not self.SpawnGroups[SpawnIndex] then
 		self.SpawnGroups[SpawnIndex] = {}
@@ -18900,7 +18902,7 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 	SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnTemplatePrefix )
 	SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnTemplatePrefix )
 	
-	self:T( { SpawnTemplate } )
+	self:T3( { SpawnTemplate } )
 	return SpawnTemplate
 end
 
@@ -18917,11 +18919,11 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	
 	SpawnTemplate.groupId = nil
 	--SpawnTemplate.lateActivation = false
-  SpawnTemplate.lateActivation = false -- TODO BUGFIX 
+  SpawnTemplate.lateActivation = false 
 
 	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
-	  self:T( "For ground units, visible needs to be false..." )
-		SpawnTemplate.visible = false -- TODO BUGFIX
+	  self:T3( "For ground units, visible needs to be false..." )
+		SpawnTemplate.visible = false 
 	end
 	
 	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
@@ -18935,7 +18937,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		SpawnTemplate.units[UnitID].y = SpawnTemplate.route.points[1].y 
 	end
 	
-	self:T( { "Template:", SpawnTemplate } )
+	self:T3( { "Template:", SpawnTemplate } )
 	return SpawnTemplate
 		
 end
@@ -19033,11 +19035,10 @@ end
 
 --- Get the next index of the groups to be spawned. This function is complicated, as it is used at several spaces.
 function SPAWN:_GetSpawnIndex( SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
-
+	self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
   
   if ( self.SpawnMaxGroups == 0 ) or ( SpawnIndex <= self.SpawnMaxGroups ) then
-    if ( self.SpawnMaxUnitsAlive == 0 ) or ( self.AliveUnits < self.SpawnMaxUnitsAlive * #self.SpawnTemplate.units ) or self.UnControlled then
+    if ( self.SpawnMaxUnitsAlive == 0 ) or ( self.AliveUnits + #self.SpawnTemplate.units <= self.SpawnMaxUnitsAlive ) or self.UnControlled == true then
       if SpawnIndex and SpawnIndex >= self.SpawnCount + 1 then
         self.SpawnCount = self.SpawnCount + 1
         SpawnIndex = self.SpawnCount
@@ -19058,14 +19059,16 @@ end
 
 
 -- TODO Need to delete this... _DATABASE does this now ...
-function SPAWN:_OnBirth( event )
 
-	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
-		if event.initiator and event.initiator:getName() then
-			local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
+--- @param #SPAWN self 
+-- @param Event#EVENTDATA Event
+function SPAWN:_OnBirth( Event )
+
+	if timer.getTime0() < timer.getAbsTime() then
+		if Event.IniDCSUnit then
+			local EventPrefix = self:_GetPrefixFromDCSUnit( Event.IniDCSUnit )
+			self:T( { "Birth Event:", EventPrefix, self.SpawnTemplatePrefix } )
 			if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-				self:T( { "Birth event: " .. event.initiator:getName(), event } )
-				--MessageToAll( "Mission command: unit " .. SpawnTemplatePrefix .. " spawned." , 5,  EventPrefix .. '/Event')
 				self.AliveUnits = self.AliveUnits + 1
 				self:T( "Alive Units: " .. self.AliveUnits )
 			end
@@ -19076,19 +19079,18 @@ end
 
 --- Obscolete
 -- @todo Need to delete this... _DATABASE does this now ...
-function SPAWN:_OnDeadOrCrash( event )
-  self:F( self.SpawnTemplatePrefix,  event )
 
-	if event.initiator and event.initiator:getName() then
-		local EventPrefix = self:_GetPrefixFromDCSUnit( event.initiator )
+--- @param #SPAWN self 
+-- @param Event#EVENTDATA Event
+function SPAWN:_OnDeadOrCrash( Event )
+  self:F( self.SpawnTemplatePrefix,  Event )
+
+	if Event.IniDCSUnit then
+		local EventPrefix = self:_GetPrefixFromDCSUnit( Event.IniDCSUnit )
+    self:T( { "Dead event: " .. EventPrefix, self.SpawnTemplatePrefix } )
 		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-			self:T( { "Dead event: " .. event.initiator:getName(), event } )
---					local DestroyedUnit = Unit.getByName( EventPrefix )
---					if DestroyedUnit and DestroyedUnit.getLife() <= 1.0 then
-				--MessageToAll( "Mission command: unit " .. SpawnTemplatePrefix .. " crashed." , 5,  EventPrefix .. '/Event')
-				self.AliveUnits = self.AliveUnits - 1
-				self:T( "Alive Units: " .. self.AliveUnits )
---					end
+			self.AliveUnits = self.AliveUnits - 1
+			self:T( "Alive Units: " .. self.AliveUnits )
 		end
 	end
 end
@@ -19158,7 +19160,7 @@ end
 --- This function is called automatically by the Spawning scheduler.
 -- It is the internal worker method SPAWNing new Groups on the defined time intervals.
 function SPAWN:_Scheduler()
-	self:F( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
+	self:F2( { "_Scheduler", self.SpawnTemplatePrefix, self.SpawnAliasPrefix, self.SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive } )
 	
 	-- Validate if there are still groups left in the batch...
 	self:Spawn()
