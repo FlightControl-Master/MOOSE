@@ -268,7 +268,7 @@ end
 function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
   self:F( { Mission, DetectedArea.AreaID } )
 
-  MT = {}
+  local MT = {}
 
   local DetectedSet = DetectedArea.Set
   local DetectedZone = DetectedArea.Zone
@@ -280,14 +280,15 @@ function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
   if RadarCount > 0 then
     if not DetectedArea.Tasks.SEADTask then
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with Radar units in it.
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:CopyFilter( DetectedSet )
+      local TargetSetUnit = SET_UNIT:New():SetDatabase( DetectedSet )
       TargetSetUnit:FilterHasRadar( Unit.RadarType.AS )
       self:E( TargetSetUnit.Filter )
       TargetSetUnit:FilterStart()
-      local Task = TASK_SEAD:New( Mission, TargetSetUnit, DetectedZone )
+
+      local MenuText = "SEAD " .. self:GetDetectedItemsText( TargetSetUnit )
+      MT[#MT+1] = "  - " .. MenuText
+      local Task = TASK_SEAD:New( Mission, MenuText, TargetSetUnit, DetectedZone )
       self.Mission:AddTask( Task )
-      MT[#MT+1] = "SEAD"
       DetectedArea.Tasks.SEADTask = Task
     end
   else
@@ -296,10 +297,10 @@ function TASK_DISPATCHER:EvaluateTaskSEAD( Mission, DetectedArea )
     end
   end
   
-  if MT ~= {} then
+  if #MT > 0 then
     return table.concat( MT, "," )
   else
-    return ""
+    return nil
   end
 end
 
@@ -311,7 +312,7 @@ end
 function TASK_DISPATCHER:EvaluateTaskCAS( Mission, DetectedArea )
   self:F2( { Mission, DetectedArea.AreaID } )
 
-  MT = {}
+  local MT = {}
 
   local DetectedSet = DetectedArea.Set
   local DetectedZone = DetectedArea.Zone
@@ -321,9 +322,10 @@ function TASK_DISPATCHER:EvaluateTaskCAS( Mission, DetectedArea )
   DetectedArea.Tasks = DetectedArea.Tasks or {}
   if GroundUnitCount > 0 then
     if not DetectedArea.Tasks.CASTask then
-      local Task = TASK_CAS:New( Mission, DetectedSet , DetectedZone )
+      local MenuText = "CAS " .. self:GetDetectedItemsText( DetectedSet )
+      MT[#MT+1] = "  -" .. MenuText
+      local Task = TASK_CAS:New( Mission, MenuText, DetectedSet , DetectedZone )
       self.Mission:AddTask( Task )
-      MT[#MT+1] = "CAS"
       DetectedArea.Tasks.CASTask = Task
     end
   else
@@ -332,17 +334,17 @@ function TASK_DISPATCHER:EvaluateTaskCAS( Mission, DetectedArea )
     end    
   end
 
-  if MT ~= {} then
+  if #MT > 0 then
     return table.concat( MT, "," )
   else
-    return ""
+    return nil
   end
 end
 
 --- Creates a string of the detected items in a @{Detection}.
--- @param #DETECTION_MANAGER self
+-- @param #TASK_DISPATCHER self
 -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Detection#DETECTION_BASE} object.
--- @return #DETECTION_MANAGER self
+-- @return #string The text
 function TASK_DISPATCHER:GetDetectedItemsText( DetectedSet )
   self:F2()
 
@@ -384,28 +386,33 @@ function TASK_DISPATCHER:ProcessDetected( TaskGroup, Detection )
 
   self:E( TaskGroup )
 
+
   --- First we need to  the detected targets.
   for DetectedAreaID, DetectedAreaData in ipairs( Detection:GetDetectedAreas() ) do
+  
+    local MT = {} -- Message Text
+
     local DetectedArea = DetectedAreaData -- Detection#DETECTION_UNITGROUPS.DetectedArea
     local TargetSetUnit = DetectedArea.Set
-    local MT = {} -- Message Text
-    local UnitTypes = {}
+    self:E( "Targets in DetectedArea " .. DetectedArea.AreaID .. ":" .. TargetSetUnit:Count() )
+    TargetSetUnit:Flush()
     local TargetZone = DetectedArea.Zone -- Zone#ZONE_BASE
     Detection:FlareDetectedZones()
     Detection:FlareDetectedUnits()
 
-    for DetectedUnitID, DetectedUnitData in pairs( TargetSetUnit:GetSet() ) do
-
-      local TargetUnit = DetectedUnitData -- Unit#UNIT
-      self:E( TargetUnit )
-      local TargetUnitName = TargetUnit:GetName()
-      local TargetUnitType = TargetUnit:GetTypeName()
-      
-      MT[#MT+1] = self:EvaluateTaskSEAD( self.Mission, DetectedArea )
-      MT[#MT+1] = self:EvaluateTaskCAS( self.Mission, DetectedArea )
+    -- Evaluate SEAD Task
+    local SEADText = self:EvaluateTaskSEAD( self.Mission, DetectedArea )
+    if SEADText then
+      MT[#MT+1] = SEADText
+    end
+    
+    -- Evaluate CAS task
+    local CASText = self:EvaluateTaskCAS( self.Mission, DetectedArea )
+    if CASText then
+      MT[#MT+1] = CASText
     end
 
-    DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedAreaID .. ": " .. self:GetDetectedItemsText( TargetSetUnit ) .. ". " .. table.concat( MT, "," ) .. " tasks addded."
+    DetectedMsg[#DetectedMsg+1] = "- Group #" .. DetectedAreaID .. ":" .. table.concat( MT, "," )
   end
   
   self.CommandCenter:MessageToGroup( "Reporting tasks for target groups:\n" .. table.concat( DetectedMsg, "\n" ), self:GetReportDisplayTime(), TaskGroup  )

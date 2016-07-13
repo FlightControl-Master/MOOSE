@@ -13,8 +13,8 @@ TASK_CAS = {
 -- @param Set#SET_UNIT UnitSetTargets
 -- @param Zone#ZONE_BASE TargetZone
 -- @return #TASK_CAS self
-function TASK_CAS:New( Mission, TargetSetUnit, TargetZone )
-  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "CAS Attack", "CAS", "A2G" ) )
+function TASK_CAS:New( Mission, MenuText, TargetSetUnit, TargetZone )
+  local self = BASE:Inherit( self, TASK_BASE:New( Mission, MenuText, "CAS", "A2G" ) )
   self:F()
 
   self.TargetSetUnit = TargetSetUnit

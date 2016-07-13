@@ -13,8 +13,8 @@ TASK_SEAD = {
 -- @param Set#SET_UNIT UnitSetTargets
 -- @param Zone#ZONE_BASE TargetZone
 -- @return #TASK_SEAD self
-function TASK_SEAD:New( Mission, TargetSetUnit, TargetZone )
-  local self = BASE:Inherit( self, TASK_BASE:New( Mission, "SEAD Attack", "SEAD", "A2G" ) )
+function TASK_SEAD:New( Mission, MenuText, TargetSetUnit, TargetZone )
+  local self = BASE:Inherit( self, TASK_BASE:New( Mission, MenuText, "SEAD", "A2G" ) )
   self:F()
 
   self.TargetSetUnit = TargetSetUnit
@@ -36,7 +36,7 @@ end
 -- @return #TASK_SEAD self
 function TASK_SEAD:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
-
+  
   local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN:New( self, TaskUnit, self.TaskBriefing ) )
   local ProcessRoute = self:AddProcess( TaskUnit, PROCESS_ROUTE:New( self, TaskUnit, self.TargetZone ) )
   local ProcessSEAD = self:AddProcess( TaskUnit, PROCESS_SEAD:New( self, TaskUnit, self.TargetSetUnit ) )
@@ -65,6 +65,7 @@ function TASK_SEAD:AssignToUnit( TaskUnit )
   ProcessRoute:AddScore( "Failed", "failed to destroy a radar", -100 )
   ProcessSEAD:AddScore( "Destroy", "destroyed a radar", 25 )
   ProcessSEAD:AddScore( "Failed", "failed to destroy a radar", -100 )
+  self:AddScore( "Success", "Destroyed all target radars", 250 )
   
   Process:Next()
 

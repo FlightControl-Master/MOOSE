@@ -158,6 +158,7 @@ function TASK_BASE:_EventAssignUnit( Event )
       local TaskPlayerName = TaskUnit:GetPlayerName()
       if TaskPlayerName ~= nil then
         if not self:HasStateMachine( TaskUnit ) then
+          self.TaskUnit = TaskUnit
           self:AssignToUnit( TaskUnit )
         end
       end
@@ -332,6 +333,22 @@ function TASK_BASE:SetBriefing( TaskBriefing )
   return self
 end
 
+--- Adds a score for the TASK to be achieved.
+-- @param #TASK_BASE self
+-- @param #string TaskStatus is the status of the TASK when the score needs to be given.
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #TASK_BASE self
+function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
+  self:F2( { TaskStatus, ScoreText, Score } )
+
+  self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
+  self.Scores[TaskStatus].ScoreText = ScoreText
+  self.Scores[TaskStatus].Score = Score
+  return self
+end
+
+
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
 -- @param StateMachine#STATEMACHINE_TASK Fsm
@@ -343,6 +360,13 @@ function TASK_BASE:OnStateChange( Fsm, Event, From, To )
 
   MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
   self:SetState( self, "State", To )
+
+  if self.Scores[To] then
+    local Scoring = self:GetScoring()
+    if Scoring then
+      Scoring:_AddMissionTaskScore( self.Mission, self.TaskUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
+    end
+  end
 
 end
 

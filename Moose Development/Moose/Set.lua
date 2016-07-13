@@ -351,12 +351,16 @@ end
 
 --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
 -- @param #SET_BASE self
--- @param #SET_BASE OtherSet
+-- @param #SET_BASE BaseSet
 -- @return #SET_BASE
-function SET_BASE:CopyFilter( OtherSet )
+function SET_BASE:SetDatabase( BaseSet )
 
-  local OtherFilter = routines.utils.deepCopy( OtherSet.Filter )
+  -- Copy the filter criteria of the BaseSet
+  local OtherFilter = routines.utils.deepCopy( BaseSet.Filter )
   self.Filter = OtherFilter
+  
+  -- Now base the new Set on the BaseSet
+  self.Database = BaseSet:GetSet()
   return self
 end
 
@@ -630,7 +634,7 @@ function SET_BASE:Flush()
   for ObjectName, Object in pairs( self.Set ) do
     ObjectNames = ObjectNames .. ObjectName .. ", "
   end
-  self:T( { "Objects in Set:", ObjectNames } )
+  self:E( { "Objects in Set:", ObjectNames } )
   
   return ObjectNames
 end
@@ -1455,7 +1459,9 @@ function SET_UNIT:IsIncludeObject( MUnit )
     for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
       self:E( { "Radar:", RadarType } )
       if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
-        self:E( "RADAR Found" )
+        if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
+          self:E( "RADAR Found" )
+        end
         MUnitRadar = true
       end
     end

@@ -76,6 +76,7 @@ end
 function PROCESS_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
 
   MESSAGE:New( "TargetCount = " .. self.TargetSetUnit:Count(), 15 ):ToAll()
+  self.TargetSetUnit:Flush()
   if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else
