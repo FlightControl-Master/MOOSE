@@ -770,7 +770,6 @@ function DETECTION_AREAS:CreateDetectionSets()
     if DetectedArea then
     
       local DetectedSet = DetectedArea.Set
-      DetectedSet:Flush()
       
       local AreaExists = false -- This flag will determine of the detected area is still existing.
             

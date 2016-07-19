@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160719_1811' ) 
+env.info( 'Moose Generation Timestamp: 20160719_1818' ) 
 local base = _G
 
 Include = {}
@@ -11811,8 +11811,6 @@ function SET_BASE:Remove( ObjectName )
     self.Set[ObjectName] = nil
   end
   
-  self:Flush()
-  
 end
 
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
@@ -11971,7 +11969,6 @@ function SET_BASE:_EventOnBirth( Event )
     self:T3( ObjectName, Object )
     if self:IsIncludeObject( Object ) then
       self:Add( ObjectName, Object )
-      self:Flush()
       --self:_EventOnPlayerEnterUnit( Event )
     end
   end
@@ -11982,7 +11979,6 @@ end
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
   self:E( { Event } )
-  self:Flush()
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -12850,8 +12846,6 @@ function SET_UNIT:GetUnitTypesText()
   local MT = {} -- Message Text
   local UnitTypes = {}
   
-  self:Flush()
-
   for UnitID, UnitData in pairs( self:GetSet() ) do
     local TextUnit = UnitData -- Unit#UNIT
     if TextUnit:IsAlive() then
@@ -25857,7 +25851,6 @@ function DETECTION_AREAS:CreateDetectionSets()
     if DetectedArea then
     
       local DetectedSet = DetectedArea.Set
-      DetectedSet:Flush()
       
       local AreaExists = false -- This flag will determine of the detected area is still existing.
             
