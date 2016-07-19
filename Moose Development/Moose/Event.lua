@@ -719,7 +719,6 @@ function EVENT:onEvent( Event )
     end
     self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
-      self:T( { "Evaluating class ", { EventData.EventSelf:GetClassNameAndID(), ClassName } } )
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T( { "Calling event function for class ", ClassName, " unit ", Event.IniUnitName } )
         EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventSelf, Event )
