@@ -174,7 +174,7 @@ end
 -- @return #number DirectionRadians The direction in radians.
 function POINT_VEC3:GetDirectionRadians( DirectionVec3 )
   local DirectionRadians = math.atan2( DirectionVec3.z, DirectionVec3.x )
-  DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
+  --DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
   if DirectionRadians < 0 then
     DirectionRadians = DirectionRadians + 2 * math.pi  -- put dir in range of 0 to 2*pi ( the full circle )
   end
@@ -220,6 +220,18 @@ function POINT_VEC3:ToStringBR( AngleRadians, Distance )
   s = s .. self:GetAltitudeText() -- When the POINT is a VEC2, there will be no altitude shown.
 
   return s
+end
+
+--- Provides a Bearing / Range string
+-- @param #POINT_VEC3 self
+-- @param #number AngleRadians The angle in randians
+-- @param #number Distance The distance
+-- @return #string The BR Text
+function POINT_VEC3:ToStringLL( acc, DMS )
+
+  acc = acc or 3
+  local lat, lon = coord.LOtoLL( self.PointVec3 )
+  return UTILS.tostringLL(lat, lon, acc, DMS)
 end
 
 --- Return the altitude text of the POINT_VEC3.

@@ -91,6 +91,30 @@ function POSITIONABLE:GetVec2()
 end
 
 
+--- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the DCS Positionable within the mission.
+-- @param Positionable#POSITIONABLE self
+-- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
+-- @return #nil The DCS Positionable is not existing or alive.  
+function POSITIONABLE:GetRandomPointVec3( Radius )
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePointVec3 = DCSPositionable:getPosition().p
+    local PositionableRandomPointVec3 = {}
+    local angle = math.random() * math.pi*2;
+    PositionableRandomPointVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+    PositionableRandomPointVec3.y = PositionablePointVec3.y
+    PositionableRandomPointVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+    
+    self:T3( PositionableRandomPointVec3 )
+    return PositionableRandomPointVec3
+  end
+  
+  return nil
+end
+
 --- Returns the @{DCSTypes#Vec3} vector indicating the point in 3D of the DCS Positionable within the mission.
 -- @param Positionable#POSITIONABLE self
 -- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
@@ -208,6 +232,27 @@ function POSITIONABLE:GetVelocity()
   
   return nil
 end
+
+--- Returns the @{Unit#UNIT} velocity in km/h.
+-- @param Positionable#POSITIONABLE self
+-- @return #number The velocity in km/h
+-- @return #nil The DCS Positionable is not existing or alive.  
+function POSITIONABLE:GetVelocityKMH()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local VelocityVec3 = self:GetVelocity()
+    local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
+    local Velocity = Velocity * 3.6 -- now it is in km/h.
+    self:T3( Velocity )
+    return Velocity
+  end
+  
+  return nil
+end
+
 
 
 

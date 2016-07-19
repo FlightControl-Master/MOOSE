@@ -37,7 +37,6 @@ MISSION = {
 function MISSION:Meta()
 
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F()
 	
 	return self
 end
@@ -58,8 +57,6 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
 	self.MissionCoalition = MissionCoalition
-
-  self:SetMissionMenu()
 
 	return self
 end
@@ -86,18 +83,51 @@ function MISSION:GetScoring()
   return self.Scoring
 end
 
---- Sets the mission menu for the coalition.
+
+--- Sets the Planned Task menu.
 -- @param #MISSION self
--- @return #MISSION self
-function MISSION:SetMissionMenu()
-  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self.Name )
+function MISSION:SetPlannedMenu()
+  
+  for _, Task in pairs( self.Tasks ) do
+    local Task = Task -- Task#TASK_BASE
+    Task:RemoveMenu()
+    Task:SetPlannedMenu()  
+  end
+  
 end
+
+--- Sets the Assigned Task menu.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task
+-- @param #string MenuText The menu text.
+-- @return #MISSION self
+function MISSION:SetAssignedMenu( Task )
+  
+  for _, Task in pairs( self.Tasks ) do
+    local Task = Task -- Task#TASK_BASE
+    Task:RemoveMenu()
+    Task:SetAssignedMenu()  
+  end
+  
+end
+
+--- Removes a Task menu.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task
+-- @return #MISSION self
+function MISSION:RemoveTaskMenu( Task )
+    
+  Task:RemoveMenu()  
+end
+
 
 --- Gets the mission menu for the coalition.
 -- @param #MISSION self
+-- @param Group#GROUP TaskGroup
 -- @return Menu#MENU_COALITION self
-function MISSION:GetMissionMenu()
-  return self.MissionMenu
+function MISSION:GetMissionMenu( TaskGroup )
+  local TaskGroupName = TaskGroup:GetName()
+  return self.MenuMission[TaskGroupName]
 end
 
 
@@ -109,59 +139,17 @@ function MISSION:ClearMissionMenu()
   self.MissionMenu = nil
 end
 
---- Fill mission menu for the Group.
--- @param #MISSION self
--- @return #MISSION self
-function MISSION:CreateTaskMenus( TaskGroup )
+--- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
+-- @param #string TaskIndex is the Index of the @{Task} within the @{Mission}.
+-- @param #number TaskID is the ID of the @{Task} within the @{Mission}.
+-- @return Task#TASK_BASE The Task
+-- @return #nil Returns nil if no task was found.
+function MISSION:GetTask( TaskName  )
+  self:F( { TaskName } )
 
-  local MissionMenu = self:GetMissionMenu()
-  local TaskMenus = self.TaskMenus
-  local TaskCategoryMenus = self.TaskCategoryMenus
-  local TaskTypeMenus = self.TaskTypeMenus
-
-  for TaskIndex, TaskTable in pairs( self.Tasks ) do
-    for _, Task in pairs( TaskTable ) do
-      Task = Task -- Task#TASK_BASE
-      local TaskType = Task:GetType()
-      local TaskName = Task:GetName()
-      local TaskID = Task:GetID()
-      local TaskCategory = Task:GetCategory()
-      local TaskMenuID = TaskCategory .. "." ..TaskType .. "." .. TaskName .. "." .. TaskID
-      
-      if not TaskMenus[TaskMenuID] then
-        
-        TaskMenus[TaskMenuID] = {}
-        
-        if not TaskCategoryMenus[TaskCategory] then
-          TaskCategoryMenus[TaskCategory] = MENU_COALITION:New( self.MissionCoalition, TaskCategory, MissionMenu )
-        end
-        TaskMenus[TaskMenuID].MenuCategory = TaskCategoryMenus[TaskCategory]
-        
-        if not TaskTypeMenus[TaskType] then
-          TaskTypeMenus[TaskType] = MENU_COALITION:New( self.MissionCoalition, TaskType, TaskMenus[TaskMenuID].MenuCategory )
-        end
-        TaskMenus[TaskMenuID].MenuType = TaskTypeMenus[TaskType]
-  
-        if TaskMenus[TaskMenuID].Menu then
-          TaskMenus[TaskMenuID].Menu:Remove()
-        end
-        TaskMenus[TaskMenuID].Menu = MENU_GROUP_COMMAND:New( TaskGroup, TaskName .. "." .. TaskID, TaskMenus[TaskMenuID].MenuType, self.AssignTaskToGroup, { self = self, Task = Task, TaskGroup = TaskGroup } )
-        
-      end
-    end
-  end  
+  return self.Tasks[TaskName]
 end
 
-function MISSION.AssignTaskToGroup( MenuParam )
-
-  local self = MenuParam.self
-  local Task = MenuParam.Task -- Task#TASK_BASE
-  local TaskGroup = MenuParam.TaskGroup
-  
-  Task:AssignToGroup( TaskGroup )
-  
-
-end
 
 --- Register a @{Task} to be completed within the @{Mission}. 
 -- Note that there can be multiple @{Task}s registered to be completed. 
@@ -170,21 +158,52 @@ end
 -- @param Task#TASK_BASE Task is the @{Task} object.
 -- @return Task#TASK_BASE The task added.
 function MISSION:AddTask( Task )
-  self:F()
 
-  local TaskCategory = Task:GetCategory()
-  local TaskType = Task:GetType()
-  local TaskName = Task:GetName()
-  local TaskIndex = TaskCategory .. "." ..TaskType .. "." .. TaskName
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
   
-  self.Tasks[TaskIndex] = self.Tasks[TaskIndex] or {}
-  local TaskID = #self.Tasks[TaskIndex] + 1
-  
-  self.Tasks[TaskIndex][TaskID] = Task
-  Task:SetID( TaskID )
+  self.Tasks[TaskName] = Task
 
   return Task
- end
+end
+
+--- Removes a @{Task} to be completed within the @{Mission}. 
+-- Note that there can be multiple @{Task}s registered to be completed. 
+-- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return #nil The cleaned Task reference.
+function MISSION:RemoveTask( Task )
+
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
+
+  Task:CleanUp() -- Cleans all events and sets task to nil to get Garbage Collected
+
+  -- Ensure everything gets garbarge collected.
+  self.Tasks[TaskName] = nil 
+  Task = nil
+  
+  return nil
+end
+
+--- Return the next @{Task} ID to be completed within the @{Mission}. 
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return Task#TASK_BASE The task added.
+function MISSION:GetNextTaskID( Task )
+
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
+  
+  self.Tasks[TaskName].n = self.Tasks[TaskName].n + 1
+
+  return self.Tasks[TaskName].n
+end
+
 
 
 --- old stuff
@@ -376,31 +395,6 @@ function MISSION:FindClient( ClientName )
 	return self._Clients[ClientName]
 end
 
-
---- Get the TASK idenified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param number TaskNumber is the number of the @{TASK} within the @{MISSION}.
--- @return TASK
--- @usage
--- -- Get Task 2 from the Mission.
--- Task2 = Mission:GetTask( 2 )
-
-function MISSION:GetTask( TaskNumber )
-	self:F()
-
-	local Valid = true
-
-	local Task = nil
-
-	if type(TaskNumber) ~= "number" then
-		Valid = false
-	end
-
-	if Valid then
-		Task = self._Tasks[TaskNumber]
-	end
-
-	return Task
-end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
 -- @return {TASK,...} Structure of TASKS with the @{TASK} number as the key.

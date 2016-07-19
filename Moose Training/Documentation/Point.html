@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li>Point</li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -87,6 +97,9 @@
 
 <h1>1) <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class defines a 3D point in the simulator.</p>
+
+<p><strong>Important Note:</strong> Most of the functions in this section were taken from MIST, and reworked to OO concepts.
+In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.</p>
 
 <h2>1.1) POINT_VEC3 constructor</h2>
 
@@ -141,6 +154,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromVec2">POINT_VEC2:DistanceFromVec2(Vec2Reference)</a></td>
 		<td class="summary">
 <p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAltitudeText">POINT_VEC2:GetAltitudeText()</a></td>
+		<td class="summary">
+<p>Return no text for the altitude of the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
@@ -202,9 +221,93 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Get2DDistance">POINT_VEC3:Get2DDistance(TargetPointVec3)</a></td>
+		<td class="summary">
+<p>Return the 2D distance in meters between the target POINT<em>VEC3 and the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Get3DDistance">POINT_VEC3:Get3DDistance(TargetPointVec3)</a></td>
+		<td class="summary">
+<p>Return the 3D distance in meters between the target POINT<em>VEC3 and the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetAltitudeText">POINT_VEC3:GetAltitudeText()</a></td>
+		<td class="summary">
+<p>Return the altitude text of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetBRText">POINT_VEC3:GetBRText(TargetPointVec3)</a></td>
+		<td class="summary">
+<p>Return a BR string from a POINT<em>VEC3 to the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetDirectionRadians">POINT_VEC3:GetDirectionRadians(DirectionVec3)</a></td>
+		<td class="summary">
+<p>Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetDirectionVec3">POINT_VEC3:GetDirectionVec3(TargetPointVec3)</a></td>
+		<td class="summary">
+<p>Return a direction vector Vec3 from POINT<em>VEC3 to the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetNorthCorrectionRadians">POINT_VEC3:GetNorthCorrectionRadians()</a></td>
+		<td class="summary">
+<p>Get a correction in radians of the real magnetic north of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetVec3">POINT_VEC3:GetVec3()</a></td>
+		<td class="summary">
+<p>Return the coordinates of the POINT_VEC3 in Vec3 format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetX">POINT_VEC3:GetX()</a></td>
+		<td class="summary">
+<p>Return the x coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetY">POINT_VEC3:GetY()</a></td>
+		<td class="summary">
+<p>Return the y coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetZ">POINT_VEC3:GetZ()</a></td>
+		<td class="summary">
+<p>Return the z coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).IsMetric">POINT_VEC3:IsMetric()</a></td>
+		<td class="summary">
+<p>Gets if the POINT_VEC3 is metric or NM.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Metric">POINT_VEC3.Metric</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).New">POINT_VEC3:New(x, y, z)</a></td>
 		<td class="summary">
 <p>Create a new POINT_VEC3 object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).PointVec3">POINT_VEC3.PointVec3</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -229,6 +332,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointType">POINT_VEC3.RoutePointType</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetMetric">POINT_VEC3:SetMetric(Metric)</a></td>
+		<td class="summary">
+<p>Sets the POINT_VEC3 metric or NM.</p>
 </td>
 		</tr>
 		<tr>
@@ -271,6 +380,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3:SmokeWhite()</a></td>
 		<td class="summary">
 <p>Smoke the POINT_VEC3 White.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ToStringBR">POINT_VEC3:ToStringBR(AngleRadians, Distance)</a></td>
+		<td class="summary">
+<p>Provides a Bearing / Range string</p>
 </td>
 		</tr>
 	</table>
@@ -468,6 +583,24 @@ The reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 				
 <p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
 The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetAltitudeText" >
+<strong>POINT_VEC2:GetAltitudeText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return no text for the altitude of the POINT_VEC2.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Empty string.</p>
 
 </dd>
 </dl>
@@ -701,6 +834,281 @@ ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).Get2DDistance" >
+<strong>POINT_VEC3:Get2DDistance(TargetPointVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the 2D distance in meters between the target POINT<em>VEC3 and the POINT</em>VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
+The target PointVec3.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+Distance The distance in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).Get3DDistance" >
+<strong>POINT_VEC3:Get3DDistance(TargetPointVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the 3D distance in meters between the target POINT<em>VEC3 and the POINT</em>VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
+The target PointVec3.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
+Distance The distance in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetAltitudeText" >
+<strong>POINT_VEC3:GetAltitudeText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the altitude text of the POINT_VEC3.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Altitude text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetBRText" >
+<strong>POINT_VEC3:GetBRText(TargetPointVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a BR string from a POINT<em>VEC3 to the POINT</em>VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
+The target PointVec3.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The BR text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetDirectionRadians" >
+<strong>POINT_VEC3:GetDirectionRadians(DirectionVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> DirectionVec3 </em></code>: 
+The direction vector in Vec3 format.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+DirectionRadians The direction in radians.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetDirectionVec3" >
+<strong>POINT_VEC3:GetDirectionVec3(TargetPointVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a direction vector Vec3 from POINT<em>VEC3 to the POINT</em>VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
+The target PointVec3.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+DirectionVec3 The direction vector in Vec3 format.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetNorthCorrectionRadians" >
+<strong>POINT_VEC3:GetNorthCorrectionRadians()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a correction in radians of the real magnetic north of the POINT_VEC3.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+CorrectionRadians The correction in radians.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetVec3" >
+<strong>POINT_VEC3:GetVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the coordinates of the POINT_VEC3 in Vec3 format.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+The Vec3 coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetX" >
+<strong>POINT_VEC3:GetX()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the x coordinate of the POINT_VEC3.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The x coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetY" >
+<strong>POINT_VEC3:GetY()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the y coordinate of the POINT_VEC3.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The y coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetZ" >
+<strong>POINT_VEC3:GetZ()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the z coordinate of the POINT_VEC3.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The z coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).IsMetric" >
+<strong>POINT_VEC3:IsMetric()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets if the POINT_VEC3 is metric or NM.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Metric true means metric, false means NM.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(POINT_VEC3).Metric" >
+<strong>POINT_VEC3.Metric</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC3).New" >
 <strong>POINT_VEC3:New(x, y, z)</strong>
 </a>
@@ -734,6 +1142,20 @@ The z coordinate of the Vec3 point, pointing to the Right.</p>
 				
 <p><em><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a></em>
+<a id="#(POINT_VEC3).PointVec3" >
+<strong>POINT_VEC3.PointVec3</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -833,6 +1255,28 @@ The route point.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).SetMetric" >
+<strong>POINT_VEC3:SetMetric(Metric)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the POINT_VEC3 metric or NM.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Metric </em></code>: 
+true means metric, false means NM.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC3).Smoke" >
 <strong>POINT_VEC3:Smoke(SmokeColor)</strong>
 </a>
@@ -927,6 +1371,39 @@ The route point.</p>
 <dd>
 	
 <p>Smoke the POINT_VEC3 White.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).ToStringBR" >
+<strong>POINT_VEC3:ToStringBR(AngleRadians, Distance)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a Bearing / Range string</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number AngleRadians </em></code>: 
+The angle in randians</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Distance </em></code>: 
+The distance</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The BR Text</p>
 
 </dd>
 </dl>

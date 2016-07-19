@@ -1,0 +1,1065 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li>DetectionManager</li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>DetectionManager</code></h1>
+   
+<p>This module contains the DETECTION_MANAGER class and derived classes.</p>
+
+   
+
+<hr/>
+
+<h1>1) <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class defines the core functions to report detected objects to groups.
+Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.</p>
+
+<h2>1.1) DETECTION_MANAGER constructor:</h2>
+<p>  * <a href="DetectionManager.html##(DETECTION_MANAGER).New">DetectionManager#DETECTION_MANAGER.New</a>(): Create a new DETECTION_MANAGER instance.</p>
+
+<h2>1.2) DETECTION_MANAGER reporting:</h2>
+<p>Derived DETECTION_MANAGER classes will reports detected units using the method <a href="DetectionManager.html##(DETECTION_MANAGER).ReportDetected">DetectionManager#DETECTION_MANAGER.ReportDetected</a>(). This method implements polymorphic behaviour.</p>
+
+<p>The time interval in seconds of the reporting can be changed using the methods <a href="DetectionManager.html##(DETECTION_MANAGER).SetReportInterval">DetectionManager#DETECTION_MANAGER.SetReportInterval</a>(). 
+To control how long a reporting message is displayed, use <a href="DetectionManager.html##(DETECTION_MANAGER).SetReportDisplayTime">DetectionManager#DETECTION_MANAGER.SetReportDisplayTime</a>().
+Derived classes need to implement the method <a href="DetectionManager.html##(DETECTION_MANAGER).GetReportDisplayTime">DetectionManager#DETECTION_MANAGER.GetReportDisplayTime</a>() to use the correct display time for displayed messages during a report.</p>
+
+<p>Reporting can be started and stopped using the methods <a href="DetectionManager.html##(DETECTION_MANAGER).StartReporting">DetectionManager#DETECTION_MANAGER.StartReporting</a>() and <a href="DetectionManager.html##(DETECTION_MANAGER).StopReporting">DetectionManager#DETECTION_MANAGER.StopReporting</a>() respectively.
+If an ad-hoc report is requested, use the method <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a>().</p>
+
+<p>The default reporting interval is every 60 seconds. The reporting messages are displayed 15 seconds.</p>
+
+<hr/>
+
+<h1>2) <a href="DetectionManager.html##(FAC_REPORTING)">DetectionManager#FAC_REPORTING</a> class, extends <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a></h1>
+<p>The <a href="DetectionManager.html##(FAC_REPORTING)">DetectionManager#FAC_REPORTING</a> class implements detected units reporting. Reporting can be controlled using the reporting methods available in the <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class.</p>
+
+<h2>2.1) FAC_REPORTING constructor:</h2>
+<p>The <a href="DetectionManager.html##(FAC_REPORTING).New">DetectionManager#FAC_REPORTING.New</a>() method creates a new FAC_REPORTING instance.</p>
+
+<hr/>
+
+<h3>Contributions: Mechanic, Prof_Hilactic, FlightControl - Concept &amp; Testing</h3>
+<h3>Author: FlightControl - Framework Design &amp;  Programming</h3>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DETECTION_MANAGER">DETECTION_MANAGER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#FAC_REPORTING">FAC_REPORTING</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_DISPATCHER">TASK_DISPATCHER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(DETECTION_MANAGER)">Type <code>DETECTION_MANAGER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).ClassName">DETECTION_MANAGER.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).Detection">DETECTION_MANAGER.Detection</a></td>
+		<td class="summary">
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).FacScheduler">DETECTION_MANAGER.FacScheduler</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).GetReportDisplayTime">DETECTION_MANAGER:GetReportDisplayTime()</a></td>
+		<td class="summary">
+<p>Get the reporting message display time.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).New">DETECTION_MANAGER:New(SetGroup, Detection)</a></td>
+		<td class="summary">
+<p>FAC constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).ReportDetected">DETECTION_MANAGER:ReportDetected(Detection)</a></td>
+		<td class="summary">
+<p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).Schedule">DETECTION_MANAGER:Schedule(DelayTime, ReportInterval)</a></td>
+		<td class="summary">
+<p>Schedule the FAC reporting.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetGroup">DETECTION_MANAGER.SetGroup</a></td>
+		<td class="summary">
+<p>The groups to which the FAC will report to.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetReportDisplayTime">DETECTION_MANAGER:SetReportDisplayTime(ReportDisplayTime)</a></td>
+		<td class="summary">
+<p>Set the reporting message display time.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetReportInterval">DETECTION_MANAGER:SetReportInterval(ReportInterval)</a></td>
+		<td class="summary">
+<p>Set the reporting time interval.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._FacScheduler">DETECTION_MANAGER:_FacScheduler(SchedulerName)</a></td>
+		<td class="summary">
+<p>Report the detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected within the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>s.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportDisplayTime">DETECTION_MANAGER._ReportDisplayTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportInterval">DETECTION_MANAGER._ReportInterval</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ScheduleDelayTime">DETECTION_MANAGER._ScheduleDelayTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(FAC_REPORTING)">Type <code>FAC_REPORTING</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).ClassName">FAC_REPORTING.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).Detection">FAC_REPORTING.Detection</a></td>
+		<td class="summary">
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).GetDetectedItemsText">FAC_REPORTING:GetDetectedItemsText(DetectedSet)</a></td>
+		<td class="summary">
+<p>Creates a string of the detected items in a <a href="Detection.html">Detection</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).New">FAC_REPORTING:New(SetGroup, Detection)</a></td>
+		<td class="summary">
+<p>FAC_REPORTING constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).ProcessDetected">FAC_REPORTING:ProcessDetected(Group, Detection)</a></td>
+		<td class="summary">
+<p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FAC_REPORTING).SetGroup">FAC_REPORTING.SetGroup</a></td>
+		<td class="summary">
+<p>The groups to which the FAC will report to.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_DISPATCHER)">Type <code>TASK_DISPATCHER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).ClassName">TASK_DISPATCHER.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).CommandCenter">TASK_DISPATCHER.CommandCenter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).Detection">TASK_DISPATCHER.Detection</a></td>
+		<td class="summary">
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).EvaluateTaskCAS">TASK_DISPATCHER:EvaluateTaskCAS(Mission, DetectedArea)</a></td>
+		<td class="summary">
+<p>Creates a CAS task when there are targets for it.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).EvaluateTaskSEAD">TASK_DISPATCHER:EvaluateTaskSEAD(Mission, DetectedArea)</a></td>
+		<td class="summary">
+<p>Creates a SEAD task when there are targets for it.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).GetDetectedItemsText">TASK_DISPATCHER:GetDetectedItemsText(DetectedSet)</a></td>
+		<td class="summary">
+<p>Creates a string of the detected items in a <a href="Detection.html">Detection</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).Mission">TASK_DISPATCHER.Mission</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).New">TASK_DISPATCHER:New(SetGroup, Detection, Mission, CommandCenter)</a></td>
+		<td class="summary">
+<p>TASK_DISPATCHER constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).ProcessDetected">TASK_DISPATCHER:ProcessDetected(Group, Detection, TaskGroup)</a></td>
+		<td class="summary">
+<p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_DISPATCHER).SetGroup">TASK_DISPATCHER.SetGroup</a></td>
+		<td class="summary">
+<p>The groups to which the FAC will report to.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a></em>
+<a id="DETECTION_MANAGER" >
+<strong>DETECTION_MANAGER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(FAC_REPORTING)">#FAC_REPORTING</a></em>
+<a id="FAC_REPORTING" >
+<strong>FAC_REPORTING</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_DISPATCHER)">#TASK_DISPATCHER</a></em>
+<a id="TASK_DISPATCHER" >
+<strong>TASK_DISPATCHER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(DetectionManager)" >Type <code>DetectionManager</code></a></h2>
+	
+			<h2><a id="#(DETECTION_MANAGER)" >Type <code>DETECTION_MANAGER</code></a></h2>
+				
+<p>DETECTION_MANAGER class.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(DETECTION_MANAGER).ClassName" >
+<strong>DETECTION_MANAGER.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></em>
+<a id="#(DETECTION_MANAGER).Detection" >
+<strong>DETECTION_MANAGER.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_MANAGER).FacScheduler" >
+<strong>DETECTION_MANAGER.FacScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).GetReportDisplayTime" >
+<strong>DETECTION_MANAGER:GetReportDisplayTime()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the reporting message display time.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+ReportDisplayTime The display time in seconds when a report needs to be done.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).New" >
+<strong>DETECTION_MANAGER:New(SetGroup, Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FAC constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).ReportDetected" >
+<strong>DETECTION_MANAGER:ReportDetected(Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).Schedule" >
+<strong>DETECTION_MANAGER:Schedule(DelayTime, ReportInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule the FAC reporting.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DelayTime </em></code>: 
+The delay in seconds to wait the reporting.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportInterval </em></code>: 
+The repeat interval in seconds for the reporting to happen repeatedly.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(DETECTION_MANAGER).SetGroup" >
+<strong>DETECTION_MANAGER.SetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The groups to which the FAC will report to.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).SetReportDisplayTime" >
+<strong>DETECTION_MANAGER:SetReportDisplayTime(ReportDisplayTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the reporting message display time.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number ReportDisplayTime </em></code>: 
+The display time in seconds when a report needs to be done.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).SetReportInterval" >
+<strong>DETECTION_MANAGER:SetReportInterval(ReportInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the reporting time interval.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number ReportInterval </em></code>: 
+The interval in seconds when a report needs to be done.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER)._FacScheduler" >
+<strong>DETECTION_MANAGER:_FacScheduler(SchedulerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report the detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected within the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>s.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SchedulerName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_MANAGER)._ReportDisplayTime" >
+<strong>DETECTION_MANAGER._ReportDisplayTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_MANAGER)._ReportInterval" >
+<strong>DETECTION_MANAGER._ReportInterval</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_MANAGER)._ScheduleDelayTime" >
+<strong>DETECTION_MANAGER._ScheduleDelayTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(FAC_REPORTING)" >Type <code>FAC_REPORTING</code></a></h2>
+				
+<p>FAC_REPORTING class.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(FAC_REPORTING).ClassName" >
+<strong>FAC_REPORTING.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></em>
+<a id="#(FAC_REPORTING).Detection" >
+<strong>FAC_REPORTING.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FAC_REPORTING).GetDetectedItemsText" >
+<strong>FAC_REPORTING:GetDetectedItemsText(DetectedSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a string of the detected items in a <a href="Detection.html">Detection</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> DetectedSet </em></code>: 
+The detected Set created by the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FAC_REPORTING).New" >
+<strong>FAC_REPORTING:New(SetGroup, Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FAC_REPORTING constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> Detection </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(FAC_REPORTING)">#FAC_REPORTING</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FAC_REPORTING).ProcessDetected" >
+<strong>FAC_REPORTING:ProcessDetected(Group, Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> Group </em></code>: 
+The <a href="Group.html">Group</a> object to where the report needs to go.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> Detection </em></code>: 
+The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return true if you want the reporting to continue... false will cancel the reporting loop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(FAC_REPORTING).SetGroup" >
+<strong>FAC_REPORTING.SetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The groups to which the FAC will report to.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_DISPATCHER)" >Type <code>TASK_DISPATCHER</code></a></h2>
+				
+<p>TASK_DISPATCHER class.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_DISPATCHER).ClassName" >
+<strong>TASK_DISPATCHER.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
+<a id="#(TASK_DISPATCHER).CommandCenter" >
+<strong>TASK_DISPATCHER.CommandCenter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></em>
+<a id="#(TASK_DISPATCHER).Detection" >
+<strong>TASK_DISPATCHER.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_DISPATCHER).EvaluateTaskCAS" >
+<strong>TASK_DISPATCHER:EvaluateTaskCAS(Mission, DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a CAS task when there are targets for it.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_UNITGROUPS.DetectedArea)">Detection#DETECTION_UNITGROUPS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Message explaining which task was added.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_DISPATCHER).EvaluateTaskSEAD" >
+<strong>TASK_DISPATCHER:EvaluateTaskSEAD(Mission, DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a SEAD task when there are targets for it.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_UNITGROUPS.DetectedArea)">Detection#DETECTION_UNITGROUPS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Message explaining which task was added.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_DISPATCHER).GetDetectedItemsText" >
+<strong>TASK_DISPATCHER:GetDetectedItemsText(DetectedSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a string of the detected items in a <a href="Detection.html">Detection</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> DetectedSet </em></code>: 
+The detected Set created by the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Mission.html##(MISSION)">Mission#MISSION</a></em>
+<a id="#(TASK_DISPATCHER).Mission" >
+<strong>TASK_DISPATCHER.Mission</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_DISPATCHER).New" >
+<strong>TASK_DISPATCHER:New(SetGroup, Detection, Mission, CommandCenter)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>TASK_DISPATCHER constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandCenter </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_DISPATCHER)">#TASK_DISPATCHER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_DISPATCHER).ProcessDetected" >
+<strong>TASK_DISPATCHER:ProcessDetected(Group, Detection, TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> Group </em></code>: 
+The <a href="Group.html">Group</a> object to where the report needs to go.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> Detection </em></code>: 
+The detection created by the <a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> object.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return true if you want the task assigning to continue... false will cancel the loop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(TASK_DISPATCHER).SetGroup" >
+<strong>TASK_DISPATCHER.SetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The groups to which the FAC will report to.</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li>Group</li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -370,15 +380,15 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMinHeight">GROUP:GetMinHeight()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMessage">GROUP:GetMessage(Message, Duration)</a></td>
 		<td class="summary">
-<p>Returns the current minimum height of the group.</p>
+<p>Returns a message for a coalition or a client.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPointVec2">GROUP:GetPointVec2()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMinHeight">GROUP:GetMinHeight()</a></td>
 		<td class="summary">
-<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
+<p>Returns the current minimum height of the group.</p>
 </td>
 		</tr>
 		<tr>
@@ -427,6 +437,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetUnits">GROUP:GetUnits()</a></td>
 		<td class="summary">
 <p>Returns the UNITs wrappers of the DCS Units of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec2">GROUP:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -492,7 +508,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Message">GROUP:Message(Message, Duration)</a></td>
 		<td class="summary">
-<p>Returns a message for a coalition or a client.</p>
+<p>Send a message to the players in the <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -511,6 +527,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).MessageToClient">GROUP:MessageToClient(Message, Duration, Client)</a></td>
 		<td class="summary">
 <p>Send a message to a client.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).MessageToGroup">GROUP:MessageToGroup(Message, Duration, MessageGroup, MsgGroup)</a></td>
+		<td class="summary">
+<p>Send a message to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -966,6 +988,39 @@ Maximum velocity found.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetMessage" >
+<strong>GROUP:GetMessage(Message, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a message for a coalition or a client.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
+The duration of the message.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Message.html##(MESSAGE)">Message#MESSAGE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetMinHeight" >
 <strong>GROUP:GetMinHeight()</strong>
 </a>
@@ -981,24 +1036,6 @@ Maximum velocity found.</p>
 				
 <p><em>#number:</em>
 Minimum height found.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(GROUP).GetPointVec2" >
-<strong>GROUP:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
-Current Vec2 point of the first DCS Unit of the DCS Group.</p>
 
 </dd>
 </dl>
@@ -1158,6 +1195,24 @@ The UNIT wrapper class.</p>
 				
 <p><em>#table:</em>
 The UNITs wrappers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetVec2" >
+<strong>GROUP:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+Current Vec2 point of the first DCS Unit of the DCS Group.</p>
 
 </dd>
 </dl>
@@ -1379,7 +1434,10 @@ true if DCS Group contains Ships.</p>
 </dt>
 <dd>
 	
-<p>Returns a message for a coalition or a client.</p>
+<p>Send a message to the players in the <a href="Group.html">Group</a>.</p>
+
+	
+<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1396,11 +1454,6 @@ The duration of the message.</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Message.html##(MESSAGE)">Message#MESSAGE</a>:</em></p>
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -1497,6 +1550,48 @@ The duration of the message.</p>
 				
 <p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> Client </em></code>: 
 The client object receiving the message.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).MessageToGroup" >
+<strong>GROUP:MessageToGroup(Message, Duration, MessageGroup, MsgGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a message to a <a href="Group.html">Group</a>.</p>
+
+	
+<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
+The duration of the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> MessageGroup </em></code>: 
+The GROUP object receiving the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> MsgGroup </em></code>: </p>
 
 				</li>
 		</ul>

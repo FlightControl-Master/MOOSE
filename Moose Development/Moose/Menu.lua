@@ -301,6 +301,7 @@ do
       missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
     end
   
+    self:T( { "Adding for MenuPath ", MenuText, MenuParentPath } )
     self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, MenuParentPath )
     MenuPath[MenuPathID] = self.MenuPath
   
@@ -395,6 +396,7 @@ do
       missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
     end
     
+    self:T( { "Adding for MenuPath ", MenuText, MenuParentPath } )
     self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, MenuParentPath, CommandMenuFunction, CommandMenuArgument )
     MenuPath[MenuPathID] = self.MenuPath
    
@@ -414,6 +416,7 @@ do
     end
     
     local MenuPath = _MENUGROUPS[self.MenuGroupID]
+
   
     if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
       MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil

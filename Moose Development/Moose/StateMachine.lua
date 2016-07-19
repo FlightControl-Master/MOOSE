@@ -92,7 +92,7 @@ function STATEMACHINE:_create_transition(name)
   self:E( { name = name } )
   return function(self, ...)
     local can, to = self:can(name)
-    self:E( { name, can, to } )
+    self:T( { name, can, to } )
 
     if can then
       local from = self.current
@@ -113,11 +113,12 @@ function STATEMACHINE:_create_transition(name)
         sub.fsm.fsmparent = self
         sub.fsm.returnevents = sub.returnevents
         sub.fsm[sub.event]( sub.fsm )
-        execute = false
+        execute = true
       end
         
       local fsmparent, event = self:_isendstate( to )
       if fsmparent and event then
+        self:E( { "end state: ", fsmparent, event } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
@@ -126,6 +127,7 @@ function STATEMACHINE:_create_transition(name)
       end
 
       if execute then      
+        self:E( { "execute: " .. to, name } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
@@ -161,6 +163,8 @@ function STATEMACHINE:_isendstate( state )
       local to = event and event.map[fromstate] or event.map['*']
       if to and to == state then
         return fsmparent, eventname
+      else
+        self:E( { "could not find parent event name for state", fromstate, to } )
       end
     end
   end
@@ -253,7 +257,7 @@ STATEMACHINE_TASK = {
 --- Creates a new STATEMACHINE_TASK object.
 -- @param #STATEMACHINE_TASK self
 -- @return #STATEMACHINE_TASK
-function STATEMACHINE_TASK:New( Task, options )
+function STATEMACHINE_TASK:New( Task, TaskUnit, options )
 
   local FsmTask = routines.utils.deepCopy( self ) -- Create a new self instance
   local Parent = STATEMACHINE:New(options)
@@ -262,13 +266,18 @@ function STATEMACHINE_TASK:New( Task, options )
   FsmTask.__index = FsmTask
 
   FsmTask["onstatechange"] = Task.OnStateChange
+  FsmTask["onAssigned"] = Task.OnAssigned
+  FsmTask["onSuccess"] = Task.OnSuccess
+  FsmTask["onFailed"] = Task.OnFailed
+  
   FsmTask.Task = Task
+  FsmTask.TaskUnit = TaskUnit
 
   return FsmTask
 end
 
 function STATEMACHINE_TASK:_call_handler( handler, params )
   if handler then
-    return handler( self.Task, unpack( params ) )
+    return handler( self.Task, self.TaskUnit, unpack( params ) )
   end
 end

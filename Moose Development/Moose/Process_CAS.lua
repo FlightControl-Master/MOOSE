@@ -28,7 +28,7 @@ function PROCESS_CAS:New( Task, ProcessUnit, TargetSetUnit )
   self.Fsm = STATEMACHINE_PROCESS:New( self, {
     initial = 'Assigned',
     events = {
-      { name = 'Await', from = 'Assigned', to = 'Waiting'    },
+      { name = 'Start', from = 'Assigned', to = 'Waiting'    },
       { name = 'HitTarget',  from = 'Waiting',    to = 'Destroy' },
       { name = 'MoreTargets', from = 'Destroy', to = 'Waiting'  },
       { name = 'Destroyed', from = 'Destroy', to = 'Success' },      
@@ -37,7 +37,7 @@ function PROCESS_CAS:New( Task, ProcessUnit, TargetSetUnit )
       { name = 'Fail', from = 'Destroy', to = 'Failed' },
     },
     callbacks = {
-      onAwait =  self.OnAwait,
+      onStart =  self.OnStart,
       onHitTarget =  self.OnHitTarget,
       onMoreTargets = self.OnMoreTargets,
       onDestroyed = self.OnDestroyed,
@@ -60,10 +60,10 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_CAS:OnAwait( Fsm, Event, From, To )
+function PROCESS_CAS:OnStart( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName} )
 
-  self:NextEvent( Fsm.Await )
+  self:NextEvent( Fsm.Start )
 end
 
 --- StateMachine callback function for a PROCESS
@@ -134,7 +134,8 @@ end
 -- @param Event#EVENTDATA Event
 function PROCESS_CAS:EventDead( Event )
 
-  if Event.IniUnit then
+  if Event.IniDCSUnit then
+    self.TargetSetUnit:Remove( Event.IniDCSUnitName )
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
 end

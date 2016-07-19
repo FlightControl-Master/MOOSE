@@ -49,7 +49,7 @@
 -- -----------------------------
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
--- If you want to obtain the complete **3D position** including oriëntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- If you want to obtain the complete **3D position** including oriï¿½ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- 1.5) Test if alive
 -- ------------------
@@ -352,9 +352,31 @@ function UNIT:HasSensors( ... )
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-    self:E( arg )
     local HasSensors = DCSUnit:hasSensors( unpack( arg ) )
     return HasSensors
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is SEADable.
+-- @param Unit#UNIT self
+-- @return #boolean returns true if the unit is SEADable. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:HasSEAD()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitSEADAttributes = DCSUnit:getDesc().attributes
+    
+    local HasSEAD = false
+    if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
+       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true then
+       HasSEAD = true
+    end
+    return HasSEAD
   end
   
   return nil
@@ -432,7 +454,47 @@ function UNIT:GetLife0()
   return nil
 end
 
+--- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
+-- The following threat levels are foreseen:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  4: Unit is a tank.
+--   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  8: Unit is a Short Range SAM, radar guided.
+--   * Threat level  9: Unit is a Medium Range SAM, radar guided.
+--   * Threat level 10: Unit is a Long Range SAM, radar guided.
+function UNIT:GetThreatLevel()
 
+  local Attributes = self:GetDesc().attributes
+  local ThreatLevel = 0
+  
+  self:T2( Attributes )
+  
+  if     Attributes["LR SAM"]                                   then ThreatLevel = 10
+  elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
+  elseif Attributes["SR SAM"] and
+         not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
+  elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
+         Attributes["IR Guided SAM"]                            then ThreatLevel = 7
+  elseif Attributes["AAA"]                                      then ThreatLevel = 6
+  elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
+  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+         Attributes["ATGM"]                                     then ThreatLevel = 4
+  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+         not Attributes["ATGM"]                                 then ThreatLevel = 3
+  elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
+  elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+  end
+
+  self:T2( ThreatLevel )
+  return ThreatLevel
+
+end
 
 
 -- Is functions
@@ -449,9 +511,9 @@ function UNIT:IsInZone( Zone )
   
     self:T( { IsInZone } )
     return IsInZone 
-  else
-    return false
   end
+  
+  return false
 end
 
 --- Returns true if the unit is not within a @{Zone}.
@@ -533,14 +595,22 @@ end
 -- @param #UNIT self
 function UNIT:FlareRed()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Red, 0 )
+  local Vec3 = self:GetPointVec3()
+  if Vec3 then
+    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
+  end
 end
 
 --- Smoke the UNIT.
 -- @param #UNIT self
-function UNIT:Smoke( SmokeColor )
+function UNIT:Smoke( SmokeColor, Range )
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), SmokeColor )
+  if Range then
+    trigger.action.smoke( self:GetRandomPointVec3( Range ), SmokeColor )
+  else
+    trigger.action.smoke( self:GetPointVec3(), SmokeColor )
+  end
+  
 end
 
 --- Smoke the UNIT Green.
@@ -619,6 +689,27 @@ function UNIT:IsGround()
   
     self:T3( IsGroundResult )
     return IsGroundResult
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is a friendly unit.
+-- @param #UNIT self
+-- @return #boolean IsFriendly evaluation result.
+function UNIT:IsFriendly( FriendlyCoalition )
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitCoalition = DCSUnit:getCoalition()
+    self:T3( { UnitCoalition, FriendlyCoalition } )
+    
+    local IsFriendlyResult = ( UnitCoalition == FriendlyCoalition )
+  
+    self:E( IsFriendlyResult )
+    return IsFriendlyResult
   end
   
   return nil

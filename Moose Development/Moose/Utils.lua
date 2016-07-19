@@ -1,4 +1,21 @@
 
+--- @type SMOKECOLOR
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Orange
+-- @field Blue
+ 
+SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
+
+--- @type FLARECOLOR
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Yellow
+
+FLARECOLOR = trigger.flareColor -- #FLARECOLOR
+
 --- Utilities static class.
 -- @type UTILS
 UTILS = {}
@@ -155,6 +172,95 @@ end
 
 UTILS.KmphToMps = function(kmph)
   return kmph/3.6
+end
+
+--[[acc:
+in DM: decimal point of minutes.
+In DMS: decimal point of seconds.
+position after the decimal of the least significant digit:
+So:
+42.32 - acc of 2.
+]]
+UTILS.tostringLL = function( lat, lon, acc, DMS)
+
+  local latHemi, lonHemi
+  if lat > 0 then
+    latHemi = 'N'
+  else
+    latHemi = 'S'
+  end
+
+  if lon > 0 then
+    lonHemi = 'E'
+  else
+    lonHemi = 'W'
+  end
+
+  lat = math.abs(lat)
+  lon = math.abs(lon)
+
+  local latDeg = math.floor(lat)
+  local latMin = (lat - latDeg)*60
+
+  local lonDeg = math.floor(lon)
+  local lonMin = (lon - lonDeg)*60
+
+  if DMS then  -- degrees, minutes, and seconds.
+    local oldLatMin = latMin
+    latMin = math.floor(latMin)
+    local latSec = UTILS.Round((oldLatMin - latMin)*60, acc)
+
+    local oldLonMin = lonMin
+    lonMin = math.floor(lonMin)
+    local lonSec = UTILS.Round((oldLonMin - lonMin)*60, acc)
+
+    if latSec == 60 then
+      latSec = 0
+      latMin = latMin + 1
+    end
+
+    if lonSec == 60 then
+      lonSec = 0
+      lonMin = lonMin + 1
+    end
+
+    local secFrmtStr -- create the formatting string for the seconds place
+    if acc <= 0 then  -- no decimal place.
+      secFrmtStr = '%02d'
+    else
+      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+    end
+
+    return string.format('%02d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
+           .. string.format('%02d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+
+  else  -- degrees, decimal minutes.
+    latMin = UTILS.Round(latMin, acc)
+    lonMin = UTILS.Round(lonMin, acc)
+
+    if latMin == 60 then
+      latMin = 0
+      latDeg = latDeg + 1
+    end
+
+    if lonMin == 60 then
+      lonMin = 0
+      lonDeg = lonDeg + 1
+    end
+
+    local minFrmtStr -- create the formatting string for the minutes place
+    if acc <= 0 then  -- no decimal place.
+      minFrmtStr = '%02d'
+    else
+      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+      minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+    end
+
+    return string.format('%02d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+     .. string.format('%02d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+
+  end
 end
 
 

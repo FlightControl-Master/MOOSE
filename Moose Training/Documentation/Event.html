@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li>Event</li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -242,6 +252,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandForUnit">EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>LAND event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDead">EVENT:OnPilotDead(EventFunction, EventSelf)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
 </td>
 		</tr>
 		<tr>
@@ -1265,6 +1281,38 @@ The function to be called when the event occurs for the unit.</p>
 				
 <p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
 The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPilotDead" >
+<strong>EVENT:OnPilotDead(EventFunction, EventSelf)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
 
 				</li>
 		</ul>

@@ -44,16 +44,22 @@ Include.File( "MissileTrainer" )
 Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
+
 Include.File( "Detection" )
 Include.File( "DetectionManager" )
+
 Include.File( "StateMachine" )
+
 Include.File( "Process" )
 Include.File( "Process_Assign" )
 Include.File( "Process_Route" )
-Include.File( "Process_SEAD" )
+Include.File( "Process_Smoke" )
+Include.File( "Process_Destroy" )
+
 Include.File( "Task" )
-Include.File( "Task_CAS" )
 Include.File( "Task_SEAD" )
+Include.File( "Task_CAS" )
+Include.File( "Task_BAI" )
 
 -- The order of the declarations is important here. Don't touch it.
 

@@ -308,7 +308,7 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:F2( ObjectName )
+  self:E( ObjectName )
 
   local t = self.Set[ObjectName]
 
@@ -339,6 +339,8 @@ function SET_BASE:Remove( ObjectName )
     self.Set[ObjectName] = nil
   end
   
+  self:Flush()
+  
 end
 
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
@@ -348,6 +350,8 @@ function SET_BASE:Count()
 
   return self.List.Count
 end
+
+
 
 --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
 -- @param #SET_BASE self
@@ -380,6 +384,20 @@ function SET_BASE:SetIteratorIntervals( YieldInterval, TimeInterval )
 end
 
 
+--- Filters for the defined collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterOnce()
+
+  for ObjectName, Object in pairs( self.Database ) do
+
+    if self:IsIncludeObject( Object ) then
+      self:Add( ObjectName, Object )
+    end
+  end
+  
+  return self
+end
 
 --- Starts the filtering for the defined collection.
 -- @param #SET_BASE self
@@ -399,9 +417,21 @@ function SET_BASE:_FilterStart()
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
   
   -- Follow alive players and clients
---  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
---  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
+  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
   
+  
+  return self
+end
+
+--- Stops the filtering for the defined collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterStop()
+
+  _EVENTDISPATCHER:OnBirthRemove( self )
+  _EVENTDISPATCHER:OnDeadRemove( self )
+  _EVENTDISPATCHER:OnCrashRemove( self )
   
   return self
 end
@@ -469,6 +499,7 @@ function SET_BASE:_EventOnBirth( Event )
     self:T3( ObjectName, Object )
     if self:IsIncludeObject( Object ) then
       self:Add( ObjectName, Object )
+      self:Flush()
       --self:_EventOnPlayerEnterUnit( Event )
     end
   end
@@ -478,49 +509,59 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:E( { Event } )
+  self:Flush()
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    if ObjectName and Object then
+    self:E({ObjectName, Object})
+    if ObjectName and Object ~= nil then
       self:Remove( ObjectName )
     end
   end
 end
 
------ Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
----- @param #SET_BASE self
----- @param Event#EVENTDATA Event
---function SET_BASE:_EventOnPlayerEnterUnit( Event )
---  self:F3( { Event } )
---
---  if Event.IniDCSUnit then
---    if self:IsIncludeObject( Event.IniDCSUnit ) then
---      if not self.PlayersAlive[Event.IniDCSUnitName] then
---        self:E( { "Add player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
---        self.PlayersAlive[Event.IniDCSUnitName] = Event.IniDCSUnit:getPlayerName()
---        self.ClientsAlive[Event.IniDCSUnitName] = _DATABASE.Clients[ Event.IniDCSUnitName ]
---      end
---    end
---  end
---end
---
------ Handles the OnPlayerLeaveUnit event to clean the active players table.
----- @param #SET_BASE self
----- @param Event#EVENTDATA Event
---function SET_BASE:_EventOnPlayerLeaveUnit( Event )
---  self:F3( { Event } )
---
---  if Event.IniDCSUnit then
---    if self:IsIncludeObject( Event.IniDCSUnit ) then
---      if self.PlayersAlive[Event.IniDCSUnitName] then
---        self:E( { "Cleaning player for unit:", Event.IniDCSUnitName, Event.IniDCSUnit:getPlayerName() } )
---        self.PlayersAlive[Event.IniDCSUnitName] = nil
---        self.ClientsAlive[Event.IniDCSUnitName] = nil
---      end
---    end
---  end
---end
+--- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
+-- @param #SET_BASE self
+-- @param Event#EVENTDATA Event
+function SET_BASE:_EventOnPlayerEnterUnit( Event )
+  self:F3( { Event } )
+
+  if Event.IniDCSUnit then
+    local ObjectName, Object = self:AddInDatabase( Event )
+    self:T3( ObjectName, Object )
+    if self:IsIncludeObject( Object ) then
+      self:Add( ObjectName, Object )
+      --self:_EventOnPlayerEnterUnit( Event )
+    end
+  end
+end
+
+--- Handles the OnPlayerLeaveUnit event to clean the active players table.
+-- @param #SET_BASE self
+-- @param Event#EVENTDATA Event
+function SET_BASE:_EventOnPlayerLeaveUnit( Event )
+  self:F3( { Event } )
+
+  local ObjectName = Event.IniDCSUnit
+  if Event.IniDCSUnit then
+    if Event.IniDCSGroup then
+      local GroupUnits = Event.IniDCSGroup:getUnits()
+      local PlayerCount = 0
+      for _, DCSUnit in pairs( GroupUnits ) do
+        if DCSUnit ~= Event.IniDCSUnit then
+          if DCSUnit:getPlayer() ~= nil then
+            PlayerCount = PlayerCount + 1
+          end
+        end
+      end
+      self:E(PlayerCount)
+      if PlayerCount == 0 then
+        self:Remove( Event.IniDCSGroupName )
+      end
+    end
+  end
+end
 
 -- Iterators
 
@@ -812,6 +853,8 @@ function SET_GROUP:FilterStart()
     self:_FilterStart()
   end
   
+  
+  
   return self
 end
 
@@ -1046,10 +1089,6 @@ function SET_UNIT:New()
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) )
 
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-
   return self
 end
 
@@ -1221,6 +1260,15 @@ function SET_UNIT:FilterHasRadar( RadarTypes )
   return self
 end
 
+--- Builds a set of SEADable units.
+-- @param #SET_UNIT self
+-- @return #SET_UNIT self
+function SET_UNIT:FilterHasSEAD()
+
+  self.Filter.SEAD = true
+  return self
+end
+
 
 
 --- Starts the filtering.
@@ -1259,9 +1307,10 @@ end
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:FindInDatabase( Event )
-  self:F3( { Event } )
+  self:E( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
 
-  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+
+  return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
 end
 
 --- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
@@ -1320,6 +1369,38 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
+--- Returns a comma separated string of the unit types with a count in the  @{Set}.
+-- @param #SET_UNIT self
+-- @return #string The unit types string
+function SET_UNIT:GetUnitTypesText()
+  self:F2()
+
+  local MT = {} -- Message Text
+  local UnitTypes = {}
+  
+  self:Flush()
+
+  for UnitID, UnitData in pairs( self:GetSet() ) do
+    local TextUnit = UnitData -- Unit#UNIT
+    if TextUnit:IsAlive() then
+      local UnitType = TextUnit:GetTypeName()
+  
+      if not UnitTypes[UnitType] then
+        UnitTypes[UnitType] = 1
+      else
+        UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+      end
+    end
+  end
+
+  for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+  end
+
+  return table.concat( MT, ", " )
+end
+
+
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self
 -- @param DCSUnit#Unit.RadarType RadarType
@@ -1336,7 +1417,7 @@ function SET_UNIT:HasRadar( RadarType )
     else
       HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR )
     end
-    self:E(HasSensors)
+    self:T3(HasSensors)
     if HasSensors then
       RadarCount = RadarCount + 1
     end
@@ -1345,6 +1426,29 @@ function SET_UNIT:HasRadar( RadarType )
   return RadarCount
 end
 
+--- Returns if the @{Set} has targets that can be SEADed.
+-- @param #SET_UNIT self
+-- @return #number The amount of SEADable units in the Set
+function SET_UNIT:HasSEAD()
+  self:F2()
+
+  local SEADCount = 0
+  for UnitID, UnitData in pairs( self:GetSet()) do
+    local UnitSEAD = UnitData -- Unit#UNIT
+    if UnitSEAD:IsAlive() then
+      local UnitSEADAttributes = UnitSEAD:GetDesc().attributes
+  
+      local HasSEAD = UnitSEAD:HasSEAD()
+         
+      self:T3(HasSEAD)
+      if HasSEAD then
+        SEADCount = SEADCount + 1
+      end
+    end
+  end
+
+  return SEADCount
+end
 
 --- Returns if the @{Set} has ground targets.
 -- @param #SET_UNIT self
@@ -1361,6 +1465,23 @@ function SET_UNIT:HasGroundUnits()
   end
 
   return GroundUnitCount
+end
+
+--- Returns if the @{Set} has friendly ground units.
+-- @param #SET_UNIT self
+-- @return #number The amount of ground targets in the Set.
+function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
+  self:F2()
+
+  local FriendlyUnitCount = 0
+  for UnitID, UnitData in pairs( self:GetSet()) do
+    local UnitTest = UnitData -- Unit#UNIT
+    if UnitTest:IsFriendly( FriendlyCoalition ) then
+      FriendlyUnitCount = FriendlyUnitCount + 1
+    end
+  end
+
+  return FriendlyUnitCount
 end
 
 
@@ -1457,15 +1578,24 @@ function SET_UNIT:IsIncludeObject( MUnit )
   if self.Filter.RadarTypes then
     local MUnitRadar = false
     for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
-      self:E( { "Radar:", RadarType } )
+      self:T3( { "Radar:", RadarType } )
       if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
         if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
-          self:E( "RADAR Found" )
+          self:T3( "RADAR Found" )
         end
         MUnitRadar = true
       end
     end
     MUnitInclude = MUnitInclude and MUnitRadar
+  end
+
+  if self.Filter.SEAD then
+    local MUnitSEAD = false
+    if MUnit:HasSEAD() == true then
+      self:T3( "SEAD Found" )
+      MUnitSEAD = true
+    end
+    MUnitInclude = MUnitInclude and MUnitSEAD
   end
 
   self:T2( MUnitInclude )

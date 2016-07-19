@@ -307,9 +307,11 @@ function ZONE_RADIUS:IsPointVec2InZone( Vec2 )
   self:F2( Vec2 )
   
   local ZoneVec2 = self:GetVec2()
-
-  if (( Vec2.x - ZoneVec2.x )^2 + ( Vec2.y - ZoneVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
-    return true
+  
+  if ZoneVec2 then
+    if (( Vec2.x - ZoneVec2.x )^2 + ( Vec2.y - ZoneVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
+      return true
+    end
   end
   
   return false
@@ -396,6 +398,7 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
   self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
   self.ZoneUNIT = ZoneUNIT
+  self.LastVec2 = ZoneUNIT:GetVec2()
   
   return self
 end
@@ -408,10 +411,16 @@ function ZONE_UNIT:GetVec2()
   self:F( self.ZoneName )
   
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
+  if ZoneVec2 then
+    self.LastVec2 = ZoneVec2
+    return ZoneVec2
+  else
+    return self.LastVec2
+  end
 
   self:T( { ZoneVec2 } )
-  
-  return ZoneVec2
+
+  return nil  
 end
 
 --- Returns a random location within the zone.
@@ -422,6 +431,9 @@ function ZONE_UNIT:GetRandomVec2()
 
   local Point = {}
   local PointVec2 = self.ZoneUNIT:GetPointVec2()
+  if not PointVec2 then
+    PointVec2 = self.LastVec2
+  end
 
   local angle = math.random() * math.pi*2;
   Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
@@ -430,6 +442,24 @@ function ZONE_UNIT:GetRandomVec2()
   self:T( { Point } )
   
   return Point
+end
+
+--- Returns the point of the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCSTypes#Vec3 The point of the zone.
+function ZONE_UNIT:GetPointVec3( Height )
+  self:F2( self.ZoneName )
+  
+  Height = Height or 0
+  
+  local Vec2 = self:GetVec2()
+
+  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+
+  self:T2( { PointVec3 } )
+  
+  return PointVec3  
 end
 
 --- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.

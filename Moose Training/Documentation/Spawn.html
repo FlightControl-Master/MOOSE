@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li>Spawn</li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -174,6 +184,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 			<h2><a id="#(SPAWN)">Type <code>SPAWN</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).AliveUnits">SPAWN.AliveUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Array">SPAWN:Array(SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY)</a></td>
 		<td class="summary">
 <p>Makes the groups visible before start (like a batallion).</p>
@@ -249,6 +265,18 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).Limit">SPAWN:Limit(SpawnMaxUnitsAlive, SpawnMaxGroups)</a></td>
 		<td class="summary">
 <p>Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).MaxAliveGroups">SPAWN.MaxAliveGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).MaxAliveUnits">SPAWN.MaxAliveUnits</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -357,6 +385,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a Group within a given <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnIndex">SPAWN.SpawnIndex</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -494,7 +528,7 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetPrefixFromDCSUnit">SPAWN:_GetPrefixFromDCSUnit(DCSUnit)</a></td>
 		<td class="summary">
-<p>Return the prefix of a DCSUnit.</p>
+<p>Return the prefix of a SpawnUnit.</p>
 </td>
 		</tr>
 		<tr>
@@ -516,15 +550,15 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnBirth">SPAWN:_OnBirth(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnBirth">SPAWN:_OnBirth(Event)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnDeadOrCrash">SPAWN:_OnDeadOrCrash(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnDeadOrCrash">SPAWN:_OnDeadOrCrash(Event)</a></td>
 		<td class="summary">
-<p>Obscolete</p>
+
 </td>
 		</tr>
 		<tr>
@@ -605,6 +639,20 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 <p>SPAWN Class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SPAWN).AliveUnits" >
+<strong>SPAWN.AliveUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -974,6 +1022,34 @@ self</p>
 -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
 -- There will be maximum 24 groups spawned during the whole mission lifetime. 
 Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SPAWN).MaxAliveGroups" >
+<strong>SPAWN.MaxAliveGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SPAWN).MaxAliveUnits" >
+<strong>SPAWN.MaxAliveUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1496,6 +1572,20 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
+<a id="#(SPAWN).SpawnIndex" >
+<strong>SPAWN.SpawnIndex</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
@@ -1860,10 +1950,26 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> DCSUnit </em></code>: </p>
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: 
+The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
 		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+The Group</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing found</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1885,8 +1991,8 @@ It will return nil of no prefix was found.</p>
 		<ul>
 				<li>
 				
-<p><code><em> DCSUnit </em></code>: 
-The DCS unit to be searched.</p>
+<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: 
+The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
 		</ul>
@@ -1929,7 +2035,7 @@ Nothing found</p>
 </dt>
 <dd>
 	
-<p>Return the prefix of a DCSUnit.</p>
+<p>Return the prefix of a SpawnUnit.</p>
 
 	
 <p>The method will search for a #-mark, and will return the text before the #-mark.
@@ -1939,8 +2045,8 @@ It will return nil of no prefix was found.</p>
 		<ul>
 				<li>
 				
-<p><code><em> DCSUnit </em></code>: 
-The DCS unit to be searched.</p>
+<p><code><em><a href="DCSUnit.html##(UNIT)">DCSUnit#UNIT</a> DCSUnit </em></code>: 
+The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
 		</ul>
@@ -2039,21 +2145,18 @@ Nothing found</p>
 <dt>
 
 <a id="#(SPAWN)._OnBirth" >
-<strong>SPAWN:_OnBirth(event)</strong>
+<strong>SPAWN:_OnBirth(Event)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-	
-<p> TODO Need to delete this... _DATABASE does this now ...</p>
-
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2063,18 +2166,18 @@ Nothing found</p>
 <dt>
 
 <a id="#(SPAWN)._OnDeadOrCrash" >
-<strong>SPAWN:_OnDeadOrCrash(event)</strong>
+<strong>SPAWN:_OnDeadOrCrash(Event)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Obscolete</p>
+
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
 
 				</li>
 		</ul>

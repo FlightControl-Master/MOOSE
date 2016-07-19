@@ -1,34 +1,34 @@
---- @module Process_SEAD
+--- @module Process_BAI
 
---- PROCESS_SEAD class
--- @type PROCESS_SEAD
+--- PROCESS_BAI class
+-- @type PROCESS_BAI
 -- @field Unit#UNIT ProcessUnit
 -- @field Set#SET_UNIT TargetSetUnit
 -- @extends Process#PROCESS
-PROCESS_SEAD = { 
-  ClassName = "PROCESS_SEAD",
+PROCESS_BAI = { 
+  ClassName = "PROCESS_BAI",
   Fsm = {},
   TargetSetUnit = nil,
 }
 
 
---- Creates a new SEAD task.
--- @param #PROCESS_SEAD self
+--- Creates a new BAI task.
+-- @param #PROCESS_BAI self
 -- @param Task#TASK Task
 -- @param Unit#UNIT ProcessUnit
 -- @param Set#SET_UNIT TargetSetUnit
--- @return #PROCESS_SEAD self
-function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
+-- @return #PROCESS_BAI self
+function PROCESS_BAI:New( Task, ProcessUnit, TargetSetUnit )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, PROCESS:New( "SEAD", Task, ProcessUnit ) ) -- #PROCESS_SEAD
+  local self = BASE:Inherit( self, PROCESS:New( "BAI", Task, ProcessUnit ) ) -- #PROCESS_BAI
   
   self.TargetSetUnit = TargetSetUnit
 
   self.Fsm = STATEMACHINE_PROCESS:New( self, {
     initial = 'Assigned',
     events = {
-      { name = 'Await', from = 'Assigned', to = 'Waiting'    },
+      { name = 'Start', from = 'Assigned', to = 'Waiting'    },
       { name = 'HitTarget',  from = 'Waiting',    to = 'Destroy' },
       { name = 'MoreTargets', from = 'Destroy', to = 'Waiting'  },
       { name = 'Destroyed', from = 'Destroy', to = 'Success' },      
@@ -37,7 +37,7 @@ function PROCESS_SEAD:New( Task, ProcessUnit, TargetSetUnit )
       { name = 'Fail', from = 'Destroy', to = 'Failed' },
     },
     callbacks = {
-      onAwait =  self.OnAwait,
+      onStart =  self.OnStart,
       onHitTarget =  self.OnHitTarget,
       onMoreTargets = self.OnMoreTargets,
       onDestroyed = self.OnDestroyed,
@@ -55,28 +55,26 @@ end
 --- Process Events
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_SEAD:OnAwait( Fsm, Event, From, To )
+function PROCESS_BAI:OnStart( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName} )
 
-  self:NextEvent( Fsm.Await )
+  self:NextEvent( Fsm.Start )
 end
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function PROCESS_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
+function PROCESS_BAI:OnHitTarget( Fsm, Event, From, To, Event )
 
-  MESSAGE:New( "TargetCount = " .. self.TargetSetUnit:Count(), 15 ):ToAll()
-  self.TargetSetUnit:Flush()
   if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
   else
@@ -85,58 +83,59 @@ function PROCESS_SEAD:OnHitTarget( Fsm, Event, From, To, Event )
 end
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_SEAD:OnMoreTargets( Fsm, Event, From, To )
+function PROCESS_BAI:OnMoreTargets( Fsm, Event, From, To )
 
 
 end
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA DCSEvent
-function PROCESS_SEAD:OnKilled( Fsm, Event, From, To )
+function PROCESS_BAI:OnKilled( Fsm, Event, From, To )
 
   self:NextEvent( Fsm.Restart )
 
 end
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_SEAD:OnRestart( Fsm, Event, From, To )
+function PROCESS_BAI:OnRestart( Fsm, Event, From, To )
 
   self:NextEvent( Fsm.Menu )
 
 end
 
 --- StateMachine callback function for a PROCESS
--- @param #PROCESS_SEAD self
+-- @param #PROCESS_BAI self
 -- @param StateMachine#STATEMACHINE_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_SEAD:OnDestroyed( Fsm, Event, From, To )
+function PROCESS_BAI:OnDestroyed( Fsm, Event, From, To )
 
 end
 
 --- DCS Events
 
---- @param #PROCESS_SEAD self
+--- @param #PROCESS_BAI self
 -- @param Event#EVENTDATA Event
-function PROCESS_SEAD:EventDead( Event )
+function PROCESS_BAI:EventDead( Event )
 
-  if Event.IniUnit then
+  if Event.IniDCSUnit then
+    self.TargetSetUnit:Remove( Event.IniDCSUnitName )
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
 end

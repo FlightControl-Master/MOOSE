@@ -960,7 +960,9 @@ function GROUP:MessageToGroup( Message, Duration, MsgGroup )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:GetMessage( Message, Duration ):ToGroup( MsgGroup )
+    if DCSGroup:isExist() then
+      self:GetMessage( Message, Duration ):ToGroup( MsgGroup )
+    end
   end
 
   return nil

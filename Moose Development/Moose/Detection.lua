@@ -34,16 +34,16 @@
 -- 
 -- ===
 -- 
--- 2) @{Detection#DETECTION_UNITGROUPS} class, extends @{Detection#DETECTION_BASE}
+-- 2) @{Detection#DETECTION_AREAS} class, extends @{Detection#DETECTION_BASE}
 -- ===============================================================================
--- The @{Detection#DETECTION_UNITGROUPS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
+-- The @{Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
 -- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
 -- The class is group the detected units within zones given a DetectedZoneRange parameter.
 -- A set with multiple detected zones will be created as there are groups of units detected.
 -- 
 -- 2.1) Retrieve the Detected Unit sets and Detected Zones
 -- -------------------------------------------------------
--- The DetectedUnitSets methods are implemented in @{Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Detection#DETECTION_UNITGROUPS}.
+-- The DetectedUnitSets methods are implemented in @{Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Detection#DETECTION_AREAS}.
 -- 
 -- Retrieve the DetectedUnitSets with the method @{Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Set#SET_UNIT}s.
 -- To understand the amount of sets created, use the method @{Detection#DETECTION_BASE.GetDetectedSetCount}(). 
@@ -55,33 +55,36 @@
 -- 
 -- 1.4) Flare or Smoke detected units
 -- ----------------------------------
--- Use the methods @{Detection#DETECTION_UNITGROUPS.FlareDetectedUnits}() or @{Detection#DETECTION_UNITGROUPS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
 -- 
 -- 1.5) Flare or Smoke detected zones
 -- ----------------------------------
--- Use the methods @{Detection#DETECTION_UNITGROUPS.FlareDetectedZones}() or @{Detection#DETECTION_UNITGROUPS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
 -- 
 -- ===
 -- 
+-- ### Contributions: Mechanic - Concept & Testing
+-- ### Authors: FlightControl : Design & Programming
+-- 
 -- @module Detection
--- @author Mechanic : Concept & Testing
--- @author FlightControl : Design & Programming
 
 
 
 --- DETECTION_BASE class
 -- @type DETECTION_BASE
--- @field Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
+-- @field Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
 -- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
+-- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
 -- @field #number DetectionRun
 -- @extends Base#BASE
 DETECTION_BASE = {
   ClassName = "DETECTION_BASE",
-  DetectionGroups = nil,
+  DetectionSetGroup = nil,
   DetectionRange = nil,
   DetectedObjects = {},
   DetectionRun = 0,
+  DetectedObjectsIdentified = {},
 }
 
 --- @type DETECTION_BASE.DetectedObjects
@@ -96,15 +99,15 @@ DETECTION_BASE = {
 
 --- DETECTION constructor.
 -- @param #DETECTION_BASE self
--- @param Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
+-- @param Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
 -- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @return #DETECTION_BASE self
-function DETECTION_BASE:New( DetectionGroups, DetectionRange )
+function DETECTION_BASE:New( DetectionSetGroup, DetectionRange )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
-  self.DetectionGroups = DetectionGroups
+  self.DetectionSetGroup = DetectionSetGroup
   self.DetectionRange = DetectionRange
   
   self:InitDetectVisual( false )
@@ -176,16 +179,62 @@ function DETECTION_BASE:InitDetectDLINK( DetectDLINK )
   self.DetectDLINK = DetectDLINK
 end
 
+--- Determines if a detected object has already been identified during detection processing.
+-- @param #DETECTION_BASE self
+-- @param #DETECTION_BASE.DetectedObject DetectedObject
+-- @return #boolean true if already identified.
+function DETECTION_BASE:IsDetectedObjectIdentified( DetectedObject )
+  self:F3( DetectedObject.Name )
+
+  local DetectedObjectName = DetectedObject.Name
+  local DetectedObjectIdentified = self.DetectedObjectsIdentified[DetectedObjectName] == true
+  self:T3( DetectedObjectIdentified )
+  return DetectedObjectIdentified
+end
+
+--- Identifies a detected object during detection processing.
+-- @param #DETECTION_BASE self
+-- @param #DETECTION_BASE.DetectedObject DetectedObject
+function DETECTION_BASE:IdentifyDetectedObject( DetectedObject )
+  self:F( DetectedObject.Name )
+
+  local DetectedObjectName = DetectedObject.Name
+  self.DetectedObjectsIdentified[DetectedObjectName] = true
+end
+
+--- UnIdentify a detected object during detection processing.
+-- @param #DETECTION_BASE self
+-- @param #DETECTION_BASE.DetectedObject DetectedObject
+function DETECTION_BASE:UnIdentifyDetectedObject( DetectedObject )
+
+  local DetectedObjectName = DetectedObject.Name
+  self.DetectedObjectsIdentified[DetectedObjectName] = false
+end
+
+--- UnIdentify all detected objects during detection processing.
+-- @param #DETECTION_BASE self
+function DETECTION_BASE:UnIdentifyAllDetectedObjects()
+
+  self.DetectedObjectsIdentified = {} -- Table will be garbage collected.
+end
+
 --- Gets a detected object with a given name.
 -- @param #DETECTION_BASE self
 -- @param #string ObjectName
 -- @return #DETECTION_BASE.DetectedObject
 function DETECTION_BASE:GetDetectedObject( ObjectName )
-	self:F( ObjectName )
+	self:F3( ObjectName )
   
   if ObjectName then
     local DetectedObject = self.DetectedObjects[ObjectName]
-    return DetectedObject
+
+    -- Only return detected objects that are alive!
+    local DetectedUnit = UNIT:FindByName( ObjectName )
+    if DetectedUnit and DetectedUnit:IsAlive() then
+      if self:IsDetectedObjectIdentified( DetectedObject ) == false then
+        return DetectedObject
+      end
+    end
   end
   
   return nil
@@ -226,10 +275,10 @@ end
 --- Get the detection Groups.
 -- @param #DETECTION_BASE self
 -- @return Group#GROUP
-function DETECTION_BASE:GetDetectionGroups()
+function DETECTION_BASE:GetDetectionSetGroup()
 
-  local DetectionGroups = self.DetectionGroups
-  return DetectionGroups
+  local DetectionSetGroup = self.DetectionSetGroup
+  return DetectionSetGroup
 end
 
 --- Make a DetectionSet table. This function will be overridden in the derived clsses.
@@ -241,6 +290,7 @@ function DETECTION_BASE:CreateDetectionSets()
   self:E( "Error, in DETECTION_BASE class..." )
 
 end
+
 
 --- Schedule the DETECTION construction.
 -- @param #DETECTION_BASE self
@@ -263,167 +313,179 @@ end
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:F2( { SchedulerName } )
   
-  self.DetectedObjects = {}
   self.DetectionRun = self.DetectionRun + 1
   
-  if self.DetectionGroups:IsAlive() then
-    local DetectionGroupsName = self.DetectionGroups:GetName()
-    
-    local DetectionDetectedTargets = self.DetectionGroups:GetDetectedTargets(
-      self.DetectVisual,
-      self.DetectOptical,
-      self.DetectRadar,
-      self.DetectIRST,
-      self.DetectRWR,
-      self.DetectDLINK
-    )
-    
-    for DetectionDetectedTargetID, DetectionDetectedTarget in pairs( DetectionDetectedTargets ) do
-      local DetectionObject = DetectionDetectedTarget.object -- DCSObject#Object
-      self:T2( DetectionObject )
+  self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
+  
+  for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
+    local DetectionGroup = DetectionGroupData -- Group#GROUP
+
+    if DetectionGroup:IsAlive() then
+
+      local DetectionGroupName = DetectionGroup:GetName()
       
-      if DetectionObject and DetectionObject:isExist() and DetectionObject.id_ < 50000000 then
-
-        local DetectionDetectedObjectName = DetectionObject:getName()
-
-        local DetectionDetectedObjectPositionVec3 = DetectionObject:getPoint()
-        local DetectionGroupsPositionVec3 = self.DetectionGroups:GetPointVec3()
-
-        local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupsPositionVec3.x )^2 +
-          ( DetectionDetectedObjectPositionVec3.y - DetectionGroupsPositionVec3.y )^2 +
-          ( DetectionDetectedObjectPositionVec3.z - DetectionGroupsPositionVec3.z )^2
-          ) ^ 0.5 / 1000
-
-        self:T2( { DetectionGroupsName, DetectionDetectedObjectName, Distance } )
-
-        if Distance <= self.DetectionRange then
-
-          if not self.DetectedObjects[DetectionDetectedObjectName] then
-            self.DetectedObjects[DetectionDetectedObjectName] = {}
-          end
-          self.DetectedObjects[DetectionDetectedObjectName].Name = DetectionDetectedObjectName
-          self.DetectedObjects[DetectionDetectedObjectName].Visible = DetectionDetectedTarget.visible
-          self.DetectedObjects[DetectionDetectedObjectName].Type = DetectionDetectedTarget.type
-          self.DetectedObjects[DetectionDetectedObjectName].Distance = DetectionDetectedTarget.distance
-          self.DetectedObjects[DetectionDetectedObjectName].Identified = false -- This flag is used to control identification.
-        else
-          -- if beyond the DetectionRange then nullify...
-          if self.DetectedObjects[DetectionDetectedObjectName] then
-            self.DetectedObjects[DetectionDetectedObjectName] = nil
+      local DetectionDetectedTargets = DetectionGroup:GetDetectedTargets(
+        self.DetectVisual,
+        self.DetectOptical,
+        self.DetectRadar,
+        self.DetectIRST,
+        self.DetectRWR,
+        self.DetectDLINK
+      )
+      
+      for DetectionDetectedTargetID, DetectionDetectedTarget in pairs( DetectionDetectedTargets ) do
+        local DetectionObject = DetectionDetectedTarget.object -- DCSObject#Object
+        self:T2( DetectionObject )
+        
+        if DetectionObject and DetectionObject:isExist() and DetectionObject.id_ < 50000000 then
+  
+          local DetectionDetectedObjectName = DetectionObject:getName()
+  
+          local DetectionDetectedObjectPositionVec3 = DetectionObject:getPoint()
+          local DetectionGroupPositionVec3 = DetectionGroup:GetPointVec3()
+  
+          local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupPositionVec3.x )^2 +
+            ( DetectionDetectedObjectPositionVec3.y - DetectionGroupPositionVec3.y )^2 +
+            ( DetectionDetectedObjectPositionVec3.z - DetectionGroupPositionVec3.z )^2
+            ) ^ 0.5 / 1000
+  
+          self:T2( { DetectionGroupName, DetectionDetectedObjectName, Distance } )
+  
+          if Distance <= self.DetectionRange then
+  
+            if not self.DetectedObjects[DetectionDetectedObjectName] then
+              self.DetectedObjects[DetectionDetectedObjectName] = {}
+            end
+            self.DetectedObjects[DetectionDetectedObjectName].Name = DetectionDetectedObjectName
+            self.DetectedObjects[DetectionDetectedObjectName].Visible = DetectionDetectedTarget.visible
+            self.DetectedObjects[DetectionDetectedObjectName].Type = DetectionDetectedTarget.type
+            self.DetectedObjects[DetectionDetectedObjectName].Distance = DetectionDetectedTarget.distance
+          else
+            -- if beyond the DetectionRange then nullify...
+            if self.DetectedObjects[DetectionDetectedObjectName] then
+              self.DetectedObjects[DetectionDetectedObjectName] = nil
+            end
           end
         end
       end
+      
+      self:T2( self.DetectedObjects )
+  
+      -- okay, now we have a list of detected object names ...
+      -- Sort the table based on distance ...
+      table.sort( self.DetectedObjects, function( a, b ) return a.Distance < b.Distance end )
     end
-    
-    self:T2( self.DetectedObjects )
-
-    -- okay, now we have a list of detected object names ...
-    -- Sort the table based on distance ...
-    self:T( { "Sorting DetectedObjects table:", self.DetectedObjects } )
-    table.sort( self.DetectedObjects, function( a, b ) return a.Distance < b.Distance end )
-    self:T( { "Sorted Targets Table:", self.DetectedObjects } )
-    
-    -- Now group the DetectedObjects table into SET_BASEs, evaluating the DetectionZoneRange.
-    
-    if self.DetectedObjects then
-      self:CreateDetectionSets()
-    end
-
-
   end
+
+  if self.DetectedObjects then
+    self:CreateDetectionSets()
+  end
+
+  return true
 end
 
 
 
---- DETECTION_UNITGROUPS class
--- @type DETECTION_UNITGROUPS
+--- DETECTION_AREAS class
+-- @type DETECTION_AREAS
 -- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
--- @field #DETECTION_UNITGROUPS.DetectedAreas DetectedAreas A list of areas containing the set of @{Unit}s, @{Zone}s, the center @{Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+-- @field #DETECTION_AREAS.DetectedAreas DetectedAreas A list of areas containing the set of @{Unit}s, @{Zone}s, the center @{Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
 -- @extends Detection#DETECTION_BASE
-DETECTION_UNITGROUPS = {
-  ClassName = "DETECTION_UNITGROUPS",
+DETECTION_AREAS = {
+  ClassName = "DETECTION_AREAS",
   DetectedAreas = { n = 0 },
   DetectionZoneRange = nil,
 }
 
---- @type DETECTION_UNITGROUPS.DetectedAreas
--- @list <#DETECTION_UNITGROUPS.DetectedArea>
+--- @type DETECTION_AREAS.DetectedAreas
+-- @list <#DETECTION_AREAS.DetectedArea>
 
---- @type DETECTION_UNITGROUPS.DetectedArea
+--- @type DETECTION_AREAS.DetectedArea
 -- @field Set#SET_UNIT Set -- The Set of Units in the detected area.
 -- @field Zone#ZONE_UNIT Zone -- The Zone of the detected area.
+-- @field #boolean Changed Documents if the detected area has changes.
+-- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
 -- @field #number AreaID -- The identifier of the detected area.
+-- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
 
 
---- DETECTION_UNITGROUPS constructor.
--- @param Detection#DETECTION_UNITGROUPS self
--- @param Group#GROUP DetectionGroups The GROUP in the Forward Air Controller role.
+--- DETECTION_AREAS constructor.
+-- @param Detection#DETECTION_AREAS self
+-- @param Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
 -- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @param DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
--- @return Detection#DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:New( DetectionGroups, DetectionRange, DetectionZoneRange )
+-- @return Detection#DETECTION_AREAS self
+function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRange )
 
   -- Inherits from DETECTION_BASE
-  local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionGroups, DetectionRange ) )
+  local self = BASE:Inherit( self, DETECTION_BASE:New( DetectionSetGroup, DetectionRange ) )
 
   self.DetectionZoneRange = DetectionZoneRange
   
-  self:Schedule( 10, 30 )
+  self._SmokeDetectedUnits = false
+  self._FlareDetectedUnits = false
+  self._SmokeDetectedZones = false
+  self._FlareDetectedZones = false
+  
+  self:Schedule( 0, 15 )
 
   return self
 end
 
---- Add a detected @{#DETECTION_UNITGROUPS.DetectedArea}.
+--- Add a detected @{#DETECTION_AREAS.DetectedArea}.
 -- @param Set#SET_UNIT Set -- The Set of Units in the detected area.
 -- @param Zone#ZONE_UNIT Zone -- The Zone of the detected area.
--- @return #DETECTION_UNITGROUPS.DetectedArea DetectedArea
-function DETECTION_UNITGROUPS:AddDetectedArea( Set, Zone )
+-- @return #DETECTION_AREAS.DetectedArea DetectedArea
+function DETECTION_AREAS:AddDetectedArea( Set, Zone )
   local DetectedAreas = self:GetDetectedAreas()
   DetectedAreas.n = self:GetDetectedAreaCount() + 1
   DetectedAreas[DetectedAreas.n] = {}
   local DetectedArea = DetectedAreas[DetectedAreas.n]
   DetectedArea.Set = Set
   DetectedArea.Zone = Zone
-  DetectedArea.AreaID = #DetectedAreas
+  DetectedArea.Removed = false
+  DetectedArea.AreaID = DetectedAreas.n
+  
   return DetectedArea
 end
 
---- Remove a detected @{#DETECTION_UNITGROUPS.DetectedArea} with a given Index.
--- @param #DETECTION_UNITGROUPS self
+--- Remove a detected @{#DETECTION_AREAS.DetectedArea} with a given Index.
+-- @param #DETECTION_AREAS self
 -- @param #number Index The Index of the detection are to be removed.
 -- @return #nil
-function DETECTION_UNITGROUPS:RemoveDetectedArea( Index )
+function DETECTION_AREAS:RemoveDetectedArea( Index )
   local DetectedAreas = self:GetDetectedAreas()
   local DetectedAreaCount = self:GetDetectedAreaCount()
-  DetectedAreas[Index] = nil
-  DetectedAreas.n = DetectedAreas.n - 1
+  local DetectedArea = DetectedAreas[Index]
+  local DetectedAreaSet = DetectedArea.Set
+  DetectedArea[Index] = nil
   return nil
 end
 
 
---- Get the detected @{#DETECTION_UNITGROUPS.DetectedAreas}.
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS.DetectedAreas DetectedAreas
-function DETECTION_UNITGROUPS:GetDetectedAreas()
+--- Get the detected @{#DETECTION_AREAS.DetectedAreas}.
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS.DetectedAreas DetectedAreas
+function DETECTION_AREAS:GetDetectedAreas()
 
   local DetectedAreas = self.DetectedAreas
   return DetectedAreas
 end
 
---- Get the amount of @{#DETECTION_UNITGROUPS.DetectedAreas}.
--- @param #DETECTION_UNITGROUPS self
+--- Get the amount of @{#DETECTION_AREAS.DetectedAreas}.
+-- @param #DETECTION_AREAS self
 -- @return #number DetectedAreaCount
-function DETECTION_UNITGROUPS:GetDetectedAreaCount()
+function DETECTION_AREAS:GetDetectedAreaCount()
 
   local DetectedAreaCount = self.DetectedAreas.n
   return DetectedAreaCount
 end
 
 --- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
--- @param #DETECTION_UNITGROUPS self
+-- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Set#SET_UNIT DetectedSet
-function DETECTION_UNITGROUPS:GetDetectedSet( Index )
+function DETECTION_AREAS:GetDetectedSet( Index )
 
   local DetectedSetUnit = self.DetectedAreas[Index].Set
   if DetectedSetUnit then
@@ -434,10 +496,10 @@ function DETECTION_UNITGROUPS:GetDetectedSet( Index )
 end
 
 --- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
--- @param #DETECTION_UNITGROUPS self
+-- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Zone#ZONE_UNIT DetectedZone
-function DETECTION_UNITGROUPS:GetDetectedZone( Index )
+function DETECTION_AREAS:GetDetectedZone( Index )
 
   local DetectedZone = self.DetectedAreas[Index].Zone
   if DetectedZone then
@@ -447,11 +509,107 @@ function DETECTION_UNITGROUPS:GetDetectedZone( Index )
   return nil
 end
 
+--- Background worker function to determine if there are friendlies nearby ...
+-- @param #DETECTION_AREAS self
+-- @param Unit#UNIT ReportUnit
+function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
+  self:F2()
+  
+  local DetectedArea = ReportGroupData.DetectedArea  -- Detection#DETECTION_AREAS.DetectedArea    
+  local DetectedSet = ReportGroupData.DetectedArea.Set
+  local DetectedZone = ReportGroupData.DetectedArea.Zone
+  local DetectedZoneUnit = DetectedZone.ZoneUNIT
+
+  DetectedArea.FriendliesNearBy = false
+  
+  local SphereSearch = {
+   id = world.VolumeType.SPHERE,
+    params = {
+     point = DetectedZoneUnit:GetPointVec3(),
+     radius = 6000,
+    }
+    
+   }
+   
+   --- @param DCSUnit#Unit FoundDCSUnit
+   -- @param Group#GROUP ReportGroup
+   -- @param Set#SET_GROUP ReportSetGroup
+   local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
+      
+      local DetectedArea = ReportGroupData.DetectedArea  -- Detection#DETECTION_AREAS.DetectedArea    
+      local DetectedSet = ReportGroupData.DetectedArea.Set
+      local DetectedZone = ReportGroupData.DetectedArea.Zone
+      local DetectedZoneUnit = DetectedZone.ZoneUNIT -- Unit#UNIT
+      local ReportSetGroup = ReportGroupData.ReportSetGroup
+
+      local EnemyCoalition = DetectedZoneUnit:GetCoalition()
+      
+      local FoundUnitCoalition = FoundDCSUnit:getCoalition()
+      local FoundUnitName = FoundDCSUnit:getName()
+      local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
+      local EnemyUnitName = DetectedZoneUnit:GetName()
+      local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
+      
+      self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+      
+      if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
+        DetectedArea.FriendliesNearBy = true
+        return false
+      end
+      
+      return true
+  end
+  
+  world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
+
+end
+
+
+
+--- Returns if there are friendlies nearby the FAC units ...
+-- @param #DETECTION_AREAS self
+-- @return #boolean trhe if there are friendlies nearby 
+function DETECTION_AREAS:IsFriendliesNearBy( DetectedArea )
+  
+  self:T3( DetectedArea.FriendliesNearBy )
+  return DetectedArea.FriendliesNearBy or false
+end
+
+--- Calculate the maxium A2G threat level of the DetectedArea.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+function DETECTION_AREAS:CalculateThreatLevelA2G( DetectedArea )
+  
+  local MaxThreatLevelA2G = 0
+  for UnitName, UnitData in pairs( DetectedArea.Set:GetSet() ) do
+    local ThreatUnit = UnitData -- Unit#UNIT
+    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+    end
+  end
+
+  self:T3( MaxThreatLevelA2G )
+  DetectedArea.MaxThreatLevelA2G = MaxThreatLevelA2G
+  
+end
+
+--- Returns the A2G threat level of the units in the DetectedArea
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @return #number a scale from 0 to 10. 
+function DETECTION_AREAS:GetTreatLevelA2G( DetectedArea )
+  
+  self:T3( DetectedArea.MaxThreatLevelA2G )
+  return DetectedArea.MaxThreatLevelA2G
+end
+
+
 
 --- Smoke the detected units
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:SmokeDetectedUnits()
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:SmokeDetectedUnits()
   self:F2()
 
   self._SmokeDetectedUnits = true
@@ -459,9 +617,9 @@ function DETECTION_UNITGROUPS:SmokeDetectedUnits()
 end
 
 --- Flare the detected units
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:FlareDetectedUnits()
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:FlareDetectedUnits()
   self:F2()
 
   self._FlareDetectedUnits = true
@@ -469,9 +627,9 @@ function DETECTION_UNITGROUPS:FlareDetectedUnits()
 end
 
 --- Smoke the detected zones
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:SmokeDetectedZones()
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:SmokeDetectedZones()
   self:F2()
 
   self._SmokeDetectedZones = true
@@ -479,59 +637,181 @@ function DETECTION_UNITGROUPS:SmokeDetectedZones()
 end
 
 --- Flare the detected zones
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:FlareDetectedZones()
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:FlareDetectedZones()
   self:F2()
 
   self._FlareDetectedZones = true
   return self
 end
 
+--- Add a change to the detected zone.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @param #string ChangeCode
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:AddChangeArea( DetectedArea, ChangeCode, AreaUnitType )
+
+  DetectedArea.Changed = true
+  local AreaID = DetectedArea.AreaID
+  
+  DetectedArea.Changes = DetectedArea.Changes or {}
+  DetectedArea.Changes[ChangeCode] = DetectedArea.Changes[ChangeCode] or {}
+  DetectedArea.Changes[ChangeCode].AreaID = AreaID
+  DetectedArea.Changes[ChangeCode].AreaUnitType = AreaUnitType
+
+  self:T( { "Change on Detection Area:", DetectedArea.AreaID, ChangeCode, AreaUnitType } )
+
+  return self
+end
+
+
+--- Add a change to the detected zone.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @param #string ChangeCode
+-- @param #string ChangeUnitType
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:AddChangeUnit( DetectedArea, ChangeCode, ChangeUnitType )
+
+  DetectedArea.Changed = true
+  local AreaID = DetectedArea.AreaID
+  
+  DetectedArea.Changes = DetectedArea.Changes or {}
+  DetectedArea.Changes[ChangeCode] = DetectedArea.Changes[ChangeCode] or {}
+  DetectedArea.Changes[ChangeCode][ChangeUnitType] = DetectedArea.Changes[ChangeCode][ChangeUnitType] or 0
+  DetectedArea.Changes[ChangeCode][ChangeUnitType] = DetectedArea.Changes[ChangeCode][ChangeUnitType] + 1
+  DetectedArea.Changes[ChangeCode].AreaID = AreaID
+  
+  self:T( { "Change on Detection Area:", DetectedArea.AreaID, ChangeCode, ChangeUnitType } )
+
+  return self
+end
+
+--- Make text documenting the changes of the detected zone.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @return #string The Changes text
+function DETECTION_AREAS:GetChangeText( DetectedArea )
+  self:F( DetectedArea )
+  
+  local MT = {}
+  
+  for ChangeCode, ChangeData in pairs( DetectedArea.Changes ) do
+
+    if ChangeCode == "AA" then
+      MT[#MT+1] = "Detected new area " .. ChangeData.AreaID .. ". The center target is a " .. ChangeData.AreaUnitType .. "."
+    end
+
+    if ChangeCode == "RAU" then
+      MT[#MT+1] = "Changed area " .. ChangeData.AreaID .. ". Removed the center target " .. ChangeData.AreaUnitType "."
+    end
+    
+    if ChangeCode == "AAU" then
+      MT[#MT+1] = "Changed area " .. ChangeData.AreaID .. ". The new center target is a " .. ChangeData.AreaUnitType "."
+    end
+    
+    if ChangeCode == "RA" then
+      MT[#MT+1] = "Removed old area " .. ChangeData.AreaID .. ". No more targets in this area."
+    end
+    
+    if ChangeCode == "AU" then
+      local MTUT = {}
+      for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
+        if ChangeUnitType  ~= "AreaID" then
+          MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
+        end
+      end
+      MT[#MT+1] = "Detected for area " .. ChangeData.AreaID .. " new target(s) " .. table.concat( MTUT, ", " ) .. "."
+    end
+
+    if ChangeCode == "RU" then
+      local MTUT = {}
+      for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
+        if ChangeUnitType  ~= "AreaID" then
+          MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
+        end
+      end
+      MT[#MT+1] = "Removed for area " .. ChangeData.AreaID .. " invisible or destroyed target(s) " .. table.concat( MTUT, ", " ) .. "."
+    end
+    
+  end
+  
+  return table.concat( MT, "\n" )
+  
+end
+
+
+--- Accepts changes from the detected zone.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:AcceptChanges( DetectedArea )
+
+  DetectedArea.Changed = false
+  DetectedArea.Changes = {}
+
+  return self
+end
+
 
 --- Make a DetectionSet table. This function will be overridden in the derived clsses.
--- @param #DETECTION_UNITGROUPS self
--- @return #DETECTION_UNITGROUPS self
-function DETECTION_UNITGROUPS:CreateDetectionSets()
+-- @param #DETECTION_AREAS self
+-- @return #DETECTION_AREAS self
+function DETECTION_AREAS:CreateDetectionSets()
   self:F2()
 
   -- First go through all detected sets, and check if there are new detected units, match all existing detected units and identify undetected units.
   -- Regroup when needed, split groups when needed.
   for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedAreas ) do
     
-    local DetectedArea = DetectedAreaData -- #DETECTION_UNITGROUPS.DetectedArea
+    local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
     if DetectedArea then
     
       local DetectedSet = DetectedArea.Set
-      local DetectedZone = DetectedArea.Zone
+      DetectedSet:Flush()
       
-      -- first test if the center unit is detected in the detection area.
-
       local AreaExists = false -- This flag will determine of the detected area is still existing.
             
-      local DetectedObject = self:GetDetectedObject( DetectedArea.Zone.ZoneUNIT.UnitName )
-      self:T( DetectedObject )
-      if DetectedObject then
-        DetectedObject.Identified = true
+      -- First test if the center unit is detected in the detection area.
+      self:T3( DetectedArea.Zone.ZoneUNIT.UnitName )
+      local DetectedZoneObject = self:GetDetectedObject( DetectedArea.Zone.ZoneUNIT.UnitName )
+      self:T3( { "Detecting Zone Object", DetectedArea.AreaID, DetectedArea.Zone, DetectedZoneObject } )
+      
+      if DetectedZoneObject then
+
+        --self:IdentifyDetectedObject( DetectedZoneObject )
         AreaExists = true
-        self:T( { DetectedArea = DetectedArea.AreaID, "Detected Center Unit " .. DetectedArea.Zone.ZoneUNIT.UnitName } )
+
+
+      
       else
         -- The center object of the detected area has not been detected. Find an other unit of the set to become the center of the area.
         -- First remove the center unit from the set.
         DetectedSet:RemoveUnitsByName( DetectedArea.Zone.ZoneUNIT.UnitName )
-        self:T( { DetectedArea = DetectedArea.AreaID, "Removed Center Unit " .. DetectedArea.Zone.ZoneUNIT.UnitName } )
+
+        self:AddChangeArea( DetectedArea, 'RAU', DetectedArea.Zone.ZoneUNIT:GetTypeName() )
+        
+        -- Then search for a new center area unit within the set. Note that the new area unit candidate must be within the area range.
         for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
+ 
           local DetectedUnit = DetectedUnitData -- Unit#UNIT
-          local DetectedObject = self:GetDetectedObject( DetectedUnit.UnitName )
+          local DetectedObject = self:GetDetectedObject( DetectedUnit.UnitName ) 
+
+          -- The DetectedObject can be nil when the DetectedUnit is not alive anymore or it is not in the DetectedObjects map.
+          -- If the DetectedUnit was already identified, DetectedObject will be nil.
           if DetectedObject then
-            if DetectedObject.Identified == false and DetectedUnit:IsAlive() then
-              DetectedObject.Identified = true
-              AreaExists = true
-              -- Assign the Unit as the new center unit of the detected area.
-              DetectedArea.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
-              self:T( { DetectedArea = DetectedArea.AreaID, "New Center Unit " .. DetectedArea.Zone.ZoneUNIT.UnitName } )
-              break
-            end
+            self:IdentifyDetectedObject( DetectedObject )
+            AreaExists = true
+
+            -- Assign the Unit as the new center unit of the detected area.
+            DetectedArea.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
+
+            self:AddChangeArea( DetectedArea, "AAU", DetectedArea.Zone.ZoneUNIT:GetTypeName() )
+
+            -- We don't need to add the DetectedObject to the area set, because it is already there ...
+            break
           end
         end
       end
@@ -540,32 +820,44 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
       -- Note that the position of the area may have moved due to the center unit repositioning.
       -- If no center unit was identified, then the detected area does not exist anymore and should be deleted, as there are no valid units that can be the center unit.
       if AreaExists then
+
         -- ok, we found the center unit of the area, now iterate through the detected area set and see which units are still within the center unit zone ...
         -- Those units within the zone are flagged as Identified.
         -- If a unit was not found in the set, remove it from the set. This may be added later to other existing or new sets.
         for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
+
           local DetectedUnit = DetectedUnitData -- Unit#UNIT
-          local DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
+          local DetectedObject = nil
+          if DetectedUnit:IsAlive() then
+          --self:E(DetectedUnit:GetName())
+            DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
+          end
           if DetectedObject then
-            if DetectedObject.Identified == false then
-              if DetectedUnit:IsInZone( DetectedZone ) then
-                DetectedObject.Identified = true
-                self:T( { DetectedArea = DetectedArea.AreaID, "Unit in zone " .. DetectedUnit.UnitName } )
-              else
-                -- Not anymore in the zone. Remove from the set.
-                DetectedSet:Remove( DetectedUnitName )
-                self:T( { DetectedArea = DetectedArea.AreaID, "Unit not in zone " .. DetectedUnit.UnitName } )
-              end
+          
+            -- Check if the DetectedUnit is within the DetectedArea.Zone
+            if DetectedUnit:IsInZone( DetectedArea.Zone ) then
+              
+              -- Yes, the DetectedUnit is within the DetectedArea.Zone, no changes, DetectedUnit can be kept within the Set.
+              self:IdentifyDetectedObject( DetectedObject )
+
+            else
+              -- No, the DetectedUnit is not within the DetectedArea.Zone, remove DetectedUnit from the Set.
+              DetectedSet:Remove( DetectedUnitName )
+              self:AddChangeUnit( DetectedArea, "RU", DetectedUnit:GetTypeName() )
             end
+          
           else
-            -- The detected object has not been found, delete from the Set!
+            -- There was no DetectedObject, remove DetectedUnit from the Set.
+            self:AddChangeUnit( DetectedArea, "RU", "destroyed target" )
             DetectedSet:Remove( DetectedUnitName )
-            self:T( { DetectedArea = DetectedArea.AreaID, "Unit not found " .. DetectedUnit.UnitName } )
+
+            -- The DetectedObject has been identified, because it does not exist ...
+            -- self:IdentifyDetectedObject( DetectedObject )
           end
         end
       else
-        self:T( { DetectedArea = DetectedArea.AreaID, "Removed detected area " } )
         self:RemoveDetectedArea( DetectedAreaID )
+        self:AddChangeArea( DetectedArea, "RA" )
       end
     end
   end
@@ -579,72 +871,77 @@ function DETECTION_UNITGROUPS:CreateDetectionSets()
   --  - They can be added to a new detection area.
   for DetectedUnitName, DetectedObjectData in pairs( self.DetectedObjects ) do
     
-    local DetectedObject = DetectedObjectData -- #DETECTION_BASE.DetectedObject
+    local DetectedObject = self:GetDetectedObject( DetectedUnitName )
     
-    if DetectedObject.Identified == false then
-      -- We found an unidentified unit outside of any existing detection area.
-      
-      local DetectedUnit = UNIT:FindByName( DetectedObjectData.Name ) -- Unit#UNIT
-      
-      if DetectedUnit and DetectedUnit:IsAlive() then
-        self:T( { "Search for " .. DetectedObjectData.Name, DetectedObjectData.Identified } )
+    if DetectedObject then
 
-        local AddedToDetectionArea = false
-        for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedAreas ) do
-          
-          local DetectedArea = DetectedAreaData -- #DETECTION_UNITGROUPS.DetectedArea
-          if DetectedArea then
-            self:T( "Detection Area #" .. DetectedArea.AreaID )
-            local DetectedSet = DetectedArea.Set
-            local DetectedZone = DetectedArea.Zone -- Zone#ZONE_UNIT
-            if DetectedUnit:IsInZone( DetectedZone ) then
-              DetectedSet:AddUnit( DetectedUnit )
-              AddedToDetectionArea = true
-              DetectedObject.Identified = true
-              self:T( "Detection Area #" .. DetectedArea.AreaID .. " added unit " .. DetectedUnit.UnitName )
-            end
+      -- We found an unidentified unit outside of any existing detection area.
+      local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Unit#UNIT
+      
+      local AddedToDetectionArea = false
+    
+      for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedAreas ) do
+        
+        local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
+        if DetectedArea then
+          self:T( "Detection Area #" .. DetectedArea.AreaID )
+          local DetectedSet = DetectedArea.Set
+          if not self:IsDetectedObjectIdentified( DetectedObject ) and DetectedUnit:IsInZone( DetectedArea.Zone ) then
+            self:IdentifyDetectedObject( DetectedObject )
+            DetectedSet:AddUnit( DetectedUnit )
+            AddedToDetectionArea = true
+            self:AddChangeUnit( DetectedArea, "AU", DetectedUnit:GetTypeName() )
           end
         end
-        if AddedToDetectionArea == false then
-          -- New detection area
-          local DetectedArea = self:AddDetectedArea( 
-            SET_UNIT:New(),
-            ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
-          )
-          self:T( { "Added Detection Area #", DetectedArea.AreaID } )
-          DetectedArea.Set:AddUnit( DetectedUnit )
-          self:T( "Detection Area #" .. DetectedArea.AreaID .. " added unit " .. DetectedUnit.UnitName )
-          DetectedObject.Identified = true
-        end  
       end
+    
+      if AddedToDetectionArea == false then
+      
+        -- New detection area
+        local DetectedArea = self:AddDetectedArea( 
+          SET_UNIT:New(),
+          ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
+        )
+        --self:E( DetectedArea.Zone.ZoneUNIT.UnitName )
+        DetectedArea.Set:AddUnit( DetectedUnit )
+        self:AddChangeArea( DetectedArea, "AA", DetectedUnit:GetTypeName() )
+      end  
     end
   end
   
   -- Now all the tests should have been build, now make some smoke and flares...
+  -- We also report here the friendlies within the detected areas.
   
   for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedAreas ) do
 
-    
-    local DetectedArea = DetectedAreaData -- #DETECTION_UNITGROUPS.DetectedArea
+    local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
     local DetectedSet = DetectedArea.Set
     local DetectedZone = DetectedArea.Zone
-    DetectedZone.ZoneUNIT:SmokeRed()
+
+    self:ReportFriendliesNearBy( { DetectedArea = DetectedArea, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+    self:CalculateThreatLevelA2G( DetectedArea )  -- Calculate A2G threat level
+
+    if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
+      DetectedZone.ZoneUNIT:SmokeRed()
+    end
     DetectedSet:ForEachUnit(
       --- @param Unit#UNIT DetectedUnit
       function( DetectedUnit )
-        self:T( "Detected Set #" .. DetectedArea.AreaID .. ":" .. DetectedUnit:GetName() )
-        if self._FlareDetectedUnits then
-          DetectedUnit:FlareRed()
-        end
-        if self._SmokeDetectedUnits then
-          DetectedUnit:SmokeRed()
+        if DetectedUnit:IsAlive() then
+          self:T( "Detected Set #" .. DetectedArea.AreaID .. ":" .. DetectedUnit:GetName() )
+          if DETECTION_AREAS._FlareDetectedUnits or self._FlareDetectedUnits then
+            DetectedUnit:FlareGreen()
+          end
+          if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
+            DetectedUnit:SmokeGreen()
+          end
         end
       end
     )
-    if self._FlareDetectedZones then
+    if DETECTION_AREAS._FlareDetectedZones or self._FlareDetectedZones then
       DetectedZone:FlareZone( POINT_VEC3.SmokeColor.White, 30, math.random( 0,90 ) )
     end
-    if self._SmokeDetectedZones then
+    if DETECTION_AREAS._SmokeDetectedZones or self._SmokeDetectedZones then
       DetectedZone:SmokeZone( POINT_VEC3.SmokeColor.White, 30 )
     end
   end

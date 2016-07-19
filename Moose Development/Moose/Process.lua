@@ -77,7 +77,9 @@ end
 function PROCESS:OnStateChange( Fsm, Event, From, To )
   self:E( { Event, From, To, self.ProcessUnit.UnitName } )
 
-  MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+  if self:IsTrace() then
+    MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+  end
 
   if self.Scores[To] then
     

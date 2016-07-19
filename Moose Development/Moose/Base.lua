@@ -55,8 +55,9 @@
 -- 
 -- ====
 -- 
+-- ### Author: FlightControl
+-- 
 -- @module Base
--- @author FlightControl
 
 
 
@@ -131,8 +132,7 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 	end
-	--Child.ClassName = Child.ClassName .. '.' .. Child.ClassID
-	self:T( 'Inherited from ' .. Parent.ClassName ) 
+	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -140,7 +140,7 @@ end
 -- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
-function BASE:Inherited( Child )
+function BASE:GetParent( Child )
 	local Parent = getmetatable( Child )
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
 	return Parent
@@ -338,11 +338,9 @@ function BASE:SetState( Object, StateName, State )
 
   local ClassNameAndID = Object:GetClassNameAndID()
 
-  if not self.States[ClassNameAndID] then
-    self.States[ClassNameAndID] = {}
-  end
+  self.States[ClassNameAndID] = self.States[ClassNameAndID] or {}
   self.States[ClassNameAndID][StateName] = State
-  self:F2( { ClassNameAndID, StateName, State } )
+  self:T2( { ClassNameAndID, StateName, State } )
   
   return self.States[ClassNameAndID][StateName]
 end
@@ -353,7 +351,7 @@ function BASE:GetState( Object, StateName )
 
   if self.States[ClassNameAndID] then
     local State = self.States[ClassNameAndID][StateName]
-    self:F2( { ClassNameAndID, StateName, State } )
+    self:T2( { ClassNameAndID, StateName, State } )
     return State
   end
   
@@ -378,7 +376,7 @@ end
 -- When Moose is loaded statically, (as one file), tracing is switched off by default.
 -- So tracing must be switched on manually in your mission if you are using Moose statically.
 -- When moose is loading dynamically (for moose class development), tracing is switched on by default.
--- @param BASE self
+-- @param #BASE self
 -- @param #boolean TraceOnOff Switch the tracing on or off.
 -- @usage
 -- -- Switch the tracing On
@@ -388,6 +386,19 @@ end
 -- BASE:TraceOn( false )
 function BASE:TraceOnOff( TraceOnOff )
   _TraceOnOff = TraceOnOff
+end
+
+
+--- Enquires if tracing is on (for the class).
+-- @param #BASE self
+-- @return #boolean
+function BASE:IsTrace()
+
+  if debug and ( _TraceAll == true ) or ( _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName] ) then
+    return true
+  else
+    return false
+  end
 end
 
 --- Set trace level

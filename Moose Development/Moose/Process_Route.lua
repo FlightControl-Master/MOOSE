@@ -26,12 +26,12 @@ function PROCESS_ROUTE:New( Task, ProcessUnit, TargetZone )
   self.DisplayCount = 30
   self.DisplayMessage = true
   self.DisplayTime = 10 -- 10 seconds is the default
-  self.DisplayCategory = "Route" -- Route is the default display category
+  self.DisplayCategory = "HQ" -- Route is the default display category
   
   self.Fsm = STATEMACHINE_PROCESS:New( self, {
     initial = 'UnArrived',
     events = {
-      { name = 'Route',  from = 'UnArrived',  to = 'Arrived' },
+      { name = 'Start',  from = 'UnArrived',  to = 'UnArrived' },
       { name = 'Fail',  from = 'UnArrived',  to = 'Failed' },
     },
     callbacks = {
@@ -56,27 +56,31 @@ end
 -- @param #string To
 function PROCESS_ROUTE:OnLeaveUnArrived( Fsm, Event, From, To )
 
-  local IsInZone = self.ProcessUnit:IsInZone( self.TargetZone )
-
-  if self.DisplayCount >= self.DisplayInterval then
-    if not IsInZone then
-      local ZoneVec2 = self.TargetZone:GetVec2()
-      local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
-      local TaskUnitVec2 = self.ProcessUnit:GetVec2()
-      local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-      local RouteText = TaskUnitPointVec2:GetBRText( ZonePointVec2 )
-      MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( self.ProcessUnit:GetGroup() )
+  if self.ProcessUnit:IsAlive() then
+    local IsInZone = self.ProcessUnit:IsInZone( self.TargetZone )
+  
+    if self.DisplayCount >= self.DisplayInterval then
+      if not IsInZone then
+        local ZoneVec2 = self.TargetZone:GetVec2()
+        local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
+        local TaskUnitVec2 = self.ProcessUnit:GetVec2()
+        local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
+        local RouteText = self.ProcessUnit:GetCallSign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
+        MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( self.ProcessUnit:GetGroup() )
+      end
+      self.DisplayCount = 1
+    else
+      self.DisplayCount = self.DisplayCount + 1
     end
-    self.DisplayCount = 1
-  else
-    self.DisplayCount = self.DisplayCount + 1
+    
+    --if not IsInZone then
+      self:NextEvent( Fsm.Start )
+    --end
+  
+    return IsInZone -- if false, then the event will not be executed...
   end
   
-  if not IsInZone then
-    self:NextEvent( Fsm.Route )
-  end
-
-  return IsInZone -- if false, then the event will not be executed...
+  return false
   
 end
 
