@@ -674,7 +674,7 @@ function ESCORT._HoldPosition( MenuParam )
   PointFrom.alt = GroupPoint.y
   PointFrom.alt_type = AI.Task.AltitudeType.BARO
 
-  local OrbitPoint = OrbitUnit:GetPointVec2()
+  local OrbitPoint = OrbitUnit:GetVec2()
   local PointTo = {}
   PointTo.x = OrbitPoint.x
   PointTo.y = OrbitPoint.y
@@ -867,7 +867,7 @@ function ESCORT._AttackTarget( MenuParam )
     SCHEDULER:New( EscortGroup,
       EscortGroup.PushTask,
       { EscortGroup:TaskCombo(
-          { EscortGroup:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+          { EscortGroup:TaskFireAtPoint( AttackUnit:GetVec2(), 50 )
           }
         )
       }, 10
@@ -907,7 +907,7 @@ function ESCORT._AssistTarget( MenuParam )
     SCHEDULER:New( EscortGroupAttack,
       EscortGroupAttack.PushTask,
       { EscortGroupAttack:TaskCombo(
-          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetPointVec2(), 50 )
+          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetVec2(), 50 )
           }
         )
       }, 10

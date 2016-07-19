@@ -138,7 +138,7 @@ function PATROLZONE:NewPatrolRoute()
     -- If not, make a waypoint within the to that the PatrolGroup will fly at maximum speed to that point.
     
 --    --- Calculate the current route point.
---    local CurrentVec2 = self.PatrolGroup:GetPointVec2()
+--    local CurrentVec2 = self.PatrolGroup:GetVec2()
 --    local CurrentAltitude = self.PatrolGroup:GetUnit(1):GetAltitude()
 --    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
 --    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 

@@ -101,10 +101,10 @@ end
 
 --- Returns if a location is within the zone.
 -- @param #ZONE_BASE self
--- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @param DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_BASE:IsPointVec2InZone( PointVec2 )
-  self:F2( PointVec2 )
+function ZONE_BASE:IsPointVec2InZone( Vec2 )
+  self:F2( Vec2 )
 
   return false
 end
@@ -121,18 +121,27 @@ function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   return InZone
 end
 
+--- Returns the Vec2 coordinate of the zone.
+-- @param #ZONE_BASE self
+-- @return #nil.
+function ZONE_BASE:GetVec2()
+  self:F2( self.ZoneName )
+
+  return nil 
+end
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
--- @return DCSTypes#Vec2 The Vec2 coordinates.
+-- @return #nil The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
-  return { x = 0, y = 0 }
+  return nil
 end
 
 --- Get the bounding square the zone.
 -- @param #ZONE_BASE self
--- @return #ZONE_BASE.BoundingSquare The bounding square.
+-- @return #nil The bounding square.
 function ZONE_BASE:GetBoundingSquare()
-  return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+  --return { x1 = 0, y1 = 0, x2 = 0, y2 = 0 }
+  return nil
 end
 
 
@@ -147,7 +156,7 @@ end
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
--- @field DCSTypes#Vec2 PointVec2 The current location of the zone.
+-- @field DCSTypes#Vec2 Vec2 The current location of the zone.
 -- @field DCSTypes#Distance Radius The radius of the zone.
 -- @extends Zone#ZONE_BASE
 ZONE_RADIUS = {
@@ -157,15 +166,15 @@ ZONE_RADIUS = {
 --- Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
 -- @param #string ZoneName Name of the zone.
--- @param DCSTypes#Vec2 PointVec2 The location of the zone.
+-- @param DCSTypes#Vec2 Vec2 The location of the zone.
 -- @param DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:New( ZoneName, PointVec2, Radius )
+function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
-	self:F( { ZoneName, PointVec2, Radius } )
+	self:F( { ZoneName, Vec2, Radius } )
 
 	self.Radius = Radius
-	self.PointVec2 = PointVec2
+	self.Vec2 = Vec2
 	
 	return self
 end
@@ -179,7 +188,7 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
   self:F2( SmokeColor )
 
   local Point = {}
-  local PointVec2 = self:GetPointVec2()
+  local Vec2 = self:GetVec2()
 
   Points = Points and Points or 360
 
@@ -188,8 +197,8 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
   
   for Angle = 0, 360, 360 / Points do
     local Radial = Angle * RadialBase / 360
-    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
-    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
     POINT_VEC2:New( Point.x, Point.y ):Smoke( SmokeColor )
   end
 
@@ -207,7 +216,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
   self:F2( { FlareColor, Azimuth } )
 
   local Point = {}
-  local PointVec2 = self:GetPointVec2()
+  local Vec2 = self:GetVec2()
   
   Points = Points and Points or 360
 
@@ -216,8 +225,8 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
   
   for Angle = 0, 360, 360 / Points do
     local Radial = Angle * RadialBase / 360
-    Point.x = PointVec2.x + math.cos( Radial ) * self:GetRadius()
-    Point.y = PointVec2.y + math.sin( Radial ) * self:GetRadius()
+    Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
     POINT_VEC2:New( Point.x, Point.y ):Flare( FlareColor, Azimuth )
   end
 
@@ -251,26 +260,26 @@ end
 --- Returns the location of the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The location of the zone.
-function ZONE_RADIUS:GetPointVec2()
+function ZONE_RADIUS:GetVec2()
 	self:F2( self.ZoneName )
 
-	self:T2( { self.PointVec2 } )
+	self:T2( { self.Vec2 } )
 	
-	return self.PointVec2	
+	return self.Vec2	
 end
 
 --- Sets the location of the zone.
 -- @param #ZONE_RADIUS self
--- @param DCSTypes#Vec2 PointVec2 The new location of the zone.
+-- @param DCSTypes#Vec2 Vec2 The new location of the zone.
 -- @return DCSTypes#Vec2 The new location of the zone.
-function ZONE_RADIUS:SetPointVec2( PointVec2 )
+function ZONE_RADIUS:SetPointVec2( Vec2 )
   self:F2( self.ZoneName )
   
-  self.PointVec2 = PointVec2
+  self.Vec2 = Vec2
 
-  self:T2( { self.PointVec2 } )
+  self:T2( { self.Vec2 } )
   
-  return self.PointVec2 
+  return self.Vec2 
 end
 
 --- Returns the point of the zone.
@@ -280,9 +289,9 @@ end
 function ZONE_RADIUS:GetPointVec3( Height )
   self:F2( self.ZoneName )
   
-  local PointVec2 = self:GetPointVec2()
+  local Vec2 = self:GetVec2()
 
-  local PointVec3 = { x = PointVec2.x, y = land.getHeight( self:GetPointVec2() ) + Height, z = PointVec2.y }
+  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
   self:T2( { PointVec3 } )
   
@@ -292,15 +301,17 @@ end
 
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self
--- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @param DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_RADIUS:IsPointVec2InZone( PointVec2 )
-  self:F2( PointVec2 )
+function ZONE_RADIUS:IsPointVec2InZone( Vec2 )
+  self:F2( Vec2 )
   
-  local ZonePointVec2 = self:GetPointVec2()
-
-  if (( PointVec2.x - ZonePointVec2.x )^2 + ( PointVec2.y - ZonePointVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
-    return true
+  local ZoneVec2 = self:GetVec2()
+  
+  if ZoneVec2 then
+    if (( Vec2.x - ZoneVec2.x )^2 + ( Vec2.y - ZoneVec2.y ) ^2 ) ^ 0.5 <= self:GetRadius() then
+      return true
+    end
   end
   
   return false
@@ -310,10 +321,10 @@ end
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Vec3 PointVec3 The point to test.
 -- @return #boolean true if the point is within the zone.
-function ZONE_RADIUS:IsPointVec3InZone( PointVec3 )
-  self:F2( PointVec3 )
+function ZONE_RADIUS:IsPointVec3InZone( Vec3 )
+  self:F2( Vec3 )
 
-  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
+  local InZone = self:IsPointVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
@@ -325,11 +336,11 @@ function ZONE_RADIUS:GetRandomVec2()
 	self:F( self.ZoneName )
 
 	local Point = {}
-	local PointVec2 = self:GetPointVec2()
+	local Vec2 = self:GetVec2()
 
 	local angle = math.random() * math.pi*2;
-	Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-	Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+	Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+	Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 	
 	self:T( { Point } )
 	
@@ -383,10 +394,11 @@ ZONE_UNIT = {
 -- @param DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_UNIT self
 function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetPointVec2(), Radius ) )
-  self:F( { ZoneName, ZoneUNIT:GetPointVec2(), Radius } )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneUNIT:GetVec2(), Radius ) )
+  self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
   self.ZoneUNIT = ZoneUNIT
+  self.LastVec2 = ZoneUNIT:GetVec2()
   
   return self
 end
@@ -395,14 +407,20 @@ end
 --- Returns the current location of the @{Unit#UNIT}.
 -- @param #ZONE_UNIT self
 -- @return DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
-function ZONE_UNIT:GetPointVec2()
+function ZONE_UNIT:GetVec2()
   self:F( self.ZoneName )
   
-  local ZonePointVec2 = self.ZoneUNIT:GetPointVec2()
+  local ZoneVec2 = self.ZoneUNIT:GetVec2()
+  if ZoneVec2 then
+    self.LastVec2 = ZoneVec2
+    return ZoneVec2
+  else
+    return self.LastVec2
+  end
 
-  self:T( { ZonePointVec2 } )
-  
-  return ZonePointVec2
+  self:T( { ZoneVec2 } )
+
+  return nil  
 end
 
 --- Returns a random location within the zone.
@@ -413,6 +431,9 @@ function ZONE_UNIT:GetRandomVec2()
 
   local Point = {}
   local PointVec2 = self.ZoneUNIT:GetPointVec2()
+  if not PointVec2 then
+    PointVec2 = self.LastVec2
+  end
 
   local angle = math.random() * math.pi*2;
   Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
@@ -421,6 +442,24 @@ function ZONE_UNIT:GetRandomVec2()
   self:T( { Point } )
   
   return Point
+end
+
+--- Returns the point of the zone.
+-- @param #ZONE_RADIUS self
+-- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return DCSTypes#Vec3 The point of the zone.
+function ZONE_UNIT:GetPointVec3( Height )
+  self:F2( self.ZoneName )
+  
+  Height = Height or 0
+  
+  local Vec2 = self:GetVec2()
+
+  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+
+  self:T2( { PointVec3 } )
+  
+  return PointVec3  
 end
 
 --- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
@@ -567,10 +606,10 @@ end
 --- Returns if a location is within the zone.
 -- Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 -- @param #ZONE_POLYGON_BASE self
--- @param DCSTypes#Vec2 PointVec2 The location to test.
+-- @param DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
-  self:F2( PointVec2 )
+function ZONE_POLYGON_BASE:IsPointVec2InZone( Vec2 )
+  self:F2( Vec2 )
 
   local Next 
   local Prev 
@@ -581,8 +620,8 @@ function ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 )
   
   while Next <= #self.Polygon do
     self:T( { Next, Prev, self.Polygon[Next], self.Polygon[Prev] } )
-    if ( ( ( self.Polygon[Next].y > PointVec2.y ) ~= ( self.Polygon[Prev].y > PointVec2.y ) ) and
-         ( PointVec2.x < ( self.Polygon[Prev].x - self.Polygon[Next].x ) * ( PointVec2.y - self.Polygon[Next].y ) / ( self.Polygon[Prev].y - self.Polygon[Next].y ) + self.Polygon[Next].x ) 
+    if ( ( ( self.Polygon[Next].y > Vec2.y ) ~= ( self.Polygon[Prev].y > Vec2.y ) ) and
+         ( Vec2.x < ( self.Polygon[Prev].x - self.Polygon[Next].x ) * ( Vec2.y - self.Polygon[Next].y ) / ( self.Polygon[Prev].y - self.Polygon[Next].y ) + self.Polygon[Next].x ) 
        ) then
        InPolygon = not InPolygon
     end

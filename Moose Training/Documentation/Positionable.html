@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li>Positionable</li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -152,12 +162,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec2">POSITIONABLE:GetPointVec2()</a></td>
-		<td class="summary">
-<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec3">POSITIONABLE:GetPointVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the point in 3D of the DCS Positionable within the mission.</p>
@@ -167,6 +171,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPositionVec3">POSITIONABLE:GetPositionVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the DCS Positionable within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVec2">POSITIONABLE:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -305,34 +315,6 @@ The DCS Positionable heading</p>
 		<dl class="function">
 <dt>
 
-<a id="#(POSITIONABLE).GetPointVec2" >
-<strong>POSITIONABLE:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
-
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
-The 2D point vector of the DCS Positionable.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Positionable is not existing or alive.  </p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(POSITIONABLE).GetPointVec3" >
 <strong>POSITIONABLE:GetPointVec3()</strong>
 </a>
@@ -375,6 +357,34 @@ The DCS Positionable is not existing or alive.  </p>
 				
 <p><em><a href="DCSTypes.html##(Position)">DCSTypes#Position</a>:</em>
 The 3D position vectors of the DCS Positionable.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Positionable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetVec2" >
+<strong>POSITIONABLE:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the DCS Positionable within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The 2D point vector of the DCS Positionable.</p>
 
 				</li>
 				<li>

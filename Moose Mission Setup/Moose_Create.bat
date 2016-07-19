@@ -39,6 +39,7 @@ COPY /b Moose.lua + "Moose Create Static\Moose_Static_Loader.lua"        	Moose.
 
 
 COPY /b Moose.lua + %1\Routines.lua                                      	Moose.lua
+COPY /b Moose.lua + %1\Utils.lua                                         	Moose.lua
 COPY /b Moose.lua + %1\Base.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Object.lua                							Moose.lua
 COPY /b Moose.lua + %1\Identifiable.lua            							Moose.lua
@@ -81,8 +82,22 @@ COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
 COPY /b Moose.lua + %1\PatrolZone.lua            							Moose.lua
 COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
 COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
+
 COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
-COPY /b Moose.lua + %1\FAC.lua          		  							Moose.lua
+COPY /b Moose.lua + %1\DetectionManager.lua       							Moose.lua
+
+COPY /b Moose.lua + %1\StateMachine.lua       	  							Moose.lua
+
+COPY /b Moose.lua + %1\Process.lua              							Moose.lua
+COPY /b Moose.lua + %1\Process_Assign.lua    	  							Moose.lua
+COPY /b Moose.lua + %1\Process_Route.lua   		  							Moose.lua
+COPY /b Moose.lua + %1\Process_Smoke.lua    		  						Moose.lua
+COPY /b Moose.lua + %1\Process_Destroy.lua 		  							Moose.lua
+
+COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
+COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
+COPY /b Moose.lua + %1\Task_CAS.lua         	  							Moose.lua
+COPY /b Moose.lua + %1\Task_BAI.lua         	  							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 

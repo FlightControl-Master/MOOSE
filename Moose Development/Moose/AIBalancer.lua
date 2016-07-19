@@ -153,7 +153,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
 
             local PlayerInRange = { Value = false }          
-            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetPointVec2(), self.ReturnTresholdRange )
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
             
             self:E( RangeZone )
             
@@ -183,7 +183,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
                   else
                     -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
                     --TODO: i need to rework the POINT_VEC2 thing.
-                    local PointVec2 = POINT_VEC2:New( AIGroup:GetPointVec2().x, AIGroup:GetPointVec2().y  )
+                    local PointVec2 = POINT_VEC2:New( AIGroup:GetVec2().x, AIGroup:GetVec2().y  )
                     local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
                     self:T( ClosestAirbase.AirbaseName )
                     AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )

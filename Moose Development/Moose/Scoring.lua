@@ -59,6 +59,8 @@ function SCORING:New( GameName )
   self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )
 
   self:ScoreMenu()
+  
+  self:OpenCSV( GameName)
 
   return self
   
@@ -262,10 +264,17 @@ end
 
 
 --- Registers Scores the players completing a Mission Task.
-function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
-  self:F( { PlayerUnit, MissionName, Score } )
+-- @param #SCORING self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT PlayerUnit
+-- @param #string Text
+-- @param #number Score
+function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
 
-  local PlayerName = PlayerUnit:getPlayerName()
+  local PlayerName = PlayerUnit:GetPlayerName()
+  local MissionName = Mission:GetName()
+
+  self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
 
   if not self.Players[PlayerName].Mission[MissionName] then
     self.Players[PlayerName].Mission[MissionName] = {}
@@ -279,26 +288,37 @@ function SCORING:_AddMissionTaskScore( PlayerUnit, MissionName, Score )
   self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score
   self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
-  MESSAGE:New( "Player '" .. PlayerName .. "' has finished another Task in Mission '" .. MissionName .. "'. " ..
-    Score .. " Score points added.",
-    20 ):ToAll()
+  MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+    Score .. " task score!",
+    30 ):ToAll()
 
-  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:getName() )
+  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
 end
 
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
-function SCORING:_AddMissionScore( MissionName, Score )
-  self:F( { MissionName, Score } )
+-- @param #SCORING self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT PlayerUnit
+-- @param #string Text
+-- @param #number Score
+function SCORING:_AddMissionScore( Mission, Text, Score )
+  
+  local MissionName = Mission:GetName()
+
+  self:F( { Mission, Text, Score } )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
 
     if PlayerData.Mission[MissionName] then
+
       PlayerData.Score = PlayerData.Score + Score
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
-      MESSAGE:New( "Player '" .. PlayerName .. "' has finished Mission '" .. MissionName .. "'. " ..
-        Score .. " Score points added.",
-        20 ):ToAll()
+
+      MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+        Score .. " mission score!",
+        60 ):ToAll()
+
       self:ScoreCSV( PlayerName, "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
   end

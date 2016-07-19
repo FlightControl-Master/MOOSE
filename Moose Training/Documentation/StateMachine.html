@@ -1,0 +1,774 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li>StateMachine</li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>StateMachine</code></h1>
+   
+<p>This module contains the STATEMACHINE class.</p>
+
+   
+<p>This development is based on a state machine implementation made by Conroy Kyle. <br/>
+The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  </p>
+
+<p>I've taken the development and enhanced it to make the state machine hierarchical... 
+It is a fantastic development, this module.</p>
+
+<hr/>
+
+<h1>1) <a href="Workflow.html##(STATEMACHINE)">Workflow#STATEMACHINE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<h2>1.1) Add or remove objects from the STATEMACHINE</h2>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE">STATEMACHINE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_PROCESS">STATEMACHINE_PROCESS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_TASK">STATEMACHINE_TASK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(STATEMACHINE)">Type <code>STATEMACHINE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).ClassName">STATEMACHINE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).New">STATEMACHINE:New(options)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._add_to_map">STATEMACHINE:_add_to_map(map, event)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._call_handler">STATEMACHINE:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._create_transition">STATEMACHINE:_create_transition(name)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._gosub">STATEMACHINE:_gosub(parentstate, parentevent)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._isendstate">STATEMACHINE:_isendstate(state)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._submap">STATEMACHINE:_submap(subs, sub, name)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).can">STATEMACHINE:can(e)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).cannot">STATEMACHINE:cannot(e)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).is">STATEMACHINE:is(state)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).todot">STATEMACHINE:todot(filename)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(STATEMACHINE_PROCESS)">Type <code>STATEMACHINE_PROCESS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).ClassName">STATEMACHINE_PROCESS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).New">STATEMACHINE_PROCESS:New(Process, options)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_PROCESS object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).Process">STATEMACHINE_PROCESS.Process</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS)._call_handler">STATEMACHINE_PROCESS:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(STATEMACHINE_TASK)">Type <code>STATEMACHINE_TASK</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK).ClassName">STATEMACHINE_TASK.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK).New">STATEMACHINE_TASK:New(Task, options)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_TASK object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK).Task">STATEMACHINE_TASK.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK)._call_handler">STATEMACHINE_TASK:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE)">#STATEMACHINE</a></em>
+<a id="STATEMACHINE" >
+<strong>STATEMACHINE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE_PROCESS)">#STATEMACHINE_PROCESS</a></em>
+<a id="STATEMACHINE_PROCESS" >
+<strong>STATEMACHINE_PROCESS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE_TASK)">#STATEMACHINE_TASK</a></em>
+<a id="STATEMACHINE_TASK" >
+<strong>STATEMACHINE_TASK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(StateMachine)" >Type <code>StateMachine</code></a></h2>
+	
+			<h2><a id="#(STATEMACHINE)" >Type <code>STATEMACHINE</code></a></h2>
+				
+<p>STATEMACHINE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE).ClassName" >
+<strong>STATEMACHINE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).New" >
+<strong>STATEMACHINE:New(options)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> options </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE)">#STATEMACHINE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._add_to_map" >
+<strong>STATEMACHINE:_add_to_map(map, event)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> map </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._call_handler" >
+<strong>STATEMACHINE:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._create_transition" >
+<strong>STATEMACHINE:_create_transition(name)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> name </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._gosub" >
+<strong>STATEMACHINE:_gosub(parentstate, parentevent)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> parentstate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> parentevent </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._isendstate" >
+<strong>STATEMACHINE:_isendstate(state)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> state </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._submap" >
+<strong>STATEMACHINE:_submap(subs, sub, name)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> subs </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> sub </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> name </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).can" >
+<strong>STATEMACHINE:can(e)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> e </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).cannot" >
+<strong>STATEMACHINE:cannot(e)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> e </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).is" >
+<strong>STATEMACHINE:is(state)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> state </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).todot" >
+<strong>STATEMACHINE:todot(filename)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> filename </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(STATEMACHINE_PROCESS)" >Type <code>STATEMACHINE_PROCESS</code></a></h2>
+				
+<p>STATEMACHINE_PROCESS class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_PROCESS).ClassName" >
+<strong>STATEMACHINE_PROCESS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_PROCESS).New" >
+<strong>STATEMACHINE_PROCESS:New(Process, options)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_PROCESS object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Process </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> options </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_PROCESS)">#STATEMACHINE_PROCESS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Process.html##(PROCESS)">Process#PROCESS</a></em>
+<a id="#(STATEMACHINE_PROCESS).Process" >
+<strong>STATEMACHINE_PROCESS.Process</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_PROCESS)._call_handler" >
+<strong>STATEMACHINE_PROCESS:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(STATEMACHINE_TASK)" >Type <code>STATEMACHINE_TASK</code></a></h2>
+				
+<p>STATEMACHINE_TASK class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_TASK).ClassName" >
+<strong>STATEMACHINE_TASK.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_TASK).New" >
+<strong>STATEMACHINE_TASK:New(Task, options)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_TASK object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> options </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_TASK)">#STATEMACHINE_TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></em>
+<a id="#(STATEMACHINE_TASK).Task" >
+<strong>STATEMACHINE_TASK.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_TASK)._call_handler" >
+<strong>STATEMACHINE_TASK:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

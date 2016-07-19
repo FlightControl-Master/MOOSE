@@ -1,0 +1,364 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
+					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
+					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
+					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
+					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="NOTASK.html">NOTASK</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
+					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
+					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li>Task_CAS</li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Task_CAS</code></h1>
+   
+<p>This module contains the TASK_CAS classes.</p>
+
+   
+
+<h1>1) <a href="##(TASK_CAS)">#TASK_CAS</a> class, extends <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></h1>
+<p>The <a href="##(TASK_CAS)">#TASK_CAS</a> class defines a new CAS task of a <a href="Set.html">Set</a> of Target Units, located at a Target Zone, based on the tasking capabilities defined in <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>.
+The TASK_CAS is processed through a <a href="Statemachine.html##(STATEMACHINE_TASK)">Statemachine#STATEMACHINE_TASK</a>, and has the following statuses:</p>
+
+<ul>
+    <li>None: Start of the process</li>
+    <li>Planned: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Assign.html##(PROCESS_ASSIGN_ACCEPT)">Process<em>Assign#PROCESS</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
+    <li>Assigned: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Route.html##(PROCESS_ROUTE)">Process<em>Route#PROCESS</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
+    <li>Success: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
+    <li>Failed: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+</ul>
+
+<hr/>
+
+<h3>Authors: FlightControl - Design and Programming</h3>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_CAS">TASK_CAS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(TASK_CAS)">Type <code>TASK_CAS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).AssignToUnit">TASK_CAS:AssignToUnit(TaskUnit)</a></td>
+		<td class="summary">
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Unit.html">Unit</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).ClassName">TASK_CAS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).New">TASK_CAS:New(Mission, UnitSetTargets, TargetZone, MenuText, TargetSetUnit)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK_CAS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).OnNext">TASK_CAS:OnNext(Fsm, Event, From, To, Event)</a></td>
+		<td class="summary">
+<p>StateMachine callback function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).TaskScheduler">TASK_CAS.TaskScheduler</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS)._Schedule">TASK_CAS:_Schedule()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS)._Scheduler">TASK_CAS:_Scheduler()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_CAS)">#TASK_CAS</a></em>
+<a id="TASK_CAS" >
+<strong>TASK_CAS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Task_CAS)" >Type <code>Task_CAS</code></a></h2>
+	
+			<h2><a id="#(TASK_CAS)" >Type <code>TASK_CAS</code></a></h2>
+				
+<p>The TASK_CAS class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS).AssignToUnit" >
+<strong>TASK_CAS:AssignToUnit(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CAS)">#TASK_CAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_CAS).ClassName" >
+<strong>TASK_CAS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS).New" >
+<strong>TASK_CAS:New(Mission, UnitSetTargets, TargetZone, MenuText, TargetSetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK_CAS.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuText </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetSetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CAS)">#TASK_CAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS).OnNext" >
+<strong>TASK_CAS:OnNext(Fsm, Event, From, To, Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_CAS).TaskScheduler" >
+<strong>TASK_CAS.TaskScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS)._Schedule" >
+<strong>TASK_CAS:_Schedule()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS)._Scheduler" >
+<strong>TASK_CAS:_Scheduler()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

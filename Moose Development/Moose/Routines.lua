@@ -245,22 +245,6 @@ end
 
 
 
--- From http://lua-users.org/wiki/SimpleRound
--- use negative idp for rounding ahead of decimal place, positive for rounding after decimal place
-routines.utils.round = function(num, idp)
-  local mult = 10^(idp or 0)
-  return math.floor(num * mult + 0.5) / mult
-end
-
--- porting in Slmod's dostring
-routines.utils.dostring = function(s)
-	local f, err = loadstring(s)
-	if f then
-		return true, f()
-	else
-		return false, err
-	end
-end
 
 
 --3D Vector manipulation

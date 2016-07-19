@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li>Set</li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -477,6 +487,24 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Count">SET_BASE:Count()</a></td>
+		<td class="summary">
+<p>Retrieves the amount of objects in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Database">SET_BASE.Database</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Filter">SET_BASE.Filter</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FindNearestObjectFromPointVec2">SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</a></td>
 		<td class="summary">
 <p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
@@ -507,6 +535,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).List">SET_BASE.List</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).New">SET_BASE:New(Database)</a></td>
 		<td class="summary">
 <p>Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
@@ -522,6 +556,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Set">SET_BASE.Set</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).SetDatabase">SET_BASE:SetDatabase(BaseSet)</a></td>
+		<td class="summary">
+<p>Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).</p>
 </td>
 		</tr>
 		<tr>
@@ -861,6 +901,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).FilterHasRadar">SET_UNIT:FilterHasRadar(RadarTypes)</a></td>
+		<td class="summary">
+<p>Builds a set of units having a radar of give types.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).FilterMeta">SET_UNIT.FilterMeta</a></td>
 		<td class="summary">
 
@@ -912,6 +958,18 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the SET_UNIT and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasGroundUnits">SET_UNIT:HasGroundUnits()</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Set.html">Set</a> has ground targets.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasRadar">SET_UNIT:HasRadar(RadarType)</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Set.html">Set</a> has targets having a radar (of a given type).</p>
 </td>
 		</tr>
 		<tr>
@@ -1471,6 +1529,55 @@ The added BASE Object.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_BASE).Count" >
+<strong>SET_BASE:Count()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Retrieves the amount of objects in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Count</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SET_BASE).Database" >
+<strong>SET_BASE.Database</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Now base the new Set on the BaseSet</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(SET_BASE).Filter" >
+<strong>SET_BASE.Filter</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_BASE).FindNearestObjectFromPointVec2" >
 <strong>SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</strong>
 </a>
@@ -1610,6 +1717,20 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#table</em>
+<a id="#(SET_BASE).List" >
+<strong>SET_BASE.List</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_BASE).New" >
 <strong>SET_BASE:New(Database)</strong>
 </a>
@@ -1661,13 +1782,39 @@ DBObject = SET_BASE:New()</code></pre>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#table</em>
 <a id="#(SET_BASE).Set" >
 <strong>SET_BASE.Set</strong>
 </a>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE).SetDatabase" >
+<strong>SET_BASE:SetDatabase(BaseSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(SET_BASE)">#SET_BASE</a> BaseSet </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em></p>
 
 
 </dd>
@@ -3121,6 +3268,36 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).FilterHasRadar" >
+<strong>SET_UNIT:FilterHasRadar(RadarTypes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units having a radar of give types.</p>
+
+	
+<p>All the units having a radar of a given type will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table RadarTypes </em></code>: 
+The radar types.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(SET_UNIT).FilterMeta" >
 <strong>SET_UNIT.FilterMeta</strong>
@@ -3380,6 +3557,50 @@ The function that will be called when there is an alive UNIT in the SET_UNIT. Th
 				
 <p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).HasGroundUnits" >
+<strong>SET_UNIT:HasGroundUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Set.html">Set</a> has ground targets.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The amount of ground targets in the Set.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).HasRadar" >
+<strong>SET_UNIT:HasRadar(RadarType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Set.html">Set</a> has targets having a radar (of a given type).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSUnit.html##(Unit.RadarType)">DCSUnit#Unit.RadarType</a> RadarType </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The amount of radars in the Set with the given type</p>
 
 </dd>
 </dl>

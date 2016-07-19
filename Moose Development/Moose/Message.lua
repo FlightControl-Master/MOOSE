@@ -59,7 +59,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
     self.MessageCategory = ""
   end
 
-	self.MessageDuration = MessageDuration
+	self.MessageDuration = MessageDuration or 5
 	self.MessageTime = timer.getTime()
 	self.MessageText = MessageText
 	
@@ -102,6 +102,21 @@ function MESSAGE:ToClient( Client )
 	return self
 end
 
+--- Sends a MESSAGE to a Group. 
+-- @param #MESSAGE self
+-- @param Group#GROUP Group is the Group.
+-- @return #MESSAGE
+function MESSAGE:ToGroup( Group )
+  self:F( Group.GroupName )
+
+  if Group then
+
+    self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+    trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  end
+  
+  return self
+end
 --- Sends a MESSAGE to the Blue coalition.
 -- @param #MESSAGE self 
 -- @return #MESSAGE

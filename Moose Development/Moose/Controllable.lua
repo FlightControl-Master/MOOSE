@@ -600,7 +600,7 @@ function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed )
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
-    local ControllablePoint = self:GetPointVec2()
+    local ControllablePoint = self:GetVec2()
     return self:TaskOrbitCircleAtVec2( ControllablePoint, Altitude, Speed )
   end
 
@@ -777,7 +777,7 @@ function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
   if RandomPoint then
     Point = Zone:GetRandomVec2()
   else
-    Point = Zone:GetPointVec2()
+    Point = Zone:GetVec2()
   end
 
   local DCSTask = self:TaskLandAtVec2( Point, Duration )
@@ -1377,7 +1377,7 @@ end
 function CONTROLLABLE:TaskRouteToVec2( Point, Speed )
   self:F2( { Point, Speed } )
 
-  local ControllablePoint = self:GetUnit( 1 ):GetPointVec2()
+  local ControllablePoint = self:GetUnit( 1 ):GetVec2()
 
   local PointFrom = {}
   PointFrom.x = ControllablePoint.x
@@ -1516,7 +1516,7 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
 
   if DCSControllable then
 
-    local ControllablePoint = self:GetPointVec2()
+    local ControllablePoint = self:GetVec2()
 
     local PointFrom = {}
     PointFrom.x = ControllablePoint.x
@@ -1532,7 +1532,7 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     if Randomize then
       ZonePoint = Zone:GetRandomVec2()
     else
-      ZonePoint = Zone:GetPointVec2()
+      ZonePoint = Zone:GetVec2()
     end
 
     PointTo.x = ZonePoint.x
@@ -1614,7 +1614,7 @@ function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
 
   if DCSControllable then
 
-    local ControllablePoint = self:GetPointVec2()
+    local ControllablePoint = self:GetVec2()
     local ControllableVelocity = self:GetMaxVelocity()
 
     local PointFrom = {}
@@ -1626,7 +1626,7 @@ function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
 
 
     local PointTo = {}
-    local AirbasePoint = ReturnAirbase:GetPointVec2()
+    local AirbasePoint = ReturnAirbase:GetVec2()
 
     PointTo.x = AirbasePoint.x
     PointTo.y = AirbasePoint.y

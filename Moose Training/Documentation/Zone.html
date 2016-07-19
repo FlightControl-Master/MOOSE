@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li>Zone</li>
 					<li><a href="env.html">env</a></li>
@@ -235,7 +245,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetVec2">ZONE_BASE:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the Vec2 coordinate of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
@@ -371,7 +387,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsPointVec2InZone">ZONE_POLYGON_BASE:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsPointVec2InZone">ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
@@ -411,12 +427,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetPointVec2">ZONE_RADIUS:GetPointVec2()</a></td>
-		<td class="summary">
-<p>Returns the location of the zone.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetPointVec3">ZONE_RADIUS:GetPointVec3(Height)</a></td>
 		<td class="summary">
 <p>Returns the point of the zone.</p>
@@ -435,27 +445,27 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec2InZone">ZONE_RADIUS:IsPointVec2InZone(PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec2">ZONE_RADIUS:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the location of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec2InZone">ZONE_RADIUS:IsPointVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec3InZone">ZONE_RADIUS:IsPointVec3InZone(PointVec3)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec3InZone">ZONE_RADIUS:IsPointVec3InZone(PointVec3, Vec3)</a></td>
 		<td class="summary">
 <p>Returns if a point is within the zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(ZoneName, PointVec2, Radius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(ZoneName, Vec2, Radius)</a></td>
 		<td class="summary">
 <p>Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).PointVec2">ZONE_RADIUS.PointVec2</a></td>
-		<td class="summary">
-<p>The current location of the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -465,7 +475,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetPointVec2">ZONE_RADIUS:SetPointVec2(PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetPointVec2">ZONE_RADIUS:SetPointVec2(Vec2)</a></td>
 		<td class="summary">
 <p>Sets the location of the zone.</p>
 </td>
@@ -482,6 +492,12 @@
 <p>Smokes the zone boundaries in a color.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Vec2">ZONE_RADIUS.Vec2</a></td>
+		<td class="summary">
+<p>The current location of the zone.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(ZONE_UNIT)">Type <code>ZONE_UNIT</code></a></h2>
@@ -493,15 +509,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetPointVec2">ZONE_UNIT:GetPointVec2()</a></td>
-		<td class="summary">
-<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetRandomVec2">ZONE_UNIT:GetRandomVec2()</a></td>
 		<td class="summary">
 <p>Returns a random location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetVec2">ZONE_UNIT:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -705,7 +721,7 @@ The name of the zone as defined within the mission editor.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(ZONE_BASE.BoundingSquare)">#ZONE_BASE.BoundingSquare</a>:</em>
+<p><em>#nil:</em>
 The bounding square.</p>
 
 </dd>
@@ -723,7 +739,7 @@ The bounding square.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+<p><em>#nil:</em>
 The Vec2 coordinates.</p>
 
 </dd>
@@ -731,8 +747,26 @@ The Vec2 coordinates.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).GetVec2" >
+<strong>ZONE_BASE:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the Vec2 coordinate of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).IsPointVec2InZone" >
-<strong>ZONE_BASE:IsPointVec2InZone(PointVec2)</strong>
+<strong>ZONE_BASE:IsPointVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -743,7 +777,7 @@ The Vec2 coordinates.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The location to test.</p>
 
 				</li>
@@ -1150,7 +1184,7 @@ The Vec2 coordinate.</p>
 <dt>
 
 <a id="#(ZONE_POLYGON_BASE).IsPointVec2InZone" >
-<strong>ZONE_POLYGON_BASE:IsPointVec2InZone(PointVec2)</strong>
+<strong>ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1164,7 +1198,7 @@ The Vec2 coordinate.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The location to test.</p>
 
 				</li>
@@ -1322,24 +1356,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_RADIUS).GetPointVec2" >
-<strong>ZONE_RADIUS:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the location of the zone.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
-The location of the zone.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(ZONE_RADIUS).GetPointVec3" >
 <strong>ZONE_RADIUS:GetPointVec3(Height)</strong>
 </a>
@@ -1403,8 +1419,26 @@ The random location within the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_RADIUS).GetVec2" >
+<strong>ZONE_RADIUS:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the location of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).IsPointVec2InZone" >
-<strong>ZONE_RADIUS:IsPointVec2InZone(PointVec2)</strong>
+<strong>ZONE_RADIUS:IsPointVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1415,7 +1449,7 @@ The random location within the zone.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The location to test.</p>
 
 				</li>
@@ -1431,19 +1465,24 @@ true if the location is within the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).IsPointVec3InZone" >
-<strong>ZONE_RADIUS:IsPointVec3InZone(PointVec3)</strong>
+<strong>ZONE_RADIUS:IsPointVec3InZone(PointVec3, Vec3)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Returns if a point is within the zone.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
 The point to test.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Vec3 </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1458,7 +1497,7 @@ true if the point is within the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).New" >
-<strong>ZONE_RADIUS:New(ZoneName, PointVec2, Radius)</strong>
+<strong>ZONE_RADIUS:New(ZoneName, Vec2, Radius)</strong>
 </a>
 </dt>
 <dd>
@@ -1475,7 +1514,7 @@ Name of the zone.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The location of the zone.</p>
 
 				</li>
@@ -1490,20 +1529,6 @@ The radius of the zone.</p>
 				
 <p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
-<a id="#(ZONE_RADIUS).PointVec2" >
-<strong>ZONE_RADIUS.PointVec2</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The current location of the zone.</p>
 
 </dd>
 </dl>
@@ -1525,7 +1550,7 @@ self</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).SetPointVec2" >
-<strong>ZONE_RADIUS:SetPointVec2(PointVec2)</strong>
+<strong>ZONE_RADIUS:SetPointVec2(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1536,7 +1561,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The new location of the zone.</p>
 
 				</li>
@@ -1608,6 +1633,20 @@ self</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
+<a id="#(ZONE_RADIUS).Vec2" >
+<strong>ZONE_RADIUS.Vec2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The current location of the zone.</p>
+
+</dd>
+</dl>
 
 			<h2><a id="#(ZONE_UNIT)" >Type <code>ZONE_UNIT</code></a></h2>
 				
@@ -1631,24 +1670,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_UNIT).GetPointVec2" >
-<strong>ZONE_UNIT:GetPointVec2()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
-The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>location.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(ZONE_UNIT).GetRandomVec2" >
 <strong>ZONE_UNIT:GetRandomVec2()</strong>
 </a>
@@ -1661,6 +1682,24 @@ The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>l
 				
 <p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
 The random location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetVec2" >
+<strong>ZONE_UNIT:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>location.</p>
 
 </dd>
 </dl>

@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li>Unit</li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -163,6 +173,12 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).ClassName">UNIT.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Destroy">UNIT:Destroy()</a></td>
+		<td class="summary">
+<p>Destroys the <a href="Unit.html">Unit</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -290,6 +306,12 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).HasSensors">UNIT:HasSensors(...)</a></td>
+		<td class="summary">
+<p>Returns if the unit has sensors of a certain type.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsActive">UNIT:IsActive()</a></td>
 		<td class="summary">
 <p>Returns if the unit is activated.</p>
@@ -302,6 +324,12 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsGround">UNIT:IsGround()</a></td>
+		<td class="summary">
+<p>Returns if the unit is of an ground category.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsInZone">UNIT:IsInZone(Zone)</a></td>
 		<td class="summary">
 <p>Returns true if the unit is within a <a href="Zone.html">Zone</a>.</p>
@@ -311,6 +339,12 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsNotInZone">UNIT:IsNotInZone(Zone)</a></td>
 		<td class="summary">
 <p>Returns true if the unit is not within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsShip">UNIT:IsShip()</a></td>
+		<td class="summary">
+<p>Returns if the unit is of a ship category.</p>
 </td>
 		</tr>
 		<tr>
@@ -431,6 +465,34 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 		</tr>
 	</table>
 
+			<h2><a id="#(Unit.SensorType)">Type <code>Unit.SensorType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).IRST">Unit.SensorType.IRST</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).OPTIC">Unit.SensorType.OPTIC</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).RADAR">Unit.SensorType.RADAR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Unit.SensorType).RWR">Unit.SensorType.RWR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -464,6 +526,24 @@ If you want to obtain the complete <strong>3D position</strong> including oriënt
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).Destroy" >
+<strong>UNIT:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destroys the <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
 
 </dd>
 </dl>
@@ -968,6 +1048,42 @@ The DCS Unit is not existing or alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).HasSensors" >
+<strong>UNIT:HasSensors(...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit has sensors of a certain type.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. </p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).IsActive" >
 <strong>UNIT:IsActive()</strong>
 </a>
@@ -1011,6 +1127,27 @@ The DCS Unit is not existing or alive.  </p>
 				
 <p><em>#boolean:</em>
 Air category evaluation result.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsGround" >
+<strong>UNIT:IsGround()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is of an ground category.</p>
+
+	
+<p>If the unit is a ground vehicle or infantry, this method will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Ground category evaluation result.</p>
 
 </dd>
 </dl>
@@ -1065,6 +1202,27 @@ The zone to test.</p>
 				
 <p><em>#boolean:</em>
 Returns true if the unit is not within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsShip" >
+<strong>UNIT:IsShip()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the unit is of a ship category.</p>
+
+	
+<p>If the unit is a ship, this method will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Ship category evaluation result.</p>
 
 </dd>
 </dl>
@@ -1359,6 +1517,64 @@ The name of the DCS unit.</p>
 
 <a id="#(UNIT.SmokeColor).White" >
 <strong>UNIT.SmokeColor.White</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Unit.SensorType)" >Type <code>Unit.SensorType</code></a></h2>
+				
+<p>Unit.SensorType</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).IRST" >
+<strong>Unit.SensorType.IRST</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).OPTIC" >
+<strong>Unit.SensorType.OPTIC</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).RADAR" >
+<strong>Unit.SensorType.RADAR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Unit.SensorType).RWR" >
+<strong>Unit.SensorType.RWR</strong>
 </a>
 </dt>
 <dd>

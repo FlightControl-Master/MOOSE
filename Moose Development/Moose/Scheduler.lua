@@ -95,6 +95,7 @@ function SCHEDULER:Stop()
 
   self.Repeat = false
   if self.ScheduleID then
+    self:E( "Stop Schedule" )
     timer.removeFunction( self.ScheduleID )
   end
   self.ScheduleID = nil

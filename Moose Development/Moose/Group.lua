@@ -476,12 +476,12 @@ end
 --- Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.
 -- @param #GROUP self
 -- @return DCSTypes#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
-function GROUP:GetPointVec2()
+function GROUP:GetVec2()
   self:F2( self.GroupName )
 
   local UnitPoint = self:GetUnit(1)
-  UnitPoint:GetPointVec2()
-  local GroupPointVec2 = UnitPoint:GetPointVec2()
+  UnitPoint:GetVec2()
+  local GroupPointVec2 = UnitPoint:GetVec2()
   self:T3( GroupPointVec2 )
   return GroupPointVec2
 end
@@ -873,7 +873,7 @@ end
 -- @param #string Message The message text
 -- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
-function GROUP:Message( Message, Duration )
+function GROUP:GetMessage( Message, Duration )
   self:F2( { Message, Duration } )
 
   local DCSGroup = self:GetDCSObject()
@@ -894,7 +894,7 @@ function GROUP:MessageToAll( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToAll()
+    self:GetMessage( Message, Duration ):ToAll()
   end
 
   return nil
@@ -910,7 +910,7 @@ function GROUP:MessageToRed( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToRed()
+    self:GetMessage( Message, Duration ):ToRed()
   end
 
   return nil
@@ -926,7 +926,7 @@ function GROUP:MessageToBlue( Message, Duration )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToBlue()
+    self:GetMessage( Message, Duration ):ToBlue()
   end
 
   return nil
@@ -943,7 +943,42 @@ function GROUP:MessageToClient( Message, Duration, Client )
 
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
-    self:Message( Message, Duration ):ToClient( Client )
+    self:GetMessage( Message, Duration ):ToClient( Client )
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+-- @param Group#GROUP MessageGroup The GROUP object receiving the message.
+function GROUP:MessageToGroup( Message, Duration, MsgGroup )
+  self:F2( { Message, Duration } )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+    if DCSGroup:isExist() then
+      self:GetMessage( Message, Duration ):ToGroup( MsgGroup )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to the players in the @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #GROUP self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function GROUP:Message( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+    self:GetMessage( Message, Duration ):ToGroup( self )
   end
 
   return nil

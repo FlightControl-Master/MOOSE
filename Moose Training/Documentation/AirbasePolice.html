@@ -44,9 +44,9 @@
 					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="Fac.html">Fac</a></li>
 					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
@@ -61,6 +61,9 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_CAS.html">Process_CAS</a></li>
+					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -68,9 +71,16 @@
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="TASK.html">TASK</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_Assign.html">Task_Assign</a></li>
+					<li><a href="Task_CAS.html">Task_CAS</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
@@ -102,15 +112,15 @@ CLIENTS should not be allowed to:</p>
 <p>All the airbases on the caucasus map can be monitored using this class.
 If you want to monitor specific airbases, you need to use the <a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE.Monitor</a>() method, which takes a table or airbase names.
 The following names can be given:
-  * AnapaVityazevo 
-  * Batumi 
-  * Beslan 
-  * Gelendzhik 
-  * Gudauta 
-  * Kobuleti 
-  * KrasnodarCenter 
-  * KrasnodarPashkovsky 
-  * Krymsk 
+  * AnapaVityazevo
+  * Batumi
+  * Beslan
+  * Gelendzhik
+  * Gudauta
+  * Kobuleti
+  * KrasnodarCenter
+  * KrasnodarPashkovsky
+  * Krymsk
   * Kutaisi
   * MaykopKhanskaya
   * MineralnyeVody
@@ -122,8 +132,17 @@ The following names can be given:
   * Soganlug
   * SukhumiBabushara
   * TbilisiLochini
-  * Vaziani
-  </p>
+  * Vaziani</p>
+
+<h1>3) <a href="AirbasePolice.html##(AIRBASEPOLICE_NEVADA)">AirbasePolice#AIRBASEPOLICE_NEVADA</a> class, extends <a href="AirbasePolice.html##(AIRBASEPOLICE_BASE)">AirbasePolice#AIRBASEPOLICE_BASE</a></h1>
+<p>All the airbases on the NEVADA map can be monitored using this class.
+If you want to monitor specific airbases, you need to use the <a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE.Monitor</a>() method, which takes a table or airbase names.
+The following names can be given:
+  * Nellis
+  * McCarran
+  * Creech
+  * Groom Lake</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -135,6 +154,12 @@ The following names can be given:
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AIRBASEPOLICE_CAUCASUS">AIRBASEPOLICE_CAUCASUS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AIRBASEPOLICE_NEVADA">AIRBASEPOLICE_NEVADA</a></td>
 		<td class="summary">
 
 </td>
@@ -166,6 +191,28 @@ The following names can be given:
 		</tr>
 	</table>
 
+			<h2><a id="#(AIRBASEPOLICE_NEVADA)">Type <code>AIRBASEPOLICE_NEVADA</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).Airbases">AIRBASEPOLICE_NEVADA.Airbases</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).ClassName">AIRBASEPOLICE_NEVADA.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).New">AIRBASEPOLICE_NEVADA:New(SetClient)</a></td>
+		<td class="summary">
+<p>Creates a new AIRBASEPOLICE_NEVADA object.</p>
+</td>
+		</tr>
+	</table>
+
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -187,6 +234,20 @@ The following names can be given:
 		<em></em>
 <a id="AIRBASEPOLICE_CAUCASUS" >
 <strong>AIRBASEPOLICE_CAUCASUS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AIRBASEPOLICE_NEVADA)">#AIRBASEPOLICE_NEVADA</a></em>
+<a id="AIRBASEPOLICE_NEVADA" >
+<strong>AIRBASEPOLICE_NEVADA</strong>
 </a>
 </dt>
 <dd>
@@ -243,6 +304,64 @@ The following names can be given:
 <dd>
 	
 
+
+</dd>
+</dl>
+
+			<h2><a id="#(AIRBASEPOLICE_NEVADA)" >Type <code>AIRBASEPOLICE_NEVADA</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AIRBASEPOLICE_NEVADA).Airbases" >
+<strong>AIRBASEPOLICE_NEVADA.Airbases</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(AIRBASEPOLICE_NEVADA).ClassName" >
+<strong>AIRBASEPOLICE_NEVADA.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASEPOLICE_NEVADA).New" >
+<strong>AIRBASEPOLICE_NEVADA:New(SetClient)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new AIRBASEPOLICE_NEVADA object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SetClient </em></code>: 
+A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AIRBASEPOLICE_NEVADA)">#AIRBASEPOLICE_NEVADA</a>:</em>
+self</p>
 
 </dd>
 </dl>

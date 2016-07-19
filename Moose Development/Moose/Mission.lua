@@ -6,13 +6,17 @@
 -- @type MISSION
 -- @extends Base#BASE
 -- @field #MISSION.Clients _Clients
+-- @field Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
 	MissionStatus = "PENDING",
 	_Clients = {},
-	_Tasks = {},
+	Tasks = {},
+  TaskMenus = {},
+  TaskCategoryMenus = {},
+  TaskTypeMenus = {},
 	_ActiveTasks = {},
 	GoalFunction = nil,
 	MissionReportTrigger = 0,
@@ -33,48 +37,176 @@ MISSION = {
 function MISSION:Meta()
 
 	local self = BASE:Inherit( self, BASE:New() )
-	self:F()
 	
 	return self
 end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
--- @param string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
--- @param string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
--- @param string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param string MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
--- @return MISSION
--- @usage 
--- -- Declare a few missions.
--- local Mission = MISSIONSCHEDULER.AddMission( 'Russia Transport Troops SA-6', 'Operational', 'Transport troops from the control center to one of the SA-6 SAM sites to activate their operation.', 'Russia' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Patriots', 'Primary', 'Our intelligence reports that 3 Patriot SAM defense batteries are located near Ruisi, Kvarhiti and Gori.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Package Delivery', 'Operational', 'In order to be in full control of the situation, we need you to deliver a very important package at a secret location. Fly undetected through the NATO defenses and deliver the secret package. The secret agent is located at waypoint 4.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue General', 'Tactical', 'Our intelligence has received a remote signal behind Gori. We believe it is a very important Russian General that was captured by Georgia. Go out there and rescue him! Ensure you stay out of the battle zone, keep south. Waypoint 4 is the location of our Russian General.', 'Russia'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Transport Troops', 'Operational', 'Transport 3 groups of air defense engineers from our barracks "Gold" and "Titan" to each patriot battery control center to activate our air defenses.', 'NATO' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'SA-6 SAMs', 'Primary', 'Our intelligence reports that 3 SA-6 SAM defense batteries are located near Didmukha, Khetagurov and Berula. Eliminate the Russian SAMs.', 'NATO'  )
--- local Mission = MISSIONSCHEDULER.AddMission( 'NATO Sling Load', 'Operational', 'Fly to the cargo pickup zone at Dzegvi or Kaspi, and sling the cargo to Soganlug airbase.', 'NATO' )
--- local Mission = MISSIONSCHEDULER.AddMission( 'Rescue secret agent', 'Tactical', 'In order to be in full control of the situation, we need you to rescue a secret agent from the woods behind enemy lines. Avoid the Russian defenses and rescue the agent. Keep south until Khasuri, and keep your eyes open for any SAM presence. The agent is located at waypoint 4 on your kneeboard.', 'NATO'  )
+-- @param #MISSION self
+-- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
+-- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
+-- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
+-- @param DCSCoalitionObject#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @return #MISSION self
 function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
 	self = MISSION:Meta()
-	self:T({ MissionName, MissionPriority, MissionBriefing, MissionCoalition })
+	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
-	local Valid = true
-  
-	Valid = routines.ValidateString( MissionName, "MissionName", Valid )
-	Valid = routines.ValidateString( MissionPriority, "MissionPriority", Valid )
-	Valid = routines.ValidateString( MissionBriefing, "MissionBriefing", Valid )
-	Valid = routines.ValidateString( MissionCoalition, "MissionCoalition", Valid )
-  
-	if Valid then
-		self.Name = MissionName
-		self.MissionPriority = MissionPriority
-		self.MissionBriefing = MissionBriefing
-		self.MissionCoalition = MissionCoalition
-	end
+	self.Name = MissionName
+	self.MissionPriority = MissionPriority
+	self.MissionBriefing = MissionBriefing
+	self.MissionCoalition = MissionCoalition
 
 	return self
 end
+
+--- Gets the mission name.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:GetName()
+  return self.Name
+end
+
+--- Add a scoring to the mission.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:AddScoring( Scoring )
+  self.Scoring = Scoring
+  return self
+end
+
+--- Get the scoring object of a mission.
+-- @param #MISSION self
+-- @return #SCORING Scoring
+function MISSION:GetScoring()
+  return self.Scoring
+end
+
+
+--- Sets the Planned Task menu.
+-- @param #MISSION self
+function MISSION:SetPlannedMenu()
+  
+  for _, Task in pairs( self.Tasks ) do
+    local Task = Task -- Task#TASK_BASE
+    Task:RemoveMenu()
+    Task:SetPlannedMenu()  
+  end
+  
+end
+
+--- Sets the Assigned Task menu.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task
+-- @param #string MenuText The menu text.
+-- @return #MISSION self
+function MISSION:SetAssignedMenu( Task )
+  
+  for _, Task in pairs( self.Tasks ) do
+    local Task = Task -- Task#TASK_BASE
+    Task:RemoveMenu()
+    Task:SetAssignedMenu()  
+  end
+  
+end
+
+--- Removes a Task menu.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task
+-- @return #MISSION self
+function MISSION:RemoveTaskMenu( Task )
+    
+  Task:RemoveMenu()  
+end
+
+
+--- Gets the mission menu for the coalition.
+-- @param #MISSION self
+-- @param Group#GROUP TaskGroup
+-- @return Menu#MENU_COALITION self
+function MISSION:GetMissionMenu( TaskGroup )
+  local TaskGroupName = TaskGroup:GetName()
+  return self.MenuMission[TaskGroupName]
+end
+
+
+--- Clears the mission menu for the coalition.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:ClearMissionMenu()
+  self.MissionMenu:Remove()
+  self.MissionMenu = nil
+end
+
+--- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
+-- @param #string TaskIndex is the Index of the @{Task} within the @{Mission}.
+-- @param #number TaskID is the ID of the @{Task} within the @{Mission}.
+-- @return Task#TASK_BASE The Task
+-- @return #nil Returns nil if no task was found.
+function MISSION:GetTask( TaskName  )
+  self:F( { TaskName } )
+
+  return self.Tasks[TaskName]
+end
+
+
+--- Register a @{Task} to be completed within the @{Mission}. 
+-- Note that there can be multiple @{Task}s registered to be completed. 
+-- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return Task#TASK_BASE The task added.
+function MISSION:AddTask( Task )
+
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
+  
+  self.Tasks[TaskName] = Task
+
+  return Task
+end
+
+--- Removes a @{Task} to be completed within the @{Mission}. 
+-- Note that there can be multiple @{Task}s registered to be completed. 
+-- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return #nil The cleaned Task reference.
+function MISSION:RemoveTask( Task )
+
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
+
+  Task:CleanUp() -- Cleans all events and sets task to nil to get Garbage Collected
+
+  -- Ensure everything gets garbarge collected.
+  self.Tasks[TaskName] = nil 
+  Task = nil
+  
+  return nil
+end
+
+--- Return the next @{Task} ID to be completed within the @{Mission}. 
+-- @param #MISSION self
+-- @param Task#TASK_BASE Task is the @{Task} object.
+-- @return Task#TASK_BASE The task added.
+function MISSION:GetNextTaskID( Task )
+
+  local TaskName = Task:GetTaskName()
+  self:F( TaskName )
+  self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
+  
+  self.Tasks[TaskName].n = self.Tasks[TaskName].n + 1
+
+  return self.Tasks[TaskName].n
+end
+
+
+
+--- old stuff
 
 --- Returns if a Mission has completed.
 -- @return bool
@@ -263,66 +395,6 @@ function MISSION:FindClient( ClientName )
 	return self._Clients[ClientName]
 end
 
-
---- Register a @{TASK} to be completed within the @{MISSION}. Note that there can be multiple @{TASK}s registered to be completed. Each TASK can be set a certain Goal. The MISSION will not be completed until all Goals are reached.
--- @param TASK Task is the @{TASK} object. The object must have been instantiated with @{TASK:New} or any of its inherited @{TASK}s.
--- @param number TaskNumber is the sequence number of the TASK within the MISSION. This number does have to be chronological.
--- @return TASK
--- @usage
--- -- Define a few tasks for the Mission.
---	PickupZones = { "NATO Gold Pickup Zone", "NATO Titan Pickup Zone" }
---	PickupSignalUnits = { "NATO Gold Coordination Center", "NATO Titan Coordination Center" }
---
---	-- Assign the Pickup Task
---	local PickupTask = PICKUPTASK:New( PickupZones, CARGO_TYPE.ENGINEERS, CLIENT.ONBOARDSIDE.LEFT )
---	PickupTask:AddSmokeBlue( PickupSignalUnits  )
---	PickupTask:SetGoalTotal( 3 )
---	Mission:AddTask( PickupTask, 1 )
---
---	-- Assign the Deploy Task
---	local PatriotActivationZones = { "US Patriot Battery 1 Activation", "US Patriot Battery 2 Activation", "US Patriot Battery 3 Activation" }
---	local PatriotActivationZonesSmokeUnits = { "US SAM Patriot - Battery 1 Control", "US SAM Patriot - Battery 2 Control", "US SAM Patriot - Battery 3 Control" }
---	local DeployTask = DEPLOYTASK:New( PatriotActivationZones, CARGO_TYPE.ENGINEERS )
---	--DeployTask:SetCargoTargetZoneName( 'US Troops Attack ' .. math.random(2) )
---	DeployTask:AddSmokeBlue( PatriotActivationZonesSmokeUnits )
---	DeployTask:SetGoalTotal( 3 )
---	DeployTask:SetGoalTotal( 3, "Patriots activated" )
---	Mission:AddTask( DeployTask, 2 )
-	
-function MISSION:AddTask( Task, TaskNumber )
-	self:F()
-
-	self._Tasks[TaskNumber] = Task
-	self._Tasks[TaskNumber]:EnableEvents()
-	self._Tasks[TaskNumber].ID = TaskNumber
-
-	return Task
- end
-
---- Get the TASK idenified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param number TaskNumber is the number of the @{TASK} within the @{MISSION}.
--- @return TASK
--- @usage
--- -- Get Task 2 from the Mission.
--- Task2 = Mission:GetTask( 2 )
-
-function MISSION:GetTask( TaskNumber )
-	self:F()
-
-	local Valid = true
-
-	local Task = nil
-
-	if type(TaskNumber) ~= "number" then
-		Valid = false
-	end
-
-	if Valid then
-		Task = self._Tasks[TaskNumber]
-	end
-
-	return Task
-end
 
 --- Get all the TASKs from the Mission. This function is useful in GoalFunctions.
 -- @return {TASK,...} Structure of TASKS with the @{TASK} number as the key.
