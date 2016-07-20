@@ -2119,6 +2119,7 @@ end
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointInitialize( WayPoints )
+  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
 
   if WayPoints then
     self.WayPoints = WayPoints
@@ -2179,6 +2180,7 @@ end
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
+  self:F( { WayPoint, WaitTime } )
 
   if not WayPoint then
     WayPoint = 1

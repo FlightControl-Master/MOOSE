@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160719_2203' ) 
+env.info( 'Moose Generation Timestamp: 20160720_1731' ) 
 local base = _G
 
 Include = {}
@@ -6072,6 +6072,7 @@ end
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointInitialize( WayPoints )
+  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
 
   if WayPoints then
     self.WayPoints = WayPoints
@@ -6132,6 +6133,7 @@ end
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
+  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
 
   if not WayPoint then
     WayPoint = 1
