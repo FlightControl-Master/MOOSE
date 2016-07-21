@@ -1365,10 +1365,10 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
---- Returns a comma separated string of the unit types with a count in the  @{Set}.
+--- Returns map of unit types.
 -- @param #SET_UNIT self
--- @return #string The unit types string
-function SET_UNIT:GetUnitTypesText()
+-- @return #map<#string,#number> A map of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+function SET_UNIT:GetUnitTypes()
   self:F2()
 
   local MT = {} -- Message Text
@@ -1391,9 +1391,49 @@ function SET_UNIT:GetUnitTypesText()
     MT[#MT+1] = UnitType .. " of " .. UnitTypeID
   end
 
+  return UnitTypes
+end
+
+
+--- Returns a comma separated string of the unit types with a count in the  @{Set}.
+-- @param #SET_UNIT self
+-- @return #string The unit types string
+function SET_UNIT:GetUnitTypesText()
+  self:F2()
+
+  local MT = {} -- Message Text
+  local UnitTypes = self:GetUnitTypes()
+  
+  for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+  end
+
   return table.concat( MT, ", " )
 end
 
+--- Returns map of unit threat levels.
+-- @param #SET_UNIT self
+-- @return #table.
+function SET_UNIT:GetUnitThreatLevels()
+  self:F2()
+
+  local UnitThreatLevels = {}
+  
+  for UnitID, UnitData in pairs( self:GetSet() ) do
+    local ThreatUnit = UnitData -- Unit#UNIT
+    if ThreatUnit:IsAlive() then
+      local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
+      local ThreatUnitName = ThreatUnit:GetName()
+  
+      UnitThreatLevels[UnitThreatLevel] = UnitThreatLevels[UnitThreatLevel] or {}
+      UnitThreatLevels[UnitThreatLevel].UnitThreatLevelText = UnitThreatLevelText
+      UnitThreatLevels[UnitThreatLevel].Units = UnitThreatLevels[UnitThreatLevel].Units or {}
+      UnitThreatLevels[UnitThreatLevel].Units[ThreatUnitName] = ThreatUnit
+    end
+  end
+
+  return UnitThreatLevels
+end
 
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self

@@ -118,6 +118,18 @@ function POINT_VEC3:New( x, y, z )
   return self
 end
 
+--- Create a new POINT_VEC3 object from  Vec3 coordinates.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Point#POINT_VEC3 self
+function POINT_VEC3:NewFromVec3( Vec3 )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self.PointVec3 = Vec3
+  self:F2( self.PointVec3 )
+  return self
+end
+
 
 --- Return the coordinates of the POINT_VEC3 in Vec3 format.
 -- @param #POINT_VEC3 self

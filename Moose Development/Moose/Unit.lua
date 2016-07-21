@@ -209,7 +209,7 @@ end
 -- @param Unit#UNIT self
 -- @return #string The Callsign of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetCallSign()
+function UNIT:GetCallsign()
   self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
@@ -473,6 +473,20 @@ function UNIT:GetThreatLevel()
   local Attributes = self:GetDesc().attributes
   local ThreatLevel = 0
   
+  local ThreatLevels = {
+    "Unarmed", 
+    "Infantry", 
+    "Old Tanks & APCs", 
+    "Tanks & IFVs without ATGM",   
+    "Tanks & IFV with ATGM",
+    "Modern Tanks",
+    "AAA",
+    "IR Guided SAMs",
+    "SR SAMs",
+    "MR SAMs",
+    "LR SAMs"
+  }
+  
   self:T2( Attributes )
   
   if     Attributes["LR SAM"]                                   then ThreatLevel = 10
@@ -492,7 +506,7 @@ function UNIT:GetThreatLevel()
   end
 
   self:T2( ThreatLevel )
-  return ThreatLevel
+  return ThreatLevel, ThreatLevels[ThreatLevel+1]
 
 end
 

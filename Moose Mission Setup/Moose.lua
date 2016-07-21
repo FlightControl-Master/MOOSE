@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160721_0859' ) 
+env.info( 'Moose Generation Timestamp: 20160721_1527' ) 
 local base = _G
 
 Include = {}
@@ -6151,6 +6151,123 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
+-- Message APIs
+
+--- Returns a message with the callsign embedded (if there is one).
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+-- @return Message#MESSAGE
+function CONTROLLABLE:GetMessage( Message, Duration )
+  self:E( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
+  end
+
+  return nil
+end
+
+--- Send a message to all coalitions.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function CONTROLLABLE:MessageToAll( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToAll()
+  end
+
+  return nil
+end
+
+--- Send a message to the red coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTYpes#Duration Duration The duration of the message.
+function CONTROLLABLE:MessageToRed( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToRed()
+  end
+
+  return nil
+end
+
+--- Send a message to the blue coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function CONTROLLABLE:MessageToBlue( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToBlue()
+  end
+
+  return nil
+end
+
+--- Send a message to a client.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+-- @param Client#CLIENT Client The client object receiving the message.
+function CONTROLLABLE:MessageToClient( Message, Duration, Client )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToClient( Client )
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+-- @param Group#GROUP MessageGroup The GROUP object receiving the message.
+function CONTROLLABLE:MessageToGroup( Message, Duration, MessageGroup )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      self:GetMessage( Message, Duration ):ToGroup( MessageGroup )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to the players in the @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #CONTROLLABLE self
+-- @param #string Message The message text
+-- @param DCSTypes#Duration Duration The duration of the message.
+function CONTROLLABLE:Message( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToGroup( self )
+  end
+
+  return nil
+end
 
 --- This module contains the SCHEDULER class.
 --
@@ -8480,123 +8597,6 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 end
 
 
--- Message APIs
-
---- Returns a message for a coalition or a client.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
--- @return Message#MESSAGE
-function GROUP:GetMessage( Message, Duration )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
-  end
-
-  return nil
-end
-
---- Send a message to all coalitions.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
-function GROUP:MessageToAll( Message, Duration )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    self:GetMessage( Message, Duration ):ToAll()
-  end
-
-  return nil
-end
-
---- Send a message to the red coalition.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTYpes#Duration Duration The duration of the message.
-function GROUP:MessageToRed( Message, Duration )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    self:GetMessage( Message, Duration ):ToRed()
-  end
-
-  return nil
-end
-
---- Send a message to the blue coalition.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
-function GROUP:MessageToBlue( Message, Duration )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    self:GetMessage( Message, Duration ):ToBlue()
-  end
-
-  return nil
-end
-
---- Send a message to a client.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
--- @param Client#CLIENT Client The client object receiving the message.
-function GROUP:MessageToClient( Message, Duration, Client )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    self:GetMessage( Message, Duration ):ToClient( Client )
-  end
-
-  return nil
-end
-
---- Send a message to a @{Group}.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
--- @param Group#GROUP MessageGroup The GROUP object receiving the message.
-function GROUP:MessageToGroup( Message, Duration, MsgGroup )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    if DCSGroup:isExist() then
-      self:GetMessage( Message, Duration ):ToGroup( MsgGroup )
-    end
-  end
-
-  return nil
-end
-
---- Send a message to the players in the @{Group}.
--- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
--- @param #GROUP self
--- @param #string Message The message text
--- @param DCSTypes#Duration Duration The duration of the message.
-function GROUP:Message( Message, Duration )
-  self:F2( { Message, Duration } )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    self:GetMessage( Message, Duration ):ToGroup( self )
-  end
-
-  return nil
-end
 --- This module contains the UNIT class.
 -- 
 -- 1) @{Unit#UNIT} class, extends @{Controllable#CONTROLLABLE}
@@ -8808,7 +8808,7 @@ end
 -- @param Unit#UNIT self
 -- @return #string The Callsign of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:GetCallSign()
+function UNIT:GetCallsign()
   self:F2( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
@@ -9072,6 +9072,20 @@ function UNIT:GetThreatLevel()
   local Attributes = self:GetDesc().attributes
   local ThreatLevel = 0
   
+  local ThreatLevels = {
+    "Unarmed", 
+    "Infantry", 
+    "Old Tanks & APCs", 
+    "Tanks & IFVs without ATGM",   
+    "Tanks & IFV with ATGM",
+    "Modern Tanks",
+    "AAA",
+    "IR Guided SAMs",
+    "SR SAMs",
+    "MR SAMs",
+    "LR SAMs"
+  }
+  
   self:T2( Attributes )
   
   if     Attributes["LR SAM"]                                   then ThreatLevel = 10
@@ -9091,7 +9105,7 @@ function UNIT:GetThreatLevel()
   end
 
   self:T2( ThreatLevel )
-  return ThreatLevel
+  return ThreatLevel, ThreatLevels[ThreatLevel+1]
 
 end
 
@@ -12838,10 +12852,10 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
---- Returns a comma separated string of the unit types with a count in the  @{Set}.
+--- Returns map of unit types.
 -- @param #SET_UNIT self
--- @return #string The unit types string
-function SET_UNIT:GetUnitTypesText()
+-- @return #map<#string,#number> A map of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+function SET_UNIT:GetUnitTypes()
   self:F2()
 
   local MT = {} -- Message Text
@@ -12864,9 +12878,49 @@ function SET_UNIT:GetUnitTypesText()
     MT[#MT+1] = UnitType .. " of " .. UnitTypeID
   end
 
+  return UnitTypes
+end
+
+
+--- Returns a comma separated string of the unit types with a count in the  @{Set}.
+-- @param #SET_UNIT self
+-- @return #string The unit types string
+function SET_UNIT:GetUnitTypesText()
+  self:F2()
+
+  local MT = {} -- Message Text
+  local UnitTypes = self:GetUnitTypes()
+  
+  for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+  end
+
   return table.concat( MT, ", " )
 end
 
+--- Returns map of unit threat levels.
+-- @param #SET_UNIT self
+-- @return #table.
+function SET_UNIT:GetUnitThreatLevels()
+  self:F2()
+
+  local UnitThreatLevels = {}
+  
+  for UnitID, UnitData in pairs( self:GetSet() ) do
+    local ThreatUnit = UnitData -- Unit#UNIT
+    if ThreatUnit:IsAlive() then
+      local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
+      local ThreatUnitName = ThreatUnit:GetName()
+  
+      UnitThreatLevels[UnitThreatLevel] = UnitThreatLevels[UnitThreatLevel] or {}
+      UnitThreatLevels[UnitThreatLevel].UnitThreatLevelText = UnitThreatLevelText
+      UnitThreatLevels[UnitThreatLevel].Units = UnitThreatLevels[UnitThreatLevel].Units or {}
+      UnitThreatLevels[UnitThreatLevel].Units[ThreatUnitName] = ThreatUnit
+    end
+  end
+
+  return UnitThreatLevels
+end
 
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self
@@ -13770,6 +13824,18 @@ function POINT_VEC3:New( x, y, z )
   return self
 end
 
+--- Create a new POINT_VEC3 object from  Vec3 coordinates.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Point#POINT_VEC3 self
+function POINT_VEC3:NewFromVec3( Vec3 )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self.PointVec3 = Vec3
+  self:F2( self.PointVec3 )
+  return self
+end
+
 
 --- Return the coordinates of the POINT_VEC3 in Vec3 format.
 -- @param #POINT_VEC3 self
@@ -14174,11 +14240,11 @@ Include.File( "Process_Assign" )
 Include.File( "Process_Route" )
 Include.File( "Process_Smoke" )
 Include.File( "Process_Destroy" )
+Include.File( "Process_JTAC" )
 
 Include.File( "Task" )
 Include.File( "Task_SEAD" )
-Include.File( "Task_CAS" )
-Include.File( "Task_BAI" )
+Include.File( "Task_A2G" )
 
 -- The order of the declarations is important here. Don't touch it.
 
@@ -25489,6 +25555,7 @@ DETECTION_AREAS = {
 -- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
 -- @field #number AreaID -- The identifier of the detected area.
 -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
+-- @field Unit#UNIT NearestFAC The nearest FAC near the Area.
 
 
 --- DETECTION_AREAS constructor.
@@ -25673,6 +25740,36 @@ function DETECTION_AREAS:CalculateThreatLevelA2G( DetectedArea )
 
   self:T3( MaxThreatLevelA2G )
   DetectedArea.MaxThreatLevelA2G = MaxThreatLevelA2G
+  
+end
+
+--- Find the nearest FAC of the DetectedArea.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @return Unit#UNIT The nearest FAC unit
+function DETECTION_AREAS:NearestFAC( DetectedArea )
+  
+  local NearestFAC = nil
+  local MinDistance = 1000000000 -- Units are not further than 1000000 km away from an area :-)
+  
+  for FACGroupName, FACGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
+    for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
+      local FACUnit = FACUnitData -- Unit#UNIT
+      if FACUnit:IsActive() then
+        local Vec3 = FACUnit:GetPointVec3()
+        local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
+        self:E( "Distance", Distance )
+        if Distance < MinDistance then
+          MinDistance = Distance
+          NearestFAC = FACUnit
+        end
+      end
+    end
+  end
+
+  self:E( { NearestFAC.UnitName, MinDistance } )
+  DetectedArea.NearestFAC = NearestFAC
   
 end
 
@@ -26001,6 +26098,7 @@ function DETECTION_AREAS:CreateDetectionSets()
 
     self:ReportFriendliesNearBy( { DetectedArea = DetectedArea, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
     self:CalculateThreatLevelA2G( DetectedArea )  -- Calculate A2G threat level
+    self:NearestFAC( DetectedArea )
 
     if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
       DetectedZone.ZoneUNIT:SmokeRed()
@@ -26466,7 +26564,7 @@ do -- DETECTION_DISPATCHER
       if not CASTask then
         local TargetSetUnit = self:EvaluateCAS( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          CASTask = Mission:AddTask( TASK_CAS:New( Mission, self.SetGroup, "CAS." .. AreaID, TargetSetUnit , DetectedZone ) ):StatePlanned()
+          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
@@ -26480,7 +26578,7 @@ do -- DETECTION_DISPATCHER
       if not BAITask then
         local TargetSetUnit = self:EvaluateBAI( DetectedArea, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          BAITask = Mission:AddTask( TASK_BAI:New( Mission, self.SetGroup, "BAI." .. AreaID, TargetSetUnit , DetectedZone ) ):StatePlanned()
+          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
@@ -26644,7 +26742,7 @@ function STATEMACHINE:_create_transition(name)
       
       local subtable = self:_gosub( to, name )
       for _, sub in pairs( subtable ) do
-        self:E( "calling sub: " .. sub.event )
+        self:F( "calling sub: " .. sub.event )
         sub.fsm.fsmparent = self
         sub.fsm.returnevents = sub.returnevents
         sub.fsm[sub.event]( sub.fsm )
@@ -26653,7 +26751,7 @@ function STATEMACHINE:_create_transition(name)
         
       local fsmparent, event = self:_isendstate( to )
       if fsmparent and event then
-        self:E( { "end state: ", fsmparent, event } )
+        self:F( { "end state: ", fsmparent, event } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
@@ -26662,7 +26760,7 @@ function STATEMACHINE:_create_transition(name)
       end
 
       if execute then      
-        self:E( { "execute: " .. to, name } )
+        self:F( { "execute: " .. to, name } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
@@ -26822,7 +26920,9 @@ end
 -- @type PROCESS
 -- @field Scheduler#SCHEDULER ProcessScheduler
 -- @field Unit#UNIT ProcessUnit
--- @field Task#TASK Task
+-- @field Group#GROUP ProcessGroup
+-- @field Menu#MENU_GROUP MissionMenu
+-- @field Task#TASK_BASE Task
 -- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @field #string ProcessName
 -- @extends Base#BASE
@@ -26844,6 +26944,8 @@ function PROCESS:New( ProcessName, Task, ProcessUnit )
   self:F()
 
   self.ProcessUnit = ProcessUnit
+  self.ProcessGroup = ProcessUnit:GetGroup()
+  self.MissionMenu = Task.Mission:GetMissionMenu( self.ProcessGroup )
   self.Task = Task
   self.ProcessName = ProcessName
   
@@ -26854,9 +26956,8 @@ end
 
 --- @param #PROCESS self
 function PROCESS:NextEvent( NextEvent, ... )
-  self:F2( arg )
   if self.AllowEvents == true then
-    self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.ProcessUnit, unpack( arg ) }, 1 )
+    self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, arg, 1 )
   end
 end
 
@@ -26893,7 +26994,7 @@ end
 -- @param #string From
 -- @param #string To
 function PROCESS:OnStateChange( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.ProcessUnit.UnitName } )
+  self:E( { self.ProcessName, Event, From, To, self.ProcessUnit.UnitName } )
 
   if self:IsTrace() then
     MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
@@ -27161,7 +27262,7 @@ function PROCESS_ROUTE:OnLeaveUnArrived( Fsm, Event, From, To )
         local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
         local TaskUnitVec2 = self.ProcessUnit:GetVec2()
         local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-        local RouteText = self.ProcessUnit:GetCallSign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
+        local RouteText = self.ProcessUnit:GetCallsign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
         MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( self.ProcessUnit:GetGroup() )
       end
       self.DisplayCount = 1
@@ -27462,6 +27563,205 @@ function PROCESS_DESTROY:EventDead( Event )
     self.TargetSetUnit:Remove( Event.IniDCSUnitName )
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
+end
+
+
+--- @module Process_JTAC
+
+--- PROCESS_JTAC class
+-- @type PROCESS_JTAC
+-- @field Unit#UNIT ProcessUnit
+-- @field Set#SET_UNIT TargetSetUnit
+-- @extends Process#PROCESS
+PROCESS_JTAC = { 
+  ClassName = "PROCESS_JTAC",
+  Fsm = {},
+  TargetSetUnit = nil,
+}
+
+
+--- Creates a new DESTROY process.
+-- @param #PROCESS_JTAC self
+-- @param Task#TASK Task
+-- @param Unit#UNIT ProcessUnit
+-- @param Set#SET_UNIT TargetSetUnit
+-- @param Unit#UNIT FACUnit
+-- @return #PROCESS_JTAC self
+function PROCESS_JTAC:New( Task, ProcessUnit, TargetSetUnit, FACUnit )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, PROCESS:New( "JTAC", Task, ProcessUnit ) ) -- #PROCESS_JTAC
+  
+  self.TargetSetUnit = TargetSetUnit
+  self.FACUnit = FACUnit
+
+  self.DisplayInterval = 60
+  self.DisplayCount = 30
+  self.DisplayMessage = true
+  self.DisplayTime = 10 -- 10 seconds is the default
+  self.DisplayCategory = "HQ" -- Targets is the default display category
+
+
+  self.Fsm = STATEMACHINE_PROCESS:New( self, {
+    initial = 'Assigned',
+    events = {
+      { name = 'Start', from = 'Assigned', to = 'CreatedMenu'    },
+      { name = 'JTACMenuUpdate', from = 'CreatedMenu', to = 'AwaitingMenu'    },
+      { name = 'JTACMenuAwait', from = 'AwaitingMenu', to = 'AwaitingMenu'    },
+      { name = 'JTACMenuSpot', from = 'AwaitingMenu', to = 'AwaitingMenu'    },
+      { name = 'JTACMenuCancel', from = 'AwaitingMenu', to = 'AwaitingMenu'  },
+      { name = 'JTACStatus', from = 'AwaitingMenu', to = 'AwaitingMenu'  },
+      { name = 'Fail', from = 'AwaitingMenu', to = 'Failed' },
+      { name = 'Fail', from = 'CreatedMenu', to = 'Failed' },
+    },
+    callbacks = {
+      onStart =  self.OnStart,
+      onJTACMenuUpdate = self.OnJTACMenuUpdate,
+      onJTACMenuAwait =  self.OnJTACMenuAwait,
+      onJTACMenuSpot = self.OnJTACMenuSpot,
+      onJTACMenuCancel = self.OnJTACMenuCancel,
+    },
+    endstates = { 'Failed' }
+  } )
+
+
+  _EVENTDISPATCHER:OnDead( self.EventDead, self )
+  
+  return self
+end
+
+--- Process Events
+
+--- StateMachine callback function for a PROCESS
+-- @param #PROCESS_JTAC self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function PROCESS_JTAC:OnStart( Fsm, Event, From, To )
+
+  self:NextEvent( Fsm.JTACMenuUpdate )
+end
+
+--- StateMachine callback function for a PROCESS
+-- @param #PROCESS_JTAC self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, Event, From, To )
+
+  local function JTACMenuSpot( MenuParam )
+    self:E( MenuParam.TargetUnit.UnitName )
+    local self = MenuParam.self
+    local TargetUnit = MenuParam.TargetUnit
+
+    self:NextEvent( self.Fsm.JTACMenuSpot, TargetUnit )
+  end
+
+  local function JTACMenuCancel( MenuParam )
+    self:E( MenuParam )
+    local self = MenuParam.self
+    local TargetUnit = MenuParam.TargetUnit
+ 
+    self:NextEvent( self.Fsm.JTACMenuCancel, TargetUnit )
+  end
+
+
+  -- Loop each unit in the target set, and determine the threat levels map table.
+  local UnitThreatLevels = self.TargetSetUnit:GetUnitThreatLevels()
+  
+  self:E( {"UnitThreadLevels", UnitThreatLevels } )
+  
+  local JTACMenu = self.ProcessGroup:GetState( self.ProcessGroup, "JTACMenu" )
+  
+  if not JTACMenu then
+    JTACMenu = MENU_GROUP:New( self.ProcessGroup, "JTAC", self.MissionMenu )
+    for ThreatLevel, ThreatLevelTable in pairs( UnitThreatLevels ) do
+      local JTACMenuThreatLevel = MENU_GROUP:New( self.ProcessGroup, ThreatLevelTable.UnitThreatLevelText, JTACMenu )
+      for ThreatUnitName, ThreatUnit in pairs( ThreatLevelTable.Units ) do
+        local JTACMenuUnit = MENU_GROUP:New( self.ProcessGroup, ThreatUnit:GetTypeName(), JTACMenuThreatLevel )
+        MENU_GROUP_COMMAND:New( self.ProcessGroup, "Lase Target", JTACMenuUnit, JTACMenuSpot, { self = self, TargetUnit = ThreatUnit } )
+        MENU_GROUP_COMMAND:New( self.ProcessGroup, "Cancel Target", JTACMenuUnit, JTACMenuCancel, { self = self, TargetUnit = ThreatUnit } )
+      end
+    end
+  end  
+  
+end
+
+--- StateMachine callback function for a PROCESS
+-- @param #PROCESS_JTAC self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function PROCESS_JTAC:OnJTACMenuAwait( Fsm, Event, From, To )
+
+  if self.DisplayCount >= self.DisplayInterval then
+
+    local TaskJTAC = self.Task -- Task#TASK_JTAC
+    TaskJTAC.Spots = TaskJTAC.Spots or {}
+    for TargetUnitName, SpotData in pairs( TaskJTAC.Spots) do
+      local TargetUnit = UNIT:FindByName( TargetUnitName )
+      self.FACUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " with laser code " .. SpotData:getCode(), 15, self.ProcessGroup )
+    end
+    self.DisplayCount = 1
+  else
+    self.DisplayCount = self.DisplayCount + 1
+  end
+  
+  self:NextEvent( Fsm.JTACMenuAwait )
+end
+
+--- StateMachine callback function for a PROCESS
+-- @param #PROCESS_JTAC self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT TargetUnit
+function PROCESS_JTAC:OnJTACMenuSpot( Fsm, Event, From, To, TargetUnit )
+
+  local TargetUnitName = TargetUnit:GetName()
+  
+  local TaskJTAC = self.Task -- Task#TASK_JTAC
+  
+  TaskJTAC.Spots = TaskJTAC.Spots or {}
+  TaskJTAC.Spots[TargetUnitName] = TaskJTAC.Spots[TargetUnitName] or {}
+
+  local DCSFACObject = self.FACUnit:GetDCSObject()
+  local TargetVec3 = TargetUnit:GetPointVec3()
+
+  TaskJTAC.Spots[TargetUnitName] = Spot.createInfraRed( self.FACUnit:GetDCSObject(), { x = 0, y = 1, z = 0 }, TargetUnit:GetPointVec3(), math.random( 1000, 9999 ) )
+  
+  local SpotData = TaskJTAC.Spots[TargetUnitName]
+  self.FACUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " with laser code " .. SpotData:getCode(), 15, self.ProcessGroup )
+
+  self:NextEvent( Fsm.JTACMenuAwait )
+end
+
+--- StateMachine callback function for a PROCESS
+-- @param #PROCESS_JTAC self
+-- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT TargetUnit
+function PROCESS_JTAC:OnJTACMenuCancel( Fsm, Event, From, To, TargetUnit )
+
+  local TargetUnitName = TargetUnit:GetName()
+  
+  local TaskJTAC = self.Task -- Task#TASK_JTAC
+  
+  TaskJTAC.Spots = TaskJTAC.Spots or {}
+  if TaskJTAC.Spots[TargetUnitName] then
+    TaskJTAC.Spots[TargetUnitName]:destroy() -- destroys the spot
+    TaskJTAC.Spots[TargetUnitName] = nil
+  end
+
+  self.FACUnit:MessageToGroup( "Stopped lasing " .. TargetUnit:GetTypeName(), 15, self.ProcessGroup )
+
+  self:NextEvent( Fsm.JTACMenuAwait )
 end
 
 
@@ -28475,12 +28775,12 @@ do -- TASK_SEAD
   end
 
 end  
---- This module contains the TASK_CAS classes.
+--- This module contains the TASK_A2G classes.
 -- 
--- 1) @{#TASK_CAS} class, extends @{Task#TASK_BASE}
+-- 1) @{#TASK_A2G} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_CAS} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_CAS is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_A2G} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_A2G is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -28495,29 +28795,31 @@ end
 -- @module Task_CAS
 
 
-do -- TASK_CAS
+do -- TASK_A2G
 
-  --- The TASK_CAS class
-  -- @type TASK_CAS
+  --- The TASK_A2G class
+  -- @type TASK_A2G
   -- @extends Task#TASK_BASE
-  TASK_CAS = {
-    ClassName = "TASK_CAS",
+  TASK_A2G = {
+    ClassName = "TASK_A2G",
   }
   
-  --- Instantiates a new TASK_CAS.
-  -- @param #TASK_CAS self
+  --- Instantiates a new TASK_A2G.
+  -- @param #TASK_A2G self
   -- @param Mission#MISSION Mission
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
+  -- @param #string TaskType BAI or CAS
   -- @param Set#SET_UNIT UnitSetTargets
   -- @param Zone#ZONE_BASE TargetZone
-  -- @return #TASK_CAS self
-  function TASK_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TargetZone )
-    local self = BASE:Inherit( self, TASK_BASE:New( Mission, SetGroup, TaskName, "CAS", "A2G" ) )
+  -- @return #TASK_A2G self
+  function TASK_A2G:New( Mission, SetGroup, TaskName, TaskType, TargetSetUnit, TargetZone, FACUnit )
+    local self = BASE:Inherit( self, TASK_BASE:New( Mission, SetGroup, TaskName, TaskType, "A2G" ) )
     self:F()
   
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
+    self.FACUnit = FACUnit
 
     _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
     _EVENTDISPATCHER:OnDead( self._EventDead, self )
@@ -28527,10 +28829,10 @@ do -- TASK_CAS
     return self
   end
   
-  --- Removes a TASK_CAS.
-  -- @param #TASK_CAS self
+  --- Removes a TASK_A2G.
+  -- @param #TASK_A2G self
   -- @return #nil
-  function TASK_CAS:CleanUp()
+  function TASK_A2G:CleanUp()
 
     self:GetParent( self ):CleanUp()
     
@@ -28539,16 +28841,17 @@ do -- TASK_CAS
   
   
   --- Assign the @{Task} to a @{Unit}.
-  -- @param #TASK_CAS self
+  -- @param #TASK_A2G self
   -- @param Unit#UNIT TaskUnit
-  -- @return #TASK_CAS self
-  function TASK_CAS:AssignToUnit( TaskUnit )
+  -- @return #TASK_A2G self
+  function TASK_A2G:AssignToUnit( TaskUnit )
     self:F( TaskUnit:GetName() )
   
     local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
     local ProcessRoute = self:AddProcess( TaskUnit, PROCESS_ROUTE:New( self, TaskUnit, self.TargetZone ) )
-    local ProcessSEAD = self:AddProcess( TaskUnit, PROCESS_DESTROY:New( self, "CAS", TaskUnit, self.TargetSetUnit ) )
+    local ProcessDestroy = self:AddProcess( TaskUnit, PROCESS_DESTROY:New( self, self.TaskType, TaskUnit, self.TargetSetUnit ) )
     local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
+    local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
     
     local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( self, TaskUnit, {
         initial = 'None',
@@ -28565,16 +28868,17 @@ do -- TASK_CAS
           onRemove = self.OnRemove,
         },
         subs = {
-          Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',        fsm = ProcessAssign.Fsm,         event = 'Start',      returnevents = { 'Next', 'Reject' } },
+          Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',         fsm = ProcessAssign.Fsm,        event = 'Start',      returnevents = { 'Next', 'Reject' } },
           Route = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessRoute.Fsm,         event = 'Start'       },
-          Sead = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSEAD.Fsm,          event = 'Start',      returnevents = { 'Next' } },
-          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke.Fsm,         event = 'Start',      }
+          Destroy = { onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessDestroy.Fsm,       event = 'Start',      returnevents = { 'Next' } },
+          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke.Fsm,         event = 'Start',      },
+          JTAC = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessJTAC.Fsm,          event = 'Start',      },
         }
       } ) )
     
     ProcessRoute:AddScore( "Failed", "failed to destroy a ground unit", -100 )
-    ProcessSEAD:AddScore( "Destroy", "destroyed a ground unit", 25 )
-    ProcessSEAD:AddScore( "Failed", "failed to destroy a ground unit", -100 )
+    ProcessDestroy:AddScore( "Destroy", "destroyed a ground unit", 25 )
+    ProcessDestroy:AddScore( "Failed", "failed to destroy a ground unit", -100 )
     
     Process:Next()
   
@@ -28582,26 +28886,26 @@ do -- TASK_CAS
   end
   
   --- StateMachine callback function for a TASK
-  -- @param #TASK_CAS self
+  -- @param #TASK_A2G self
   -- @param StateMachine#STATEMACHINE_TASK Fsm
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   -- @param Event#EVENTDATA Event
-  function TASK_CAS:OnNext( Fsm, Event, From, To, Event )
+  function TASK_A2G:OnNext( Fsm, Event, From, To, Event )
   
     self:SetState( self, "State", To )
   
   end
   
-    --- @param #TASK_CAS self
-  function TASK_CAS:GetPlannedMenuText()
+    --- @param #TASK_A2G self
+  function TASK_A2G:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
   
   
-  --- @param #TASK_CAS self
-  function TASK_CAS:_Schedule()
+  --- @param #TASK_A2G self
+  function TASK_A2G:_Schedule()
     self:F2()
   
     self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
@@ -28609,153 +28913,8 @@ do -- TASK_CAS
   end
   
   
-  --- @param #TASK_CAS self
-  function TASK_CAS._Scheduler()
-    self:F2()
-  
-    return true
-  end
-  
-end
-
-
-
---- This module contains the TASK_BAI classes.
--- 
--- 1) @{#TASK_BAI} class, extends @{Task#TASK_BASE}
--- =================================================
--- The @{#TASK_BAI} class defines a new BAI task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_BAI is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
--- 
---   * **None**: Start of the process
---   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Route#PROCESS_ROUTE} is started to route the active Units in the Group to the attack zone.
---   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
---   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
--- 
--- ===
--- 
--- ### Authors: FlightControl - Design and Programming
--- 
--- @module Task_BAI
-
-
-do -- TASK_BAI
-
-  --- The TASK_BAI class
-  -- @type TASK_BAI
-  -- @extends Task#TASK_BASE
-  TASK_BAI = {
-    ClassName = "TASK_BAI",
-  }
-  
-  --- Instantiates a new TASK_BAI.
-  -- @param #TASK_BAI self
-  -- @param Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
-  -- @param Zone#ZONE_BASE TargetZone
-  -- @return #TASK_BAI self
-  function TASK_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TargetZone )
-    local self = BASE:Inherit( self, TASK_BASE:New( Mission, SetGroup, TaskName, "BAI", "A2G" ) )
-    self:F()
-  
-    self.TargetSetUnit = TargetSetUnit
-    self.TargetZone = TargetZone
-
-    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
-    _EVENTDISPATCHER:OnDead( self._EventDead, self )
-    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
-    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
-  
-    return self
-  end
-  
-  --- Removes a TASK_BAI.
-  -- @param #TASK_BAI self
-  -- @return #nil
-  function TASK_BAI:CleanUp()
-
-    self:GetParent( self ):CleanUp()
-    
-    return nil
-  end
-  
-  
-  --- Assign the @{Task} to a @{Unit}.
-  -- @param #TASK_BAI self
-  -- @param Unit#UNIT TaskUnit
-  -- @return #TASK_BAI self
-  function TASK_BAI:AssignToUnit( TaskUnit )
-    self:F( TaskUnit:GetName() )
-  
-    local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
-    local ProcessRoute = self:AddProcess( TaskUnit, PROCESS_ROUTE:New( self, TaskUnit, self.TargetZone ) )
-    local ProcessSEAD = self:AddProcess( TaskUnit, PROCESS_DESTROY:New( self, "BAI", TaskUnit, self.TargetSetUnit ) )
-    local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
-    
-    local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( self, TaskUnit, {
-        initial = 'None',
-        events = {
-          { name = 'Next',   from = 'None',           to = 'Planned' },
-          { name = 'Next',    from = 'Planned',       to = 'Assigned' },
-          { name = 'Reject',  from = 'Planned',       to = 'Rejected' }, 
-          { name = 'Next',    from = 'Assigned',      to = 'Success' },
-          { name = 'Fail',    from = 'Assigned',      to = 'Failed' }, 
-          { name = 'Fail',    from = 'Arrived',       to = 'Failed' }     
-        },
-        callbacks = {
-          onNext = self.OnNext,
-          onRemove = self.OnRemove,
-        },
-        subs = {
-          Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',        fsm = ProcessAssign.Fsm,         event = 'Start',      returnevents = { 'Next', 'Reject' } },
-          Route = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessRoute.Fsm,         event = 'Start'       },
-          Sead = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSEAD.Fsm,          event = 'Start',      returnevents = { 'Next' } },
-          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke.Fsm,         event = 'Start',      }
-        }
-      } ) )
-    
-    ProcessRoute:AddScore( "Failed", "failed to destroy a ground unit", -100 )
-    ProcessSEAD:AddScore( "Destroy", "destroyed a ground unit", 25 )
-    ProcessSEAD:AddScore( "Failed", "failed to destroy a ground unit", -100 )
-    
-    Process:Next()
-  
-    return self
-  end
-  
-  --- StateMachine callback function for a TASK
-  -- @param #TASK_BAI self
-  -- @param StateMachine#STATEMACHINE_TASK Fsm
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Event#EVENTDATA Event
-  function TASK_BAI:OnNext( Fsm, Event, From, To, Event )
-  
-    self:SetState( self, "State", To )
-  
-  end
-  
-    --- @param #TASK_BAI self
-  function TASK_BAI:GetPlannedMenuText()
-    return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
-  end
-  
-  
-  --- @param #TASK_BAI self
-  function TASK_BAI:_Schedule()
-    self:F2()
-  
-    self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
-    return self
-  end
-  
-  
-  --- @param #TASK_BAI self
-  function TASK_BAI._Scheduler()
+  --- @param #TASK_A2G self
+  function TASK_A2G._Scheduler()
     self:F2()
   
     return true
