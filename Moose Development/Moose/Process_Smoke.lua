@@ -94,7 +94,9 @@ do -- PROCESS_SMOKE_TARGETS
         if math.random( 1, ( 100 * self.TargetSetUnit:Count() ) / 4 ) <= 100 then
           SCHEDULER:New( self,
             function()
-              SmokeUnit:Smoke( self.SmokeColor, 150 )
+              if SmokeUnit:IsAlive() then
+                SmokeUnit:Smoke( self.SmokeColor, 150 )
+              end
             end, {}, math.random( 10, 60 ) 
           )
         end
