@@ -308,7 +308,7 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:E( ObjectName )
+  self:F( ObjectName )
 
   local t = self.Set[ObjectName]
 
@@ -506,11 +506,10 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:E( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    self:E({ObjectName, Object})
     if ObjectName and Object ~= nil then
       self:Remove( ObjectName )
     end

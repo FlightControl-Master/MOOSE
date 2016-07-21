@@ -2206,7 +2206,6 @@ end
 -- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
 function CONTROLLABLE:GetMessage( Message, Duration )
-  self:E( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then

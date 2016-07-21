@@ -103,14 +103,15 @@ end
 -- @param Event#EVENTDATA Event
 function PROCESS_DESTROY:OnHitTarget( Fsm, Event, From, To, Event )
 
+
   self.TargetSetUnit:Flush()
   
   if self.TargetSetUnit:FindUnit( Event.IniUnitName ) then
     self.TargetSetUnit:RemoveUnitsByName( Event.IniUnitName )
+    local TaskGroup = self.ProcessUnit:GetGroup()
+    MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
   end
 
-  local TaskGroup = self.ProcessUnit:GetGroup()
-  MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
   
   if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
@@ -172,7 +173,6 @@ end
 function PROCESS_DESTROY:EventDead( Event )
 
   if Event.IniDCSUnit then
-    self.TargetSetUnit:Remove( Event.IniDCSUnitName )
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
 end
