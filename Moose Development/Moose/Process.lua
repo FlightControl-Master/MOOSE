@@ -4,7 +4,9 @@
 -- @type PROCESS
 -- @field Scheduler#SCHEDULER ProcessScheduler
 -- @field Unit#UNIT ProcessUnit
--- @field Task#TASK Task
+-- @field Group#GROUP ProcessGroup
+-- @field Menu#MENU_GROUP MissionMenu
+-- @field Task#TASK_BASE Task
 -- @field StateMachine#STATEMACHINE_TASK Fsm
 -- @field #string ProcessName
 -- @extends Base#BASE
@@ -26,6 +28,8 @@ function PROCESS:New( ProcessName, Task, ProcessUnit )
   self:F()
 
   self.ProcessUnit = ProcessUnit
+  self.ProcessGroup = ProcessUnit:GetGroup()
+  self.MissionMenu = Task.Mission:GetMissionMenu( self.ProcessGroup )
   self.Task = Task
   self.ProcessName = ProcessName
   
@@ -36,9 +40,8 @@ end
 
 --- @param #PROCESS self
 function PROCESS:NextEvent( NextEvent, ... )
-  self:F2( arg )
   if self.AllowEvents == true then
-    self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, { self, self.ProcessUnit, unpack( arg ) }, 1 )
+    self.ProcessScheduler = SCHEDULER:New( self.Fsm, NextEvent, arg, 1 )
   end
 end
 
@@ -75,7 +78,7 @@ end
 -- @param #string From
 -- @param #string To
 function PROCESS:OnStateChange( Fsm, Event, From, To )
-  self:E( { Event, From, To, self.ProcessUnit.UnitName } )
+  self:E( { self.ProcessName, Event, From, To, self.ProcessUnit.UnitName } )
 
   if self:IsTrace() then
     MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()

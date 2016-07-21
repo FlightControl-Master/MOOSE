@@ -407,6 +407,7 @@ DETECTION_AREAS = {
 -- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
 -- @field #number AreaID -- The identifier of the detected area.
 -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
+-- @field Unit#UNIT NearestFAC The nearest FAC near the Area.
 
 
 --- DETECTION_AREAS constructor.
@@ -591,6 +592,36 @@ function DETECTION_AREAS:CalculateThreatLevelA2G( DetectedArea )
 
   self:T3( MaxThreatLevelA2G )
   DetectedArea.MaxThreatLevelA2G = MaxThreatLevelA2G
+  
+end
+
+--- Find the nearest FAC of the DetectedArea.
+-- @param #DETECTION_AREAS self
+-- @param #DETECTION_AREAS.DetectedArea DetectedArea
+-- @return Unit#UNIT The nearest FAC unit
+function DETECTION_AREAS:NearestFAC( DetectedArea )
+  
+  local NearestFAC = nil
+  local MinDistance = 1000000000 -- Units are not further than 1000000 km away from an area :-)
+  
+  for FACGroupName, FACGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
+    for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
+      local FACUnit = FACUnitData -- Unit#UNIT
+      if FACUnit:IsActive() then
+        local Vec3 = FACUnit:GetPointVec3()
+        local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
+        self:E( "Distance", Distance )
+        if Distance < MinDistance then
+          MinDistance = Distance
+          NearestFAC = FACUnit
+        end
+      end
+    end
+  end
+
+  self:E( { NearestFAC.UnitName, MinDistance } )
+  DetectedArea.NearestFAC = NearestFAC
   
 end
 
@@ -919,6 +950,7 @@ function DETECTION_AREAS:CreateDetectionSets()
 
     self:ReportFriendliesNearBy( { DetectedArea = DetectedArea, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
     self:CalculateThreatLevelA2G( DetectedArea )  -- Calculate A2G threat level
+    self:NearestFAC( DetectedArea )
 
     if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
       DetectedZone.ZoneUNIT:SmokeRed()

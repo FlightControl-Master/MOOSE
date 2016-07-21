@@ -93,11 +93,11 @@ COPY /b Moose.lua + %1\Process_Assign.lua    	  							Moose.lua
 COPY /b Moose.lua + %1\Process_Route.lua   		  							Moose.lua
 COPY /b Moose.lua + %1\Process_Smoke.lua    		  						Moose.lua
 COPY /b Moose.lua + %1\Process_Destroy.lua 		  							Moose.lua
+COPY /b Moose.lua + %1\Process_JTAC.lua 		  							Moose.lua
 
 COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
 COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
-COPY /b Moose.lua + %1\Task_CAS.lua         	  							Moose.lua
-COPY /b Moose.lua + %1\Task_BAI.lua         	  							Moose.lua
+COPY /b Moose.lua + %1\Task_A2G.lua         	  							Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 

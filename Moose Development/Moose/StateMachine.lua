@@ -109,7 +109,7 @@ function STATEMACHINE:_create_transition(name)
       
       local subtable = self:_gosub( to, name )
       for _, sub in pairs( subtable ) do
-        self:E( "calling sub: " .. sub.event )
+        self:F( "calling sub: " .. sub.event )
         sub.fsm.fsmparent = self
         sub.fsm.returnevents = sub.returnevents
         sub.fsm[sub.event]( sub.fsm )
@@ -118,7 +118,7 @@ function STATEMACHINE:_create_transition(name)
         
       local fsmparent, event = self:_isendstate( to )
       if fsmparent and event then
-        self:E( { "end state: ", fsmparent, event } )
+        self:F( { "end state: ", fsmparent, event } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)
@@ -127,7 +127,7 @@ function STATEMACHINE:_create_transition(name)
       end
 
       if execute then      
-        self:E( { "execute: " .. to, name } )
+        self:F( { "execute: " .. to, name } )
         self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
         self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
         self:_call_handler(self["onstatechange"], params)

@@ -65,7 +65,7 @@ function PROCESS_ROUTE:OnLeaveUnArrived( Fsm, Event, From, To )
         local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
         local TaskUnitVec2 = self.ProcessUnit:GetVec2()
         local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-        local RouteText = self.ProcessUnit:GetCallSign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
+        local RouteText = self.ProcessUnit:GetCallsign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
         MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( self.ProcessUnit:GetGroup() )
       end
       self.DisplayCount = 1

@@ -55,11 +55,11 @@ Include.File( "Process_Assign" )
 Include.File( "Process_Route" )
 Include.File( "Process_Smoke" )
 Include.File( "Process_Destroy" )
+Include.File( "Process_JTAC" )
 
 Include.File( "Task" )
 Include.File( "Task_SEAD" )
-Include.File( "Task_CAS" )
-Include.File( "Task_BAI" )
+Include.File( "Task_A2G" )
 
 -- The order of the declarations is important here. Don't touch it.
 

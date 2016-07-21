@@ -434,7 +434,7 @@ do -- DETECTION_DISPATCHER
       if not CASTask then
         local TargetSetUnit = self:EvaluateCAS( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          CASTask = Mission:AddTask( TASK_CAS:New( Mission, self.SetGroup, "CAS." .. AreaID, TargetSetUnit , DetectedZone ) ):StatePlanned()
+          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
@@ -448,7 +448,7 @@ do -- DETECTION_DISPATCHER
       if not BAITask then
         local TargetSetUnit = self:EvaluateBAI( DetectedArea, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          BAITask = Mission:AddTask( TASK_BAI:New( Mission, self.SetGroup, "BAI." .. AreaID, TargetSetUnit , DetectedZone ) ):StatePlanned()
+          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
