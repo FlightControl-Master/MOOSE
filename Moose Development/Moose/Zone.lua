@@ -477,8 +477,8 @@ ZONE_GROUP = {
 -- @param DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
-  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetPointVec2(), Radius ) )
-  self:F( { ZoneName, ZoneGROUP:GetPointVec2(), Radius } )
+  local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius ) )
+  self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self.ZoneGROUP = ZoneGROUP
   
@@ -489,14 +489,14 @@ end
 --- Returns the current location of the @{Group}.
 -- @param #ZONE_GROUP self
 -- @return DCSTypes#Vec2 The location of the zone based on the @{Group} location.
-function ZONE_GROUP:GetPointVec2()
+function ZONE_GROUP:GetVec2()
   self:F( self.ZoneName )
   
-  local ZonePointVec2 = self.ZoneGROUP:GetPointVec2()
+  local ZoneVec2 = self.ZoneGROUP:GetVec2()
 
-  self:T( { ZonePointVec2 } )
+  self:T( { ZoneVec2 } )
   
-  return ZonePointVec2
+  return ZoneVec2
 end
 
 --- Returns a random location within the zone of the @{Group}.
@@ -506,11 +506,11 @@ function ZONE_GROUP:GetRandomVec2()
   self:F( self.ZoneName )
 
   local Point = {}
-  local PointVec2 = self.ZoneGROUP:GetPointVec2()
+  local Vec2 = self.ZoneGROUP:GetVec2()
 
   local angle = math.random() * math.pi*2;
-  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
   
   self:T( { Point } )
   
