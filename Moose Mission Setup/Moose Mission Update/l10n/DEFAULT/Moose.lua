@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160721_1527' ) 
+env.info( 'Moose Generation Timestamp: 20160721_2013' ) 
 local base = _G
 
 Include = {}
@@ -6159,7 +6159,6 @@ end
 -- @param DCSTypes#Duration Duration The duration of the message.
 -- @return Message#MESSAGE
 function CONTROLLABLE:GetMessage( Message, Duration )
-  self:E( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
@@ -7908,7 +7907,6 @@ function GROUP:Find( DCSGroup )
 
   local GroupName = DCSGroup:getName() -- Group#GROUP
   local GroupFound = _DATABASE:FindGroup( GroupName )
-  GroupFound:E( { GroupName, GroupFound:GetClassNameAndID() } )
   return GroupFound
 end
 
@@ -11795,7 +11793,7 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:E( ObjectName )
+  self:F( ObjectName )
 
   local t = self.Set[ObjectName]
 
@@ -11993,11 +11991,10 @@ end
 -- @param #SET_BASE self
 -- @param Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:E( { Event } )
+  self:F3( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    self:E({ObjectName, Object})
     if ObjectName and Object ~= nil then
       self:Remove( ObjectName )
     end
@@ -17837,7 +17834,6 @@ function TASK_BASE:FailProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
     local Process = ProcessData -- Process#PROCESS
-    self:E( { "Failing process: ", Process } )
     Process.Fsm:Fail()
   end
 end
@@ -25576,7 +25572,7 @@ function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRa
   self._SmokeDetectedZones = false
   self._FlareDetectedZones = false
   
-  self:Schedule( 0, 15 )
+  self:Schedule( 0, 30 )
 
   return self
 end
@@ -25759,7 +25755,6 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
         local Vec3 = FACUnit:GetPointVec3()
         local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
         local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
-        self:E( "Distance", Distance )
         if Distance < MinDistance then
           MinDistance = Distance
           NearestFAC = FACUnit
@@ -25768,7 +25763,6 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
     end
   end
 
-  self:E( { NearestFAC.UnitName, MinDistance } )
   DetectedArea.NearestFAC = NearestFAC
   
 end
@@ -27491,14 +27485,15 @@ end
 -- @param Event#EVENTDATA Event
 function PROCESS_DESTROY:OnHitTarget( Fsm, Event, From, To, Event )
 
+
   self.TargetSetUnit:Flush()
   
   if self.TargetSetUnit:FindUnit( Event.IniUnitName ) then
     self.TargetSetUnit:RemoveUnitsByName( Event.IniUnitName )
+    local TaskGroup = self.ProcessUnit:GetGroup()
+    MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
   end
 
-  local TaskGroup = self.ProcessUnit:GetGroup()
-  MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
   
   if self.TargetSetUnit:Count() > 0 then
     self:NextEvent( Fsm.MoreTargets )
@@ -27560,7 +27555,6 @@ end
 function PROCESS_DESTROY:EventDead( Event )
 
   if Event.IniDCSUnit then
-    self.TargetSetUnit:Remove( Event.IniDCSUnitName )
     self:NextEvent( self.Fsm.HitTarget, Event )
   end
 end
@@ -28205,7 +28199,6 @@ function TASK_BASE:FailProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
     local Process = ProcessData -- Process#PROCESS
-    self:E( { "Failing process: ", Process } )
     Process.Fsm:Fail()
   end
 end

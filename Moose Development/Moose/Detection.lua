@@ -428,7 +428,7 @@ function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRa
   self._SmokeDetectedZones = false
   self._FlareDetectedZones = false
   
-  self:Schedule( 0, 15 )
+  self:Schedule( 0, 30 )
 
   return self
 end
@@ -611,7 +611,6 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
         local Vec3 = FACUnit:GetPointVec3()
         local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
         local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
-        self:E( "Distance", Distance )
         if Distance < MinDistance then
           MinDistance = Distance
           NearestFAC = FACUnit
@@ -620,7 +619,6 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
     end
   end
 
-  self:E( { NearestFAC.UnitName, MinDistance } )
   DetectedArea.NearestFAC = NearestFAC
   
 end

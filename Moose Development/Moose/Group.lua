@@ -177,7 +177,6 @@ function GROUP:Find( DCSGroup )
 
   local GroupName = DCSGroup:getName() -- Group#GROUP
   local GroupFound = _DATABASE:FindGroup( GroupName )
-  GroupFound:E( { GroupName, GroupFound:GetClassNameAndID() } )
   return GroupFound
 end
 

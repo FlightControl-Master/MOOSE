@@ -438,7 +438,6 @@ function TASK_BASE:FailProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
     local Process = ProcessData -- Process#PROCESS
-    self:E( { "Failing process: ", Process } )
     Process.Fsm:Fail()
   end
 end
