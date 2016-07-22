@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -91,18 +92,116 @@
 	<div id="content">
    <h1>Module <code>Menu</code></h1>
    
-<p>Encapsulation of DCS World Menu system in a set of MENU classes.</p>
+<p>This module contains the MENU classes.</p>
+
+   
+
+<p> There is a small note... When you see a class like MENU<em>COMMAND</em>COALITION with COMMAND in italic, it acutally represents it like this: <code>MENU_COMMAND_COALITION</code>.</p>
+
+<hr/>
+
+<p>DCS Menus can be managed using the MENU classes. 
+The advantage of using MENU classes is that it hides the complexity of dealing with menu management in more advanced scanerios where you need to 
+set menus and later remove them, and later set them again. You'll find while using use normal DCS scripting functions, that setting and removing
+menus is not a easy feat if you have complex menu hierarchies defined. 
+Using the MOOSE menu classes, the removal and refreshing of menus are nicely being handled within these classes, and becomes much more easy.
+On top, MOOSE implements <strong>variable parameter</strong> passing for command menus. </p>
+
+<p>There are basically two different MENU class types that you need to use:</p>
+
+<h3>To manage <strong>main menus</strong>, the classes begin with <strong>MENU_</strong>:</h3>
+
+<ul>
+    <li><a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a>: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
+    <li><a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a>: Manages main menus for GROUPs.</li>
+    <li><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a>: Manages main menus for whole COALITIONs.</li>
+</ul>
+
+<h3>To manage <strong>command menus</strong>, which are menus that allow the player to issue <strong>functions</strong>, the classes begin with <strong>MENU<em>COMMAND</em></strong>:</h3>
+
+<ul>
+    <li><a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a>: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
+    <li><a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a>: Manages command menus for GROUPs.</li>
+    <li><a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a>: Manages command menus for whole COALITIONs.</li>
+</ul>
+
+<hr/>
+
+<p>The above menus classes <strong>are derived</strong> from 2 main <strong>abstract</strong> classes defined within the MOOSE framework (so don't use these):</p>
+
+<h1>1) MENU_ BASE classes (don't use them)</h1>
+<p>The underlying base menu classes are not to be used within your missions. They simply are abstract classes defining a couple of fields that are used by the 
+derived MENU_ classes to manage menus.</p>
+
+<h2>1.1) <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
+<p>The <a href="##(MENU_BASE)">#MENU_BASE</a> class defines the main MENU class where other MENU classes are derived from.</p>
+
+<h2>1.2) <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
+<p>The <a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a> class defines the main MENU class where other MENU COMMAND_ classes are derived from, in order to set commands.</p>
+
+<hr/>
+
+<p>The next menus define the MENU classes that you can use within your missions:</p>
+
+<h1>2) MENU COALITION classes</h1>
+<p>The underlying classes manage the menus for whole coalitions.</p>
+
+<h2>2.1) <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class manages the main menus for coalitions. <br/>
+You can add menus with the <a href="##(MENU_COALITION).New">MENU_COALITION.New</a> method, which constructs a MENU_COALITION object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION).Remove">MENU_COALITION.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<h2>2.2) <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+You can add menus with the <a href="##(MENU_COALITION_COMMAND).New">MENU<em>COALITION</em>COMMAND.New</a> method, which constructs a MENU<em>COALITION</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION_COMMAND).Remove">MENU<em>COALITION</em>COMMAND.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<hr/>
+
+<h1>3) MENU CLIENT classes</h1>
+<p>The underlying classes manage the menus for units with skill level client or player.</p>
+
+<h2>3.1) <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class manages the main menus for coalitions. <br/>
+You can add menus with the <a href="##(MENU_CLIENT).New">MENU_CLIENT.New</a> method, which constructs a MENU_CLIENT object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT).Remove">MENU_CLIENT.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<h2>3.2) <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+You can add menus with the <a href="##(MENU_CLIENT_COMMAND).New">MENU<em>CLIENT</em>COMMAND.New</a> method, which constructs a MENU<em>CLIENT</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT_COMMAND).Remove">MENU<em>CLIENT</em>COMMAND.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<hr/>
+
+<h1>4) MENU GROUP classes</h1>
+<p>The underlying classes manage the menus for groups. Note that groups can be inactive, alive or can be destroyed.</p>
+
+<h2>4.1) <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class manages the main menus for coalitions. <br/>
+You can add menus with the <a href="##(MENU_GROUP).New">MENU_GROUP.New</a> method, which constructs a MENU_GROUP object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP).Remove">MENU_GROUP.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<h2>4.2) <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+You can add menus with the <a href="##(MENU_GROUP_COMMAND).New">MENU<em>GROUP</em>COMMAND.New</a> method, which constructs a MENU<em>GROUP</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP_COMMAND).Remove">MENU<em>GROUP</em>COMMAND.Remove</a>.
+Refer to the respective methods documentation for usage examples.</p>
+
+<hr/>
+
+<h3>Contributions: -</h3>
+<h3>Authors: FlightControl : Design &amp; Programming</h3>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#COMMANDMENU">COMMANDMENU</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#MENU">MENU</a></td>
+		<td class="name" nowrap="nowrap"><a href="#MENU_BASE">MENU_BASE</a></td>
 		<td class="summary">
 
 </td>
@@ -132,6 +231,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#MENU_COMMAND_BASE">MENU_COMMAND_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_GROUP">MENU_GROUP</a></td>
 		<td class="summary">
 
@@ -143,71 +248,37 @@
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#SUBMENU">SUBMENU</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
-			<h2><a id="#(COMMANDMENU)">Type <code>COMMANDMENU</code></a></h2>
+			<h2><a id="#(MENU_BASE)">Type <code>MENU_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDMENU).ClassName">COMMANDMENU.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).ClassName">MENU_BASE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDMENU).CommandMenuArgument">COMMANDMENU.CommandMenuArgument</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuParentPath">MENU_BASE.MenuParentPath</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDMENU).CommandMenuFunction">COMMANDMENU.CommandMenuFunction</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuPath">MENU_BASE.MenuPath</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDMENU).New">COMMANDMENU:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(MENU)">Type <code>MENU</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU).ClassName">MENU.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuText">MENU_BASE.MenuText</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU).MenuParentPath">MENU.MenuParentPath</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).New">MENU_BASE:New(MenuText, ParentMenu)</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU).MenuPath">MENU.MenuPath</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU).MenuText">MENU.MenuText</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU).New">MENU:New(MenuText, MenuParentPath)</a></td>
-		<td class="summary">
-
+<p>Consructor</p>
 </td>
 		</tr>
 	</table>
@@ -221,9 +292,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT).New">MENU_CLIENT:New(MenuClient, MenuText, ParentMenu)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT).New">MENU_CLIENT:New(Client, MenuText, ParentMenu)</a></td>
 		<td class="summary">
-<p>Creates a new menu item for a group</p>
+<p>MENU_CLIENT constructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -235,7 +306,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT).RemoveSubMenus">MENU_CLIENT:RemoveSubMenus()</a></td>
 		<td class="summary">
-<p>Removes the sub menus recursively of this MENU_CLIENT.</p>
+<p>Removes the sub menus recursively of this <a href="##(MENU_CLIENT)">#MENU_CLIENT</a>.</p>
 </td>
 		</tr>
 	</table>
@@ -249,15 +320,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).New">MENU_CLIENT_COMMAND:New(MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).New">MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, MenuClient, ...)</a></td>
 		<td class="summary">
-<p>Creates a new radio command item for a group</p>
+<p>MENU<em>CLIENT</em>COMMAND constructor.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).Remove">MENU_CLIENT_COMMAND:Remove()</a></td>
 		<td class="summary">
-
+<p>Removes a menu structure for a client.</p>
 </td>
 		</tr>
 	</table>
@@ -273,13 +344,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).New">MENU_COALITION:New(Coalition, MenuText, ParentMenu)</a></td>
 		<td class="summary">
-<p>Creates a new coalition menu item</p>
+<p>MENU_COALITION constructor.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).Remove">MENU_COALITION:Remove()</a></td>
 		<td class="summary">
-<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+<p>Removes the main menu and the sub menus recursively of this MENU_COALITION.</p>
 </td>
 		</tr>
 		<tr>
@@ -299,15 +370,49 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).New">MENU_COALITION_COMMAND:New(MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).New">MENU_COALITION_COMMAND:New(Coalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</a></td>
 		<td class="summary">
-<p>Creates a new radio command item for a group</p>
+<p>MENU_COALITION constructor.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).Remove">MENU_COALITION_COMMAND:Remove()</a></td>
 		<td class="summary">
 <p>Removes a radio command item for a coalition</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(MENU_COMMAND_BASE)">Type <code>MENU_COMMAND_BASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).ClassName">MENU_COMMAND_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).CommandMenuArgument">MENU_COMMAND_BASE.CommandMenuArgument</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).CommandMenuFunction">MENU_COMMAND_BASE.CommandMenuFunction</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).MenuCallHandler">MENU_COMMAND_BASE.MenuCallHandler</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).New">MENU_COMMAND_BASE:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</a></td>
+		<td class="summary">
+<p>Constructor</p>
 </td>
 		</tr>
 	</table>
@@ -323,13 +428,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).New">MENU_GROUP:New(MenuGroup, MenuText, ParentMenu)</a></td>
 		<td class="summary">
-<p>Creates a new menu item for a group</p>
+<p>MENU_GROUP constructor.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Remove">MENU_GROUP:Remove()</a></td>
 		<td class="summary">
-<p>Removes the sub menus recursively of this MENU_GROUP.</p>
+<p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -349,7 +454,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).New">MENU_GROUP_COMMAND:New(MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).New">MENU_GROUP_COMMAND:New(MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</a></td>
 		<td class="summary">
 <p>Creates a new radio command item for a group</p>
 </td>
@@ -357,23 +462,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).Remove">MENU_GROUP_COMMAND:Remove()</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(SUBMENU)">Type <code>SUBMENU</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SUBMENU).ClassName">SUBMENU.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SUBMENU).New">SUBMENU:New(MenuText, ParentMenu)</a></td>
-		<td class="summary">
-
+<p>Removes a menu structure for a group.</p>
 </td>
 		</tr>
 	</table>
@@ -382,23 +471,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(COMMANDMENU)">#COMMANDMENU</a></em>
-<a id="COMMANDMENU" >
-<strong>COMMANDMENU</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(MENU)">#MENU</a></em>
-<a id="MENU" >
-<strong>MENU</strong>
+		<em><a href="##(MENU_BASE)">#MENU_BASE</a></em>
+<a id="MENU_BASE" >
+<strong>MENU_BASE</strong>
 </a>
 </dt>
 <dd>
@@ -466,6 +541,20 @@
 		<dl class="function">
 <dt>
 
+		<em><a href="##(MENU_COMMAND_BASE)">#MENU_COMMAND_BASE</a></em>
+<a id="MENU_COMMAND_BASE" >
+<strong>MENU_COMMAND_BASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(MENU_GROUP)">#MENU_GROUP</a></em>
 <a id="MENU_GROUP" >
 <strong>MENU_GROUP</strong>
@@ -491,33 +580,19 @@
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(SUBMENU)">#SUBMENU</a></em>
-<a id="SUBMENU" >
-<strong>SUBMENU</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 	<h2><a id="#(Menu)" >Type <code>Menu</code></a></h2>
 	
-			<h2><a id="#(COMMANDMENU)" >Type <code>COMMANDMENU</code></a></h2>
+			<h2><a id="#(MENU_BASE)" >Type <code>MENU_BASE</code></a></h2>
 				
-<p>The COMMANDMENU class</p>
+<p>The MENU_BASE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(COMMANDMENU).ClassName" >
-<strong>COMMANDMENU.ClassName</strong>
+<a id="#(MENU_BASE).ClassName" >
+<strong>MENU_BASE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -529,8 +604,8 @@
 		<dl class="function">
 <dt>
 
-<a id="#(COMMANDMENU).CommandMenuArgument" >
-<strong>COMMANDMENU.CommandMenuArgument</strong>
+<a id="#(MENU_BASE).MenuParentPath" >
+<strong>MENU_BASE.MenuParentPath</strong>
 </a>
 </dt>
 <dd>
@@ -542,8 +617,8 @@
 		<dl class="function">
 <dt>
 
-<a id="#(COMMANDMENU).CommandMenuFunction" >
-<strong>COMMANDMENU.CommandMenuFunction</strong>
+<a id="#(MENU_BASE).MenuPath" >
+<strong>MENU_BASE.MenuPath</strong>
 </a>
 </dt>
 <dd>
@@ -555,13 +630,27 @@
 		<dl class="function">
 <dt>
 
-<a id="#(COMMANDMENU).New" >
-<strong>COMMANDMENU:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</strong>
+		<em>#string</em>
+<a id="#(MENU_BASE).MenuText" >
+<strong>MENU_BASE.MenuText</strong>
 </a>
 </dt>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_BASE).New" >
+<strong>MENU_BASE:New(MenuText, ParentMenu)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Consructor</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -575,109 +664,67 @@
 <p><code><em> ParentMenu </em></code>: </p>
 
 				</li>
-				<li>
-				
-<p><code><em> CommandMenuFunction </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> CommandMenuArgument </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-
-			<h2><a id="#(MENU)" >Type <code>MENU</code></a></h2>
-				
-<p>The MENU class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU).ClassName" >
-<strong>MENU.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU).MenuParentPath" >
-<strong>MENU.MenuParentPath</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU).MenuPath" >
-<strong>MENU.MenuPath</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU).MenuText" >
-<strong>MENU.MenuText</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU).New" >
-<strong>MENU:New(MenuText, MenuParentPath)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> MenuText </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MenuParentPath </em></code>: </p>
-
-				</li>
 		</ul>
 </dd>
 </dl>
 
 			<h2><a id="#(MENU_CLIENT)" >Type <code>MENU_CLIENT</code></a></h2>
 				
-<p>The MENU_CLIENT class</p>
+<p>MENU_COALITION constructor.</p>
+
+	
+<p>Creates a new radio command item for a coalition, which can invoke a function with parameters.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the two clients of planes.
+ -- Each client will receive a different menu structure.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+ -- And play with the Add and Remove menu options.
+ 
+ -- Note that in multi player, this will only work after the DCS clients bug is solved.
+
+ local function ShowStatus( PlaneClient, StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   PlaneClient:Message( StatusText, 15 )
+ end
+
+ local MenuStatus = {}
+
+ local function RemoveStatusMenu( MenuClient )
+   local MenuClientName = MenuClient:GetName()
+   MenuStatus[MenuClientName]:Remove()
+ end
+
+ --- @param Client#CLIENT MenuClient
+ local function AddStatusMenu( MenuClient )
+   env.info(MenuClient.ClientName)
+   local MenuClientName = MenuClient:GetName()
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )
+   MENU_CLIENT_COMMAND:New( MenuClient, "Show Status", MenuStatus[MenuClientName], ShowStatus, MenuClient, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneClient = CLIENT:FindByName( "Plane 1" )
+     if PlaneClient and PlaneClient:IsAlive() then
+       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneClient )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneClient )
+     end
+   end, {}, 10, 10 )
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneClient = CLIENT:FindByName( "Plane 2" )
+     if PlaneClient and PlaneClient:IsAlive() then
+       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneClient )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneClient )
+     end
+   end, {}, 10, 10 )</code></pre>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -698,18 +745,21 @@
 <dt>
 
 <a id="#(MENU_CLIENT).New" >
-<strong>MENU_CLIENT:New(MenuClient, MenuText, ParentMenu)</strong>
+<strong>MENU_CLIENT:New(Client, MenuText, ParentMenu)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new menu item for a group</p>
+<p>MENU_CLIENT constructor.</p>
+
+	
+<p>Creates a new radio menu item for a client.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> MenuClient </em></code>: 
+<p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> Client </em></code>: 
 The Client owning the menu.</p>
 
 				</li>
@@ -746,8 +796,8 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_CLIENT)">#MENU_CLIENT</a>:</em>
-self</p>
+<p><em>#nil:</em></p>
+
 
 </dd>
 </dl>
@@ -760,7 +810,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Removes the sub menus recursively of this MENU_CLIENT.</p>
+<p>Removes the sub menus recursively of this <a href="##(MENU_CLIENT)">#MENU_CLIENT</a>.</p>
 
 		<h3>Return value</h3>
 				
@@ -793,30 +843,33 @@ self</p>
 <dt>
 
 <a id="#(MENU_CLIENT_COMMAND).New" >
-<strong>MENU_CLIENT_COMMAND:New(MenuClient, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</strong>
+<strong>MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, MenuClient, ...)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new radio command item for a group</p>
+<p>MENU<em>CLIENT</em>COMMAND constructor.</p>
+
+	
+<p>Creates a new radio command item for a client, which can invoke a function with parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> MenuClient </em></code>: 
+<p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> Client </em></code>: 
 The Client owning the menu.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> MenuText </em></code>: 
+<p><code><em>#string MenuText </em></code>: 
 The text for the menu.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> ParentMenu </em></code>: 
+<p><code><em><a href="##(MENU_BASE)">#MENU_BASE</a> ParentMenu </em></code>: 
 The parent menu.</p>
 
 				</li>
@@ -830,6 +883,16 @@ A function that is called when the menu key is pressed.</p>
 				
 <p><code><em> CommandMenuArgument </em></code>: 
 An argument for the function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuClient </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -849,6 +912,11 @@ self</p>
 </dt>
 <dd>
 	
+<p>Removes a menu structure for a client.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
 
 
 </dd>
@@ -857,6 +925,43 @@ self</p>
 			<h2><a id="#(MENU_COALITION)" >Type <code>MENU_COALITION</code></a></h2>
 				
 <p>The MENU_COALITION class</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the planes within the red coalition.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+
+ local Plane1 = CLIENT:FindByName( "Plane 1" )
+ local Plane2 = CLIENT:FindByName( "Plane 2" )
+
+
+ -- This would create a menu for the red coalition under the main DCS "Others" menu.
+ local MenuCoalitionRed = MENU_COALITION:New( coalition.side.RED, "Manage Menus" )
+
+
+ local function ShowStatus( StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   Plane1:Message( StatusText, 15 )
+   Plane2:Message( StatusText, 15 )
+ end
+
+ local MenuStatus -- Menu#MENU_COALITION
+ local MenuStatusShow -- Menu#MENU_COALITION_COMMAND
+
+ local function RemoveStatusMenu()
+   MenuStatus:Remove()
+ end
+
+ local function AddStatusMenu()
+   
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus = MENU_COALITION:New( coalition.side.RED, "Status for Planes" )
+   MenuStatusShow = MENU_COALITION_COMMAND:New( coalition.side.RED, "Show Status", MenuStatus, ShowStatus, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ local MenuAdd = MENU_COALITION_COMMAND:New( coalition.side.RED, "Add Status Menu", MenuCoalitionRed, AddStatusMenu )
+ local MenuRemove = MENU_COALITION_COMMAND:New( coalition.side.RED, "Remove Status Menu", MenuCoalitionRed, RemoveStatusMenu )</code></pre>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -882,7 +987,10 @@ self</p>
 </dt>
 <dd>
 	
-<p>Creates a new coalition menu item</p>
+<p>MENU_COALITION constructor.</p>
+
+	
+<p>Creates a new MENU_COALITION object and creates the menu for a complete coalition.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -901,7 +1009,7 @@ The text for the menu.</p>
 				<li>
 				
 <p><code><em>#table ParentMenu </em></code>: 
-The parent menu.</p>
+The parent menu. This parameter can be ignored if you want the menu to be located at the perent menu of DCS world (under F10 other).</p>
 
 				</li>
 		</ul>
@@ -921,12 +1029,12 @@ self</p>
 </dt>
 <dd>
 	
-<p>Removes the sub menus recursively of this MENU_COALITION.</p>
+<p>Removes the main menu and the sub menus recursively of this MENU_COALITION.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em>
-self</p>
+<p><em>#nil:</em></p>
+
 
 </dd>
 </dl>
@@ -940,6 +1048,9 @@ self</p>
 <dd>
 	
 <p>Removes the sub menus recursively of this MENU_COALITION.</p>
+
+	
+<p>Note that the main menu is kept!</p>
 
 		<h3>Return value</h3>
 				
@@ -972,30 +1083,33 @@ self</p>
 <dt>
 
 <a id="#(MENU_COALITION_COMMAND).New" >
-<strong>MENU_COALITION_COMMAND:New(MenuCoalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</strong>
+<strong>MENU_COALITION_COMMAND:New(Coalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new radio command item for a group</p>
+<p>MENU_COALITION constructor.</p>
+
+	
+<p>Creates a new radio command item for a coalition, which can invoke a function with parameters.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSCoalition.html##(coalition.side)">DCSCoalition#coalition.side</a> MenuCoalition </em></code>: 
+<p><code><em><a href="DCSCoalition.html##(coalition.side)">DCSCoalition#coalition.side</a> Coalition </em></code>: 
 The coalition owning the menu.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> MenuText </em></code>: 
+<p><code><em>#string MenuText </em></code>: 
 The text for the menu.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> ParentMenu </em></code>: 
+<p><code><em><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> ParentMenu </em></code>: 
 The parent menu.</p>
 
 				</li>
@@ -1008,7 +1122,12 @@ A function that is called when the menu key is pressed.</p>
 				<li>
 				
 <p><code><em> CommandMenuArgument </em></code>: 
-An argument for the function.</p>
+An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1032,15 +1151,163 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_COALITION_COMMAND)">#MENU<em>COALITION</em>COMMAND</a>:</em>
-self</p>
+<p><em>#nil:</em></p>
 
+
+</dd>
+</dl>
+
+			<h2><a id="#(MENU_COMMAND_BASE)" >Type <code>MENU_COMMAND_BASE</code></a></h2>
+				
+<p>The MENU<em>COMMAND</em>BASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MENU_COMMAND_BASE).ClassName" >
+<strong>MENU_COMMAND_BASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COMMAND_BASE).CommandMenuArgument" >
+<strong>MENU_COMMAND_BASE.CommandMenuArgument</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COMMAND_BASE).CommandMenuFunction" >
+<strong>MENU_COMMAND_BASE.CommandMenuFunction</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#function</em>
+<a id="#(MENU_COMMAND_BASE).MenuCallHandler" >
+<strong>MENU_COMMAND_BASE.MenuCallHandler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COMMAND_BASE).New" >
+<strong>MENU_COMMAND_BASE:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuText </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ParentMenu </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuFunction </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuArguments </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 
 			<h2><a id="#(MENU_GROUP)" >Type <code>MENU_GROUP</code></a></h2>
 				
 <p>The MENU_GROUP class</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the two groups of planes.
+ -- Each group will receive a different menu structure.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+ -- And play with the Add and Remove menu options.
+ 
+ -- Note that in multi player, this will only work after the DCS groups bug is solved.
+
+ local function ShowStatus( PlaneGroup, StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   PlaneGroup:Message( StatusText, 15 )
+ end
+
+ local MenuStatus = {}
+
+ local function RemoveStatusMenu( MenuGroup )
+   local MenuGroupName = MenuGroup:GetName()
+   MenuStatus[MenuGroupName]:Remove()
+ end
+
+ --- @param Group#GROUP MenuGroup
+ local function AddStatusMenu( MenuGroup )
+   env.info(MenuGroup.GroupName)
+   local MenuGroupName = MenuGroup:GetName()
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus[MenuGroupName] = MENU_GROUP:New( MenuGroup, "Status for Planes" )
+   MENU_GROUP_COMMAND:New( MenuGroup, "Show Status", MenuStatus[MenuGroupName], ShowStatus, MenuGroup, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneGroup = GROUP:FindByName( "Plane 1" )
+     if PlaneGroup and PlaneGroup:IsAlive() then
+       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneGroup )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneGroup )
+     end
+   end, {}, 10, 10 )
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneGroup = GROUP:FindByName( "Plane 2" )
+     if PlaneGroup and PlaneGroup:IsAlive() then
+       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneGroup )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneGroup )
+     end
+   end, {}, 10, 10 )
+</code></pre>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1066,7 +1333,10 @@ self</p>
 </dt>
 <dd>
 	
-<p>Creates a new menu item for a group</p>
+<p>MENU_GROUP constructor.</p>
+
+	
+<p>Creates a new radio menu item for a group.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1105,12 +1375,12 @@ self</p>
 </dt>
 <dd>
 	
-<p>Removes the sub menus recursively of this MENU_GROUP.</p>
+<p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_GROUP)">#MENU_GROUP</a>:</em>
-self</p>
+<p><em>#nil:</em></p>
+
 
 </dd>
 </dl>
@@ -1156,7 +1426,7 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP_COMMAND).New" >
-<strong>MENU_GROUP_COMMAND:New(MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument)</strong>
+<strong>MENU_GROUP_COMMAND:New(MenuGroup, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1195,6 +1465,11 @@ A function that is called when the menu key is pressed.</p>
 An argument for the function.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
@@ -1212,54 +1487,13 @@ self</p>
 </dt>
 <dd>
 	
+<p>Removes a menu structure for a group.</p>
 
-
-</dd>
-</dl>
-
-			<h2><a id="#(SUBMENU)" >Type <code>SUBMENU</code></a></h2>
+		<h3>Return value</h3>
 				
-<p>The SUBMENU class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(SUBMENU).ClassName" >
-<strong>SUBMENU.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
+<p><em>#nil:</em></p>
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SUBMENU).New" >
-<strong>SUBMENU:New(MenuText, ParentMenu)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> MenuText </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ParentMenu </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 

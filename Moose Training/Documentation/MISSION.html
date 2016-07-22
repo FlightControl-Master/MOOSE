@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -145,12 +146,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).AssignTaskToGroup">MISSION.AssignTaskToGroup(MenuParam)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ClassName">MISSION.ClassName</a></td>
 		<td class="summary">
 
@@ -166,12 +161,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).Completed">MISSION:Completed()</a></td>
 		<td class="summary">
 <p>Set a Mission to completed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).CreateTaskMenus">MISSION:CreateTaskMenus(TaskGroup)</a></td>
-		<td class="summary">
-<p>Fill mission menu for the Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -193,7 +182,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMissionMenu">MISSION:GetMissionMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMissionMenu">MISSION:GetMissionMenu(TaskGroup)</a></td>
 		<td class="summary">
 <p>Gets the mission menu for the coalition.</p>
 </td>
@@ -205,15 +194,21 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetNextTaskID">MISSION:GetNextTaskID(Task)</a></td>
+		<td class="summary">
+<p>Return the next <a href="Task.html">Task</a> ID to be completed within the <a href="Mission.html">Mission</a>. </p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetScoring">MISSION:GetScoring()</a></td>
 		<td class="summary">
 <p>Get the scoring object of a mission.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTask">MISSION:GetTask(TaskNumber)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTask">MISSION.GetTask(TaskIndex, TaskID, self, TaskName)</a></td>
 		<td class="summary">
-
+<p>Get the TASK identified by the TaskNumber from the Mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -349,6 +344,18 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveTask">MISSION:RemoveTask(Task)</a></td>
+		<td class="summary">
+<p>Removes a <a href="Task.html">Task</a> to be completed within the <a href="Mission.html">Mission</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveTaskMenu">MISSION:RemoveTaskMenu(Task)</a></td>
+		<td class="summary">
+<p>Removes a Task menu.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportToAll">MISSION:ReportToAll()</a></td>
 		<td class="summary">
 <p>Report the status of all MISSIONs to all active Clients.</p>
@@ -373,9 +380,15 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMissionMenu">MISSION:SetMissionMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetAssignedMenu">MISSION:SetAssignedMenu(Task, MenuText)</a></td>
 		<td class="summary">
-<p>Sets the mission menu for the coalition.</p>
+<p>Sets the Assigned Task menu.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetPlannedMenu">MISSION:SetPlannedMenu()</a></td>
+		<td class="summary">
+<p>Sets the Planned Task menu.</p>
 </td>
 		</tr>
 		<tr>
@@ -781,27 +794,6 @@ The task added.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).AssignTaskToGroup" >
-<strong>MISSION.AssignTaskToGroup(MenuParam)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> MenuParam </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em>#string</em>
 <a id="#(MISSION).ClassName" >
 <strong>MISSION.ClassName</strong>
@@ -841,32 +833,6 @@ self</p>
 <dd>
 	
 <p>Set a Mission to completed.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MISSION).CreateTaskMenus" >
-<strong>MISSION:CreateTaskMenus(TaskGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Fill mission menu for the Group.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> TaskGroup </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(MISSION)">#MISSION</a>:</em>
-self</p>
 
 </dd>
 </dl>
@@ -942,13 +908,21 @@ local BomberClient = Mission:FindClient( "Bomber" )</code></pre>
 <dt>
 
 <a id="#(MISSION).GetMissionMenu" >
-<strong>MISSION:GetMissionMenu()</strong>
+<strong>MISSION:GetMissionMenu(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Gets the mission menu for the coalition.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a>:</em>
@@ -977,6 +951,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).GetNextTaskID" >
+<strong>MISSION:GetNextTaskID(Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the next <a href="Task.html">Task</a> ID to be completed within the <a href="Mission.html">Mission</a>. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: 
+is the <a href="Task.html">Task</a> object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>:</em>
+The task added.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).GetScoring" >
 <strong>MISSION:GetScoring()</strong>
 </a>
@@ -996,21 +997,56 @@ Scoring</p>
 <dt>
 
 <a id="#(MISSION).GetTask" >
-<strong>MISSION:GetTask(TaskNumber)</strong>
+<strong>MISSION.GetTask(TaskIndex, TaskID, self, TaskName)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Get the TASK identified by the TaskNumber from the Mission.</p>
 
+	
+<p>This function is useful in GoalFunctions.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> TaskNumber </em></code>: </p>
+<p><code><em>#string TaskIndex </em></code>: 
+is the Index of the <a href="Task.html">Task</a> within the <a href="Mission.html">Mission</a>.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TaskID </em></code>: 
+is the ID of the <a href="Task.html">Task</a> within the <a href="Mission.html">Mission</a>.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskName </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>:</em>
+The Task</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Returns nil if no task was found.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1376,6 +1412,63 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).RemoveTask" >
+<strong>MISSION:RemoveTask(Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a <a href="Task.html">Task</a> to be completed within the <a href="Mission.html">Mission</a>.</p>
+
+	
+<p>Note that there can be multiple <a href="Task.html">Task</a>s registered to be completed. 
+Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: 
+is the <a href="Task.html">Task</a> object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The cleaned Task reference.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).RemoveTaskMenu" >
+<strong>MISSION:RemoveTaskMenu(Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a Task menu.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSION)">#MISSION</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).ReportToAll" >
 <strong>MISSION:ReportToAll()</strong>
 </a>
@@ -1433,18 +1526,45 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).SetMissionMenu" >
-<strong>MISSION:SetMissionMenu()</strong>
+<a id="#(MISSION).SetAssignedMenu" >
+<strong>MISSION:SetAssignedMenu(Task, MenuText)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Sets the mission menu for the coalition.</p>
+<p>Sets the Assigned Task menu.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string MenuText </em></code>: 
+The menu text.</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(MISSION)">#MISSION</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).SetPlannedMenu" >
+<strong>MISSION:SetPlannedMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the Planned Task menu.</p>
 
 </dd>
 </dl>

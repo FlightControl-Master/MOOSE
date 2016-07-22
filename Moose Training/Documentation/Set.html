@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -505,6 +506,18 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FilterOnce">SET_BASE:FilterOnce()</a></td>
+		<td class="summary">
+<p>Filters for the defined collection.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FilterStop">SET_BASE:FilterStop()</a></td>
+		<td class="summary">
+<p>Stops the filtering for the defined collection.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FindNearestObjectFromPointVec2">SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</a></td>
 		<td class="summary">
 <p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
@@ -592,6 +605,18 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnDeadOrCrash">SET_BASE:_EventOnDeadOrCrash(Event)</a></td>
 		<td class="summary">
 <p>Handles the OnDead or OnCrash event for alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnPlayerEnterUnit">SET_BASE:_EventOnPlayerEnterUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnPlayerLeaveUnit">SET_BASE:_EventOnPlayerLeaveUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
 </td>
 		</tr>
 		<tr>
@@ -907,6 +932,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).FilterHasSEAD">SET_UNIT:FilterHasSEAD()</a></td>
+		<td class="summary">
+<p>Builds a set of SEADable units.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).FilterMeta">SET_UNIT.FilterMeta</a></td>
 		<td class="summary">
 
@@ -961,6 +992,30 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitThreatLevels">SET_UNIT:GetUnitThreatLevels()</a></td>
+		<td class="summary">
+<p>Returns map of unit threat levels.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitTypes">SET_UNIT:GetUnitTypes()</a></td>
+		<td class="summary">
+<p>Returns map of unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitTypesText">SET_UNIT:GetUnitTypesText()</a></td>
+		<td class="summary">
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasFriendlyUnits">SET_UNIT:HasFriendlyUnits(FriendlyCoalition)</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Set.html">Set</a> has friendly ground units.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasGroundUnits">SET_UNIT:HasGroundUnits()</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Set.html">Set</a> has ground targets.</p>
@@ -970,6 +1025,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasRadar">SET_UNIT:HasRadar(RadarType)</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Set.html">Set</a> has targets having a radar (of a given type).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).HasSEAD">SET_UNIT:HasSEAD()</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Set.html">Set</a> has targets that can be SEADed.</p>
 </td>
 		</tr>
 		<tr>
@@ -1578,6 +1639,42 @@ Count</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_BASE).FilterOnce" >
+<strong>SET_BASE:FilterOnce()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Filters for the defined collection.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE).FilterStop" >
+<strong>SET_BASE:FilterStop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the filtering for the defined collection.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_BASE).FindNearestObjectFromPointVec2" >
 <strong>SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</strong>
 </a>
@@ -1911,6 +2008,48 @@ self</p>
 <dd>
 	
 <p>Handles the OnDead or OnCrash event for alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE)._EventOnPlayerEnterUnit" >
+<strong>SET_BASE:_EventOnPlayerEnterUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE)._EventOnPlayerLeaveUnit" >
+<strong>SET_BASE:_EventOnPlayerLeaveUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -3298,6 +3437,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).FilterHasSEAD" >
+<strong>SET_UNIT:FilterHasSEAD()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of SEADable units.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(SET_UNIT).FilterMeta" >
 <strong>SET_UNIT.FilterMeta</strong>
@@ -3563,6 +3720,86 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).GetUnitThreatLevels" >
+<strong>SET_UNIT:GetUnitThreatLevels()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns map of unit threat levels.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetUnitTypes" >
+<strong>SET_UNIT:GetUnitTypes()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns map of unit types.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,#number> A map of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetUnitTypesText" >
+<strong>SET_UNIT:GetUnitTypesText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The unit types string</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).HasFriendlyUnits" >
+<strong>SET_UNIT:HasFriendlyUnits(FriendlyCoalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Set.html">Set</a> has friendly ground units.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FriendlyCoalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The amount of ground targets in the Set.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_UNIT).HasGroundUnits" >
 <strong>SET_UNIT:HasGroundUnits()</strong>
 </a>
@@ -3601,6 +3838,24 @@ The amount of ground targets in the Set.</p>
 				
 <p><em>#number:</em>
 The amount of radars in the Set with the given type</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).HasSEAD" >
+<strong>SET_UNIT:HasSEAD()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Set.html">Set</a> has targets that can be SEADed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The amount of SEADable units in the Set</p>
 
 </dd>
 </dl>
@@ -3694,6 +3949,8 @@ A single name or an array of UNIT names.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(map)" >Type <code>map</code></a></h2>
+			
 </div>
 
 </div>

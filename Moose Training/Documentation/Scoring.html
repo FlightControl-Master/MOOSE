@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -225,7 +226,7 @@ to a database or a BI tool to publish the scoring results to the player communit
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionScore">SCORING:_AddMissionScore(MissionName, Score)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionScore">SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</a></td>
 		<td class="summary">
 <p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
 </td>
@@ -677,7 +678,7 @@ self</p>
 <dt>
 
 <a id="#(SCORING)._AddMissionScore" >
-<strong>SCORING:_AddMissionScore(MissionName, Score)</strong>
+<strong>SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</strong>
 </a>
 </dt>
 <dd>
@@ -688,12 +689,22 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> MissionName </em></code>: </p>
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Score </em></code>: </p>
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: </p>
 
 				</li>
 		</ul>
