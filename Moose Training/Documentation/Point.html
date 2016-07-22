@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li>Point</li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -305,6 +306,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).NewFromVec3">POINT_VEC3:NewFromVec3(Vec3)</a></td>
+		<td class="summary">
+<p>Create a new POINT_VEC3 object from  Vec3 coordinates.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).PointVec3">POINT_VEC3.PointVec3</a></td>
 		<td class="summary">
 
@@ -384,6 +391,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ToStringBR">POINT_VEC3:ToStringBR(AngleRadians, Distance)</a></td>
+		<td class="summary">
+<p>Provides a Bearing / Range string</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ToStringLL">POINT_VEC3:ToStringLL(AngleRadians, Distance, acc, DMS)</a></td>
 		<td class="summary">
 <p>Provides a Bearing / Range string</p>
 </td>
@@ -1148,6 +1161,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).NewFromVec3" >
+<strong>POINT_VEC3:NewFromVec3(Vec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POINT_VEC3 object from  Vec3 coordinates.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+The Vec3 point.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a></em>
 <a id="#(POINT_VEC3).PointVec3" >
 <strong>POINT_VEC3.PointVec3</strong>
@@ -1397,6 +1437,49 @@ The angle in randians</p>
 				
 <p><code><em>#number Distance </em></code>: 
 The distance</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The BR Text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).ToStringLL" >
+<strong>POINT_VEC3:ToStringLL(AngleRadians, Distance, acc, DMS)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a Bearing / Range string</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number AngleRadians </em></code>: 
+The angle in randians</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Distance </em></code>: 
+The distance</p>
+
+				</li>
+				<li>
+				
+<p><code><em> acc </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DMS </em></code>: </p>
 
 				</li>
 		</ul>

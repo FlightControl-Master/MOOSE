@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -126,14 +127,14 @@
 
 <hr/>
 
-<h1> 2) <a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
-<p> The <a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
+<h1> 2) <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+<p> The <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
  and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.
  The class is group the detected units within zones given a DetectedZoneRange parameter.
  A set with multiple detected zones will be created as there are groups of units detected.</p>
 
 <h2> 2.1) Retrieve the Detected Unit sets and Detected Zones</h2>
-<p> The DetectedUnitSets methods are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and the DetectedZones methods is implemented in <a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a>.</p>
+<p> The DetectedUnitSets methods are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and the DetectedZones methods is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
 
 <p> Retrieve the DetectedUnitSets with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSets">Detection#DETECTION_BASE.GetDetectedSets</a>(). A table will be return of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s.
  To understand the amount of sets created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSetCount">Detection#DETECTION_BASE.GetDetectedSetCount</a>(). 
@@ -144,10 +145,10 @@
  If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
 
 <h2> 1.4) Flare or Smoke detected units</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_UNITGROUPS).FlareDetectedUnits">Detection#DETECTION_UNITGROUPS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_UNITGROUPS).SmokeDetectedUnits">Detection#DETECTION_UNITGROUPS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
+<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
 
 <h2> 1.5) Flare or Smoke detected zones</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_UNITGROUPS).FlareDetectedZones">Detection#DETECTION_UNITGROUPS.FlareDetectedZones</a>() or <a href="Detection.html##(DETECTION_UNITGROUPS).SmokeDetectedZones">Detection#DETECTION_UNITGROUPS.SmokeDetectedZones</a>() to flare or smoke the detected zones when a new detection has taken place.</p>
+<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to flare or smoke the detected zones when a new detection has taken place.</p>
 
 <hr/>
 
@@ -158,18 +159,242 @@
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#DETECTION_BASE">DETECTION_BASE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#DETECTION_AREAS">DETECTION_AREAS</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#DETECTION_UNITGROUPS">DETECTION_UNITGROUPS</a></td>
+		<td class="name" nowrap="nowrap"><a href="#DETECTION_BASE">DETECTION_BASE</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
+			<h2><a id="#(DETECTION_AREAS)">Type <code>DETECTION_AREAS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AcceptChanges">DETECTION_AREAS:AcceptChanges(DetectedArea)</a></td>
+		<td class="summary">
+<p>Accepts changes from the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddChangeArea">DETECTION_AREAS:AddChangeArea(DetectedArea, ChangeCode, AreaUnitType)</a></td>
+		<td class="summary">
+<p>Add a change to the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddChangeUnit">DETECTION_AREAS:AddChangeUnit(DetectedArea, ChangeCode, ChangeUnitType)</a></td>
+		<td class="summary">
+<p>Add a change to the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddDetectedArea">DETECTION_AREAS.AddDetectedArea(Set, Zone, self)</a></td>
+		<td class="summary">
+<p>Add a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CalculateThreatLevelA2G">DETECTION_AREAS:CalculateThreatLevelA2G(DetectedArea)</a></td>
+		<td class="summary">
+<p>Calculate the maxium A2G threat level of the DetectedArea.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).ClassName">DETECTION_AREAS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CreateDetectionSets">DETECTION_AREAS:CreateDetectionSets()</a></td>
+		<td class="summary">
+<p>Make a DetectionSet table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a></td>
+		<td class="summary">
+<p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectionZoneRange">DETECTION_AREAS.DetectionZoneRange</a></td>
+		<td class="summary">
+<p>The range till which targets are grouped upon the first detected target.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).FlareDetectedUnits">DETECTION_AREAS:FlareDetectedUnits()</a></td>
+		<td class="summary">
+<p>Flare the detected units</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).FlareDetectedZones">DETECTION_AREAS:FlareDetectedZones()</a></td>
+		<td class="summary">
+<p>Flare the detected zones</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetChangeText">DETECTION_AREAS:GetChangeText(DetectedArea)</a></td>
+		<td class="summary">
+<p>Make text documenting the changes of the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedAreaCount">DETECTION_AREAS:GetDetectedAreaCount()</a></td>
+		<td class="summary">
+<p>Get the amount of <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedAreas">DETECTION_AREAS:GetDetectedAreas()</a></td>
+		<td class="summary">
+<p>Get the detected <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedSet">DETECTION_AREAS:GetDetectedSet(Index)</a></td>
+		<td class="summary">
+<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedZone">DETECTION_AREAS:GetDetectedZone(Index)</a></td>
+		<td class="summary">
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetTreatLevelA2G">DETECTION_AREAS:GetTreatLevelA2G(DetectedArea)</a></td>
+		<td class="summary">
+<p>Returns the A2G threat level of the units in the DetectedArea</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).IsFriendliesNearBy">DETECTION_AREAS:IsFriendliesNearBy(DetectedArea)</a></td>
+		<td class="summary">
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).NearestFAC">DETECTION_AREAS:NearestFAC(DetectedArea)</a></td>
+		<td class="summary">
+<p>Find the nearest FAC of the DetectedArea.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).New">DETECTION_AREAS:New(DetectionSetGroup, DetectionRange, DetectionZoneRange)</a></td>
+		<td class="summary">
+<p>DETECTION_AREAS constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).RemoveDetectedArea">DETECTION_AREAS:RemoveDetectedArea(Index)</a></td>
+		<td class="summary">
+<p>Remove a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a> with a given Index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).ReportFriendliesNearBy">DETECTION_AREAS:ReportFriendliesNearBy(ReportUnit, ReportGroupData)</a></td>
+		<td class="summary">
+<p>Background worker function to determine if there are friendlies nearby ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).SmokeDetectedUnits">DETECTION_AREAS:SmokeDetectedUnits()</a></td>
+		<td class="summary">
+<p>Smoke the detected units</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).SmokeDetectedZones">DETECTION_AREAS:SmokeDetectedZones()</a></td>
+		<td class="summary">
+<p>Smoke the detected zones</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS)._FlareDetectedUnits">DETECTION_AREAS._FlareDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS)._FlareDetectedZones">DETECTION_AREAS._FlareDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS)._SmokeDetectedUnits">DETECTION_AREAS._SmokeDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS)._SmokeDetectedZones">DETECTION_AREAS._SmokeDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(DETECTION_AREAS.DetectedArea)">Type <code>DETECTION_AREAS.DetectedArea</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).AreaID">DETECTION_AREAS.DetectedArea.AreaID</a></td>
+		<td class="summary">
+<p>-- The identifier of the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Changed">DETECTION_AREAS.DetectedArea.Changed</a></td>
+		<td class="summary">
+<p>Documents if the detected area has changes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Changes">DETECTION_AREAS.DetectedArea.Changes</a></td>
+		<td class="summary">
+<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).FriendliesNearBy">DETECTION_AREAS.DetectedArea.FriendliesNearBy</a></td>
+		<td class="summary">
+<p>Indicates if there are friendlies within the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).MaxThreatLevelA2G">DETECTION_AREAS.DetectedArea.MaxThreatLevelA2G</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).NearestFAC">DETECTION_AREAS.DetectedArea.NearestFAC</a></td>
+		<td class="summary">
+<p>The nearest FAC near the Area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Set">DETECTION_AREAS.DetectedArea.Set</a></td>
+		<td class="summary">
+<p>-- The Set of Units in the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Zone">DETECTION_AREAS.DetectedArea.Zone</a></td>
+		<td class="summary">
+<p>-- The Zone of the detected area.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(DETECTION_BASE)">Type <code>DETECTION_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -227,9 +452,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionGroups">DETECTION_BASE.DetectionGroups</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedObjectsIdentified">DETECTION_BASE.DetectedObjectsIdentified</a></td>
 		<td class="summary">
-<p>The GROUP in the Forward Air Controller role.</p>
+<p>Map of the DetectedObjects identified.</p>
 </td>
 		</tr>
 		<tr>
@@ -248,6 +473,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionScheduler">DETECTION_BASE.DetectionScheduler</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionSetGroup">DETECTION_BASE.DetectionSetGroup</a></td>
+		<td class="summary">
+<p>The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 </td>
 		</tr>
 		<tr>
@@ -275,9 +506,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectionGroups">DETECTION_BASE:GetDetectionGroups()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectionSetGroup">DETECTION_BASE:GetDetectionSetGroup()</a></td>
 		<td class="summary">
 <p>Get the detection Groups.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IdentifyDetectedObject">DETECTION_BASE:IdentifyDetectedObject(DetectedObject)</a></td>
+		<td class="summary">
+<p>Identifies a detected object during detection processing.</p>
 </td>
 		</tr>
 		<tr>
@@ -317,7 +554,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).New">DETECTION_BASE:New(DetectionGroups, DetectionRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsDetectedObjectIdentified">DETECTION_BASE:IsDetectedObjectIdentified(DetectedObject)</a></td>
+		<td class="summary">
+<p>Determines if a detected object has already been identified during detection processing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).New">DETECTION_BASE:New(DetectionSetGroup, DetectionRange)</a></td>
 		<td class="summary">
 <p>DETECTION constructor.</p>
 </td>
@@ -338,6 +581,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ScheduleRepeatInterval">DETECTION_BASE.ScheduleRepeatInterval</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).UnIdentifyAllDetectedObjects">DETECTION_BASE:UnIdentifyAllDetectedObjects()</a></td>
+		<td class="summary">
+<p>UnIdentify all detected objects during detection processing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).UnIdentifyDetectedObject">DETECTION_BASE:UnIdentifyDetectedObject(DetectedObject)</a></td>
+		<td class="summary">
+<p>UnIdentify a detected object during detection processing.</p>
 </td>
 		</tr>
 		<tr>
@@ -382,147 +637,21 @@
 		</tr>
 	</table>
 
-			<h2><a id="#(DETECTION_UNITGROUPS)">Type <code>DETECTION_UNITGROUPS</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).AddDetectedArea">DETECTION_UNITGROUPS.AddDetectedArea(Set, Zone, self)</a></td>
-		<td class="summary">
-<p>Add a detected <a href="##(DETECTION_UNITGROUPS).DetectedArea">DETECTION_UNITGROUPS.DetectedArea</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).ClassName">DETECTION_UNITGROUPS.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).CreateDetectionSets">DETECTION_UNITGROUPS:CreateDetectionSets()</a></td>
-		<td class="summary">
-<p>Make a DetectionSet table.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).DetectedAreas">DETECTION_UNITGROUPS.DetectedAreas</a></td>
-		<td class="summary">
-<p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).DetectionZoneRange">DETECTION_UNITGROUPS.DetectionZoneRange</a></td>
-		<td class="summary">
-<p>The range till which targets are grouped upon the first detected target.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).FlareDetectedUnits">DETECTION_UNITGROUPS:FlareDetectedUnits()</a></td>
-		<td class="summary">
-<p>Flare the detected units</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).FlareDetectedZones">DETECTION_UNITGROUPS:FlareDetectedZones()</a></td>
-		<td class="summary">
-<p>Flare the detected zones</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).GetDetectedAreaCount">DETECTION_UNITGROUPS:GetDetectedAreaCount()</a></td>
-		<td class="summary">
-<p>Get the amount of <a href="##(DETECTION_UNITGROUPS).DetectedAreas">DETECTION_UNITGROUPS.DetectedAreas</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).GetDetectedAreas">DETECTION_UNITGROUPS:GetDetectedAreas()</a></td>
-		<td class="summary">
-<p>Get the detected <a href="##(DETECTION_UNITGROUPS).DetectedAreas">DETECTION_UNITGROUPS.DetectedAreas</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).GetDetectedSet">DETECTION_UNITGROUPS:GetDetectedSet(Index)</a></td>
-		<td class="summary">
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).GetDetectedZone">DETECTION_UNITGROUPS:GetDetectedZone(Index)</a></td>
-		<td class="summary">
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).New">DETECTION_UNITGROUPS:New(DetectionGroups, DetectionRange, DetectionZoneRange)</a></td>
-		<td class="summary">
-<p>DETECTION_UNITGROUPS constructor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).RemoveDetectedArea">DETECTION_UNITGROUPS:RemoveDetectedArea(Index)</a></td>
-		<td class="summary">
-<p>Remove a detected <a href="##(DETECTION_UNITGROUPS).DetectedArea">DETECTION_UNITGROUPS.DetectedArea</a> with a given Index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).SmokeDetectedUnits">DETECTION_UNITGROUPS:SmokeDetectedUnits()</a></td>
-		<td class="summary">
-<p>Smoke the detected units</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS).SmokeDetectedZones">DETECTION_UNITGROUPS:SmokeDetectedZones()</a></td>
-		<td class="summary">
-<p>Smoke the detected zones</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS)._FlareDetectedUnits">DETECTION_UNITGROUPS._FlareDetectedUnits</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS)._FlareDetectedZones">DETECTION_UNITGROUPS._FlareDetectedZones</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS)._SmokeDetectedUnits">DETECTION_UNITGROUPS._SmokeDetectedUnits</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS)._SmokeDetectedZones">DETECTION_UNITGROUPS._SmokeDetectedZones</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(DETECTION_UNITGROUPS.DetectedArea)">Type <code>DETECTION_UNITGROUPS.DetectedArea</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS.DetectedArea).AreaID">DETECTION_UNITGROUPS.DetectedArea.AreaID</a></td>
-		<td class="summary">
-<p>-- The identifier of the detected area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS.DetectedArea).Set">DETECTION_UNITGROUPS.DetectedArea.Set</a></td>
-		<td class="summary">
-<p>-- The Set of Units in the detected area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITGROUPS.DetectedArea).Zone">DETECTION_UNITGROUPS.DetectedArea.Zone</a></td>
-		<td class="summary">
-<p>-- The Zone of the detected area.</p>
-</td>
-		</tr>
-	</table>
-
 	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a></em>
+<a id="DETECTION_AREAS" >
+<strong>DETECTION_AREAS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -537,12 +666,176 @@
 
 </dd>
 </dl>
+	<h2><a id="#(Detection)" >Type <code>Detection</code></a></h2>
+	
+			<h2><a id="#(DETECTION_AREAS)" >Type <code>DETECTION_AREAS</code></a></h2>
+				
+<p>DETECTION_AREAS class</p>
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a></em>
-<a id="DETECTION_UNITGROUPS" >
-<strong>DETECTION_UNITGROUPS</strong>
+<a id="#(DETECTION_AREAS).AcceptChanges" >
+<strong>DETECTION_AREAS:AcceptChanges(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Accepts changes from the detected zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).AddChangeArea" >
+<strong>DETECTION_AREAS:AddChangeArea(DetectedArea, ChangeCode, AreaUnitType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a change to the detected zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeCode </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AreaUnitType </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).AddChangeUnit" >
+<strong>DETECTION_AREAS:AddChangeUnit(DetectedArea, ChangeCode, ChangeUnitType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a change to the detected zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeCode </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeUnitType </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).AddDetectedArea" >
+<strong>DETECTION_AREAS.AddDetectedArea(Set, Zone, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> Set </em></code>: 
+-- The Set of Units in the detected area.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> Zone </em></code>: 
+-- The Zone of the detected area.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a>:</em>
+DetectedArea</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).CalculateThreatLevelA2G" >
+<strong>DETECTION_AREAS:CalculateThreatLevelA2G(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate the maxium A2G threat level of the DetectedArea.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(DETECTION_AREAS).ClassName" >
+<strong>DETECTION_AREAS.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -551,8 +844,585 @@
 
 </dd>
 </dl>
-	<h2><a id="#(Detection)" >Type <code>Detection</code></a></h2>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).CreateDetectionSets" >
+<strong>DETECTION_AREAS:CreateDetectionSets()</strong>
+</a>
+</dt>
+<dd>
 	
+<p>Make a DetectionSet table.</p>
+
+	
+<p>This function will be overridden in the derived clsses.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_AREAS.DetectedAreas)">#DETECTION_AREAS.DetectedAreas</a></em>
+<a id="#(DETECTION_AREAS).DetectedAreas" >
+<strong>DETECTION_AREAS.DetectedAreas</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(DETECTION_AREAS).DetectionZoneRange" >
+<strong>DETECTION_AREAS.DetectionZoneRange</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The range till which targets are grouped upon the first detected target.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).FlareDetectedUnits" >
+<strong>DETECTION_AREAS:FlareDetectedUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the detected units</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).FlareDetectedZones" >
+<strong>DETECTION_AREAS:FlareDetectedZones()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flare the detected zones</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetChangeText" >
+<strong>DETECTION_AREAS:GetChangeText(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make text documenting the changes of the detected zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetDetectedAreaCount" >
+<strong>DETECTION_AREAS:GetDetectedAreaCount()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the amount of <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+DetectedAreaCount</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetDetectedAreas" >
+<strong>DETECTION_AREAS:GetDetectedAreas()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the detected <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS.DetectedAreas)">#DETECTION_AREAS.DetectedAreas</a>:</em>
+DetectedAreas</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetDetectedSet" >
+<strong>DETECTION_AREAS:GetDetectedSet(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>:</em>
+DetectedSet</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetDetectedZone" >
+<strong>DETECTION_AREAS:GetDetectedZone(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>:</em>
+DetectedZone</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetTreatLevelA2G" >
+<strong>DETECTION_AREAS:GetTreatLevelA2G(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the A2G threat level of the units in the DetectedArea</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+a scale from 0 to 10. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).IsFriendliesNearBy" >
+<strong>DETECTION_AREAS:IsFriendliesNearBy(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+trhe if there are friendlies nearby </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).NearestFAC" >
+<strong>DETECTION_AREAS:NearestFAC(DetectedArea)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the nearest FAC of the DetectedArea.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+The nearest FAC unit</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).New" >
+<strong>DETECTION_AREAS:New(DetectionSetGroup, DetectionRange, DetectionZoneRange)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>DETECTION_AREAS constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionRange </em></code>: 
+The range till which targets are accepted to be detected.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionZoneRange </em></code>: 
+The range till which targets are grouped upon the first detected target.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).RemoveDetectedArea" >
+<strong>DETECTION_AREAS:RemoveDetectedArea(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a> with a given Index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: 
+The Index of the detection are to be removed.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).ReportFriendliesNearBy" >
+<strong>DETECTION_AREAS:ReportFriendliesNearBy(ReportUnit, ReportGroupData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Background worker function to determine if there are friendlies nearby ...</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ReportUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ReportGroupData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).SmokeDetectedUnits" >
+<strong>DETECTION_AREAS:SmokeDetectedUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the detected units</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).SmokeDetectedZones" >
+<strong>DETECTION_AREAS:SmokeDetectedZones()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the detected zones</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS)._FlareDetectedUnits" >
+<strong>DETECTION_AREAS._FlareDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS)._FlareDetectedZones" >
+<strong>DETECTION_AREAS._FlareDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS)._SmokeDetectedUnits" >
+<strong>DETECTION_AREAS._SmokeDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS)._SmokeDetectedZones" >
+<strong>DETECTION_AREAS._SmokeDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(DETECTION_AREAS.DetectedArea)" >Type <code>DETECTION_AREAS.DetectedArea</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_AREAS.DetectedArea).AreaID" >
+<strong>DETECTION_AREAS.DetectedArea.AreaID</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The identifier of the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS.DetectedArea).Changed" >
+<strong>DETECTION_AREAS.DetectedArea.Changed</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Documents if the detected area has changes.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(DETECTION_AREAS.DetectedArea).Changes" >
+<strong>DETECTION_AREAS.DetectedArea.Changes</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS.DetectedArea).FriendliesNearBy" >
+<strong>DETECTION_AREAS.DetectedArea.FriendliesNearBy</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Indicates if there are friendlies within the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_AREAS.DetectedArea).MaxThreatLevelA2G" >
+<strong>DETECTION_AREAS.DetectedArea.MaxThreatLevelA2G</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+<a id="#(DETECTION_AREAS.DetectedArea).NearestFAC" >
+<strong>DETECTION_AREAS.DetectedArea.NearestFAC</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The nearest FAC near the Area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(DETECTION_AREAS.DetectedArea).Set" >
+<strong>DETECTION_AREAS.DetectedArea.Set</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The Set of Units in the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a></em>
+<a id="#(DETECTION_AREAS.DetectedArea).Zone" >
+<strong>DETECTION_AREAS.DetectedArea.Zone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The Zone of the detected area.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(DETECTION_AREAS.DetectedAreas)" >Type <code>DETECTION_AREAS.DetectedAreas</code></a></h2>
+			
 			<h2><a id="#(DETECTION_BASE)" >Type <code>DETECTION_BASE</code></a></h2>
 				
 <p>DETECTION_BASE class</p>
@@ -694,14 +1564,14 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
-<a id="#(DETECTION_BASE).DetectionGroups" >
-<strong>DETECTION_BASE.DetectionGroups</strong>
+		<em>#table</em>
+<a id="#(DETECTION_BASE).DetectedObjectsIdentified" >
+<strong>DETECTION_BASE.DetectedObjectsIdentified</strong>
 </a>
 </dt>
 <dd>
 	
-<p>The GROUP in the Forward Air Controller role.</p>
+<p>Map of the DetectedObjects identified.</p>
 
 </dd>
 </dl>
@@ -744,6 +1614,20 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(DETECTION_BASE).DetectionSetGroup" >
+<strong>DETECTION_BASE.DetectionSetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 
 </dd>
 </dl>
@@ -838,8 +1722,8 @@ DetectedSets</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).GetDetectionGroups" >
-<strong>DETECTION_BASE:GetDetectionGroups()</strong>
+<a id="#(DETECTION_BASE).GetDetectionSetGroup" >
+<strong>DETECTION_BASE:GetDetectionSetGroup()</strong>
 </a>
 </dt>
 <dd>
@@ -851,6 +1735,27 @@ DetectedSets</p>
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).IdentifyDetectedObject" >
+<strong>DETECTION_BASE:IdentifyDetectedObject(DetectedObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Identifies a detected object during detection processing.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedObject)">#DETECTION_BASE.DetectedObject</a> DetectedObject </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1012,8 +1917,34 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).IsDetectedObjectIdentified" >
+<strong>DETECTION_BASE:IsDetectedObjectIdentified(DetectedObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Determines if a detected object has already been identified during detection processing.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedObject)">#DETECTION_BASE.DetectedObject</a> DetectedObject </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if already identified.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).New" >
-<strong>DETECTION_BASE:New(DetectionGroups, DetectionRange)</strong>
+<strong>DETECTION_BASE:New(DetectionSetGroup, DetectionRange)</strong>
 </a>
 </dt>
 <dd>
@@ -1024,8 +1955,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> DetectionGroups </em></code>: 
-The GROUP in the Forward Air Controller role.</p>
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 
 				</li>
 				<li>
@@ -1101,6 +2032,40 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).UnIdentifyAllDetectedObjects" >
+<strong>DETECTION_BASE:UnIdentifyAllDetectedObjects()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnIdentify all detected objects during detection processing.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).UnIdentifyDetectedObject" >
+<strong>DETECTION_BASE:UnIdentifyDetectedObject(DetectedObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnIdentify a detected object during detection processing.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedObject)">#DETECTION_BASE.DetectedObject</a> DetectedObject </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1201,442 +2166,6 @@ self</p>
 			<h2><a id="#(DETECTION_BASE.DetectedObjects)" >Type <code>DETECTION_BASE.DetectedObjects</code></a></h2>
 			
 			<h2><a id="#(DETECTION_BASE.DetectedSets)" >Type <code>DETECTION_BASE.DetectedSets</code></a></h2>
-			
-			<h2><a id="#(DETECTION_UNITGROUPS)" >Type <code>DETECTION_UNITGROUPS</code></a></h2>
-				
-<p>DETECTION_UNITGROUPS class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).AddDetectedArea" >
-<strong>DETECTION_UNITGROUPS.AddDetectedArea(Set, Zone, self)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a detected <a href="##(DETECTION_UNITGROUPS).DetectedArea">DETECTION_UNITGROUPS.DetectedArea</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> Set </em></code>: 
--- The Set of Units in the detected area.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> Zone </em></code>: 
--- The Zone of the detected area.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS.DetectedArea)">#DETECTION_UNITGROUPS.DetectedArea</a>:</em>
-DetectedArea</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(DETECTION_UNITGROUPS).ClassName" >
-<strong>DETECTION_UNITGROUPS.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).CreateDetectionSets" >
-<strong>DETECTION_UNITGROUPS:CreateDetectionSets()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Make a DetectionSet table.</p>
-
-	
-<p>This function will be overridden in the derived clsses.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(DETECTION_UNITGROUPS.DetectedAreas)">#DETECTION_UNITGROUPS.DetectedAreas</a></em>
-<a id="#(DETECTION_UNITGROUPS).DetectedAreas" >
-<strong>DETECTION_UNITGROUPS.DetectedAreas</strong>
-</a>
-</dt>
-<dd>
-	
-<p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
-<a id="#(DETECTION_UNITGROUPS).DetectionZoneRange" >
-<strong>DETECTION_UNITGROUPS.DetectionZoneRange</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The range till which targets are grouped upon the first detected target.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).FlareDetectedUnits" >
-<strong>DETECTION_UNITGROUPS:FlareDetectedUnits()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Flare the detected units</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).FlareDetectedZones" >
-<strong>DETECTION_UNITGROUPS:FlareDetectedZones()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Flare the detected zones</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).GetDetectedAreaCount" >
-<strong>DETECTION_UNITGROUPS:GetDetectedAreaCount()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the amount of <a href="##(DETECTION_UNITGROUPS).DetectedAreas">DETECTION_UNITGROUPS.DetectedAreas</a>.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-DetectedAreaCount</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).GetDetectedAreas" >
-<strong>DETECTION_UNITGROUPS:GetDetectedAreas()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the detected <a href="##(DETECTION_UNITGROUPS).DetectedAreas">DETECTION_UNITGROUPS.DetectedAreas</a>.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS.DetectedAreas)">#DETECTION_UNITGROUPS.DetectedAreas</a>:</em>
-DetectedAreas</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).GetDetectedSet" >
-<strong>DETECTION_UNITGROUPS:GetDetectedSet(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>:</em>
-DetectedSet</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).GetDetectedZone" >
-<strong>DETECTION_UNITGROUPS:GetDetectedZone(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>:</em>
-DetectedZone</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).New" >
-<strong>DETECTION_UNITGROUPS:New(DetectionGroups, DetectionRange, DetectionZoneRange)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>DETECTION_UNITGROUPS constructor.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> DetectionGroups </em></code>: 
-The GROUP in the Forward Air Controller role.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionRange </em></code>: 
-The range till which targets are accepted to be detected.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionZoneRange </em></code>: 
-The range till which targets are grouped upon the first detected target.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Detection.html##(DETECTION_UNITGROUPS)">Detection#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).RemoveDetectedArea" >
-<strong>DETECTION_UNITGROUPS:RemoveDetectedArea(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Remove a detected <a href="##(DETECTION_UNITGROUPS).DetectedArea">DETECTION_UNITGROUPS.DetectedArea</a> with a given Index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: 
-The Index of the detection are to be removed.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#nil:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).SmokeDetectedUnits" >
-<strong>DETECTION_UNITGROUPS:SmokeDetectedUnits()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the detected units</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_UNITGROUPS).SmokeDetectedZones" >
-<strong>DETECTION_UNITGROUPS:SmokeDetectedZones()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the detected zones</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_UNITGROUPS)">#DETECTION_UNITGROUPS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_UNITGROUPS)._FlareDetectedUnits" >
-<strong>DETECTION_UNITGROUPS._FlareDetectedUnits</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_UNITGROUPS)._FlareDetectedZones" >
-<strong>DETECTION_UNITGROUPS._FlareDetectedZones</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_UNITGROUPS)._SmokeDetectedUnits" >
-<strong>DETECTION_UNITGROUPS._SmokeDetectedUnits</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_UNITGROUPS)._SmokeDetectedZones" >
-<strong>DETECTION_UNITGROUPS._SmokeDetectedZones</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-
-			<h2><a id="#(DETECTION_UNITGROUPS.DetectedArea)" >Type <code>DETECTION_UNITGROUPS.DetectedArea</code></a></h2>
-				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(DETECTION_UNITGROUPS.DetectedArea).AreaID" >
-<strong>DETECTION_UNITGROUPS.DetectedArea.AreaID</strong>
-</a>
-</dt>
-<dd>
-	
-<p>-- The identifier of the detected area.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(DETECTION_UNITGROUPS.DetectedArea).Set" >
-<strong>DETECTION_UNITGROUPS.DetectedArea.Set</strong>
-</a>
-</dt>
-<dd>
-	
-<p>-- The Set of Units in the detected area.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a></em>
-<a id="#(DETECTION_UNITGROUPS.DetectedArea).Zone" >
-<strong>DETECTION_UNITGROUPS.DetectedArea.Zone</strong>
-</a>
-</dt>
-<dd>
-	
-<p>-- The Zone of the detected area.</p>
-
-</dd>
-</dl>
-
-			<h2><a id="#(DETECTION_UNITGROUPS.DetectedAreas)" >Type <code>DETECTION_UNITGROUPS.DetectedAreas</code></a></h2>
 			
 </div>
 

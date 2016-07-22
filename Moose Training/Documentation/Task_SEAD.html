@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -100,11 +101,11 @@
 The TASK_SEAD is processed through a <a href="Statemachine.html##(STATEMACHINE_TASK)">Statemachine#STATEMACHINE_TASK</a>, and has the following statuses:</p>
 
 <ul>
-    <li>None: Start of the process</li>
-    <li>Planned: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Assign.html##(PROCESS_ASSIGN_ACCEPT)">Process<em>Assign#PROCESS</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
-    <li>Assigned: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Route.html##(PROCESS_ROUTE)">Process<em>Route#PROCESS</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
-    <li>Success: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
-    <li>Failed: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+    <li><strong>None</strong>: Start of the process</li>
+    <li><strong>Planned</strong>: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Assign.html##(PROCESS_ASSIGN_ACCEPT)">Process<em>Assign#PROCESS</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
+    <li><strong>Assigned</strong>: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Route.html##(PROCESS_ROUTE)">Process<em>Route#PROCESS</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
+    <li><strong>Success</strong>: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
+    <li><strong>Failed</strong>: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
 </ul>
 
 <hr/>
@@ -136,7 +137,19 @@ The TASK_SEAD is processed through a <a href="Statemachine.html##(STATEMACHINE_T
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, UnitSetTargets, TargetZone, MenuText, TargetSetUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).CleanUp">TASK_SEAD:CleanUp()</a></td>
+		<td class="summary">
+<p>Removes a TASK_SEAD.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).GetPlannedMenuText">TASK_SEAD:GetPlannedMenuText()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetZone, TargetSetUnit)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_SEAD.</p>
 </td>
@@ -145,6 +158,12 @@ The TASK_SEAD is processed through a <a href="Statemachine.html##(STATEMACHINE_T
 		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).OnNext">TASK_SEAD:OnNext(Fsm, Event, From, To, Event)</a></td>
 		<td class="summary">
 <p>StateMachine callback function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).TargetSetUnit">TASK_SEAD.TargetSetUnit</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -232,8 +251,39 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_SEAD).CleanUp" >
+<strong>TASK_SEAD:CleanUp()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a TASK_SEAD.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_SEAD).GetPlannedMenuText" >
+<strong>TASK_SEAD:GetPlannedMenuText()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_SEAD).New" >
-<strong>TASK_SEAD:New(Mission, UnitSetTargets, TargetZone, MenuText, TargetSetUnit)</strong>
+<strong>TASK_SEAD:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetZone, TargetSetUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -249,17 +299,24 @@ self</p>
 				</li>
 				<li>
 				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
 <p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> MenuText </em></code>: </p>
 
 				</li>
 				<li>
@@ -314,6 +371,20 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_SEAD).TargetSetUnit" >
+<strong>TASK_SEAD.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">

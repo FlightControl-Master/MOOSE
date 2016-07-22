@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li>Task</li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -158,7 +159,7 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AddProcess">TASK_BASE:AddProcess(TaskUnit, Process)</a></td>
 		<td class="summary">
-<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -189,6 +190,18 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).ClassName">TASK_BASE.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).CleanUp">TASK_BASE:CleanUp()</a></td>
+		<td class="summary">
+<p>Cleans all references of a TASK_BASE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).FailProcesses">TASK_BASE:FailProcesses(TaskUnitName)</a></td>
+		<td class="summary">
+<p>Fail processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
 </td>
 		</tr>
 		<tr>
@@ -228,15 +241,33 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetTaskIndex">TASK_BASE:GetTaskIndex()</a></td>
+		<td class="summary">
+<p>Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetTaskName">TASK_BASE:GetTaskName()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Task.html">Task</a> name.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetType">TASK_BASE:GetType()</a></td>
 		<td class="summary">
 <p>Gets the Type of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).HasStateMachine">TASK_BASE:HasStateMachine(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).HasStateMachine">TASK_BASE:HasStateMachine(TaskUnitName)</a></td>
 		<td class="summary">
 <p>Checks if there is a FiniteStateMachine assigned to <a href="Unit.html">Unit</a> for <a href="Task.html">Task</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsAssignedToGroup">TASK_BASE:IsAssignedToGroup(TaskGroup)</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -276,19 +307,73 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Menu">TASK_BASE.Menu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuAbort">TASK_BASE.MenuAbort</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuAssignToGroup">TASK_BASE.MenuAssignToGroup(MenuParam)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuStatus">TASK_BASE.MenuStatus</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuTaskAbort">TASK_BASE.MenuTaskAbort(MenuParam)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuTaskStatus">TASK_BASE.MenuTaskStatus(MenuParam)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Mission">TASK_BASE.Mission</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).New">TASK_BASE:New(Mission, TaskName, TaskType, TaskCategory)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).New">TASK_BASE:New(The, SetGroup, TaskName, TaskType, TaskCategory, Mission)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_BASE.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnStateChange">TASK_BASE:OnStateChange(Fsm, Event, From, To, Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnAssigned">TASK_BASE:OnAssigned(TaskUnit, Fsm, Event, From, To, Event)</a></td>
+		<td class="summary">
+<p>StateMachine callback function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnFailed">TASK_BASE:OnFailed(TaskUnit, Fsm, Event, From, To, Event)</a></td>
+		<td class="summary">
+<p>StateMachine callback function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnStateChange">TASK_BASE:OnStateChange(TaskUnit, Fsm, Event, From, To, Event)</a></td>
+		<td class="summary">
+<p>StateMachine callback function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnSuccess">TASK_BASE:OnSuccess(TaskUnit, Fsm, Event, From, To, Event)</a></td>
 		<td class="summary">
 <p>StateMachine callback function for a TASK</p>
 </td>
@@ -306,13 +391,25 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveProcesses">TASK_BASE:RemoveProcesses(TaskUnit, FailProcesses)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveMenu">TASK_BASE:RemoveMenu()</a></td>
+		<td class="summary">
+<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveMenuForGroup">TASK_BASE:RemoveMenuForGroup(TaskGroup)</a></td>
+		<td class="summary">
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveProcesses">TASK_BASE:RemoveProcesses(TaskUnitName)</a></td>
 		<td class="summary">
 <p>Remove Processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveStateMachines">TASK_BASE:RemoveStateMachines(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveStateMachines">TASK_BASE:RemoveStateMachines(TaskUnitName)</a></td>
 		<td class="summary">
 <p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
 </td>
@@ -321,6 +418,24 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Scores">TASK_BASE.Scores</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SendBriefingToAssignedGroups">TASK_BASE:SendBriefingToAssignedGroups()</a></td>
+		<td class="summary">
+<p>Send the briefng message of the <a href="Task.html">Task</a> to the assigned <a href="Group.html">Group</a>s.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetAssignedMenu">TASK_BASE:SetAssignedMenu()</a></td>
+		<td class="summary">
+<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetAssignedMenuForGroup">TASK_BASE:SetAssignedMenuForGroup(TaskGroup)</a></td>
+		<td class="summary">
+<p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -336,6 +451,12 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetGroup">TASK_BASE.SetGroup</a></td>
+		<td class="summary">
+<p>The Set of Groups assigned to the Task</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetID">TASK_BASE:SetID(TaskID)</a></td>
 		<td class="summary">
 <p>Sets the ID of the Task</p>
@@ -345,6 +466,18 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetName">TASK_BASE:SetName(TaskName)</a></td>
 		<td class="summary">
 <p>Sets the Name of the Task</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetPlannedMenu">TASK_BASE:SetPlannedMenu()</a></td>
+		<td class="summary">
+<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetPlannedMenuForGroup">TASK_BASE:SetPlannedMenuForGroup(TaskGroup, MenuText)</a></td>
+		<td class="summary">
+<p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -426,13 +559,13 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskUnit">TASK_BASE.TaskUnit</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).UnAssignFromGroups">TASK_BASE:UnAssignFromGroups()</a></td>
 		<td class="summary">
-
+<p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).UnAssignFromUnit">TASK_BASE:UnAssignFromUnit(TaskUnit, FailProcesses)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).UnAssignFromUnit">TASK_BASE:UnAssignFromUnit(TaskUnit, TaskUnitName)</a></td>
 		<td class="summary">
 <p>UnAssign the <a href="Task.html">Task</a> from an alive <a href="Unit.html">Unit</a>.</p>
 </td>
@@ -444,9 +577,15 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventUnAssignUnit">TASK_BASE:_EventUnAssignUnit(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventDead">TASK_BASE:_EventDead(Event)</a></td>
 		<td class="summary">
 <p>UnAssigns a <a href="Unit.html">Unit</a> that is left by a player, crashed, dead, ....</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventPlayerLeaveUnit">TASK_BASE:_EventPlayerLeaveUnit(Event)</a></td>
+		<td class="summary">
+<p>Catches the "player leave unit" event for a <a href="Unit.html">Unit</a>  ....</p>
 </td>
 		</tr>
 		<tr>
@@ -494,7 +633,7 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </dt>
 <dd>
 	
-<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -605,11 +744,6 @@ self</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -649,6 +783,50 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).CleanUp" >
+<strong>TASK_BASE:CleanUp()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Cleans all references of a TASK_BASE.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).FailProcesses" >
+<strong>TASK_BASE:FailProcesses(TaskUnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Fail processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskUnitName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -754,6 +932,42 @@ Scoring</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_BASE).GetTaskIndex" >
+<strong>TASK_BASE:GetTaskIndex()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The Task ID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).GetTaskName" >
+<strong>TASK_BASE:GetTaskName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Task.html">Task</a> name.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+TaskName</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_BASE).GetType" >
 <strong>TASK_BASE:GetType()</strong>
 </a>
@@ -773,7 +987,7 @@ TaskType</p>
 <dt>
 
 <a id="#(TASK_BASE).HasStateMachine" >
-<strong>TASK_BASE:HasStateMachine(TaskUnit)</strong>
+<strong>TASK_BASE:HasStateMachine(TaskUnitName)</strong>
 </a>
 </dt>
 <dd>
@@ -784,7 +998,7 @@ TaskType</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em>#string TaskUnitName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -792,6 +1006,32 @@ TaskType</p>
 				
 <p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).IsAssignedToGroup" >
+<strong>TASK_BASE:IsAssignedToGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -876,6 +1116,108 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_BASE).Menu" >
+<strong>TASK_BASE.Menu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).MenuAbort" >
+<strong>TASK_BASE.MenuAbort</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).MenuAssignToGroup" >
+<strong>TASK_BASE.MenuAssignToGroup(MenuParam)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuParam </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).MenuStatus" >
+<strong>TASK_BASE.MenuStatus</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).MenuTaskAbort" >
+<strong>TASK_BASE.MenuTaskAbort(MenuParam)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuParam </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).MenuTaskStatus" >
+<strong>TASK_BASE.MenuTaskStatus(MenuParam)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuParam </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Mission.html##(MISSION)">Mission#MISSION</a></em>
 <a id="#(TASK_BASE).Mission" >
 <strong>TASK_BASE.Mission</strong>
@@ -891,7 +1233,7 @@ self</p>
 <dt>
 
 <a id="#(TASK_BASE).New" >
-<strong>TASK_BASE:New(Mission, TaskName, TaskType, TaskCategory)</strong>
+<strong>TASK_BASE:New(The, SetGroup, TaskName, TaskType, TaskCategory, Mission)</strong>
 </a>
 </dt>
 <dd>
@@ -905,22 +1247,37 @@ self</p>
 		<ul>
 				<li>
 				
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> The </em></code>: 
+mission wherein the Task is registered.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskType </em></code>: 
+The type of the Task</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskCategory </em></code>: 
+The category of the Task (A2G, A2A, Transport, ... )</p>
+
+				</li>
+				<li>
+				
 <p><code><em> Mission </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TaskName </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TaskType </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TaskCategory </em></code>: </p>
 
 				</li>
 		</ul>
@@ -934,8 +1291,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).OnStateChange" >
-<strong>TASK_BASE:OnStateChange(Fsm, Event, From, To, Event)</strong>
+<a id="#(TASK_BASE).OnAssigned" >
+<strong>TASK_BASE:OnAssigned(TaskUnit, Fsm, Event, From, To, Event)</strong>
 </a>
 </dt>
 <dd>
@@ -944,6 +1301,149 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).OnFailed" >
+<strong>TASK_BASE:OnFailed(TaskUnit, Fsm, Event, From, To, Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).OnStateChange" >
+<strong>TASK_BASE:OnStateChange(TaskUnit, Fsm, Event, From, To, Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).OnSuccess" >
+<strong>TASK_BASE:OnSuccess(TaskUnit, Fsm, Event, From, To, Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
@@ -988,7 +1488,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(TASK_BASE).Processes" >
 <strong>TASK_BASE.Processes</strong>
 </a>
@@ -1002,24 +1501,63 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_BASE).RemoveMenu" >
+<strong>TASK_BASE:RemoveMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).RemoveMenuForGroup" >
+<strong>TASK_BASE:RemoveMenuForGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_BASE).RemoveProcesses" >
-<strong>TASK_BASE:RemoveProcesses(TaskUnit, FailProcesses)</strong>
+<strong>TASK_BASE:RemoveProcesses(TaskUnitName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Remove Processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FailProcesses </em></code>: </p>
+<p><code><em>#string TaskUnitName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1034,7 +1572,7 @@ self</p>
 <dt>
 
 <a id="#(TASK_BASE).RemoveStateMachines" >
-<strong>TASK_BASE:RemoveStateMachines(TaskUnit)</strong>
+<strong>TASK_BASE:RemoveStateMachines(TaskUnitName)</strong>
 </a>
 </dt>
 <dd>
@@ -1045,7 +1583,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> TaskUnit </em></code>: </p>
+<p><code><em>#string TaskUnitName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1073,6 +1611,63 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_BASE).SendBriefingToAssignedGroups" >
+<strong>TASK_BASE:SendBriefingToAssignedGroups()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send the briefng message of the <a href="Task.html">Task</a> to the assigned <a href="Group.html">Group</a>s.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).SetAssignedMenu" >
+<strong>TASK_BASE:SetAssignedMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).SetAssignedMenuForGroup" >
+<strong>TASK_BASE:SetAssignedMenuForGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_BASE).SetBriefing" >
 <strong>TASK_BASE:SetBriefing(TaskBriefing)</strong>
 </a>
@@ -1091,8 +1686,8 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-
-<p>self</p>
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -1115,6 +1710,20 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(TASK_BASE).SetGroup" >
+<strong>TASK_BASE.SetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The Set of Groups assigned to the Task</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1157,6 +1766,56 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).SetPlannedMenu" >
+<strong>TASK_BASE:SetPlannedMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE).SetPlannedMenuForGroup" >
+<strong>TASK_BASE:SetPlannedMenuForGroup(TaskGroup, MenuText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string MenuText </em></code>: 
+The menu text.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1345,14 +2004,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(TASK_BASE).TaskUnit" >
-<strong>TASK_BASE.TaskUnit</strong>
+<a id="#(TASK_BASE).UnAssignFromGroups" >
+<strong>TASK_BASE:UnAssignFromGroups()</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
 
 </dd>
 </dl>
@@ -1360,7 +2018,7 @@ self</p>
 <dt>
 
 <a id="#(TASK_BASE).UnAssignFromUnit" >
-<strong>TASK_BASE:UnAssignFromUnit(TaskUnit, FailProcesses)</strong>
+<strong>TASK_BASE:UnAssignFromUnit(TaskUnit, TaskUnitName)</strong>
 </a>
 </dt>
 <dd>
@@ -1376,7 +2034,7 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em> FailProcesses </em></code>: </p>
+<p><code><em> TaskUnitName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1419,8 +2077,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE)._EventUnAssignUnit" >
-<strong>TASK_BASE:_EventUnAssignUnit(Event)</strong>
+<a id="#(TASK_BASE)._EventDead" >
+<strong>TASK_BASE:_EventDead(Event)</strong>
 </a>
 </dt>
 <dd>
@@ -1429,6 +2087,41 @@ self</p>
 
 	
 <p>There are only assignments if there are players in it.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BASE)._EventPlayerLeaveUnit" >
+<strong>TASK_BASE:_EventPlayerLeaveUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Catches the "player leave unit" event for a <a href="Unit.html">Unit</a>  ....</p>
+
+	
+<p>When a player is an air unit, and leaves the unit:</p>
+
+<ul>
+    <li>and he is not at an airbase runway on the ground, he will fail its task.</li>
+    <li>and he is on an airbase and on the ground, the process for him will just continue to work, he can switch airplanes, and take-off again.
+    This is important to model the change from plane types for a player during mission assignment.</li>
+</ul>
 
 		<h3>Parameter</h3>
 		<ul>

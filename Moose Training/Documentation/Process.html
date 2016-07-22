@@ -37,6 +37,7 @@
 					<li><a href="DCSWorld.html">DCSWorld</a></li>
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
 					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
 					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
@@ -62,8 +63,9 @@
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li>Process</li>
-					<li><a href="Process_CAS.html">Process_CAS</a></li>
-					<li><a href="Process_SEAD.html">Process_SEAD</a></li>
+					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -74,7 +76,6 @@
 					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
-					<li><a href="TASK.html">TASK</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_CAS.html">Task_CAS</a></li>
@@ -129,6 +130,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PROCESS).MissionMenu">PROCESS.MissionMenu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(PROCESS).New">PROCESS:New(ProcessName, Task, ProcessUnit)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK Base.</p>
@@ -144,6 +151,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(PROCESS).OnStateChange">PROCESS:OnStateChange(Fsm, Event, From, To)</a></td>
 		<td class="summary">
 <p>StateMachine callback function for a PROCESS</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ProcessGroup">PROCESS.ProcessGroup</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -290,6 +303,20 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a></em>
+<a id="#(PROCESS).MissionMenu" >
+<strong>PROCESS.MissionMenu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(PROCESS).New" >
 <strong>PROCESS:New(ProcessName, Task, ProcessUnit)</strong>
 </a>
@@ -378,6 +405,20 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
+<a id="#(PROCESS).ProcessGroup" >
+<strong>PROCESS.ProcessGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(PROCESS).ProcessName" >
 <strong>PROCESS.ProcessName</strong>
@@ -447,7 +488,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Task.html##(TASK)">Task#TASK</a></em>
+		<em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></em>
 <a id="#(PROCESS).Task" >
 <strong>PROCESS.Task</strong>
 </a>
