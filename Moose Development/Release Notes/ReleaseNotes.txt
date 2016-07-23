@@ -70,11 +70,161 @@
 2016-07-19
 
 	- Updated presentation Moose Training/Presentations/DCS World - MOOSE - Detection - Part 1 - Explanation.pptx
-	- Added DETECTION class
+
+	- Fixed bug in AIBALANCER
+	
+	- Added function BASE:IsTrace()
+	
+	- Renamed functions GetPointVec2() to GetVec2() to prepare new naming convension...
+		- Still pending is the rename of GetPointVec3 to GetVec3()..
 		
+	- Added DETECTION_AREAS class to manage detection in areas.
+	- Added DETECTION_BASE class
+	
+	- Added DETECTION_MANAGER class
+	- Added DETECTION_DISPATCHER class to dispatch tasks to players.
+	- Added DETECTION_REPORTING class
+	
+	- Added in EVENT class the RemoveEvent functions
+	
+	- Removed FAC.lua file
+	
+	- Added MENU classes to manager the menus.
+		- MENU_COALITION class
+		- MENU_COALITION_COMMAND class
+		- MENU_CLIENT class
+		- MENU_CLIENT_COMMAND class
+		- MENU-GROUP class
+		- MENU_GROUP_COMMAND class
+	
+	- Added new TASK_BASE classes
+		- Added TASK_BAI
+		- Added TASK_CAS
+		- Added TASK_SEAD
+	
+	- Added new PROCESS classes
+		- Added PROCESS_ASSIGN class
+		- Added PROCESS_DESTROY class
+		- Added PROCESS_ROUTE class
+		- Added PROCESS_SMOKE class
+	
+	- Added POINT_VEC3 methods
+		- POINT_VEC3:GetVec3()
+		- POINT_VEC3:GetX()
+		- POINT_VEC3:GetY()
+		- POINT_VEC3:GetZ()
+		- POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
+		- POINT_VEC3:GetNorthCorrectionRadians()
+		- POINT_VEC3:GetDirectionRadians( DirectionVec3 )
+		- POINT_VEC3:Get2DDistance( TargetPointVec3 )
+		- POINT_VEC3:Get3DDistance( TargetPointVec3 )
+		- POINT_VEC3:ToStringBR( AngleRadians, Distance )
+		- POINT_VEC3:ToStringLL( acc, DMS )
+		- POINT_VEC3:GetAltitudeText()
+		- POINT_VEC3:GetBRText( TargetPointVec3 )
+		- POINT_VEC3:SetMetric( Metric )
+		- POINT_VEC3:IsMetric()
+	
+	- Added POINT_VEC2 methods
+		- POINT_VEC2:GetAltitudeText()
+		
+	- Added POSITIONABLE method
+		- POSITIONABLE:GetRandomPointVec3( Radius )
+		- POSITIONABLE:GetVelocityKMH()
+		
+	- Cleaned up Routines.lua file
+	
+	- Fixed bug in handling CSV files in SCORING class
+	
+	- Added lists to SET_ classes in Set.lua file
+	
+	- Added STATEMACHINE classes
+	
+	- Added UNIT methods
+		- UNIT:Destroy()
+		- UNIT:HasSensors( ... )
+		- UNIT:HasSEAD()
+		- UNIT:GetThreatLevel()
+		- UNIT:IsGround()
+		- UNIT:IsFriendly( FriendlyCoalition )
+		- UNIT:IsShip()
+	
+	- Created Utils.lua file with many utility functions.
+	
+	- Added method in ZONE_BASE
+		- ZONE_BASE:GetVec2()
+	
+	- Added method in ZONE_UNIT
+		- ZONE_UNIT:GetPointVec3( Height )
+	
+	- Reworked ZONE_UNIT so that it always will provide a position.
+	
+	- Optimized the ray casting algorithm in ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 ) 	
+  
+2016-07-12
 
-2016-07-18
+	- Fixed bug in SPAWN, related to DEAD events.
+	
+	- Added test mission Moose_Test_SPAWN_Limit_Scheduled
 
+2016-07-08
+
+	- Fixed bug with velocity in AIRBASEPOLICE class
+
+	- Release in cooperation with dutch-baron the AIRBASEPOLIC_NAVADA class.
+
+	- Removed messages menu from CLIENT class
+
+	- Removed Moose_Test_DETECTION_Laser mission
+	
+2016-07-06
+
+	- Bugfixes in CONTROLLABLE and GROUP
+	
+2016-07-05
+
+	- Added country in DCScountry.lua
+	
+	- Added DATABASE:GetGroupTemplate( GroupName )
+	
+	- Added methods in GROUP class
+		- GROUP:Respawn( Template )
+		- GROUP:SetTemplateControlled( Template, Controlled )
+		- GROUP:SetTemplateCountry( Template, CountryID )
+		- GROUP:SetTemplateCoalition( Template, CoalitionID )
+	
+	- Added ZONE_GROUP class
+	
+2016-07-04
+
+	- Fixed bug in SPAWN class restarting GROUPS after landing.
+
+2016-07-03
+
+	- Added method in ZONE_UNIT
+		- ZONE_UNIT:GetRandomVec2()
+
+2016-06-28
+	
+	- Release of rework of MOOSE wrapper object model
+		- Added IDENTIFIABLE class
+		- Added POSITIONABLE class
+		- Added OBJECT class
+		- Added CONTROLLABLE class
+
+2016-06-26
+
+	- Reworked scheduler implementations
+
+2016-06-22 
+
+	- Added AIBALANCER class
+	- Added PATROLZONE class
+	- Added POINT_VEC3 and POINT_VEC2 classes
+	
+	
+
+2016-07-
 	
 		
 	
