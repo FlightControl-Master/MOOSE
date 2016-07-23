@@ -23,7 +23,6 @@ do
 
   --- @param Client#CLIENT MenuClient
   local function AddStatusMenu( MenuClient )
-    env.info(MenuClient.ClientName)
     local MenuClientName = MenuClient:GetName()
     -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
     MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )

@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160723_1236' ) 
+env.info( 'Moose Generation Timestamp: 20160723_1650' ) 
 local base = _G
 
 Include = {}
@@ -7690,7 +7690,6 @@ do -- MENU_CLIENT
   --
   --  --- @param Client#CLIENT MenuClient
   --  local function AddStatusMenu( MenuClient )
-  --    env.info(MenuClient.ClientName)
   --    local MenuClientName = MenuClient:GetName()
   --    -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
   --    MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )
@@ -7917,7 +7916,6 @@ do
   --
   --  --- @param Group#GROUP MenuGroup
   --  local function AddStatusMenu( MenuGroup )
-  --    env.info(MenuGroup.GroupName)
   --    local MenuGroupName = MenuGroup:GetName()
   --    -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
   --    MenuStatus[MenuGroupName] = MENU_GROUP:New( MenuGroup, "Status for Planes" )
