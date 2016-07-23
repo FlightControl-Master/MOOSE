@@ -52,6 +52,8 @@ STATIC = {
 function STATIC:FindByName( StaticName )
   local StaticFound = _DATABASE:FindStatic( StaticName )
 
+  self.StaticName = StaticName
+  
   if StaticFound then
     StaticFound:F( { StaticName } )
 
@@ -63,12 +65,13 @@ end
 
 function STATIC:Register( StaticName )
   local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
+  self.StaticName = StaticName
   return self
 end
 
 
-function STATIC:GetDCSUnit()
-  local DCSStatic = StaticObject.getByName( self.UnitName )
+function STATIC:GetDCSObject()
+  local DCSStatic = StaticObject.getByName( self.StaticName )
   
   if DCSStatic then
     return DCSStatic

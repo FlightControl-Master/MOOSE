@@ -52,6 +52,9 @@
 --   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
 --   * @{#SPAWN.ReSpawn}: Re-spawn a group based on a given index.
 --   * @{#SPAWN.SpawnScheduled}: Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart} and @{#SPAWN.SpawnScheduleStop} to start and stop the schedule respectively.
+--   * @{#SPAWN.SpawnFromVec3}: Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
+--   * @{#SPAWN.SpawnFromVec2}: Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
+--   * @{#SPAWN.SpawnFromStatic}: Spawn a new group from a structure, taking the position of a @{STATIC}.
 --   * @{#SPAWN.SpawnFromUnit}: Spawn a new group taking the position of a @{UNIT}.
 --   * @{#SPAWN.SpawnInZone}: Spawn a new group in a @{ZONE}.
 -- 
@@ -537,6 +540,86 @@ function SPAWN:SpawnFunction( SpawnFunctionHook, ... )
 end
 
 
+--- Will spawn a group from a Vec3 in 3D space. 
+-- This function is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
+-- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @return Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec3, OuterRadius, InnerRadius, SpawnIndex } )
+
+  local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+  self:T2(PointVec3)
+
+  if SpawnIndex then
+  else
+    SpawnIndex = self.SpawnIndex + 1
+  end
+  
+  if self:_GetSpawnIndex( SpawnIndex ) then
+    
+    local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+  
+    if SpawnTemplate then
+
+      self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
+      
+      SpawnTemplate.route.points[1].x = Vec3.x
+      SpawnTemplate.route.points[1].y = Vec3.z
+      SpawnTemplate.route.points[1].alt = Vec3.y
+      
+      InnerRadius = InnerRadius or 0
+      OuterRadius = OuterRadius or 0
+      
+      -- Apply SpawnFormation
+      for UnitID = 1, #SpawnTemplate.units do
+        local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+        SpawnTemplate.units[UnitID].x = RandomVec2.x
+        SpawnTemplate.units[UnitID].y = RandomVec2.y
+        SpawnTemplate.units[UnitID].alt = Vec3.y
+        self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      end
+
+      -- TODO: Need to rework this. A spawn action should always be at the random point to start from. This move is not correct to be here.      
+--      local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+--      local Point = {}
+--      Point.type = "Turning Point"
+--      Point.x = RandomVec2.x
+--      Point.y = RandomVec2.y
+--      Point.action = "Cone"
+--      Point.speed = 5
+--      table.insert( SpawnTemplate.route.points, 2, Point )
+      
+      return self:SpawnWithIndex( self.SpawnIndex )
+    end
+  end
+  
+  return nil
+end
+
+--- Will spawn a group from a Vec2 in 3D space. 
+-- This function is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
+-- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @return Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnFromVec2( Vec2, OuterRadius, InnerRadius, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec2, OuterRadius, InnerRadius, SpawnIndex } )
+
+  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
+  return self:SpawnFromVec3( PointVec2:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+end
 
 
 --- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
@@ -544,8 +627,8 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
--- @param #number OuterRadius The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius The inner radius in meters where the new group will NOT be spawned.
+-- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
@@ -553,66 +636,26 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
+    return self:SpawnFromVec3( HostUnit:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
+  end
+  
+  return nil
+end
 
-    if SpawnIndex then
-    else
-      SpawnIndex = self.SpawnIndex + 1
-    end
-    
-    if self:_GetSpawnIndex( SpawnIndex ) then
-      
-      local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-    
-      if SpawnTemplate then
+--- Will spawn a group from a hosting static. This function is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Static#STATIC HostStatic The static dropping or unloading the group.
+-- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @return Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, HostStatic, OuterRadius, InnerRadius, SpawnIndex } )
 
-        local UnitPoint = HostUnit:GetVec2()
-        
-        self:T( { "Current point of ", self.SpawnTemplatePrefix, UnitPoint } )
-        
-        --for PointID, Point in pairs( SpawnTemplate.route.points ) do
-          --Point.x = UnitPoint.x
-          --Point.y = UnitPoint.y
-          --Point.alt = nil
-          --Point.alt_type = nil
-        --end
-        
-        SpawnTemplate.route.points[1].x = UnitPoint.x
-        SpawnTemplate.route.points[1].y = UnitPoint.y
-
-        if not InnerRadius then
-          InnerRadius = 10
-        end
-        
-        if not OuterRadius then
-          OuterRadius = 50
-        end
-        
-        -- Apply SpawnFormation
-        for UnitID = 1, #SpawnTemplate.units do
-          if InnerRadius == 0 then
-            SpawnTemplate.units[UnitID].x = UnitPoint.x
-            SpawnTemplate.units[UnitID].y = UnitPoint.y
-          else
-            local CirclePos = routines.getRandPointInCircle( UnitPoint, OuterRadius, InnerRadius )
-            SpawnTemplate.units[UnitID].x = CirclePos.x
-            SpawnTemplate.units[UnitID].y = CirclePos.y
-          end
-          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-        end
-        
-        local SpawnPos = routines.getRandPointInCircle( UnitPoint, OuterRadius, InnerRadius )
-        local Point = {}
-        Point.type = "Turning Point"
-        Point.x = SpawnPos.x
-        Point.y = SpawnPos.y
-        Point.action = "Cone"
-        Point.speed = 5
-        
-        table.insert( SpawnTemplate.route.points, 2, Point )
-        
-        return self:SpawnWithIndex( self.SpawnIndex )
-      end
-    end
+  if HostStatic and HostStatic:IsAlive() then
+    return self:SpawnFromVec3( HostStatic:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
   end
   
   return nil
@@ -631,39 +674,10 @@ function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
   
   if Zone then
-    
-    if SpawnIndex then
+    if ZoneRandomize then
+      return self:SpawnFromVec2( Zone:GetVec2(), Zone:GetRadius(), 0, SpawnIndex )
     else
-      SpawnIndex = self.SpawnIndex + 1
-    end
-    
-    if self:_GetSpawnIndex( SpawnIndex ) then
-
-      local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-      
-      if SpawnTemplate then
-    
-        local ZonePoint 
-        
-        if ZoneRandomize == true then
-          ZonePoint = Zone:GetRandomVec2()
-        else
-          ZonePoint = Zone:GetVec2()
-        end
-
-        SpawnTemplate.route.points[1].x = ZonePoint.x
-        SpawnTemplate.route.points[1].y = ZonePoint.y
-        
-        -- Apply SpawnFormation
-        for UnitID = 1, #SpawnTemplate.units do
-          local ZonePointUnit = Zone:GetRandomVec2()
-          SpawnTemplate.units[UnitID].x = ZonePointUnit.x
-          SpawnTemplate.units[UnitID].y = ZonePointUnit.y
-          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-        end
-       
-        return self:SpawnWithIndex( self.SpawnIndex )
-      end
+      return self:SpawnFromVec2( Zone:GetVec2(), 0, 0, SpawnIndex )
     end
   end
   
