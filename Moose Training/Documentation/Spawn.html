@@ -153,6 +153,9 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).Spawn">SPAWN.Spawn</a>: Spawn one new group based on the last spawned index.</li>
     <li><a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a>: Re-spawn a group based on a given index.</li>
     <li><a href="##(SPAWN).SpawnScheduled">SPAWN.SpawnScheduled</a>: Spawn groups at scheduled but randomized intervals. You can use <a href="##(SPAWN).SpawnScheduleStart">SPAWN.SpawnScheduleStart</a> and <a href="##(SPAWN).SpawnScheduleStop">SPAWN.SpawnScheduleStop</a> to start and stop the schedule respectively.</li>
+    <li><a href="##(SPAWN).SpawnFromVec3">SPAWN.SpawnFromVec3</a>: Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).</li>
+    <li><a href="##(SPAWN).SpawnFromVec2">SPAWN.SpawnFromVec2</a>: Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).</li>
+    <li><a href="##(SPAWN).SpawnFromStatic">SPAWN.SpawnFromStatic</a>: Spawn a new group from a structure, taking the position of a <a href="STATIC.html">STATIC</a>.</li>
     <li><a href="##(SPAWN).SpawnFromUnit">SPAWN.SpawnFromUnit</a>: Spawn a new group taking the position of a <a href="UNIT.html">UNIT</a>.</li>
     <li><a href="##(SPAWN).SpawnInZone">SPAWN.SpawnInZone</a>: Spawn a new group in a <a href="ZONE.html">ZONE</a>.</li>
 </ul>
@@ -353,9 +356,27 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, OuterRadius, InnerRadius, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a group from a hosting static.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, OuterRadius, InnerRadius, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec2">SPAWN:SpawnFromVec2(Vec2, OuterRadius, InnerRadius, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a group from a Vec2 in 3D space.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec3">SPAWN:SpawnFromVec3(Vec3, OuterRadius, InnerRadius, SpawnIndex)</a></td>
+		<td class="summary">
+<p>Will spawn a group from a Vec3 in 3D space.</p>
 </td>
 		</tr>
 		<tr>
@@ -1363,6 +1384,65 @@ The group that was spawned. You can use this group for further actions.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SPAWN).SpawnFromStatic" >
+<strong>SPAWN:SpawnFromStatic(HostStatic, OuterRadius, InnerRadius, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a group from a hosting static.</p>
+
+	
+<p>This function is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
+You can use the returned group to further define the route to be followed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Static.html##(STATIC)">Static#STATIC</a> HostStatic </em></code>: 
+The static dropping or unloading the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number OuterRadius </em></code>: 
+(Optional) The outer radius in meters where the new group will be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number InnerRadius </em></code>: 
+(Optional) The inner radius in meters where the new group will NOT be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+(Optional) The index which group to spawn within the given zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+that was spawned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing was spawned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SPAWN).SpawnFromUnit" >
 <strong>SPAWN:SpawnFromUnit(HostUnit, OuterRadius, InnerRadius, SpawnIndex)</strong>
 </a>
@@ -1387,13 +1467,133 @@ The air or ground unit dropping or unloading the group.</p>
 				<li>
 				
 <p><code><em>#number OuterRadius </em></code>: 
-The outer radius in meters where the new group will be spawned.</p>
+(Optional) The outer radius in meters where the new group will be spawned.</p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number InnerRadius </em></code>: 
-The inner radius in meters where the new group will NOT be spawned.</p>
+(Optional) The inner radius in meters where the new group will NOT be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+(Optional) The index which group to spawn within the given zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+that was spawned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing was spawned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnFromVec2" >
+<strong>SPAWN:SpawnFromVec2(Vec2, OuterRadius, InnerRadius, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a group from a Vec2 in 3D space.</p>
+
+	
+<p>This function is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+You can use the returned group to further define the route to be followed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+The Vec2 coordinates where to spawn the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number OuterRadius </em></code>: 
+(Optional) The outer radius in meters where the new group will be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number InnerRadius </em></code>: 
+(Optional) The inner radius in meters where the new group will NOT be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnIndex </em></code>: 
+(Optional) The index which group to spawn within the given zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+that was spawned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+Nothing was spawned.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).SpawnFromVec3" >
+<strong>SPAWN:SpawnFromVec3(Vec3, OuterRadius, InnerRadius, SpawnIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Will spawn a group from a Vec3 in 3D space.</p>
+
+	
+<p>This function is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+You can use the returned group to further define the route to be followed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+The Vec3 coordinates where to spawn the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number OuterRadius </em></code>: 
+(Optional) The outer radius in meters where the new group will be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number InnerRadius </em></code>: 
+(Optional) The inner radius in meters where the new group will NOT be spawned.</p>
 
 				</li>
 				<li>

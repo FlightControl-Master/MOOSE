@@ -287,15 +287,16 @@ end
 -- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCSTypes#Vec3 The point of the zone.
 function ZONE_RADIUS:GetPointVec3( Height )
-  self:F2( self.ZoneName )
-  
+  self:F2( { self.ZoneName, Height } )
+
+  Height = Height or 0
   local Vec2 = self:GetVec2()
 
-  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
-  self:T2( { PointVec3 } )
+  self:T2( { Vec3 } )
   
-  return PointVec3  
+  return Vec3  
 end
 
 
