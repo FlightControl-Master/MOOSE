@@ -501,7 +501,7 @@ function MISSILETRAINER:_EventShot( Event )
     end
   else
      -- TODO: some weapons don't know the target unit... Need to develop a workaround for this.
-    TrainerWeapon:destroy()
+    SCHEDULER:New( TrainerWeapon, TrainerWeapon.destroy, {}, 2 )
   end
 end
 

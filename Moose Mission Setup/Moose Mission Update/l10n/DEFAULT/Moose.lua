@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160723_1232' ) 
+env.info( 'Moose Generation Timestamp: 20160723_1236' ) 
 local base = _G
 
 Include = {}
@@ -23726,7 +23726,7 @@ function MISSILETRAINER:_EventShot( Event )
     end
   else
      -- TODO: some weapons don't know the target unit... Need to develop a workaround for this.
-    TrainerWeapon:destroy()
+    SCHEDULER:New( TrainerWeapon, TrainerWeapon.destroy, {}, 2 )
   end
 end
 
