@@ -739,7 +739,7 @@ function DETECTION_AREAS:GetChangeText( DetectedArea )
     end
 
     if ChangeCode == "RAU" then
-      MT[#MT+1] = "Changed area " .. ChangeData.AreaID .. ". Removed the center target " .. ChangeData.AreaUnitType "."
+      MT[#MT+1] = "Changed area " .. ChangeData.AreaID .. ". Removed the center target."
     end
     
     if ChangeCode == "AAU" then
@@ -824,7 +824,7 @@ function DETECTION_AREAS:CreateDetectionSets()
         -- First remove the center unit from the set.
         DetectedSet:RemoveUnitsByName( DetectedArea.Zone.ZoneUNIT.UnitName )
 
-        self:AddChangeArea( DetectedArea, 'RAU', DetectedArea.Zone.ZoneUNIT:GetTypeName() )
+        self:AddChangeArea( DetectedArea, 'RAU', "Dummy" )
         
         -- Then search for a new center area unit within the set. Note that the new area unit candidate must be within the area range.
         for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do

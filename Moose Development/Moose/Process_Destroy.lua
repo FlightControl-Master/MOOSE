@@ -25,7 +25,7 @@ function PROCESS_DESTROY:New( Task, ProcessName, ProcessUnit, TargetSetUnit )
   
   self.TargetSetUnit = TargetSetUnit
 
-  self.DisplayInterval = 60
+  self.DisplayInterval = 30
   self.DisplayCount = 30
   self.DisplayMessage = true
   self.DisplayTime = 10 -- 10 seconds is the default
@@ -109,7 +109,7 @@ function PROCESS_DESTROY:OnHitTarget( Fsm, Event, From, To, Event )
   if self.TargetSetUnit:FindUnit( Event.IniUnitName ) then
     self.TargetSetUnit:RemoveUnitsByName( Event.IniUnitName )
     local TaskGroup = self.ProcessUnit:GetGroup()
-    MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
+    MESSAGE:New( "You hit a target. Your group with assigned " .. self.Task:GetName() .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
   end
 
   
