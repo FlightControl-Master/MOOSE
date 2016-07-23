@@ -9,7 +9,7 @@
 -- It suports the following functionality:
 --
 --  * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
---  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …
+--  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range ï¿½
 --  * Provide alerts when a missile would have killed your aircraft.
 --  * Provide alerts when the missile self destructs.
 --  * Enable / Disable and Configure the Missile Trainer using the various menu options.
@@ -461,42 +461,47 @@ function MISSILETRAINER:_EventShot( Event )
   self:T( "Missile Launched = " .. TrainerWeaponName )
 
   local TrainerTargetDCSUnit = TrainerWeapon:getTarget() -- Identify target
-  local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
-  local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
-
-  self:T(TrainerTargetDCSUnitName )
-
-  local Client = self.DBClients:FindClient( TrainerTargetDCSUnitName )
-  if Client then
-
-    local TrainerSourceUnit = UNIT:Find( TrainerSourceDCSUnit )
-    local TrainerTargetUnit = UNIT:Find( TrainerTargetDCSUnit )
-
-    if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
-
-      local Message = MESSAGE:New(
-        string.format( "%s launched a %s",
-          TrainerSourceUnit:GetTypeName(),
-          TrainerWeaponName
-        ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ), 5, "Launch Alert" )
-
-      if self.AlertsToAll then
-        Message:ToAll()
-      else
-        Message:ToClient( Client )
+  if TrainerTargetDCSUnit then
+    local TrainerTargetDCSUnitName = Unit.getName( TrainerTargetDCSUnit )
+    local TrainerTargetSkill =  _DATABASE.Templates.Units[TrainerTargetDCSUnitName].Template.skill
+  
+    self:T(TrainerTargetDCSUnitName )
+  
+    local Client = self.DBClients:FindClient( TrainerTargetDCSUnitName )
+    if Client then
+  
+      local TrainerSourceUnit = UNIT:Find( TrainerSourceDCSUnit )
+      local TrainerTargetUnit = UNIT:Find( TrainerTargetDCSUnit )
+  
+      if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+  
+        local Message = MESSAGE:New(
+          string.format( "%s launched a %s",
+            TrainerSourceUnit:GetTypeName(),
+            TrainerWeaponName
+          ) .. self:_AddRange( Client, TrainerWeapon ) .. self:_AddBearing( Client, TrainerWeapon ), 5, "Launch Alert" )
+  
+        if self.AlertsToAll then
+          Message:ToAll()
+        else
+          Message:ToClient( Client )
+        end
       end
+  
+      local ClientID = Client:GetID()
+      self:T( ClientID )
+      local MissileData = {}
+      MissileData.TrainerSourceUnit = TrainerSourceUnit
+      MissileData.TrainerWeapon = TrainerWeapon
+      MissileData.TrainerTargetUnit = TrainerTargetUnit
+      MissileData.TrainerWeaponTypeName = TrainerWeapon:getTypeName()
+      MissileData.TrainerWeaponLaunched = true
+      table.insert( self.TrackingMissiles[ClientID].MissileData, MissileData )
+      --self:T( self.TrackingMissiles )
     end
-
-    local ClientID = Client:GetID()
-    self:T( ClientID )
-    local MissileData = {}
-    MissileData.TrainerSourceUnit = TrainerSourceUnit
-    MissileData.TrainerWeapon = TrainerWeapon
-    MissileData.TrainerTargetUnit = TrainerTargetUnit
-    MissileData.TrainerWeaponTypeName = TrainerWeapon:getTypeName()
-    MissileData.TrainerWeaponLaunched = true
-    table.insert( self.TrackingMissiles[ClientID].MissileData, MissileData )
-    --self:T( self.TrackingMissiles )
+  else
+     -- TODO: some weapons don't know the target unit... Need to develop a workaround for this.
+    SCHEDULER:New( TrainerWeapon, TrainerWeapon.destroy, {}, 2 )
   end
 end
 
