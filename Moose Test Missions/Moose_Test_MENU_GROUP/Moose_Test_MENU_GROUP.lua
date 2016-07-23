@@ -23,7 +23,6 @@ do
 
   --- @param Group#GROUP MenuGroup
   local function AddStatusMenu( MenuGroup )
-    env.info(MenuGroup.GroupName)
     local MenuGroupName = MenuGroup:GetName()
     -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
     MenuStatus[MenuGroupName] = MENU_GROUP:New( MenuGroup, "Status for Planes" )
