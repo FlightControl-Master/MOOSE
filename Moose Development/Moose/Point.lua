@@ -124,10 +124,7 @@ end
 -- @return Point#POINT_VEC3 self
 function POINT_VEC3:NewFromVec3( Vec3 )
 
-  local self = BASE:Inherit( self, BASE:New() )
-  self.PointVec3 = Vec3
-  self:F2( self.PointVec3 )
-  return self
+  return self:New( Vec3.x, Vec3.y, Vec3.z )
 end
 
 
@@ -138,11 +135,19 @@ function POINT_VEC3:GetVec3()
   return self.PointVec3
 end
 
+--- Return the coordinates of the POINT_VEC3 in Vec2 format.
+-- @param #POINT_VEC3 self
+-- @return DCSTypes#Vec2 The Vec2 coodinate.
+function POINT_VEC3:GetVec2()
+  return { x = self.PointVec3.x, y = self.PointVec3.z }
+end
+
 
 --- Return the x coordinate of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @return #number The x coodinate.
 function POINT_VEC3:GetX()
+  self:F2(self.PointVec3.x)
   return self.PointVec3.x
 end
 
@@ -150,6 +155,7 @@ end
 -- @param #POINT_VEC3 self
 -- @return #number The y coodinate.
 function POINT_VEC3:GetY()
+  self:F2(self.PointVec3.y)
   return self.PointVec3.y
 end
 
@@ -157,7 +163,53 @@ end
 -- @param #POINT_VEC3 self
 -- @return #number The z coodinate.
 function POINT_VEC3:GetZ()
+  self:F2(self.PointVec3.z)
   return self.PointVec3.z
+end
+
+--- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return DCSTypes#Vec2 Vec2
+function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+  self:F2( { self.PointVec3, OuterRadius, InnerRadius } )
+
+  local Theta = 2 * math.pi * math.random()
+  local Radials = math.random() + math.random()
+  if Radials > 1 then
+    Radials = 2 - Radials
+  end
+
+  local RadialMultiplier
+  if InnerRadius and InnerRadius <= OuterRadius then
+    RadialMultiplier = ( OuterRadius - InnerRadius ) * Radials + InnerRadius
+  else
+    RadialMultiplier = OuterRadius * Radials
+  end
+
+  local RandomVec3
+  if OuterRadius > 0 then
+    RandomVec3 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
+  else
+    RandomVec3 = { x = self:GetX(), y = self:GetZ() }
+  end
+  
+  return RandomVec3
+end
+
+--- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return DCSTypes#Vec3 Vec3
+function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
+
+  local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+  local y = self:GetY() + math.random( InnerRadius, OuterRadius )
+  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.z }
+
+  return RandomVec3
 end
 
 
@@ -439,6 +491,28 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   self:F2( { x, y, LandHeightAdd } )
   
   self.PointVec2 = { x = x, y = y }
+
+  return self
+end
+
+--- Create a new POINT_VEC2 object from  Vec2 coordinates.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec2 Vec2 The Vec2 point.
+-- @return Point#POINT_VEC2 self
+function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
+
+  local self = BASE:Inherit( self, BASE:New() )
+
+  local LandHeight = land.getHeight( Vec2 )
+  if LandHeightAdd then
+    LandHeight = LandHeight + LandHeightAdd
+  end
+  
+  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
+
+  self.PointVec2 = Vec2
+  self:F2( self.PointVec3 )
 
   return self
 end

@@ -170,6 +170,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).NewFromVec2">POINT_VEC2:NewFromVec2(Vec2, LandHeightAdd)</a></td>
+		<td class="summary">
+<p>Create a new POINT_VEC2 object from  Vec2 coordinates.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).PointVec2">POINT_VEC2.PointVec2</a></td>
 		<td class="summary">
 
@@ -261,6 +267,24 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetNorthCorrectionRadians">POINT_VEC3:GetNorthCorrectionRadians()</a></td>
 		<td class="summary">
 <p>Get a correction in radians of the real magnetic north of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomVec2InRadius">POINT_VEC3:GetRandomVec2InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomVec3InRadius">POINT_VEC3:GetRandomVec3InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetVec2">POINT_VEC3:GetVec2()</a></td>
+		<td class="summary">
+<p>Return the coordinates of the POINT_VEC3 in Vec2 format.</p>
 </td>
 		</tr>
 		<tr>
@@ -659,6 +683,38 @@ The y coordinate of the Vec3 point, pointing to the Right.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC2).NewFromVec2" >
+<strong>POINT_VEC2:NewFromVec2(Vec2, LandHeightAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POINT_VEC2 object from  Vec2 coordinates.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+The Vec2 point.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> LandHeightAdd </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
 <a id="#(POINT_VEC2).PointVec2" >
 <strong>POINT_VEC2.PointVec2</strong>
@@ -1012,6 +1068,86 @@ DirectionVec3 The direction vector in Vec3 format.</p>
 				
 <p><em>#number:</em>
 CorrectionRadians The correction in radians.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetRandomVec2InRadius" >
+<strong>POINT_VEC3:GetRandomVec2InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+Vec2</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetRandomVec3InRadius" >
+<strong>POINT_VEC3:GetRandomVec3InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+Vec3</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetVec2" >
+<strong>POINT_VEC3:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the coordinates of the POINT_VEC3 in Vec2 format.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
+The Vec2 coodinate.</p>
 
 </dd>
 </dl>
