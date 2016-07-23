@@ -49,8 +49,10 @@
 --   * Creech
 --   * Groom Lake
 --
+-- ### Contributions: Dutch Baron - Concept & Testing
+-- ### Author: FlightControl - Framework Design &  Programming
+--
 -- @module AirbasePolice
--- @author Flight Control & DUTCH BARON
 
 
 

@@ -23,22 +23,24 @@
 -- 1.3) AIBALANCER allows AI to patrol specific zones:
 -- ---------------------------------------------------
 -- Use @{AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
--- 
 --
 -- ===
 -- 
--- CREDITS
--- =======
--- **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.
--- Working together with James has resulted in the creation of the AIBALANCER class. 
--- James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- ### Contributions: 
 -- 
--- **SNAFU**
--- Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
--- None of the script code has been used however within the new AIBALANCER moose class.
+--   * **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.  
+--   Working together with James has resulted in the creation of the AIBALANCER class.  
+--   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
+--   * **SNAFU**
+--   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
+--   None of the script code has been used however within the new AIBALANCER moose class.
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl - Framework Design &  Programming
 -- 
 -- @module AIBalancer
--- @author FlightControl
 
 --- AIBALANCER class
 -- @type AIBALANCER

@@ -17,8 +17,23 @@
 --  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
 --  * @{Scheduler#SCHEDULER.Stop}: Stop the scheduler.
 --
+-- 1.3) Reschedule new time event
+-- ------------------------------
+-- With @{Scheduler#SCHEDULER.Schedule} a new time event can be scheduled.
+--
+-- ===
+--
+-- ### Contributions: 
+-- 
+--   * Mechanist : Concept & Testing
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+-- 
+-- ===
+--
 -- @module Scheduler
--- @author FlightControl
 
 
 --- The SCHEDULER class
@@ -45,30 +60,33 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
 
   self.TimeEventObject = TimeEventObject
   self.TimeEventFunction = TimeEventFunction
+
+  self:Schedule( TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+
+  self:Start()
+
+  return self
+end
+
+--- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
+-- @param #SCHEDULER self
+-- @param #table TimeEventFunctionArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+-- @param #number StartSeconds Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+-- @param #number RepeatSecondsInterval Specifies the interval in seconds when the scheduler will call the event function.
+-- @param #number RandomizationFactor Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.
+-- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
+-- @return #SCHEDULER self
+function SCHEDULER:Schedule( TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+  self:F2( { TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+
   self.TimeEventFunctionArguments = TimeEventFunctionArguments
   self.StartSeconds = StartSeconds
   self.Repeat = false
-
-  if RepeatSecondsInterval then
-    self.RepeatSecondsInterval = RepeatSecondsInterval
-  else
-    self.RepeatSecondsInterval = 0
-  end
-
-  if RandomizationFactor then
-    self.RandomizationFactor = RandomizationFactor
-  else
-    self.RandomizationFactor = 0
-  end
-
-  if StopSeconds then
-    self.StopSeconds = StopSeconds
-  end
-
+  self.RepeatSecondsInterval = RepeatSecondsInterval or 0
+  self.RandomizationFactor = RandomizationFactor or 0
+  self.StopSeconds = StopSeconds
 
   self.StartTime = timer.getTime()
-
-  self:Start()
 
   return self
 end
