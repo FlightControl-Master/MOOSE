@@ -15,23 +15,26 @@
 -- 
 -- ### To manage **main menus**, the classes begin with **MENU_**:
 -- 
---   * @{Menu#MENU_CLIENT}: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".
+--   * @{Menu#MENU_MISSION}: Manages main menus for whole mission file.
+--   * @{Menu#MENU_COALITION}: Manages main menus for whole coalition.
 --   * @{Menu#MENU_GROUP}: Manages main menus for GROUPs.
---   * @{Menu#MENU_COALITION}: Manages main menus for whole COALITIONs.
+--   * @{Menu#MENU_CLIENT}: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".
 --   
 -- ### To manage **command menus**, which are menus that allow the player to issue **functions**, the classes begin with **MENU_COMMAND_**:
 --   
---   * @{Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
+--   * @{Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
+--   * @{Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
 --   * @{Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
---   * @{Menu#MENU_COALITION_COMMAND}: Manages command menus for whole COALITIONs.
+--   * @{Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
 -- 
 -- ===
 -- 
 -- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
 -- 
--- 1) MENU_ BASE classes (don't use them)
--- ======================================
--- The underlying base menu classes are not to be used within your missions. They simply are abstract classes defining a couple of fields that are used by the 
+-- 1) MENU_ BASE abstract base classes (don't use them)
+-- ====================================================
+-- The underlying base menu classes are **NOT** to be used within your missions.
+-- These are simply abstract base classes defining a couple of fields that are used by the 
 -- derived MENU_ classes to manage menus.
 -- 
 -- 1.1) @{Menu#MENU_BASE} class, extends @{Base#BASE}
@@ -44,45 +47,41 @@
 -- 
 -- ===
 -- 
--- The next menus define the MENU classes that you can use within your missions:
+-- **The next menus define the MENU classes that you can use within your missions.**
+--  
+-- 2) MENU MISSION classes
+-- ======================
+-- The underlying classes manage the menus for a complete mission file.
 -- 
--- 2) MENU COALITION classes
+-- 2.1) @{Menu#MENU_MISSION} class, extends @{Menu#MENU_BASE}
+-- ---------------------------------------------------------
+-- The @{Menu#MENU_MISSION} class manages the main menus for a complete mission.  
+-- You can add menus with the @{#MENU_MISSION.New} method, which constructs a MENU_MISSION object and returns you the object reference.
+-- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION.Remove}.
+-- 
+-- 2.2) @{Menu#MENU_MISSION_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
+-- -------------------------------------------------------------------------
+-- The @{Menu#MENU_MISSION_COMMAND} class manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
+-- You can add menus with the @{#MENU_MISSION_COMMAND.New} method, which constructs a MENU_MISSION_COMMAND object and returns you the object reference.
+-- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION_COMMAND.Remove}.
+-- 
+-- ===
+-- 
+-- 3) MENU COALITION classes
 -- =========================
 -- The underlying classes manage the menus for whole coalitions.
 -- 
--- 2.1) @{Menu#MENU_COALITION} class, extends @{Menu#MENU_BASE}
+-- 3.1) @{Menu#MENU_COALITION} class, extends @{Menu#MENU_BASE}
 -- ------------------------------------------------------------
 -- The @{Menu#MENU_COALITION} class manages the main menus for coalitions.  
 -- You can add menus with the @{#MENU_COALITION.New} method, which constructs a MENU_COALITION object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION.Remove}.
--- Refer to the respective methods documentation for usage examples.
 -- 
--- 2.2) @{Menu#MENU_COALITION_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
+-- 3.2) @{Menu#MENU_COALITION_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- ----------------------------------------------------------------------------
 -- The @{Menu#MENU_COALITION_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_COALITION_COMMAND.New} method, which constructs a MENU_COALITION_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION_COMMAND.Remove}.
--- Refer to the respective methods documentation for usage examples.
--- 
--- ===
--- 
--- 3) MENU CLIENT classes
--- ======================
--- The underlying classes manage the menus for units with skill level client or player.
--- 
--- 3.1) @{Menu#MENU_CLIENT} class, extends @{Menu#MENU_BASE}
--- ---------------------------------------------------------
--- The @{Menu#MENU_CLIENT} class manages the main menus for coalitions.  
--- You can add menus with the @{#MENU_CLIENT.New} method, which constructs a MENU_CLIENT object and returns you the object reference.
--- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT.Remove}.
--- Refer to the respective methods documentation for usage examples.
--- 
--- 3.2) @{Menu#MENU_CLIENT_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
--- -------------------------------------------------------------------------
--- The @{Menu#MENU_CLIENT_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
--- You can add menus with the @{#MENU_CLIENT_COMMAND.New} method, which constructs a MENU_CLIENT_COMMAND object and returns you the object reference.
--- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT_COMMAND.Remove}.
--- Refer to the respective methods documentation for usage examples.
 -- 
 -- ===
 -- 
@@ -95,17 +94,33 @@
 -- The @{Menu#MENU_GROUP} class manages the main menus for coalitions.  
 -- You can add menus with the @{#MENU_GROUP.New} method, which constructs a MENU_GROUP object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP.Remove}.
--- Refer to the respective methods documentation for usage examples.
 -- 
 -- 4.2) @{Menu#MENU_GROUP_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- ------------------------------------------------------------------------
 -- The @{Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_GROUP_COMMAND.New} method, which constructs a MENU_GROUP_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND.Remove}.
--- Refer to the respective methods documentation for usage examples.
 -- 
 -- ===
---  
+-- 
+-- 5) MENU CLIENT classes
+-- ======================
+-- The underlying classes manage the menus for units with skill level client or player.
+-- 
+-- 5.1) @{Menu#MENU_CLIENT} class, extends @{Menu#MENU_BASE}
+-- ---------------------------------------------------------
+-- The @{Menu#MENU_CLIENT} class manages the main menus for coalitions.  
+-- You can add menus with the @{#MENU_CLIENT.New} method, which constructs a MENU_CLIENT object and returns you the object reference.
+-- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT.Remove}.
+-- 
+-- 5.2) @{Menu#MENU_CLIENT_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
+-- -------------------------------------------------------------------------
+-- The @{Menu#MENU_CLIENT_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+-- You can add menus with the @{#MENU_CLIENT_COMMAND.New} method, which constructs a MENU_CLIENT_COMMAND object and returns you the object reference.
+-- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT_COMMAND.Remove}.
+-- 
+-- ===
+-- 
 -- ### Contributions: -
 -- ### Authors: FlightControl : Design & Programming
 -- 
@@ -170,6 +185,124 @@ do -- MENU_COMMAND_BASE
   end
 
 end
+
+
+do -- MENU_MISSION
+
+  --- The MENU_MISSION class
+  -- @type MENU_MISSION
+  -- @extends Menu#MENU_BASE
+  MENU_MISSION = {
+    ClassName = "MENU_MISSION"
+  }
+  
+  --- MENU_MISSION constructor. Creates a new MENU_MISSION object and creates the menu for a complete mission file.
+  -- @param #MENU_MISSION self
+  -- @param #string MenuText The text for the menu.
+  -- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the perent menu of DCS world (under F10 other).
+  -- @return #MENU_MISSION self
+  function MENU_MISSION:New( MenuText, ParentMenu )
+  
+    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+    
+    self:F( { MenuText, ParentMenu } )
+  
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+    
+    self.Menus = {}
+  
+    self:T( { MenuText } )
+  
+    self.MenuPath = missionCommands.addSubMenu( MenuText, self.MenuParentPath )
+  
+    self:T( { self.MenuPath } )
+  
+    if ParentMenu and ParentMenu.Menus then
+      ParentMenu.Menus[self.MenuPath] = self
+    end
+
+    return self
+  end
+  
+  --- Removes the sub menus recursively of this MENU_MISSION. Note that the main menu is kept!
+  -- @param #MENU_MISSION self
+  -- @return #MENU_MISSION self
+  function MENU_MISSION:RemoveSubMenus()
+    self:F( self.MenuPath )
+  
+    for MenuID, Menu in pairs( self.Menus ) do
+      Menu:Remove()
+    end
+  
+  end
+  
+  --- Removes the main menu and the sub menus recursively of this MENU_MISSION.
+  -- @param #MENU_MISSION self
+  -- @return #nil
+  function MENU_MISSION:Remove()
+    self:F( self.MenuPath )
+  
+    self:RemoveSubMenus()
+    missionCommands.removeItem( self.MenuPath )
+    if self.ParentMenu then
+      self.ParentMenu.Menus[self.MenuPath] = nil
+    end
+  
+    return nil
+  end
+
+end
+
+do -- MENU_MISSION_COMMAND
+  
+  --- The MENU_MISSION_COMMAND class
+  -- @type MENU_MISSION_COMMAND
+  -- @extends Menu#MENU_COMMAND_BASE
+  MENU_MISSION_COMMAND = {
+    ClassName = "MENU_MISSION_COMMAND"
+  }
+  
+  --- MENU_MISSION constructor. Creates a new radio command item for a complete mission file, which can invoke a function with parameters.
+  -- @param #MENU_MISSION_COMMAND self
+  -- @param #string MenuText The text for the menu.
+  -- @param Menu#MENU_MISSION ParentMenu The parent menu.
+  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  -- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
+  -- @return #MENU_MISSION_COMMAND self
+  function MENU_MISSION_COMMAND:New( MenuText, ParentMenu, CommandMenuFunction, ... )
+  
+    local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+    
+    self.MenuText = MenuText
+    self.ParentMenu = ParentMenu
+  
+    self:T( { MenuText, CommandMenuFunction, arg } )
+    
+  
+    self.MenuPath = missionCommands.addCommand( MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
+   
+    ParentMenu.Menus[self.MenuPath] = self
+    
+    return self
+  end
+  
+  --- Removes a radio command item for a coalition
+  -- @param #MENU_MISSION_COMMAND self
+  -- @return #nil
+  function MENU_MISSION_COMMAND:Remove()
+    self:F( self.MenuPath )
+  
+    missionCommands.removeItem( self.MenuPath )
+    if self.ParentMenu then
+      self.ParentMenu.Menus[self.MenuPath] = nil
+    end
+    return nil
+  end
+
+end
+
+
 
 do -- MENU_COALITION
 

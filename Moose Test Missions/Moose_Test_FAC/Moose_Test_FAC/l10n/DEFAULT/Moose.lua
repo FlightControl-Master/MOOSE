@@ -22761,7 +22761,7 @@ end
 -- It suports the following functionality:
 --
 --  * Track the missiles fired at you and other players, providing bearing and range information of the missiles towards the airplanes.
---  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range …
+--  * Provide alerts of missile launches, including detailed information of the units launching, including bearing, range ï¿½
 --  * Provide alerts when a missile would have killed your aircraft.
 --  * Provide alerts when the missile self destructs.
 --  * Enable / Disable and Configure the Missile Trainer using the various menu options.
@@ -25211,7 +25211,7 @@ end
 -- 
 -- ===
 -- 
--- ### Contributions: Mechanic - Concept & Testing
+-- ### Contributions: Mechanist - Concept & Testing
 -- ### Authors: FlightControl : Design & Programming
 -- 
 -- @module Detection
@@ -26184,7 +26184,7 @@ end
 --    
 -- ===
 -- 
--- ### Contributions: Mechanic, Prof_Hilactic, FlightControl - Concept & Testing
+-- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
 -- @module DetectionManager

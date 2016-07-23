@@ -218,8 +218,15 @@
 -- 
 -- ====
 -- 
+-- ### Contributions: 
+-- 
+--   * Mechanist : Concept & Testing
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+-- 
 -- @module Set
--- @author FlightControl
 
 
 --- SET_BASE class

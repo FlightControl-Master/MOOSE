@@ -63,8 +63,13 @@
 -- 
 -- ===
 -- 
--- ### Contributions: Mechanic - Concept & Testing
--- ### Authors: FlightControl : Design & Programming
+-- ### Contributions: 
+-- 
+--   * Mechanist : Concept & Testing
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
 -- 
 -- @module Detection
 

@@ -70,8 +70,8 @@ end
 -- @param #SCORING self
 -- @return #SCORING self
 function SCORING:ScoreMenu()
-  self.Menu = SUBMENU:New( 'Scoring' )
-  self.AllScoresMenu = COMMANDMENU:New( 'Score All Active Players', self.Menu, SCORING.ReportScoreAll, self )
+  self.Menu = MENU_MISSION:New( 'Scoring' )
+  self.AllScoresMenu = MENU_MISSION_COMMAND:New( 'Score All Active Players', self.Menu, SCORING.ReportScoreAll, self )
   --- = COMMANDMENU:New('Your Current Score', ReportScore, SCORING.ReportScorePlayer, self )
   return self
 end
