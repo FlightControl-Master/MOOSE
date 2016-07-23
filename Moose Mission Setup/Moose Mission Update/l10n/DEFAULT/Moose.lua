@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160723_1130' ) 
+env.info( 'Moose Generation Timestamp: 20160723_1214' ) 
 local base = _G
 
 Include = {}
@@ -7174,7 +7174,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event.IniUnitName, Event.TgtUnitName, Event.WeaponName } )
+    self:E( { _EVENTCODES[Event.id], Event.initiator, Event.IniDCSUnitName, Event.target, Event.TgtDCSUnitName, Event.weapon, Event.WeaponName } )
     for ClassName, EventData in pairs( self.Events[Event.id] ) do
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T( { "Calling event function for class ", ClassName, " unit ", Event.IniUnitName } )
