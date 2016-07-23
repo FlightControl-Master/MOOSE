@@ -33,14 +33,15 @@ function PROCESS:New( ProcessName, Task, ProcessUnit )
   self.Task = Task
   self.ProcessName = ProcessName
   
-  self.ProcessScheduler = SCHEDULER:New( self.Fsm, self.NextEvent )
+  self.ProcessScheduler = SCHEDULER:New()
   
   return self
 end
 
 --- @param #PROCESS self
 function PROCESS:NextEvent( NextEvent, ... )
-  self.ProcessScheduler:Schedule( arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
+  self:F(self.ProcessName)
+  self.ProcessScheduler:Schedule( self.Fsm, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
 end
 
 --- @param #PROCESS self
