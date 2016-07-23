@@ -100,8 +100,11 @@ function SCHEDULER:Start()
   if self.RepeatSecondsInterval ~= 0 then
     self.Repeat = true
   end
-  self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
-
+  
+  if self.StartSeconds then
+    self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+  end
+  
   return self
 end
 
