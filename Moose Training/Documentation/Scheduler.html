@@ -114,6 +114,25 @@
     <li><a href="Scheduler.html##(SCHEDULER).Stop">Scheduler#SCHEDULER.Stop</a>: Stop the scheduler.</li>
 </ul>
 
+<h2>1.3) Reschedule new time event</h2>
+<p>With <a href="Scheduler.html##(SCHEDULER).Schedule">Scheduler#SCHEDULER.Schedule</a> a new time event can be scheduled.</p>
+
+<hr/>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li>Mechanist : Concept &amp; Testing</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li>FlightControl : Design &amp; Programming</li>
+</ul>
+
+<hr/>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -139,9 +158,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).RandomizationFactor">SCHEDULER.RandomizationFactor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Repeat">SCHEDULER.Repeat</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).RepeatSecondsInterval">SCHEDULER.RepeatSecondsInterval</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedule">SCHEDULER:Schedule(TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
 </td>
 		</tr>
 		<tr>
@@ -157,9 +194,33 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StartSeconds">SCHEDULER.StartSeconds</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StartTime">SCHEDULER.StartTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Stop">SCHEDULER:Stop()</a></td>
 		<td class="summary">
 <p>Stops the scheduler.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StopSeconds">SCHEDULER.StopSeconds</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventFunctionArguments">SCHEDULER.TimeEventFunctionArguments</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -272,6 +333,19 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SCHEDULER).RandomizationFactor" >
+<strong>SCHEDULER.RandomizationFactor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#boolean</em>
 <a id="#(SCHEDULER).Repeat" >
 <strong>SCHEDULER.Repeat</strong>
@@ -280,6 +354,73 @@ self</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCHEDULER).RepeatSecondsInterval" >
+<strong>SCHEDULER.RepeatSecondsInterval</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCHEDULER).Schedule" >
+<strong>SCHEDULER:Schedule(TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table TimeEventFunctionArguments </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number StartSeconds </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RepeatSecondsInterval </em></code>: 
+Specifies the interval in seconds when the scheduler will call the event function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RandomizationFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number StopSeconds </em></code>: 
+Specifies the amount of seconds when the scheduler will be stopped.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -318,6 +459,34 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SCHEDULER).StartSeconds" >
+<strong>SCHEDULER.StartSeconds</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCHEDULER).StartTime" >
+<strong>SCHEDULER.StartTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SCHEDULER).Stop" >
 <strong>SCHEDULER:Stop()</strong>
 </a>
@@ -330,6 +499,34 @@ self</p>
 				
 <p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCHEDULER).StopSeconds" >
+<strong>SCHEDULER.StopSeconds</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCHEDULER).TimeEventFunctionArguments" >
+<strong>SCHEDULER.TimeEventFunctionArguments</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
