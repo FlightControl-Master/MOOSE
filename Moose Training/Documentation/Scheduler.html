@@ -176,7 +176,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedule">SCHEDULER:Schedule(TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedule">SCHEDULER:Schedule(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
 		<td class="summary">
 <p>Schedule a new time event.</p>
 </td>
@@ -218,7 +218,19 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventFunction">SCHEDULER.TimeEventFunction</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventFunctionArguments">SCHEDULER.TimeEventFunctionArguments</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventObject">SCHEDULER.TimeEventObject</a></td>
 		<td class="summary">
 
 </td>
@@ -374,7 +386,7 @@ self</p>
 <dt>
 
 <a id="#(SCHEDULER).Schedule" >
-<strong>SCHEDULER:Schedule(TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
+<strong>SCHEDULER:Schedule(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
 </a>
 </dt>
 <dd>
@@ -386,6 +398,18 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#table TimeEventObject </em></code>: 
+Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function TimeEventFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.</p>
+
+				</li>
 				<li>
 				
 <p><code><em>#table TimeEventFunctionArguments </em></code>: 
@@ -520,8 +544,36 @@ self</p>
 <dt>
 
 		<em></em>
+<a id="#(SCHEDULER).TimeEventFunction" >
+<strong>SCHEDULER.TimeEventFunction</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(SCHEDULER).TimeEventFunctionArguments" >
 <strong>SCHEDULER.TimeEventFunctionArguments</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCHEDULER).TimeEventObject" >
+<strong>SCHEDULER.TimeEventObject</strong>
 </a>
 </dt>
 <dd>

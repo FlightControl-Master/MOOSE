@@ -102,7 +102,7 @@ For each group to be spawned, within the mission editor, a group has to be creat
 A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
 
 <p>Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
-When new groups get spawned by using the SPAWN functions (see below), it will be validated whether the Limits (<a href="##(SPAWN).Limit">SPAWN.Limit</a>) of the SPAWN object are not reached.
+When new groups get spawned by using the SPAWN methods (see below), it will be validated whether the Limits (<a href="##(SPAWN).Limit">SPAWN.Limit</a>) of the SPAWN object are not reached.
 When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.</p>
 
 <p>Regarding the name of new spawned groups, a <em>SpawnPrefix</em> will be assigned for each new group created. 
@@ -127,11 +127,11 @@ Groups will follow the following naming structure when spawned at run-time:</p>
 <p>Create a new SPAWN object with the <a href="##(SPAWN).New">SPAWN.New</a> or the <a href="##(SPAWN).NewWithAlias">SPAWN.NewWithAlias</a> methods:</p>
 
 <ul>
-    <li><a href="##(SPAWN).New">SPAWN.New</a>: Creates a new SPAWN object taking the name of the group that functions as the Template.</li>
+    <li><a href="##(SPAWN).New">SPAWN.New</a>: Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).</li>
 </ul>
 
 <p>It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
-The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.</p>
 
 <h2>1.2) SPAWN initialization methods</h2>
@@ -143,7 +143,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).RandomizeTemplate">SPAWN.RandomizeTemplate</a>: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. </li>
     <li><a href="##(SPAWN).Uncontrolled">SPAWN.Uncontrolled</a>: Spawn plane groups uncontrolled.</li>
     <li><a href="##(SPAWN).Array">SPAWN.Array</a>: Make groups visible before they are actually activated, and order these groups like a batallion in an array.</li>
-    <li><a href="##(SPAWN).InitRepeat">SPAWN.InitRepeat</a>: Re-spawn groups when they land at the home base. Similar functions are <a href="##(SPAWN).InitRepeatOnLanding">SPAWN.InitRepeatOnLanding</a> and <a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN.InitRepeatOnEngineShutDown</a>.</li>
+    <li><a href="##(SPAWN).InitRepeat">SPAWN.InitRepeat</a>: Re-spawn groups when they land at the home base. Similar methods are <a href="##(SPAWN).InitRepeatOnLanding">SPAWN.InitRepeatOnLanding</a> and <a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN.InitRepeatOnEngineShutDown</a>.</li>
 </ul>
 
 <h2>1.3) SPAWN spawning methods</h2>
@@ -163,7 +163,21 @@ So in principle, the group list will contain all parameters and configurations a
 <p>Note that <a href="##(SPAWN).Spawn">SPAWN.Spawn</a> and <a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a> return a <a href="GROUP.html##(GROUP).New">GROUP#GROUP.New</a> object, that contains a reference to the DCSGroup object. 
 You can use the <a href="GROUP.html">GROUP</a> object to do further actions with the DCSGroup.</p>
 
-<h2>1.4) SPAWN object cleaning</h2>
+<h2>1.4) Retrieve alive GROUPs spawned by the SPAWN object</h2>
+<p>The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
+Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
+SPAWN provides methods to iterate through that internal GROUP object reference table:</p>
+
+<ul>
+    <li><a href="##(SPAWN).GetFirstAliveGroup">SPAWN.GetFirstAliveGroup</a>: Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.</li>
+    <li><a href="##(SPAWN).GetNextAliveGroup">SPAWN.GetNextAliveGroup</a>: Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.</li>
+    <li><a href="##(SPAWN).GetLastAliveGroup">SPAWN.GetLastAliveGroup</a>: Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.</li>
+</ul>
+
+<p>You can use the methods <a href="##(SPAWN).GetFirstAliveGroup">SPAWN.GetFirstAliveGroup</a> and sequently <a href="##(SPAWN).GetNextAliveGroup">SPAWN.GetNextAliveGroup</a> to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+The method <a href="##(SPAWN).GetGroupFromIndex">SPAWN.GetGroupFromIndex</a> will return the GROUP object reference from the given Index, dead or alive...</p>
+
+<h2>1.5) SPAWN object cleaning</h2>
 <p>Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 and it may occur that no new groups are or can be spawned as limits are reached.
@@ -218,9 +232,9 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetFirstAliveGroup">SPAWN:GetFirstAliveGroup(SpawnCursor)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetFirstAliveGroup">SPAWN:GetFirstAliveGroup()</a></td>
 		<td class="summary">
-<p>Find the first alive group.</p>
+<p>Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.</p>
 </td>
 		</tr>
 		<tr>
@@ -232,13 +246,13 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetLastAliveGroup">SPAWN:GetLastAliveGroup()</a></td>
 		<td class="summary">
-<p>Find the last alive group during runtime.</p>
+<p>Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetNextAliveGroup">SPAWN:GetNextAliveGroup(SpawnCursor)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetNextAliveGroup">SPAWN:GetNextAliveGroup(SpawnIndexStart)</a></td>
 		<td class="summary">
-<p>Find the next alive group.</p>
+<p>Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.</p>
 </td>
 		</tr>
 		<tr>
@@ -798,28 +812,19 @@ self</p>
 <dt>
 
 <a id="#(SPAWN).GetFirstAliveGroup" >
-<strong>SPAWN:GetFirstAliveGroup(SpawnCursor)</strong>
+<strong>SPAWN:GetFirstAliveGroup()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Find the first alive group.</p>
+<p>Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number SpawnCursor </em></code>: 
-A number holding the index from where to find the first group from.</p>
-
-				</li>
-		</ul>
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
-The group found, the new index where the group was found.</p>
+The GROUP object found, the new Index where the group was found.</p>
 
 				</li>
 				<li>
@@ -829,6 +834,14 @@ When no group is found, #nil is returned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+while GroupPlane ~= nil do
+  -- Do actions with the GroupPlane object.
+  GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+end</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -871,7 +884,29 @@ self</p>
 </dt>
 <dd>
 	
-<p>Find the last alive group during runtime.</p>
+<p>Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
+The last alive GROUP object found, the last Index where the last alive GROUP object was found.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil, #nil:</em>
+When no alive GROUP object is found, #nil is returned.</p>
+
+				</li>
+			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
+if GroupPlane then -- GroupPlane can be nil!!!
+  -- Do actions with the GroupPlane object.
+end</code></pre>
 
 </dd>
 </dl>
@@ -879,19 +914,19 @@ self</p>
 <dt>
 
 <a id="#(SPAWN).GetNextAliveGroup" >
-<strong>SPAWN:GetNextAliveGroup(SpawnCursor)</strong>
+<strong>SPAWN:GetNextAliveGroup(SpawnIndexStart)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Find the next alive group.</p>
+<p>Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number SpawnCursor </em></code>: 
-A number holding the last found previous index.</p>
+<p><code><em>#number SpawnIndexStart </em></code>: 
+A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.</p>
 
 				</li>
 		</ul>
@@ -900,16 +935,24 @@ A number holding the last found previous index.</p>
 				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
-The group found, the new index where the group was found.</p>
+The next alive GROUP object found, the next Index where the next alive GROUP object was found.</p>
 
 				</li>
 				<li>
 				
 <p><em>#nil, #nil:</em>
-When no group is found, #nil is returned.</p>
+When no alive GROUP object is found from the start Index position, #nil is returned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+while GroupPlane ~= nil do
+  -- Do actions with the GroupPlane object.
+  GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+end</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
