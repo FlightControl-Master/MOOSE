@@ -1,3 +1,6 @@
+2016-07-29
+	- Documentation of methods GetFirstAliveGroup, GetNextAliveGroup, GetLastAliveGroup + code snippets.
+
 2016-07-23
 	
 	- Fixed problem in MISSILETRAINER 
