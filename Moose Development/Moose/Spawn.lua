@@ -1064,7 +1064,7 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
       SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
       
       -- Manage randomization of altitude for airborne units ...
-      if SpawnTemplate.CategoryID == Group.Category.AIRPLANE or SpawnTemplate.CategoryID == Group.Category.HELICOPTER then
+      if SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE or SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER then
         if SpawnTemplate.route.points[t].alt and self.SpawnRandomizeRouteHeight then
           SpawnTemplate.route.points[t].alt = SpawnTemplate.route.points[t].alt + math.random( 1, self.SpawnRandomizeRouteHeight )
         end
