@@ -1,4 +1,4 @@
---- This module contains the TASK_ASSIGN classes.
+--- This module contains the PROCESS_ASSIGN classes.
 -- 
 -- ===
 -- 
