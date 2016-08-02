@@ -39,7 +39,7 @@
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups.
+--   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
@@ -217,6 +217,7 @@ end
 -- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
 -- This parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
 -- @param #number SpawnRadius is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...
+-- @param #number SpawnHeight (optional) Specifies the **additional** height in meters that can be added to the base height specified at each waypoint in the ME.
 -- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
@@ -224,13 +225,14 @@ end
 -- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
 -- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
-function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
-	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
+function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight } )
 
 	self.SpawnRandomizeRoute = true
 	self.SpawnRandomizeRouteStartPoint = SpawnStartPoint
 	self.SpawnRandomizeRouteEndPoint = SpawnEndPoint
 	self.SpawnRandomizeRouteRadius = SpawnRadius
+	self.SpawnRandomizeRouteHeight = SpawnHeight
 
 	for GroupID = 1, self.SpawnMaxGroups do
 		self:_RandomizeRoute( GroupID )
@@ -1057,11 +1059,19 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
     local RouteCount = #SpawnTemplate.route.points
     
     for t = self.SpawnRandomizeRouteStartPoint + 1, ( RouteCount - self.SpawnRandomizeRouteEndPoint ) do
+      
       SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
       SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
-      -- TODO: manage altitude for airborne units ...
-      SpawnTemplate.route.points[t].alt = nil
-      --SpawnGroup.route.points[t].alt_type = nil
+      
+      -- Manage randomization of altitude for airborne units ...
+      if SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE or SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER then
+        if SpawnTemplate.route.points[t].alt and self.SpawnRandomizeRouteHeight then
+          SpawnTemplate.route.points[t].alt = SpawnTemplate.route.points[t].alt + math.random( 1, self.SpawnRandomizeRouteHeight )
+        end
+      else
+        SpawnTemplate.route.points[t].alt = nil
+      end
+      
       self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
     end
   end

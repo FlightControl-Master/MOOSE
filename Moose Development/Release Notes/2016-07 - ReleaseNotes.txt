@@ -1,3 +1,6 @@
+2016-07-31
+    - Added a SpawnHeight parameter to the SPAWN method RandomizeRoute(), based upon a bug report of David. Air units will now also have optionally the route height randomized.
+
 2016-07-29
 	- Documentation of methods GetFirstAliveGroup, GetNextAliveGroup, GetLastAliveGroup + code snippets.
 
