@@ -2,8 +2,9 @@
 -- 
 -- 1) @{#TASK_SEAD} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_SEAD} class defines a new SEAD task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_SEAD is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
+-- based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_SEAD is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
