@@ -2,8 +2,9 @@
 -- 
 -- 1) @{#TASK_A2G} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_A2G} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_A2G is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_A2G} class defines a CAS or BAI task of a @{Set} of Target Units, 
+-- located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_A2G is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -15,7 +16,7 @@
 -- 
 -- ### Authors: FlightControl - Design and Programming
 -- 
--- @module Task_CAS
+-- @module Task_A2G
 
 
 do -- TASK_A2G
