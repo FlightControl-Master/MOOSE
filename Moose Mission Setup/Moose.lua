@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160801_1851' ) 
+env.info( 'Moose Generation Timestamp: 20160803_2050' ) 
 local base = _G
 
 Include = {}
@@ -20554,7 +20554,7 @@ SPAWN = {
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
 -- @usage local Plane = SPAWN:New( "Plane" ) -- Creates a new local variable that can initiate new planes with the name "Plane#ddd" using the template "Plane" as defined within the ME.
 function SPAWN:New( SpawnTemplatePrefix )
-	local self = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWN
 	self:F( { SpawnTemplatePrefix } )
   
 	local TemplateGroup = Group.getByName( SpawnTemplatePrefix )
@@ -21532,6 +21532,9 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].x = self.SpawnTemplate.units[1].x
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].y = self.SpawnTemplate.units[1].y
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].alt = self.SpawnTemplate.units[1].alt
     end
   end
   
@@ -27547,7 +27550,7 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
 end
 
 
---- This module contains the TASK_ASSIGN classes.
+--- This module contains the PROCESS_ASSIGN classes.
 -- 
 -- ===
 -- 
@@ -29172,8 +29175,9 @@ end
 -- 
 -- 1) @{#TASK_SEAD} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_SEAD} class defines a new SEAD task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_SEAD is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
+-- based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_SEAD is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29317,8 +29321,9 @@ end
 -- 
 -- 1) @{#TASK_A2G} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_A2G} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_A2G is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_A2G} class defines a CAS or BAI task of a @{Set} of Target Units, 
+-- located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_A2G is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29330,7 +29335,7 @@ end
 -- 
 -- ### Authors: FlightControl - Design and Programming
 -- 
--- @module Task_CAS
+-- @module Task_A2G
 
 
 do -- TASK_A2G
