@@ -1,16 +1,226 @@
---- CARGO Classes
--- @module CARGO
+--- This module contains the CARGO classes.
+-- 
+-- ===
+-- 
+-- 1) @{Cargo#CARGO_BASE} class, extends @{Base#BASE}
+-- ==================================================
+-- The @{#CARGO_BASE} class defines the core functions that defines a cargo object within MOOSE.
+-- A cargo is a logical object defined within a @{Mission}, that is available for transport, and has a life status within a simulation.
+-- 
+-- Cargo can be of various forms:
+-- 
+--   * CARGO_UNIT, represented by a @{Unit} in a @{Group}: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost. 
+--   * CARGO_STATIC, represented by a @{Static}: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.
+--   * CARGO_PACKAGE, contained in a @{Unit} of a @{Group}: Cargo can be contained within a Unit of a Group. The cargo can be **delivered** by the @{Unit}. If the Unit is destroyed, the cargo will be destroyed also.
+--   * CARGO_PACKAGE, Contained in a @{Static}: Cargo can be contained within a Static. The cargo can be **collected** from the @Static. If the @{Static} is destroyed, the cargo will be destroyed.
+--   * CARGO_SLINGLOAD, represented by a @{Cargo} that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.
+-- 
+-- @module Cargo
 
 
-
-
-
-
-
---- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- These clients are defined within the Mission Orchestration Framework (MOF)
 
 CARGOS = {}
+
+--- @type CARGO
+-- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
+-- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
+-- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
+-- @field #number ReportRadius (optional) A number defining the radius in meters when the cargo is signalling or reporting to a Carrier.
+-- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
+-- @field Positionable#POSITIONABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+-- @field Positionable#POSITIONABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+-- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
+-- @field #boolean Moveable This flag defines if the cargo is moveable.
+-- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
+-- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
+CARGO = {
+  ClassName = "CARGO",
+  STATUS = {
+    NONE = 0,
+    LOADED = 1,
+    UNLOADED = 2,
+    LOADING = 3
+  },
+  Type = nil,
+  Name = nil,
+  Weight = nil,
+  CargoObject = nil,
+  CargoCarrier = nil,
+  Representable = false,
+  Slingloadable = false,
+  Moveable = false,
+  Containable = false,
+}
+
+
+--- Add Cargo to the mission... 
+function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+
+  self.Type = Type
+  self.Name = Name
+  self.Weight = Weight
+  self.ReportRadius = ReportRadius
+  self.NearRadius = NearRadius
+  self.CargoObject = nil
+  self.CargoCarrier = nil
+  self.Representable = false
+  self.Slingloadable = false
+  self.Moveable = false
+  self.Containable = false
+
+  self:StatusNone()
+  
+  return self
+end
+
+function CARGO:Spawn( PointVec2 )
+  self:F()
+
+  return self
+
+end
+
+function CARGO:Load( CargoObject, CargoCarrier )
+  self:F()
+
+  self:StatusLoaded( CargoCarrier )
+
+  return self
+end
+
+
+function CARGO:UnLoad( CargoCarrier, CargoObject )
+  self:F()
+
+  self:StatusUnLoaded( CargoObject )
+
+  return self
+end
+
+function CARGO:OnBoard( CargoObject, CargoCarrier )
+  self:F()
+  
+end
+
+function CARGO:OnBoarded( CargoCarrier )
+  self:F()
+
+  local OnBoarded = false
+  
+  return OnBoarded
+end
+
+
+function CARGO:IsNear( CargoCarrier, CargoObject, Radius )
+  self:F()
+
+  local Near = true
+  
+  return Near
+  
+end
+
+
+function CARGO:IsLoading()
+  self:F()
+
+  if self:IsStatusLoading() then
+    return self.Object
+  end
+  
+  return nil
+
+end
+
+
+function CARGO:IsContained()
+  self:F()
+
+  if self:IsStatusContained() then
+    return self.Object
+  end
+  
+  return nil
+
+end
+
+
+function CARGO:IsLandingRequired()
+  self:F()
+  return true
+end
+
+function CARGO:IsSlingLoad()
+  self:F()
+  return false
+end
+
+
+function CARGO:StatusNone()
+  self:F()
+
+  self.CargoClient = nil
+  self.CargoStatus = CARGO.STATUS.NONE
+  
+  return self
+end
+
+function CARGO:StatusLoading( Carrier )
+  self:F()
+
+  self.CargoClient = Carrier
+  self.CargoStatus = CARGO.STATUS.LOADING
+  self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
+  
+  return self
+end
+
+function CARGO:StatusLoaded( Client )
+  self:F()
+
+  self.CargoClient = Client
+  self.CargoStatus = CARGO.STATUS.LOADED
+  self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. self.CargoClient:GetClientGroupName() )
+  
+  return self
+end
+
+function CARGO:StatusUnLoaded()
+  self:F()
+
+  self.CargoClient = nil
+  self.CargoStatus = CARGO.STATUS.UNLOADED
+  
+  return self
+end
+
+
+function CARGO:IsStatusNone()
+  self:F()
+
+  return self.CargoStatus == CARGO.STATUS.NONE
+end
+
+function CARGO:IsStatusLoading()
+  self:F()
+
+  return self.CargoStatus == CARGO.STATUS.LOADING
+end
+
+function CARGO:IsStatusLoaded()
+  self:F()
+
+  return self.CargoStatus == CARGO.STATUS.LOADED
+end
+
+function CARGO:IsStatusUnLoaded()
+  self:F()
+
+  return self.CargoStatus == CARGO.STATUS.UNLOADED
+end
+
 
 
 CARGO_ZONE = {
@@ -326,180 +536,7 @@ function CARGO_ZONE:GetCargoZoneName()
 	return self.CargoZoneName
 end
 
-CARGO = {
-	ClassName = "CARGO",
-	STATUS = {
-		NONE = 0,
-		LOADED = 1,
-		UNLOADED = 2,
-		LOADING = 3
-	},
-	CargoClient = nil
-}
 
---- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
-function CARGO:New( CargoType, CargoName, CargoWeight ) local self = BASE:Inherit( self, BASE:New() )
-	self:F( { CargoType, CargoName, CargoWeight } )
-
-
-	self.CargoType = CargoType
-	self.CargoName = CargoName
-    self.CargoWeight = CargoWeight
-
-	self:StatusNone()
-	
-	return self
-end
-
-function CARGO:Spawn( Client )
-	self:F()
-
-	return self
-
-end
-
-function CARGO:IsNear( Client, LandingZone )
-	self:F()
-
-	local Near = true
-	
-	return Near
-	
-end
-
-
-function CARGO:IsLoadingToClient()
-	self:F()
-
-	if self:IsStatusLoading() then
-		return self.CargoClient
-	end
-	
-	return nil
-
-end
-
-
-function CARGO:IsLoadedInClient()
-	self:F()
-
-	if self:IsStatusLoaded() then
-		return self.CargoClient
-	end
-	
-	return nil
-
-end
-
-
-function CARGO:UnLoad( Client, TargetZoneName )
-	self:F()
-
-	self:StatusUnLoaded()
-
-	return self
-end
-
-function CARGO:OnBoard( Client, LandingZone )
-	self:F()
-  
-	local Valid = true
-  
-	self.CargoClient = Client
-	local ClientUnit = Client:GetClientGroupDCSUnit()
-
-	return Valid
-end
-
-function CARGO:OnBoarded( Client, LandingZone )
-	self:F()
-
-	local OnBoarded = true
-  
-	return OnBoarded
-end
-
-function CARGO:Load( Client )
-	self:F()
-
-	self:StatusLoaded( Client )
-
-	return self
-end
-
-function CARGO:IsLandingRequired()
-	self:F()
-	return true
-end
-
-function CARGO:IsSlingLoad()
-	self:F()
-	return false
-end
-
-
-function CARGO:StatusNone()
-	self:F()
-
-	self.CargoClient = nil
-	self.CargoStatus = CARGO.STATUS.NONE
-	
-	return self
-end
-
-function CARGO:StatusLoading( Client )
-	self:F()
-
-	self.CargoClient = Client
-	self.CargoStatus = CARGO.STATUS.LOADING
-	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
-	
-	return self
-end
-
-function CARGO:StatusLoaded( Client )
-	self:F()
-
-	self.CargoClient = Client
-	self.CargoStatus = CARGO.STATUS.LOADED
-	self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. self.CargoClient:GetClientGroupName() )
-	
-	return self
-end
-
-function CARGO:StatusUnLoaded()
-	self:F()
-
-	self.CargoClient = nil
-	self.CargoStatus = CARGO.STATUS.UNLOADED
-	
-	return self
-end
-
-
-function CARGO:IsStatusNone()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.NONE
-end
-
-function CARGO:IsStatusLoading()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.LOADING
-end
-
-function CARGO:IsStatusLoaded()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.LOADED
-end
-
-function CARGO:IsStatusUnLoaded()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.UNLOADED
-end
 
 
 CARGO_GROUP = {
