@@ -1,3 +1,10 @@
+2016-08-03
+	- Fixed error at SPAWN:RandomizeTemplate()
+		-- Units started in wrong x, y position (at the template, instead of at the master template of the SPAWN).
+		-- Adjusted x, y and alt to the start position of the first unit of the master template.
+		-- Added a test mission Moose_Test_SPAWN_RandomizeTemplate.
+		-- Regenerated MOOSE.lua
+
 2016-07-31
     - Added a SpawnHeight parameter to the SPAWN method RandomizeRoute(), based upon a bug report of David. Air units will now also have optionally the route height randomized.
 
