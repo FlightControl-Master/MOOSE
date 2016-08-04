@@ -381,6 +381,44 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   return RoutePoint
 end
 
+--- Build an ground type route point.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3.RoutePointAction Formation The route point Formation.
+-- @param DCSTypes#Speed Speed Speed in km/h.
+-- @return #table The route point.
+function POINT_VEC3:RoutePointGround( Formation, Speed )
+  self:F2( { Formation, Speed } )
+
+  local RoutePoint = {}
+  RoutePoint.x = self.PointVec3.x
+  RoutePoint.y = self.PointVec3.z
+  
+  RoutePoint.action = Formation
+
+  RoutePoint.speed = Speed / 3.6
+  RoutePoint.speed_locked = true
+  
+--  ["task"] = 
+--  {
+--      ["id"] = "ComboTask",
+--      ["params"] = 
+--      {
+--          ["tasks"] = 
+--          {
+--          }, -- end of ["tasks"]
+--      }, -- end of ["params"]
+--  }, -- end of ["task"]
+
+
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = {}
+  
+  
+  return RoutePoint
+end
+
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self

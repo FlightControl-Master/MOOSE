@@ -30,7 +30,7 @@ do -- CARGO
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number ReportRadius (optional) A number defining the radius in meters when the cargo is signalling or reporting to a Carrier.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
-  -- @field Positionable#POSITIONABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  -- @field Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
   -- @field Positionable#POSITIONABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
@@ -254,7 +254,7 @@ do -- CARGO_REPRESENTABLE
   --- CARGO_REPRESENTABLE Constructor.
   -- @param #CARGO_REPRESENTABLE self
   -- @param Mission#MISSION Mission
-  -- @param Positionable#POSITIONABLE CargoObject
+  -- @param Controllable#Controllable CargoObject
   -- @param #string Type
   -- @param #string Name
   -- @param #number Weight
@@ -272,8 +272,9 @@ do -- CARGO_REPRESENTABLE
   
   --- Onboard representable Cargo to a Carrier.
   -- @param #CARGO_REPRESENTABLE self
-  function CARGO_REPRESENTABLE:Onboard( Carrier, OnBoardSide )
-  self:F()
+  -- @param Unit#UNIT Carrier
+  function CARGO_REPRESENTABLE:Onboard( Carrier )
+    self:F()
   
     local OnBoardScheduler = SCHEDULER:New( self, self.ExecuteOnboarding, 1, 1, 0, 30 )
   
@@ -287,67 +288,18 @@ do -- CARGO_REPRESENTABLE
   
       local Points = {}
       
-      local PointStartVec2 = self.CargoObject:GetVec2()
+      local PointStartVec2 = self.CargoObject:GetPointVec2()
+      local PointEndVec2 = Carrier:GetPointVec2()
+      
   
-      self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-      self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
+      Points[#Points+1] = PointStartVec2:RoutePointGround( "Cone", 10 )
+      Points[#Points+1] = PointEndVec2:RoutePointGround( "Cone", 10 )
   
-      Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-  
-      self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-  
-      if OnBoardSide == nil then
-        OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-      end
-  
-      if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-  
-        self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-        CarrierPosMove.z = CarrierPosMove.z - 25
-        CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  
-      elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-  
-        self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-        CarrierPosMove.z = CarrierPosMove.z + 25
-        CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  
-      elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-  
-        self:T( "TransportCargoOnBoard: Onboarding BACK" )
-        CarrierPosMove.x = CarrierPosMove.x - 25
-        CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  
-      elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-  
-        self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-        CarrierPosMove.x = CarrierPosMove.x + 25
-        CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-        Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  
-      elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-  
-        self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-        Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-  
-      end
-      self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-  
-      --routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
-      SCHEDULER:New( self, routines.goRoute, { self.CargoGroupName, Points}, 4 )
+      local TaskRoute = self.CargoObject:TaskRoute( Points )
+      self.CargoObject:SetTask( TaskRoute, 4 )
     end
   
-    self:StatusLoading( Client )
-  
-    return Valid
-
+    self:StatusLoading( Carrier )
   end
   
   --- Can the Cargo Onboard to the Carrier?
