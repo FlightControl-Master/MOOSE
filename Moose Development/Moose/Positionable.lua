@@ -79,9 +79,30 @@ function POSITIONABLE:GetVec2()
   if DCSPositionable then
     local PositionablePointVec3 = DCSPositionable:getPosition().p
     
-    local PositionablePointVec2 = {}
-    PositionablePointVec2.x = PositionablePointVec3.x
-    PositionablePointVec2.y = PositionablePointVec3.z
+    local PositionableVec2 = {}
+    PositionableVec2.x = PositionablePointVec3.x
+    PositionableVec2.y = PositionablePointVec3.z
+  
+    self:T2( PositionableVec2 )
+    return PositionableVec2
+  end
+  
+  return nil
+end
+
+--- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
+-- @param Positionable#POSITIONABLE self
+-- @return Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The DCS Positionable is not existing or alive.  
+function POSITIONABLE:GetVec2()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePointVec3 = DCSPositionable:getPosition().p
+    
+    local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionablePointVec3 )
   
     self:T2( PositionablePointVec2 )
     return PositionablePointVec2
