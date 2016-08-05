@@ -49,167 +49,146 @@ do -- CARGO
     Containable = false,
   }
 
-  --- @type CARGO.CargoObjects
-  -- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
+--- @type CARGO.CargoObjects
+-- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
+
+
+--- CARGO Constructor.
+-- @param #CARGO self
+-- @param Mission#MISSION Mission
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO
+function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+
+  self.Type = Type
+  self.Name = Name
+  self.Weight = Weight
+  self.ReportRadius = ReportRadius
+  self.NearRadius = NearRadius
+  self.CargoObjects = nil
+  self.CargoCarrier = nil
+  self.Representable = false
+  self.Slingloadable = false
+  self.Moveable = false
+  self.Containable = false
+
+
+  self.CargoScheduler = SCHEDULER:New()
+
+  CARGOS[self.Name] = self
+
+  return self
+end
+
+
+--- Template method to spawn a new representation of the CARGO in the simulator.
+-- @param #CARGO self
+-- @return #CARGO
+function CARGO:Spawn( PointVec2 )
+  self:F()
+
+end
+
+--- Board Cargo to a Carrier with a defined Speed.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+function CARGO:Board( CargoCarrier, Speed )
+  self:F()
   
+  self:_NextEvent( self.FsmP.Board, CargoCarrier, Speed )
+end
+
+--- UnBoard Cargo from a Carrier with a defined Speed.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+function CARGO:UnBoard( Speed )
+  self:F()
   
-  --- CARGO Constructor.
-  -- @param #CARGO self
-  -- @param Mission#MISSION Mission
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number Weight
-  -- @param #number ReportRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO
-  function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) 
-    local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
-    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  self:_NextEvent( self.FsmP.UnBoard, Speed )
+end
+
+--- Load Cargo to a Carrier.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+function CARGO:Load( CargoCarrier )
+  self:F()
   
+  self:_NextEvent( self.FsmP.Load, CargoCarrier )
+end
+
+--- UnLoad Cargo from a Carrier.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+function CARGO:UnLoad()
+  self:F()
   
-    self.Type = Type
-    self.Name = Name
-    self.Weight = Weight
-    self.ReportRadius = ReportRadius
-    self.NearRadius = NearRadius
-    self.CargoObjects = nil
-    self.CargoCarrier = nil
-    self.Representable = false
-    self.Slingloadable = false
-    self.Moveable = false
-    self.Containable = false
-    
-    local Process = STATEMACHINE_PROCESS:New( self, {
-        initial = 'UnLoaded',
-        events = {
-          { name = 'Board',   from = 'UnLoaded',           to = 'Boarding' },
-          { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
-          { name = 'Load',  from = 'Boarding',       to = 'Loaded' }, 
-          { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' }, 
-          { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
-          { name = 'UnBoard',    from = 'UnBoarding',      to = 'UnBoarding' }, 
-          { name = 'UnBoarded',    from = 'UnBoarding',       to = 'UnLoaded' },     
-          { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },     
-        },
-        callbacks = {
-          OnBoard = self.Board,
-          OnBoarded = self.OnBoarded,
-          OnLoad = self.Load,
-          OnUnBoard = self.UnBoard,
-          OnUnBoarded = self.UnBoarded,
-          OnUnLoad = self.UnLoad,
-          OnLoaded = self.Loaded,
-          OnUnLoaded = self.UnLoaded,
-        },
-      } )
-      
-    self.CargoScheduler = SCHEDULER:New()
-    
-    CARGOS[self.CargoName] = self
+  self:_NextEvent( self.FsmP.UnLoad )
+end
+
+
+--- Check if CargoCarrier is near the Cargo to be Loaded.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+-- @return #boolean
+function CARGO:IsNear( CargoCarrier )
+  self:F()
+
+  local CargoCarrierPoint = CargoCarrier:GetPointVec2()
   
-    return self
+  local Distance = CargoCarrierPoint:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  self:T( Distance )
+  
+  if Distance <= self.NearRadius then
+    return true
+  else
+    return false
   end
-  
-  --- @param #CARGO self
-  function CARGO:NextEvent( NextEvent, ... )
-    self:F( self.Name )
-    self.CargoScheduler:Schedule( self.Fsm, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
-  end
+end
 
 
-  --- Template method to spawn a new representation of the CARGO in the simulator.
-  -- @param #CARGO self
-  -- @return #CARGO
-  function CARGO:Spawn( PointVec2 )
-    self:F()
-  
-  end
-  
-  --- Load Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Load( FsmP, Event, From, To, CargoCarrier )
-    self:F()
-  
-  end
+--- Loaded State.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO:OnLoaded( FsmP, Event, From, To, CargoCarrier )
+  self:F()
 
+  self.CargoCarrier = CargoCarrier
+  self:T( "Cargo " .. self.Name .. " loaded in " .. self.CargoCarrier:GetName() )
+end
 
-  --- UnLoad Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  function CARGO:UnLoad( FsmP, Event, From, To )
-    self:F()
-  
-  end
+--- UnLoaded State.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO:OnUnLoaded( FsmP, Event, From, To )
+  self:F()
 
-  --- Board Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Board( FsmP, Event, From, To, CargoCarrier )
-    self:F()
+  self:T( "Cargo " .. self.Name .. " unloaded from " .. self.CargoCarrier:GetName() )
+  self.CargoCarrier = nil
+end
 
-  end
-
-  --- Boarded Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Boarded( FsmP, Event, From, To, CargoCarrier )
-    self:F()
-  
-  end
-
-
-  function CARGO:IsNear( CargoCarrier, CargoObject, Radius )
-    self:F()
-  
-    local Near = true
-  
-    return Near
-  
-  end
-
-
-  --- Loaded State.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Loaded( FsmP, Event, From, To, CargoCarrier )
-    self:F()
-  
-    self.CargoCarrier = CargoCarrier
-    self:T( "Cargo " .. self.Name .. " loaded in " .. self.CargoCarrier:GetName() )
-  end
-
-  --- UnLoaded State.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  function CARGO:StatusUnLoaded( FsmP, Event, From, To )
-    self:F()
-  
-    self:T( "Cargo " .. self.Name .. " unloaded from " .. self.CargoCarrier:GetName() )
-    self.CargoCarrier = nil
-  end
+--- @param #CARGO self
+function CARGO:_NextEvent( NextEvent, ... )
+  self:F( self.Name )
+  self.CargoScheduler:Schedule( self.FsmP, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
+end
 
 end
 
@@ -221,90 +200,133 @@ do -- CARGO_REPRESENTABLE
     ClassName = "CARGO_REPRESENTABLE"
   }
 
-  --- CARGO_REPRESENTABLE Constructor.
-  -- @param #CARGO_REPRESENTABLE self
-  -- @param Mission#MISSION Mission
-  -- @param Controllable#Controllable CargoObject
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number Weight
-  -- @param #number ReportRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_REPRESENTABLE
-  function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, ReportRadius, NearRadius ) 
-    local self = BASE:Inherit( self, CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
-    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-  
-    self.CargoObject = CargoObject
-  
-    return self
-  end
-  
-  --- Board Event.
-  -- @param #CARGO_REPRESENTABLE self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO_REPRESENTABLE:Onboard( FsmP, Event, From, To, CargoCarrier )
-    self:F()
-  
-    self.CargoInAir = self.CargoObject:InAir()
-  
-    self:T( self.CargoInAir )
-  
-    -- Only move the group to the carrier when the cargo is not in the air
-    -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-    if not self.CargoInAir then
-  
-      local Points = {}
-      
-      local PointStartVec2 = self.CargoObject:GetPointVec2()
-      local PointEndVec2 = Carrier:GetPointVec2()
-      
-  
-      Points[#Points+1] = PointStartVec2:RoutePointGround( "Cone", 10 )
-      Points[#Points+1] = PointEndVec2:RoutePointGround( "Cone", 10 )
-  
-      local TaskRoute = self.CargoObject:TaskRoute( Points )
-      self.CargoObject:SetTask( TaskRoute, 4 )
-    end
+--- CARGO_REPRESENTABLE Constructor.
+-- @param #CARGO_REPRESENTABLE self
+-- @param Mission#MISSION Mission
+-- @param Controllable#Controllable CargoObject
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_REPRESENTABLE
+function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
-    self:NextEvent( FsmP.Boarded, CargoCarrier )
+  self:T( CargoObject )
+  self.CargoObject = CargoObject
   
-  end
+    self.FsmP = STATEMACHINE_PROCESS:New( self, {
+    initial = 'UnLoaded',
+    events = {
+      { name = 'Board',   from = 'UnLoaded',           to = 'Boarding' },
+      { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
+      { name = 'Load',  from = 'Boarding',       to = 'Loaded' },
+      { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' },
+      { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
+      { name = 'UnBoarded',    from = 'UnBoarding',      to = 'UnBoarding' },
+      { name = 'UnLoad',    from = 'UnBoarding',       to = 'UnLoaded' },
+      { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },
+    },
+    callbacks = {
+      onBoard = self.OnBoard,
+      onBoarded = self.OnBoarded,
+      onLoad = self.OnLoad,
+      onUnBoard = self.OnUnBoard,
+      onUnBoarded = self.OnUnBoarded,
+      onUnLoad = self.OnUnLoad,
+      onLoaded = self.OnLoaded,
+      onUnLoaded = self.OnUnLoaded,
+    },
+  } )
   
-    --- Boarded Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Boarded( FsmP, Event, From, To, CargoCarrier )
-    self:F()
 
-    if self:IsNear( CargoCarrier ) then
-      self:NextEvent( FsmP.Boarded, CargoCarrier )
-    else
-      self:NextEvent( FsmP.Load, CargoCarrier )
-    end
+  return self
+end
+
+--- Board Event.
+-- @param #CARGO_REPRESENTABLE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed )
+  self:F()
+
+  self.CargoInAir = self.CargoObject:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only move the group to the carrier when the cargo is not in the air
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+
+    local Points = {}
+
+    local PointStartVec2 = self.CargoObject:GetPointVec2()
+    local PointEndVec2 = CargoCarrier:GetPointVec2()
+
+
+    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+    Points[#Points+1] = PointEndVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 4 )
   end
-  
-    --- Load Event.
-  -- @param #CARGO self
-  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Unit#UNIT CargoCarrier
-  function CARGO:Load( FsmP, Event, From, To, CargoCarrier )
-    self:F()
-    
-    self.CargoCarrier = CargoCarrier
-    self.CargoObject:Destroy()
+
+  self:_NextEvent( FsmP.Boarded, CargoCarrier )
+
+end
+
+--- Boarded Event.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnBoarded( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  if self:IsNear( CargoCarrier ) then
+    self:_NextEvent( FsmP.Load, CargoCarrier )
+  else
+    self:_NextEvent( FsmP.Boarded, CargoCarrier )
   end
+end
+
+--- UnBoarded Event.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnUnBoarded( FsmP, Event, From, To )
+  self:F()
+
+  if self.CargoObject:GetVelocityKMH() <= 0.1 then
+    self:_NextEvent( FsmP.UnLoad )
+  else
+    self:_NextEvent( FsmP.Boarded, CargoCarrier )
+  end
+end
+
+--- Load Event.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnLoad( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  self.CargoCarrier = CargoCarrier
+  self.CargoObject:Destroy()
+end
 
 end
 
@@ -316,22 +338,22 @@ do -- CARGO_UNIT
     ClassName = "CARGO_UNIT"
   }
 
-  --- CARGO_UNIT Constructor.
-  -- @param #CARGO_UNIT self
-  -- @param Mission#MISSION Mission
-  -- @param Unit#UNIT CargoUnit
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number Weight
-  -- @param #number ReportRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_UNIT
-  function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) 
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
-    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-  
-    return self
-  end
+--- CARGO_UNIT Constructor.
+-- @param #CARGO_UNIT self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT CargoUnit
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_UNIT
+function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  return self
+end
 
 end
 
@@ -591,7 +613,13 @@ function CARGO_SLINGLOAD:Spawn( Client )
 
 
 
+
+
+
 	-- This does not work in 1.5.2.
+
+
+
 
 
 
@@ -601,7 +629,13 @@ function CARGO_SLINGLOAD:Spawn( Client )
 
 
 
+
+
+
 	if CargoStatic then
+
+
+
 
 
 
@@ -611,7 +645,13 @@ function CARGO_SLINGLOAD:Spawn( Client )
 
 
 
+
+
+
 	end
+
+
+
 
 
 
@@ -1023,6 +1063,9 @@ function CARGO_ZONE:GetCargoZoneName()
 
   return self.CargoZoneName
 end
+
+
+
 
 
 

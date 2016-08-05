@@ -383,17 +383,18 @@ end
 
 --- Build an ground type route point.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3.RoutePointAction Formation The route point Formation.
 -- @param DCSTypes#Speed Speed Speed in km/h.
+-- @param #POINT_VEC3.RoutePointAction Formation The route point Formation.
 -- @return #table The route point.
-function POINT_VEC3:RoutePointGround( Formation, Speed )
+function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
   RoutePoint.x = self.PointVec3.x
   RoutePoint.y = self.PointVec3.z
   
-  RoutePoint.action = Formation
+  RoutePoint.action = Formation or ""
+    
 
   RoutePoint.speed = Speed / 3.6
   RoutePoint.speed_locked = true
@@ -548,6 +549,26 @@ function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
   
   local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
   self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
+
+  self.PointVec2 = Vec2
+  self:F2( self.PointVec3 )
+
+  return self
+end
+
+--- Create a new POINT_VEC2 object from  Vec3 coordinates.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Point#POINT_VEC2 self
+function POINT_VEC2:NewFromVec3( Vec3 )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  local Vec2 = { x = Vec3.x, y = Vec3.z }
+
+  local LandHeight = land.getHeight( Vec2 )
+  
+  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( { Vec2.x, LandHeight, Vec2.y } )
 
   self.PointVec2 = Vec2
   self:F2( self.PointVec3 )

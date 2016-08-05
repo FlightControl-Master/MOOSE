@@ -71,7 +71,7 @@ end
 --- Destroys the OBJECT.
 -- @param #OBJECT self
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:Destroy()
+function OBJECT:Destroy()
   self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
