@@ -38,12 +38,6 @@ do -- CARGO
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
   CARGO = {
     ClassName = "CARGO",
-    STATUS = {
-      NONE = 0,
-      LOADED = 1,
-      UNLOADED = 2,
-      LOADING = 3
-    },
     Type = nil,
     Name = nil,
     Weight = nil,
@@ -55,191 +49,167 @@ do -- CARGO
     Containable = false,
   }
 
---- @type CARGO.CargoObjects
--- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
-
-
---- CARGO Constructor.
--- @param #CARGO self
--- @param Mission#MISSION Mission
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO
-function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) 
-  local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-
-
-  self.Type = Type
-  self.Name = Name
-  self.Weight = Weight
-  self.ReportRadius = ReportRadius
-  self.NearRadius = NearRadius
-  self.CargoObjects = nil
-  self.CargoCarrier = nil
-  self.Representable = false
-  self.Slingloadable = false
-  self.Moveable = false
-  self.Containable = false
-
-  self:StatusNone()
+  --- @type CARGO.CargoObjects
+  -- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
   
-  CARGOS[self.CargoName] = self
-
-  return self
-end
-
---- Template method to spawn a new representation of the CARGO in the simulator.
--- @param #CARGO self
--- @return #CARGO
-function CARGO:Spawn( PointVec2 )
-  self:F()
-
-  return self
-
-end
-
-function CARGO:Load( CargoObject, CargoCarrier )
-  self:F()
-
-  self:StatusLoaded( CargoCarrier )
-
-  return self
-end
-
-
-function CARGO:UnLoad( CargoCarrier, CargoObject )
-  self:F()
-
-  self:StatusUnLoaded( CargoObject )
-
-  return self
-end
-
-function CARGO:OnBoard( CargoCarrier )
-  self:F()
-
-end
-
-function CARGO:OnBoarded( CargoCarrier )
-  self:F()
-
-  local OnBoarded = false
-
-  return OnBoarded
-end
-
-
-function CARGO:IsNear( CargoCarrier, CargoObject, Radius )
-  self:F()
-
-  local Near = true
-
-  return Near
-
-end
-
-
-function CARGO:IsLoading()
-  self:F()
-
-  if self:IsStatusLoading() then
-    return self.Object
+  
+  --- CARGO Constructor.
+  -- @param #CARGO self
+  -- @param Mission#MISSION Mission
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO
+  function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) 
+    local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
+    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  
+  
+    self.Type = Type
+    self.Name = Name
+    self.Weight = Weight
+    self.ReportRadius = ReportRadius
+    self.NearRadius = NearRadius
+    self.CargoObjects = nil
+    self.CargoCarrier = nil
+    self.Representable = false
+    self.Slingloadable = false
+    self.Moveable = false
+    self.Containable = false
+    
+    local Process = STATEMACHINE_PROCESS:New( self, {
+        initial = 'UnLoaded',
+        events = {
+          { name = 'Board',   from = 'UnLoaded',           to = 'Boarding' },
+          { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
+          { name = 'Load',  from = 'Boarding',       to = 'Loaded' }, 
+          { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' }, 
+          { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
+          { name = 'UnBoard',    from = 'UnBoarding',      to = 'UnBoarding' }, 
+          { name = 'UnBoarded',    from = 'UnBoarding',       to = 'UnLoaded' },     
+          { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },     
+        },
+        callbacks = {
+          OnBoard = self.Board,
+          OnBoarded = self.OnBoarded,
+          OnLoad = self.Load,
+          OnUnBoard = self.UnBoard,
+          OnUnBoarded = self.UnBoarded,
+          OnUnLoad = self.UnLoad,
+          OnLoaded = self.Loaded,
+          OnUnLoaded = self.UnLoaded,
+        },
+      } )
+      
+    self.CargoScheduler = SCHEDULER:New()
+    
+    CARGOS[self.CargoName] = self
+  
+    return self
+  end
+  
+  --- @param #CARGO self
+  function CARGO:NextEvent( NextEvent, ... )
+    self:F( self.Name )
+    self.CargoScheduler:Schedule( self.Fsm, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
   end
 
-  return nil
 
-end
-
-
-function CARGO:IsContained()
-  self:F()
-
-  if self:IsStatusContained() then
-    return self.Object
+  --- Template method to spawn a new representation of the CARGO in the simulator.
+  -- @param #CARGO self
+  -- @return #CARGO
+  function CARGO:Spawn( PointVec2 )
+    self:F()
+  
+  end
+  
+  --- Load Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Load( FsmP, Event, From, To, CargoCarrier )
+    self:F()
+  
   end
 
-  return nil
 
-end
+  --- UnLoad Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO:UnLoad( FsmP, Event, From, To )
+    self:F()
+  
+  end
 
+  --- Board Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Board( FsmP, Event, From, To, CargoCarrier )
+    self:F()
 
-function CARGO:IsLandingRequired()
-  self:F()
-  return true
-end
+  end
 
-function CARGO:IsSlingLoad()
-  self:F()
-  return false
-end
-
-
-function CARGO:StatusNone()
-  self:F()
-
-  self.CargoClient = nil
-  self.CargoStatus = CARGO.STATUS.NONE
-
-  return self
-end
-
-function CARGO:StatusLoading( Carrier )
-  self:F()
-
-  self.CargoClient = Carrier
-  self.CargoStatus = CARGO.STATUS.LOADING
-  self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
-
-  return self
-end
-
-function CARGO:StatusLoaded( Client )
-  self:F()
-
-  self.CargoClient = Client
-  self.CargoStatus = CARGO.STATUS.LOADED
-  self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. self.CargoClient:GetClientGroupName() )
-
-  return self
-end
-
-function CARGO:StatusUnLoaded()
-  self:F()
-
-  self.CargoClient = nil
-  self.CargoStatus = CARGO.STATUS.UNLOADED
-
-  return self
-end
+  --- Boarded Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Boarded( FsmP, Event, From, To, CargoCarrier )
+    self:F()
+  
+  end
 
 
-function CARGO:IsStatusNone()
-  self:F()
+  function CARGO:IsNear( CargoCarrier, CargoObject, Radius )
+    self:F()
+  
+    local Near = true
+  
+    return Near
+  
+  end
 
-  return self.CargoStatus == CARGO.STATUS.NONE
-end
 
-function CARGO:IsStatusLoading()
-  self:F()
+  --- Loaded State.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Loaded( FsmP, Event, From, To, CargoCarrier )
+    self:F()
+  
+    self.CargoCarrier = CargoCarrier
+    self:T( "Cargo " .. self.Name .. " loaded in " .. self.CargoCarrier:GetName() )
+  end
 
-  return self.CargoStatus == CARGO.STATUS.LOADING
-end
-
-function CARGO:IsStatusLoaded()
-  self:F()
-
-  return self.CargoStatus == CARGO.STATUS.LOADED
-end
-
-function CARGO:IsStatusUnLoaded()
-  self:F()
-
-  return self.CargoStatus == CARGO.STATUS.UNLOADED
-end
+  --- UnLoaded State.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO:StatusUnLoaded( FsmP, Event, From, To )
+    self:F()
+  
+    self:T( "Cargo " .. self.Name .. " unloaded from " .. self.CargoCarrier:GetName() )
+    self.CargoCarrier = nil
+  end
 
 end
 
@@ -270,13 +240,15 @@ do -- CARGO_REPRESENTABLE
     return self
   end
   
-  --- Onboard representable Cargo to a Carrier.
+  --- Board Event.
   -- @param #CARGO_REPRESENTABLE self
-  -- @param Unit#UNIT Carrier
-  function CARGO_REPRESENTABLE:Onboard( Carrier )
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO_REPRESENTABLE:Onboard( FsmP, Event, From, To, CargoCarrier )
     self:F()
-  
-    local OnBoardScheduler = SCHEDULER:New( self, self.ExecuteOnboarding, 1, 1, 0, 30 )
   
     self.CargoInAir = self.CargoObject:InAir()
   
@@ -298,26 +270,40 @@ do -- CARGO_REPRESENTABLE
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 4 )
     end
-  
-    self:StatusLoading( Carrier )
-  end
-  
-  --- Can the Cargo Onboard to the Carrier?
-  -- @param #CARGO_REPRESENTABLE self
-  -- @return #boolean true if Cargo is near enough to be Onboarded.
-  function CARGO_REPRESENTABLE:CanOnboard( Carrier )
-    return self:IsNear( Carrier )
-  end
 
-  --- Execute the Cargo Onboarding to the Carrier.
-  -- @param #CARGO_REPRESENTABLE self
-  function CARGO_REPRESENTABLE:ExecuteOnboarding( Carrier )
-    if self:CanOnboard( Carrier ) then
-      self.CargoCarrier = Carrier
-      self.CargoObject:Destroy()
-      return false
+    self:NextEvent( FsmP.Boarded, CargoCarrier )
+  
+  end
+  
+    --- Boarded Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Boarded( FsmP, Event, From, To, CargoCarrier )
+    self:F()
+
+    if self:IsNear( CargoCarrier ) then
+      self:NextEvent( FsmP.Boarded, CargoCarrier )
+    else
+      self:NextEvent( FsmP.Load, CargoCarrier )
     end
-    return true
+  end
+  
+    --- Load Event.
+  -- @param #CARGO self
+  -- @param StateMachine#STATEMACHINE_PROCESS FsmP
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Unit#UNIT CargoCarrier
+  function CARGO:Load( FsmP, Event, From, To, CargoCarrier )
+    self:F()
+    
+    self.CargoCarrier = CargoCarrier
+    self.CargoObject:Destroy()
   end
 
 end
@@ -349,244 +335,6 @@ do -- CARGO_UNIT
 
 end
 
-do -- CARGO_GROUP
-
-  --- @type CARGO_GROUP
-  CARGO_GROUP = {
-    ClassName = "CARGO_GROUP"
-  }
-
---- CARGO_GROUP Constructor.
--- @param #CARGO_GROUP self
--- @param Mission#MISSION Mission
--- @param Group#GROUP CargoGroup
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_GROUP
-function CARGO_GROUP:New( Mission, CargoGroup, Type, Name, Weight, ReportRadius, NearRadius ) 
-  local self = BASE:Inherit( self, CARGO:New( Mission, CargoGroup, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-
-  self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
-  self.CargoZone = CargoZone
-
-  CARGOS[self.CargoName] = self
-
-  return self
-
-end
-
-function CARGO_GROUP:Spawn( Client )
-  self:F( { Client } )
-
-  local SpawnCargo = true
-
-  if self:IsStatusNone() then
-    local CargoGroup = Group.getByName( self.CargoName )
-    if CargoGroup and CargoGroup:isExist() then
-      SpawnCargo = false
-    end
-
-  elseif self:IsStatusLoading() then
-
-    local Client = self:IsLoadingToClient()
-    if Client and Client:GetDCSGroup() then
-      SpawnCargo = false
-    else
-      local CargoGroup = Group.getByName( self.CargoName	 )
-      if CargoGroup and CargoGroup:isExist() then
-        SpawnCargo = false
-      end
-    end
-
-  elseif self:IsStatusLoaded()  then
-
-    local ClientLoaded = self:IsLoadedInClient()
-    -- Now test if another Client is alive (not this one), and it has the CARGO, then this cargo does not need to be initialized and spawned.
-    if ClientLoaded and ClientLoaded ~= Client then
-      local ClientGroup = Client:GetDCSGroup()
-      if ClientLoaded:GetClientGroupDCSUnit() and ClientLoaded:GetClientGroupDCSUnit():isExist() then
-        SpawnCargo = false
-      else
-        self:StatusNone()
-      end
-    else
-      -- Same Client, but now in initialize, so set back the status to None.
-      self:StatusNone()
-    end
-
-  elseif self:IsStatusUnLoaded() then
-
-    SpawnCargo = false
-
-  end
-
-  if SpawnCargo then
-    if self.CargoZone:GetCargoHostUnit() then
-      --- ReSpawn the Cargo from the CargoHost
-      self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
-    else
-      --- ReSpawn the Cargo in the CargoZone without a host ...
-      self:T( self.CargoZone )
-      self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
-    end
-    self:StatusNone()
-  end
-
-  self:T( { self.CargoGroupName, CARGOS[self.CargoName].CargoGroupName } )
-
-  return self
-end
-
-function CARGO_GROUP:IsNear( Client, LandingZone )
-  self:F()
-
-  local Near = false
-
-  if self.CargoGroupName then
-    local CargoGroup = Group.getByName( self.CargoGroupName )
-    if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 250 ) then
-      Near = true
-    end
-  end
-
-  return Near
-
-end
-
-
-function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
-  self:F()
-
-  local Valid = true
-
-  local ClientUnit = Client:GetClientGroupDCSUnit()
-
-  local CarrierPos = ClientUnit:getPoint()
-  local CarrierPosMove = ClientUnit:getPoint()
-  local CarrierPosOnBoard = ClientUnit:getPoint()
-
-  local CargoGroup = Group.getByName( self.CargoGroupName )
-
-  local CargoUnit = CargoGroup:getUnit(1)
-  local CargoPos = CargoUnit:getPoint()
-
-  self.CargoInAir = CargoUnit:inAir()
-
-  self:T( self.CargoInAir )
-
-  -- Only move the group to the carrier when the cargo is not in the air
-  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-  if not self.CargoInAir then
-
-    local Points = {}
-
-    self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-    self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-
-    Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-    self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-
-    if OnBoardSide == nil then
-      OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-    end
-
-    if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-
-      self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-      CarrierPosMove.z = CarrierPosMove.z - 25
-      CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-
-    elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-
-      self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-      CarrierPosMove.z = CarrierPosMove.z + 25
-      CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-
-    elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-
-      self:T( "TransportCargoOnBoard: Onboarding BACK" )
-      CarrierPosMove.x = CarrierPosMove.x - 25
-      CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-
-    elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-
-      self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-      CarrierPosMove.x = CarrierPosMove.x + 25
-      CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-      Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-
-    elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-
-      self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-      Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-
-    end
-    self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-
-    --routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
-    SCHEDULER:New( self, routines.goRoute, { self.CargoGroupName, Points}, 4 )
-  end
-
-  self:StatusLoading( Client )
-
-  return Valid
-
-end
-
-
-function CARGO_GROUP:OnBoarded( Client, LandingZone )
-  self:F()
-
-  local OnBoarded = false
-
-  local CargoGroup = Group.getByName( self.CargoGroupName )
-
-  if not self.CargoInAir then
-    if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 25 ) then
-      CargoGroup:destroy()
-      self:StatusLoaded( Client )
-      OnBoarded = true
-    end
-  else
-    CargoGroup:destroy()
-    self:StatusLoaded( Client )
-    OnBoarded = true
-  end
-
-  return OnBoarded
-end
-
-
-function CARGO_GROUP:UnLoad( Client, TargetZoneName )
-  self:F()
-
-  self:T( 'self.CargoName = ' .. self.CargoName )
-
-  local CargoGroup = self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), 60, 30 )
-
-  self.CargoGroupName = CargoGroup:GetName()
-  self:T( 'self.CargoGroupName = ' .. self.CargoGroupName )
-
-  CargoGroup:TaskRouteToZone( ZONE:New( TargetZoneName ), true )
-
-  self:StatusUnLoaded()
-
-  return self
-end
-
-end
 
 CARGO_PACKAGE = {
   ClassName = "CARGO_PACKAGE"
