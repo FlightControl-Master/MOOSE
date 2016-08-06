@@ -387,6 +387,14 @@ function DATABASE:GetGroupTemplate( GroupName )
   return GroupTemplate
 end
 
+function DATABASE:GetGroupNameFromUnitName( UnitName )
+  return self.Templates.Units[UnitName].GroupName
+end
+
+function DATABASE:GetGroupTemplateFromUnitName( UnitName )
+  return self.Templates.Units[UnitName].GroupTemplate
+end
+
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   return self.Templates.ClientsByName[ClientName].CoalitionID
 end

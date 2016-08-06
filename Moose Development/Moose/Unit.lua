@@ -166,6 +166,56 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will respawn the re-modelled group.
+--  
+-- @param Unit#UNIT self
+-- @param DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param #number Heading The heading of the unit respawn.
+function UNIT:ReSpawn( SpawnVec3, Heading )
+
+  local SpawnGroupTemplate = _DATABASE:GetGroupTemplateFromUnitName( self:GetName() )
+  local SpawnGroup = self:GetGroup()
+  
+  if SpawnGroup then
+  
+    local Vec3 = SpawnGroup:GetVec3()
+    SpawnGroupTemplate.x = Vec3.x
+    SpawnGroupTemplate.y = Vec3.z
+    
+    self:E( #SpawnGroupTemplate.units )
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+      local GroupUnit = UnitData -- Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
+        SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
+        SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
+        SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+      end
+    end
+  end
+  
+  for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
+    if UnitTemplateData.name == self:GetName() then
+      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
+      self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+    end
+  end
+
+  _DATABASE:Spawn( SpawnGroupTemplate )
+end
 
 
 

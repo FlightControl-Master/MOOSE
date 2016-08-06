@@ -317,20 +317,19 @@ function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Angle, Dis
 
     local Points = {}
 
-    local PointStartVec2 = self.CargoCarrier:GetPointVec2()
+    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
     local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
     local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local PointEndVec2 = CargoCarrier:GetPointVec2()
+    local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
 
-
-    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-    Points[#Points+1] = PointEndVec2:RoutePointGround( Speed )
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
 
     local TaskRoute = self.CargoObject:TaskRoute( Points )
     self.CargoObject:SetTask( TaskRoute, 4 )
   end
 
-  self:_NextEvent( FsmP.Boarded, CargoCarrier )
+  self:_NextEvent( FsmP.UnBoarded )
 
 end
 
@@ -345,9 +344,8 @@ function CARGO_REPRESENTABLE:OnUnBoarded( FsmP, Event, From, To )
   self:F()
 
   if self.CargoObject:GetVelocityKMH() <= 0.1 then
-    self:_NextEvent( FsmP.UnLoad )
   else
-    self:_NextEvent( FsmP.Boarded, CargoCarrier )
+    self:_NextEvent( FsmP.UnBoarded )
   end
 end
 
@@ -363,6 +361,25 @@ function CARGO_REPRESENTABLE:OnLoad( FsmP, Event, From, To, CargoCarrier )
 
   self.CargoCarrier = CargoCarrier
   self.CargoObject:Destroy()
+end
+
+--- UnLoad Event.
+-- @param #CARGO self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnUnLoad( FsmP, Event, From, To, Distance, Angle )
+  self:F()
+  
+  local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+
+  -- Respawn the group...
+  self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
 end
 
 end
