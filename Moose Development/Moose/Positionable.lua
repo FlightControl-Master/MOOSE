@@ -209,6 +209,7 @@ function POSITIONABLE:GetHeading()
       if PositionableHeading < 0 then
         PositionableHeading = PositionableHeading + 2 * math.pi
       end
+      PositionableHeading = PositionableHeading * 180 / math.pi
       self:T2( PositionableHeading )
       return PositionableHeading
     end

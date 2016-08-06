@@ -1003,9 +1003,9 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
 	end
 
-	SpawnTemplate.SpawnCoalitionID = self:_GetGroupCoalitionID( SpawnTemplatePrefix )
-	SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnTemplatePrefix )
-	SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCoalitionID = self:_GetGroupCoalitionID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnTemplatePrefix )
 	
 	self:T3( { SpawnTemplate } )
 	return SpawnTemplate
@@ -1026,12 +1026,12 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	--SpawnTemplate.lateActivation = false
   SpawnTemplate.lateActivation = false 
 
-	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	if SpawnTemplate.CategoryID == Group.Category.GROUND then
 	  self:T3( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false 
 	end
 	
-	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
+	if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
 		SpawnTemplate.uncontrolled = false
 	end
 
@@ -1064,7 +1064,7 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
       SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
       
       -- Manage randomization of altitude for airborne units ...
-      if SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE or SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER then
+      if SpawnTemplate.CategoryID == Group.Category.AIRPLANE or SpawnTemplate.CategoryID == Group.Category.HELICOPTER then
         if SpawnTemplate.route.points[t].alt and self.SpawnRandomizeRouteHeight then
           SpawnTemplate.route.points[t].alt = SpawnTemplate.route.points[t].alt + math.random( 1, self.SpawnRandomizeRouteHeight )
         end

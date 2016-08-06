@@ -185,7 +185,7 @@ function POINT_VEC3:SetZ( z )
   self.z = z
 end
 
---- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+--- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param DCSTypes#Distance OuterRadius
 -- @param DCSTypes#Distance InnerRadius
@@ -206,17 +206,28 @@ function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
     RadialMultiplier = OuterRadius * Radials
   end
 
-  local RandomVec3
+  local RandomVec2
   if OuterRadius > 0 then
-    RandomVec3 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
+    RandomVec2 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
   else
-    RandomVec3 = { x = self:GetX(), y = self:GetZ() }
+    RandomVec2 = { x = self:GetX(), y = self:GetZ() }
   end
   
-  return RandomVec3
+  return RandomVec2
 end
 
---- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+--- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return #POINT_VEC2
+function POINT_VEC3:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
+  self:F2( { OuterRadius, InnerRadius } )
+  
+  return POINT_VEC2:NewFromVec2( self:GetRandomPointVec2InRadius( OuterRadius, InnerRadius ) )
+end
+
+--- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param DCSTypes#Distance OuterRadius
 -- @param DCSTypes#Distance InnerRadius
@@ -228,6 +239,16 @@ function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
   local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.z }
 
   return RandomVec3
+end
+
+--- Return a random POINT_VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return #POINT_VEC3
+function POINT_VEC3:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
+
+  return POINT_VEC3:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
 end
 
 
@@ -295,8 +316,10 @@ function POINT_VEC3:Translate( Distance, Angle )
   local TX = Distance * math.cos( Radians ) + SX
   local TY = Distance * math.sin( Radians ) + SY
   
-  local SourceVec3 = self:GetVec3()
-  return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+  self:SetX( TX )
+  self:SetY( TY )
+  
+  return self
 end
 
 --- Provides a Bearing / Range string
@@ -626,7 +649,7 @@ end
 --- Set the x coordinate of the POINT_VEC2.
 -- @param #number x The x coordinate.
 function POINT_VEC2:SetX( x )
-  elf.x = x
+  self.x = x
 end
 
 --- Set the y coordinate of the POINT_VEC2.

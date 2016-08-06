@@ -110,10 +110,10 @@ end
 -- @param #CARGO self
 -- @param Unit#UNIT CargoCarrier
 -- @param #number Speed
-function CARGO:UnBoard( Speed )
+function CARGO:UnBoard( Speed, Distance, Angle )
   self:F()
   
-  self:_NextEvent( self.FsmP.UnBoard, Speed )
+  self:_NextEvent( self.FsmP.UnBoard, Speed, Distance, Angle )
 end
 
 --- Load Cargo to a Carrier.
@@ -181,13 +181,12 @@ function CARGO:OnUnLoaded( FsmP, Event, From, To )
   self:F()
 
   self:T( "Cargo " .. self.Name .. " unloaded from " .. self.CargoCarrier:GetName() )
-  self.CargoCarrier = nil
 end
 
 --- @param #CARGO self
 function CARGO:_NextEvent( NextEvent, ... )
   self:F( self.Name )
-  self.CargoScheduler:Schedule( self.FsmP, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
+  SCHEDULER:New( self.FsmP, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
 end
 
 end
@@ -224,10 +223,9 @@ function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, Repo
       { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
       { name = 'Load',  from = 'Boarding',       to = 'Loaded' },
       { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' },
-      { name = 'UnBoard',    from = 'Loaded',      to = 'UnLoading' },
-      { name = 'UnLoad',    from = 'UnLoading',       to = 'UnBoarding' },
-      { name = 'UnBoard',    from = 'UnBoarding',      to = 'UnBoarding' },
-      { name = 'UnBoarded',    from = 'UnBoarding',      to = 'UnLoaded' },
+      { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
+      { name = 'UnBoarded',    from = 'UnBoarding',       to = 'UnBoarding' },
+      { name = 'UnLoad',    from = 'UnBoarding',      to = 'UnLoaded' },
       { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },
     },
     callbacks = {
@@ -316,43 +314,28 @@ function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Distance, 
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
   
-    if self.FsmP:is( "Loaded" ) then
-      self:_NextEvent( FsmP.UnLoad, Distance, Angle )
+    if self.FsmP:is( "UnLoading" ) then
+      self:_NextEvent( FsmP.UnLoad, 3, Angle )
+      self:_NextEvent( FsmP.UnBoard, Speed, Distance, Angle )
     else
       local Points = {}
   
       local StartPointVec2 = self.CargoCarrier:GetPointVec2()
       local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
       local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      self:T( { CargoCarrierHeading, CargoDeployHeading } )
       local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+      local CargoDeployPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius( self.NearRadius )
   
       Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
       Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
   
       local TaskRoute = self.CargoObject:TaskRoute( Points )
-      self.CargoObject:SetTask( TaskRoute, 4 )
-
-      self:_NextEvent( FsmP.UnBoarded )
+      self.CargoObject:SetTask( TaskRoute, 1 )
     end
   end
 
 
-end
-
---- UnBoarded Event.
--- @param #CARGO self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnUnBoarded( FsmP, Event, From, To )
-  self:F()
-
-  if self.CargoObject:GetVelocityKMH() <= 0.1 then
-  else
-    self:_NextEvent( FsmP.UnBoarded )
-  end
 end
 
 --- Load Event.

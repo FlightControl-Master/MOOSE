@@ -264,19 +264,19 @@ end
 -- @param #table SpawnTemplate
 -- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
-  self:F2( SpawnTemplate.name )
+  self:F( SpawnTemplate.name )
 
-  self:T2( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
+  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
 
   -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
-  local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
-  local SpawnCountryID = SpawnTemplate.SpawnCountryID
-  local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
+  local SpawnCoalitionID = SpawnTemplate.CoalitionID
+  local SpawnCountryID = SpawnTemplate.CountryID
+  local SpawnCategoryID = SpawnTemplate.CategoryID
 
   -- Nullify
-  SpawnTemplate.SpawnCoalitionID = nil
-  SpawnTemplate.SpawnCountryID = nil
-  SpawnTemplate.SpawnCategoryID = nil
+  SpawnTemplate.CoalitionID = nil
+  SpawnTemplate.CountryID = nil
+  SpawnTemplate.CategoryID = nil
 
   self:_RegisterTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
 
@@ -284,9 +284,9 @@ function DATABASE:Spawn( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
-  SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
-  SpawnTemplate.SpawnCountryID = SpawnCountryID
-  SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+  SpawnTemplate.CoalitionID = SpawnCoalitionID
+  SpawnTemplate.CountryID = SpawnCountryID
+  SpawnTemplate.CategoryID = SpawnCategoryID
 
   local SpawnGroup = self:AddGroup( SpawnTemplate.name )
   return SpawnGroup
@@ -330,6 +330,10 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
     GroupTemplate.route.spans = nil
   end
   
+  GroupTemplate.CategoryID = CategoryID
+  GroupTemplate.CoalitionID = CoalitionID
+  GroupTemplate.CountryID = CountryID
+  
   self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
   self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
@@ -354,26 +358,27 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
-    local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Templates.Units[UnitTemplateName] = {}
-    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
-    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
-    self.Templates.Units[UnitTemplateName].CategoryID = CategoryID
-    self.Templates.Units[UnitTemplateName].CoalitionID = CoalitionID
-    self.Templates.Units[UnitTemplateName].CountryID = CountryID
+    UnitTemplate.name = env.getValueDictByKey(UnitTemplate.name)
+    
+    self.Templates.Units[UnitTemplate.name] = {}
+    self.Templates.Units[UnitTemplate.name].UnitName = UnitTemplate.name
+    self.Templates.Units[UnitTemplate.name].Template = UnitTemplate
+    self.Templates.Units[UnitTemplate.name].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplate.name].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplate.name].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplate.name].CategoryID = CategoryID
+    self.Templates.Units[UnitTemplate.name].CoalitionID = CoalitionID
+    self.Templates.Units[UnitTemplate.name].CountryID = CountryID
 
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.Templates.ClientsByName[UnitTemplateName].CategoryID = CategoryID
-      self.Templates.ClientsByName[UnitTemplateName].CoalitionID = CoalitionID
-      self.Templates.ClientsByName[UnitTemplateName].CountryID = CountryID
+      self.Templates.ClientsByName[UnitTemplate.name] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplate.name].CategoryID = CategoryID
+      self.Templates.ClientsByName[UnitTemplate.name].CoalitionID = CoalitionID
+      self.Templates.ClientsByName[UnitTemplate.name].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
     
-    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplateName].UnitName 
+    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplate.name].UnitName 
   end
 
   self:E( TraceTable )

@@ -152,6 +152,14 @@ function UNIT:FindByName( UnitName )
   return UnitFound
 end
 
+--- Return the name of the UNIT.
+-- @param #UNIT self
+-- @return #string The UNIT name.
+function UNIT:Name()
+  
+  return self.UnitName
+end
+
 
 --- @param #UNIT self
 -- @return DCSUnit#Unit
@@ -179,7 +187,8 @@ end
 -- @param #number Heading The heading of the unit respawn.
 function UNIT:ReSpawn( SpawnVec3, Heading )
 
-  local SpawnGroupTemplate = _DATABASE:GetGroupTemplateFromUnitName( self:GetName() )
+  local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
+  self:T( SpawnGroupTemplate )
   local SpawnGroup = self:GetGroup()
   
   if SpawnGroup then
@@ -205,7 +214,9 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   end
   
   for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
-    if UnitTemplateData.name == self:GetName() then
+    self:T( UnitTemplateData.name )
+    if UnitTemplateData.name == self:Name() then
+      self:T("Adjusting")
       SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
       SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
       SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
