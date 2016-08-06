@@ -224,9 +224,10 @@ function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, Repo
       { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
       { name = 'Load',  from = 'Boarding',       to = 'Loaded' },
       { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' },
-      { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
-      { name = 'UnBoarded',    from = 'UnBoarding',      to = 'UnBoarding' },
-      { name = 'UnLoad',    from = 'UnBoarding',       to = 'UnLoaded' },
+      { name = 'UnBoard',    from = 'Loaded',      to = 'UnLoading' },
+      { name = 'UnLoad',    from = 'UnLoading',       to = 'UnBoarding' },
+      { name = 'UnBoard',    from = 'UnBoarding',      to = 'UnBoarding' },
+      { name = 'UnBoarded',    from = 'UnBoarding',      to = 'UnLoaded' },
       { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },
     },
     callbacks = {
@@ -304,7 +305,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Angle, Distance )
+function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Distance, Angle )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -314,22 +315,27 @@ function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Angle, Dis
   -- Only unboard the cargo when the carrier is not in the air.
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
+  
+    if self.FsmP:is( "Loaded" ) then
+      self:_NextEvent( FsmP.UnLoad, Distance, Angle )
+    else
+      local Points = {}
+  
+      local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+  
+      Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+      Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+  
+      local TaskRoute = self.CargoObject:TaskRoute( Points )
+      self.CargoObject:SetTask( TaskRoute, 4 )
 
-    local Points = {}
-
-    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
-    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
-
-    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
-
-    local TaskRoute = self.CargoObject:TaskRoute( Points )
-    self.CargoObject:SetTask( TaskRoute, 4 )
+      self:_NextEvent( FsmP.UnBoarded )
+    end
   end
 
-  self:_NextEvent( FsmP.UnBoarded )
 
 end
 
