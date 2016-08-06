@@ -1,3 +1,9 @@
+2016-08-06
+    - Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
+    	-- Replaced method PointVec3() to Vec3() where the code manages a Vec3. Replaced all references to the method.
+    	-- Replaced method PointVec2() to Vec2() where the code manages a Vec2. Replaced all references to the method.
+    	-- Replaced method RandomPointVec3() to RandomVec3() where the code manages a Vec3. Replaced all references to the method.
+
 2016-08-03
 	- Fixed error at SPAWN:RandomizeTemplate()
 		-- Units started in wrong x, y position (at the template, instead of at the master template of the SPAWN).

@@ -347,11 +347,11 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
           local DetectionDetectedObjectName = DetectionObject:getName()
   
           local DetectionDetectedObjectPositionVec3 = DetectionObject:getPoint()
-          local DetectionGroupPositionVec3 = DetectionGroup:GetPointVec3()
+          local DetectionGroupVec3 = DetectionGroup:GetVec3()
   
-          local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupPositionVec3.x )^2 +
-            ( DetectionDetectedObjectPositionVec3.y - DetectionGroupPositionVec3.y )^2 +
-            ( DetectionDetectedObjectPositionVec3.z - DetectionGroupPositionVec3.z )^2
+          local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupVec3.x )^2 +
+            ( DetectionDetectedObjectPositionVec3.y - DetectionGroupVec3.y )^2 +
+            ( DetectionDetectedObjectPositionVec3.z - DetectionGroupVec3.z )^2
             ) ^ 0.5 / 1000
   
           self:T2( { DetectionGroupName, DetectionDetectedObjectName, Distance } )
@@ -531,7 +531,7 @@ function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
   local SphereSearch = {
    id = world.VolumeType.SPHERE,
     params = {
-     point = DetectedZoneUnit:GetPointVec3(),
+     point = DetectedZoneUnit:GetVec3(),
      radius = 6000,
     }
     
@@ -613,9 +613,9 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
     for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
       local FACUnit = FACUnitData -- Unit#UNIT
       if FACUnit:IsActive() then
-        local Vec3 = FACUnit:GetPointVec3()
+        local Vec3 = FACUnit:GetVec3()
         local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
-        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
+        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetVec3() ) )
         if Distance < MinDistance then
           MinDistance = Distance
           NearestFAC = FACUnit

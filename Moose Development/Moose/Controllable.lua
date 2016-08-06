@@ -506,15 +506,15 @@ end
 
 --- (AIR) Delivering weapon at the point on the ground. 
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the point to deliver weapon at.
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) Desired quantity of passes. The parameter is not the same in AttackControllable and AttackUnit tasks. 
 -- @param DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskBombing( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
+  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
 
 --  Bombing = { 
 --    id = 'Bombing', 
@@ -531,7 +531,7 @@ function CONTROLLABLE:TaskBombing( PointVec2, WeaponType, WeaponExpend, AttackQt
   local DCSTask
   DCSTask = { id = 'Bombing',
     params = {
-    point = PointVec2,
+    point = Vec2,
     weaponType = WeaponType, 
     expend = WeaponExpend,
     attackQty = AttackQty, 
@@ -624,15 +624,15 @@ end
 
 --- (AIR) Attacking the map object (building, structure, e.t.c).
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackMapObject( PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskAttackMapObject( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
+  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
 
 --  AttackMapObject = { 
 --    id = 'AttackMapObject', 
@@ -649,7 +649,7 @@ function CONTROLLABLE:TaskAttackMapObject( PointVec2, WeaponType, WeaponExpend, 
   local DCSTask
   DCSTask = { id = 'AttackMapObject',
     params = {
-    point = PointVec2,
+    point = Vec2,
     weaponType = WeaponType, 
     expend = WeaponExpend,
     attackQty = AttackQty, 
@@ -793,11 +793,11 @@ end
 -- If another controllable is on land the unit / controllable will orbit around. 
 -- @param #CONTROLLABLE self
 -- @param Controllable#CONTROLLABLE FollowControllable The controllable to be followed.
--- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
+-- @param DCSTypes#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFollow( FollowControllable, PointVec3, LastWaypointIndex )
-  self:F2( { self.ControllableName, FollowControllable, PointVec3, LastWaypointIndex } )
+function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
+  self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex } )
 
 --  Follow = {
 --    id = 'Follow',
@@ -818,7 +818,7 @@ function CONTROLLABLE:TaskFollow( FollowControllable, PointVec3, LastWaypointInd
   DCSTask = { id = 'Follow',
     params = {
       controllableId = FollowControllable:GetID(),
-      pos = PointVec3,
+      pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
       lastWptIndex = LastWaypointIndex,
     },
@@ -834,13 +834,13 @@ end
 -- The unit / controllable will also protect that controllable from threats of specified types.
 -- @param #CONTROLLABLE self
 -- @param Controllable#CONTROLLABLE EscortControllable The controllable to be escorted.
--- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
+-- @param DCSTypes#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @param #number EngagementDistanceMax Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
 -- @param DCSTypes#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskEscort( FollowControllable, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes )
-  self:F2( { self.ControllableName, FollowControllable, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
+function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
+  self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
 
 --  Escort = {
 --    id = 'Escort',
@@ -863,7 +863,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, PointVec3, LastWaypointInd
   DCSTask = { id = 'Follow',
     params = {
       controllableId = FollowControllable:GetID(),
-      pos = PointVec3,
+      pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
       lastWptIndex = LastWaypointIndex,
       engagementDistMax = EngagementDistance,
@@ -880,11 +880,11 @@ end
 
 --- (GROUND) Fire at a VEC2 point until ammunition is finished.
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 The point to fire at.
+-- @param DCSTypes#Vec2 Vec2 The point to fire at.
 -- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( PointVec2, Radius )
-  self:F2( { self.ControllableName, PointVec2, Radius } )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
+  self:F2( { self.ControllableName, Vec2, Radius } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
@@ -897,7 +897,7 @@ function CONTROLLABLE:TaskFireAtPoint( PointVec2, Radius )
   local DCSTask
   DCSTask = { id = 'FireAtPoint',
     params = {
-      point = PointVec2,
+      point = Vec2,
       radius = Radius,
     }
   }
@@ -1004,13 +1004,13 @@ end
 
 --- (AIR) Engaging a targets of defined types at circle-shaped zone.
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the zone. 
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the zone. 
 -- @param DCSTypes#Distance Radius Radius of the zone. 
 -- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priority )
-  self:F2( { self.ControllableName, PointVec2, Radius, TargetTypes, Priority } )
+function CONTROLLABLE:EnRouteTaskEngageTargets( Vec2, Radius, TargetTypes, Priority )
+  self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
 
 --  EngageTargetsInZone = { 
 --    id = 'EngageTargetsInZone', 
@@ -1025,7 +1025,7 @@ function CONTROLLABLE:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, 
   local DCSTask
   DCSTask = { id = 'EngageTargetsInZone',
     params = {
-      point = PointVec2, 
+      point = Vec2, 
       zoneRadius = Radius, 
       targetTypes = TargetTypes,  
       priority = Priority 
@@ -1428,12 +1428,12 @@ end
 function CONTROLLABLE:TaskRouteToVec3( Point, Speed )
   self:F2( { Point, Speed } )
 
-  local ControllablePoint = self:GetUnit( 1 ):GetPointVec3()
+  local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
 
   local PointFrom = {}
-  PointFrom.x = ControllablePoint.x
-  PointFrom.y = ControllablePoint.z
-  PointFrom.alt = ControllablePoint.y
+  PointFrom.x = ControllableVec3.x
+  PointFrom.y = ControllableVec3.z
+  PointFrom.alt = ControllableVec3.y
   PointFrom.alt_type = "BARO"
   PointFrom.type = "Turning Point"
   PointFrom.action = "Turning Point"

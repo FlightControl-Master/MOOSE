@@ -297,6 +297,43 @@ function CARGO_REPRESENTABLE:OnBoarded( FsmP, Event, From, To, CargoCarrier )
   end
 end
 
+--- UnBoard Event.
+-- @param #CARGO_REPRESENTABLE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Angle, Distance )
+  self:F()
+
+  self.CargoInAir = self.CargoObject:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only unboard the cargo when the carrier is not in the air.
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+
+    local Points = {}
+
+    local PointStartVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    local PointEndVec2 = CargoCarrier:GetPointVec2()
+
+
+    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+    Points[#Points+1] = PointEndVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 4 )
+  end
+
+  self:_NextEvent( FsmP.Boarded, CargoCarrier )
+
+end
+
 --- UnBoarded Event.
 -- @param #CARGO self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
@@ -886,17 +923,17 @@ function CARGO_ZONE:Signal()
       if SignalUnit then
 
         self:T( 'Signalling Unit' )
-        local SignalVehiclePos = SignalUnit:GetPointVec3()
-        SignalVehiclePos.y = SignalVehiclePos.y + 2
+        local SignalVehicleVec3 = SignalUnit:GetVec3()
+        SignalVehicleVec3.y = SignalVehicleVec3.y + 2
 
         if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-          trigger.action.smoke( SignalVehiclePos, self.SignalColor.TRIGGERCOLOR )
+          trigger.action.smoke( SignalVehicleVec3, self.SignalColor.TRIGGERCOLOR )
           Signalled = true
 
         elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
 
-          trigger.action.signalFlare( SignalVehiclePos, self.SignalColor.TRIGGERCOLOR , 0 )
+          trigger.action.signalFlare( SignalVehicleVec3, self.SignalColor.TRIGGERCOLOR , 0 )
           Signalled = false
 
         end
@@ -904,15 +941,15 @@ function CARGO_ZONE:Signal()
 
     else
 
-      local ZonePointVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
+      local ZoneVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
 
       if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-        trigger.action.smoke( ZonePointVec3, self.SignalColor.TRIGGERCOLOR  )
+        trigger.action.smoke( ZoneVec3, self.SignalColor.TRIGGERCOLOR  )
         Signalled = true
 
       elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
-        trigger.action.signalFlare( ZonePointVec3, self.SignalColor.TRIGGERCOLOR, 0 )
+        trigger.action.signalFlare( ZoneVec3, self.SignalColor.TRIGGERCOLOR, 0 )
         Signalled = false
 
       end

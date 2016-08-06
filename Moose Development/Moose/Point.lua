@@ -31,7 +31,9 @@
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
 -- @extends Base#BASE
--- @field DCSTypes#Vec3 PointVec3 
+-- @field #number x The x coordinate in 3D space.
+-- @field #number y The y coordinate in 3D space.
+-- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
 -- @field #POINT_VEC3.FlareColor FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
@@ -113,8 +115,9 @@ POINT_VEC3 = {
 function POINT_VEC3:New( x, y, z )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self.PointVec3 = { x = x, y = y, z = z }
-  self:F2( self.PointVec3 )
+  self.x = x
+  self.y = y
+  self.z = z
   return self
 end
 
@@ -132,14 +135,14 @@ end
 -- @param #POINT_VEC3 self
 -- @return DCSTypes#Vec3 The Vec3 coodinate.
 function POINT_VEC3:GetVec3()
-  return self.PointVec3
+  return { x = self.x, y = self.y, z = self.z }
 end
 
 --- Return the coordinates of the POINT_VEC3 in Vec2 format.
 -- @param #POINT_VEC3 self
 -- @return DCSTypes#Vec2 The Vec2 coodinate.
 function POINT_VEC3:GetVec2()
-  return { x = self.PointVec3.x, y = self.PointVec3.z }
+  return { x = self.x, y = self.z }
 end
 
 
@@ -147,24 +150,39 @@ end
 -- @param #POINT_VEC3 self
 -- @return #number The x coodinate.
 function POINT_VEC3:GetX()
-  self:F2(self.PointVec3.x)
-  return self.PointVec3.x
+  return self.x
 end
 
 --- Return the y coordinate of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @return #number The y coodinate.
 function POINT_VEC3:GetY()
-  self:F2(self.PointVec3.y)
-  return self.PointVec3.y
+  return self.y
 end
 
 --- Return the z coordinate of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @return #number The z coodinate.
 function POINT_VEC3:GetZ()
-  self:F2(self.PointVec3.z)
-  return self.PointVec3.z
+  return self.z
+end
+
+--- Set the x coordinate of the POINT_VEC3.
+-- @param #number x The x coordinate.
+function POINT_VEC3:SetX( x )
+  self.x = x
+end
+
+--- Set the y coordinate of the POINT_VEC3.
+-- @param #number y The y coordinate.
+function POINT_VEC3:SetY( y )
+  self.y = y
+end
+
+--- Set the z coordinate of the POINT_VEC3.
+-- @param #number z The z coordinate.
+function POINT_VEC3:SetZ( z )
+  self.z = z
 end
 
 --- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
@@ -173,7 +191,7 @@ end
 -- @param DCSTypes#Distance InnerRadius
 -- @return DCSTypes#Vec2 Vec2
 function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-  self:F2( { self.PointVec3, OuterRadius, InnerRadius } )
+  self:F2( { OuterRadius, InnerRadius } )
 
   local Theta = 2 * math.pi * math.random()
   local Radials = math.random() + math.random()
@@ -215,7 +233,7 @@ end
 
 --- Return a direction vector Vec3 from POINT_VEC3 to the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
 function POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
   return { x = TargetPointVec3:GetX() - self:GetX(), y = TargetPointVec3:GetY() - self:GetY(), z = TargetPointVec3:GetZ() - self:GetZ() }
@@ -247,7 +265,7 @@ end
 
 --- Return the 2D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get2DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
@@ -257,10 +275,26 @@ end
 
 --- Return the 3D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get3DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
+  local SourceVec3 = self:GetVec3()
+  return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
+end
+
+--- Add a Distance in meters from the POINT_VEC3 orthogonal plane, with the given angle, and calculate the new POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC3 The new calculated POINT_VEC3.
+function POINT_VEC3:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SY = self:GetY()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TY = Distance * math.sin( Radians ) + SY
+  
   local SourceVec3 = self:GetVec3()
   return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
 end
@@ -294,7 +328,7 @@ end
 function POINT_VEC3:ToStringLL( acc, DMS )
 
   acc = acc or 3
-  local lat, lon = coord.LOtoLL( self.PointVec3 )
+  local lat, lon = coord.LOtoLL( self:GetVec3() )
   return UTILS.tostringLL(lat, lon, acc, DMS)
 end
 
@@ -311,7 +345,7 @@ end
 
 --- Return a BR string from a POINT_VEC3 to the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return #string The BR text.
 function POINT_VEC3:GetBRText( TargetPointVec3 )
     local DirectionVec3 = self:GetDirectionVec3( TargetPointVec3 )
@@ -349,9 +383,9 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self.PointVec3.x
-  RoutePoint.y = self.PointVec3.z
-  RoutePoint.alt = self.PointVec3.y
+  RoutePoint.x = self:GetX()
+  RoutePoint.y = self:GetZ()
+  RoutePoint.alt = self:GetY()
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
@@ -390,8 +424,8 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
-  RoutePoint.x = self.PointVec3.x
-  RoutePoint.y = self.PointVec3.z
+  RoutePoint.x = self:GetX()
+  RoutePoint.y = self:GetZ()
   
   RoutePoint.action = Formation or ""
     
@@ -425,8 +459,8 @@ end
 -- @param #POINT_VEC3 self
 -- @param Point#POINT_VEC3.SmokeColor SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
-  self:F2( { SmokeColor, self.PointVec3 } )
-  trigger.action.smoke( self.PointVec3, SmokeColor )
+  self:F2( { SmokeColor } )
+  trigger.action.smoke( self:GetVec3(), SmokeColor )
 end
 
 --- Smoke the POINT_VEC3 Green.
@@ -469,8 +503,8 @@ end
 -- @param Point#POINT_VEC3.FlareColor
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
-  self:F2( { FlareColor, self.PointVec3 } )
-  trigger.action.signalFlare( self.PointVec3, FlareColor, Azimuth and Azimuth or 0 )
+  self:F2( { FlareColor } )
+  trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
 end
 
 --- Flare the POINT_VEC3 White.
@@ -507,8 +541,9 @@ end
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
--- @field DCSTypes#Vec2 PointVec2
 -- @extends Point#POINT_VEC3
+-- @field #number x The x coordinate in 2D space.
+-- @field #number y the y coordinate in 2D space.
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
   }
@@ -527,10 +562,7 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   end
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
-  self:F2( { x, y, LandHeightAdd } )
   
-  self.PointVec2 = { x = x, y = y }
-
   return self
 end
 
@@ -550,9 +582,6 @@ function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
   local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
   self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
 
-  self.PointVec2 = Vec2
-  self:F2( self.PointVec3 )
-
   return self
 end
 
@@ -570,20 +599,52 @@ function POINT_VEC2:NewFromVec3( Vec3 )
   local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
   self:F2( { Vec2.x, LandHeight, Vec2.y } )
 
-  self.PointVec2 = Vec2
-  self:F2( self.PointVec3 )
-
   return self
 end
 
---- Calculate the distance from a reference @{Point#POINT_VEC2}.
+--- Return the x coordinate of the POINT_VEC2.
 -- @param #POINT_VEC2 self
--- @param #POINT_VEC2 PointVec2Reference The reference @{Point#POINT_VEC2}.
--- @return DCSTypes#Distance The distance from the reference @{Point#POINT_VEC2} in meters.
+-- @return #number The x coodinate.
+function POINT_VEC2:GetX()
+  return self.x
+end
+
+--- Return the y coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @return #number The y coodinate.
+function POINT_VEC2:GetY()
+  return self.z
+end
+
+--- Return the altitude of the land at the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @return #number The land altitude.
+function POINT_VEC2:GetAlt()
+  return land.getHeight( { x = self.x, y = self.z } )
+end
+
+--- Set the x coordinate of the POINT_VEC2.
+-- @param #number x The x coordinate.
+function POINT_VEC2:SetX( x )
+  elf.x = x
+end
+
+--- Set the y coordinate of the POINT_VEC2.
+-- @param #number y The y coordinate.
+function POINT_VEC2:SetY( y )
+  self.z = y
+end
+
+
+
+--- Calculate the distance from a reference @{#POINT_VEC2}.
+-- @param #POINT_VEC2 self
+-- @param #POINT_VEC2 PointVec2Reference The reference @{#POINT_VEC2}.
+-- @return DCSTypes#Distance The distance from the reference @{#POINT_VEC2} in meters.
 function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   self:F2( PointVec2Reference )
   
-  local Distance = ( ( PointVec2Reference.PointVec2.x - self.PointVec2.x ) ^ 2 + ( PointVec2Reference.PointVec2.y - self.PointVec2.y ) ^2 ) ^0.5
+  local Distance = ( ( PointVec2Reference:GetX() - self:GetX() ) ^ 2 + ( PointVec2Reference:GetY() - self:GetY() ) ^2 ) ^0.5
   
   self:T2( Distance )
   return Distance
@@ -596,7 +657,7 @@ end
 function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   self:F2( Vec2Reference )
   
-  local Distance = ( ( Vec2Reference.x - self.PointVec2.x ) ^ 2 + ( Vec2Reference.y - self.PointVec2.y ) ^2 ) ^0.5
+  local Distance = ( ( Vec2Reference.x - self:GetX() ) ^ 2 + ( Vec2Reference.y - self:GetY() ) ^2 ) ^0.5
   
   self:T2( Distance )
   return Distance

@@ -162,9 +162,9 @@ function PROCESS_JTAC:OnJTACMenuSpot( Fsm, Event, From, To, TargetUnit )
   TaskJTAC.Spots[TargetUnitName] = TaskJTAC.Spots[TargetUnitName] or {}
 
   local DCSFACObject = self.FACUnit:GetDCSObject()
-  local TargetVec3 = TargetUnit:GetPointVec3()
+  local TargetVec3 = TargetUnit:GetVec3()
 
-  TaskJTAC.Spots[TargetUnitName] = Spot.createInfraRed( self.FACUnit:GetDCSObject(), { x = 0, y = 1, z = 0 }, TargetUnit:GetPointVec3(), math.random( 1000, 9999 ) )
+  TaskJTAC.Spots[TargetUnitName] = Spot.createInfraRed( self.FACUnit:GetDCSObject(), { x = 0, y = 1, z = 0 }, TargetUnit:GetVec3(), math.random( 1000, 9999 ) )
   
   local SpotData = TaskJTAC.Spots[TargetUnitName]
   self.FACUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " with laser code " .. SpotData:getCode(), 15, self.ProcessGroup )

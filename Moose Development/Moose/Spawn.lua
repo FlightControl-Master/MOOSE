@@ -651,7 +651,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
-    return self:SpawnFromVec3( HostUnit:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostUnit:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
   end
   
   return nil
@@ -670,7 +670,7 @@ function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex
   self:F( { self.SpawnTemplatePrefix, HostStatic, OuterRadius, InnerRadius, SpawnIndex } )
 
   if HostStatic and HostStatic:IsAlive() then
-    return self:SpawnFromVec3( HostStatic:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostStatic:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
   end
   
   return nil

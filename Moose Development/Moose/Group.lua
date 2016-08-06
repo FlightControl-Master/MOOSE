@@ -485,14 +485,14 @@ function GROUP:GetVec2()
   return GroupPointVec2
 end
 
---- Returns the current point (Vec3 vector) of the first DCS Unit in the DCS Group.
--- @return DCSTypes#Vec3 Current Vec3 point of the first DCS Unit of the DCS Group.
-function GROUP:GetPointVec3()
+--- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+-- @return DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
+function GROUP:GetVec3()
   self:F2( self.GroupName )
 
-  local GroupPointVec3 = self:GetUnit(1):GetPointVec3()
-  self:T3( GroupPointVec3 )
-  return GroupPointVec3
+  local GroupVec3 = self:GetUnit(1):GetVec3()
+  self:T3( GroupVec3 )
+  return GroupVec3
 end
 
 
@@ -508,7 +508,8 @@ function GROUP:IsCompletelyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    -- TODO: Rename IsPointVec3InZone to IsVec3InZone
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
     else
       return false
     end
@@ -526,7 +527,7 @@ function GROUP:IsPartlyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return true
     end
   end
@@ -543,7 +544,7 @@ function GROUP:IsNotInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return false
     end
   end
@@ -731,7 +732,7 @@ end
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
-  local Vec3 = self:GetPointVec3()
+  local Vec3 = self:GetVec3()
   Template.x = Vec3.x
   Template.y = Vec3.z
   --Template.x = nil
@@ -742,7 +743,7 @@ function GROUP:Respawn( Template )
     local GroupUnit = UnitData -- Unit#UNIT
     self:E( GroupUnit:GetName() )
     if GroupUnit:IsAlive() then
-      local GroupUnitVec3 = GroupUnit:GetPointVec3()
+      local GroupUnitVec3 = GroupUnit:GetVec3()
       local GroupUnitHeading = GroupUnit:GetHeading()
       Template.units[UnitID].alt = GroupUnitVec3.y
       Template.units[UnitID].x = GroupUnitVec3.x

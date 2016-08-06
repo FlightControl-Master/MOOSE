@@ -2,11 +2,11 @@
 -- 
 -- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
 -- ===========================================================
--- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the DCS Positionable objects:
+-- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
 --
---  * Support all DCS Positionable APIs.
---  * Enhance with Positionable specific APIs not in the DCS Positionable API set.
---  * Manage the "state" of the DCS Positionable.
+--  * Support all DCS APIs.
+--  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
+--  * Manage the "state" of the POSITIONABLE.
 --
 -- 1.1) POSITIONABLE constructor:
 -- ------------------------------
@@ -41,7 +41,7 @@ POSITIONABLE = {
 
 --- Create a new POSITIONABLE from a DCSPositionable
 -- @param #POSITIONABLE self
--- @param DCSPositionable#Positionable PositionableName The DCS Positionable name
+-- @param DCSPositionable#Positionable PositionableName The POSITIONABLE name
 -- @return #POSITIONABLE self
 function POSITIONABLE:New( PositionableName )
   local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
@@ -49,10 +49,10 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Position The 3D position vectors of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -67,10 +67,10 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec2 The 2D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Vec2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVec2()
   self:F2( self.PositionableName )
 
@@ -93,7 +93,7 @@ end
 --- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
 -- @return Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPointVec2()
   self:F2( self.PositionableName )
 
@@ -112,52 +112,52 @@ function POSITIONABLE:GetPointVec2()
 end
 
 
---- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the DCS Positionable within the mission.
+--- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
-function POSITIONABLE:GetRandomPointVec3( Radius )
+-- @return DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetRandomVec3( Radius )
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
     local PositionablePointVec3 = DCSPositionable:getPosition().p
-    local PositionableRandomPointVec3 = {}
+    local PositionableRandomVec3 = {}
     local angle = math.random() * math.pi*2;
-    PositionableRandomPointVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
-    PositionableRandomPointVec3.y = PositionablePointVec3.y
-    PositionableRandomPointVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+    PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+    PositionableRandomVec3.y = PositionablePointVec3.y
+    PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
     
-    self:T3( PositionableRandomPointVec3 )
-    return PositionableRandomPointVec3
+    self:T3( PositionableRandomVec3 )
+    return PositionableRandomVec3
   end
   
   return nil
 end
 
---- Returns the @{DCSTypes#Vec3} vector indicating the point in 3D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
-function POSITIONABLE:GetPointVec3()
+-- @return DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVec3()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPosition().p
-    self:T3( PositionablePointVec3 )
-    return PositionablePointVec3
+    local PositionableVec3 = DCSPositionable:getPosition().p
+    self:T3( PositionableVec3 )
+    return PositionableVec3
   end
   
   return nil
 end
 
---- Returns the altitude of the DCS Positionable.
+--- Returns the altitude of the POSITIONABLE.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Distance The altitude of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Distance The altitude of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetAltitude()
   self:F2()
 
@@ -174,7 +174,7 @@ end
 --- Returns if the Positionable is located above a runway.
 -- @param Positionable#POSITIONABLE self
 -- @return #boolean true if Positionable is above a runway.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:IsAboveRunway()
   self:F2( self.PositionableName )
 
@@ -182,8 +182,8 @@ function POSITIONABLE:IsAboveRunway()
   
   if DCSPositionable then
   
-    local PointVec2 = self:GetVec2()
-    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local Vec2 = self:GetVec2()
+    local SurfaceType = land.getSurfaceType( Vec2 )
     local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
   
     self:T2( IsAboveRunway )
@@ -195,9 +195,9 @@ end
 
 
 
---- Returns the DCS Positionable heading.
+--- Returns the POSITIONABLE heading in degrees.
 -- @param Positionable#POSITIONABLE self
--- @return #number The DCS Positionable heading
+-- @return #number The POSTIONABLE heading
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
 
@@ -218,10 +218,10 @@ function POSITIONABLE:GetHeading()
 end
 
 
---- Returns true if the DCS Positionable is in the air.
+--- Returns true if the POSITIONABLE is in the air.
 -- @param Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
@@ -236,10 +236,10 @@ function POSITIONABLE:InAir()
   return nil
 end
  
---- Returns the DCS Positionable velocity vector.
+--- Returns the POSITIONABLE velocity vector.
 -- @param Positionable#POSITIONABLE self
 -- @return DCSTypes#Vec3 The velocity vector
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocity()
   self:F2( self.PositionableName )
 
@@ -254,10 +254,10 @@ function POSITIONABLE:GetVelocity()
   return nil
 end
 
---- Returns the @{Unit#UNIT} velocity in km/h.
+--- Returns the POSITIONABLE velocity in km/h.
 -- @param Positionable#POSITIONABLE self
 -- @return #number The velocity in km/h
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
 

@@ -512,11 +512,11 @@ function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
   if self.DetailsRangeOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPointVec3()
+    local TargetVec3 = Client:GetVec3()
 
-    local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
-      ( PositionMissile.y - PositionTarget.y )^2 +
-      ( PositionMissile.z - PositionTarget.z )^2
+    local Range = ( ( PositionMissile.x - TargetVec3.x )^2 +
+      ( PositionMissile.y - TargetVec3.y )^2 +
+      ( PositionMissile.z - TargetVec3.z )^2
       ) ^ 0.5 / 1000
 
     RangeText = string.format( ", at %4.2fkm", Range )
@@ -532,11 +532,11 @@ function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
   if self.DetailsBearingOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPointVec3()
+    local TargetVec3 = Client:GetVec3()
 
-    self:T2( { PositionTarget, PositionMissile })
+    self:T2( { TargetVec3, PositionMissile })
 
-    local DirectionVector = { x = PositionMissile.x - PositionTarget.x, y = PositionMissile.y - PositionTarget.y, z = PositionMissile.z - PositionTarget.z }
+    local DirectionVector = { x = PositionMissile.x - TargetVec3.x, y = PositionMissile.y - TargetVec3.y, z = PositionMissile.z - TargetVec3.z }
     local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
     --DirectionRadians = DirectionRadians + routines.getNorthCorrection( PositionTarget )
     if DirectionRadians < 0 then
@@ -580,11 +580,11 @@ function MISSILETRAINER:_TrackMissiles()
   
       if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
         local PositionMissile = TrainerWeapon:getPosition().p
-        local PositionTarget = Client:GetPointVec3()
+        local TargetVec3 = Client:GetVec3()
   
-        local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
-          ( PositionMissile.y - PositionTarget.y )^2 +
-          ( PositionMissile.z - PositionTarget.z )^2
+        local Distance = ( ( PositionMissile.x - TargetVec3.x )^2 +
+          ( PositionMissile.y - TargetVec3.y )^2 +
+          ( PositionMissile.z - TargetVec3.z )^2
           ) ^ 0.5 / 1000
   
         if Distance <= self.Distance then
