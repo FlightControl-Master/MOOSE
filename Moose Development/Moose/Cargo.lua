@@ -72,7 +72,7 @@ function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius )
   self.Weight = Weight
   self.ReportRadius = ReportRadius
   self.NearRadius = NearRadius
-  self.CargoObjects = nil
+  self.CargoObject = nil
   self.CargoCarrier = nil
   self.Representable = false
   self.Slingloadable = false
@@ -96,46 +96,49 @@ function CARGO:Spawn( PointVec2 )
 
 end
 
---- Board Cargo to a Carrier with a defined Speed.
--- @param #CARGO self
--- @param Unit#UNIT CargoCarrier
--- @param #number Speed
-function CARGO:Board( CargoCarrier, Speed )
-  self:F()
-  
-  self:_NextEvent( self.FsmP.Board, CargoCarrier, Speed )
-end
-
---- UnBoard Cargo from a Carrier with a defined Speed.
--- @param #CARGO self
--- @param Unit#UNIT CargoCarrier
--- @param #number Speed
-function CARGO:UnBoard( Speed, Distance, Angle )
-  self:F()
-  
-  self:_NextEvent( self.FsmP.UnBoard, Speed, Distance, Angle )
-end
-
 --- Load Cargo to a Carrier.
 -- @param #CARGO self
 -- @param Unit#UNIT CargoCarrier
--- @param #number Speed
 function CARGO:Load( CargoCarrier )
   self:F()
   
   self:_NextEvent( self.FsmP.Load, CargoCarrier )
 end
 
---- UnLoad Cargo from a Carrier.
+--- UnLoad Cargo from a Carrier with a UnLoadDistance and an Angle.
+-- @param #CARGO self
+-- @param #number UnLoadDistance
+-- @param #number Angle
+function CARGO:UnLoad( CargoCarrier )
+  self:F()
+  
+  self:_NextEvent( self.FsmP.Board, CargoCarrier )
+end
+
+--- Board Cargo to a Carrier with a defined Speed.
 -- @param #CARGO self
 -- @param Unit#UNIT CargoCarrier
 -- @param #number Speed
-function CARGO:UnLoad()
+-- @param #number BoardDistance
+-- @param #number Angle
+function CARGO:Board( CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
   
-  self:_NextEvent( self.FsmP.UnLoad )
+  self:_NextEvent( self.FsmP.Board, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
 end
 
+--- UnBoard Cargo from a Carrier with a defined Speed.
+-- @param #CARGO self
+-- @param #number Speed
+-- @param #number UnLoadDistance
+-- @param #number UnBoardDistance
+-- @param #number UnBoardRadius
+-- @param #number Angle
+function CARGO:UnBoard( Speed, UnLoadDistance, UnBoardDistance, UnBoardRadius, Angle )
+  self:F()
+  
+  self:_NextEvent( self.FsmP.UnBoard, Speed, UnLoadDistance, UnBoardDistance, UnBoardRadius, Angle )
+end
 
 --- Check if CargoCarrier is near the Cargo to be Loaded.
 -- @param #CARGO self
@@ -167,8 +170,7 @@ end
 function CARGO:OnLoaded( FsmP, Event, From, To, CargoCarrier )
   self:F()
 
-  self.CargoCarrier = CargoCarrier
-  self:T( "Cargo " .. self.Name .. " loaded in " .. self.CargoCarrier:GetName() )
+  self:T( "Cargo " .. self.Name .. " loaded in " .. CargoCarrier:GetName() )
 end
 
 --- UnLoaded State.
@@ -187,6 +189,12 @@ end
 function CARGO:_NextEvent( NextEvent, ... )
   self:F( self.Name )
   SCHEDULER:New( self.FsmP, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
+end
+
+--- @param #CARGO self
+function CARGO:_Next( NextEvent, ... )
+  self:F( self.Name )
+  self.FsmP.NextEvent( self, unpack(arg) ) -- This calls the next event...
 end
 
 end
@@ -213,20 +221,52 @@ function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, Repo
   local self = BASE:Inherit( self, CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
-  self:T( CargoObject )
-  self.CargoObject = CargoObject
   
-    self.FsmP = STATEMACHINE_PROCESS:New( self, {
+  
+
+  return self
+end
+
+
+
+end
+
+do -- CARGO_UNIT
+
+  --- @type CARGO_UNIT
+  -- @extends #CARGO_REPRESENTABLE
+  CARGO_UNIT = {
+    ClassName = "CARGO_UNIT"
+  }
+
+--- CARGO_UNIT Constructor.
+-- @param #CARGO_UNIT self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT CargoUnit
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_UNIT
+function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  self:T( CargoUnit )
+  self.CargoObject = CargoUnit
+
+  self.FsmP = STATEMACHINE_PROCESS:New( self, {
     initial = 'UnLoaded',
     events = {
-      { name = 'Board',   from = 'UnLoaded',           to = 'Boarding' },
-      { name = 'Boarded',    from = 'Boarding',       to = 'Boarding' },
-      { name = 'Load',  from = 'Boarding',       to = 'Loaded' },
-      { name = 'Load',  from = 'UnLoaded',       to = 'Loaded' },
-      { name = 'UnBoard',    from = 'Loaded',      to = 'UnBoarding' },
-      { name = 'UnBoarded',    from = 'UnBoarding',       to = 'UnBoarding' },
-      { name = 'UnLoad',    from = 'UnBoarding',      to = 'UnLoaded' },
-      { name = 'UnLoad',    from = 'Loaded',       to = 'UnLoaded' },
+      { name = 'Board',       from = 'UnLoaded',        to = 'Boarding' },
+      { name = 'Boarded',     from = 'Boarding',        to = 'Boarding' },
+      { name = 'Load',        from = 'Boarding',        to = 'Loaded' },
+      { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
+      { name = 'UnBoard',     from = 'Loaded',          to = 'UnBoarding' },
+      { name = 'UnBoarded',   from = 'UnBoarding',      to = 'UnBoarding' },
+      { name = 'UnLoad',      from = 'UnBoarding',      to = 'UnLoaded' },
+      { name = 'UnLoad',      from = 'Loaded',          to = 'UnLoaded' },
     },
     callbacks = {
       onBoard = self.OnBoard,
@@ -239,19 +279,20 @@ function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, Repo
       onUnLoaded = self.OnUnLoaded,
     },
   } )
-  
+
+  self:T( self.ClassName )
 
   return self
 end
 
 --- Board Event.
--- @param #CARGO_REPRESENTABLE self
+-- @param #CARGO_UNIT self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed )
+function CARGO_UNIT:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -280,13 +321,13 @@ function CARGO_REPRESENTABLE:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed
 end
 
 --- Boarded Event.
--- @param #CARGO self
+-- @param #CARGO_UNIT self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnBoarded( FsmP, Event, From, To, CargoCarrier )
+function CARGO_UNIT:OnBoarded( FsmP, Event, From, To, CargoCarrier )
   self:F()
 
   if self:IsNear( CargoCarrier ) then
@@ -297,13 +338,17 @@ function CARGO_REPRESENTABLE:OnBoarded( FsmP, Event, From, To, CargoCarrier )
 end
 
 --- UnBoard Event.
--- @param #CARGO_REPRESENTABLE self
+-- @param #CARGO_UNIT self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Distance, Angle )
+-- @param #number Speed
+-- @param #number UnLoadDistance
+-- @param #number UnBoardDistance
+-- @param #number Radius
+-- @param #number Angle
+function CARGO_UNIT:OnUnBoard( FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -313,292 +358,332 @@ function CARGO_REPRESENTABLE:OnUnBoard( FsmP, Event, From, To, Speed, Distance, 
   -- Only unboard the cargo when the carrier is not in the air.
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
-  
-    if self.FsmP:is( "UnLoading" ) then
-      self:_NextEvent( FsmP.UnLoad, 3, Angle )
-      self:_NextEvent( FsmP.UnBoard, Speed, Distance, Angle )
-    else
-      local Points = {}
-  
-      local StartPointVec2 = self.CargoCarrier:GetPointVec2()
-      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-      self:T( { CargoCarrierHeading, CargoDeployHeading } )
-      local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
-      local CargoDeployPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius( self.NearRadius )
-  
-      Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-      Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
-  
-      local TaskRoute = self.CargoObject:TaskRoute( Points )
-      self.CargoObject:SetTask( TaskRoute, 1 )
-    end
+
   end
 
+  self:_NextEvent( FsmP.UnBoarded, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
 
 end
 
---- Load Event.
--- @param #CARGO self
+--- UnBoarded Event.
+-- @param #CARGO_UNIT self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnLoad( FsmP, Event, From, To, CargoCarrier )
+function CARGO_UNIT:OnUnBoarded( FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
   self:F()
 
+  self:_NextEvent( FsmP.UnLoad, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+end
+
+
+--- Load Event.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_UNIT:OnLoad( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  self:T( self.ClassName )
+
   self.CargoCarrier = CargoCarrier
-  self.CargoObject:Destroy()
+  
+  -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
+  if self.CargoObject then
+    self.CargoObject:Destroy()
+  end
 end
 
 --- UnLoad Event.
--- @param #CARGO self
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param #number Distance
+-- @param #number Angle
+function CARGO_UNIT:OnUnLoad( FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+  self:F()
+  
+  local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = StartPointVec2:Translate( UnLoadDistance, CargoDeployHeading )
+
+  -- Respawn the group...
+  if self.CargoObject then
+    self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+
+    local Points = {}
+
+    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    self:T( { CargoCarrierHeading, CargoDeployHeading } )
+    local CargoDeployPointVec2 = StartPointVec2:Translate( UnBoardDistance, CargoDeployHeading )
+    local CargoDeployPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius( Radius )
+
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 4 )
+  end
+end
+
+end
+
+do -- CARGO_PACKAGE
+
+  --- @type CARGO_PACKAGE
+  -- @extends #CARGO_REPRESENTABLE
+  CARGO_PACKAGE = {
+    ClassName = "CARGO_PACKAGE"
+  }
+
+--- CARGO_PACKAGE Constructor.
+-- @param #CARGO_PACKAGE self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT CargoCarrier The UNIT carrying the package.
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_PACKAGE
+function CARGO_PACKAGE:New( Mission, CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  self:T( CargoCarrier )
+  self.CargoCarrier = CargoCarrier
+
+  self.FsmP = STATEMACHINE_PROCESS:New( self, {
+    initial = 'UnLoaded',
+    events = {
+      { name = 'Board',       from = 'UnLoaded',        to = 'Boarding' },
+      { name = 'Boarded',     from = 'Boarding',        to = 'Boarding' },
+      { name = 'Load',        from = 'Boarding',        to = 'Loaded' },
+      { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
+      { name = 'UnBoard',     from = 'Loaded',          to = 'UnBoarding' },
+      { name = 'UnBoarded',   from = 'UnBoarding',      to = 'UnBoarding' },
+      { name = 'UnLoad',      from = 'UnBoarding',      to = 'UnLoaded' },
+      { name = 'UnLoad',      from = 'Loaded',          to = 'UnLoaded' },
+    },
+    callbacks = {
+      onBoard = self.OnBoard,
+      onBoarded = self.OnBoarded,
+      onLoad = self.OnLoad,
+      onUnBoard = self.OnUnBoard,
+      onUnBoarded = self.OnUnBoarded,
+      onUnLoad = self.OnUnLoad,
+      onLoaded = self.OnLoaded,
+      onUnLoaded = self.OnUnLoaded,
+    },
+  } )
+
+  return self
+end
+
+--- Board Event.
+-- @param #CARGO_PACKAGE self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_REPRESENTABLE:OnUnLoad( FsmP, Event, From, To, Distance, Angle )
+-- @param #number Speed
+-- @param #number BoardDistance
+-- @param #number Angle
+function CARGO_PACKAGE:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  self:F()
+
+  self.CargoInAir = self.CargoCarrier:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only move the CargoCarrier to the New CargoCarrier when the New CargoCarrier is not in the air.
+  if not self.CargoInAir then
+
+    local Points = {}
+
+    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    self:T( { CargoCarrierHeading, CargoDeployHeading } )
+    local CargoDeployPointVec2 = CargoCarrier:GetPointVec2():Translate( BoardDistance, CargoDeployHeading )
+
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+    self.CargoCarrier:SetTask( TaskRoute, 1 )
+  end
+
+  self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+
+end
+
+--- Check if CargoCarrier is near the Cargo to be Loaded.
+-- @param #CARGO_PACKAGE self
+-- @param Unit#UNIT CargoCarrier
+-- @return #boolean
+function CARGO_PACKAGE:IsNear( CargoCarrier )
+  self:F()
+
+  local CargoCarrierPoint = CargoCarrier:GetPointVec2()
+  
+  local Distance = CargoCarrierPoint:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+  self:T( Distance )
+  
+  if Distance <= self.NearRadius then
+    return true
+  else
+    return false
+  end
+end
+
+--- Boarded Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_PACKAGE:OnBoarded( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  self:F()
+
+  if self:IsNear( CargoCarrier ) then
+    self:_NextEvent( FsmP.Load, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  else
+    self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  end
+end
+
+--- UnBoard Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param #number Speed
+-- @param #number UnLoadDistance
+-- @param #number UnBoardDistance
+-- @param #number Radius
+-- @param #number Angle
+function CARGO_PACKAGE:OnUnBoard( FsmP, Event, From, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+  self:F()
+
+  self.CargoInAir = self.CargoCarrier:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only unboard the cargo when the carrier is not in the air.
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+
+    self:_Next( self.FsmP.UnLoad, UnLoadDistance, Angle )
+  
+    local Points = {}
+
+    local StartPointVec2 = CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    self:T( { CargoCarrierHeading, CargoDeployHeading } )
+    local CargoDeployPointVec2 = StartPointVec2:Translate( UnBoardDistance, CargoDeployHeading )
+
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = CargoCarrier:TaskRoute( Points )
+    CargoCarrier:SetTask( TaskRoute, 1 )
+  end
+
+  self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+
+end
+
+--- UnBoarded Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_PACKAGE:OnUnBoarded( FsmP, Event, From, To, CargoCarrier, Speed )
+  self:F()
+
+  if self:IsNear( CargoCarrier ) then
+    self:_NextEvent( FsmP.UnLoad, CargoCarrier, Speed )
+  else
+    self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+  end
+end
+
+--- Load Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+-- @param #number LoadDistance
+-- @param #number Angle
+function CARGO_PACKAGE:OnLoad( FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle )
+  self:F()
+
+  local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = StartPointVec2:Translate( LoadDistance, CargoDeployHeading )
+  
+  self.CargoCarrier = CargoCarrier
+
+  local Points = {}
+  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+  local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+  self.CargoCarrier:SetTask( TaskRoute, 1 )
+
+end
+
+--- UnLoad Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param #number Distance
+-- @param #number Angle
+function CARGO_PACKAGE:OnUnLoad( FsmP, Event, From, To, CargoCarrier, Speed, Distance, Angle )
   self:F()
   
   local StartPointVec2 = self.CargoCarrier:GetPointVec2()
   local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
   local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
   local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
-
-  -- Respawn the group...
-  self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
-end
-
-end
-
-do -- CARGO_UNIT
-
-  --- @type CARGO_UNIT
-  -- @extends #CARGO_REPRESENTABLE
-  CARGO_UNIT = {
-    ClassName = "CARGO_UNIT"
-  }
-
---- CARGO_UNIT Constructor.
--- @param #CARGO_UNIT self
--- @param Mission#MISSION Mission
--- @param Unit#UNIT CargoUnit
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_UNIT
-function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-
-  return self
-end
-
-end
-
-
-CARGO_PACKAGE = {
-  ClassName = "CARGO_PACKAGE"
-}
-
-
-function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-  self:F( { CargoType, CargoName, CargoWeight, CargoClient } )
-
-  self.CargoClient = CargoClient
-
-  CARGOS[self.CargoName] = self
-
-  return self
-
-end
-
-
-function CARGO_PACKAGE:Spawn( Client )
-  self:F( { self, Client } )
-
-  -- this needs to be checked thoroughly
-
-  local CargoClientGroup = self.CargoClient:GetDCSGroup()
-  if not CargoClientGroup then
-    if not self.CargoClientSpawn then
-      self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() ):Limit( 1, 1 )
-    end
-    self.CargoClientSpawn:ReSpawn( 1 )
-  end
-
-  local SpawnCargo = true
-
-  if self:IsStatusNone() then
-
-  elseif self:IsStatusLoading() or self:IsStatusLoaded() then
-
-    local CargoClientLoaded = self:IsLoadedInClient()
-    if CargoClientLoaded and CargoClientLoaded:GetDCSGroup() then
-      SpawnCargo = false
-    end
-
-  elseif self:IsStatusUnLoaded() then
-
-    SpawnCargo = false
-
-  else
-
-  end
-
-  if SpawnCargo then
-    self:StatusLoaded( self.CargoClient )
-  end
-
-  return self
-end
-
-
-function CARGO_PACKAGE:IsNear( Client, LandingZone )
-  self:F()
-
-  local Near = false
-
-  if self.CargoClient and self.CargoClient:GetDCSGroup() then
-    self:T( self.CargoClient.ClientName )
-    self:T( 'Client Exists.' )
-
-    if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:GetPositionVec3(), 150 ) then
-      Near = true
-    end
-  end
-
-  return Near
-
-end
-
-
-function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
-  self:F()
-
-  local Valid = true
-
-  local ClientUnit = Client:GetClientGroupDCSUnit()
-
-  local CarrierPos = ClientUnit:getPoint()
-  local CarrierPosMove = ClientUnit:getPoint()
-  local CarrierPosOnBoard = ClientUnit:getPoint()
-  local CarrierPosMoveAway = ClientUnit:getPoint()
-
-  local CargoHostGroup = self.CargoClient:GetDCSGroup()
-  local CargoHostName = self.CargoClient:GetDCSGroup():getName()
-
-  local CargoHostUnits = CargoHostGroup:getUnits()
-  local CargoPos = CargoHostUnits[1]:getPoint()
+  
+  self.CargoCarrier = CargoCarrier
 
   local Points = {}
+  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
 
-  self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-  self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-
-  Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-  self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-
-  if OnBoardSide == nil then
-    OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-  end
-
-  if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-
-    self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-    CarrierPosMove.z = CarrierPosMove.z - 25
-    CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-    CarrierPosMoveAway.z = CarrierPosMoveAway.z - 20
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-  elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-
-    self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-    CarrierPosMove.z = CarrierPosMove.z + 25
-    CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-    CarrierPosMoveAway.z = CarrierPosMoveAway.z + 20
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-  elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-
-    self:T( "TransportCargoOnBoard: Onboarding BACK" )
-    CarrierPosMove.x = CarrierPosMove.x - 25
-    CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-    CarrierPosMoveAway.x = CarrierPosMoveAway.x - 20
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-  elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-
-    self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-    CarrierPosMove.x = CarrierPosMove.x + 25
-    CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-    CarrierPosMoveAway.x = CarrierPosMoveAway.x + 20
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-  elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-
-    self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-    CarrierPosMove.x = CarrierPosMove.x + 25
-    CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-    CarrierPosMoveAway.x = CarrierPosMoveAway.x + 20
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-    Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-  end
-  self:T( "Routing " .. CargoHostName )
-
-  SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
-
-  return Valid
+  local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+  self.CargoCarrier:SetTask( TaskRoute, 1 )
 
 end
 
 
-function CARGO_PACKAGE:OnBoarded( Client, LandingZone )
-  self:F()
-
-  local OnBoarded = false
-
-  if self.CargoClient and self.CargoClient:GetDCSGroup() then
-    if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:GetPositionVec3(), 10 ) then
-
-      -- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
-      self:StatusLoaded( Client )
-
-      -- All done, onboarded the Cargo to the new Client.
-      OnBoarded = true
-    end
-  end
-
-  return OnBoarded
 end
 
-
-function CARGO_PACKAGE:UnLoad( Client, TargetZoneName )
-  self:F()
-
-  self:T( 'self.CargoName = ' .. self.CargoName )
-  --self:T( 'self.CargoHostName = ' .. self.CargoHostName )
-
-  --self.CargoSpawn:FromCarrier( Client:GetDCSGroup(), TargetZoneName, self.CargoHostName )
-  self:StatusUnLoaded()
-
-  return Cargo
-end
 
 
 CARGO_SLINGLOAD = {

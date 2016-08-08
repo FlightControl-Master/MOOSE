@@ -224,7 +224,7 @@ end
 function POINT_VEC3:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
   self:F2( { OuterRadius, InnerRadius } )
   
-  return POINT_VEC2:NewFromVec2( self:GetRandomPointVec2InRadius( OuterRadius, InnerRadius ) )
+  return POINT_VEC2:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
 end
 
 --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
