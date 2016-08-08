@@ -77,8 +77,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
-					<li><a href="Task_CAS.html">Task_CAS</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
@@ -139,7 +139,7 @@ So in principle, the group list will contain all parameters and configurations a
 
 <ul>
     <li><a href="##(SPAWN).Limit">SPAWN.Limit</a>: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.</li>
-    <li><a href="##(SPAWN).RandomizeRoute">SPAWN.RandomizeRoute</a>: Randomize the routes of spawned groups.</li>
+    <li><a href="##(SPAWN).RandomizeRoute">SPAWN.RandomizeRoute</a>: Randomize the routes of spawned groups, and for air groups also optionally the height.</li>
     <li><a href="##(SPAWN).RandomizeTemplate">SPAWN.RandomizeTemplate</a>: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. </li>
     <li><a href="##(SPAWN).Uncontrolled">SPAWN.Uncontrolled</a>: Spawn plane groups uncontrolled.</li>
     <li><a href="##(SPAWN).Array">SPAWN.Array</a>: Make groups visible before they are actually activated, and order these groups like a batallion in an array.</li>
@@ -310,7 +310,7 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RandomizeRoute">SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).RandomizeRoute">SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight)</a></td>
 		<td class="summary">
 <p>Randomizes the defined route of the SpawnTemplatePrefix group in the ME.</p>
 </td>
@@ -370,6 +370,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnCount">SPAWN.SpawnCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, OuterRadius, InnerRadius, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting static.</p>
@@ -418,6 +424,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnGroups">SPAWN.SpawnGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a Group within a given <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</p>
@@ -425,6 +437,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnIndex">SPAWN.SpawnIndex</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnIsScheduled">SPAWN.SpawnIsScheduled</a></td>
 		<td class="summary">
 
 </td>
@@ -442,6 +460,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnRandomize">SPAWN.SpawnRandomize</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnRandomizeRoute">SPAWN.SpawnRandomizeRoute</a></td>
 		<td class="summary">
 
@@ -449,6 +473,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnRandomizeRouteEndPoint">SPAWN.SpawnRandomizeRouteEndPoint</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnRandomizeRouteHeight">SPAWN.SpawnRandomizeRouteHeight</a></td>
 		<td class="summary">
 
 </td>
@@ -496,6 +526,12 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnTemplate">SPAWN.SpawnTemplate</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnTemplatePrefix">SPAWN.SpawnTemplatePrefix</a></td>
 		<td class="summary">
 
@@ -520,9 +556,9 @@ Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).UnControlled">SPAWN:UnControlled()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).UnControlled">SPAWN.UnControlled</a></td>
 		<td class="summary">
-<p>Will spawn a plane group in uncontrolled mode...</p>
+
 </td>
 		</tr>
 		<tr>
@@ -1196,7 +1232,7 @@ Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter 
 <dt>
 
 <a id="#(SPAWN).RandomizeRoute" >
-<strong>SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius)</strong>
+<strong>SPAWN:RandomizeRoute(SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight)</strong>
 </a>
 </dt>
 <dd>
@@ -1226,6 +1262,12 @@ This parameter is useful to avoid randomization to end at a waypoint earlier tha
 				
 <p><code><em>#number SpawnRadius </em></code>: 
 is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SpawnHeight </em></code>: 
+(optional) Specifies the <strong>additional</strong> height in meters that can be added to the base height specified at each waypoint in the ME.</p>
 
 				</li>
 		</ul>
@@ -1331,6 +1373,9 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
+	
+<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1421,6 +1466,23 @@ The group that was spawned. You can use this group for further actions.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SPAWN).SpawnCount" >
+<strong>SPAWN.SpawnCount</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> The internal counter of the amount of spawning the has happened since SpawnStart.</p>
 
 </dd>
 </dl>
@@ -1763,6 +1825,23 @@ SpawnGroupName</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SPAWN).SpawnGroups" >
+<strong>SPAWN.SpawnGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Array containing the descriptions of each Group to be Spawned.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SPAWN).SpawnInZone" >
 <strong>SPAWN:SpawnInZone(Zone, ZoneRandomize, SpawnIndex)</strong>
 </a>
@@ -1830,6 +1909,23 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(SPAWN).SpawnIsScheduled" >
+<strong>SPAWN.SpawnIsScheduled</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
@@ -1865,6 +1961,23 @@ when nothing was spawned.</p>
 <dt>
 
 		<em>#boolean</em>
+<a id="#(SPAWN).SpawnRandomize" >
+<strong>SPAWN.SpawnRandomize</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Sets the randomization flag of new Spawned units to false.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
 <a id="#(SPAWN).SpawnRandomizeRoute" >
 <strong>SPAWN.SpawnRandomizeRoute</strong>
 </a>
@@ -1881,6 +1994,20 @@ when nothing was spawned.</p>
 		<em></em>
 <a id="#(SPAWN).SpawnRandomizeRouteEndPoint" >
 <strong>SPAWN.SpawnRandomizeRouteEndPoint</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWN).SpawnRandomizeRouteHeight" >
+<strong>SPAWN.SpawnRandomizeRouteHeight</strong>
 </a>
 </dt>
 <dd>
@@ -2024,6 +2151,23 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SPAWN).SpawnTemplate" >
+<strong>SPAWN.SpawnTemplate</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(SPAWN).SpawnTemplatePrefix" >
 <strong>SPAWN.SpawnTemplatePrefix</strong>
@@ -2098,21 +2242,17 @@ The group that was spawned. You can use this group for further actions.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
 <a id="#(SPAWN).UnControlled" >
-<strong>SPAWN:UnControlled()</strong>
+<strong>SPAWN.UnControlled</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Will spawn a plane group in uncontrolled mode...</p>
+
 
 	
-<p>This will be similar to the uncontrolled flag setting in the ME.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
-self</p>
+<p> When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.</p>
 
 </dd>
 </dl>

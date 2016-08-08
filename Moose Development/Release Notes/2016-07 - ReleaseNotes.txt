@@ -1,3 +1,7 @@
+2016-08-08
+	- Added briefing to method ESCORT:New()
+		-- If no EscortBriefing is given, the New() method will show the default briefing.
+		
 2016-08-06
     - Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
     	-- Replaced method PointVec3() to Vec3() where the code manages a Vec3. Replaced all references to the method.

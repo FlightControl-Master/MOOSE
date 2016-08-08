@@ -164,6 +164,7 @@ ESCORT = {
 -- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
+-- @param #string EscortBriefing A text showing the ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #ESCORT self
 -- @usage
 -- -- Declare a new EscortPlanes object as follows:
@@ -201,12 +202,18 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
 
   self.EscortGroup:OptionROTVertical()
   self.EscortGroup:OptionROEOpenFire()
-
-  EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
-    "We're escorting your flight. " ..
-    "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
-    60, EscortClient
-  )
+  
+  if not EscortBriefing then
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
+      "We're escorting your flight. " ..
+      "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
+      60, EscortClient
+    )
+  else
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") " .. EscortBriefing,
+      60, EscortClient
+    )
+  end
 
   self.FollowDistance = 100
   self.CT1 = 0
