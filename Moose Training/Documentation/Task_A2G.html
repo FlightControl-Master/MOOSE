@@ -62,7 +62,7 @@
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li>Process</li>
+					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
@@ -77,7 +77,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
-					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li>Task_A2G</li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
@@ -90,101 +90,91 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Process</code></h1>
+   <h1>Module <code>Task_A2G</code></h1>
    
+<p>This module contains the TASK_A2G classes.</p>
+
+   
+
+<h1>1) <a href="##(TASK_A2G)">#TASK_A2G</a> class, extends <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></h1>
+<p>The <a href="##(TASK_A2G)">#TASK_A2G</a> class defines a CAS or BAI task of a <a href="Set.html">Set</a> of Target Units, 
+located at a Target Zone, based on the tasking capabilities defined in <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>.
+The TASK_A2G is implemented using a <a href="Statemachine.html##(STATEMACHINE_TASK)">Statemachine#STATEMACHINE_TASK</a>, and has the following statuses:</p>
+
+<ul>
+    <li><strong>None</strong>: Start of the process</li>
+    <li><strong>Planned</strong>: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Assign.html##(PROCESS_ASSIGN_ACCEPT)">Process<em>Assign#PROCESS</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
+    <li><strong>Assigned</strong>: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Route.html##(PROCESS_ROUTE)">Process<em>Route#PROCESS</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
+    <li><strong>Success</strong>: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
+    <li><strong>Failed</strong>: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+</ul>
+
+<hr/>
+
+<h3>Authors: FlightControl - Design and Programming</h3>
 
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#PROCESS">PROCESS</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2G">TASK_A2G</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(PROCESS)">Type <code>PROCESS</code></a></h2>
+			<h2><a id="#(TASK_A2G)">Type <code>TASK_A2G</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).AddScore">PROCESS:AddScore(ProcessStatus, ScoreText, Score)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).AssignToUnit">TASK_A2G:AssignToUnit(TaskUnit)</a></td>
 		<td class="summary">
-<p>Adds a score for the PROCESS to be achieved.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Unit.html">Unit</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ClassName">PROCESS.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).Fsm">PROCESS.Fsm</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).ClassName">TASK_A2G.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).MissionMenu">PROCESS.MissionMenu</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).CleanUp">TASK_A2G:CleanUp()</a></td>
+		<td class="summary">
+<p>Removes a TASK_A2G.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetPlannedMenuText">TASK_A2G:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).New">PROCESS:New(ProcessName, Task, ProcessUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, TaskType, UnitSetTargets, TargetZone, TargetSetUnit, FACUnit)</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK Base.</p>
+<p>Instantiates a new TASK_A2G.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).NextEvent">PROCESS.NextEvent</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).OnNext">TASK_A2G:OnNext(Fsm, Event, From, To, Event)</a></td>
 		<td class="summary">
-
+<p>StateMachine callback function for a TASK</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).OnStateChange">PROCESS:OnStateChange(Fsm, Event, From, To)</a></td>
-		<td class="summary">
-<p>StateMachine callback function for a PROCESS</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ProcessGroup">PROCESS.ProcessGroup</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).TaskScheduler">TASK_A2G.TaskScheduler</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ProcessName">PROCESS.ProcessName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G)._Schedule">TASK_A2G:_Schedule()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ProcessScheduler">PROCESS.ProcessScheduler</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).ProcessUnit">PROCESS.ProcessUnit</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).Scores">PROCESS.Scores</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).StopEvents">PROCESS:StopEvents()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PROCESS).Task">PROCESS.Task</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G)._Scheduler">TASK_A2G:_Scheduler()</a></td>
 		<td class="summary">
 
 </td>
@@ -195,9 +185,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(PROCESS)">#PROCESS</a></em>
-<a id="PROCESS" >
-<strong>PROCESS</strong>
+		<em><a href="##(TASK_A2G)">#TASK_A2G</a></em>
+<a id="TASK_A2G" >
+<strong>TASK_A2G</strong>
 </a>
 </dt>
 <dd>
@@ -206,48 +196,35 @@
 
 </dd>
 </dl>
-	<h2><a id="#(Process)" >Type <code>Process</code></a></h2>
+	<h2><a id="#(Task_A2G)" >Type <code>Task_A2G</code></a></h2>
 	
-			<h2><a id="#(PROCESS)" >Type <code>PROCESS</code></a></h2>
+			<h2><a id="#(TASK_A2G)" >Type <code>TASK_A2G</code></a></h2>
 				
-<p>The PROCESS class</p>
+<p>The TASK_A2G class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(PROCESS).AddScore" >
-<strong>PROCESS:AddScore(ProcessStatus, ScoreText, Score)</strong>
+<a id="#(TASK_A2G).AssignToUnit" >
+<strong>TASK_A2G:AssignToUnit(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Adds a score for the PROCESS to be achieved.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Unit.html">Unit</a>.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string ProcessStatus </em></code>: 
-is the status of the PROCESS when the score needs to be given.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ScoreText </em></code>: 
-is a text describing the score that is given according the status.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-is a number providing the score of the status.</p>
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PROCESS)">#PROCESS</a>:</em>
+<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em>
 self</p>
 
 </dd>
@@ -256,8 +233,8 @@ self</p>
 <dt>
 
 		<em>#string</em>
-<a id="#(PROCESS).ClassName" >
-<strong>PROCESS.ClassName</strong>
+<a id="#(TASK_A2G).ClassName" >
+<strong>TASK_A2G.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -269,9 +246,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a></em>
-<a id="#(PROCESS).Fsm" >
-<strong>PROCESS.Fsm</strong>
+<a id="#(TASK_A2G).CleanUp" >
+<strong>TASK_A2G:CleanUp()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a TASK_A2G.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).GetPlannedMenuText" >
+<strong>TASK_A2G:GetPlannedMenuText()</strong>
 </a>
 </dt>
 <dd>
@@ -283,52 +277,63 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a></em>
-<a id="#(PROCESS).MissionMenu" >
-<strong>PROCESS.MissionMenu</strong>
+<a id="#(TASK_A2G).New" >
+<strong>TASK_A2G:New(Mission, SetGroup, TaskName, TaskType, UnitSetTargets, TargetZone, TargetSetUnit, FACUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(PROCESS).New" >
-<strong>PROCESS:New(ProcessName, Task, ProcessUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Instantiates a new TASK Base.</p>
-
-	
-<p>Should never be used. Interface Class.</p>
+<p>Instantiates a new TASK_A2G.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string ProcessName </em></code>: </p>
+<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ProcessUnit </em></code>: </p>
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskType </em></code>: 
+BAI or CAS</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetSetUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FACUnit </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PROCESS)">#PROCESS</a>:</em>
+<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em>
 self</p>
 
 </dd>
@@ -336,32 +341,19 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PROCESS).NextEvent" >
-<strong>PROCESS.NextEvent</strong>
+<a id="#(TASK_A2G).OnNext" >
+<strong>TASK_A2G:OnNext(Fsm, Event, From, To, Event)</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(PROCESS).OnStateChange" >
-<strong>PROCESS:OnStateChange(Fsm, Event, From, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>StateMachine callback function for a PROCESS</p>
+<p>StateMachine callback function for a TASK</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> Fsm </em></code>: </p>
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
 
 				</li>
 				<li>
@@ -379,71 +371,20 @@ self</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
-<a id="#(PROCESS).ProcessGroup" >
-<strong>PROCESS.ProcessGroup</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(PROCESS).ProcessName" >
-<strong>PROCESS.ProcessName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a></em>
-<a id="#(PROCESS).ProcessScheduler" >
-<strong>PROCESS.ProcessScheduler</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
-<a id="#(PROCESS).ProcessUnit" >
-<strong>PROCESS.ProcessUnit</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em></em>
-<a id="#(PROCESS).Scores" >
-<strong>PROCESS.Scores</strong>
+<a id="#(TASK_A2G).TaskScheduler" >
+<strong>TASK_A2G.TaskScheduler</strong>
 </a>
 </dt>
 <dd>
@@ -455,8 +396,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PROCESS).StopEvents" >
-<strong>PROCESS:StopEvents()</strong>
+<a id="#(TASK_A2G)._Schedule" >
+<strong>TASK_A2G:_Schedule()</strong>
 </a>
 </dt>
 <dd>
@@ -468,9 +409,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></em>
-<a id="#(PROCESS).Task" >
-<strong>PROCESS.Task</strong>
+<a id="#(TASK_A2G)._Scheduler" >
+<strong>TASK_A2G:_Scheduler()</strong>
 </a>
 </dt>
 <dd>
