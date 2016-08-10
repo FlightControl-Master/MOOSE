@@ -559,7 +559,7 @@ function CARGO_PACKAGE:OnBoarded( FsmP, Event, From, To, CargoCarrier, Speed, Bo
   self:F()
 
   if self:IsNear( CargoCarrier ) then
-    self:_NextEvent( FsmP.Load, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+    self:_NextEvent( FsmP.Load, CargoCarrier, Speed, LoadDistance, Angle )
   else
     self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   end
@@ -638,13 +638,13 @@ end
 function CARGO_PACKAGE:OnLoad( FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle )
   self:F()
 
+  self.CargoCarrier = CargoCarrier
+
   local StartPointVec2 = self.CargoCarrier:GetPointVec2()
   local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
   local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
   local CargoDeployPointVec2 = StartPointVec2:Translate( LoadDistance, CargoDeployHeading )
   
-  self.CargoCarrier = CargoCarrier
-
   local Points = {}
   Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
   Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
