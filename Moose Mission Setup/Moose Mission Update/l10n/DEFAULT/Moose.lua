@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160723_2026' ) 
+env.info( 'Moose Generation Timestamp: 20160810_0820' ) 
 local base = _G
 
 Include = {}
@@ -20444,7 +20444,7 @@ end
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
 -- 
 -- Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
--- When new groups get spawned by using the SPAWN functions (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
+-- When new groups get spawned by using the SPAWN methods (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
 -- When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.
 -- 
 -- Regarding the name of new spawned groups, a _SpawnPrefix_ will be assigned for each new group created. 
@@ -20465,10 +20465,10 @@ end
 -- -------------------------------
 -- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
 -- 
---   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
+--   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
 --
 -- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
--- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+-- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
 -- 1.2) SPAWN initialization methods
@@ -20476,11 +20476,11 @@ end
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups.
+--   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
 -- 1.3) SPAWN spawning methods
 -- ---------------------------
@@ -20498,7 +20498,20 @@ end
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- 1.4) SPAWN object cleaning
+-- 1.4) Retrieve alive GROUPs spawned by the SPAWN object
+-- ------------------------------------------------------
+-- The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
+-- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
+-- SPAWN provides methods to iterate through that internal GROUP object reference table:
+-- 
+--   * @{#SPAWN.GetFirstAliveGroup}: Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--   * @{#SPAWN.GetNextAliveGroup}: Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--   * @{#SPAWN.GetLastAliveGroup}: Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+-- 
+-- You can use the methods @{#SPAWN.GetFirstAliveGroup} and sequently @{#SPAWN.GetNextAliveGroup} to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+-- The method @{#SPAWN.GetGroupFromIndex} will return the GROUP object reference from the given Index, dead or alive...
+-- 
+-- 1.5) SPAWN object cleaning
 -- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
@@ -20541,7 +20554,7 @@ SPAWN = {
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
 -- @usage local Plane = SPAWN:New( "Plane" ) -- Creates a new local variable that can initiate new planes with the name "Plane#ddd" using the template "Plane" as defined within the ME.
 function SPAWN:New( SpawnTemplatePrefix )
-	local self = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWN
 	self:F( { SpawnTemplatePrefix } )
   
 	local TemplateGroup = Group.getByName( SpawnTemplatePrefix )
@@ -20641,6 +20654,7 @@ end
 -- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
 -- This parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
 -- @param #number SpawnRadius is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...
+-- @param #number SpawnHeight (optional) Specifies the **additional** height in meters that can be added to the base height specified at each waypoint in the ME.
 -- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
@@ -20648,13 +20662,14 @@ end
 -- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
 -- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
-function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
-	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
+function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight } )
 
 	self.SpawnRandomizeRoute = true
 	self.SpawnRandomizeRouteStartPoint = SpawnStartPoint
 	self.SpawnRandomizeRouteEndPoint = SpawnEndPoint
 	self.SpawnRandomizeRouteRadius = SpawnRadius
+	self.SpawnRandomizeRouteHeight = SpawnHeight
 
 	for GroupID = 1, self.SpawnMaxGroups do
 		self:_RandomizeRoute( GroupID )
@@ -21164,19 +21179,24 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
---- Find the first alive group.
+--- Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
 -- @param #SPAWN self
--- @param #number SpawnCursor A number holding the index from where to find the first group from.
--- @return Group#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The GROUP object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
-function SPAWN:GetFirstAliveGroup( SpawnCursor )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+-- @usage
+-- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+-- while GroupPlane ~= nil do
+--   -- Do actions with the GroupPlane object.
+--   GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+-- end
+function SPAWN:GetFirstAliveGroup()
+	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
   for SpawnIndex = 1, self.SpawnCount do
     local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
     if SpawnGroup and SpawnGroup:IsAlive() then
-      SpawnCursor = SpawnIndex
-      return SpawnGroup, SpawnCursor
+      return SpawnGroup, SpawnIndex
     end
   end
   
@@ -21184,27 +21204,42 @@ function SPAWN:GetFirstAliveGroup( SpawnCursor )
 end
 
 
---- Find the next alive group.
+--- Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
 -- @param #SPAWN self
--- @param #number SpawnCursor A number holding the last found previous index.
--- @return Group#GROUP, #number The group found, the new index where the group was found.
--- @return #nil, #nil When no group is found, #nil is returned.
-function SPAWN:GetNextAliveGroup( SpawnCursor )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.
+-- @return Group#GROUP, #number The next alive GROUP object found, the next Index where the next alive GROUP object was found.
+-- @return #nil, #nil When no alive GROUP object is found from the start Index position, #nil is returned.
+-- @usage
+-- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+-- while GroupPlane ~= nil do
+--   -- Do actions with the GroupPlane object.
+--   GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+-- end
+function SPAWN:GetNextAliveGroup( SpawnIndexStart )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndexStart } )
 
-  SpawnCursor = SpawnCursor + 1
-  for SpawnIndex = SpawnCursor, self.SpawnCount do
+  SpawnIndexStart = SpawnIndexStart + 1
+  for SpawnIndex = SpawnIndexStart, self.SpawnCount do
     local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
     if SpawnGroup and SpawnGroup:IsAlive() then
-      SpawnCursor = SpawnIndex
-      return SpawnGroup, SpawnCursor
+      return SpawnGroup, SpawnIndex
     end
   end
   
   return nil, nil
 end
 
---- Find the last alive group during runtime.
+--- Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+-- @param #SPAWN self
+-- @return Group#GROUP, #number The last alive GROUP object found, the last Index where the last alive GROUP object was found.
+-- @return #nil, #nil When no alive GROUP object is found, #nil is returned.
+-- @usage
+-- -- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
+-- if GroupPlane then -- GroupPlane can be nil!!!
+--   -- Do actions with the GroupPlane object.
+-- end
 function SPAWN:GetLastAliveGroup()
 	self:F( { self.SpawnTemplatePrefixself.SpawnAliasPrefix } )
 
@@ -21461,11 +21496,19 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
     local RouteCount = #SpawnTemplate.route.points
     
     for t = self.SpawnRandomizeRouteStartPoint + 1, ( RouteCount - self.SpawnRandomizeRouteEndPoint ) do
+      
       SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
       SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
-      -- TODO: manage altitude for airborne units ...
-      SpawnTemplate.route.points[t].alt = nil
-      --SpawnGroup.route.points[t].alt_type = nil
+      
+      -- Manage randomization of altitude for airborne units ...
+      if SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE or SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER then
+        if SpawnTemplate.route.points[t].alt and self.SpawnRandomizeRouteHeight then
+          SpawnTemplate.route.points[t].alt = SpawnTemplate.route.points[t].alt + math.random( 1, self.SpawnRandomizeRouteHeight )
+        end
+      else
+        SpawnTemplate.route.points[t].alt = nil
+      end
+      
       self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
     end
   end
@@ -21489,6 +21532,9 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].x = self.SpawnTemplate.units[1].x
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].y = self.SpawnTemplate.units[1].y
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].alt = self.SpawnTemplate.units[1].alt
     end
   end
   
@@ -22130,6 +22176,7 @@ ESCORT = {
 -- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
+-- @param #string EscortBriefing A text showing the ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #ESCORT self
 -- @usage
 -- -- Declare a new EscortPlanes object as follows:
@@ -22167,12 +22214,18 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
 
   self.EscortGroup:OptionROTVertical()
   self.EscortGroup:OptionROEOpenFire()
-
-  EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
-    "We're escorting your flight. " ..
-    "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
-    60, EscortClient
-  )
+  
+  if not EscortBriefing then
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
+      "We're escorting your flight. " ..
+      "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
+      60, EscortClient
+    )
+  else
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") " .. EscortBriefing,
+      60, EscortClient
+    )
+  end
 
   self.FollowDistance = 100
   self.CT1 = 0
@@ -27504,7 +27557,7 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
 end
 
 
---- This module contains the TASK_ASSIGN classes.
+--- This module contains the PROCESS_ASSIGN classes.
 -- 
 -- ===
 -- 
@@ -29129,8 +29182,9 @@ end
 -- 
 -- 1) @{#TASK_SEAD} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_SEAD} class defines a new SEAD task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_SEAD is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
+-- based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_SEAD is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29274,8 +29328,9 @@ end
 -- 
 -- 1) @{#TASK_A2G} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_A2G} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_A2G is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_A2G} class defines a CAS or BAI task of a @{Set} of Target Units, 
+-- located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_A2G is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29287,7 +29342,7 @@ end
 -- 
 -- ### Authors: FlightControl - Design and Programming
 -- 
--- @module Task_CAS
+-- @module Task_A2G
 
 
 do -- TASK_A2G
