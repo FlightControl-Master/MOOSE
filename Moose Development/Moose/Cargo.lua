@@ -150,29 +150,21 @@ function CARGO:IsNear( PointVec2 )
 end
 
 
---- Loaded State.
--- @param #CARGO self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Unit#UNIT CargoCarrier
-function CARGO:OnLoaded( FsmP, Event, From, To, CargoCarrier )
+--- On Loaded callback function.
+function CARGO:OnLoaded( CallBackFunction, ... )
   self:F()
-
-  self:T( "Cargo " .. self.Name .. " loaded in " .. CargoCarrier:GetName() )
+  
+  self.OnLoadedCallBack = CallBackFunction
+  self.OnLoadedParameters = arg
+  
 end
 
---- UnLoaded State.
--- @param #CARGO self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO:OnUnLoaded( FsmP, Event, From, To )
+--- On UnLoaded callback function.
+function CARGO:OnUnLoaded( CallBackFunction, ... )
   self:F()
 
-  self:T( "Cargo " .. self.Name .. " unloaded from " .. self.CargoCarrier:GetName() )
+  self.OnUnLoadedCallBack = CallBackFunction
+  self.OnUnLoadedParameters = arg
 end
 
 --- @param #CARGO self
@@ -256,10 +248,10 @@ function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, N
       { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
     },
     callbacks = {
-      onBoard = self.OnBoard,
-      onLoad = self.OnLoad,
-      onUnBoard = self.OnUnBoard,
-      onUnLoad = self.OnUnLoad,
+      onafterBoard = self.EventBoard,
+      onafterLoad = self.EventLoad,
+      onafterUnBoard = self.EventUnBoard,
+      onafterUnLoad = self.EventUnLoad,
       onenterBoarding = self.EnterStateBoarding,
       onleaveBoarding = self.LeaveStateBoarding,
       onenterLoaded = self.EnterStateLoaded,
@@ -314,6 +306,8 @@ function CARGO_UNIT:EnterStateUnBoarding( FsmP, Event, From, To, ToPointVec2 )
   
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 1 )
+
+      self:_NextEvent( FsmP.UnBoard, ToPointVec2 )
     end
   end
 
@@ -337,7 +331,7 @@ function CARGO_UNIT:LeaveStateUnBoarding( FsmP, Event, From, To, ToPointVec2 )
     if self:IsNear( ToPointVec2 ) then
       return true
     else
-      self:_NextEvent( FsmP.UnLoad, ToPointVec2 )
+      self:_NextEvent( FsmP.UnBoard, ToPointVec2 )
     end
     return false
   end
@@ -368,6 +362,12 @@ function CARGO_UNIT:EnterStateUnLoaded( FsmP, Event, From, To, ToPointVec2 )
       self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
       self.CargoCarrier = nil
     end
+    
+  end
+
+  if self.OnUnLoadedCallBack then
+    self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
+    self.OnUnLoadedCallBack = nil
   end
 
 end
@@ -440,6 +440,12 @@ function CARGO_UNIT:EnterStateLoaded( FsmP, Event, From, To, CargoCarrier )
   if self.CargoObject then
     self.CargoObject:Destroy()
   end
+  
+  if self.OnLoadedCallBack then
+    self.OnLoadedCallBack( self, unpack( self.OnLoadedParameters ) )
+    self.OnLoadedCallBack = nil
+  end
+  
 end
 
 
@@ -449,7 +455,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:OnBoard( FsmP, Event, From, To, CargoCarrier )
+function CARGO_UNIT:EventBoard( FsmP, Event, From, To, CargoCarrier )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -465,30 +471,13 @@ function CARGO_UNIT:OnBoard( FsmP, Event, From, To, CargoCarrier )
 
 end
 
---- Boarded Event.
--- @param #CARGO_UNIT self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Unit#UNIT CargoCarrier
-function CARGO_UNIT:OnBoarded( FsmP, Event, From, To, CargoCarrier )
-  self:F()
-
-  if self:IsNear( CargoCarrier ) then
-    self:_NextEvent( FsmP.Load, CargoCarrier )
-  else
-    self:_NextEvent( FsmP.Boarded, CargoCarrier )
-  end
-end
-
 --- UnBoard Event.
 -- @param #CARGO_UNIT self
 -- @param StateMachine#STATEMACHINE_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:OnUnBoard( FsmP, Event, From, To )
+function CARGO_UNIT:EventUnBoard( FsmP, Event, From, To )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -512,7 +501,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Unit#UNIT CargoCarrier
-function CARGO_UNIT:OnLoad( FsmP, Event, From, To, CargoCarrier )
+function CARGO_UNIT:EventLoad( FsmP, Event, From, To, CargoCarrier )
   self:F()
 
   self:T( self.ClassName )
@@ -525,7 +514,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:OnUnLoad( FsmP, Event, From, To )
+function CARGO_UNIT:EventUnLoad( FsmP, Event, From, To )
   self:F()
   
 end

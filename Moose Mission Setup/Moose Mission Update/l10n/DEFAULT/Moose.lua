@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160723_2026' ) 
+env.info( 'Moose Generation Timestamp: 20160811_0937' ) 
 local base = _G
 
 Include = {}
@@ -3471,6 +3471,23 @@ function OBJECT:GetID()
   return nil
 end
 
+--- Destroys the OBJECT.
+-- @param #OBJECT self
+-- @return #nil The DCS Unit is not existing or alive.  
+function OBJECT:Destroy()
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  
+  if DCSObject then
+  
+    DCSObject:destroy()
+  end
+
+  return nil
+end
+
+
 
 
 --- This module contains the IDENTIFIABLE class.
@@ -3697,11 +3714,11 @@ end
 -- 
 -- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
 -- ===========================================================
--- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the DCS Positionable objects:
+-- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
 --
---  * Support all DCS Positionable APIs.
---  * Enhance with Positionable specific APIs not in the DCS Positionable API set.
---  * Manage the "state" of the DCS Positionable.
+--  * Support all DCS APIs.
+--  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
+--  * Manage the "state" of the POSITIONABLE.
 --
 -- 1.1) POSITIONABLE constructor:
 -- ------------------------------
@@ -3736,7 +3753,7 @@ POSITIONABLE = {
 
 --- Create a new POSITIONABLE from a DCSPositionable
 -- @param #POSITIONABLE self
--- @param DCSPositionable#Positionable PositionableName The DCS Positionable name
+-- @param DCSPositionable#Positionable PositionableName The POSITIONABLE name
 -- @return #POSITIONABLE self
 function POSITIONABLE:New( PositionableName )
   local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
@@ -3744,10 +3761,10 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Position The 3D position vectors of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
   self:F2( self.PositionableName )
 
@@ -3762,21 +3779,42 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec2 The 2D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Vec2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVec2()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPosition().p
+    local PositionableVec3 = DCSPositionable:getPosition().p
     
-    local PositionablePointVec2 = {}
-    PositionablePointVec2.x = PositionablePointVec3.x
-    PositionablePointVec2.y = PositionablePointVec3.z
+    local PositionableVec2 = {}
+    PositionableVec2.x = PositionableVec3.x
+    PositionableVec2.y = PositionableVec3.z
+  
+    self:T2( PositionableVec2 )
+    return PositionableVec2
+  end
+  
+  return nil
+end
+
+--- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
+-- @param Positionable#POSITIONABLE self
+-- @return Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetPointVec2()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = DCSPositionable:getPosition().p
+    
+    local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
   
     self:T2( PositionablePointVec2 )
     return PositionablePointVec2
@@ -3786,52 +3824,52 @@ function POSITIONABLE:GetVec2()
 end
 
 
---- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the DCS Positionable within the mission.
+--- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
-function POSITIONABLE:GetRandomPointVec3( Radius )
+-- @return DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetRandomVec3( Radius )
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
     local PositionablePointVec3 = DCSPositionable:getPosition().p
-    local PositionableRandomPointVec3 = {}
+    local PositionableRandomVec3 = {}
     local angle = math.random() * math.pi*2;
-    PositionableRandomPointVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
-    PositionableRandomPointVec3.y = PositionablePointVec3.y
-    PositionableRandomPointVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+    PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+    PositionableRandomVec3.y = PositionablePointVec3.y
+    PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
     
-    self:T3( PositionableRandomPointVec3 )
-    return PositionableRandomPointVec3
+    self:T3( PositionableRandomVec3 )
+    return PositionableRandomVec3
   end
   
   return nil
 end
 
---- Returns the @{DCSTypes#Vec3} vector indicating the point in 3D of the DCS Positionable within the mission.
+--- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Vec3 The 3D point vector of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
-function POSITIONABLE:GetPointVec3()
+-- @return DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVec3()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPosition().p
-    self:T3( PositionablePointVec3 )
-    return PositionablePointVec3
+    local PositionableVec3 = DCSPositionable:getPosition().p
+    self:T3( PositionableVec3 )
+    return PositionableVec3
   end
   
   return nil
 end
 
---- Returns the altitude of the DCS Positionable.
+--- Returns the altitude of the POSITIONABLE.
 -- @param Positionable#POSITIONABLE self
--- @return DCSTypes#Distance The altitude of the DCS Positionable.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return DCSTypes#Distance The altitude of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetAltitude()
   self:F2()
 
@@ -3848,7 +3886,7 @@ end
 --- Returns if the Positionable is located above a runway.
 -- @param Positionable#POSITIONABLE self
 -- @return #boolean true if Positionable is above a runway.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:IsAboveRunway()
   self:F2( self.PositionableName )
 
@@ -3856,8 +3894,8 @@ function POSITIONABLE:IsAboveRunway()
   
   if DCSPositionable then
   
-    local PointVec2 = self:GetVec2()
-    local SurfaceType = land.getSurfaceType( PointVec2 )
+    local Vec2 = self:GetVec2()
+    local SurfaceType = land.getSurfaceType( Vec2 )
     local IsAboveRunway = SurfaceType == land.SurfaceType.RUNWAY
   
     self:T2( IsAboveRunway )
@@ -3869,9 +3907,9 @@ end
 
 
 
---- Returns the DCS Positionable heading.
+--- Returns the POSITIONABLE heading in degrees.
 -- @param Positionable#POSITIONABLE self
--- @return #number The DCS Positionable heading
+-- @return #number The POSTIONABLE heading
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
 
@@ -3883,6 +3921,7 @@ function POSITIONABLE:GetHeading()
       if PositionableHeading < 0 then
         PositionableHeading = PositionableHeading + 2 * math.pi
       end
+      PositionableHeading = PositionableHeading * 180 / math.pi
       self:T2( PositionableHeading )
       return PositionableHeading
     end
@@ -3892,10 +3931,10 @@ function POSITIONABLE:GetHeading()
 end
 
 
---- Returns true if the DCS Positionable is in the air.
+--- Returns true if the POSITIONABLE is in the air.
 -- @param Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
@@ -3910,10 +3949,10 @@ function POSITIONABLE:InAir()
   return nil
 end
  
---- Returns the DCS Positionable velocity vector.
+--- Returns the POSITIONABLE velocity vector.
 -- @param Positionable#POSITIONABLE self
 -- @return DCSTypes#Vec3 The velocity vector
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocity()
   self:F2( self.PositionableName )
 
@@ -3928,10 +3967,10 @@ function POSITIONABLE:GetVelocity()
   return nil
 end
 
---- Returns the @{Unit#UNIT} velocity in km/h.
+--- Returns the POSITIONABLE velocity in km/h.
 -- @param Positionable#POSITIONABLE self
 -- @return #number The velocity in km/h
--- @return #nil The DCS Positionable is not existing or alive.  
+-- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
 
@@ -4459,15 +4498,15 @@ end
 
 --- (AIR) Delivering weapon at the point on the ground. 
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the point to deliver weapon at.
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) Desired quantity of passes. The parameter is not the same in AttackControllable and AttackUnit tasks. 
 -- @param DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskBombing( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
+  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
 
 --  Bombing = { 
 --    id = 'Bombing', 
@@ -4484,7 +4523,7 @@ function CONTROLLABLE:TaskBombing( PointVec2, WeaponType, WeaponExpend, AttackQt
   local DCSTask
   DCSTask = { id = 'Bombing',
     params = {
-    point = PointVec2,
+    point = Vec2,
     weaponType = WeaponType, 
     expend = WeaponExpend,
     attackQty = AttackQty, 
@@ -4577,15 +4616,15 @@ end
 
 --- (AIR) Attacking the map object (building, structure, e.t.c).
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @param DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackMapObject( PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskAttackMapObject( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
+  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
 
 --  AttackMapObject = { 
 --    id = 'AttackMapObject', 
@@ -4602,7 +4641,7 @@ function CONTROLLABLE:TaskAttackMapObject( PointVec2, WeaponType, WeaponExpend, 
   local DCSTask
   DCSTask = { id = 'AttackMapObject',
     params = {
-    point = PointVec2,
+    point = Vec2,
     weaponType = WeaponType, 
     expend = WeaponExpend,
     attackQty = AttackQty, 
@@ -4746,11 +4785,11 @@ end
 -- If another controllable is on land the unit / controllable will orbit around. 
 -- @param #CONTROLLABLE self
 -- @param Controllable#CONTROLLABLE FollowControllable The controllable to be followed.
--- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
+-- @param DCSTypes#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFollow( FollowControllable, PointVec3, LastWaypointIndex )
-  self:F2( { self.ControllableName, FollowControllable, PointVec3, LastWaypointIndex } )
+function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
+  self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex } )
 
 --  Follow = {
 --    id = 'Follow',
@@ -4771,7 +4810,7 @@ function CONTROLLABLE:TaskFollow( FollowControllable, PointVec3, LastWaypointInd
   DCSTask = { id = 'Follow',
     params = {
       controllableId = FollowControllable:GetID(),
-      pos = PointVec3,
+      pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
       lastWptIndex = LastWaypointIndex,
     },
@@ -4787,13 +4826,13 @@ end
 -- The unit / controllable will also protect that controllable from threats of specified types.
 -- @param #CONTROLLABLE self
 -- @param Controllable#CONTROLLABLE EscortControllable The controllable to be escorted.
--- @param DCSTypes#Vec3 PointVec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
+-- @param DCSTypes#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Follow task is finished.
 -- @param #number EngagementDistanceMax Maximal distance from escorted controllable to threat. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax. 
 -- @param DCSTypes#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskEscort( FollowControllable, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes )
-  self:F2( { self.ControllableName, FollowControllable, PointVec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
+function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
+  self:F2( { self.ControllableName, FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes } )
 
 --  Escort = {
 --    id = 'Escort',
@@ -4816,7 +4855,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, PointVec3, LastWaypointInd
   DCSTask = { id = 'Follow',
     params = {
       controllableId = FollowControllable:GetID(),
-      pos = PointVec3,
+      pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
       lastWptIndex = LastWaypointIndex,
       engagementDistMax = EngagementDistance,
@@ -4833,11 +4872,11 @@ end
 
 --- (GROUND) Fire at a VEC2 point until ammunition is finished.
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 The point to fire at.
+-- @param DCSTypes#Vec2 Vec2 The point to fire at.
 -- @param DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( PointVec2, Radius )
-  self:F2( { self.ControllableName, PointVec2, Radius } )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
+  self:F2( { self.ControllableName, Vec2, Radius } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
@@ -4850,7 +4889,7 @@ function CONTROLLABLE:TaskFireAtPoint( PointVec2, Radius )
   local DCSTask
   DCSTask = { id = 'FireAtPoint',
     params = {
-      point = PointVec2,
+      point = Vec2,
       radius = Radius,
     }
   }
@@ -4957,13 +4996,13 @@ end
 
 --- (AIR) Engaging a targets of defined types at circle-shaped zone.
 -- @param #CONTROLLABLE self
--- @param DCSTypes#Vec2 PointVec2 2D-coordinates of the zone. 
+-- @param DCSTypes#Vec2 Vec2 2D-coordinates of the zone. 
 -- @param DCSTypes#Distance Radius Radius of the zone. 
 -- @param DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return DCSTask#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, Priority )
-  self:F2( { self.ControllableName, PointVec2, Radius, TargetTypes, Priority } )
+function CONTROLLABLE:EnRouteTaskEngageTargets( Vec2, Radius, TargetTypes, Priority )
+  self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
 
 --  EngageTargetsInZone = { 
 --    id = 'EngageTargetsInZone', 
@@ -4978,7 +5017,7 @@ function CONTROLLABLE:EnRouteTaskEngageTargets( PointVec2, Radius, TargetTypes, 
   local DCSTask
   DCSTask = { id = 'EngageTargetsInZone',
     params = {
-      point = PointVec2, 
+      point = Vec2, 
       zoneRadius = Radius, 
       targetTypes = TargetTypes,  
       priority = Priority 
@@ -5381,12 +5420,12 @@ end
 function CONTROLLABLE:TaskRouteToVec3( Point, Speed )
   self:F2( { Point, Speed } )
 
-  local ControllablePoint = self:GetUnit( 1 ):GetPointVec3()
+  local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
 
   local PointFrom = {}
-  PointFrom.x = ControllablePoint.x
-  PointFrom.y = ControllablePoint.z
-  PointFrom.alt = ControllablePoint.y
+  PointFrom.x = ControllableVec3.x
+  PointFrom.y = ControllableVec3.z
+  PointFrom.alt = ControllableVec3.y
   PointFrom.alt_type = "BARO"
   PointFrom.type = "Turning Point"
   PointFrom.action = "Turning Point"
@@ -8606,14 +8645,14 @@ function GROUP:GetVec2()
   return GroupPointVec2
 end
 
---- Returns the current point (Vec3 vector) of the first DCS Unit in the DCS Group.
--- @return DCSTypes#Vec3 Current Vec3 point of the first DCS Unit of the DCS Group.
-function GROUP:GetPointVec3()
+--- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+-- @return DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
+function GROUP:GetVec3()
   self:F2( self.GroupName )
 
-  local GroupPointVec3 = self:GetUnit(1):GetPointVec3()
-  self:T3( GroupPointVec3 )
-  return GroupPointVec3
+  local GroupVec3 = self:GetUnit(1):GetVec3()
+  self:T3( GroupVec3 )
+  return GroupVec3
 end
 
 
@@ -8629,7 +8668,8 @@ function GROUP:IsCompletelyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    -- TODO: Rename IsPointVec3InZone to IsVec3InZone
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
     else
       return false
     end
@@ -8647,7 +8687,7 @@ function GROUP:IsPartlyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return true
     end
   end
@@ -8664,7 +8704,7 @@ function GROUP:IsNotInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetPointVec3() ) then
+    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return false
     end
   end
@@ -8852,7 +8892,7 @@ end
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
-  local Vec3 = self:GetPointVec3()
+  local Vec3 = self:GetVec3()
   Template.x = Vec3.x
   Template.y = Vec3.z
   --Template.x = nil
@@ -8863,7 +8903,7 @@ function GROUP:Respawn( Template )
     local GroupUnit = UnitData -- Unit#UNIT
     self:E( GroupUnit:GetName() )
     if GroupUnit:IsAlive() then
-      local GroupUnitVec3 = GroupUnit:GetPointVec3()
+      local GroupUnitVec3 = GroupUnit:GetVec3()
       local GroupUnitHeading = GroupUnit:GetHeading()
       Template.units[UnitID].alt = GroupUnitVec3.y
       Template.units[UnitID].x = GroupUnitVec3.x
@@ -9036,7 +9076,7 @@ end
 -- 1.4) Location Position, Point
 -- -----------------------------
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
--- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
 -- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- 1.5) Test if alive
@@ -9140,6 +9180,14 @@ function UNIT:FindByName( UnitName )
   return UnitFound
 end
 
+--- Return the name of the UNIT.
+-- @param #UNIT self
+-- @return #string The UNIT name.
+function UNIT:Name()
+  
+  return self.UnitName
+end
+
 
 --- @param #UNIT self
 -- @return DCSUnit#Unit
@@ -9154,6 +9202,59 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will respawn the re-modelled group.
+--  
+-- @param Unit#UNIT self
+-- @param DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param #number Heading The heading of the unit respawn.
+function UNIT:ReSpawn( SpawnVec3, Heading )
+
+  local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
+  self:T( SpawnGroupTemplate )
+  local SpawnGroup = self:GetGroup()
+  
+  if SpawnGroup then
+  
+    local Vec3 = SpawnGroup:GetVec3()
+    SpawnGroupTemplate.x = Vec3.x
+    SpawnGroupTemplate.y = Vec3.z
+    
+    self:E( #SpawnGroupTemplate.units )
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+      local GroupUnit = UnitData -- Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
+        SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
+        SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
+        SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+      end
+    end
+  end
+  
+  for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
+    self:T( UnitTemplateData.name )
+    if UnitTemplateData.name == self:Name() then
+      self:T("Adjusting")
+      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
+      self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+    end
+  end
+
+  _DATABASE:Spawn( SpawnGroupTemplate )
+end
 
 
 
@@ -9170,22 +9271,6 @@ function UNIT:IsActive()
   
     local UnitIsActive = DCSUnit:isActive()
     return UnitIsActive 
-  end
-
-  return nil
-end
-
---- Destroys the @{Unit}.
--- @param Unit#UNIT self
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:Destroy()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-  
-    DCSUnit:destroy()
   end
 
   return nil
@@ -9509,7 +9594,7 @@ function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+    local IsInZone = Zone:IsPointVec3InZone( self:GetVec3() )
   
     self:T( { IsInZone } )
     return IsInZone 
@@ -9526,7 +9611,7 @@ function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetVec3() )
     
     self:T( { IsInZone } )
     return IsInZone 
@@ -9548,10 +9633,10 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  	local UnitPos = self:GetPointVec3()
-  	local AwaitUnitPos = AwaitUnit:GetPointVec3()
+  	local UnitVec3 = self:GetVec3()
+  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
   
-  	if  (((UnitPos.x - AwaitUnitPos.x)^2 + (UnitPos.z - AwaitUnitPos.z)^2)^0.5 <= Radius) then
+  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
   		self:T3( "true" )
   		return true
   	else
@@ -9569,35 +9654,35 @@ end
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), FlareColor , 0 )
+  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
 end
 
 --- Signal a white flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareWhite()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.White , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
 end
 
 --- Signal a yellow flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareYellow()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Yellow , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
 end
 
 --- Signal a green flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareGreen()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Green , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
 end
 
 --- Signal a red flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareRed()
   self:F2()
-  local Vec3 = self:GetPointVec3()
+  local Vec3 = self:GetVec3()
   if Vec3 then
     trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
   end
@@ -9608,9 +9693,9 @@ end
 function UNIT:Smoke( SmokeColor, Range )
   self:F2()
   if Range then
-    trigger.action.smoke( self:GetRandomPointVec3( Range ), SmokeColor )
+    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
   else
-    trigger.action.smoke( self:GetPointVec3(), SmokeColor )
+    trigger.action.smoke( self:GetVec3(), SmokeColor )
   end
   
 end
@@ -9619,35 +9704,35 @@ end
 -- @param #UNIT self
 function UNIT:SmokeGreen()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Green )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
 end
 
 --- Smoke the UNIT Red.
 -- @param #UNIT self
 function UNIT:SmokeRed()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Red )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
 end
 
 --- Smoke the UNIT White.
 -- @param #UNIT self
 function UNIT:SmokeWhite()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.White )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
 end
 
 --- Smoke the UNIT Orange.
 -- @param #UNIT self
 function UNIT:SmokeOrange()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Orange )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
 end
 
 --- Smoke the UNIT Blue.
 -- @param #UNIT self
 function UNIT:SmokeBlue()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Blue )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
 -- Is methods
@@ -9852,12 +9937,12 @@ end
 
 --- Returns if a point is within the zone.
 -- @param #ZONE_BASE self
--- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @param DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
-function ZONE_BASE:IsPointVec3InZone( PointVec3 )
-  self:F2( PointVec3 )
+function ZONE_BASE:IsPointVec3InZone( Vec3 )
+  self:F2( Vec3 )
 
-  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
+  local InZone = self:IsPointVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
@@ -10023,11 +10108,11 @@ function ZONE_RADIUS:SetPointVec2( Vec2 )
   return self.Vec2 
 end
 
---- Returns the point of the zone.
+--- Returns the @{DCSTypes#Vec3} of the ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCSTypes#Vec3 The point of the zone.
-function ZONE_RADIUS:GetPointVec3( Height )
+function ZONE_RADIUS:GetVec3( Height )
   self:F2( { self.ZoneName, Height } )
 
   Height = Height or 0
@@ -10061,7 +10146,7 @@ end
 
 --- Returns if a point is within the zone.
 -- @param #ZONE_RADIUS self
--- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @param DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_RADIUS:IsPointVec3InZone( Vec3 )
   self:F2( Vec3 )
@@ -10186,22 +10271,22 @@ function ZONE_UNIT:GetRandomVec2()
   return Point
 end
 
---- Returns the point of the zone.
--- @param #ZONE_RADIUS self
+--- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
+-- @param #ZONE_UNIT self
 -- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCSTypes#Vec3 The point of the zone.
-function ZONE_UNIT:GetPointVec3( Height )
+function ZONE_UNIT:GetVec3( Height )
   self:F2( self.ZoneName )
   
   Height = Height or 0
   
   local Vec2 = self:GetVec2()
 
-  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
-  self:T2( { PointVec3 } )
+  self:T2( { Vec3 } )
   
-  return PointVec3  
+  return Vec3  
 end
 
 --- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
@@ -11378,19 +11463,19 @@ end
 -- @param #table SpawnTemplate
 -- @return #DATABASE self
 function DATABASE:Spawn( SpawnTemplate )
-  self:F2( SpawnTemplate.name )
+  self:F( SpawnTemplate.name )
 
-  self:T2( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
+  self:T( { SpawnTemplate.SpawnCountryID, SpawnTemplate.SpawnCategoryID } )
 
   -- Copy the spawn variables of the template in temporary storage, nullify, and restore the spawn variables.
-  local SpawnCoalitionID = SpawnTemplate.SpawnCoalitionID
-  local SpawnCountryID = SpawnTemplate.SpawnCountryID
-  local SpawnCategoryID = SpawnTemplate.SpawnCategoryID
+  local SpawnCoalitionID = SpawnTemplate.CoalitionID
+  local SpawnCountryID = SpawnTemplate.CountryID
+  local SpawnCategoryID = SpawnTemplate.CategoryID
 
   -- Nullify
-  SpawnTemplate.SpawnCoalitionID = nil
-  SpawnTemplate.SpawnCountryID = nil
-  SpawnTemplate.SpawnCategoryID = nil
+  SpawnTemplate.CoalitionID = nil
+  SpawnTemplate.CountryID = nil
+  SpawnTemplate.CategoryID = nil
 
   self:_RegisterTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
 
@@ -11398,9 +11483,9 @@ function DATABASE:Spawn( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
 
   -- Restore
-  SpawnTemplate.SpawnCoalitionID = SpawnCoalitionID
-  SpawnTemplate.SpawnCountryID = SpawnCountryID
-  SpawnTemplate.SpawnCategoryID = SpawnCategoryID
+  SpawnTemplate.CoalitionID = SpawnCoalitionID
+  SpawnTemplate.CountryID = SpawnCountryID
+  SpawnTemplate.CategoryID = SpawnCategoryID
 
   local SpawnGroup = self:AddGroup( SpawnTemplate.name )
   return SpawnGroup
@@ -11444,6 +11529,10 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
     GroupTemplate.route.spans = nil
   end
   
+  GroupTemplate.CategoryID = CategoryID
+  GroupTemplate.CoalitionID = CoalitionID
+  GroupTemplate.CountryID = CountryID
+  
   self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
   self.Templates.Groups[GroupTemplateName].Template = GroupTemplate
   self.Templates.Groups[GroupTemplateName].groupId = GroupTemplate.groupId
@@ -11468,26 +11557,27 @@ function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, Cou
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
-    local UnitTemplateName = env.getValueDictByKey(UnitTemplate.name)
-    self.Templates.Units[UnitTemplateName] = {}
-    self.Templates.Units[UnitTemplateName].UnitName = UnitTemplateName
-    self.Templates.Units[UnitTemplateName].Template = UnitTemplate
-    self.Templates.Units[UnitTemplateName].GroupName = GroupTemplateName
-    self.Templates.Units[UnitTemplateName].GroupTemplate = GroupTemplate
-    self.Templates.Units[UnitTemplateName].GroupId = GroupTemplate.groupId
-    self.Templates.Units[UnitTemplateName].CategoryID = CategoryID
-    self.Templates.Units[UnitTemplateName].CoalitionID = CoalitionID
-    self.Templates.Units[UnitTemplateName].CountryID = CountryID
+    UnitTemplate.name = env.getValueDictByKey(UnitTemplate.name)
+    
+    self.Templates.Units[UnitTemplate.name] = {}
+    self.Templates.Units[UnitTemplate.name].UnitName = UnitTemplate.name
+    self.Templates.Units[UnitTemplate.name].Template = UnitTemplate
+    self.Templates.Units[UnitTemplate.name].GroupName = GroupTemplateName
+    self.Templates.Units[UnitTemplate.name].GroupTemplate = GroupTemplate
+    self.Templates.Units[UnitTemplate.name].GroupId = GroupTemplate.groupId
+    self.Templates.Units[UnitTemplate.name].CategoryID = CategoryID
+    self.Templates.Units[UnitTemplate.name].CoalitionID = CoalitionID
+    self.Templates.Units[UnitTemplate.name].CountryID = CountryID
 
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
-      self.Templates.ClientsByName[UnitTemplateName] = UnitTemplate
-      self.Templates.ClientsByName[UnitTemplateName].CategoryID = CategoryID
-      self.Templates.ClientsByName[UnitTemplateName].CoalitionID = CoalitionID
-      self.Templates.ClientsByName[UnitTemplateName].CountryID = CountryID
+      self.Templates.ClientsByName[UnitTemplate.name] = UnitTemplate
+      self.Templates.ClientsByName[UnitTemplate.name].CategoryID = CategoryID
+      self.Templates.ClientsByName[UnitTemplate.name].CoalitionID = CoalitionID
+      self.Templates.ClientsByName[UnitTemplate.name].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
     
-    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplateName].UnitName 
+    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplate.name].UnitName 
   end
 
   self:E( TraceTable )
@@ -11499,6 +11589,14 @@ function DATABASE:GetGroupTemplate( GroupName )
   GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
   GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
   return GroupTemplate
+end
+
+function DATABASE:GetGroupNameFromUnitName( UnitName )
+  return self.Templates.Units[UnitName].GroupName
+end
+
+function DATABASE:GetGroupTemplateFromUnitName( UnitName )
+  return self.Templates.Units[UnitName].GroupTemplate
 end
 
 function DATABASE:GetCoalitionFromClientTemplate( ClientName )
@@ -14138,7 +14236,9 @@ end
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
 -- @extends Base#BASE
--- @field DCSTypes#Vec3 PointVec3 
+-- @field #number x The x coordinate in 3D space.
+-- @field #number y The y coordinate in 3D space.
+-- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
 -- @field #POINT_VEC3.FlareColor FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
@@ -14220,8 +14320,9 @@ POINT_VEC3 = {
 function POINT_VEC3:New( x, y, z )
 
   local self = BASE:Inherit( self, BASE:New() )
-  self.PointVec3 = { x = x, y = y, z = z }
-  self:F2( self.PointVec3 )
+  self.x = x
+  self.y = y
+  self.z = z
   return self
 end
 
@@ -14239,14 +14340,14 @@ end
 -- @param #POINT_VEC3 self
 -- @return DCSTypes#Vec3 The Vec3 coodinate.
 function POINT_VEC3:GetVec3()
-  return self.PointVec3
+  return { x = self.x, y = self.y, z = self.z }
 end
 
 --- Return the coordinates of the POINT_VEC3 in Vec2 format.
 -- @param #POINT_VEC3 self
 -- @return DCSTypes#Vec2 The Vec2 coodinate.
 function POINT_VEC3:GetVec2()
-  return { x = self.PointVec3.x, y = self.PointVec3.z }
+  return { x = self.x, y = self.z }
 end
 
 
@@ -14254,33 +14355,48 @@ end
 -- @param #POINT_VEC3 self
 -- @return #number The x coodinate.
 function POINT_VEC3:GetX()
-  self:F2(self.PointVec3.x)
-  return self.PointVec3.x
+  return self.x
 end
 
 --- Return the y coordinate of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @return #number The y coodinate.
 function POINT_VEC3:GetY()
-  self:F2(self.PointVec3.y)
-  return self.PointVec3.y
+  return self.y
 end
 
 --- Return the z coordinate of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @return #number The z coodinate.
 function POINT_VEC3:GetZ()
-  self:F2(self.PointVec3.z)
-  return self.PointVec3.z
+  return self.z
 end
 
---- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+--- Set the x coordinate of the POINT_VEC3.
+-- @param #number x The x coordinate.
+function POINT_VEC3:SetX( x )
+  self.x = x
+end
+
+--- Set the y coordinate of the POINT_VEC3.
+-- @param #number y The y coordinate.
+function POINT_VEC3:SetY( y )
+  self.y = y
+end
+
+--- Set the z coordinate of the POINT_VEC3.
+-- @param #number z The z coordinate.
+function POINT_VEC3:SetZ( z )
+  self.z = z
+end
+
+--- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param DCSTypes#Distance OuterRadius
 -- @param DCSTypes#Distance InnerRadius
 -- @return DCSTypes#Vec2 Vec2
 function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-  self:F2( { self.PointVec3, OuterRadius, InnerRadius } )
+  self:F2( { OuterRadius, InnerRadius } )
 
   local Theta = 2 * math.pi * math.random()
   local Radials = math.random() + math.random()
@@ -14295,17 +14411,28 @@ function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
     RadialMultiplier = OuterRadius * Radials
   end
 
-  local RandomVec3
+  local RandomVec2
   if OuterRadius > 0 then
-    RandomVec3 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
+    RandomVec2 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
   else
-    RandomVec3 = { x = self:GetX(), y = self:GetZ() }
+    RandomVec2 = { x = self:GetX(), y = self:GetZ() }
   end
   
-  return RandomVec3
+  return RandomVec2
 end
 
---- Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+--- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return #POINT_VEC2
+function POINT_VEC3:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
+  self:F2( { OuterRadius, InnerRadius } )
+  
+  return POINT_VEC2:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+end
+
+--- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param DCSTypes#Distance OuterRadius
 -- @param DCSTypes#Distance InnerRadius
@@ -14319,10 +14446,20 @@ function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
   return RandomVec3
 end
 
+--- Return a random POINT_VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance OuterRadius
+-- @param DCSTypes#Distance InnerRadius
+-- @return #POINT_VEC3
+function POINT_VEC3:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
+
+  return POINT_VEC3:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
+end
+
 
 --- Return a direction vector Vec3 from POINT_VEC3 to the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
 function POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
   return { x = TargetPointVec3:GetX() - self:GetX(), y = TargetPointVec3:GetY() - self:GetY(), z = TargetPointVec3:GetZ() - self:GetZ() }
@@ -14354,7 +14491,7 @@ end
 
 --- Return the 2D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get2DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
@@ -14364,7 +14501,7 @@ end
 
 --- Return the 3D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get3DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
@@ -14401,7 +14538,7 @@ end
 function POINT_VEC3:ToStringLL( acc, DMS )
 
   acc = acc or 3
-  local lat, lon = coord.LOtoLL( self.PointVec3 )
+  local lat, lon = coord.LOtoLL( self:GetVec3() )
   return UTILS.tostringLL(lat, lon, acc, DMS)
 end
 
@@ -14418,7 +14555,7 @@ end
 
 --- Return a BR string from a POINT_VEC3 to the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target PointVec3.
+-- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
 -- @return #string The BR text.
 function POINT_VEC3:GetBRText( TargetPointVec3 )
     local DirectionVec3 = self:GetDirectionVec3( TargetPointVec3 )
@@ -14456,13 +14593,52 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self.PointVec3.x
-  RoutePoint.y = self.PointVec3.z
-  RoutePoint.alt = self.PointVec3.y
+  RoutePoint.x = self:GetX()
+  RoutePoint.y = self:GetZ()
+  RoutePoint.alt = self:GetY()
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
   RoutePoint.action = Action
+
+  RoutePoint.speed = Speed / 3.6
+  RoutePoint.speed_locked = true
+  
+--  ["task"] = 
+--  {
+--      ["id"] = "ComboTask",
+--      ["params"] = 
+--      {
+--          ["tasks"] = 
+--          {
+--          }, -- end of ["tasks"]
+--      }, -- end of ["params"]
+--  }, -- end of ["task"]
+
+
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = {}
+  
+  
+  return RoutePoint
+end
+
+--- Build an ground type route point.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Speed Speed Speed in km/h.
+-- @param #POINT_VEC3.RoutePointAction Formation The route point Formation.
+-- @return #table The route point.
+function POINT_VEC3:RoutePointGround( Speed, Formation )
+  self:F2( { Formation, Speed } )
+
+  local RoutePoint = {}
+  RoutePoint.x = self:GetX()
+  RoutePoint.y = self:GetZ()
+  
+  RoutePoint.action = Formation or ""
+    
 
   RoutePoint.speed = Speed / 3.6
   RoutePoint.speed_locked = true
@@ -14493,8 +14669,8 @@ end
 -- @param #POINT_VEC3 self
 -- @param Point#POINT_VEC3.SmokeColor SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
-  self:F2( { SmokeColor, self.PointVec3 } )
-  trigger.action.smoke( self.PointVec3, SmokeColor )
+  self:F2( { SmokeColor } )
+  trigger.action.smoke( self:GetVec3(), SmokeColor )
 end
 
 --- Smoke the POINT_VEC3 Green.
@@ -14537,8 +14713,8 @@ end
 -- @param Point#POINT_VEC3.FlareColor
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
-  self:F2( { FlareColor, self.PointVec3 } )
-  trigger.action.signalFlare( self.PointVec3, FlareColor, Azimuth and Azimuth or 0 )
+  self:F2( { FlareColor } )
+  trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
 end
 
 --- Flare the POINT_VEC3 White.
@@ -14575,8 +14751,9 @@ end
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
--- @field DCSTypes#Vec2 PointVec2
 -- @extends Point#POINT_VEC3
+-- @field #number x The x coordinate in 2D space.
+-- @field #number y the y coordinate in 2D space.
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
   }
@@ -14590,15 +14767,12 @@ POINT_VEC2 = {
 function POINT_VEC2:New( x, y, LandHeightAdd )
 
   local LandHeight = land.getHeight( { ["x"] = x, ["y"] = y } )
-  if LandHeightAdd then
-    LandHeight = LandHeight + LandHeightAdd
-  end
+  
+  LandHeightAdd = LandHeightAdd or 0
+  LandHeight = LandHeight + LandHeightAdd
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
-  self:F2( { x, y, LandHeightAdd } )
   
-  self.PointVec2 = { x = x, y = y }
-
   return self
 end
 
@@ -14608,30 +14782,77 @@ end
 -- @return Point#POINT_VEC2 self
 function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
 
-  local self = BASE:Inherit( self, BASE:New() )
-
   local LandHeight = land.getHeight( Vec2 )
-  if LandHeightAdd then
-    LandHeight = LandHeight + LandHeightAdd
-  end
+
+  LandHeightAdd = LandHeightAdd or 0
+  LandHeight = LandHeight + LandHeightAdd
   
   local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
   self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
 
-  self.PointVec2 = Vec2
-  self:F2( self.PointVec3 )
+  return self
+end
+
+--- Create a new POINT_VEC2 object from  Vec3 coordinates.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Point#POINT_VEC2 self
+function POINT_VEC2:NewFromVec3( Vec3 )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  local Vec2 = { x = Vec3.x, y = Vec3.z }
+
+  local LandHeight = land.getHeight( Vec2 )
+  
+  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( { Vec2.x, LandHeight, Vec2.y } )
 
   return self
 end
 
---- Calculate the distance from a reference @{Point#POINT_VEC2}.
+--- Return the x coordinate of the POINT_VEC2.
 -- @param #POINT_VEC2 self
--- @param #POINT_VEC2 PointVec2Reference The reference @{Point#POINT_VEC2}.
--- @return DCSTypes#Distance The distance from the reference @{Point#POINT_VEC2} in meters.
+-- @return #number The x coodinate.
+function POINT_VEC2:GetX()
+  return self.x
+end
+
+--- Return the y coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @return #number The y coodinate.
+function POINT_VEC2:GetY()
+  return self.z
+end
+
+--- Return the altitude of the land at the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @return #number The land altitude.
+function POINT_VEC2:GetAlt()
+  return land.getHeight( { x = self.x, y = self.z } )
+end
+
+--- Set the x coordinate of the POINT_VEC2.
+-- @param #number x The x coordinate.
+function POINT_VEC2:SetX( x )
+  self.x = x
+end
+
+--- Set the y coordinate of the POINT_VEC2.
+-- @param #number y The y coordinate.
+function POINT_VEC2:SetY( y )
+  self.z = y
+end
+
+
+
+--- Calculate the distance from a reference @{#POINT_VEC2}.
+-- @param #POINT_VEC2 self
+-- @param #POINT_VEC2 PointVec2Reference The reference @{#POINT_VEC2}.
+-- @return DCSTypes#Distance The distance from the reference @{#POINT_VEC2} in meters.
 function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   self:F2( PointVec2Reference )
   
-  local Distance = ( ( PointVec2Reference.PointVec2.x - self.PointVec2.x ) ^ 2 + ( PointVec2Reference.PointVec2.y - self.PointVec2.y ) ^2 ) ^0.5
+  local Distance = ( ( PointVec2Reference:GetX() - self:GetX() ) ^ 2 + ( PointVec2Reference:GetY() - self:GetY() ) ^2 ) ^0.5
   
   self:T2( Distance )
   return Distance
@@ -14644,7 +14865,7 @@ end
 function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   self:F2( Vec2Reference )
   
-  local Distance = ( ( Vec2Reference.x - self.PointVec2.x ) ^ 2 + ( Vec2Reference.y - self.PointVec2.y ) ^2 ) ^0.5
+  local Distance = ( ( Vec2Reference.x - self:GetX() ) ^ 2 + ( Vec2Reference.y - self:GetY() ) ^2 ) ^0.5
   
   self:T2( Distance )
   return Distance
@@ -14657,6 +14878,23 @@ end
 function POINT_VEC2:GetAltitudeText()
   return ''
 end
+
+--- Add a Distance in meters from the POINT_VEC2 orthonormal plane, with the given angle, and calculate the new POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC2 The new calculated POINT_VEC2.
+function POINT_VEC2:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SY = self:GetY()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TY = Distance * math.sin( Radians ) + SY
+  
+  return POINT_VEC2:New( TX, TY )
+end
+
+
 
 --- The main include file for the MOOSE system.
 
@@ -15550,39 +15788,988 @@ function SCORING:CloseCSV()
   end
 end
 
---- CARGO Classes
--- @module CARGO
+--- This module contains the CARGO classes.
+--
+-- ===
+--
+-- 1) @{Cargo#CARGO_BASE} class, extends @{Base#BASE}
+-- ==================================================
+-- The @{#CARGO_BASE} class defines the core functions that defines a cargo object within MOOSE.
+-- A cargo is a logical object defined within a @{Mission}, that is available for transport, and has a life status within a simulation.
+--
+-- Cargo can be of various forms:
+--
+--   * CARGO_UNIT, represented by a @{Unit} in a @{Group}: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost.
+--   * CARGO_STATIC, represented by a @{Static}: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.
+--   * CARGO_PACKAGE, contained in a @{Unit} of a @{Group}: Cargo can be contained within a Unit of a Group. The cargo can be **delivered** by the @{Unit}. If the Unit is destroyed, the cargo will be destroyed also.
+--   * CARGO_PACKAGE, Contained in a @{Static}: Cargo can be contained within a Static. The cargo can be **collected** from the @Static. If the @{Static} is destroyed, the cargo will be destroyed.
+--   * CARGO_SLINGLOAD, represented by a @{Cargo} that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.
+--
+-- @module Cargo
 
 
-
-
-
-
-
---- Clients are those Groups defined within the Mission Editor that have the skillset defined as "Client" or "Player".
--- These clients are defined within the Mission Orchestration Framework (MOF)
 
 CARGOS = {}
 
+do -- CARGO
+
+  --- @type CARGO
+  -- @extends Base#BASE
+  -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
+  -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
+  -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
+  -- @field #number ReportRadius (optional) A number defining the radius in meters when the cargo is signalling or reporting to a Carrier.
+  -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
+  -- @field Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  -- @field Positionable#POSITIONABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+  -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
+  -- @field #boolean Moveable This flag defines if the cargo is moveable.
+  -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
+  -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
+  CARGO = {
+    ClassName = "CARGO",
+    Type = nil,
+    Name = nil,
+    Weight = nil,
+    CargoObject = nil,
+    CargoCarrier = nil,
+    Representable = false,
+    Slingloadable = false,
+    Moveable = false,
+    Containable = false,
+  }
+
+--- @type CARGO.CargoObjects
+-- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
+
+
+--- CARGO Constructor.
+-- @param #CARGO self
+-- @param Mission#MISSION Mission
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO
+function CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, BASE:New() ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+
+  self.Type = Type
+  self.Name = Name
+  self.Weight = Weight
+  self.ReportRadius = ReportRadius
+  self.NearRadius = NearRadius
+  self.CargoObject = nil
+  self.CargoCarrier = nil
+  self.Representable = false
+  self.Slingloadable = false
+  self.Moveable = false
+  self.Containable = false
+
+
+  self.CargoScheduler = SCHEDULER:New()
+
+  CARGOS[self.Name] = self
+
+  return self
+end
+
+
+--- Template method to spawn a new representation of the CARGO in the simulator.
+-- @param #CARGO self
+-- @return #CARGO
+function CARGO:Spawn( PointVec2 )
+  self:F()
+
+end
+
+--- Load Cargo to a Carrier.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+function CARGO:Load( CargoCarrier )
+  self:F()
+  
+  self:_NextEvent( self.FsmP.Load, CargoCarrier )
+end
+
+--- UnLoad Cargo from a Carrier with a UnLoadDistance and an Angle.
+-- @param #CARGO self
+-- @param #number UnLoadDistance
+-- @param #number Angle
+function CARGO:UnLoad( CargoCarrier )
+  self:F()
+  
+  self:_NextEvent( self.FsmP.Board, CargoCarrier )
+end
+
+--- Board Cargo to a Carrier with a defined Speed.
+-- @param #CARGO self
+-- @param Unit#UNIT CargoCarrier
+function CARGO:Board( CargoCarrier )
+  self:F()
+  
+  self:_NextEvent( self.FsmP.Board, CargoCarrier )
+end
+
+--- UnLoad Cargo from a Carrier.
+-- @param #CARGO self
+function CARGO:UnLoad()
+  self:F()
+  
+  self:_NextEvent( self.FsmP.UnLoad )
+end
+
+--- Check if CargoCarrier is near the Cargo to be Loaded.
+-- @param #CARGO self
+-- @param Point#POINT_VEC2 PointVec2
+-- @return #boolean
+function CARGO:IsNear( PointVec2 )
+  self:F()
+
+  local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  self:T( Distance )
+  
+  if Distance <= self.NearRadius then
+    return true
+  else
+    return false
+  end
+end
+
+
+--- On Loaded callback function.
+function CARGO:OnLoaded( CallBackFunction, ... )
+  self:F()
+  
+  self.OnLoadedCallBack = CallBackFunction
+  self.OnLoadedParameters = arg
+  
+end
+
+--- On UnLoaded callback function.
+function CARGO:OnUnLoaded( CallBackFunction, ... )
+  self:F()
+
+  self.OnUnLoadedCallBack = CallBackFunction
+  self.OnUnLoadedParameters = arg
+end
+
+--- @param #CARGO self
+function CARGO:_NextEvent( NextEvent, ... )
+  self:F( self.Name )
+  SCHEDULER:New( self.FsmP, NextEvent, arg, 1 ) -- This schedules the next event, but only if scheduling is activated.
+end
+
+--- @param #CARGO self
+function CARGO:_Next( NextEvent, ... )
+  self:F( self.Name )
+  self.FsmP.NextEvent( self, unpack(arg) ) -- This calls the next event...
+end
+
+end
+
+do -- CARGO_REPRESENTABLE
+
+  --- @type CARGO_REPRESENTABLE
+  -- @extends #CARGO
+  CARGO_REPRESENTABLE = {
+    ClassName = "CARGO_REPRESENTABLE"
+  }
+
+--- CARGO_REPRESENTABLE Constructor.
+-- @param #CARGO_REPRESENTABLE self
+-- @param Mission#MISSION Mission
+-- @param Controllable#Controllable CargoObject
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_REPRESENTABLE
+function CARGO_REPRESENTABLE:New( Mission, CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO:New( Mission, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  
+  
+
+  return self
+end
+
+
+
+end
+
+do -- CARGO_UNIT
+
+  --- @type CARGO_UNIT
+  -- @extends #CARGO_REPRESENTABLE
+  CARGO_UNIT = {
+    ClassName = "CARGO_UNIT"
+  }
+
+--- CARGO_UNIT Constructor.
+-- @param #CARGO_UNIT self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT CargoUnit
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_UNIT
+function CARGO_UNIT:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  self:T( CargoUnit )
+  self.CargoObject = CargoUnit
+
+  self.FsmP = STATEMACHINE_PROCESS:New( self, {
+    initial = 'UnLoaded',
+    events = {
+      { name = 'Board',       from = 'UnLoaded',        to = 'Boarding' },
+      { name = 'Load',        from = 'Boarding',        to = 'Loaded' },
+      { name = 'UnLoad',      from = 'Loaded',          to = 'UnBoarding' },
+      { name = 'UnBoard',     from = 'UnBoarding',      to = 'UnLoaded' },
+      { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
+    },
+    callbacks = {
+      onafterBoard = self.EventBoard,
+      onafterLoad = self.EventLoad,
+      onafterUnBoard = self.EventUnBoard,
+      onafterUnLoad = self.EventUnLoad,
+      onenterBoarding = self.EnterStateBoarding,
+      onleaveBoarding = self.LeaveStateBoarding,
+      onenterLoaded = self.EnterStateLoaded,
+      onenterUnBoarding = self.EnterStateUnBoarding,
+      onleaveUnBoarding = self.LeaveStateUnBoarding,
+      onenterUnLoaded = self.EnterStateUnLoaded,
+    },
+  } )
+
+  self:T( self.ClassName )
+
+  return self
+end
+
+--- Enter UnBoarding State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Point#POINT_VEC2 ToPointVec2
+function CARGO_UNIT:EnterStateUnBoarding( FsmP, Event, From, To, ToPointVec2 )
+  self:F()
+
+  local Angle = 180
+  local Speed = 10
+  local DeployDistance = 5
+  local RouteDistance = 60
+
+  if From == "Loaded" then
+
+    local CargoCarrierPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, CargoDeployHeading )
+    local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
+
+    if not ToPointVec2 then
+      ToPointVec2 = CargoRoutePointVec2
+    end
+    
+    local FromPointVec2 = CargoCarrierPointVec2
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+      self.CargoCarrier = nil
+
+      local Points = {}
+      Points[#Points+1] = FromPointVec2:RoutePointGround( Speed )
+      Points[#Points+1] = ToPointVec2:RoutePointGround( Speed  )
+  
+      local TaskRoute = self.CargoObject:TaskRoute( Points )
+      self.CargoObject:SetTask( TaskRoute, 1 )
+
+      self:_NextEvent( FsmP.UnBoard, ToPointVec2 )
+    end
+  end
+
+end
+
+--- Leave UnBoarding State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Point#POINT_VEC2 ToPointVec2
+function CARGO_UNIT:LeaveStateUnBoarding( FsmP, Event, From, To, ToPointVec2 )
+  self:F()
+
+  local Angle = 180
+  local Speed = 10
+  local Distance = 5
+
+  if From == "UnBoarding" then
+    if self:IsNear( ToPointVec2 ) then
+      return true
+    else
+      self:_NextEvent( FsmP.UnBoard, ToPointVec2 )
+    end
+    return false
+  end
+
+end
+
+--- Enter UnLoaded State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO_UNIT:EnterStateUnLoaded( FsmP, Event, From, To, ToPointVec2 )
+  self:F()
+
+  local Angle = 180
+  local Speed = 10
+  local Distance = 5
+
+  if From == "Loaded" then
+    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
+      self.CargoCarrier = nil
+    end
+    
+  end
+
+  if self.OnUnLoadedCallBack then
+    self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
+    self.OnUnLoadedCallBack = nil
+  end
+
+end
+
+
+
+--- Enter Boarding State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_UNIT:EnterStateBoarding( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+  
+  local Speed = 10
+  local Angle = 180
+  local Distance = 5
+
+  if From == "UnLoaded" then
+    local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+
+    local Points = {}
+
+    local PointStartVec2 = self.CargoObject:GetPointVec2()
+
+    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 2 )
+  end
+end
+
+--- Leave Boarding State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_UNIT:LeaveStateBoarding( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  if self:IsNear( CargoCarrier:GetPointVec2() ) then
+    return true
+  else
+    self:_NextEvent( FsmP.Load, CargoCarrier )
+  end
+  return false
+end
+
+--- Loaded State.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_UNIT:EnterStateLoaded( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  self.CargoCarrier = CargoCarrier
+  
+  -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
+  if self.CargoObject then
+    self.CargoObject:Destroy()
+  end
+  
+  if self.OnLoadedCallBack then
+    self.OnLoadedCallBack( self, unpack( self.OnLoadedParameters ) )
+    self.OnLoadedCallBack = nil
+  end
+  
+end
+
+
+--- Board Event.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO_UNIT:EventBoard( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  self.CargoInAir = self.CargoObject:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only move the group to the carrier when the cargo is not in the air
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+    self:_NextEvent( FsmP.Load, CargoCarrier )
+  end
+
+
+end
+
+--- UnBoard Event.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO_UNIT:EventUnBoard( FsmP, Event, From, To )
+  self:F()
+
+  self.CargoInAir = self.CargoObject:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only unboard the cargo when the carrier is not in the air.
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+
+  end
+
+  self:_NextEvent( FsmP.UnLoad )
+
+end
+
+--- Load Event.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_UNIT:EventLoad( FsmP, Event, From, To, CargoCarrier )
+  self:F()
+
+  self:T( self.ClassName )
+
+end
+
+--- UnLoad Event.
+-- @param #CARGO_UNIT self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO_UNIT:EventUnLoad( FsmP, Event, From, To )
+  self:F()
+  
+end
+
+end
+
+do -- CARGO_PACKAGE
+
+  --- @type CARGO_PACKAGE
+  -- @extends #CARGO_REPRESENTABLE
+  CARGO_PACKAGE = {
+    ClassName = "CARGO_PACKAGE"
+  }
+
+--- CARGO_PACKAGE Constructor.
+-- @param #CARGO_PACKAGE self
+-- @param Mission#MISSION Mission
+-- @param Unit#UNIT CargoCarrier The UNIT carrying the package.
+-- @param #string Type
+-- @param #string Name
+-- @param #number Weight
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_PACKAGE
+function CARGO_PACKAGE:New( Mission, CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( Mission, CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+
+  self:T( CargoCarrier )
+  self.CargoCarrier = CargoCarrier
+
+  self.FsmP = STATEMACHINE_PROCESS:New( self, {
+    initial = 'UnLoaded',
+    events = {
+      { name = 'Board',       from = 'UnLoaded',        to = 'Boarding' },
+      { name = 'Boarded',     from = 'Boarding',        to = 'Boarding' },
+      { name = 'Load',        from = 'Boarding',        to = 'Loaded' },
+      { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
+      { name = 'UnBoard',     from = 'Loaded',          to = 'UnBoarding' },
+      { name = 'UnBoarded',   from = 'UnBoarding',      to = 'UnBoarding' },
+      { name = 'UnLoad',      from = 'UnBoarding',      to = 'UnLoaded' },
+      { name = 'UnLoad',      from = 'Loaded',          to = 'UnLoaded' },
+    },
+    callbacks = {
+      onBoard = self.OnBoard,
+      onBoarded = self.OnBoarded,
+      onLoad = self.OnLoad,
+      onUnBoard = self.OnUnBoard,
+      onUnBoarded = self.OnUnBoarded,
+      onUnLoad = self.OnUnLoad,
+      onLoaded = self.OnLoaded,
+      onUnLoaded = self.OnUnLoaded,
+    },
+  } )
+
+  return self
+end
+
+--- Board Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+-- @param #number BoardDistance
+-- @param #number Angle
+function CARGO_PACKAGE:OnBoard( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  self:F()
+
+  self.CargoInAir = self.CargoCarrier:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only move the CargoCarrier to the New CargoCarrier when the New CargoCarrier is not in the air.
+  if not self.CargoInAir then
+
+    local Points = {}
+
+    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    self:T( { CargoCarrierHeading, CargoDeployHeading } )
+    local CargoDeployPointVec2 = CargoCarrier:GetPointVec2():Translate( BoardDistance, CargoDeployHeading )
+
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+    self.CargoCarrier:SetTask( TaskRoute, 1 )
+  end
+
+  self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+
+end
+
+--- Check if CargoCarrier is near the Cargo to be Loaded.
+-- @param #CARGO_PACKAGE self
+-- @param Unit#UNIT CargoCarrier
+-- @return #boolean
+function CARGO_PACKAGE:IsNear( CargoCarrier )
+  self:F()
+
+  local CargoCarrierPoint = CargoCarrier:GetPointVec2()
+  
+  local Distance = CargoCarrierPoint:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+  self:T( Distance )
+  
+  if Distance <= self.NearRadius then
+    return true
+  else
+    return false
+  end
+end
+
+--- Boarded Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_PACKAGE:OnBoarded( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  self:F()
+
+  if self:IsNear( CargoCarrier ) then
+    self:_NextEvent( FsmP.Load, CargoCarrier, Speed, LoadDistance, Angle )
+  else
+    self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+  end
+end
+
+--- UnBoard Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param #number Speed
+-- @param #number UnLoadDistance
+-- @param #number UnBoardDistance
+-- @param #number Radius
+-- @param #number Angle
+function CARGO_PACKAGE:OnUnBoard( FsmP, Event, From, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+  self:F()
+
+  self.CargoInAir = self.CargoCarrier:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only unboard the cargo when the carrier is not in the air.
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+
+    self:_Next( self.FsmP.UnLoad, UnLoadDistance, Angle )
+  
+    local Points = {}
+
+    local StartPointVec2 = CargoCarrier:GetPointVec2()
+    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    self:T( { CargoCarrierHeading, CargoDeployHeading } )
+    local CargoDeployPointVec2 = StartPointVec2:Translate( UnBoardDistance, CargoDeployHeading )
+
+    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+    local TaskRoute = CargoCarrier:TaskRoute( Points )
+    CargoCarrier:SetTask( TaskRoute, 1 )
+  end
+
+  self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+
+end
+
+--- UnBoarded Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+function CARGO_PACKAGE:OnUnBoarded( FsmP, Event, From, To, CargoCarrier, Speed )
+  self:F()
+
+  if self:IsNear( CargoCarrier ) then
+    self:_NextEvent( FsmP.UnLoad, CargoCarrier, Speed )
+  else
+    self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+  end
+end
+
+--- Load Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Unit#UNIT CargoCarrier
+-- @param #number Speed
+-- @param #number LoadDistance
+-- @param #number Angle
+function CARGO_PACKAGE:OnLoad( FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle )
+  self:F()
+
+  self.CargoCarrier = CargoCarrier
+
+  local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = StartPointVec2:Translate( LoadDistance, CargoDeployHeading )
+  
+  local Points = {}
+  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+  local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+  self.CargoCarrier:SetTask( TaskRoute, 1 )
+
+end
+
+--- UnLoad Event.
+-- @param #CARGO_PACKAGE self
+-- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param #number Distance
+-- @param #number Angle
+function CARGO_PACKAGE:OnUnLoad( FsmP, Event, From, To, CargoCarrier, Speed, Distance, Angle )
+  self:F()
+  
+  local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+  
+  self.CargoCarrier = CargoCarrier
+
+  local Points = {}
+  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+  local TaskRoute = self.CargoCarrier:TaskRoute( Points )
+  self.CargoCarrier:SetTask( TaskRoute, 1 )
+
+end
+
+
+end
+
+
+
+CARGO_SLINGLOAD = {
+  ClassName = "CARGO_SLINGLOAD"
+}
+
+
+function CARGO_SLINGLOAD:New( CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID )
+  local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
+  self:F( { CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID } )
+
+  self.CargoHostName = CargoHostName
+
+  -- Cargo will be initialized around the CargoZone position.
+  self.CargoZone = CargoZone
+
+  self.CargoCount = 0
+  self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
+
+  -- The country ID needs to be correctly set.
+  self.CargoCountryID = CargoCountryID
+
+  CARGOS[self.CargoName] = self
+
+  return self
+
+end
+
+
+function CARGO_SLINGLOAD:IsLandingRequired()
+  self:F()
+  return false
+end
+
+
+function CARGO_SLINGLOAD:IsSlingLoad()
+  self:F()
+  return true
+end
+
+
+function CARGO_SLINGLOAD:Spawn( Client )
+  self:F( { self, Client } )
+
+  local Zone = trigger.misc.getZone( self.CargoZone )
+
+  local ZonePos = {}
+  ZonePos.x = Zone.point.x + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
+  ZonePos.y = Zone.point.z + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
+
+  self:T( "Cargo Location = " .. ZonePos.x .. ", " .. ZonePos.y )
+
+  --[[
+
+
+
+
+
+
+
+	-- This does not work in 1.5.2.
+
+
+
+
+
+
+
+	CargoStatic = StaticObject.getByName( self.CargoName )
+
+
+
+
+
+
+
+	if CargoStatic then
+
+
+
+
+
+
+
+		CargoStatic:destroy()
+
+
+
+
+
+
+
+	end
+
+
+
+
+
+
+
+	--]]
+
+  CargoStatic = StaticObject.getByName( self.CargoStaticName )
+
+  if CargoStatic and CargoStatic:isExist() then
+    CargoStatic:destroy()
+  end
+
+  -- I need to make every time a new cargo due to bugs in 1.5.2.
+
+  self.CargoCount = self.CargoCount + 1
+  self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
+
+  local CargoTemplate = {
+    ["category"] = "Cargo",
+    ["shape_name"] = "ab-212_cargo",
+    ["type"] = "Cargo1",
+    ["x"] = ZonePos.x,
+    ["y"] = ZonePos.y,
+    ["mass"] = self.CargoWeight,
+    ["name"] =  self.CargoStaticName,
+    ["canCargo"] = true,
+    ["heading"] = 0,
+  }
+
+  coalition.addStaticObject( self.CargoCountryID, CargoTemplate )
+
+  --	end
+
+  return self
+end
+
+
+function CARGO_SLINGLOAD:IsNear( Client, LandingZone )
+  self:F()
+
+  local Near = false
+
+  return Near
+end
+
+
+function CARGO_SLINGLOAD:IsInLandingZone( Client, LandingZone )
+  self:F()
+
+  local Near = false
+
+  local CargoStaticUnit = StaticObject.getByName( self.CargoName )
+  if CargoStaticUnit then
+    if routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
+      Near = true
+    end
+  end
+
+  return Near
+end
+
+
+function CARGO_SLINGLOAD:OnBoard( Client, LandingZone, OnBoardSide )
+  self:F()
+
+  local Valid = true
+
+
+  return Valid
+end
+
+
+function CARGO_SLINGLOAD:OnBoarded( Client, LandingZone )
+  self:F()
+
+  local OnBoarded = false
+
+  local CargoStaticUnit = StaticObject.getByName( self.CargoName )
+  if CargoStaticUnit then
+    if not routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
+      OnBoarded = true
+    end
+  end
+
+  return OnBoarded
+end
+
+
+function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
+  self:F()
+
+  self:T( 'self.CargoName = ' .. self.CargoName )
+  self:T( 'self.CargoGroupName = ' .. self.CargoGroupName )
+
+  self:StatusUnLoaded()
+
+  return Cargo
+end
 
 CARGO_ZONE = {
-	ClassName="CARGO_ZONE",
-	CargoZoneName = '',
-	CargoHostUnitName = '',
-	SIGNAL = {
-		TYPE = {
-			SMOKE = { ID = 1, TEXT = "smoke" },
-			FLARE = { ID = 2, TEXT = "flare" }
-		},
-		COLOR = {	
-			GREEN = { ID = 1, TRIGGERCOLOR = trigger.smokeColor.Green, TEXT = "A green" },
-			RED = { ID = 2, TRIGGERCOLOR = trigger.smokeColor.Red, TEXT = "A red" },
-			WHITE = { ID = 3, TRIGGERCOLOR = trigger.smokeColor.White, TEXT = "A white" },
-			ORANGE = { ID = 4, TRIGGERCOLOR = trigger.smokeColor.Orange, TEXT = "An orange" },
-			BLUE = { ID = 5, TRIGGERCOLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
-			YELLOW = { ID = 6, TRIGGERCOLOR = trigger.flareColor.Yellow, TEXT = "A yellow" }
-		}
-	}
+  ClassName="CARGO_ZONE",
+  CargoZoneName = '',
+  CargoHostUnitName = '',
+  SIGNAL = {
+    TYPE = {
+      SMOKE = { ID = 1, TEXT = "smoke" },
+      FLARE = { ID = 2, TEXT = "flare" }
+    },
+    COLOR = {
+      GREEN = { ID = 1, TRIGGERCOLOR = trigger.smokeColor.Green, TEXT = "A green" },
+      RED = { ID = 2, TRIGGERCOLOR = trigger.smokeColor.Red, TEXT = "A red" },
+      WHITE = { ID = 3, TRIGGERCOLOR = trigger.smokeColor.White, TEXT = "A white" },
+      ORANGE = { ID = 4, TRIGGERCOLOR = trigger.smokeColor.Orange, TEXT = "An orange" },
+      BLUE = { ID = 5, TRIGGERCOLOR = trigger.smokeColor.Blue, TEXT = "A blue" },
+      YELLOW = { ID = 6, TRIGGERCOLOR = trigger.flareColor.Yellow, TEXT = "A yellow" }
+    }
+  }
 }
 
 --- Creates a new zone where cargo can be collected or deployed.
@@ -15590,1045 +16777,301 @@ CARGO_ZONE = {
 -- Provide the zone name as declared in the mission file into the CargoZoneName in the :New method.
 -- An optional parameter is the CargoHostName, which is a Group declared with Late Activation switched on in the mission file.
 -- The CargoHostName is the "host" of the cargo zone:
--- 
+--
 -- * It will smoke the zone position when a client is approaching the zone.
 -- * Depending on the cargo type, it will assist in the delivery of the cargo by driving to and from the client.
--- 
+--
 -- @param #CARGO_ZONE self
 -- @param #string CargoZoneName The name of the zone as declared within the mission editor.
--- @param #string CargoHostName The name of the Group "hosting" the zone. The Group MUST NOT be a static, and must be a "mobile" unit. 
+-- @param #string CargoHostName The name of the Group "hosting" the zone. The Group MUST NOT be a static, and must be a "mobile" unit.
 function CARGO_ZONE:New( CargoZoneName, CargoHostName ) local self = BASE:Inherit( self, ZONE:New( CargoZoneName ) )
-	self:F( { CargoZoneName, CargoHostName } )
+  self:F( { CargoZoneName, CargoHostName } )
 
-	self.CargoZoneName = CargoZoneName
-	self.SignalHeight = 2
-	--self.CargoZone = trigger.misc.getZone( CargoZoneName )
-	
+  self.CargoZoneName = CargoZoneName
+  self.SignalHeight = 2
+  --self.CargoZone = trigger.misc.getZone( CargoZoneName )
 
-	if CargoHostName then
-		self.CargoHostName = CargoHostName
-	end
 
-	self:T( self.CargoZoneName )
-	
-	return self
+  if CargoHostName then
+    self.CargoHostName = CargoHostName
+  end
+
+  self:T( self.CargoZoneName )
+
+  return self
 end
 
 function CARGO_ZONE:Spawn()
-	self:F( self.CargoHostName )
+  self:F( self.CargoHostName )
 
   if self.CargoHostName then -- Only spawn a host in the zone when there is one given as a parameter in the New function.
-  	if self.CargoHostSpawn then
-  		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
-  		if CargoHostGroup and CargoHostGroup:IsAlive() then
-  		else
-  			self.CargoHostSpawn:ReSpawn( 1 )
-  		end
-  	else
-  		self:T( "Initialize CargoHostSpawn" )
-  		self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
-  		self.CargoHostSpawn:ReSpawn( 1 )
-  	end
+    if self.CargoHostSpawn then
+      local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+      if CargoHostGroup and CargoHostGroup:IsAlive() then
+      else
+        self.CargoHostSpawn:ReSpawn( 1 )
+      end
+  else
+    self:T( "Initialize CargoHostSpawn" )
+    self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+    self.CargoHostSpawn:ReSpawn( 1 )
+  end
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:GetHostUnit()
-	self:F( self )
+  self:F( self )
 
-	if self.CargoHostName then
-		
-		-- A Host has been given, signal the host
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
-		local CargoHostUnit
-		if CargoHostGroup and CargoHostGroup:IsAlive() then
-			CargoHostUnit = CargoHostGroup:GetUnit(1)
-		else
-			CargoHostUnit = StaticObject.getByName( self.CargoHostName )
-		end
-		
-		return CargoHostUnit
-	end
-	
-	return nil
+  if self.CargoHostName then
+
+    -- A Host has been given, signal the host
+    local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex()
+    local CargoHostUnit
+    if CargoHostGroup and CargoHostGroup:IsAlive() then
+      CargoHostUnit = CargoHostGroup:GetUnit(1)
+    else
+      CargoHostUnit = StaticObject.getByName( self.CargoHostName )
+    end
+
+    return CargoHostUnit
+  end
+
+  return nil
 end
 
 function CARGO_ZONE:ReportCargosToClient( Client, CargoType )
-	self:F()
+  self:F()
 
-	local SignalUnit = self:GetHostUnit()
+  local SignalUnit = self:GetHostUnit()
 
-	if SignalUnit then
-		
-		local SignalUnitTypeName = SignalUnit:getTypeName()
-		
-		local HostMessage = ""
+  if SignalUnit then
 
-		local IsCargo = false
-		for CargoID, Cargo in pairs( CARGOS ) do
-			if Cargo.CargoType == Task.CargoType then
-				if Cargo:IsStatusNone() then
-					HostMessage = HostMessage .. " - " .. Cargo.CargoName .. " - " .. Cargo.CargoType .. " (" .. Cargo.Weight .. "kg)" .. "\n"
-					IsCargo = true
-				end
-			end
-		end
-		
-		if not IsCargo then
-			HostMessage = "No Cargo Available."
-		end
+    local SignalUnitTypeName = SignalUnit:getTypeName()
 
-		Client:Message( HostMessage, 20, SignalUnitTypeName .. ": Reporting Cargo", 10 )
-	end
+    local HostMessage = ""
+
+    local IsCargo = false
+    for CargoID, Cargo in pairs( CARGOS ) do
+      if Cargo.CargoType == Task.CargoType then
+        if Cargo:IsStatusNone() then
+          HostMessage = HostMessage .. " - " .. Cargo.CargoName .. " - " .. Cargo.CargoType .. " (" .. Cargo.Weight .. "kg)" .. "\n"
+          IsCargo = true
+        end
+      end
+    end
+
+    if not IsCargo then
+      HostMessage = "No Cargo Available."
+    end
+
+    Client:Message( HostMessage, 20, SignalUnitTypeName .. ": Reporting Cargo", 10 )
+  end
 end
 
 
 function CARGO_ZONE:Signal()
-	self:F()
+  self:F()
 
-	local Signalled = false
+  local Signalled = false
 
-	if self.SignalType then
-	
-		if self.CargoHostName then
-			
-			-- A Host has been given, signal the host
-			
-			local SignalUnit = self:GetHostUnit()
-			
-			if SignalUnit then
-			
-				self:T( 'Signalling Unit' )
-				local SignalVehiclePos = SignalUnit:GetPointVec3()
-				SignalVehiclePos.y = SignalVehiclePos.y + 2
+  if self.SignalType then
 
-				if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
+    if self.CargoHostName then
 
-					trigger.action.smoke( SignalVehiclePos, self.SignalColor.TRIGGERCOLOR )
-					Signalled = true
+      -- A Host has been given, signal the host
 
-				elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
+      local SignalUnit = self:GetHostUnit()
 
-					trigger.action.signalFlare( SignalVehiclePos, self.SignalColor.TRIGGERCOLOR , 0 )
-					Signalled = false
+      if SignalUnit then
 
-				end
-			end
-			
-		else
-		
-			local ZonePointVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
-	  
-			if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
+        self:T( 'Signalling Unit' )
+        local SignalVehicleVec3 = SignalUnit:GetVec3()
+        SignalVehicleVec3.y = SignalVehicleVec3.y + 2
 
-				trigger.action.smoke( ZonePointVec3, self.SignalColor.TRIGGERCOLOR  )
-				Signalled = true
+        if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
 
-			elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
-				trigger.action.signalFlare( ZonePointVec3, self.SignalColor.TRIGGERCOLOR, 0 )
-				Signalled = false
+          trigger.action.smoke( SignalVehicleVec3, self.SignalColor.TRIGGERCOLOR )
+          Signalled = true
 
-			end
-		end
-	end
-	
-	return Signalled
+        elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
+
+          trigger.action.signalFlare( SignalVehicleVec3, self.SignalColor.TRIGGERCOLOR , 0 )
+          Signalled = false
+
+        end
+      end
+
+    else
+
+      local ZoneVec3 = self:GetPointVec3( self.SignalHeight ) -- Get the zone position + the landheight + 2 meters
+
+      if self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.SMOKE.ID then
+
+        trigger.action.smoke( ZoneVec3, self.SignalColor.TRIGGERCOLOR  )
+        Signalled = true
+
+      elseif self.SignalType.ID == CARGO_ZONE.SIGNAL.TYPE.FLARE.ID then
+        trigger.action.signalFlare( ZoneVec3, self.SignalColor.TRIGGERCOLOR, 0 )
+        Signalled = false
+
+      end
+    end
+  end
+
+  return Signalled
 
 end
 
 function CARGO_ZONE:WhiteSmoke( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
-	
-	if SignalHeight then
-	 self.SignalHeight = SignalHeight
-	end
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
 
-	return self
+  if SignalHeight then
+    self.SignalHeight = SignalHeight
+  end
+
+  return self
 end
 
 function CARGO_ZONE:BlueSmoke( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.BLUE
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:RedSmoke( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:OrangeSmoke( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.ORANGE
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:GreenSmoke( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.SMOKE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 
 function CARGO_ZONE:WhiteFlare( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.WHITE
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:RedFlare( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.RED
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:GreenFlare( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.GREEN
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 function CARGO_ZONE:YellowFlare( SignalHeight )
-	self:F()
+  self:F()
 
-	self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
-	self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
+  self.SignalType = CARGO_ZONE.SIGNAL.TYPE.FLARE
+  self.SignalColor = CARGO_ZONE.SIGNAL.COLOR.YELLOW
 
   if SignalHeight then
-   self.SignalHeight = SignalHeight
+    self.SignalHeight = SignalHeight
   end
 
-	return self
+  return self
 end
 
 
 function CARGO_ZONE:GetCargoHostUnit()
-	self:F( self )
+  self:F( self )
 
-	if self.CargoHostSpawn then 
-		local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex(1)
-		if CargoHostGroup and CargoHostGroup:IsAlive() then
-			local CargoHostUnit = CargoHostGroup:GetUnit(1)
-			if CargoHostUnit and CargoHostUnit:IsAlive() then
-				return CargoHostUnit
-			end
-		end
-	end
+  if self.CargoHostSpawn then
+    local CargoHostGroup = self.CargoHostSpawn:GetGroupFromIndex(1)
+    if CargoHostGroup and CargoHostGroup:IsAlive() then
+      local CargoHostUnit = CargoHostGroup:GetUnit(1)
+      if CargoHostUnit and CargoHostUnit:IsAlive() then
+        return CargoHostUnit
+      end
+    end
+  end
 
-	return nil
+  return nil
 end
 
 function CARGO_ZONE:GetCargoZoneName()
-	self:F()
+  self:F()
 
-	return self.CargoZoneName
-end
-
-CARGO = {
-	ClassName = "CARGO",
-	STATUS = {
-		NONE = 0,
-		LOADED = 1,
-		UNLOADED = 2,
-		LOADING = 3
-	},
-	CargoClient = nil
-}
-
---- Add Cargo to the mission... Cargo functionality needs to be reworked a bit, so this is still under construction. I need to make a CARGO Class...
-function CARGO:New( CargoType, CargoName, CargoWeight ) local self = BASE:Inherit( self, BASE:New() )
-	self:F( { CargoType, CargoName, CargoWeight } )
-
-
-	self.CargoType = CargoType
-	self.CargoName = CargoName
-    self.CargoWeight = CargoWeight
-
-	self:StatusNone()
-	
-	return self
-end
-
-function CARGO:Spawn( Client )
-	self:F()
-
-	return self
-
-end
-
-function CARGO:IsNear( Client, LandingZone )
-	self:F()
-
-	local Near = true
-	
-	return Near
-	
+  return self.CargoZoneName
 end
 
 
-function CARGO:IsLoadingToClient()
-	self:F()
 
-	if self:IsStatusLoading() then
-		return self.CargoClient
-	end
-	
-	return nil
 
-end
 
 
-function CARGO:IsLoadedInClient()
-	self:F()
 
-	if self:IsStatusLoaded() then
-		return self.CargoClient
-	end
-	
-	return nil
 
-end
-
-
-function CARGO:UnLoad( Client, TargetZoneName )
-	self:F()
-
-	self:StatusUnLoaded()
-
-	return self
-end
-
-function CARGO:OnBoard( Client, LandingZone )
-	self:F()
-  
-	local Valid = true
-  
-	self.CargoClient = Client
-	local ClientUnit = Client:GetClientGroupDCSUnit()
-
-	return Valid
-end
-
-function CARGO:OnBoarded( Client, LandingZone )
-	self:F()
-
-	local OnBoarded = true
-  
-	return OnBoarded
-end
-
-function CARGO:Load( Client )
-	self:F()
-
-	self:StatusLoaded( Client )
-
-	return self
-end
-
-function CARGO:IsLandingRequired()
-	self:F()
-	return true
-end
-
-function CARGO:IsSlingLoad()
-	self:F()
-	return false
-end
-
-
-function CARGO:StatusNone()
-	self:F()
-
-	self.CargoClient = nil
-	self.CargoStatus = CARGO.STATUS.NONE
-	
-	return self
-end
-
-function CARGO:StatusLoading( Client )
-	self:F()
-
-	self.CargoClient = Client
-	self.CargoStatus = CARGO.STATUS.LOADING
-	self:T( "Cargo " .. self.CargoName .. " loading to Client: " .. self.CargoClient:GetClientGroupName() )
-	
-	return self
-end
-
-function CARGO:StatusLoaded( Client )
-	self:F()
-
-	self.CargoClient = Client
-	self.CargoStatus = CARGO.STATUS.LOADED
-	self:T( "Cargo " .. self.CargoName .. " loaded in Client: " .. self.CargoClient:GetClientGroupName() )
-	
-	return self
-end
-
-function CARGO:StatusUnLoaded()
-	self:F()
-
-	self.CargoClient = nil
-	self.CargoStatus = CARGO.STATUS.UNLOADED
-	
-	return self
-end
-
-
-function CARGO:IsStatusNone()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.NONE
-end
-
-function CARGO:IsStatusLoading()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.LOADING
-end
-
-function CARGO:IsStatusLoaded()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.LOADED
-end
-
-function CARGO:IsStatusUnLoaded()
-	self:F()
-
-	return self.CargoStatus == CARGO.STATUS.UNLOADED
-end
-
-
-CARGO_GROUP = {
-	ClassName = "CARGO_GROUP"
-}
-
-
-function CARGO_GROUP:New( CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone ) 	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-	self:F( { CargoType, CargoName, CargoWeight, CargoGroupTemplate, CargoZone } )
-
-	self.CargoSpawn = SPAWN:NewWithAlias( CargoGroupTemplate, CargoName )
-	self.CargoZone = CargoZone
-
-	CARGOS[self.CargoName] = self
-
-	return self
-
-end
-
-function CARGO_GROUP:Spawn( Client )
-	self:F( { Client } )
-
-	local SpawnCargo = true
-	
-	if self:IsStatusNone() then
-		local CargoGroup = Group.getByName( self.CargoName )
-		if CargoGroup and CargoGroup:isExist() then
-			SpawnCargo = false
-		end
-		
-	elseif self:IsStatusLoading() then
-	
-		local Client = self:IsLoadingToClient()
-		if Client and Client:GetDCSGroup() then
-			SpawnCargo = false
-		else
-			local CargoGroup = Group.getByName( self.CargoName	 )
-			if CargoGroup and CargoGroup:isExist() then
-				SpawnCargo = false
-			end
-		end
-	
-	elseif self:IsStatusLoaded()  then
-	
-		local ClientLoaded = self:IsLoadedInClient()
-		-- Now test if another Client is alive (not this one), and it has the CARGO, then this cargo does not need to be initialized and spawned.
-		if ClientLoaded and ClientLoaded ~= Client then
-			local ClientGroup = Client:GetDCSGroup()
-			if ClientLoaded:GetClientGroupDCSUnit() and ClientLoaded:GetClientGroupDCSUnit():isExist() then
-				SpawnCargo = false
-			else
-				self:StatusNone()
-			end
-		else
-			-- Same Client, but now in initialize, so set back the status to None.
-			self:StatusNone()
-		end
-		
-	elseif self:IsStatusUnLoaded() then
-	
-		SpawnCargo = false
-		
-	end
-	
-	if SpawnCargo then 
-		if self.CargoZone:GetCargoHostUnit() then
-			--- ReSpawn the Cargo from the CargoHost
-			self.CargoGroupName = self.CargoSpawn:SpawnFromUnit( self.CargoZone:GetCargoHostUnit(), 60, 30, 1 ):GetName()
-		else
-			--- ReSpawn the Cargo in the CargoZone without a host ...
-			self:T( self.CargoZone )
-			self.CargoGroupName = self.CargoSpawn:SpawnInZone( self.CargoZone, true, 1 ):GetName()
-		end
-		self:StatusNone()	
-	end
-	
-	self:T( { self.CargoGroupName, CARGOS[self.CargoName].CargoGroupName } )
-
-	return self
-end
-
-function CARGO_GROUP:IsNear( Client, LandingZone )
-	self:F()
-
-	local Near = false
-
-	if self.CargoGroupName then 
-		local CargoGroup = Group.getByName( self.CargoGroupName )
-		if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 250 ) then
-			Near = true
-		end
-	end
-	
-	return Near
-	
-end
-
-
-function CARGO_GROUP:OnBoard( Client, LandingZone, OnBoardSide )
-	self:F()
-  
-	local Valid = true
-  
-	local ClientUnit = Client:GetClientGroupDCSUnit()
-	
-	local CarrierPos = ClientUnit:getPoint()
-	local CarrierPosMove = ClientUnit:getPoint()
-	local CarrierPosOnBoard = ClientUnit:getPoint()
-	
-	local CargoGroup = Group.getByName( self.CargoGroupName )
-
-	local CargoUnit = CargoGroup:getUnit(1)
-	local CargoPos = CargoUnit:getPoint()
-	
-	self.CargoInAir = CargoUnit:inAir()
-	
-	self:T( self.CargoInAir )
-
-  -- Only move the group to the carrier when the cargo is not in the air 
-  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-  if not self.CargoInAir then    
-	
-  	local Points = {}
-  	
-  	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-  	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-  	
-  	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-  
-  	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-  	
-  	if OnBoardSide == nil then
-  		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-  	end
-  	
-  	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-  	
-  		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-  		CarrierPosMove.z = CarrierPosMove.z - 25
-  		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  	
-  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-  		
-  		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-  		CarrierPosMove.z = CarrierPosMove.z + 25
-  		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  	
-  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-  		
-  		self:T( "TransportCargoOnBoard: Onboarding BACK" )
-  		CarrierPosMove.x = CarrierPosMove.x - 25
-  		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  	
-  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-  		
-  		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-  		CarrierPosMove.x = CarrierPosMove.x + 25
-  		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-  	
-  	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-  		
-  		self:T( "TransportCargoOnBoard: Onboarding CENTRAL" )
-  		Points[#Points+1] = routines.ground.buildWP( CarrierPos, "Cone", 10 )
-  	
-  	end
-  	self:T( "TransportCargoOnBoard: Routing " .. self.CargoGroupName )
-  
-  	--routines.scheduleFunction( routines.goRoute, { self.CargoGroupName, Points}, timer.getTime() + 4 )
-  	SCHEDULER:New( self, routines.goRoute, { self.CargoGroupName, Points}, 4 )
-  end
-	
-	self:StatusLoading( Client )
-     
-	return Valid
-  
-end
-
-
-function CARGO_GROUP:OnBoarded( Client, LandingZone )
-	self:F()
-
-	local OnBoarded = false
-  
-  local CargoGroup = Group.getByName( self.CargoGroupName )
-
-	if not self.CargoInAir then
-  	if routines.IsPartOfGroupInRadius( CargoGroup, Client:GetPositionVec3(), 25 ) then
-  		CargoGroup:destroy()
-  		self:StatusLoaded( Client )
-  		OnBoarded = true
-  	end
-  else
-    CargoGroup:destroy()
-    self:StatusLoaded( Client )
-    OnBoarded = true
-  end
-
-	return OnBoarded
-end
-
-
-function CARGO_GROUP:UnLoad( Client, TargetZoneName )
-	self:F()
-
-	self:T( 'self.CargoName = ' .. self.CargoName ) 
-
-	local CargoGroup = self.CargoSpawn:SpawnFromUnit( Client:GetClientGroupUnit(), 60, 30 )
-
-	self.CargoGroupName = CargoGroup:GetName()
-	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
-	
-	CargoGroup:TaskRouteToZone( ZONE:New( TargetZoneName ), true )
-	
-	self:StatusUnLoaded()
-
-	return self
-end
-
-
-CARGO_PACKAGE = {
-	ClassName = "CARGO_PACKAGE"
-}
-
-
-function CARGO_PACKAGE:New( CargoType, CargoName, CargoWeight, CargoClient ) local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-	self:F( { CargoType, CargoName, CargoWeight, CargoClient } )
-
-	self.CargoClient = CargoClient
-	
-	CARGOS[self.CargoName] = self
-
-	return self
-
-end
-
-
-function CARGO_PACKAGE:Spawn( Client )
-	self:F( { self, Client } )
-
-	-- this needs to be checked thoroughly
-
-	local CargoClientGroup = self.CargoClient:GetDCSGroup()
-	if not CargoClientGroup then
-		if not self.CargoClientSpawn then
-			self.CargoClientSpawn = SPAWN:New( self.CargoClient:GetClientGroupName() ):Limit( 1, 1 )
-		end
-		self.CargoClientSpawn:ReSpawn( 1 )	
-	end
-
-	local SpawnCargo = true
-	
-	if self:IsStatusNone() then
-	
-	elseif self:IsStatusLoading() or self:IsStatusLoaded() then
-
-		local CargoClientLoaded = self:IsLoadedInClient()
-		if CargoClientLoaded and CargoClientLoaded:GetDCSGroup() then
-			SpawnCargo = false
-		end
-	
-	elseif self:IsStatusUnLoaded() then
-	
-		SpawnCargo = false
-	
-	else
-
-	end
-
-	if SpawnCargo then
-		self:StatusLoaded( self.CargoClient )
-	end
-
-	return self
-end
-
-
-function CARGO_PACKAGE:IsNear( Client, LandingZone )
-	self:F()
-
-	local Near = false
-
-	if self.CargoClient and self.CargoClient:GetDCSGroup() then
-		self:T( self.CargoClient.ClientName )
-		self:T( 'Client Exists.' )
-
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), Client:GetPositionVec3(), 150 ) then
-			Near = true
-		end
-	end
-	
-	return Near
-	
-end
-
-
-function CARGO_PACKAGE:OnBoard( Client, LandingZone, OnBoardSide )
-	self:F()
-  
-	local Valid = true
-  
-	local ClientUnit = Client:GetClientGroupDCSUnit()
-	
-	local CarrierPos = ClientUnit:getPoint()
-	local CarrierPosMove = ClientUnit:getPoint()
-	local CarrierPosOnBoard = ClientUnit:getPoint()
-	local CarrierPosMoveAway = ClientUnit:getPoint()
-	
-	local CargoHostGroup = self.CargoClient:GetDCSGroup()
-	local CargoHostName = self.CargoClient:GetDCSGroup():getName()
-
-	local CargoHostUnits = CargoHostGroup:getUnits()
-	local CargoPos = CargoHostUnits[1]:getPoint()
-
-	local Points = {}
-	
-	self:T( 'CargoPos x = ' .. CargoPos.x .. " z = " .. CargoPos.z )
-	self:T( 'CarrierPosMove x = ' .. CarrierPosMove.x .. " z = " .. CarrierPosMove.z )
-	
-	Points[#Points+1] = routines.ground.buildWP( CargoPos, "Cone", 10 )
-
-	self:T( 'Points[1] x = ' .. Points[1].x .. " y = " .. Points[1].y )
-	
-	if OnBoardSide == nil then
-		OnBoardSide = CLIENT.ONBOARDSIDE.NONE
-	end
-	
-	if OnBoardSide == CLIENT.ONBOARDSIDE.LEFT then
-	
-		self:T( "TransportCargoOnBoard: Onboarding LEFT" )
-		CarrierPosMove.z = CarrierPosMove.z - 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z - 5
-		CarrierPosMoveAway.z = CarrierPosMoveAway.z - 20
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.RIGHT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding RIGHT" )
-		CarrierPosMove.z = CarrierPosMove.z + 25
-		CarrierPosOnBoard.z = CarrierPosOnBoard.z + 5
-		CarrierPosMoveAway.z = CarrierPosMoveAway.z + 20
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )	
-	
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.BACK then
-		
-		self:T( "TransportCargoOnBoard: Onboarding BACK" )
-		CarrierPosMove.x = CarrierPosMove.x - 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x - 5
-		CarrierPosMoveAway.x = CarrierPosMoveAway.x - 20
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.FRONT then
-		
-		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-		CarrierPosMove.x = CarrierPosMove.x + 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-		CarrierPosMoveAway.x = CarrierPosMoveAway.x + 20
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-
-	elseif  OnBoardSide == CLIENT.ONBOARDSIDE.NONE then
-		
-		self:T( "TransportCargoOnBoard: Onboarding FRONT" )
-		CarrierPosMove.x = CarrierPosMove.x + 25
-		CarrierPosOnBoard.x = CarrierPosOnBoard.x + 5
-		CarrierPosMoveAway.x = CarrierPosMoveAway.x + 20
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMove, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosOnBoard, "Cone", 10 )
-		Points[#Points+1] = routines.ground.buildWP( CarrierPosMoveAway, "Cone", 10 )
-	
-	end
-	self:T( "Routing " .. CargoHostName )
-
-	SCHEDULER:New( self, routines.goRoute, { CargoHostName, Points }, 4 )
-     
-	return Valid
-  
-end
-
-
-function CARGO_PACKAGE:OnBoarded( Client, LandingZone )
-	self:F()
-
-	local OnBoarded = false
-  
-	if self.CargoClient and self.CargoClient:GetDCSGroup() then
-		if routines.IsUnitInRadius( self.CargoClient:GetClientGroupDCSUnit(), self.CargoClient:GetPositionVec3(), 10 ) then
-			
-			-- Switch Cargo from self.CargoClient to Client ... Each cargo can have only one client. So assigning the new client for the cargo is enough.
-			self:StatusLoaded( Client )
-			
-			-- All done, onboarded the Cargo to the new Client.
-			OnBoarded = true
-		end
-	end
-
-	return OnBoarded
-end
-
-
-function CARGO_PACKAGE:UnLoad( Client, TargetZoneName )
-	self:F()
-
-	self:T( 'self.CargoName = ' .. self.CargoName ) 
-	--self:T( 'self.CargoHostName = ' .. self.CargoHostName ) 
-	
-	--self.CargoSpawn:FromCarrier( Client:GetDCSGroup(), TargetZoneName, self.CargoHostName )
-	self:StatusUnLoaded()
-
-	return Cargo
-end
-
-
-CARGO_SLINGLOAD = {
-	ClassName = "CARGO_SLINGLOAD"
-}
-
-
-function CARGO_SLINGLOAD:New( CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID )
-	local self = BASE:Inherit( self, CARGO:New( CargoType, CargoName, CargoWeight ) )
-	self:F( { CargoType, CargoName, CargoWeight, CargoZone, CargoHostName, CargoCountryID } )
-
-	self.CargoHostName = CargoHostName
-
-	-- Cargo will be initialized around the CargoZone position.
-	self.CargoZone = CargoZone
-	
-	self.CargoCount = 0
-	self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
-
-	-- The country ID needs to be correctly set.
-	self.CargoCountryID = CargoCountryID
-
-	CARGOS[self.CargoName] = self
-
-	return self
-
-end
-
-
-function CARGO_SLINGLOAD:IsLandingRequired()
-	self:F()
-	return false
-end
-
-
-function CARGO_SLINGLOAD:IsSlingLoad()
-	self:F()
-	return true
-end
-
-
-function CARGO_SLINGLOAD:Spawn( Client )
-	self:F( { self, Client } )
-
-	local Zone = trigger.misc.getZone( self.CargoZone )
-
-	local ZonePos = {}
-	ZonePos.x = Zone.point.x + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
-	ZonePos.y = Zone.point.z + math.random( Zone.radius / 2 * -1, Zone.radius / 2 )
-	
-	self:T( "Cargo Location = " .. ZonePos.x .. ", " .. ZonePos.y )
-
-	--[[
-	-- This does not work in 1.5.2.
-	CargoStatic = StaticObject.getByName( self.CargoName )
-	if CargoStatic then
-		CargoStatic:destroy()
-	end
-	--]]
-	
-	CargoStatic = StaticObject.getByName( self.CargoStaticName )
-
-	if CargoStatic and CargoStatic:isExist() then
-		CargoStatic:destroy()
-	end
-
-	-- I need to make every time a new cargo due to bugs in 1.5.2.
-	
-		self.CargoCount = self.CargoCount + 1
-		self.CargoStaticName = string.format( "%s#%03d", self.CargoName, self.CargoCount )
-
-		local CargoTemplate = {
-				["category"] = "Cargo",
-				["shape_name"] = "ab-212_cargo",
-				["type"] = "Cargo1",
-				["x"] = ZonePos.x,
-				["y"] = ZonePos.y,
-				["mass"] = self.CargoWeight,
-				["name"] =  self.CargoStaticName,
-				["canCargo"] = true,
-				["heading"] = 0,
-			}
-			
-		coalition.addStaticObject( self.CargoCountryID, CargoTemplate )
-		
---	end
-
-	return self
-end
-
-
-function CARGO_SLINGLOAD:IsNear( Client, LandingZone )
-	self:F()
-
-	local Near = false
-
-	return Near
-end
-
-
-function CARGO_SLINGLOAD:IsInLandingZone( Client, LandingZone )
-	self:F()
-
-	local Near = false
-
-	local CargoStaticUnit = StaticObject.getByName( self.CargoName )
-	if CargoStaticUnit then 
-		if routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
-			Near = true
-		end
-	end
-	
-	return Near
-end
-
-
-function CARGO_SLINGLOAD:OnBoard( Client, LandingZone, OnBoardSide )
-	self:F()
-  
-	local Valid = true
-  
-     
-	return Valid
-end
-
-
-function CARGO_SLINGLOAD:OnBoarded( Client, LandingZone )
-	self:F()
-
-	local OnBoarded = false
-  
-	local CargoStaticUnit = StaticObject.getByName( self.CargoName )
-	if CargoStaticUnit then 
-		if not routines.IsStaticInZones( CargoStaticUnit, LandingZone ) then
-			OnBoarded = true
-		end
-	end
-
-	return OnBoarded
-end
-
-
-function CARGO_SLINGLOAD:UnLoad( Client, TargetZoneName )
-	self:F()
-
-	self:T( 'self.CargoName = ' .. self.CargoName ) 
-	self:T( 'self.CargoGroupName = ' .. self.CargoGroupName ) 
-	
-	self:StatusUnLoaded()
-
-	return Cargo
-end
 --- This module contains the MESSAGE class.
 -- 
 -- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
@@ -20444,7 +20887,7 @@ end
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
 -- 
 -- Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
--- When new groups get spawned by using the SPAWN functions (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
+-- When new groups get spawned by using the SPAWN methods (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
 -- When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.
 -- 
 -- Regarding the name of new spawned groups, a _SpawnPrefix_ will be assigned for each new group created. 
@@ -20465,10 +20908,10 @@ end
 -- -------------------------------
 -- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
 -- 
---   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that functions as the Template.
+--   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
 --
 -- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
--- The initialization functions will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+-- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
 -- 1.2) SPAWN initialization methods
@@ -20476,11 +20919,11 @@ end
 -- A spawn object will behave differently based on the usage of initialization methods:  
 -- 
 --   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups.
+--   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
 --   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar functions are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 -- 
 -- 1.3) SPAWN spawning methods
 -- ---------------------------
@@ -20498,7 +20941,20 @@ end
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- 1.4) SPAWN object cleaning
+-- 1.4) Retrieve alive GROUPs spawned by the SPAWN object
+-- ------------------------------------------------------
+-- The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
+-- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
+-- SPAWN provides methods to iterate through that internal GROUP object reference table:
+-- 
+--   * @{#SPAWN.GetFirstAliveGroup}: Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--   * @{#SPAWN.GetNextAliveGroup}: Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--   * @{#SPAWN.GetLastAliveGroup}: Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+-- 
+-- You can use the methods @{#SPAWN.GetFirstAliveGroup} and sequently @{#SPAWN.GetNextAliveGroup} to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+-- The method @{#SPAWN.GetGroupFromIndex} will return the GROUP object reference from the given Index, dead or alive...
+-- 
+-- 1.5) SPAWN object cleaning
 -- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
@@ -20541,7 +20997,7 @@ SPAWN = {
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' )
 -- @usage local Plane = SPAWN:New( "Plane" ) -- Creates a new local variable that can initiate new planes with the name "Plane#ddd" using the template "Plane" as defined within the ME.
 function SPAWN:New( SpawnTemplatePrefix )
-	local self = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWN
 	self:F( { SpawnTemplatePrefix } )
   
 	local TemplateGroup = Group.getByName( SpawnTemplatePrefix )
@@ -20641,6 +21097,7 @@ end
 -- @param #number SpawnEndPoint is the waypoint where the randomization ends counting backwards. 
 -- This parameter is useful to avoid randomization to end at a waypoint earlier than the last waypoint on the route.
 -- @param #number SpawnRadius is the radius in meters in which the randomization of the new waypoints, with the original waypoint of the original template located in the middle ...
+-- @param #number SpawnHeight (optional) Specifies the **additional** height in meters that can be added to the base height specified at each waypoint in the ME.
 -- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
@@ -20648,13 +21105,14 @@ end
 -- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
 -- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
 -- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
-function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius )
-	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius } )
+function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight } )
 
 	self.SpawnRandomizeRoute = true
 	self.SpawnRandomizeRouteStartPoint = SpawnStartPoint
 	self.SpawnRandomizeRouteEndPoint = SpawnEndPoint
 	self.SpawnRandomizeRouteRadius = SpawnRadius
+	self.SpawnRandomizeRouteHeight = SpawnHeight
 
 	for GroupID = 1, self.SpawnMaxGroups do
 		self:_RandomizeRoute( GroupID )
@@ -21073,7 +21531,7 @@ function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
-    return self:SpawnFromVec3( HostUnit:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostUnit:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
   end
   
   return nil
@@ -21092,7 +21550,7 @@ function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex
   self:F( { self.SpawnTemplatePrefix, HostStatic, OuterRadius, InnerRadius, SpawnIndex } )
 
   if HostStatic and HostStatic:IsAlive() then
-    return self:SpawnFromVec3( HostStatic:GetPointVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostStatic:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
   end
   
   return nil
@@ -21164,19 +21622,24 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
---- Find the first alive group.
+--- Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
 -- @param #SPAWN self
--- @param #number SpawnCursor A number holding the index from where to find the first group from.
--- @return Group#GROUP, #number The group found, the new index where the group was found.
+-- @return Group#GROUP, #number The GROUP object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
-function SPAWN:GetFirstAliveGroup( SpawnCursor )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+-- @usage
+-- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+-- while GroupPlane ~= nil do
+--   -- Do actions with the GroupPlane object.
+--   GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+-- end
+function SPAWN:GetFirstAliveGroup()
+	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
   for SpawnIndex = 1, self.SpawnCount do
     local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
     if SpawnGroup and SpawnGroup:IsAlive() then
-      SpawnCursor = SpawnIndex
-      return SpawnGroup, SpawnCursor
+      return SpawnGroup, SpawnIndex
     end
   end
   
@@ -21184,27 +21647,42 @@ function SPAWN:GetFirstAliveGroup( SpawnCursor )
 end
 
 
---- Find the next alive group.
+--- Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
 -- @param #SPAWN self
--- @param #number SpawnCursor A number holding the last found previous index.
--- @return Group#GROUP, #number The group found, the new index where the group was found.
--- @return #nil, #nil When no group is found, #nil is returned.
-function SPAWN:GetNextAliveGroup( SpawnCursor )
-	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnCursor } )
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.
+-- @return Group#GROUP, #number The next alive GROUP object found, the next Index where the next alive GROUP object was found.
+-- @return #nil, #nil When no alive GROUP object is found from the start Index position, #nil is returned.
+-- @usage
+-- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
+-- while GroupPlane ~= nil do
+--   -- Do actions with the GroupPlane object.
+--   GroupPlane, Index = SpawnPlanes:GetNextAliveGroup( Index )
+-- end
+function SPAWN:GetNextAliveGroup( SpawnIndexStart )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndexStart } )
 
-  SpawnCursor = SpawnCursor + 1
-  for SpawnIndex = SpawnCursor, self.SpawnCount do
+  SpawnIndexStart = SpawnIndexStart + 1
+  for SpawnIndex = SpawnIndexStart, self.SpawnCount do
     local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
     if SpawnGroup and SpawnGroup:IsAlive() then
-      SpawnCursor = SpawnIndex
-      return SpawnGroup, SpawnCursor
+      return SpawnGroup, SpawnIndex
     end
   end
   
   return nil, nil
 end
 
---- Find the last alive group during runtime.
+--- Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+-- @param #SPAWN self
+-- @return Group#GROUP, #number The last alive GROUP object found, the last Index where the last alive GROUP object was found.
+-- @return #nil, #nil When no alive GROUP object is found, #nil is returned.
+-- @usage
+-- -- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
+-- if GroupPlane then -- GroupPlane can be nil!!!
+--   -- Do actions with the GroupPlane object.
+-- end
 function SPAWN:GetLastAliveGroup()
 	self:F( { self.SpawnTemplatePrefixself.SpawnAliasPrefix } )
 
@@ -21405,9 +21883,9 @@ function SPAWN:_GetTemplate( SpawnTemplatePrefix )
 		error( 'No Template returned for SpawnTemplatePrefix = ' .. SpawnTemplatePrefix )
 	end
 
-	SpawnTemplate.SpawnCoalitionID = self:_GetGroupCoalitionID( SpawnTemplatePrefix )
-	SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnTemplatePrefix )
-	SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCoalitionID = self:_GetGroupCoalitionID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCategoryID = self:_GetGroupCategoryID( SpawnTemplatePrefix )
+	--SpawnTemplate.SpawnCountryID = self:_GetGroupCountryID( SpawnTemplatePrefix )
 	
 	self:T3( { SpawnTemplate } )
 	return SpawnTemplate
@@ -21428,12 +21906,12 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	--SpawnTemplate.lateActivation = false
   SpawnTemplate.lateActivation = false 
 
-	if SpawnTemplate.SpawnCategoryID == Group.Category.GROUND then
+	if SpawnTemplate.CategoryID == Group.Category.GROUND then
 	  self:T3( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false 
 	end
 	
-	if SpawnTemplate.SpawnCategoryID == Group.Category.HELICOPTER or SpawnTemplate.SpawnCategoryID == Group.Category.AIRPLANE then
+	if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
 		SpawnTemplate.uncontrolled = false
 	end
 
@@ -21461,11 +21939,19 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
     local RouteCount = #SpawnTemplate.route.points
     
     for t = self.SpawnRandomizeRouteStartPoint + 1, ( RouteCount - self.SpawnRandomizeRouteEndPoint ) do
+      
       SpawnTemplate.route.points[t].x = SpawnTemplate.route.points[t].x + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
       SpawnTemplate.route.points[t].y = SpawnTemplate.route.points[t].y + math.random( self.SpawnRandomizeRouteRadius * -1, self.SpawnRandomizeRouteRadius )
-      -- TODO: manage altitude for airborne units ...
-      SpawnTemplate.route.points[t].alt = nil
-      --SpawnGroup.route.points[t].alt_type = nil
+      
+      -- Manage randomization of altitude for airborne units ...
+      if SpawnTemplate.CategoryID == Group.Category.AIRPLANE or SpawnTemplate.CategoryID == Group.Category.HELICOPTER then
+        if SpawnTemplate.route.points[t].alt and self.SpawnRandomizeRouteHeight then
+          SpawnTemplate.route.points[t].alt = SpawnTemplate.route.points[t].alt + math.random( 1, self.SpawnRandomizeRouteHeight )
+        end
+      else
+        SpawnTemplate.route.points[t].alt = nil
+      end
+      
       self:T( 'SpawnTemplate.route.points[' .. t .. '].x = ' .. SpawnTemplate.route.points[t].x .. ', SpawnTemplate.route.points[' .. t .. '].y = ' .. SpawnTemplate.route.points[t].y )
     end
   end
@@ -21489,6 +21975,9 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
     self.SpawnGroups[SpawnIndex].SpawnTemplate.start_time = self.SpawnTemplate.start_time
     for UnitID = 1, #self.SpawnGroups[SpawnIndex].SpawnTemplate.units do
       self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].heading = self.SpawnTemplate.units[1].heading
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].x = self.SpawnTemplate.units[1].x
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].y = self.SpawnTemplate.units[1].y
+      self.SpawnGroups[SpawnIndex].SpawnTemplate.units[UnitID].alt = self.SpawnTemplate.units[1].alt
     end
   end
   
@@ -22130,6 +22619,7 @@ ESCORT = {
 -- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
 -- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
+-- @param #string EscortBriefing A text showing the ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #ESCORT self
 -- @usage
 -- -- Declare a new EscortPlanes object as follows:
@@ -22167,12 +22657,18 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
 
   self.EscortGroup:OptionROTVertical()
   self.EscortGroup:OptionROEOpenFire()
-
-  EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
-    "We're escorting your flight. " ..
-    "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
-    60, EscortClient
-  )
+  
+  if not EscortBriefing then
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") reporting! " ..
+      "We're escorting your flight. " ..
+      "Use the Radio Menu and F10 and use the options under + " .. EscortName .. "\n",
+      60, EscortClient
+    )
+  else
+    EscortGroup:MessageToClient( EscortGroup:GetCategoryName() .. " '" .. EscortName .. "' (" .. EscortGroup:GetCallsign() .. ") " .. EscortBriefing,
+      60, EscortClient
+    )
+  end
 
   self.FollowDistance = 100
   self.CT1 = 0
@@ -22631,13 +23127,13 @@ function ESCORT._HoldPosition( MenuParam )
   self.FollowScheduler:Stop()
 
   local PointFrom = {}
-  local GroupPoint = EscortGroup:GetUnit(1):GetPointVec3()
+  local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
   PointFrom = {}
-  PointFrom.x = GroupPoint.x
-  PointFrom.y = GroupPoint.z
+  PointFrom.x = GroupVec3.x
+  PointFrom.y = GroupVec3.z
   PointFrom.speed = 250
   PointFrom.type = AI.Task.WaypointType.TURNING_POINT
-  PointFrom.alt = GroupPoint.y
+  PointFrom.alt = GroupVec3.y
   PointFrom.alt_type = AI.Task.AltitudeType.BARO
 
   local OrbitPoint = OrbitUnit:GetVec2()
@@ -22963,16 +23459,16 @@ function ESCORT:_FollowScheduler()
     self:T( {ClientUnit.UnitName, GroupUnit.UnitName } )
 
     if self.CT1 == 0 and self.GT1 == 0 then
-      self.CV1 = ClientUnit:GetPointVec3()
+      self.CV1 = ClientUnit:GetVec3()
       self:T( { "self.CV1", self.CV1 } )
       self.CT1 = timer.getTime()
-      self.GV1 = GroupUnit:GetPointVec3()
+      self.GV1 = GroupUnit:GetVec3()
       self.GT1 = timer.getTime()
     else
       local CT1 = self.CT1
       local CT2 = timer.getTime()
       local CV1 = self.CV1
-      local CV2 = ClientUnit:GetPointVec3()
+      local CV2 = ClientUnit:GetVec3()
       self.CT1 = CT2
       self.CV1 = CV2
 
@@ -22986,7 +23482,7 @@ function ESCORT:_FollowScheduler()
       local GT1 = self.GT1
       local GT2 = timer.getTime()
       local GV1 = self.GV1
-      local GV2 = GroupUnit:GetPointVec3()
+      local GV2 = GroupUnit:GetVec3()
       self.GT1 = GT2
       self.GV1 = GV2
 
@@ -23098,11 +23594,11 @@ function ESCORT:_ReportTargetsScheduler()
         --                EscortTargetLastVelocity } )
 
 
-        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPointVec3()
-        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-        local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
-          ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
-          ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
+        local EscortTargetUnitVec3 = EscortTargetUnit:GetVec3()
+        local EscortVec3 = self.EscortGroup:GetVec3()
+        local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+          ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+          ( EscortTargetUnitVec3.z - EscortVec3.z )^2
           ) ^ 0.5 / 1000
 
         self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget } )
@@ -23157,11 +23653,11 @@ function ESCORT:_ReportTargetsScheduler()
               EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
             end
 
-            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPointVec3()
-            local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-            local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
-              ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
-              ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
+            local EscortTargetUnitVec3 = ClientEscortTargetData.AttackUnit:GetVec3()
+            local EscortVec3 = self.EscortGroup:GetVec3()
+            local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+              ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+              ( EscortTargetUnitVec3.z - EscortVec3.z )^2
               ) ^ 0.5 / 1000
 
             self:T( { self.EscortGroup:GetName(), ClientEscortTargetData.AttackUnit:GetName(), Distance, ClientEscortTargetData.AttackUnit } )
@@ -23225,9 +23721,9 @@ function ESCORT:_ReportTargetsScheduler()
 
       local TaskPoints = self:RegisterRoute()
       for WayPointID, WayPoint in pairs( TaskPoints ) do
-        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-        local Distance = ( ( WayPoint.x - EscortPositionVec3.x )^2 +
-          ( WayPoint.y - EscortPositionVec3.z )^2
+        local EscortVec3 = self.EscortGroup:GetVec3()
+        local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+          ( WayPoint.y - EscortVec3.z )^2
           ) ^ 0.5 / 1000
         MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
       end
@@ -23752,11 +24248,11 @@ function MISSILETRAINER:_AddRange( Client, TrainerWeapon )
   if self.DetailsRangeOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPointVec3()
+    local TargetVec3 = Client:GetVec3()
 
-    local Range = ( ( PositionMissile.x - PositionTarget.x )^2 +
-      ( PositionMissile.y - PositionTarget.y )^2 +
-      ( PositionMissile.z - PositionTarget.z )^2
+    local Range = ( ( PositionMissile.x - TargetVec3.x )^2 +
+      ( PositionMissile.y - TargetVec3.y )^2 +
+      ( PositionMissile.z - TargetVec3.z )^2
       ) ^ 0.5 / 1000
 
     RangeText = string.format( ", at %4.2fkm", Range )
@@ -23772,11 +24268,11 @@ function MISSILETRAINER:_AddBearing( Client, TrainerWeapon )
   if self.DetailsBearingOnOff then
 
     local PositionMissile = TrainerWeapon:getPoint()
-    local PositionTarget = Client:GetPointVec3()
+    local TargetVec3 = Client:GetVec3()
 
-    self:T2( { PositionTarget, PositionMissile })
+    self:T2( { TargetVec3, PositionMissile })
 
-    local DirectionVector = { x = PositionMissile.x - PositionTarget.x, y = PositionMissile.y - PositionTarget.y, z = PositionMissile.z - PositionTarget.z }
+    local DirectionVector = { x = PositionMissile.x - TargetVec3.x, y = PositionMissile.y - TargetVec3.y, z = PositionMissile.z - TargetVec3.z }
     local DirectionRadians = math.atan2( DirectionVector.z, DirectionVector.x )
     --DirectionRadians = DirectionRadians + routines.getNorthCorrection( PositionTarget )
     if DirectionRadians < 0 then
@@ -23820,11 +24316,11 @@ function MISSILETRAINER:_TrackMissiles()
   
       if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
         local PositionMissile = TrainerWeapon:getPosition().p
-        local PositionTarget = Client:GetPointVec3()
+        local TargetVec3 = Client:GetVec3()
   
-        local Distance = ( ( PositionMissile.x - PositionTarget.x )^2 +
-          ( PositionMissile.y - PositionTarget.y )^2 +
-          ( PositionMissile.z - PositionTarget.z )^2
+        local Distance = ( ( PositionMissile.x - TargetVec3.x )^2 +
+          ( PositionMissile.y - TargetVec3.y )^2 +
+          ( PositionMissile.z - TargetVec3.z )^2
           ) ^ 0.5 / 1000
   
         if Distance <= self.Distance then
@@ -25992,11 +26488,11 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
           local DetectionDetectedObjectName = DetectionObject:getName()
   
           local DetectionDetectedObjectPositionVec3 = DetectionObject:getPoint()
-          local DetectionGroupPositionVec3 = DetectionGroup:GetPointVec3()
+          local DetectionGroupVec3 = DetectionGroup:GetVec3()
   
-          local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupPositionVec3.x )^2 +
-            ( DetectionDetectedObjectPositionVec3.y - DetectionGroupPositionVec3.y )^2 +
-            ( DetectionDetectedObjectPositionVec3.z - DetectionGroupPositionVec3.z )^2
+          local Distance = ( ( DetectionDetectedObjectPositionVec3.x - DetectionGroupVec3.x )^2 +
+            ( DetectionDetectedObjectPositionVec3.y - DetectionGroupVec3.y )^2 +
+            ( DetectionDetectedObjectPositionVec3.z - DetectionGroupVec3.z )^2
             ) ^ 0.5 / 1000
   
           self:T2( { DetectionGroupName, DetectionDetectedObjectName, Distance } )
@@ -26176,7 +26672,7 @@ function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
   local SphereSearch = {
    id = world.VolumeType.SPHERE,
     params = {
-     point = DetectedZoneUnit:GetPointVec3(),
+     point = DetectedZoneUnit:GetVec3(),
      radius = 6000,
     }
     
@@ -26258,9 +26754,9 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
     for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
       local FACUnit = FACUnitData -- Unit#UNIT
       if FACUnit:IsActive() then
-        local Vec3 = FACUnit:GetPointVec3()
+        local Vec3 = FACUnit:GetVec3()
         local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
-        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetPointVec3() ) )
+        local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetVec3() ) )
         if Distance < MinDistance then
           MinDistance = Distance
           NearestFAC = FACUnit
@@ -27090,7 +27586,7 @@ do -- DETECTION_DISPATCHER
     
         local ThreatLevel = Detection:GetTreatLevelA2G( DetectedArea )
 
-        local DetectedAreaVec3 = DetectedZone:GetPointVec3()
+        local DetectedAreaVec3 = DetectedZone:GetVec3()
         local DetectedAreaPointVec3 = POINT_VEC3:New( DetectedAreaVec3.x, DetectedAreaVec3.y, DetectedAreaVec3.z )
         local DetectedAreaPointLL = DetectedAreaPointVec3:ToStringLL( 3, true )
         AreaMsg[#AreaMsg+1] = string.format( "  - Area #%d - %s - Threat Level [%s] (%2d)", 
@@ -27200,6 +27696,13 @@ function STATEMACHINE:New( options )
   return self
 end
 
+function STATEMACHINE:LoadCallBacks( CallBackTable )
+
+  for name, callback in pairs( CallBackTable or {} ) do
+    self[name] = callback
+  end
+
+end
 
 function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )
@@ -27504,7 +28007,7 @@ function PROCESS:OnStateChange( Fsm, Event, From, To )
 end
 
 
---- This module contains the TASK_ASSIGN classes.
+--- This module contains the PROCESS_ASSIGN classes.
 -- 
 -- ===
 -- 
@@ -28226,9 +28729,9 @@ function PROCESS_JTAC:OnJTACMenuSpot( Fsm, Event, From, To, TargetUnit )
   TaskJTAC.Spots[TargetUnitName] = TaskJTAC.Spots[TargetUnitName] or {}
 
   local DCSFACObject = self.FACUnit:GetDCSObject()
-  local TargetVec3 = TargetUnit:GetPointVec3()
+  local TargetVec3 = TargetUnit:GetVec3()
 
-  TaskJTAC.Spots[TargetUnitName] = Spot.createInfraRed( self.FACUnit:GetDCSObject(), { x = 0, y = 1, z = 0 }, TargetUnit:GetPointVec3(), math.random( 1000, 9999 ) )
+  TaskJTAC.Spots[TargetUnitName] = Spot.createInfraRed( self.FACUnit:GetDCSObject(), { x = 0, y = 1, z = 0 }, TargetUnit:GetVec3(), math.random( 1000, 9999 ) )
   
   local SpotData = TaskJTAC.Spots[TargetUnitName]
   self.FACUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " with laser code " .. SpotData:getCode(), 15, self.ProcessGroup )
@@ -29129,8 +29632,9 @@ end
 -- 
 -- 1) @{#TASK_SEAD} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_SEAD} class defines a new SEAD task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_SEAD is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
+-- based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_SEAD is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29274,8 +29778,9 @@ end
 -- 
 -- 1) @{#TASK_A2G} class, extends @{Task#TASK_BASE}
 -- =================================================
--- The @{#TASK_A2G} class defines a new CAS task of a @{Set} of Target Units, located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_A2G is processed through a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- The @{#TASK_A2G} class defines a CAS or BAI task of a @{Set} of Target Units, 
+-- located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK_BASE}.
+-- The TASK_A2G is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
@@ -29287,7 +29792,7 @@ end
 -- 
 -- ### Authors: FlightControl - Design and Programming
 -- 
--- @module Task_CAS
+-- @module Task_A2G
 
 
 do -- TASK_A2G
