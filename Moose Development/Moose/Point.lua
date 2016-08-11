@@ -304,24 +304,6 @@ function POINT_VEC3:Get3DDistance( TargetPointVec3 )
   return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
 end
 
---- Add a Distance in meters from the POINT_VEC3 orthogonal plane, with the given angle, and calculate the new POINT_VEC3.
--- @param #POINT_VEC3 self
--- @param DCSTypes#Distance Distance The Distance to be added in meters.
--- @param DCSTypes#Angle Angle The Angle in degrees.
--- @return #POINT_VEC3 The new calculated POINT_VEC3.
-function POINT_VEC3:Translate( Distance, Angle )
-  local SX = self:GetX()
-  local SY = self:GetY()
-  local Radians = Angle / 180 * math.pi
-  local TX = Distance * math.cos( Radians ) + SX
-  local TY = Distance * math.sin( Radians ) + SY
-  
-  self:SetX( TX )
-  self:SetY( TY )
-  
-  return self
-end
-
 --- Provides a Bearing / Range string
 -- @param #POINT_VEC3 self
 -- @param #number AngleRadians The angle in randians
@@ -580,9 +562,9 @@ POINT_VEC2 = {
 function POINT_VEC2:New( x, y, LandHeightAdd )
 
   local LandHeight = land.getHeight( { ["x"] = x, ["y"] = y } )
-  if LandHeightAdd then
-    LandHeight = LandHeight + LandHeightAdd
-  end
+  
+  LandHeightAdd = LandHeightAdd or 0
+  LandHeight = LandHeight + LandHeightAdd
   
   local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
   
@@ -595,12 +577,10 @@ end
 -- @return Point#POINT_VEC2 self
 function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
 
-  local self = BASE:Inherit( self, BASE:New() )
-
   local LandHeight = land.getHeight( Vec2 )
-  if LandHeightAdd then
-    LandHeight = LandHeight + LandHeightAdd
-  end
+
+  LandHeightAdd = LandHeightAdd or 0
+  LandHeight = LandHeight + LandHeightAdd
   
   local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
   self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
@@ -693,4 +673,21 @@ end
 function POINT_VEC2:GetAltitudeText()
   return ''
 end
+
+--- Add a Distance in meters from the POINT_VEC2 orthonormal plane, with the given angle, and calculate the new POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC2 The new calculated POINT_VEC2.
+function POINT_VEC2:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SY = self:GetY()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TY = Distance * math.sin( Radians ) + SY
+  
+  return POINT_VEC2:New( TX, TY )
+end
+
+
 
