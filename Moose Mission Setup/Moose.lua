@@ -1,9 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-<<<<<<< HEAD
-env.info( 'Moose Generation Timestamp: 20160811_0937' ) 
-=======
-env.info( 'Moose Generation Timestamp: 20160810_0820' ) 
->>>>>>> refs/remotes/origin/master
+env.info( 'Moose Generation Timestamp: 20160812_0800' ) 
 local base = _G
 
 Include = {}
