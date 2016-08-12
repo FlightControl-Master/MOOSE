@@ -2,6 +2,15 @@
 	- Temporary release of the new cargo handling.
 		-- Released available functionality to handle one CARGO_UNIT loading, boarding, unloading.
 		-- Created CARGO_UNIT test missions.
+	- Added Translate() method in POINT_VEC3, translating a 3D point over the horizontal plane with a Distance and Angle coordinate.
+	- Changed Spawn APIs, adding RandomizeGroup and RandomizeUnits parameters, to express Group position and Unit position randomization.
+		-- Changed SpawnInZone() method. 
+			--- RandomizeGroup is used to randomize the start position of the Group in a zone.
+			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
+		-- Changed SpawnFromVec3() method.
+			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
+		-- Changed SpawnFromVec2() method.		
+			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
 
 2016-08-08
 	- Added briefing to method ESCORT:New()

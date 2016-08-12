@@ -66,6 +66,19 @@ POINT_VEC3 = {
   },
 }
 
+--- The POINT_VEC2 class
+-- @type POINT_VEC2
+-- @extends #POINT_VEC3
+-- @field DCSTypes#Distance x The x coordinate in meters.
+-- @field DCSTypes#Distance y the y coordinate in meters.
+POINT_VEC2 = {
+  ClassName = "POINT_VEC2",
+  x = 0,
+  y = 0,
+}
+
+
+do -- POINT_VEC3
 
 --- SmokeColor
 -- @type POINT_VEC3.SmokeColor
@@ -373,6 +386,20 @@ function POINT_VEC3:IsMetric()
   return self.Metric
 end
 
+--- Add a Distance in meters from the POINT_VEC3 horizontal plane, with the given angle, and calculate the new POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC3 The new calculated POINT_VEC3.
+function POINT_VEC3:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SZ = self:GetZ()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TZ = Distance * math.sin( Radians ) + SZ
+  
+  return POINT_VEC3:New( TX, self:GetY(), TZ )
+end
 
 
 
@@ -543,17 +570,13 @@ function POINT_VEC3:FlareRed( Azimuth )
   self:Flare( POINT_VEC3.FlareColor.Red, Azimuth )
 end
 
+end
 
---- The POINT_VEC2 class
--- @type POINT_VEC2
--- @extends Point#POINT_VEC3
--- @field #number x The x coordinate in 2D space.
--- @field #number y the y coordinate in 2D space.
-POINT_VEC2 = {
-  ClassName = "POINT_VEC2",
-  }
+do -- POINT_VEC2
 
---- Create a new POINT_VEC2 object.
+
+
+--- POINT_VEC2 constructor.
 -- @param #POINT_VEC2 self
 -- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
 -- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
@@ -689,5 +712,6 @@ function POINT_VEC2:Translate( Distance, Angle )
   return POINT_VEC2:New( TX, TY )
 end
 
+end
 
 

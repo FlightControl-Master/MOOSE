@@ -606,8 +606,10 @@ function SPAWN:SpawnFromVec3( Vec3, RandomizeUnits, OuterRadius, InnerRadius, Sp
       else
         for UnitID = 1, #SpawnTemplate.units do
           local UnitTemplate = SpawnTemplate.units[UnitID]
-          local UnitPointVec3 = POINT_VEC3:New( UnitTemplate.x, UnitTemplate.alt, UnitTemplate.y )
-          UnitPointVec3 = UnitPointVec3:
+          local UnitPointVec2 = POINT_VEC2:New( UnitTemplate.x, UnitTemplate.y )
+          local Distance = UnitPointVec2
+          local Angle = UnitPointVec2:GetAngle( PointVec3 )
+          UnitPointVec2 = UnitPointVec2:Translate( Distance, Angle )
           local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
           SpawnTemplate.units[UnitID].x = RandomVec2.x
           SpawnTemplate.units[UnitID].y = RandomVec2.y
