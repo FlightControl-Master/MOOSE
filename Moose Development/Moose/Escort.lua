@@ -672,13 +672,13 @@ function ESCORT._HoldPosition( MenuParam )
   self.FollowScheduler:Stop()
 
   local PointFrom = {}
-  local GroupPoint = EscortGroup:GetUnit(1):GetPointVec3()
+  local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
   PointFrom = {}
-  PointFrom.x = GroupPoint.x
-  PointFrom.y = GroupPoint.z
+  PointFrom.x = GroupVec3.x
+  PointFrom.y = GroupVec3.z
   PointFrom.speed = 250
   PointFrom.type = AI.Task.WaypointType.TURNING_POINT
-  PointFrom.alt = GroupPoint.y
+  PointFrom.alt = GroupVec3.y
   PointFrom.alt_type = AI.Task.AltitudeType.BARO
 
   local OrbitPoint = OrbitUnit:GetVec2()
@@ -1004,16 +1004,16 @@ function ESCORT:_FollowScheduler()
     self:T( {ClientUnit.UnitName, GroupUnit.UnitName } )
 
     if self.CT1 == 0 and self.GT1 == 0 then
-      self.CV1 = ClientUnit:GetPointVec3()
+      self.CV1 = ClientUnit:GetVec3()
       self:T( { "self.CV1", self.CV1 } )
       self.CT1 = timer.getTime()
-      self.GV1 = GroupUnit:GetPointVec3()
+      self.GV1 = GroupUnit:GetVec3()
       self.GT1 = timer.getTime()
     else
       local CT1 = self.CT1
       local CT2 = timer.getTime()
       local CV1 = self.CV1
-      local CV2 = ClientUnit:GetPointVec3()
+      local CV2 = ClientUnit:GetVec3()
       self.CT1 = CT2
       self.CV1 = CV2
 
@@ -1027,7 +1027,7 @@ function ESCORT:_FollowScheduler()
       local GT1 = self.GT1
       local GT2 = timer.getTime()
       local GV1 = self.GV1
-      local GV2 = GroupUnit:GetPointVec3()
+      local GV2 = GroupUnit:GetVec3()
       self.GT1 = GT2
       self.GV1 = GV2
 
@@ -1139,11 +1139,11 @@ function ESCORT:_ReportTargetsScheduler()
         --                EscortTargetLastVelocity } )
 
 
-        local EscortTargetUnitPositionVec3 = EscortTargetUnit:GetPointVec3()
-        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-        local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
-          ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
-          ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
+        local EscortTargetUnitVec3 = EscortTargetUnit:GetVec3()
+        local EscortVec3 = self.EscortGroup:GetVec3()
+        local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+          ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+          ( EscortTargetUnitVec3.z - EscortVec3.z )^2
           ) ^ 0.5 / 1000
 
         self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget } )
@@ -1198,11 +1198,11 @@ function ESCORT:_ReportTargetsScheduler()
               EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
             end
 
-            local EscortTargetUnitPositionVec3 = ClientEscortTargetData.AttackUnit:GetPointVec3()
-            local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-            local Distance = ( ( EscortTargetUnitPositionVec3.x - EscortPositionVec3.x )^2 +
-              ( EscortTargetUnitPositionVec3.y - EscortPositionVec3.y )^2 +
-              ( EscortTargetUnitPositionVec3.z - EscortPositionVec3.z )^2
+            local EscortTargetUnitVec3 = ClientEscortTargetData.AttackUnit:GetVec3()
+            local EscortVec3 = self.EscortGroup:GetVec3()
+            local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+              ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+              ( EscortTargetUnitVec3.z - EscortVec3.z )^2
               ) ^ 0.5 / 1000
 
             self:T( { self.EscortGroup:GetName(), ClientEscortTargetData.AttackUnit:GetName(), Distance, ClientEscortTargetData.AttackUnit } )
@@ -1266,9 +1266,9 @@ function ESCORT:_ReportTargetsScheduler()
 
       local TaskPoints = self:RegisterRoute()
       for WayPointID, WayPoint in pairs( TaskPoints ) do
-        local EscortPositionVec3 = self.EscortGroup:GetPointVec3()
-        local Distance = ( ( WayPoint.x - EscortPositionVec3.x )^2 +
-          ( WayPoint.y - EscortPositionVec3.z )^2
+        local EscortVec3 = self.EscortGroup:GetVec3()
+        local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+          ( WayPoint.y - EscortVec3.z )^2
           ) ^ 0.5 / 1000
         MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
       end

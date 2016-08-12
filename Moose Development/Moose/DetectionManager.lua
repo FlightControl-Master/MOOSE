@@ -460,7 +460,7 @@ do -- DETECTION_DISPATCHER
     
         local ThreatLevel = Detection:GetTreatLevelA2G( DetectedArea )
 
-        local DetectedAreaVec3 = DetectedZone:GetPointVec3()
+        local DetectedAreaVec3 = DetectedZone:GetVec3()
         local DetectedAreaPointVec3 = POINT_VEC3:New( DetectedAreaVec3.x, DetectedAreaVec3.y, DetectedAreaVec3.z )
         local DetectedAreaPointLL = DetectedAreaPointVec3:ToStringLL( 3, true )
         AreaMsg[#AreaMsg+1] = string.format( "  - Area #%d - %s - Threat Level [%s] (%2d)", 

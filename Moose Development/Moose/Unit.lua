@@ -48,7 +48,7 @@
 -- 1.4) Location Position, Point
 -- -----------------------------
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
--- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetPointVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
 -- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
 -- 1.5) Test if alive
@@ -152,6 +152,14 @@ function UNIT:FindByName( UnitName )
   return UnitFound
 end
 
+--- Return the name of the UNIT.
+-- @param #UNIT self
+-- @return #string The UNIT name.
+function UNIT:Name()
+  
+  return self.UnitName
+end
+
 
 --- @param #UNIT self
 -- @return DCSUnit#Unit
@@ -166,6 +174,59 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will respawn the re-modelled group.
+--  
+-- @param Unit#UNIT self
+-- @param DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param #number Heading The heading of the unit respawn.
+function UNIT:ReSpawn( SpawnVec3, Heading )
+
+  local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
+  self:T( SpawnGroupTemplate )
+  local SpawnGroup = self:GetGroup()
+  
+  if SpawnGroup then
+  
+    local Vec3 = SpawnGroup:GetVec3()
+    SpawnGroupTemplate.x = Vec3.x
+    SpawnGroupTemplate.y = Vec3.z
+    
+    self:E( #SpawnGroupTemplate.units )
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+      local GroupUnit = UnitData -- Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
+        SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
+        SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
+        SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+      end
+    end
+  end
+  
+  for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
+    self:T( UnitTemplateData.name )
+    if UnitTemplateData.name == self:Name() then
+      self:T("Adjusting")
+      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
+      self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+    end
+  end
+
+  _DATABASE:Spawn( SpawnGroupTemplate )
+end
 
 
 
@@ -182,22 +243,6 @@ function UNIT:IsActive()
   
     local UnitIsActive = DCSUnit:isActive()
     return UnitIsActive 
-  end
-
-  return nil
-end
-
---- Destroys the @{Unit}.
--- @param Unit#UNIT self
--- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:Destroy()
-  self:F2( self.UnitName )
-
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-  
-    DCSUnit:destroy()
   end
 
   return nil
@@ -521,7 +566,7 @@ function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = Zone:IsPointVec3InZone( self:GetPointVec3() )
+    local IsInZone = Zone:IsPointVec3InZone( self:GetVec3() )
   
     self:T( { IsInZone } )
     return IsInZone 
@@ -538,7 +583,7 @@ function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = not Zone:IsPointVec3InZone( self:GetPointVec3() )
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetVec3() )
     
     self:T( { IsInZone } )
     return IsInZone 
@@ -560,10 +605,10 @@ function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-  	local UnitPos = self:GetPointVec3()
-  	local AwaitUnitPos = AwaitUnit:GetPointVec3()
+  	local UnitVec3 = self:GetVec3()
+  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
   
-  	if  (((UnitPos.x - AwaitUnitPos.x)^2 + (UnitPos.z - AwaitUnitPos.z)^2)^0.5 <= Radius) then
+  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
   		self:T3( "true" )
   		return true
   	else
@@ -581,35 +626,35 @@ end
 -- @param #UNIT self
 function UNIT:Flare( FlareColor )
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), FlareColor , 0 )
+  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
 end
 
 --- Signal a white flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareWhite()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.White , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
 end
 
 --- Signal a yellow flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareYellow()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Yellow , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
 end
 
 --- Signal a green flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareGreen()
   self:F2()
-  trigger.action.signalFlare( self:GetPointVec3(), trigger.flareColor.Green , 0 )
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
 end
 
 --- Signal a red flare at the position of the UNIT.
 -- @param #UNIT self
 function UNIT:FlareRed()
   self:F2()
-  local Vec3 = self:GetPointVec3()
+  local Vec3 = self:GetVec3()
   if Vec3 then
     trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
   end
@@ -620,9 +665,9 @@ end
 function UNIT:Smoke( SmokeColor, Range )
   self:F2()
   if Range then
-    trigger.action.smoke( self:GetRandomPointVec3( Range ), SmokeColor )
+    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
   else
-    trigger.action.smoke( self:GetPointVec3(), SmokeColor )
+    trigger.action.smoke( self:GetVec3(), SmokeColor )
   end
   
 end
@@ -631,35 +676,35 @@ end
 -- @param #UNIT self
 function UNIT:SmokeGreen()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Green )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
 end
 
 --- Smoke the UNIT Red.
 -- @param #UNIT self
 function UNIT:SmokeRed()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Red )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
 end
 
 --- Smoke the UNIT White.
 -- @param #UNIT self
 function UNIT:SmokeWhite()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.White )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
 end
 
 --- Smoke the UNIT Orange.
 -- @param #UNIT self
 function UNIT:SmokeOrange()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Orange )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
 end
 
 --- Smoke the UNIT Blue.
 -- @param #UNIT self
 function UNIT:SmokeBlue()
   self:F2()
-  trigger.action.smoke( self:GetPointVec3(), trigger.smokeColor.Blue )
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
 -- Is methods
