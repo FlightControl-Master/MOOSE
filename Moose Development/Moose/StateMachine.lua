@@ -67,6 +67,13 @@ function STATEMACHINE:New( options )
   return self
 end
 
+function STATEMACHINE:LoadCallBacks( CallBackTable )
+
+  for name, callback in pairs( CallBackTable or {} ) do
+    self[name] = callback
+  end
+
+end
 
 function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )

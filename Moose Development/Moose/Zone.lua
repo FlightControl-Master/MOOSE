@@ -111,12 +111,12 @@ end
 
 --- Returns if a point is within the zone.
 -- @param #ZONE_BASE self
--- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @param DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
-function ZONE_BASE:IsPointVec3InZone( PointVec3 )
-  self:F2( PointVec3 )
+function ZONE_BASE:IsPointVec3InZone( Vec3 )
+  self:F2( Vec3 )
 
-  local InZone = self:IsPointVec2InZone( { x = PointVec3.x, y = PointVec3.z } )
+  local InZone = self:IsPointVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
@@ -282,11 +282,11 @@ function ZONE_RADIUS:SetPointVec2( Vec2 )
   return self.Vec2 
 end
 
---- Returns the point of the zone.
+--- Returns the @{DCSTypes#Vec3} of the ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCSTypes#Vec3 The point of the zone.
-function ZONE_RADIUS:GetPointVec3( Height )
+function ZONE_RADIUS:GetVec3( Height )
   self:F2( { self.ZoneName, Height } )
 
   Height = Height or 0
@@ -320,7 +320,7 @@ end
 
 --- Returns if a point is within the zone.
 -- @param #ZONE_RADIUS self
--- @param DCSTypes#Vec3 PointVec3 The point to test.
+-- @param DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_RADIUS:IsPointVec3InZone( Vec3 )
   self:F2( Vec3 )
@@ -445,22 +445,22 @@ function ZONE_UNIT:GetRandomVec2()
   return Point
 end
 
---- Returns the point of the zone.
--- @param #ZONE_RADIUS self
+--- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
+-- @param #ZONE_UNIT self
 -- @param DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCSTypes#Vec3 The point of the zone.
-function ZONE_UNIT:GetPointVec3( Height )
+function ZONE_UNIT:GetVec3( Height )
   self:F2( self.ZoneName )
   
   Height = Height or 0
   
   local Vec2 = self:GetVec2()
 
-  local PointVec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
-  self:T2( { PointVec3 } )
+  self:T2( { Vec3 } )
   
-  return PointVec3  
+  return Vec3  
 end
 
 --- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
