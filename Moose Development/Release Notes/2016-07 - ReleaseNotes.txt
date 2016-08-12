@@ -1,3 +1,8 @@
+2016-08-12
+	- Temporary release of the new cargo handling.
+		-- Released available functionality to handle one CARGO_UNIT loading, boarding, unloading.
+		-- Created CARGO_UNIT test missions.
+
 2016-08-08
 	- Added briefing to method ESCORT:New()
 		-- If no EscortBriefing is given, the New() method will show the default briefing.
