@@ -561,13 +561,14 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
+-- @param #boolean RandomizeUnits (optional) Randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
 -- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
 -- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec3, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec3( Vec3, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec3, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex } )
 
   local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
   self:T2(PointVec3)
@@ -589,16 +590,30 @@ function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
       SpawnTemplate.route.points[1].y = Vec3.z
       SpawnTemplate.route.points[1].alt = Vec3.y
       
+      RandomizeUnits = RandomizeUnits or false
       InnerRadius = InnerRadius or 0
       OuterRadius = OuterRadius or 0
       
-      -- Apply SpawnFormation
-      for UnitID = 1, #SpawnTemplate.units do
-        local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-        SpawnTemplate.units[UnitID].x = RandomVec2.x
-        SpawnTemplate.units[UnitID].y = RandomVec2.y
-        SpawnTemplate.units[UnitID].alt = Vec3.y
-        self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      -- If RandomizeUnits, then randomize the formation, otherwise translate the existing Group template.
+      if RandomizeUnits then
+        for UnitID = 1, #SpawnTemplate.units do
+          local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+          SpawnTemplate.units[UnitID].x = RandomVec2.x
+          SpawnTemplate.units[UnitID].y = RandomVec2.y
+          SpawnTemplate.units[UnitID].alt = Vec3.y
+          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        end
+      else
+        for UnitID = 1, #SpawnTemplate.units do
+          local UnitTemplate = SpawnTemplate.units[UnitID]
+          local UnitPointVec3 = POINT_VEC3:New( UnitTemplate.x, UnitTemplate.alt, UnitTemplate.y )
+          UnitPointVec3 = UnitPointVec3:
+          local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+          SpawnTemplate.units[UnitID].x = RandomVec2.x
+          SpawnTemplate.units[UnitID].y = RandomVec2.y
+          SpawnTemplate.units[UnitID].alt = Vec3.y
+          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        end
       end
 
       -- TODO: Need to rework this. A spawn action should always be at the random point to start from. This move is not correct to be here.      
@@ -624,16 +639,17 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #boolean RandomizeUnits (optional) Randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
+-- @param #number OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param #number InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec2( Vec2, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec2, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec2( Vec2, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec2, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex } )
 
   local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
-  return self:SpawnFromVec3( PointVec2:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+  return self:SpawnFromVec3( PointVec2:GetVec3(), RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 
@@ -676,23 +692,27 @@ function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex
   return nil
 end
 
---- Will spawn a Group within a given @{Zone#ZONE}.
--- Once the group is spawned within the zone, it will continue on its route.
--- The first waypoint (where the group is spawned) is replaced with the zone coordinates.
+--- Will spawn a Group within a given @{Zone}.
+-- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
+-- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
+-- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
 -- @param Zone#ZONE Zone The zone where the group is to be spawned.
--- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
+-- @param #boolean RandomizeGroup (optional) Randomization of the @{GROUP} position in the zone.
+-- @param #boolean RandomizeUnits (optional) Randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
+-- @param DCSTypes#Distance OuterRadius (optional) The outer radius of the radius band, till where @{Unit} randomization is done.
+-- @param DCSTypes#Distance InnerRadius (optional) The inner radius of the radius band, from where @{Unit} randomization is done.
 -- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
+function SPAWN:SpawnInZone( Zone, RandomizeGroup, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex } )
   
   if Zone then
-    if ZoneRandomize then
-      return self:SpawnFromVec2( Zone:GetVec2(), Zone:GetRadius(), 0, SpawnIndex )
+    if RandomizeGroup then
+      return self:SpawnFromVec2( Zone:GetRandomVec2(), RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
     else
-      return self:SpawnFromVec2( Zone:GetVec2(), 0, 0, SpawnIndex )
+      return self:SpawnFromVec2( Zone:GetVec2(), RandomizeUnits, OuterRadius, InnerRadius, SpawnIndex )
     end
   end
   
