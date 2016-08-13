@@ -586,9 +586,6 @@ function SPAWN:SpawnFromVec3( Vec3, RandomizeUnits, OuterRadius, InnerRadius, Sp
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
       
-      SpawnTemplate.route.points[1].x = Vec3.x
-      SpawnTemplate.route.points[1].y = Vec3.z
-      SpawnTemplate.route.points[1].alt = Vec3.y
       
       RandomizeUnits = RandomizeUnits or false
       InnerRadius = InnerRadius or 0
@@ -605,18 +602,25 @@ function SPAWN:SpawnFromVec3( Vec3, RandomizeUnits, OuterRadius, InnerRadius, Sp
         end
       else
         for UnitID = 1, #SpawnTemplate.units do
+          self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
           local UnitTemplate = SpawnTemplate.units[UnitID]
-          local UnitPointVec2 = POINT_VEC2:New( UnitTemplate.x, UnitTemplate.y )
-          local Distance = UnitPointVec2
-          local Angle = UnitPointVec2:GetAngle( PointVec3 )
-          UnitPointVec2 = UnitPointVec2:Translate( Distance, Angle )
-          local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-          SpawnTemplate.units[UnitID].x = RandomVec2.x
-          SpawnTemplate.units[UnitID].y = RandomVec2.y
+          local SX = UnitTemplate.x
+          local SY = UnitTemplate.y 
+          local BX = SpawnTemplate.route.points[1].x
+          local BY = SpawnTemplate.route.points[1].y
+          local TX = Vec3.x + ( SX - BX )
+          local TY = Vec3.z + ( SY - BY )
+          SpawnTemplate.units[UnitID].x = TX
+          SpawnTemplate.units[UnitID].y = TY
           SpawnTemplate.units[UnitID].alt = Vec3.y
-          self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+          self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         end
       end
+
+      SpawnTemplate.route.points[1].x = Vec3.x
+      SpawnTemplate.route.points[1].y = Vec3.z
+      SpawnTemplate.route.points[1].alt = Vec3.y
+      SpawnTemplate.route.points[1].action = "Custom"
 
       -- TODO: Need to rework this. A spawn action should always be at the random point to start from. This move is not correct to be here.      
 --      local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
@@ -1060,8 +1064,6 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	for UnitID = 1, #SpawnTemplate.units do
 		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
 		SpawnTemplate.units[UnitID].unitId = nil
-		SpawnTemplate.units[UnitID].x = SpawnTemplate.route.points[1].x
-		SpawnTemplate.units[UnitID].y = SpawnTemplate.route.points[1].y 
 	end
 	
 	self:T3( { "Template:", SpawnTemplate } )
