@@ -1,28 +1,56 @@
+2016-08-14
+
+	- Changed Spawn APIs to express Group position and Unit position randomization.
+
+	- Changed the API protocol of SpawnInZone() method. 
+		-- Removed OuterRadius and InnerRadius parameters !!!
+		
+	- Changed the API protocol of SpawnFromUnit() method.
+		-- Removed OuterRadius and InnerRadius parameters !!!
+
+	- Added InitRandomizeUnits() method, taking 3 parameters:
+		-- RandomizeUnits given the value true, will randomize the units upon spawning, false (default) will not randomize the untis.
+		-- OuterRadius is the outer radius of the band where the units will be spawned, if RandomizeUnits is true.
+		-- InnerRadius is the inner radius of the band where the units will not be spawned, if RandomizeUnits is true.
+
+	- Removed SpawnFunction() method.
+
+	- Added OnSpawnGroup() method as the new official CallBack function method to catch when a new function will be called.
+		-- Documented OnSpawnGroup() method.
+		
+	- Renamed Limit() method to InitLimit() method.
+
+	- Renamed Array() method to InitArray() method.
+
+	- Renamed RandomizeRoute() method to InitRandomizeRoute() method.
+
+	- Renamed RandomizeTemplate() method to InitRandomizeTemplate() method.
+	
+	- Reviewed all test missions for the changes executed and made adaptions where necessary + re-tests.
+	
+
 2016-08-12
+
 	- Temporary release of the new cargo handling.
 		-- Released available functionality to handle one CARGO_UNIT loading, boarding, unloading.
 		-- Created CARGO_UNIT test missions.
+
 	- Added Translate() method in POINT_VEC3, translating a 3D point over the horizontal plane with a Distance and Angle coordinate.
-	- Changed Spawn APIs, adding RandomizeGroup and RandomizeUnits parameters, to express Group position and Unit position randomization.
-		-- Changed SpawnInZone() method. 
-			--- RandomizeGroup is used to randomize the start position of the Group in a zone.
-			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
-		-- Changed SpawnFromVec3() method.
-			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
-		-- Changed SpawnFromVec2() method.		
-			--- RandomizeUnits is used to randomize the start position of the Units in a defined radius band, through OuterRadius and InnerRadius parameters.
 
 2016-08-08
+
 	- Added briefing to method ESCORT:New()
 		-- If no EscortBriefing is given, the New() method will show the default briefing.
 		
 2016-08-06
+
     - Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
     	-- Replaced method PointVec3() to Vec3() where the code manages a Vec3. Replaced all references to the method.
     	-- Replaced method PointVec2() to Vec2() where the code manages a Vec2. Replaced all references to the method.
     	-- Replaced method RandomPointVec3() to RandomVec3() where the code manages a Vec3. Replaced all references to the method.
 
 2016-08-03
+
 	- Fixed error at SPAWN:RandomizeTemplate()
 		-- Units started in wrong x, y position (at the template, instead of at the master template of the SPAWN).
 		-- Adjusted x, y and alt to the start position of the first unit of the master template.
@@ -30,9 +58,11 @@
 		-- Regenerated MOOSE.lua
 
 2016-07-31
+
     - Added a SpawnHeight parameter to the SPAWN method RandomizeRoute(), based upon a bug report of David. Air units will now also have optionally the route height randomized.
 
 2016-07-29
+
 	- Documentation of methods GetFirstAliveGroup, GetNextAliveGroup, GetLastAliveGroup + code snippets.
 
 2016-07-23

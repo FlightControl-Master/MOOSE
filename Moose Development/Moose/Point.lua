@@ -73,8 +73,6 @@ POINT_VEC3 = {
 -- @field DCSTypes#Distance y the y coordinate in meters.
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
-  x = 0,
-  y = 0,
 }
 
 
@@ -131,6 +129,7 @@ function POINT_VEC3:New( x, y, z )
   self.x = x
   self.y = y
   self.z = z
+  
   return self
 end
 
@@ -140,7 +139,9 @@ end
 -- @return Point#POINT_VEC3 self
 function POINT_VEC3:NewFromVec3( Vec3 )
 
-  return self:New( Vec3.x, Vec3.y, Vec3.z )
+  self = self:New( Vec3.x, Vec3.y, Vec3.z )
+  self:F2( self )
+  return self
 end
 
 
@@ -589,7 +590,8 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self:F2( self )
   
   return self
 end
@@ -605,8 +607,8 @@ function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end
@@ -622,8 +624,8 @@ function POINT_VEC2:NewFromVec3( Vec3 )
 
   local LandHeight = land.getHeight( Vec2 )
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, LandHeight, Vec2.y } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end

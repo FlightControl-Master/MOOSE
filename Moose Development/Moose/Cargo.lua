@@ -1023,7 +1023,7 @@ function CARGO_ZONE:Spawn()
       end
   else
     self:T( "Initialize CargoHostSpawn" )
-    self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+    self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):InitLimit( 1, 1 )
     self.CargoHostSpawn:ReSpawn( 1 )
   end
   end

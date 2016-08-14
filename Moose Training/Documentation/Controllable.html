@@ -21,7 +21,7 @@
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li>Controllable</li>
@@ -65,6 +65,7 @@
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -80,6 +81,7 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -548,7 +550,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Attacking the map object (building, structure, e.t.c).</p>
 </td>
@@ -560,7 +562,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Delivering weapon at the point on the ground. </p>
 </td>
@@ -602,7 +604,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE:TaskEscort(EscortControllable, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowControllable, EngagementDistance)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE:TaskEscort(EscortControllable, Vec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowControllable, EngagementDistance)</a></td>
 		<td class="summary">
 <p>(AIR) Escort another airborne controllable.</p>
 </td>
@@ -614,13 +616,13 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(PointVec2, Radius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</a></td>
 		<td class="summary">
 <p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE:TaskFollow(FollowControllable, PointVec3, LastWaypointIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE:TaskFollow(FollowControllable, Vec3, LastWaypointIndex)</a></td>
 		<td class="summary">
 <p>(AIR) Following another airborne controllable.</p>
 </td>
@@ -2189,7 +2191,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackMapObject" >
-<strong>CONTROLLABLE:TaskAttackMapObject(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
 </a>
 </dt>
 <dd>
@@ -2200,7 +2202,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.</p>
 
 				</li>
@@ -2309,7 +2311,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskBombing" >
-<strong>CONTROLLABLE:TaskBombing(PointVec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
 </a>
 </dt>
 <dd>
@@ -2320,7 +2322,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 2D-coordinates of the point to deliver weapon at.</p>
 
 				</li>
@@ -2600,7 +2602,7 @@ The DCS task structure</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskEscort" >
-<strong>CONTROLLABLE:TaskEscort(EscortControllable, PointVec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowControllable, EngagementDistance)</strong>
+<strong>CONTROLLABLE:TaskEscort(EscortControllable, Vec3, LastWaypointIndex, EngagementDistanceMax, TargetTypes, FollowControllable, EngagementDistance)</strong>
 </a>
 </dt>
 <dd>
@@ -2621,7 +2623,7 @@ The controllable to be escorted.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.</p>
 
 				</li>
@@ -2714,7 +2716,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFireAtPoint" >
-<strong>CONTROLLABLE:TaskFireAtPoint(PointVec2, Radius)</strong>
+<strong>CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</strong>
 </a>
 </dt>
 <dd>
@@ -2725,7 +2727,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> PointVec2 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
 The point to fire at.</p>
 
 				</li>
@@ -2747,7 +2749,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFollow" >
-<strong>CONTROLLABLE:TaskFollow(FollowControllable, PointVec3, LastWaypointIndex)</strong>
+<strong>CONTROLLABLE:TaskFollow(FollowControllable, Vec3, LastWaypointIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2768,7 +2770,7 @@ The controllable to be followed.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> PointVec3 </em></code>: 
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.</p>
 
 				</li>

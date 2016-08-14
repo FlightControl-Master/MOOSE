@@ -21,7 +21,7 @@
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -65,6 +65,7 @@
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
@@ -80,6 +81,7 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -148,7 +150,7 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromPointVec2">POINT_VEC2:DistanceFromPointVec2(PointVec2Reference)</a></td>
 		<td class="summary">
-<p>Calculate the distance from a reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+<p>Calculate the distance from a reference <a href="##(POINT_VEC2)">#POINT_VEC2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -158,15 +160,33 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAlt">POINT_VEC2:GetAlt()</a></td>
+		<td class="summary">
+<p>Return the altitude of the land at the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAltitudeText">POINT_VEC2:GetAltitudeText()</a></td>
 		<td class="summary">
 <p>Return no text for the altitude of the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetX">POINT_VEC2:GetX()</a></td>
+		<td class="summary">
+<p>Return the x coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetY">POINT_VEC2:GetY()</a></td>
+		<td class="summary">
+<p>Return the y coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).New">POINT_VEC2:New(x, y, LandHeightAdd)</a></td>
 		<td class="summary">
-<p>Create a new POINT_VEC2 object.</p>
+<p>POINT_VEC2 constructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -176,9 +196,39 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).PointVec2">POINT_VEC2.PointVec2</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).NewFromVec3">POINT_VEC2:NewFromVec3(Vec3)</a></td>
 		<td class="summary">
-
+<p>Create a new POINT_VEC2 object from  Vec3 coordinates.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX(x, self)</a></td>
+		<td class="summary">
+<p>Set the x coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY(y, self)</a></td>
+		<td class="summary">
+<p>Set the y coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).Translate">POINT_VEC2:Translate(Distance, Angle)</a></td>
+		<td class="summary">
+<p>Add a Distance in meters from the POINT<em>VEC2 orthonormal plane, with the given angle, and calculate the new POINT</em>VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).x">POINT_VEC2.x</a></td>
+		<td class="summary">
+<p>The x coordinate in meters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).y">POINT_VEC2.y</a></td>
+		<td class="summary">
+<p>the y coordinate in meters.</p>
 </td>
 		</tr>
 	</table>
@@ -270,15 +320,27 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomPointVec2InRadius">POINT_VEC3:GetRandomPointVec2InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random POINT<em>VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomPointVec3InRadius">POINT_VEC3:GetRandomPointVec3InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random POINT<em>VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomVec2InRadius">POINT_VEC3:GetRandomVec2InRadius(OuterRadius, InnerRadius)</a></td>
 		<td class="summary">
-<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomVec3InRadius">POINT_VEC3:GetRandomVec3InRadius(OuterRadius, InnerRadius)</a></td>
 		<td class="summary">
-<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
@@ -336,12 +398,6 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).PointVec3">POINT_VEC3.PointVec3</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointAction">POINT_VEC3.RoutePointAction</a></td>
 		<td class="summary">
 
@@ -360,6 +416,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointGround">POINT_VEC3:RoutePointGround(Speed, Formation)</a></td>
+		<td class="summary">
+<p>Build an ground type route point.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).RoutePointType">POINT_VEC3.RoutePointType</a></td>
 		<td class="summary">
 
@@ -369,6 +431,24 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetMetric">POINT_VEC3:SetMetric(Metric)</a></td>
 		<td class="summary">
 <p>Sets the POINT_VEC3 metric or NM.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetX">POINT_VEC3.SetX(x, self)</a></td>
+		<td class="summary">
+<p>Set the x coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetY">POINT_VEC3.SetY(y, self)</a></td>
+		<td class="summary">
+<p>Set the y coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetZ">POINT_VEC3.SetZ(z, self)</a></td>
+		<td class="summary">
+<p>Set the z coordinate of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
@@ -423,6 +503,30 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ToStringLL">POINT_VEC3:ToStringLL(AngleRadians, Distance, acc, DMS)</a></td>
 		<td class="summary">
 <p>Provides a Bearing / Range string</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Translate">POINT_VEC3:Translate(Distance, Angle)</a></td>
+		<td class="summary">
+<p>Add a Distance in meters from the POINT<em>VEC3 horizontal plane, with the given angle, and calculate the new POINT</em>VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).x">POINT_VEC3.x</a></td>
+		<td class="summary">
+<p>The x coordinate in 3D space.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).y">POINT_VEC3.y</a></td>
+		<td class="summary">
+<p>The y coordinate in 3D space.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).z">POINT_VEC3.z</a></td>
+		<td class="summary">
+<p>The z coordiante in 3D space.</p>
 </td>
 		</tr>
 	</table>
@@ -578,21 +682,21 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </dt>
 <dd>
 	
-<p>Calculate the distance from a reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+<p>Calculate the distance from a reference <a href="##(POINT_VEC2)">#POINT_VEC2</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(POINT_VEC2)">#POINT_VEC2</a> PointVec2Reference </em></code>: 
-The reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+The reference <a href="##(POINT_VEC2)">#POINT_VEC2</a>.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a>:</em>
-The distance from the reference <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> in meters.</p>
+The distance from the reference <a href="##(POINT_VEC2)">#POINT_VEC2</a> in meters.</p>
 
 </dd>
 </dl>
@@ -626,6 +730,24 @@ The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC2).GetAlt" >
+<strong>POINT_VEC2:GetAlt()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the altitude of the land at the POINT_VEC2.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The land altitude.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC2).GetAltitudeText" >
 <strong>POINT_VEC2:GetAltitudeText()</strong>
 </a>
@@ -644,13 +766,49 @@ Empty string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC2).GetX" >
+<strong>POINT_VEC2:GetX()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the x coordinate of the POINT_VEC2.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The x coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetY" >
+<strong>POINT_VEC2:GetY()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the y coordinate of the POINT_VEC2.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The y coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC2).New" >
 <strong>POINT_VEC2:New(x, y, LandHeightAdd)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Create a new POINT_VEC2 object.</p>
+<p>POINT_VEC2 constructor.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -715,14 +873,142 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a></em>
-<a id="#(POINT_VEC2).PointVec2" >
-<strong>POINT_VEC2.PointVec2</strong>
+<a id="#(POINT_VEC2).NewFromVec3" >
+<strong>POINT_VEC2:NewFromVec3(Vec3)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Create a new POINT_VEC2 object from  Vec3 coordinates.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+The Vec3 point.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetX" >
+<strong>POINT_VEC2.SetX(x, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the x coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetY" >
+<strong>POINT_VEC2.SetY(y, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the y coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).Translate" >
+<strong>POINT_VEC2:Translate(Distance, Angle)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a Distance in meters from the POINT<em>VEC2 orthonormal plane, with the given angle, and calculate the new POINT</em>VEC2.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Distance </em></code>: 
+The Distance to be added in meters.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Angle)">DCSTypes#Angle</a> Angle </em></code>: 
+The Angle in degrees.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em>
+The new calculated POINT_VEC2.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(POINT_VEC2).x" >
+<strong>POINT_VEC2.x</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The x coordinate in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+<a id="#(POINT_VEC2).y" >
+<strong>POINT_VEC2.y</strong>
+</a>
+</dt>
+<dd>
+	
+<p>the y coordinate in meters.</p>
 
 </dd>
 </dl>
@@ -916,7 +1202,7 @@ ptional) Azimuth The azimuth of the flare direction. The default azimuth is 0.</
 				<li>
 				
 <p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
-The target PointVec3.</p>
+The target POINT_VEC3.</p>
 
 				</li>
 		</ul>
@@ -943,7 +1229,7 @@ Distance The distance in meters.</p>
 				<li>
 				
 <p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
-The target PointVec3.</p>
+The target POINT_VEC3.</p>
 
 				</li>
 		</ul>
@@ -988,7 +1274,7 @@ Altitude text.</p>
 				<li>
 				
 <p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
-The target PointVec3.</p>
+The target POINT_VEC3.</p>
 
 				</li>
 		</ul>
@@ -1042,7 +1328,7 @@ DirectionRadians The direction in radians.</p>
 				<li>
 				
 <p><code><em><a href="##(POINT_VEC3)">#POINT_VEC3</a> TargetPointVec3 </em></code>: 
-The target PointVec3.</p>
+The target POINT_VEC3.</p>
 
 				</li>
 		</ul>
@@ -1074,13 +1360,75 @@ CorrectionRadians The correction in radians.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).GetRandomPointVec2InRadius" >
+<strong>POINT_VEC3:GetRandomPointVec2InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random POINT<em>VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetRandomPointVec3InRadius" >
+<strong>POINT_VEC3:GetRandomPointVec3InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random POINT<em>VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC3).GetRandomVec2InRadius" >
 <strong>POINT_VEC3:GetRandomVec2InRadius(OuterRadius, InnerRadius)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1111,7 +1459,7 @@ Vec2</p>
 </dt>
 <dd>
 	
-<p>Return a random Vec3 point within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
+<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1324,20 +1672,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a></em>
-<a id="#(POINT_VEC3).PointVec3" >
-<strong>POINT_VEC3.PointVec3</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="##(POINT_VEC3.RoutePointAction)">#POINT_VEC3.RoutePointAction</a></em>
 <a id="#(POINT_VEC3).RoutePointAction" >
 <strong>POINT_VEC3.RoutePointAction</strong>
@@ -1417,6 +1751,39 @@ The route point.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).RoutePointGround" >
+<strong>POINT_VEC3:RoutePointGround(Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an ground type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> Speed </em></code>: 
+Speed in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(POINT_VEC3.RoutePointAction)">#POINT_VEC3.RoutePointAction</a> Formation </em></code>: 
+The route point Formation.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(POINT_VEC3.RoutePointType)">#POINT_VEC3.RoutePointType</a></em>
 <a id="#(POINT_VEC3).RoutePointType" >
 <strong>POINT_VEC3.RoutePointType</strong>
@@ -1445,6 +1812,87 @@ The route point.</p>
 				
 <p><code><em>#boolean Metric </em></code>: 
 true means metric, false means NM.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SetX" >
+<strong>POINT_VEC3.SetX(x, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the x coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SetY" >
+<strong>POINT_VEC3.SetY(y, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the y coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).SetZ" >
+<strong>POINT_VEC3.SetZ(z, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the z coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number z </em></code>: 
+The z coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1623,6 +2071,81 @@ The distance</p>
 				
 <p><em>#string:</em>
 The BR Text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).Translate" >
+<strong>POINT_VEC3:Translate(Distance, Angle)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a Distance in meters from the POINT<em>VEC3 horizontal plane, with the given angle, and calculate the new POINT</em>VEC3.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Distance </em></code>: 
+The Distance to be added in meters.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="DCSTypes.html##(Angle)">DCSTypes#Angle</a> Angle </em></code>: 
+The Angle in degrees.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em>
+The new calculated POINT_VEC3.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(POINT_VEC3).x" >
+<strong>POINT_VEC3.x</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The x coordinate in 3D space.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(POINT_VEC3).y" >
+<strong>POINT_VEC3.y</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The y coordinate in 3D space.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(POINT_VEC3).z" >
+<strong>POINT_VEC3.z</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The z coordiante in 3D space.</p>
 
 </dd>
 </dl>
