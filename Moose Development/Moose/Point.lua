@@ -25,7 +25,27 @@
 -- 
 --  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
 --  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
---  
+-- 
+-- ===
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
+-- 
+-- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
+-- 
+--   * Replaced method _Point_Vec3() to **Vec3**() where the code manages a Vec3. Replaced all references to the method.
+--   * Replaced method _Point_Vec2() to **Vec2**() where the code manages a Vec2. Replaced all references to the method.
+--   * Replaced method Random_Point_Vec3() to **RandomVec3**() where the code manages a Vec3. Replaced all references to the method.
+-- .
 -- ===
 --  
 -- ### Authors: 

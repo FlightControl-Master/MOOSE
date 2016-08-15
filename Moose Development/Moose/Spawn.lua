@@ -45,6 +45,7 @@
 --   * @{#SPAWN.InitArray}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 --   * @{#SPAWN.InitRandomizeUnits}: Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
+--   * @{#SPAWN.InitRandomizeZones}: Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 -- 
 -- 1.3) SPAWN spawning methods
 -- ---------------------------
@@ -87,7 +88,7 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- 1.6) Catch the @{Group} Spawn event.
+-- 1.6) Catch the @{Group} Spawn event!
 -- ------------------------------------
 -- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
 -- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
@@ -98,9 +99,84 @@
 -- 
 -- ====
 -- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones ) added.
+-- 
+--    * This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types. 
+-- 
+-- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
+-- 
+-- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+-- 
+-- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
+-- 
+--    * This method enables the randomization of units at the first route point in a radius band at a spawn event.
+-- 
+-- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- ===
+-- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
 -- ### Contributions: 
 -- 
---   * Aaron:
+--   * Aaron: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
 -- 
 -- ### Authors: 
 -- 
@@ -120,12 +196,15 @@
 -- @field #number MaxAliveUnits
 -- @field #number SpawnIndex
 -- @field #number MaxAliveGroups
+-- @field #SPAWN.SpawnZoneTable SpawnZoneTable
 SPAWN = {
   ClassName = "SPAWN",
   SpawnTemplatePrefix = nil,
   SpawnAliasPrefix = nil,
 }
 
+--- @type SPAWN.SpawnZoneTable
+-- @list <Zone#ZONE_BASE> SpawnZone
 
 
 --- Creates the main object to spawn a @{Group} defined in the DCS ME.
@@ -203,7 +282,7 @@ end
 
 --- Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
--- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+-- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this method should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
 -- @param #SPAWN self
 -- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
@@ -287,8 +366,8 @@ function SPAWN:InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )
   return self
 end
 
---- This function is rather complicated to understand. But I'll try to explain.
--- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+--- This method is rather complicated to understand. But I'll try to explain.
+-- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
@@ -319,12 +398,33 @@ function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	return self
 end
 
+--TODO: Add example.
+--- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
+-- @param #SPAWN self
+-- @param #table SpawnZoneTable A table with @{Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Zone}s objects. 
+-- @return #SPAWN
+-- @usage
+-- -- NATO Tank Platoons invading Gori.
+-- -- Choose between 3 different zones for each new SPAWN the Group to be executed, regardless of the zone type. 
+function SPAWN:InitRandomizeZones( SpawnZoneTable )
+  self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
+
+  self.SpawnZoneTable = SpawnZoneTable
+  self.SpawnRandomizeZones = true
+
+  for SpawnGroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeZones( SpawnGroupID )
+  end
+  
+  return self
+end
+
 
 
 
 
 --- For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.
--- This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+-- This method is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
 -- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
 -- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
 -- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
@@ -585,7 +685,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 end
 
 --- Will re-start the spawning scheduler.
--- Note: This function is only required to be called when the schedule was stopped.
+-- Note: This method is only required to be called when the schedule was stopped.
 function SPAWN:SpawnScheduleStart()
   self:F( { self.SpawnTemplatePrefix } )
 
@@ -601,7 +701,7 @@ end
 
 
 --- Allows to place a CallFunction hook when a new group spawns.
--- The provided function will be called when a new group is spawned, including its given parameters.
+-- The provided method will be called when a new group is spawned, including its given parameters.
 -- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
 -- @param #SPAWN self
 -- @param #function SpawnCallBackFunction The function to be called when a group spawns.
@@ -632,7 +732,7 @@ end
 
 
 --- Will spawn a group from a Vec3 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
@@ -690,7 +790,7 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
 end
 
 --- Will spawn a group from a Vec2 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+-- This method is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
@@ -706,7 +806,7 @@ function SPAWN:SpawnFromVec2( Vec2, SpawnIndex )
 end
 
 
---- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+--- Will spawn a group from a hosting unit. This method is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
@@ -724,7 +824,7 @@ function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
   return nil
 end
 
---- Will spawn a group from a hosting static. This function is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
+--- Will spawn a group from a hosting static. This method is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Static#STATIC HostStatic The static dropping or unloading the group.
@@ -833,7 +933,7 @@ end
 
 --- Will find the next alive @{Group} object from a given Index, and return a reference to the alive @{Group} object and the next Index where the alive @{Group} has been found.
 -- @param #SPAWN self
--- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive @{Group} object from the given Index.
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This method can also be used to find the first alive @{Group} object from the given Index.
 -- @return Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
 -- @return #nil, #nil When no alive @{Group} object is found from the start Index position, #nil is returned.
 -- @usage
@@ -1168,6 +1268,54 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
   return self
 end
 
+--- Private method that randomizes the @{Zone}s where the Group will be spawned.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
+function SPAWN:_RandomizeZones( SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
+
+  if self.SpawnRandomizeZones then
+    local SpawnZone = nil -- Zone#ZONE_BASE
+    while not SpawnZone do
+      self:T( { SpawnZoneTableCount = #self.SpawnZoneTable, self.SpawnZoneTable } )
+      local ZoneID = math.random( #self.SpawnZoneTable )
+      self:T( ZoneID )
+      SpawnZone = self.SpawnZoneTable[ ZoneID ]:GetZoneMaybe() 
+    end
+    
+    self:T( "Preparing Spawn in Zone", SpawnZone:GetName() )
+    
+    local SpawnVec2 = SpawnZone:GetRandomVec2()
+    
+    local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+    
+    for UnitID = 1, #SpawnTemplate.units do
+      local UnitTemplate = SpawnTemplate.units[UnitID]
+      self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+      local SX = UnitTemplate.x
+      local SY = UnitTemplate.y 
+      local BX = SpawnTemplate.route.points[1].x
+      local BY = SpawnTemplate.route.points[1].y
+      local TX = SpawnVec2.x + ( SX - BX )
+      local TY = SpawnVec2.y + ( SY - BY )
+      UnitTemplate.x = TX
+      UnitTemplate.y = TY
+      -- TODO: Manage altitude based on landheight...
+      --SpawnTemplate.units[UnitID].alt = SpawnVec2:
+      self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+    end
+    SpawnTemplate.x = SpawnVec2.x
+    SpawnTemplate.y = SpawnVec2.y
+    SpawnTemplate.route.points[1].x = SpawnVec2.x
+    SpawnTemplate.route.points[1].y = SpawnVec2.y
+  end
+  
+  self:_RandomizeRoute( SpawnIndex )
+  
+  return self
+end
+
 function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle } )
   
@@ -1211,7 +1359,7 @@ function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, Spa
   return self
 end
 
---- Get the next index of the groups to be spawned. This function is complicated, as it is used at several spaces.
+--- Get the next index of the groups to be spawned. This method is complicated, as it is used at several spaces.
 function SPAWN:_GetSpawnIndex( SpawnIndex )
 	self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
   

@@ -10,6 +10,18 @@
 	
 	- Changed and removed the POINT_VEC3 SmokeColor and FlareColor structure. Replaced with SMOKECOLOR and FLARECOLOR types.
 		-- Replaced also code in test missions with SMOKECOLOR and FLARECOLOR references.
+	
+	- Added change logs of API changes in MOOSE documentation.
+	
+	- Added ZONE_BASE:GetName() method.
+	
+	- Added ZONE_BASE:GetZoneProbability() method.
+	
+	- Added ZONE_BASE:SetZoneProbability() method.
+	
+	- Added ZONE_BASE:GetZoneMaybe() method.
+	
+	- Added SPAWN:InitRandomizeZones() method.
 		
 
 2016-08-14

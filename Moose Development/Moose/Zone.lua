@@ -28,27 +28,31 @@
 -- ================================================
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
--- ### 1.1) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- ### 1.1) Each zone has a name:
+-- 
+--   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+-- 
+-- ### 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
 --   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Point#POINT_VEC2} is within the zone.
 --   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Point#POINT_VEC3} is within the zone.
 --   
--- ### 1.2) A zone has a probability factor that can be set to randomize a selection between zones:
+-- ### 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
 -- 
 --   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
 --   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
---   * @{#ZONE_BASE.GetZoneRandomize}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
+--   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
 -- 
--- ### 1.3) A zone manages Vectors:
+-- ### 1.4) A zone manages Vectors:
 -- 
 --   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
 --   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
 -- 
--- ### 1.4) A zone has a bounding square:
+-- ### 1.5) A zone has a bounding square:
 -- 
 --   * @{#ZONE_BASE.GetBoundingSquare}(): Get the outer most bounding square of the zone.
 -- 
--- ### 1.5) A zone can be marked: 
+-- ### 1.6) A zone can be marked: 
 -- 
 --   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
 --   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
@@ -111,6 +115,26 @@
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: ZONE_BASE:**GetName()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**SetZoneProbability( ZoneProbability )** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneProbability()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneMaybe()** added.
+-- 
 -- ===
 -- 
 -- @module Zone
@@ -120,12 +144,12 @@
 --- The ZONE_BASE class
 -- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
--- @field #number RandomizationProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
-  RandomizationProbability = 1,
+  ZoneProbability = 1,
   }
 
 
@@ -150,6 +174,14 @@ function ZONE_BASE:New( ZoneName )
   return self
 end
 
+--- Returns the name of the zone.
+-- @param #ZONE_BASE self
+-- @return #string The name of the zone.
+function ZONE_BASE:GetName()
+  self:F2()
+
+  return self.ZoneName
+end
 --- Returns if a location is within the zone.
 -- @param #ZONE_BASE self
 -- @param DCSTypes#Vec2 Vec2 The location to test.
@@ -182,7 +214,7 @@ function ZONE_BASE:GetVec2()
 end
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
--- @return #nil The Vec2 coordinates.
+-- @return DCSTypes#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
   return nil
 end
@@ -206,31 +238,32 @@ end
 
 --- Set the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
--- @param RandomizationProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
-function ZONE_BASE:SetRandomizationProbability( RandomizationProbability )
-  self:F2( RandomizationProbability )
+-- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+function ZONE_BASE:SetZoneProbability( ZoneProbability )
+  self:F2( ZoneProbability )
   
-  self.RandomizationProbability = RandomizationProbability or 1
+  self.ZoneProbability = ZoneProbability or 1
+  return self
 end
 
 --- Get the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
 -- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
-function ZONE_BASE:GetRandomizationProbability()
+function ZONE_BASE:GetZoneProbability()
   self:F2()
   
-  return self.RandomizationProbability
+  return self.ZoneProbability
 end
 
 --- Get the zone taking into account the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
 -- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
 -- @return #nil The zone is not selected taking into account the randomization probability factor.
-function ZONE_BASE:GetZoneRandomized()
+function ZONE_BASE:GetZoneMaybe()
   self:F2()
   
   local Randomization = math.random()
-  if Randomization <= self.RandomizationProbability then
+  if Randomization <= self.ZoneProbability then
     return self
   else
     return nil

@@ -183,7 +183,7 @@ In such a case, when the inactive group is cleaned, a new group will Re-spawned 
 This models AI that has succesfully returned to their airbase, to restart their combat activities.
 Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 
-<h2>1.6) Catch the <a href="Group.html">Group</a> Spawn event.</h2>
+<h2>1.6) Catch the <a href="Group.html">Group</a> Spawn event!</h2>
 <p>When using the SpawnScheduled method, new <a href="Group.html">Group</a>s are created following the schedule timing parameters.
 When a new <a href="Group.html">Group</a> is spawned, you maybe want to execute actions with that group spawned at the spawn event.
 To SPAWN class supports this functionality through the <a href="##(SPAWN).OnSpawnGroup">SPAWN.OnSpawnGroup</a>( <em>*function( SpawnedGroup ) end *</em> ) method, which takes a function as a parameter that you can define locally. 
@@ -193,10 +193,103 @@ A coding example is provided at the description of the <a href="##(SPAWN).OnSpaw
 
 <hr/>
 
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2016-08-14: SPAWN:<strong>OnSpawnGroup</strong>( SpawnCallBackFunction, ... ) replaces SPAWN:<em>SpawnFunction</em>( SpawnCallBackFunction, ... ).</p>
+
+<p>2016-08-14: SPAWN.SpawnInZone( Zone, <strong>RandomizeGroup</strong>, SpawnIndex ) replaces SpawnInZone( Zone, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ).</p>
+
+<ul>
+    <li>The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method <a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>( RandomizeUnits, OuterRadius, InnerRadius ).</li>
+    <li>A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned <a href="Group.html">Group</a>.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ):</p>
+
+<ul>
+    <li>The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method <a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>( RandomizeUnits, OuterRadius, InnerRadius ).</li>
+    <li>A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned <a href="Group.html">Group</a>.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ):</p>
+
+<ul>
+    <li>The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method <a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>( RandomizeUnits, OuterRadius, InnerRadius ).</li>
+    <li>A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned <a href="Group.html">Group</a>.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ):</p>
+
+<ul>
+    <li>The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method <a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>( RandomizeUnits, OuterRadius, InnerRadius ).</li>
+    <li>A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned <a href="Group.html">Group</a>.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ): </p>
+
+<ul>
+    <li>The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method <a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>( RandomizeUnits, OuterRadius, InnerRadius ).</li>
+    <li>A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned <a href="Group.html">Group</a>.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )</strong> added:</p>
+
+<ul>
+    <li>This function enables the randomization of units at the first route point in a radius band at a spawn event.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>Init</strong>Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN.<em>Limit</em>( SpawnMaxUnitsAlive, SpawnMaxGroups ):</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>Init</strong>Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN.<em>Array</em>( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>Init</strong>RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN.<em>RandomizeRoute</em>( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>Init</strong>RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN.<em>RandomizeTemplate</em>( SpawnTemplatePrefixTable ).</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<p>2016-08-14: SPAWN.<strong>Init</strong>UnControlled() replaces SPAWN.<em>UnControlled</em>().</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<hr/>
+
+<h1>AUTHORS and CONTRIBUTIONS</h1>
+
 <h3>Contributions:</h3>
 
 <ul>
-    <li>Aaron:</li>
+    <li>Aaron: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.</li>
 </ul>
 
 <h3>Authors:</h3>
@@ -1547,6 +1640,9 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
+	
+<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2341,7 +2437,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
+<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
 
 </dd>
 </dl>
