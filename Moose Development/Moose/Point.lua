@@ -1,7 +1,7 @@
 --- This module contains the POINT classes.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
--- ===============================================
+-- ==================================================
 -- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
@@ -9,10 +9,11 @@
 -- 
 -- 1.1) POINT_VEC3 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{#POINT_VEC3.New}(): a 3D point.
+--  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+--  
 --
 -- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
@@ -20,13 +21,20 @@
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC2 instance can be created with:
 -- 
---  * @{#POINT_VEC2.New}(): a 2D point.
+--  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+--  
+-- ===
+--  
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+--   
+-- ### Contributions: 
 -- 
 -- @module Point
--- @author FlightControl
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3

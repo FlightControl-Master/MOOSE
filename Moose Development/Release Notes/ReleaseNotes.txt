@@ -10,7 +10,7 @@
 	
 	- Changed and removed the POINT_VEC3 SmokeColor and FlareColor structure. Replaced with SMOKECOLOR and FLARECOLOR types.
 		-- Replaced also code in test missions with SMOKECOLOR and FLARECOLOR references.
-
+		
 
 2016-08-14
 
