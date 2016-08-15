@@ -38,17 +38,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,9 +50,7 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -67,7 +59,6 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
 					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -85,6 +76,7 @@
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -191,12 +183,28 @@ In such a case, when the inactive group is cleaned, a new group will Re-spawned 
 This models AI that has succesfully returned to their airbase, to restart their combat activities.
 Check the <a href="##(SPAWN).CleanUp">SPAWN.CleanUp</a> for further info.</p>
 
-<h2>1.6) Call a function new GROUP is spawned.</h2>
-<p>When using the SpawnScheduled class, new GROUPs are created following the schedule timing parameters.
-However, when a new GROUP is spawned, you maybe want to execute actions with that group spawned.
-To achieve this functionality, utilize the <a href="##(SPAWN).OnSpawn">SPAWN.OnSpawn</a>( <em>*function( SpawnedGroup ) end *</em> ) method, which takes a function as a parameter that you can define locally at the
-OnSpawn() method utilization. Whenever a new GROUP is spawned, the function that is given as a parameter to OnSpawn() will be called.
-This function requires one parameter to be declared, containing the just spawned GROUP object. For an example, consult to function.</p>
+<h2>1.6) Catch the <a href="Group.html">Group</a> Spawn event.</h2>
+<p>When using the SpawnScheduled method, new <a href="Group.html">Group</a>s are created following the schedule timing parameters.
+When a new <a href="Group.html">Group</a> is spawned, you maybe want to execute actions with that group spawned at the spawn event.
+To SPAWN class supports this functionality through the <a href="##(SPAWN).OnSpawnGroup">SPAWN.OnSpawnGroup</a>( <em>*function( SpawnedGroup ) end *</em> ) method, which takes a function as a parameter that you can define locally. 
+Whenever a new <a href="Group.html">Group</a> is spawned, the given function is called, and the <a href="Group.html">Group</a> that was just spawned, is given as a parameter.
+As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned <a href="Group.html">Group</a> object. 
+A coding example is provided at the description of the <a href="##(SPAWN).OnSpawnGroup">SPAWN.OnSpawnGroup</a>( <em>*function( SpawnedGroup ) end *</em> ) method.</p>
+
+<hr/>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li>Aaron:</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li>FlightControl : Design &amp; Programming</li>
+</ul>
+
 
 
 	<h2>Global(s)</h2>
@@ -237,7 +245,7 @@ This function requires one parameter to be declared, containing the just spawned
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetFirstAliveGroup">SPAWN:GetFirstAliveGroup()</a></td>
 		<td class="summary">
-<p>Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.</p>
+<p>Will find the first alive <a href="Group.html">Group</a> it has spawned, and return the alive <a href="Group.html">Group</a> object and the first Index where the first alive <a href="Group.html">Group</a> object has been found.</p>
 </td>
 		</tr>
 		<tr>
@@ -249,13 +257,13 @@ This function requires one parameter to be declared, containing the just spawned
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetLastAliveGroup">SPAWN:GetLastAliveGroup()</a></td>
 		<td class="summary">
-<p>Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.</p>
+<p>Will find the last alive <a href="Group.html">Group</a> object, and will return a reference to the last live <a href="Group.html">Group</a> object and the last Index where the last alive <a href="Group.html">Group</a> object has been found.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).GetNextAliveGroup">SPAWN:GetNextAliveGroup(SpawnIndexStart)</a></td>
 		<td class="summary">
-<p>Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.</p>
+<p>Will find the next alive <a href="Group.html">Group</a> object from a given Index, and return a reference to the alive <a href="Group.html">Group</a> object and the next Index where the alive <a href="Group.html">Group</a> has been found.</p>
 </td>
 		</tr>
 		<tr>
@@ -313,6 +321,12 @@ This function requires one parameter to be declared, containing the just spawned
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitUnControlled">SPAWN:InitUnControlled()</a></td>
+		<td class="summary">
+<p>(AIR) Will spawn a plane group in uncontrolled mode...</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).MaxAliveGroups">SPAWN.MaxAliveGroups</a></td>
 		<td class="summary">
 
@@ -327,7 +341,7 @@ This function requires one parameter to be declared, containing the just spawned
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).New">SPAWN:New(SpawnTemplatePrefix)</a></td>
 		<td class="summary">
-<p>Creates the main object to spawn a GROUP defined in the DCS ME.</p>
+<p>Creates the main object to spawn a <a href="Group.html">Group</a> defined in the DCS ME.</p>
 </td>
 		</tr>
 		<tr>
@@ -572,6 +586,12 @@ This function requires one parameter to be declared, containing the just spawned
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnTemplatePrefixTable">SPAWN.SpawnTemplatePrefixTable</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnUnControlled">SPAWN.SpawnUnControlled</a></td>
 		<td class="summary">
 
 </td>
@@ -830,14 +850,14 @@ self</p>
 </dt>
 <dd>
 	
-<p>Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.</p>
+<p>Will find the first alive <a href="Group.html">Group</a> it has spawned, and return the alive <a href="Group.html">Group</a> object and the first Index where the first alive <a href="Group.html">Group</a> object has been found.</p>
 
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
-The GROUP object found, the new Index where the group was found.</p>
+The <a href="Group.html">Group</a> object found, the new Index where the group was found.</p>
 
 				</li>
 				<li>
@@ -848,7 +868,7 @@ When no group is found, #nil is returned.</p>
 				</li>
 			</ol>
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+		<pre class="example"><code>-- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 while GroupPlane ~= nil do
   -- Do actions with the GroupPlane object.
@@ -897,25 +917,25 @@ self</p>
 </dt>
 <dd>
 	
-<p>Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.</p>
+<p>Will find the last alive <a href="Group.html">Group</a> object, and will return a reference to the last live <a href="Group.html">Group</a> object and the last Index where the last alive <a href="Group.html">Group</a> object has been found.</p>
 
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
-The last alive GROUP object found, the last Index where the last alive GROUP object was found.</p>
+The last alive <a href="Group.html">Group</a> object found, the last Index where the last alive <a href="Group.html">Group</a> object was found.</p>
 
 				</li>
 				<li>
 				
 <p><em>#nil, #nil:</em>
-When no alive GROUP object is found, #nil is returned.</p>
+When no alive <a href="Group.html">Group</a> object is found, #nil is returned.</p>
 
 				</li>
 			</ol>
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+		<pre class="example"><code>-- Find the last alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
 if GroupPlane then -- GroupPlane can be nil!!!
   -- Do actions with the GroupPlane object.
@@ -932,14 +952,14 @@ end</code></pre>
 </dt>
 <dd>
 	
-<p>Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.</p>
+<p>Will find the next alive <a href="Group.html">Group</a> object from a given Index, and return a reference to the alive <a href="Group.html">Group</a> object and the next Index where the alive <a href="Group.html">Group</a> has been found.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number SpawnIndexStart </em></code>: 
-A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.</p>
+A Index holding the start position to search from. This function can also be used to find the first alive <a href="Group.html">Group</a> object from the given Index.</p>
 
 				</li>
 		</ul>
@@ -948,18 +968,18 @@ A Index holding the start position to search from. This function can also be use
 				<li>
 				
 <p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
-The next alive GROUP object found, the next Index where the next alive GROUP object was found.</p>
+The next alive <a href="Group.html">Group</a> object found, the next Index where the next alive <a href="Group.html">Group</a> object was found.</p>
 
 				</li>
 				<li>
 				
 <p><em>#nil, #nil:</em>
-When no alive GROUP object is found from the start Index position, #nil is returned.</p>
+When no alive <a href="Group.html">Group</a> object is found from the start Index position, #nil is returned.</p>
 
 				</li>
 			</ol>
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+		<pre class="example"><code>-- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 while GroupPlane ~= nil do
   -- Do actions with the GroupPlane object.
@@ -1311,6 +1331,27 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SPAWN).InitUnControlled" >
+<strong>SPAWN:InitUnControlled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Will spawn a plane group in uncontrolled mode...</p>
+
+	
+<p>This will be similar to the uncontrolled flag setting in the ME.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(SPAWN).MaxAliveGroups" >
 <strong>SPAWN.MaxAliveGroups</strong>
@@ -1345,7 +1386,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Creates the main object to spawn a GROUP defined in the DCS ME.</p>
+<p>Creates the main object to spawn a <a href="Group.html">Group</a> defined in the DCS ME.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1906,7 +1947,7 @@ The zone where the group is to be spawned.</p>
 				<li>
 				
 <p><code><em>#boolean RandomizeGroup </em></code>: 
-(optional) Randomization of the <a href="GROUP.html">GROUP</a> position in the zone.</p>
+(optional) Randomization of the <a href="Group.html">Group</a> position in the zone.</p>
 
 				</li>
 				<li>
@@ -1980,7 +2021,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -1997,7 +2038,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -2265,6 +2306,20 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<em></em>
 <a id="#(SPAWN).SpawnTemplatePrefixTable" >
 <strong>SPAWN.SpawnTemplatePrefixTable</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(SPAWN).SpawnUnControlled" >
+<strong>SPAWN.SpawnUnControlled</strong>
 </a>
 </dt>
 <dd>

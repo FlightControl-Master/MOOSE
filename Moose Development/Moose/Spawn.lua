@@ -87,13 +87,25 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.CleanUp} for further info.
 -- 
--- 1.6) Call a function new GROUP is spawned.
--- ------------------------------------------
--- When using the SpawnScheduled class, new GROUPs are created following the schedule timing parameters.
--- However, when a new GROUP is spawned, you maybe want to execute actions with that group spawned.
--- To achieve this functionality, utilize the @{#SPAWN.OnSpawn}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally at the
--- OnSpawn() method utilization. Whenever a new GROUP is spawned, the function that is given as a parameter to OnSpawn() will be called.
--- This function requires one parameter to be declared, containing the just spawned GROUP object. For an example, consult to function.
+-- 1.6) Catch the @{Group} Spawn event.
+-- ------------------------------------
+-- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
+-- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
+-- To SPAWN class supports this functionality through the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally. 
+-- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
+-- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
+-- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- 
+-- ====
+-- 
+-- ### Contributions: 
+-- 
+--   * Aaron:
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+-- 
 -- 
 -- @module Spawn
 -- @author FlightControl
@@ -116,7 +128,7 @@ SPAWN = {
 
 
 
---- Creates the main object to spawn a GROUP defined in the DCS ME.
+--- Creates the main object to spawn a @{Group} defined in the DCS ME.
 -- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWN
@@ -735,7 +747,7 @@ end
 -- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
 -- @param Zone#ZONE Zone The zone where the group is to be spawned.
--- @param #boolean RandomizeGroup (optional) Randomization of the @{GROUP} position in the zone.
+-- @param #boolean RandomizeGroup (optional) Randomization of the @{Group} position in the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
@@ -753,13 +765,11 @@ function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
   return nil
 end
 
-
-
-
---- Will spawn a plane group in uncontrolled mode... 
+--- (AIR) Will spawn a plane group in uncontrolled mode... 
 -- This will be similar to the uncontrolled flag setting in the ME.
+-- @param #SPAWN self
 -- @return #SPAWN self
-function SPAWN:UnControlled()
+function SPAWN:InitUnControlled()
 	self:F( { self.SpawnTemplatePrefix } )
 	
 	self.SpawnUnControlled = true
@@ -796,12 +806,12 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
---- Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--- Will find the first alive @{Group} it has spawned, and return the alive @{Group} object and the first Index where the first alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The GROUP object found, the new Index where the group was found.
+-- @return Group#GROUP, #number The @{Group} object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -821,13 +831,13 @@ function SPAWN:GetFirstAliveGroup()
 end
 
 
---- Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--- Will find the next alive @{Group} object from a given Index, and return a reference to the alive @{Group} object and the next Index where the alive @{Group} has been found.
 -- @param #SPAWN self
--- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.
--- @return Group#GROUP, #number The next alive GROUP object found, the next Index where the next alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found from the start Index position, #nil is returned.
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive @{Group} object from the given Index.
+-- @return Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found from the start Index position, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -847,12 +857,12 @@ function SPAWN:GetNextAliveGroup( SpawnIndexStart )
   return nil, nil
 end
 
---- Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+--- Will find the last alive @{Group} object, and will return a reference to the last live @{Group} object and the last Index where the last alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The last alive GROUP object found, the last Index where the last alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found, #nil is returned.
+-- @return Group#GROUP, #number The last alive @{Group} object found, the last Index where the last alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found, #nil is returned.
 -- @usage
--- -- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the last alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
 -- if GroupPlane then -- GroupPlane can be nil!!!
 --   -- Do actions with the GroupPlane object.

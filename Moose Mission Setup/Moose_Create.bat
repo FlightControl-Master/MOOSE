@@ -38,8 +38,11 @@ ECHO env.info( 'Moose Generation Timestamp: %2' ) >> 						Moose.lua
 COPY /b Moose.lua + "Moose Create Static\Moose_Static_Loader.lua"        	Moose.lua
 
 
+rem Core Routines
 COPY /b Moose.lua + %1\Routines.lua                                      	Moose.lua
 COPY /b Moose.lua + %1\Utils.lua                                         	Moose.lua
+
+rem Core Classes
 COPY /b Moose.lua + %1\Base.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Object.lua                							Moose.lua
 COPY /b Moose.lua + %1\Identifiable.lua            							Moose.lua
@@ -59,19 +62,10 @@ COPY /b Moose.lua + %1\Set.lua                   							Moose.lua
 COPY /b Moose.lua + %1\Point.lua                 							Moose.lua
 COPY /b Moose.lua + %1\Moose.lua                 							Moose.lua
 COPY /b Moose.lua + %1\Scoring.lua               							Moose.lua
+
+rem Functional Classes
 COPY /b Moose.lua + %1\Cargo.lua                 							Moose.lua
 COPY /b Moose.lua + %1\Message.lua               							Moose.lua
-COPY /b Moose.lua + %1\Stage.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Task.lua                  							Moose.lua
-COPY /b Moose.lua + %1\GoHomeTask.lua            							Moose.lua
-COPY /b Moose.lua + %1\DestroyBaseTask.lua       							Moose.lua
-COPY /b Moose.lua + %1\DestroyGroupsTask.lua    							Moose.lua
-COPY /b Moose.lua + %1\DestroyRadarsTask.lua     							Moose.lua
-COPY /b Moose.lua + %1\DestroyUnitTypesTask.lua  							Moose.lua
-COPY /b Moose.lua + %1\PickupTask.lua            							Moose.lua
-COPY /b Moose.lua + %1\DeployTask.lua            							Moose.lua
-COPY /b Moose.lua + %1\NoTask.lua                							Moose.lua
-COPY /b Moose.lua + %1\RouteTask.lua             							Moose.lua
 COPY /b Moose.lua + %1\Mission.lua               							Moose.lua
 COPY /b Moose.lua + %1\CleanUp.lua               							Moose.lua
 COPY /b Moose.lua + %1\Spawn.lua                 							Moose.lua
@@ -82,8 +76,9 @@ COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
 COPY /b Moose.lua + %1\PatrolZone.lua            							Moose.lua
 COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
 COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
-
 COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
+
+rem Task Handling Classes
 COPY /b Moose.lua + %1\DetectionManager.lua       							Moose.lua
 
 COPY /b Moose.lua + %1\StateMachine.lua       	  							Moose.lua

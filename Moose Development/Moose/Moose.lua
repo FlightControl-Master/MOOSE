@@ -1,7 +1,10 @@
 --- The main include file for the MOOSE system.
 
+--- Core Routines
 Include.File( "Routines" )
 Include.File( "Utils" )
+
+--- Core Classes
 Include.File( "Base" )
 Include.File( "Object" )
 Include.File( "Identifiable" )
@@ -19,21 +22,11 @@ Include.File( "Airbase" )
 Include.File( "Database" )
 Include.File( "Set" )
 Include.File( "Point" )
-Include.File( "Moose" )
 Include.File( "Scoring" )
+
+--- Functional Classes
 Include.File( "Cargo" )
 Include.File( "Message" )
-Include.File( "Stage" )
-Include.File( "Task" )
-Include.File( "GoHomeTask" )
-Include.File( "DestroyBaseTask" )
-Include.File( "DestroyGroupsTask" )
-Include.File( "DestroyRadarsTask" )
-Include.File( "DestroyUnitTypesTask" )
-Include.File( "PickupTask" )
-Include.File( "DeployTask" )
-Include.File( "NoTask" )
-Include.File( "RouteTask" )
 Include.File( "Mission" )
 Include.File( "CleanUp" )
 Include.File( "Spawn" )
@@ -44,8 +37,9 @@ Include.File( "MissileTrainer" )
 Include.File( "PatrolZone" )
 Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
-
 Include.File( "Detection" )
+
+--- Task Handling Classes
 Include.File( "DetectionManager" )
 
 Include.File( "StateMachine" )

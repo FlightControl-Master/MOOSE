@@ -1,3 +1,17 @@
+2016-08-15
+
+	- Removed the old classes and moved into an "Old" folder in the Moose/Development folder.
+		-- Cleaned Moose.lua + Documented class types
+		-- Cleaned Create_Moose.bat + Documented class types
+
+	- Extend the ZONE_BASE class with a probability randomization factor, that can be used for zone randomization purposes.
+	
+	- Documented the Zone module classes.
+	
+	- Changed and removed the POINT_VEC3 SmokeColor and FlareColor structure. Replaced with SMOKECOLOR and FLARECOLOR types.
+		-- Replaced also code in test missions with SMOKECOLOR and FLARECOLOR references.
+
+
 2016-08-14
 
 	- Changed Spawn APIs to express Group position and Unit position randomization.
@@ -25,6 +39,8 @@
 	- Renamed RandomizeRoute() method to InitRandomizeRoute() method.
 
 	- Renamed RandomizeTemplate() method to InitRandomizeTemplate() method.
+	
+	- Renamed UnControlled() method to InitUnControlled method.
 	
 	- Reviewed all test missions for the changes executed and made adaptions where necessary + re-tests.
 	

@@ -6,11 +6,7 @@
 -- Upon landing: 
 -- 1. The KA-50 and the C-101EB should respawn itself directly when landed. 
 -- 2. the MI-8MTV2 and the A-10C should respawn itself when the air unit has parked at the ramp.
--- @module MOOSE_Test_SPAWN_Repeat
--- @author FlightControl
-
-
-
+-- 
 
 do
 

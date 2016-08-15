@@ -1,6 +1,7 @@
+--- 
 -- Tests Gudauta
 -- --------------
--- Limited spawning of groups, scheduled every 15 seconds, with RandomizeTemplate ...
+-- Limited and scheduled spawning of groups, with RandomizeTemplate ...
 
 Templates = { "Template1", "Template2", "Template3", "Template4" }
 

@@ -35,25 +35,12 @@
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
--- @field #POINT_VEC3.FlareColor FlareColor
+-- @field Utils#FLARECOLOR FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
-  SmokeColor = {
-    Green = trigger.smokeColor.Green,
-    Red = trigger.smokeColor.Red,
-    White = trigger.smokeColor.White,
-    Orange = trigger.smokeColor.Orange,
-    Blue = trigger.smokeColor.Blue
-  },
-  FlareColor = {
-    Green = trigger.flareColor.Green,
-    Red = trigger.flareColor.Red,
-    White = trigger.flareColor.White,
-    Yellow = trigger.flareColor.Yellow
-  },
   Metric = true,
   RoutePointAltType = {
     BARO = "BARO",
@@ -78,42 +65,17 @@ POINT_VEC2 = {
 
 do -- POINT_VEC3
 
---- SmokeColor
--- @type POINT_VEC3.SmokeColor
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
-
-
-
---- FlareColor
--- @type POINT_VEC3.FlareColor
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
-
-
-
 --- RoutePoint AltTypes
 -- @type POINT_VEC3.RoutePointAltType
 -- @field BARO "BARO"
-
-
 
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
 -- @field TurningPoint "Turning Point"
 
-
-
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
 -- @field TurningPoint "Turning Point"
-
-
 
 -- Constructor.
   
@@ -490,7 +452,7 @@ end
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.SmokeColor SmokeColor
+-- @param Utils#SMOKECOLOR SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
   self:F2( { SmokeColor } )
   trigger.action.smoke( self:GetVec3(), SmokeColor )
@@ -500,40 +462,40 @@ end
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeGreen()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Green )
+  self:Smoke( SMOKECOLOR.Green )
 end
 
 --- Smoke the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeRed()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Red )
+  self:Smoke( SMOKECOLOR.Red )
 end
 
 --- Smoke the POINT_VEC3 White.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeWhite()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.White )
+  self:Smoke( SMOKECOLOR.White )
 end
 
 --- Smoke the POINT_VEC3 Orange.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeOrange()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Orange )
+  self:Smoke( SMOKECOLOR.Orange )
 end
 
 --- Smoke the POINT_VEC3 Blue.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeBlue()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Blue )
+  self:Smoke( SMOKECOLOR.Blue )
 end
 
 --- Flares the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.FlareColor
+-- @param Utils#FLARECOLOR FlareColor
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
   self:F2( { FlareColor } )
@@ -545,7 +507,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareWhite( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.White, Azimuth )
+  self:Flare( FLARECOLOR.White, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Yellow.
@@ -553,7 +515,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareYellow( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Yellow, Azimuth )
+  self:Flare( FLARECOLOR.Yellow, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Green.
@@ -561,14 +523,14 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareGreen( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Green, Azimuth )
+  self:Flare( FLARECOLOR.Green, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:FlareRed( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Red, Azimuth )
+  self:Flare( FLARECOLOR.Red, Azimuth )
 end
 
 end
