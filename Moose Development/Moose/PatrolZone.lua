@@ -2,21 +2,28 @@
 -- 
 -- ===
 -- 
--- 1) @{Patrol#PATROLZONE} class, extends @{Base#BASE}
+-- 1) @{#PATROLZONE} class, extends @{Base#BASE}
 -- ===================================================
--- The @{Patrol#PATROLZONE} class implements the core functions to patrol a @{Zone}.
+-- The @{#PATROLZONE} class implements the core functions to patrol a @{Zone} by air units.
+-- The PATROLZONE class will guide the airplanes towards the patrolzone.
+-- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
+-- a random point is selected as the route point within the 3D space, within the given boundary limits.
+-- The airplane will fly towards the random point using a randomly selected speed within given boundary limits.
+-- Upon arrival at the random point, a new random point will be selected within the patrol zone within boundary limits.
+-- This cycle will continue until a fuel treshold has been reached by the airplane.
+-- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
 -- 1.1) PATROLZONE constructor:
 -- ----------------------------
--- @{PatrolZone#PATROLZONE.New}(): Creates a new PATROLZONE object.
+-- @{#PATROLZONE.New}(): Creates a new PATROLZONE object.
 -- 
 -- 1.2) Modify the PATROLZONE parameters:
 -- --------------------------------------
 -- The following methods are available to modify the parameters of a PATROLZONE object:
 -- 
---     * @{PatrolZone#PATROLZONE.SetGroup}(): Set the AI Patrol Group.
---     * @{PatrolZone#PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
---     * @{PatrolZone#PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+--   * @{#PATROLZONE.SetGroup}(): Set the AI Patrol Group.
+--   * @{#PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
+--   * @{#PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
 -- 
 -- 1.3) Manage the out of fuel in the PATROLZONE:
 -- ----------------------------------------------
@@ -24,12 +31,37 @@
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
 -- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
 -- Once the time is finished, the old PatrolGroup will return to the base.
--- Use the method @{PatrolZone#PATROLZONE.ManageFuel}() to have this proces in place.
+-- Use the method @{#PATROLZONE.ManageFuel}() to have this proces in place.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-07-01: Initial class and API.
 -- 
 -- ===
 -- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
+-- ### Contributions: 
+-- 
+--   * DutchBaron: Testing.
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl: Design & Programming
+-- 
+-- 
 -- @module PatrolZone
--- @author FlightControl
 
 
 --- PATROLZONE class

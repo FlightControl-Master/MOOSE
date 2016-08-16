@@ -547,19 +547,20 @@ end
 function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
-  local Point = {}
-  local PointVec2 = self.ZoneUNIT:GetPointVec2()
-  if not PointVec2 then
-    PointVec2 = self.LastVec2
+  local RandomVec2 = {}
+  local Vec2 = self.ZoneUNIT:GetVec2()
+  
+  if not Vec2 then
+    Vec2 = self.LastVec2
   end
 
   local angle = math.random() * math.pi*2;
-  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  RandomVec2.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  RandomVec2.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
   
-  self:T( { Point } )
+  self:T( { RandomVec2 } )
   
-  return Point
+  return RandomVec2
 end
 
 --- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.

@@ -22,6 +22,10 @@
 	- Added ZONE_BASE:GetZoneMaybe() method.
 	
 	- Added SPAWN:InitRandomizeZones() method.
+	
+	- Renamed SPAWN:CleanUp() method to SPAWN:InitCleanUp() method.
+	
+	- Reviewed documentation of the PatrolZone module and PATROLZONE class.
 		
 
 2016-08-14

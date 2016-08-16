@@ -59,7 +59,6 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -123,14 +122,20 @@
 <h1>1) <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
 
-<h3>1.1) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h3>
+<h3>1.1) Each zone has a name:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
+</ul>
+
+<h3>1.2) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> is within the zone.</li>
     <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> is within the zone.</li>
 </ul>
 
-<h3>1.2) A zone has a probability factor that can be set to randomize a selection between zones:</h3>
+<h3>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).SetRandomizeProbability">ZONE_BASE.SetRandomizeProbability</a>(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
@@ -138,20 +143,20 @@
     <li><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE.GetZoneMaybe</a>(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.</li>
 </ul>
 
-<h3>1.3) A zone manages Vectors:</h3>
+<h3>1.4) A zone manages Vectors:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</li>
     <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</li>
 </ul>
 
-<h3>1.4) A zone has a bounding square:</h3>
+<h3>1.5) A zone has a bounding square:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).GetBoundingSquare">ZONE_BASE.GetBoundingSquare</a>(): Get the outer most bounding square of the zone.</li>
 </ul>
 
-<h3>1.5) A zone can be marked:</h3>
+<h3>1.6) A zone can be marked:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).SmokeZone">ZONE_BASE.SmokeZone</a>(): Smokes the zone boundaries in a color.</li>
@@ -229,9 +234,11 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 
 <p>Hereby the change log:</p>
 
-<p>2016-08-15: ZONE_BASE:<strong>SetRandomizationProbability( RandomizationProbability )</strong> added.</p>
+<p>2016-08-15: ZONE_BASE:<strong>GetName()</strong> added.</p>
 
-<p>2016-08-15: ZONE_BASE:<strong>GetRandomizationProbability()</strong> added.</p>
+<p>2016-08-15: ZONE_BASE:<strong>SetZoneProbability( ZoneProbability )</strong> added.</p>
+
+<p>2016-08-15: ZONE_BASE:<strong>GetZoneProbability()</strong> added.</p>
 
 <p>2016-08-15: ZONE_BASE:<strong>GetZoneMaybe()</strong> added.</p>
 
@@ -314,15 +321,15 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE:GetRandomVec2()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetName">ZONE_BASE:GetName()</a></td>
 		<td class="summary">
-<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
+<p>Returns the name of the zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomizationProbability">ZONE_BASE:GetRandomizationProbability()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE:GetRandomVec2()</a></td>
 		<td class="summary">
-<p>Get the randomization probability of a zone to be selected.</p>
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -335,6 +342,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE:GetZoneMaybe()</a></td>
 		<td class="summary">
 <p>Get the zone taking into account the randomization probability of a zone to be selected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetZoneProbability">ZONE_BASE:GetZoneProbability()</a></td>
+		<td class="summary">
+<p>Get the randomization probability of a zone to be selected.</p>
 </td>
 		</tr>
 		<tr>
@@ -356,13 +369,7 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).RandomizationProbability">ZONE_BASE.RandomizationProbability</a></td>
-		<td class="summary">
-<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetRandomizationProbability">ZONE_BASE:SetRandomizationProbability(RandomizationProbability)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetZoneProbability">ZONE_BASE:SetZoneProbability(ZoneProbability)</a></td>
 		<td class="summary">
 <p>Set the randomization probability of a zone to be selected.</p>
 </td>
@@ -377,6 +384,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneName">ZONE_BASE.ZoneName</a></td>
 		<td class="summary">
 <p>Name of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneProbability">ZONE_BASE.ZoneProbability</a></td>
+		<td class="summary">
+<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
 </td>
 		</tr>
 	</table>
@@ -838,6 +851,24 @@ The bounding square.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).GetName" >
+<strong>ZONE_BASE:GetName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the name of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The name of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).GetRandomVec2" >
 <strong>ZONE_BASE:GetRandomVec2()</strong>
 </a>
@@ -848,26 +879,8 @@ The bounding square.</p>
 
 		<h3>Return value</h3>
 				
-<p><em>#nil:</em>
+<p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
 The Vec2 coordinates.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_BASE).GetRandomizationProbability" >
-<strong>ZONE_BASE:GetRandomizationProbability()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the randomization probability of a zone to be selected.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
 
 </dd>
 </dl>
@@ -915,6 +928,24 @@ The zone is not selected taking into account the randomization probability facto
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetZoneProbability" >
+<strong>ZONE_BASE:GetZoneProbability()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the randomization probability of a zone to be selected.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1001,22 +1032,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(ZONE_BASE).RandomizationProbability" >
-<strong>ZONE_BASE.RandomizationProbability</strong>
-</a>
-</dt>
-<dd>
-	
-<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_BASE).SetRandomizationProbability" >
-<strong>ZONE_BASE:SetRandomizationProbability(RandomizationProbability)</strong>
+<a id="#(ZONE_BASE).SetZoneProbability" >
+<strong>ZONE_BASE:SetZoneProbability(ZoneProbability)</strong>
 </a>
 </dt>
 <dd>
@@ -1027,7 +1044,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> RandomizationProbability </em></code>: 
+<p><code><em> ZoneProbability </em></code>: 
 A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
 
 				</li>
@@ -1067,6 +1084,20 @@ The smoke color.</p>
 <dd>
 	
 <p>Name of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ZONE_BASE).ZoneProbability" >
+<strong>ZONE_BASE.ZoneProbability</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
 
 </dd>
 </dl>
