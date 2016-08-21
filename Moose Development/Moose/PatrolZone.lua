@@ -45,6 +45,8 @@
 -- 
 -- Hereby the change log:
 -- 
+-- 2016-08-17: PATROLZONE:New( **PatrolSpawn,** PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- 
 -- 2016-07-01: Initial class and API.
 -- 
 -- ===
@@ -54,14 +56,15 @@
 -- 
 -- ### Contributions: 
 -- 
---   * DutchBaron: Testing.
+--   * **DutchBaron**: Testing.
 -- 
 -- ### Authors: 
 -- 
---   * FlightControl: Design & Programming
+--   * **FlightControl**: Design & Programming
 -- 
 -- 
 -- @module PatrolZone
+
 
 
 --- PATROLZONE class
@@ -77,8 +80,11 @@ PATROLZONE = {
   ClassName = "PATROLZONE",
 }
 
+
+
 --- Creates a new PATROLZONE object, taking a @{Group} object as a parameter. The GROUP needs to be alive.
 -- @param #PATROLZONE self
+-- @param Spawn#SPAWN PatrolSpawn The @{SPAWN} object to spawn new group objects when required due to the fuel treshold.
 -- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
@@ -88,13 +94,14 @@ PATROLZONE = {
 -- @usage
 -- -- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
--- PatrolGroup = GROUP:FindByName( "Patrol Group" )
--- PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )
-function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- PatrolSpawn = SPAWN:New( "Patrol Group" )
+-- PatrolArea = PATROLZONE:New( PatrolSpawn, PatrolZone, 3000, 6000, 600, 900 )
+function PATROLZONE:New( PatrolSpawn, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
   
+  self.PatrolSpawn = PatrolSpawn
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
@@ -103,6 +110,8 @@ function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude,
 
   return self
 end
+
+
 
 --- Set the @{Group} to act as the Patroller.
 -- @param #PATROLZONE self
@@ -116,11 +125,12 @@ function PATROLZONE:SetGroup( PatrolGroup )
 
   if not self.PatrolOutOfFuelMonitor then
     self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
-    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
 
   return self  
 end
+
+
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #PATROLZONE self
@@ -133,6 +143,8 @@ function PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
 end
+
+
 
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #PATROLZONE self
@@ -155,6 +167,8 @@ function _NewPatrolRoute( PatrolGroup )
   local PatrolZone = PatrolGroup:GetState( PatrolGroup, "PatrolZone" ) -- PatrolZone#PATROLZONE
   PatrolZone:NewPatrolRoute()
 end
+
+
 
 --- Defines a new patrol route using the @{PatrolZone} parameters and settings.
 -- @param #PATROLZONE self
@@ -267,7 +281,6 @@ function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrb
   
   if self.PatrolGroup then
     self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
-    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
   end
   return self
 end
@@ -287,7 +300,7 @@ function _MonitorOutOfFuelScheduled( self )
       local TimedOrbitTask = OldPatrolGroup:TaskControlled( OrbitTask, OldPatrolGroup:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
       OldPatrolGroup:SetTask( TimedOrbitTask, 10 )
       
-      local NewPatrolGroup = self.SpawnPatrolGroup:Spawn()
+      local NewPatrolGroup = self.PatrolSpawn:Spawn()
       self.PatrolGroup = NewPatrolGroup
       self:NewPatrolRoute()
     end

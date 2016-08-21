@@ -182,11 +182,11 @@
 -- 
 -- ### Contributions: 
 -- 
---   * Aaron: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
+--   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
 -- 
 -- ### Authors: 
 -- 
---   * FlightControl : Design & Programming
+--   * **FlightControl**: Design & Programming
 -- 
 -- 
 -- @module Spawn
@@ -490,6 +490,10 @@ function SPAWN:InitCleanUp( SpawnCleanUpInterval )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
+
+  local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
+  self:T( { "CleanUp Scheduler:", SpawnGroup } )
+	
 	--self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
 	self.CleanUpScheduler = SCHEDULER:New( self, self._SpawnCleanUpScheduler, {}, 1, SpawnCleanUpInterval, 0.2 )
 	return self
@@ -614,6 +618,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		else
 
 		  local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+		  self:T( SpawnTemplate.name )
 
       if SpawnTemplate then
 
@@ -642,7 +647,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       if self.RepeatOnEngineShutDown then
         _EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
       end
-      self:T3( SpawnTemplate )
+      self:T3( SpawnTemplate.name )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
 			
@@ -1506,28 +1511,72 @@ function SPAWN:_Scheduler()
 	return true
 end
 
+--- Schedules the CleanUp of Groups
+-- @param #SPAWN self
+-- @return #boolean True = Continue Scheduler
 function SPAWN:_SpawnCleanUpScheduler()
 	self:F( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
 
-	local SpawnCursor
-	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup( SpawnCursor )
-	
+	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
 	self:T( { "CleanUp Scheduler:", SpawnGroup } )
 
 	while SpawnGroup do
-		
-		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
-			else
-				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
-					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
-					SpawnGroup:Destroy()
-				end
-			end
-		else
-			self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = nil
-		end
+
+    local SpawnUnits = SpawnGroup:GetUnits()
+	  
+	  for UnitID, UnitData in pairs( SpawnUnits ) do
+	    
+	    local SpawnUnit = UnitData -- Unit#UNIT
+	    local SpawnUnitName = SpawnUnit:GetName()
+	    
+	    
+	    self.SpawnCleanUpTimeStamps[SpawnUnitName] = self.SpawnCleanUpTimeStamps[SpawnUnitName] or {}
+	    local Stamp = self.SpawnCleanUpTimeStamps[SpawnUnitName]
+      self:T( { SpawnUnitName, Stamp } )
+	    
+	    if Stamp.Moved then
+    		if SpawnUnit:InAir() == false then
+    		  if SpawnUnit:GetVelocityKMH() < 1 then
+      		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
+      			if not Stamp.Time then
+      				Stamp.Time = timer.getTime()
+      			else
+      				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
+      					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
+      					self:ReSpawn( SpawnCursor )
+                Stamp.Moved = nil
+                Stamp.Time = nil
+      				end
+      			end
+      		else
+      		  Stamp.Time = nil
+      		end
+    		else
+    		  Stamp.Moved = nil
+    			Stamp.Time = nil
+    		end
+    	else
+        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() > 1 then
+          Stamp.Moved = true
+        else
+          -- If the plane did not move and on the runway for about 3 minutes, clean it.
+          if SpawnUnit:IsAboveRunway() and SpawnUnit:GetVelocityKMH() < 1 then
+            if not Stamp.Time then
+              Stamp.Time = timer.getTime()
+            end
+            if Stamp.Time + 180 < timer.getTime() then
+              self:T( { "CleanUp Scheduler:", "ReSpawning inactive group:", SpawnGroup:GetName() } )
+              self:ReSpawn( SpawnCursor )
+              Stamp.Moved = nil
+              Stamp.Time = nil
+            end
+          else
+            Stamp.Moved = nil
+            Stamp.Time = nil
+          end
+    	  end
+      end
+    end
 		
 		SpawnGroup, SpawnCursor = self:GetNextAliveGroup( SpawnCursor )
 		

@@ -230,9 +230,10 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     -- Controller.setTask( Controller, DCSTask )
 
     if not WaitTime then
-      WaitTime = 1
+      Controller:setTask( DCSTask )
+    else
+      SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
     end
-    SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
 
     return self
   end
@@ -2152,7 +2153,7 @@ function CONTROLLABLE:TaskFunction( WayPoint, WayPointIndex, FunctionString, Fun
   local DCSTask
 
   local DCSScript = {}
-  DCSScript[#DCSScript+1] = "local MissionControllable = CONTROLLABLE:Find( ... ) "
+  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
 
   if FunctionArguments and #FunctionArguments > 0 then
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, " .. table.concat( FunctionArguments, "," ) .. ")"

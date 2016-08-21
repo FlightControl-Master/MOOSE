@@ -1,3 +1,12 @@
+2016-08-17
+
+	- Making the PATROLZONE class work with a SPAWN object, instead of a GROUP object.
+		-- The SPAWN object is needed to make the FuelManagement logic work correctly. New planes need to be spawned when old planes are out of fuel.
+		-- Changed the PATROLZONE:New() method to work with a SPAWN object instead of a GROUP object.
+	
+	- Making the AIBALANCER class work with the modified PATROLZONE class SPAWN object.
+		-- Added AIBALANCER:GetPatrolZone() method.
+
 2016-08-15
 
 	- Removed the old classes and moved into an "Old" folder in the Moose/Development folder.

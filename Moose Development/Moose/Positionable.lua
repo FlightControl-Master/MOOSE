@@ -236,6 +236,7 @@ function POSITIONABLE:InAir()
   
   return nil
 end
+
  
 --- Returns the POSITIONABLE velocity vector.
 -- @param Positionable#POSITIONABLE self

@@ -18,6 +18,7 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
@@ -133,6 +134,8 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 
 <p>Hereby the change log:</p>
 
+<p>2016-08-17: PATROLZONE:New( <strong>PatrolSpawn,</strong> PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )</p>
+
 <p>2016-07-01: Initial class and API.</p>
 
 <hr/>
@@ -142,13 +145,13 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 <h3>Contributions:</h3>
 
 <ul>
-    <li>DutchBaron: Testing.</li>
+    <li><strong>DutchBaron</strong>: Testing.</li>
 </ul>
 
 <h3>Authors:</h3>
 
 <ul>
-    <li>FlightControl: Design &amp; Programming</li>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
 </ul>
 
 
@@ -183,7 +186,7 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).New">PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).New">PATROLZONE:New(PatrolSpawn, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Creates a new PATROLZONE object, taking a <a href="Group.html">Group</a> object as a parameter.</p>
 </td>
@@ -276,12 +279,6 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SetSpeed">PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SpawnPatrolGroup">PATROLZONE.SpawnPatrolGroup</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 	</table>
@@ -385,7 +382,7 @@ self</p>
 <dt>
 
 <a id="#(PATROLZONE).New" >
-<strong>PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<strong>PATROLZONE:New(PatrolSpawn, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
@@ -397,6 +394,12 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em><a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a> PatrolSpawn </em></code>: 
+The <a href="SPAWN.html">SPAWN</a> object to spawn new group objects when required due to the fuel treshold.</p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> PatrolZone </em></code>: 
@@ -436,8 +439,8 @@ self</p>
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
-PatrolGroup = GROUP:FindByName( "Patrol Group" )
-PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )</code></pre>
+PatrolSpawn = SPAWN:New( "Patrol Group" )
+PatrolArea = PATROLZONE:New( PatrolSpawn, PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 
 </dd>
 </dl>
@@ -703,20 +706,6 @@ The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 				
 <p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(PATROLZONE).SpawnPatrolGroup" >
-<strong>PATROLZONE.SpawnPatrolGroup</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
