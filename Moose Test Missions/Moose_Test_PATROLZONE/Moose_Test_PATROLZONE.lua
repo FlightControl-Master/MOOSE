@@ -1,7 +1,7 @@
 -- This test mission models the behaviour of the AI_PATROLZONE class.
 -- 
 -- It creates a 2 AI_PATROLZONE objects with the name Patrol1 and Patrol2.
--- Patrol1 will goven a GROUP object to patrol the zone defined by PatrolZone1, within 3000 meters and 6000 meters, within a speed of 400 and 600 km/h.
+-- Patrol1 will govern a GROUP object to patrol the zone defined by PatrolZone1, within 3000 meters and 6000 meters, within a speed of 400 and 600 km/h.
 -- When the GROUP object that is assigned to Patrol has fuel below 20%, the GROUP object will orbit for 60 secondes, before returning to base.
 -- 
 -- Patrol2 will goven a GROUP object to patrol the zone defined by PatrolZone2, within 600 meters and 1000 meters, within a speed of 300 and 400 km/h.
@@ -25,8 +25,8 @@ local PatrolGroup = PatrolSpawn:Spawn()
 
 local Patrol1 = AI_PATROLZONE:New( PatrolZone1, 3000, 6000, 400, 600 )
 Patrol1:ManageFuel( 0.2, 60 )
-Patrol1:SetGroup( PatrolGroup )
-Patrol1:__Start( 1, PatrolGroup )
+Patrol1:SetControllable( PatrolGroup )
+Patrol1:__Start( 5 )
 
 local Patrol2 = AI_PATROLZONE:New( PatrolZone2, 600, 1000, 300, 400 )
 Patrol2:ManageFuel( 0.2, 0 )
@@ -44,8 +44,8 @@ end
 -- @param Group#GROUP AIGroup
 function Patrol1:OnAfterRTB( AIGroup )
   local NewGroup = PatrolSpawn:Spawn()
-  Patrol2:SetGroup( NewGroup )
-  Patrol2:__Start( 1, NewGroup )
+  Patrol2:SetControllable( NewGroup )
+  Patrol2:__Start( 1 )
 end 
 
 --- State transition function for the AI\_PATROLZONE **Patrol1** object
@@ -68,8 +68,8 @@ end
 -- @param Group#GROUP AIGroup
 function Patrol2:OnAfterRTB( AIGroup )
   local NewGroup = PatrolSpawn:Spawn()
-  Patrol1:SetGroup( NewGroup )
-  Patrol1:__Start( 1, NewGroup )
+  Patrol1:SetControllable( NewGroup )
+  Patrol1:__Start( 1 )
 end 
 
 --- State transition function for the AI\_PATROLZONE **Patrol2** object

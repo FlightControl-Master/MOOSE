@@ -95,7 +95,7 @@ end
 
 function STATEMACHINE:_call_handler(handler, params)
   if handler then
-    return handler(unpack(params))
+    return handler( self, unpack(params) )
   end
 end
 
@@ -110,7 +110,7 @@ function STATEMACHINE._handler( self, EventName, ... )
 
   if can then
     local from = self.current
-    local params = { self, ..., EventName, from, to  }
+    local params = { ..., EventName, from, to  }
 
     if self:_call_handler(self["onbefore" .. EventName], params) == false
     or self:_call_handler(self["onleave" .. from], params) == false then
@@ -315,5 +315,52 @@ end
 function STATEMACHINE_TASK:_call_handler( handler, params )
   if handler then
     return handler( self.Task, self.TaskUnit, unpack( params ) )
+  end
+end
+
+--- STATEMACHINE_CONTROLLABLE class
+-- @type STATEMACHINE_CONTROLLABLE
+-- @field Controllable#CONTROLLABLE Controllable
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_CONTROLLABLE = {
+  ClassName = "STATEMACHINE_CONTROLLABLE",
+}
+
+--- Creates a new STATEMACHINE_CONTROLLABLE object.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param #table FSMT Finite State Machine Table
+-- @param Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
+  
+  if Controllable then
+    self:SetControllable( Controllable )
+  end
+
+  return self
+end
+
+--- Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param Controllable#CONTROLLABLE Controllable
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:SetControllable( FSMControllable )
+  self:F( FSMControllable )
+  self.Controllable = FSMControllable
+end
+
+--- Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @return Controllable#CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:GetControllable()
+  return self.Controllable
+end
+
+function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
+  if handler then
+    return handler( self, self.Controllable, unpack( params ) )
   end
 end
