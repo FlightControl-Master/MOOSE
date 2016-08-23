@@ -18,10 +18,11 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -38,17 +39,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li>Group</li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,18 +51,15 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -80,9 +72,11 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -387,12 +381,6 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPointVec3">GROUP:GetPointVec3()</a></td>
-		<td class="summary">
-<p>Returns the current point (Vec3 vector) of the first DCS Unit in the DCS Group.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetSize">GROUP:GetSize()</a></td>
 		<td class="summary">
 <p>Returns current size of the DCS Group.</p>
@@ -438,6 +426,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec2">GROUP:GetVec2()</a></td>
 		<td class="summary">
 <p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec3">GROUP:GetVec3()</a></td>
+		<td class="summary">
+<p>Returns the current Vec3 vector of the first DCS Unit in the GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -968,24 +962,6 @@ Minimum height found.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).GetPointVec3" >
-<strong>GROUP:GetPointVec3()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the current point (Vec3 vector) of the first DCS Unit in the DCS Group.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
-Current Vec3 point of the first DCS Unit of the DCS Group.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(GROUP).GetSize" >
 <strong>GROUP:GetSize()</strong>
 </a>
@@ -1139,6 +1115,24 @@ The UNITs wrappers.</p>
 				
 <p><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>:</em>
 Current Vec2 point of the first DCS Unit of the DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetVec3" >
+<strong>GROUP:GetVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current Vec3 vector of the first DCS Unit in the GROUP.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>:</em>
+Current Vec3 of the first DCS Unit of the GROUP.</p>
 
 </dd>
 </dl>

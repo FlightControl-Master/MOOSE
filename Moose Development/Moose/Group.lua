@@ -673,19 +673,19 @@ function GROUP:GetMaxVelocity()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local MaxVelocity = 0
+    local GroupVelocityMax = 0
 
     for Index, UnitData in pairs( DCSGroup:getUnits() ) do
 
-      local Velocity = UnitData:getVelocity()
-      local VelocityTotal = math.abs( Velocity.x ) + math.abs( Velocity.y ) + math.abs( Velocity.z )
+      local UnitVelocityVec3 = UnitData:getVelocity()
+      local UnitVelocity = math.abs( UnitVelocityVec3.x ) + math.abs( UnitVelocityVec3.y ) + math.abs( UnitVelocityVec3.z )
 
-      if VelocityTotal < MaxVelocity then
-        MaxVelocity = VelocityTotal
+      if UnitVelocity > GroupVelocityMax then
+        GroupVelocityMax = UnitVelocity
       end
     end
 
-    return MaxVelocity
+    return GroupVelocityMax
   end
 
   return nil

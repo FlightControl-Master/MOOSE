@@ -22,46 +22,118 @@
 --   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
 --   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
--- Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
--- 
---   * @{#ZONE_BASE.IsPointVec2InZone}: Returns if a location is within the zone.
---   * @{#ZONE_BASE.IsPointVec3InZone}: Returns if a point is within the zone.
--- 
 -- ===
 -- 
 -- 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
 -- ================================================
--- The ZONE_BASE class defining the base for all other zone classes.
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ### 1.1) Each zone has a name:
+-- 
+--   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+-- 
+-- ### 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- 
+--   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Point#POINT_VEC2} is within the zone.
+--   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Point#POINT_VEC3} is within the zone.
+--   
+-- ### 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
+-- 
+--   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
+-- 
+-- ### 1.4) A zone manages Vectors:
+-- 
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
+--   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
+-- 
+-- ### 1.5) A zone has a bounding square:
+-- 
+--   * @{#ZONE_BASE.GetBoundingSquare}(): Get the outer most bounding square of the zone.
+-- 
+-- ### 1.6) A zone can be marked: 
+-- 
+--   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
+--   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
 -- 
 -- ===
 -- 
 -- 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
 -- =======================================================
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
+-- This class implements the inherited functions from Zone#ZONE_BASE taking into account the own zone format and properties.
+-- 
+-- ### 2.1) @{Zone#ZONE_RADIUS} constructor:
+-- 
+--   * @{#ZONE_BASE.New}(): Constructor.
+--   
+-- ### 2.2) Manage the radius of the zone:
+-- 
+--   * @{#ZONE_BASE.SetRadius}(): Sets the radius of the zone.
+--   * @{#ZONE_BASE.GetRadius}(): Returns the radius of the zone.
+-- 
+-- ### 2.3) Manage the location of the zone:
+-- 
+--   * @{#ZONE_BASE.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
 -- 
 -- ===
 -- 
 -- 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
 -- ==========================================
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
+-- This class implements the inherited functions from {Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
 -- 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
 -- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
 -- 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
 -- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
--- 6) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
+-- 6) @{Zone#ZONE_POLYGON_BASE} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
+-- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ===
+-- 
+-- 7) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_POLYGON_BASE}
+-- ================================================================
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: ZONE_BASE:**GetName()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**SetZoneProbability( ZoneProbability )** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneProbability()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneMaybe()** added.
 -- 
 -- ===
 -- 
@@ -72,9 +144,12 @@
 --- The ZONE_BASE class
 -- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
+-- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
+  ZoneName = "",
+  ZoneProbability = 1,
   }
 
 
@@ -99,6 +174,14 @@ function ZONE_BASE:New( ZoneName )
   return self
 end
 
+--- Returns the name of the zone.
+-- @param #ZONE_BASE self
+-- @return #string The name of the zone.
+function ZONE_BASE:GetName()
+  self:F2()
+
+  return self.ZoneName
+end
 --- Returns if a location is within the zone.
 -- @param #ZONE_BASE self
 -- @param DCSTypes#Vec2 Vec2 The location to test.
@@ -121,7 +204,7 @@ function ZONE_BASE:IsPointVec3InZone( Vec3 )
   return InZone
 end
 
---- Returns the Vec2 coordinate of the zone.
+--- Returns the @{DCSTypes#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
 function ZONE_BASE:GetVec2()
@@ -131,7 +214,7 @@ function ZONE_BASE:GetVec2()
 end
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
--- @return #nil The Vec2 coordinates.
+-- @return DCSTypes#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
   return nil
 end
@@ -153,6 +236,40 @@ function ZONE_BASE:SmokeZone( SmokeColor )
 
 end
 
+--- Set the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+function ZONE_BASE:SetZoneProbability( ZoneProbability )
+  self:F2( ZoneProbability )
+  
+  self.ZoneProbability = ZoneProbability or 1
+  return self
+end
+
+--- Get the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+function ZONE_BASE:GetZoneProbability()
+  self:F2()
+  
+  return self.ZoneProbability
+end
+
+--- Get the zone taking into account the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
+-- @return #nil The zone is not selected taking into account the randomization probability factor.
+function ZONE_BASE:GetZoneMaybe()
+  self:F2()
+  
+  local Randomization = math.random()
+  if Randomization <= self.ZoneProbability then
+    return self
+  else
+    return nil
+  end
+end
+
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
@@ -163,7 +280,7 @@ ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
 
---- Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.
+--- Constructor of @{#ZONE_RADIUS}, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
 -- @param #string ZoneName Name of the zone.
 -- @param DCSTypes#Vec2 Vec2 The location of the zone.
@@ -208,7 +325,7 @@ end
 
 --- Flares the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
--- @param #POINT_VEC3.FlareColor FlareColor The flare color.
+-- @param Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Points (optional) The amount of points in the circle.
 -- @param DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
 -- @return #ZONE_RADIUS self
@@ -257,7 +374,7 @@ function ZONE_RADIUS:SetRadius( Radius )
   return self.Radius
 end
 
---- Returns the location of the zone.
+--- Returns the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
@@ -268,11 +385,11 @@ function ZONE_RADIUS:GetVec2()
 	return self.Vec2	
 end
 
---- Sets the location of the zone.
+--- Sets the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Vec2 Vec2 The new location of the zone.
 -- @return DCSTypes#Vec2 The new location of the zone.
-function ZONE_RADIUS:SetPointVec2( Vec2 )
+function ZONE_RADIUS:SetVec2( Vec2 )
   self:F2( self.ZoneName )
   
   self.Vec2 = Vec2
@@ -430,19 +547,20 @@ end
 function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
-  local Point = {}
-  local PointVec2 = self.ZoneUNIT:GetPointVec2()
-  if not PointVec2 then
-    PointVec2 = self.LastVec2
+  local RandomVec2 = {}
+  local Vec2 = self.ZoneUNIT:GetVec2()
+  
+  if not Vec2 then
+    Vec2 = self.LastVec2
   end
 
   local angle = math.random() * math.pi*2;
-  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  RandomVec2.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  RandomVec2.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
   
-  self:T( { Point } )
+  self:T( { RandomVec2 } )
   
-  return Point
+  return RandomVec2
 end
 
 --- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.

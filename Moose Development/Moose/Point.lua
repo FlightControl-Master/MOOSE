@@ -1,7 +1,7 @@
 --- This module contains the POINT classes.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
--- ===============================================
+-- ==================================================
 -- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
@@ -9,10 +9,11 @@
 -- 
 -- 1.1) POINT_VEC3 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{#POINT_VEC3.New}(): a 3D point.
+--  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+--  
 --
 -- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
@@ -20,13 +21,40 @@
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC2 instance can be created with:
 -- 
---  * @{#POINT_VEC2.New}(): a 2D point.
+--  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- 
+-- ===
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
+-- 
+-- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
+-- 
+--   * Replaced method _Point_Vec3() to **Vec3**() where the code manages a Vec3. Replaced all references to the method.
+--   * Replaced method _Point_Vec2() to **Vec2**() where the code manages a Vec2. Replaced all references to the method.
+--   * Replaced method Random_Point_Vec3() to **RandomVec3**() where the code manages a Vec3. Replaced all references to the method.
+-- .
+-- ===
+--  
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+--   
+-- ### Contributions: 
 -- 
 -- @module Point
--- @author FlightControl
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
@@ -35,25 +63,12 @@
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
--- @field #POINT_VEC3.FlareColor FlareColor
+-- @field Utils#FLARECOLOR FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
-  SmokeColor = {
-    Green = trigger.smokeColor.Green,
-    Red = trigger.smokeColor.Red,
-    White = trigger.smokeColor.White,
-    Orange = trigger.smokeColor.Orange,
-    Blue = trigger.smokeColor.Blue
-  },
-  FlareColor = {
-    Green = trigger.flareColor.Green,
-    Red = trigger.flareColor.Red,
-    White = trigger.flareColor.White,
-    Yellow = trigger.flareColor.Yellow
-  },
   Metric = true,
   RoutePointAltType = {
     BARO = "BARO",
@@ -66,43 +81,29 @@ POINT_VEC3 = {
   },
 }
 
-
---- SmokeColor
--- @type POINT_VEC3.SmokeColor
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
-
-
-
---- FlareColor
--- @type POINT_VEC3.FlareColor
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
+--- The POINT_VEC2 class
+-- @type POINT_VEC2
+-- @extends #POINT_VEC3
+-- @field DCSTypes#Distance x The x coordinate in meters.
+-- @field DCSTypes#Distance y the y coordinate in meters.
+POINT_VEC2 = {
+  ClassName = "POINT_VEC2",
+}
 
 
+do -- POINT_VEC3
 
 --- RoutePoint AltTypes
 -- @type POINT_VEC3.RoutePointAltType
 -- @field BARO "BARO"
 
-
-
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
 -- @field TurningPoint "Turning Point"
 
-
-
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
 -- @field TurningPoint "Turning Point"
-
-
 
 -- Constructor.
   
@@ -118,6 +119,7 @@ function POINT_VEC3:New( x, y, z )
   self.x = x
   self.y = y
   self.z = z
+  
   return self
 end
 
@@ -127,7 +129,9 @@ end
 -- @return Point#POINT_VEC3 self
 function POINT_VEC3:NewFromVec3( Vec3 )
 
-  return self:New( Vec3.x, Vec3.y, Vec3.z )
+  self = self:New( Vec3.x, Vec3.y, Vec3.z )
+  self:F2( self )
+  return self
 end
 
 
@@ -373,6 +377,20 @@ function POINT_VEC3:IsMetric()
   return self.Metric
 end
 
+--- Add a Distance in meters from the POINT_VEC3 horizontal plane, with the given angle, and calculate the new POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC3 The new calculated POINT_VEC3.
+function POINT_VEC3:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SZ = self:GetZ()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TZ = Distance * math.sin( Radians ) + SZ
+  
+  return POINT_VEC3:New( TX, self:GetY(), TZ )
+end
 
 
 
@@ -462,7 +480,7 @@ end
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.SmokeColor SmokeColor
+-- @param Utils#SMOKECOLOR SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
   self:F2( { SmokeColor } )
   trigger.action.smoke( self:GetVec3(), SmokeColor )
@@ -472,40 +490,40 @@ end
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeGreen()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Green )
+  self:Smoke( SMOKECOLOR.Green )
 end
 
 --- Smoke the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeRed()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Red )
+  self:Smoke( SMOKECOLOR.Red )
 end
 
 --- Smoke the POINT_VEC3 White.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeWhite()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.White )
+  self:Smoke( SMOKECOLOR.White )
 end
 
 --- Smoke the POINT_VEC3 Orange.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeOrange()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Orange )
+  self:Smoke( SMOKECOLOR.Orange )
 end
 
 --- Smoke the POINT_VEC3 Blue.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeBlue()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Blue )
+  self:Smoke( SMOKECOLOR.Blue )
 end
 
 --- Flares the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.FlareColor
+-- @param Utils#FLARECOLOR FlareColor
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
   self:F2( { FlareColor } )
@@ -517,7 +535,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareWhite( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.White, Azimuth )
+  self:Flare( FLARECOLOR.White, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Yellow.
@@ -525,7 +543,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareYellow( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Yellow, Azimuth )
+  self:Flare( FLARECOLOR.Yellow, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Green.
@@ -533,27 +551,23 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareGreen( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Green, Azimuth )
+  self:Flare( FLARECOLOR.Green, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:FlareRed( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Red, Azimuth )
+  self:Flare( FLARECOLOR.Red, Azimuth )
 end
 
+end
 
---- The POINT_VEC2 class
--- @type POINT_VEC2
--- @extends Point#POINT_VEC3
--- @field #number x The x coordinate in 2D space.
--- @field #number y the y coordinate in 2D space.
-POINT_VEC2 = {
-  ClassName = "POINT_VEC2",
-  }
+do -- POINT_VEC2
 
---- Create a new POINT_VEC2 object.
+
+
+--- POINT_VEC2 constructor.
 -- @param #POINT_VEC2 self
 -- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
 -- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
@@ -566,7 +580,8 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self:F2( self )
   
   return self
 end
@@ -582,8 +597,8 @@ function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end
@@ -599,8 +614,8 @@ function POINT_VEC2:NewFromVec3( Vec3 )
 
   local LandHeight = land.getHeight( Vec2 )
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, LandHeight, Vec2.y } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end
@@ -689,5 +704,6 @@ function POINT_VEC2:Translate( Distance, Angle )
   return POINT_VEC2:New( TX, TY )
 end
 
+end
 
 

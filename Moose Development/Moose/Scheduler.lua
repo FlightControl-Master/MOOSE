@@ -56,7 +56,7 @@ SCHEDULER = {
 -- @return #SCHEDULER self
 function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
 
 
   self:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
@@ -75,7 +75,8 @@ end
 -- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #SCHEDULER self
 function SCHEDULER:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
-  self:F2( { TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:T3( { TimeEventFunctionArguments } )
 
   self.TimeEventObject = TimeEventObject
   self.TimeEventFunction = TimeEventFunction
@@ -97,7 +98,7 @@ end
 -- @param #SCHEDULER self
 -- @return #SCHEDULER self
 function SCHEDULER:Start()
-  self:F2( self.TimeEventObject )
+  self:F2()
 
   if self.RepeatSecondsInterval ~= 0 then
     self.Repeat = true
@@ -107,7 +108,8 @@ function SCHEDULER:Start()
     if self.ScheduleID then
       timer.removeFunction( self.ScheduleID )
     end
-    self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+    self:T( { self.StartSeconds } )
+    self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .001 )
   end
   
   return self

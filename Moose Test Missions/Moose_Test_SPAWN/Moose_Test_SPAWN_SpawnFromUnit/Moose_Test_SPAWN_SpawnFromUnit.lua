@@ -9,10 +9,10 @@ ShipUnits = { "ShipUnit1", "ShipUnit2", "ShipUnit3" }
 
 HeightLimit = 500
 
-SpawnGrounds = SPAWN:New("Ground"):Limit( 20, 10 )
-SpawnAirplanes = SPAWN:New("Airplane"):Limit( 20, 10 )
-SpawnHelicopters = SPAWN:New("Helicopter"):Limit( 20, 10 )
-SpawnShips = SPAWN:New("Ship"):Limit( 20, 10 )
+SpawnGrounds = SPAWN:New("Ground"):InitLimit( 20, 10 ):InitRandomizeUnits( true, 10, 3 )
+SpawnAirplanes = SPAWN:New("Airplane"):InitLimit( 20, 10 )
+SpawnHelicopters = SPAWN:New("Helicopter"):InitLimit( 20, 10 )
+SpawnShips = SPAWN:New("Ship"):InitLimit( 20, 10 )
 
 --- Spawns these groups slowly.
 SCHEDULER:New( nil,
@@ -22,7 +22,7 @@ SCHEDULER:New( nil,
       -- Spawn Ground
       local UnitName = GroundUnits[ math.random( 1, 3 ) ]
       local SpawnUnit = UNIT:FindByName( UnitName )
-      SpawnGrounds:SpawnFromUnit( SpawnUnit, 10, 3 )  
+      SpawnGrounds:SpawnFromUnit( SpawnUnit )  
     end
     
     do

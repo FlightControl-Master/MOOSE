@@ -15,6 +15,6 @@ Messager = SCHEDULER:New( nil,
 
 TankZoneColoring = SCHEDULER:New( nil,
   function()
-    ZoneA:FlareZone( POINT_VEC3.FlareColor.White, 90, 60 )
+    ZoneA:FlareZone( FLARECOLOR.White, 90, 60 )
   end, 
   {}, 0, 5 )

@@ -18,10 +18,11 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -38,17 +39,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,18 +51,15 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -80,9 +72,11 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -96,6 +90,12 @@
 			<td class="name" nowrap="nowrap"><a href="AIBalancer.html">AIBalancer</a></td>
 			<td class="summary">
 <p>This module contains the AIBALANCER class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_PatrolZone.html">AI_PatrolZone</a></td>
+			<td class="summary">
+<p>This module contains the AI_PATROLZONE class.</p>
 </td>
 			</tr>
 			<tr>
@@ -117,9 +117,9 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="CARGO.html">CARGO</a></td>
+			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>CARGO Classes</p>
+<p>This module contains the CARGO classes.</p>
 </td>
 			</tr>
 			<tr>
@@ -219,36 +219,6 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="DEPLOYTASK.html">DEPLOYTASK</a></td>
-			<td class="summary">
-<p>A DEPLOYTASK orchestrates the deployment of CARGO within a specific landing zone.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></td>
-			<td class="summary">
-<p>A DESTROYBASETASK will monitor the destruction of Groups and Units.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></td>
-			<td class="summary">
-<p>DESTROYGROUPSTASK</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></td>
-			<td class="summary">
-<p>Task class to destroy radar installations.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></td>
-			<td class="summary">
-<p>Set TASK to destroy certain unit types.</p>
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Database.html">Database</a></td>
 			<td class="summary">
 <p>This module contains the DATABASE class, managing the database of mission objects.</p>
@@ -276,12 +246,6 @@
 			<td class="name" nowrap="nowrap"><a href="Event.html">Event</a></td>
 			<td class="summary">
 <p>The EVENT class models an efficient event handling process between other classes and its units, weapons.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="GOHOMETASK.html">GOHOMETASK</a></td>
-			<td class="summary">
-<p>A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.</p>
 </td>
 			</tr>
 			<tr>
@@ -327,21 +291,9 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="NOTASK.html">NOTASK</a></td>
-			<td class="summary">
-<p>A NOTASK is a dummy activity...</p>
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Object.html">Object</a></td>
 			<td class="summary">
 <p>This module contains the OBJECT class.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="PICKUPTASK.html">PICKUPTASK</a></td>
-			<td class="summary">
-<p>A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.</p>
 </td>
 			</tr>
 			<tr>
@@ -381,21 +333,15 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="Process_Smoke.html">Process_Smoke</a></td>
+			<td class="name" nowrap="nowrap"><a href="Process_Pickup.html">Process_Pickup</a></td>
 			<td class="summary">
 
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="ROUTETASK.html">ROUTETASK</a></td>
+			<td class="name" nowrap="nowrap"><a href="Process_Smoke.html">Process_Smoke</a></td>
 			<td class="summary">
-<p>A ROUTETASK orchestrates the travel to a specific zone defined within the ME.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="STAGE.html">STAGE</a></td>
-			<td class="summary">
-<p>Stages within a <a href="TASK.html">TASK</a> within a <a href="MISSION.html">MISSION</a>.</p>
+
 </td>
 			</tr>
 			<tr>
@@ -471,6 +417,12 @@
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_PICKUP.html">Task_PICKUP</a></td>
+			<td class="summary">
+<p>This module contains the TASK_PICKUP classes.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task_Route.html">Task_Route</a></td>
 			<td class="summary">
 
@@ -486,6 +438,13 @@
 			<td class="name" nowrap="nowrap"><a href="Unit.html">Unit</a></td>
 			<td class="summary">
 <p>This module contains the UNIT class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Utils.html">Utils</a></td>
+			<td class="summary">
+<p>This module contains derived utilities taken from the MIST framework, 
+which are excellent tools to be reused in an OO environment!.</p>
 </td>
 			</tr>
 			<tr>

@@ -18,6 +18,7 @@
 
 --- STATEMACHINE class
 -- @type STATEMACHINE
+-- @extends Base#BASE
 STATEMACHINE = {
   ClassName = "STATEMACHINE",
 }
@@ -47,7 +48,10 @@ function STATEMACHINE:New( options )
 
   for _, event in ipairs(options.events or {}) do
     local name = event.name
+    local __name = "__" .. event.name
     self[name] = self[name] or self:_create_transition(name)
+    self[__name] = self[__name] or self:_delayed_transition(name)
+    self:T( "Added methods: " .. name .. ", " .. __name )
     self.events[name] = self.events[name] or { map = {} }
     self:_add_to_map(self.events[name].map, event)
   end
@@ -91,60 +95,85 @@ end
 
 function STATEMACHINE:_call_handler(handler, params)
   if handler then
-    return handler(unpack(params))
+    return handler( self, unpack(params) )
   end
 end
 
-function STATEMACHINE:_create_transition(name)
-  self:E( { name = name } )
-  return function(self, ...)
-    local can, to = self:can(name)
-    self:T( { name, can, to } )
+function STATEMACHINE._handler( self, EventName, ... )
 
-    if can then
-      local from = self.current
-      local params = { self, name, from, to, ... }
+  self:F( EventName )
 
-      if self:_call_handler(self["onbefore" .. name], params) == false
-      or self:_call_handler(self["onleave" .. from], params) == false then
-        return false
-      end
+  local can, to = self:can(EventName)
+  self:T( { EventName, can, to } )
+  
+  local ReturnValues = nil
 
-      self.current = to
-      
-      local execute = true
-      
-      local subtable = self:_gosub( to, name )
-      for _, sub in pairs( subtable ) do
-        self:F( "calling sub: " .. sub.event )
-        sub.fsm.fsmparent = self
-        sub.fsm.returnevents = sub.returnevents
-        sub.fsm[sub.event]( sub.fsm )
-        execute = true
-      end
-        
-      local fsmparent, event = self:_isendstate( to )
-      if fsmparent and event then
-        self:F( { "end state: ", fsmparent, event } )
-        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-        self:_call_handler(self["onstatechange"], params)
-        fsmparent[event]( fsmparent )
-        execute = false
-      end
+  if can then
+    local from = self.current
+    local params = { ..., EventName, from, to  }
 
-      if execute then      
-        self:F( { "execute: " .. to, name } )
-        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-        self:_call_handler(self["onstatechange"], params)
-      end
-      
-      return true
+    if self:_call_handler(self["onbefore" .. EventName], params) == false
+    or self:_call_handler(self["onleave" .. from], params) == false then
+      return false
     end
 
-    return false
+    self.current = to
+    
+    local execute = true
+    
+    local subtable = self:_gosub( to, EventName )
+    for _, sub in pairs( subtable ) do
+      self:F2( "calling sub: " .. sub.event )
+      sub.fsm.fsmparent = self
+      sub.fsm.returnevents = sub.returnevents
+      sub.fsm[sub.event]( sub.fsm )
+      execute = true
+    end
+      
+    local fsmparent, event = self:_isendstate( to )
+    if fsmparent and event then
+      self:F2( { "end state: ", fsmparent, event } )
+      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+      self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
+      self:_call_handler(self["onstatechange"], params)
+      fsmparent[event]( fsmparent )
+      execute = false
+    end
+
+    if execute then
+      self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+      
+      self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
+      if ( self:_call_handler(self["OnBefore" .. to], params ) ~= false ) then
+
+        self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
+        self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
+        
+        self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
+        ReturnValues = self:_call_handler(self["OnAfter" .. to], params )
+      end
+
+      self:_call_handler(self["onstatechange"], params)
+    end
+    
+    return ReturnValues
   end
+
+  return nil
+end
+
+function STATEMACHINE:_delayed_transition( EventName )
+  self:E( { EventName = EventName } )
+  return function( self, DelaySeconds, ... )
+    self:T( "Delayed Event: " .. EventName )
+    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds ) 
+  end
+end
+
+function STATEMACHINE:_create_transition( EventName )
+  self:E( { Event =  EventName  } )
+  return function( self, ... ) return self._handler( self,  EventName , ... ) end
 end
 
 function STATEMACHINE:_gosub( parentstate, parentevent )
@@ -286,5 +315,52 @@ end
 function STATEMACHINE_TASK:_call_handler( handler, params )
   if handler then
     return handler( self.Task, self.TaskUnit, unpack( params ) )
+  end
+end
+
+--- STATEMACHINE_CONTROLLABLE class
+-- @type STATEMACHINE_CONTROLLABLE
+-- @field Controllable#CONTROLLABLE Controllable
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_CONTROLLABLE = {
+  ClassName = "STATEMACHINE_CONTROLLABLE",
+}
+
+--- Creates a new STATEMACHINE_CONTROLLABLE object.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param #table FSMT Finite State Machine Table
+-- @param Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
+  
+  if Controllable then
+    self:SetControllable( Controllable )
+  end
+
+  return self
+end
+
+--- Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param Controllable#CONTROLLABLE Controllable
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:SetControllable( FSMControllable )
+  self:F( FSMControllable )
+  self.Controllable = FSMControllable
+end
+
+--- Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @return Controllable#CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:GetControllable()
+  return self.Controllable
+end
+
+function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
+  if handler then
+    return handler( self, self.Controllable, unpack( params ) )
   end
 end

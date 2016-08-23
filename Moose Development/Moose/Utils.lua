@@ -1,3 +1,16 @@
+--- This module contains derived utilities taken from the MIST framework, 
+-- which are excellent tools to be reused in an OO environment!.
+-- 
+-- ### Authors: 
+-- 
+--   * Grimes : Design & Programming of the MIST framework.
+--   
+-- ### Contributions:
+-- 
+--   * FlightControl : Rework to OO framework 
+-- 
+-- @module Utils
+
 
 --- @type SMOKECOLOR
 -- @field Green

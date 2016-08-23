@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160812_0800' ) 
+env.info( 'Moose Generation Timestamp: 20160823_0655' ) 
 local base = _G
 
 Include = {}
@@ -2495,6 +2495,19 @@ end
 
 env.info(( 'Init: Scripts Loaded v1.1' ))
 
+--- This module contains derived utilities taken from the MIST framework, 
+-- which are excellent tools to be reused in an OO environment!.
+-- 
+-- ### Authors: 
+-- 
+--   * Grimes : Design & Programming of the MIST framework.
+--   
+-- ### Contributions:
+-- 
+--   * FlightControl : Rework to OO framework 
+-- 
+-- @module Utils
+
 
 --- @type SMOKECOLOR
 -- @field Green
@@ -3948,6 +3961,7 @@ function POSITIONABLE:InAir()
   
   return nil
 end
+
  
 --- Returns the POSITIONABLE velocity vector.
 -- @param Positionable#POSITIONABLE self
@@ -4222,9 +4236,10 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     -- Controller.setTask( Controller, DCSTask )
 
     if not WaitTime then
-      WaitTime = 1
+      Controller:setTask( DCSTask )
+    else
+      SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
     end
-    SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
 
     return self
   end
@@ -6144,7 +6159,7 @@ function CONTROLLABLE:TaskFunction( WayPoint, WayPointIndex, FunctionString, Fun
   local DCSTask
 
   local DCSScript = {}
-  DCSScript[#DCSScript+1] = "local MissionControllable = CONTROLLABLE:Find( ... ) "
+  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
 
   if FunctionArguments and #FunctionArguments > 0 then
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, " .. table.concat( FunctionArguments, "," ) .. ")"
@@ -6365,7 +6380,7 @@ SCHEDULER = {
 -- @return #SCHEDULER self
 function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2( { TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
 
 
   self:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
@@ -6384,7 +6399,8 @@ end
 -- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #SCHEDULER self
 function SCHEDULER:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
-  self:F2( { TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:T3( { TimeEventFunctionArguments } )
 
   self.TimeEventObject = TimeEventObject
   self.TimeEventFunction = TimeEventFunction
@@ -6406,7 +6422,7 @@ end
 -- @param #SCHEDULER self
 -- @return #SCHEDULER self
 function SCHEDULER:Start()
-  self:F2( self.TimeEventObject )
+  self:F2()
 
   if self.RepeatSecondsInterval ~= 0 then
     self.Repeat = true
@@ -6416,7 +6432,8 @@ function SCHEDULER:Start()
     if self.ScheduleID then
       timer.removeFunction( self.ScheduleID )
     end
-    self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .01 )
+    self:T( { self.StartSeconds } )
+    self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .001 )
   end
   
   return self
@@ -8833,19 +8850,19 @@ function GROUP:GetMaxVelocity()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local MaxVelocity = 0
+    local GroupVelocityMax = 0
 
     for Index, UnitData in pairs( DCSGroup:getUnits() ) do
 
-      local Velocity = UnitData:getVelocity()
-      local VelocityTotal = math.abs( Velocity.x ) + math.abs( Velocity.y ) + math.abs( Velocity.z )
+      local UnitVelocityVec3 = UnitData:getVelocity()
+      local UnitVelocity = math.abs( UnitVelocityVec3.x ) + math.abs( UnitVelocityVec3.y ) + math.abs( UnitVelocityVec3.z )
 
-      if VelocityTotal < MaxVelocity then
-        MaxVelocity = VelocityTotal
+      if UnitVelocity > GroupVelocityMax then
+        GroupVelocityMax = UnitVelocity
       end
     end
 
-    return MaxVelocity
+    return GroupVelocityMax
   end
 
   return nil
@@ -9848,46 +9865,118 @@ end
 --   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
 --   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
--- Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
--- 
---   * @{#ZONE_BASE.IsPointVec2InZone}: Returns if a location is within the zone.
---   * @{#ZONE_BASE.IsPointVec3InZone}: Returns if a point is within the zone.
--- 
 -- ===
 -- 
 -- 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
 -- ================================================
--- The ZONE_BASE class defining the base for all other zone classes.
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ### 1.1) Each zone has a name:
+-- 
+--   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+-- 
+-- ### 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- 
+--   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Point#POINT_VEC2} is within the zone.
+--   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Point#POINT_VEC3} is within the zone.
+--   
+-- ### 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
+-- 
+--   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
+-- 
+-- ### 1.4) A zone manages Vectors:
+-- 
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
+--   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
+-- 
+-- ### 1.5) A zone has a bounding square:
+-- 
+--   * @{#ZONE_BASE.GetBoundingSquare}(): Get the outer most bounding square of the zone.
+-- 
+-- ### 1.6) A zone can be marked: 
+-- 
+--   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
+--   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
 -- 
 -- ===
 -- 
 -- 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
 -- =======================================================
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
+-- This class implements the inherited functions from Zone#ZONE_BASE taking into account the own zone format and properties.
+-- 
+-- ### 2.1) @{Zone#ZONE_RADIUS} constructor:
+-- 
+--   * @{#ZONE_BASE.New}(): Constructor.
+--   
+-- ### 2.2) Manage the radius of the zone:
+-- 
+--   * @{#ZONE_BASE.SetRadius}(): Sets the radius of the zone.
+--   * @{#ZONE_BASE.GetRadius}(): Returns the radius of the zone.
+-- 
+-- ### 2.3) Manage the location of the zone:
+-- 
+--   * @{#ZONE_BASE.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
 -- 
 -- ===
 -- 
 -- 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
 -- ==========================================
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
+-- This class implements the inherited functions from {Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
 -- 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
 -- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
 -- 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
 -- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
--- 6) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_BASE}
+-- 6) @{Zone#ZONE_POLYGON_BASE} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
+-- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ===
+-- 
+-- 7) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_POLYGON_BASE}
+-- ================================================================
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: ZONE_BASE:**GetName()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**SetZoneProbability( ZoneProbability )** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneProbability()** added.
+-- 
+-- 2016-08-15: ZONE_BASE:**GetZoneMaybe()** added.
 -- 
 -- ===
 -- 
@@ -9898,9 +9987,12 @@ end
 --- The ZONE_BASE class
 -- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
+-- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @extends Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
+  ZoneName = "",
+  ZoneProbability = 1,
   }
 
 
@@ -9925,6 +10017,14 @@ function ZONE_BASE:New( ZoneName )
   return self
 end
 
+--- Returns the name of the zone.
+-- @param #ZONE_BASE self
+-- @return #string The name of the zone.
+function ZONE_BASE:GetName()
+  self:F2()
+
+  return self.ZoneName
+end
 --- Returns if a location is within the zone.
 -- @param #ZONE_BASE self
 -- @param DCSTypes#Vec2 Vec2 The location to test.
@@ -9947,7 +10047,7 @@ function ZONE_BASE:IsPointVec3InZone( Vec3 )
   return InZone
 end
 
---- Returns the Vec2 coordinate of the zone.
+--- Returns the @{DCSTypes#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
 function ZONE_BASE:GetVec2()
@@ -9957,7 +10057,7 @@ function ZONE_BASE:GetVec2()
 end
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
--- @return #nil The Vec2 coordinates.
+-- @return DCSTypes#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
   return nil
 end
@@ -9979,6 +10079,40 @@ function ZONE_BASE:SmokeZone( SmokeColor )
 
 end
 
+--- Set the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+function ZONE_BASE:SetZoneProbability( ZoneProbability )
+  self:F2( ZoneProbability )
+  
+  self.ZoneProbability = ZoneProbability or 1
+  return self
+end
+
+--- Get the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+function ZONE_BASE:GetZoneProbability()
+  self:F2()
+  
+  return self.ZoneProbability
+end
+
+--- Get the zone taking into account the randomization probability of a zone to be selected.
+-- @param #ZONE_BASE self
+-- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
+-- @return #nil The zone is not selected taking into account the randomization probability factor.
+function ZONE_BASE:GetZoneMaybe()
+  self:F2()
+  
+  local Randomization = math.random()
+  if Randomization <= self.ZoneProbability then
+    return self
+  else
+    return nil
+  end
+end
+
 
 --- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
 -- @type ZONE_RADIUS
@@ -9989,7 +10123,7 @@ ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
 
---- Constructor of ZONE_RADIUS, taking the zone name, the zone location and a radius.
+--- Constructor of @{#ZONE_RADIUS}, taking the zone name, the zone location and a radius.
 -- @param #ZONE_RADIUS self
 -- @param #string ZoneName Name of the zone.
 -- @param DCSTypes#Vec2 Vec2 The location of the zone.
@@ -10034,7 +10168,7 @@ end
 
 --- Flares the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
--- @param #POINT_VEC3.FlareColor FlareColor The flare color.
+-- @param Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Points (optional) The amount of points in the circle.
 -- @param DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
 -- @return #ZONE_RADIUS self
@@ -10083,7 +10217,7 @@ function ZONE_RADIUS:SetRadius( Radius )
   return self.Radius
 end
 
---- Returns the location of the zone.
+--- Returns the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @return DCSTypes#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
@@ -10094,11 +10228,11 @@ function ZONE_RADIUS:GetVec2()
 	return self.Vec2	
 end
 
---- Sets the location of the zone.
+--- Sets the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @param DCSTypes#Vec2 Vec2 The new location of the zone.
 -- @return DCSTypes#Vec2 The new location of the zone.
-function ZONE_RADIUS:SetPointVec2( Vec2 )
+function ZONE_RADIUS:SetVec2( Vec2 )
   self:F2( self.ZoneName )
   
   self.Vec2 = Vec2
@@ -10256,19 +10390,20 @@ end
 function ZONE_UNIT:GetRandomVec2()
   self:F( self.ZoneName )
 
-  local Point = {}
-  local PointVec2 = self.ZoneUNIT:GetPointVec2()
-  if not PointVec2 then
-    PointVec2 = self.LastVec2
+  local RandomVec2 = {}
+  local Vec2 = self.ZoneUNIT:GetVec2()
+  
+  if not Vec2 then
+    Vec2 = self.LastVec2
   end
 
   local angle = math.random() * math.pi*2;
-  Point.x = PointVec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-  Point.y = PointVec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+  RandomVec2.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
+  RandomVec2.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
   
-  self:T( { Point } )
+  self:T( { RandomVec2 } )
   
-  return Point
+  return RandomVec2
 end
 
 --- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
@@ -12196,13 +12331,12 @@ end
 -- 
 -- ====
 -- 
--- ### Contributions: 
--- 
---   * Mechanist : Concept & Testing
--- 
 -- ### Authors: 
 -- 
 --   * FlightControl : Design & Programming
+--   
+-- ### Contributions: 
+-- 
 -- 
 -- @module Set
 
@@ -14206,7 +14340,7 @@ end
 --- This module contains the POINT classes.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
--- ===============================================
+-- ==================================================
 -- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
@@ -14214,10 +14348,11 @@ end
 -- 
 -- 1.1) POINT_VEC3 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{#POINT_VEC3.New}(): a 3D point.
+--  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+--  
 --
 -- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
@@ -14225,13 +14360,40 @@ end
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
---  
--- A new POINT instance can be created with:
+-- A new POINT_VEC2 instance can be created with:
 -- 
---  * @{#POINT_VEC2.New}(): a 2D point.
+--  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- 
+-- ===
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
+-- 
+-- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
+-- 
+--   * Replaced method _Point_Vec3() to **Vec3**() where the code manages a Vec3. Replaced all references to the method.
+--   * Replaced method _Point_Vec2() to **Vec2**() where the code manages a Vec2. Replaced all references to the method.
+--   * Replaced method Random_Point_Vec3() to **RandomVec3**() where the code manages a Vec3. Replaced all references to the method.
+-- .
+-- ===
+--  
+-- ### Authors: 
+-- 
+--   * FlightControl : Design & Programming
+--   
+-- ### Contributions: 
 -- 
 -- @module Point
--- @author FlightControl
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
@@ -14240,25 +14402,12 @@ end
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
--- @field #POINT_VEC3.FlareColor FlareColor
+-- @field Utils#FLARECOLOR FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
-  SmokeColor = {
-    Green = trigger.smokeColor.Green,
-    Red = trigger.smokeColor.Red,
-    White = trigger.smokeColor.White,
-    Orange = trigger.smokeColor.Orange,
-    Blue = trigger.smokeColor.Blue
-  },
-  FlareColor = {
-    Green = trigger.flareColor.Green,
-    Red = trigger.flareColor.Red,
-    White = trigger.flareColor.White,
-    Yellow = trigger.flareColor.Yellow
-  },
   Metric = true,
   RoutePointAltType = {
     BARO = "BARO",
@@ -14271,43 +14420,29 @@ POINT_VEC3 = {
   },
 }
 
-
---- SmokeColor
--- @type POINT_VEC3.SmokeColor
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
-
-
-
---- FlareColor
--- @type POINT_VEC3.FlareColor
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
+--- The POINT_VEC2 class
+-- @type POINT_VEC2
+-- @extends #POINT_VEC3
+-- @field DCSTypes#Distance x The x coordinate in meters.
+-- @field DCSTypes#Distance y the y coordinate in meters.
+POINT_VEC2 = {
+  ClassName = "POINT_VEC2",
+}
 
 
+do -- POINT_VEC3
 
 --- RoutePoint AltTypes
 -- @type POINT_VEC3.RoutePointAltType
 -- @field BARO "BARO"
 
-
-
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
 -- @field TurningPoint "Turning Point"
 
-
-
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
 -- @field TurningPoint "Turning Point"
-
-
 
 -- Constructor.
   
@@ -14323,6 +14458,7 @@ function POINT_VEC3:New( x, y, z )
   self.x = x
   self.y = y
   self.z = z
+  
   return self
 end
 
@@ -14332,7 +14468,9 @@ end
 -- @return Point#POINT_VEC3 self
 function POINT_VEC3:NewFromVec3( Vec3 )
 
-  return self:New( Vec3.x, Vec3.y, Vec3.z )
+  self = self:New( Vec3.x, Vec3.y, Vec3.z )
+  self:F2( self )
+  return self
 end
 
 
@@ -14578,6 +14716,20 @@ function POINT_VEC3:IsMetric()
   return self.Metric
 end
 
+--- Add a Distance in meters from the POINT_VEC3 horizontal plane, with the given angle, and calculate the new POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @return #POINT_VEC3 The new calculated POINT_VEC3.
+function POINT_VEC3:Translate( Distance, Angle )
+  local SX = self:GetX()
+  local SZ = self:GetZ()
+  local Radians = Angle / 180 * math.pi
+  local TX = Distance * math.cos( Radians ) + SX
+  local TZ = Distance * math.sin( Radians ) + SZ
+  
+  return POINT_VEC3:New( TX, self:GetY(), TZ )
+end
 
 
 
@@ -14667,7 +14819,7 @@ end
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.SmokeColor SmokeColor
+-- @param Utils#SMOKECOLOR SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
   self:F2( { SmokeColor } )
   trigger.action.smoke( self:GetVec3(), SmokeColor )
@@ -14677,40 +14829,40 @@ end
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeGreen()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Green )
+  self:Smoke( SMOKECOLOR.Green )
 end
 
 --- Smoke the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeRed()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Red )
+  self:Smoke( SMOKECOLOR.Red )
 end
 
 --- Smoke the POINT_VEC3 White.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeWhite()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.White )
+  self:Smoke( SMOKECOLOR.White )
 end
 
 --- Smoke the POINT_VEC3 Orange.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeOrange()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Orange )
+  self:Smoke( SMOKECOLOR.Orange )
 end
 
 --- Smoke the POINT_VEC3 Blue.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:SmokeBlue()
   self:F2()
-  self:Smoke( POINT_VEC3.SmokeColor.Blue )
+  self:Smoke( SMOKECOLOR.Blue )
 end
 
 --- Flares the point in a color.
 -- @param #POINT_VEC3 self
--- @param Point#POINT_VEC3.FlareColor
+-- @param Utils#FLARECOLOR FlareColor
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
   self:F2( { FlareColor } )
@@ -14722,7 +14874,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareWhite( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.White, Azimuth )
+  self:Flare( FLARECOLOR.White, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Yellow.
@@ -14730,7 +14882,7 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareYellow( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Yellow, Azimuth )
+  self:Flare( FLARECOLOR.Yellow, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Green.
@@ -14738,27 +14890,23 @@ end
 -- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareGreen( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Green, Azimuth )
+  self:Flare( FLARECOLOR.Green, Azimuth )
 end
 
 --- Flare the POINT_VEC3 Red.
 -- @param #POINT_VEC3 self
 function POINT_VEC3:FlareRed( Azimuth )
   self:F2( Azimuth )
-  self:Flare( POINT_VEC3.FlareColor.Red, Azimuth )
+  self:Flare( FLARECOLOR.Red, Azimuth )
 end
 
+end
 
---- The POINT_VEC2 class
--- @type POINT_VEC2
--- @extends Point#POINT_VEC3
--- @field #number x The x coordinate in 2D space.
--- @field #number y the y coordinate in 2D space.
-POINT_VEC2 = {
-  ClassName = "POINT_VEC2",
-  }
+do -- POINT_VEC2
 
---- Create a new POINT_VEC2 object.
+
+
+--- POINT_VEC2 constructor.
 -- @param #POINT_VEC2 self
 -- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
 -- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
@@ -14771,7 +14919,8 @@ function POINT_VEC2:New( x, y, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self = BASE:Inherit( self, POINT_VEC3:New( x, LandHeight, y ) )
+  self:F2( self )
   
   return self
 end
@@ -14787,8 +14936,8 @@ function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
   LandHeightAdd = LandHeightAdd or 0
   LandHeight = LandHeight + LandHeightAdd
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, Vec2.y, LandHeightAdd } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end
@@ -14804,8 +14953,8 @@ function POINT_VEC2:NewFromVec3( Vec3 )
 
   local LandHeight = land.getHeight( Vec2 )
   
-  local self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
-  self:F2( { Vec2.x, LandHeight, Vec2.y } )
+  self = BASE:Inherit( self, POINT_VEC3:New( Vec2.x, LandHeight, Vec2.y ) )
+  self:F2( self )
 
   return self
 end
@@ -14894,12 +15043,16 @@ function POINT_VEC2:Translate( Distance, Angle )
   return POINT_VEC2:New( TX, TY )
 end
 
+end
 
 
 --- The main include file for the MOOSE system.
 
+--- Core Routines
 Include.File( "Routines" )
 Include.File( "Utils" )
+
+--- Core Classes
 Include.File( "Base" )
 Include.File( "Object" )
 Include.File( "Identifiable" )
@@ -14917,21 +15070,11 @@ Include.File( "Airbase" )
 Include.File( "Database" )
 Include.File( "Set" )
 Include.File( "Point" )
-Include.File( "Moose" )
 Include.File( "Scoring" )
+
+--- Functional Classes
 Include.File( "Cargo" )
 Include.File( "Message" )
-Include.File( "Stage" )
-Include.File( "Task" )
-Include.File( "GoHomeTask" )
-Include.File( "DestroyBaseTask" )
-Include.File( "DestroyGroupsTask" )
-Include.File( "DestroyRadarsTask" )
-Include.File( "DestroyUnitTypesTask" )
-Include.File( "PickupTask" )
-Include.File( "DeployTask" )
-Include.File( "NoTask" )
-Include.File( "RouteTask" )
 Include.File( "Mission" )
 Include.File( "CleanUp" )
 Include.File( "Spawn" )
@@ -14939,11 +15082,11 @@ Include.File( "Movement" )
 Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
-Include.File( "PatrolZone" )
-Include.File( "AIBalancer" )
+--Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
-
 Include.File( "Detection" )
+
+--- Task Handling Classes
 Include.File( "DetectionManager" )
 
 Include.File( "StateMachine" )
@@ -14958,6 +15101,9 @@ Include.File( "Process_JTAC" )
 Include.File( "Task" )
 Include.File( "Task_SEAD" )
 Include.File( "Task_A2G" )
+
+--- AI Handling Classes
+Include.File( "AI_PatrolZone" )
 
 -- The order of the declarations is important here. Don't touch it.
 
@@ -16813,7 +16959,7 @@ function CARGO_ZONE:Spawn()
       end
   else
     self:T( "Initialize CargoHostSpawn" )
-    self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):Limit( 1, 1 )
+    self.CargoHostSpawn = SPAWN:New( self.CargoHostName ):InitLimit( 1, 1 )
     self.CargoHostSpawn:ReSpawn( 1 )
   end
   end
@@ -17348,2478 +17494,6 @@ end
 ----- The _MessageQueue object is created when the MESSAGE class module is loaded.
 ----_MessageQueue = MESSAGEQUEUE:New( 0.5 )
 --
---- Stages within a @{TASK} within a @{MISSION}. All of the STAGE functionality is considered internally administered and not to be used by any Mission designer.
--- @module STAGE
--- @author Flightcontrol
-
-
-
-
-
-
-
---- The STAGE class
--- @type
-STAGE = {
-  ClassName = "STAGE",
-  MSG = { ID = "None", TIME = 10 },
-  FREQUENCY = { NONE = 0, ONCE = 1, REPEAT = -1 },
-  
-  Name = "NoStage",
-  StageType = '',
-  WaitTime = 1,
-  Frequency = 1,
-  MessageCount = 0,
-  MessageInterval = 15,
-  MessageShown = {},
-  MessageShow = false,
-  MessageFlash = false
-}
-
-
-function STAGE:New()
-	local self = BASE:Inherit( self, BASE:New() )
-	self:F()
-	return self
-end
-
-function STAGE:Execute( Mission, Client, Task )
-
-	local Valid = true
-
-	return Valid
-end
-
-function STAGE:Executing( Mission, Client, Task )
-
-end
-
-function STAGE:Validate( Mission, Client, Task )
-  local Valid = true
-  
-  return Valid
-end
-
-
-STAGEBRIEF = {
-	ClassName = "BRIEF",
-	MSG = { ID = "Brief", TIME = 1 },
-	Name = "Brief",
-	StageBriefingTime = 0,
-	StageBriefingDuration = 1
-}
-
-function STAGEBRIEF:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
---- Execute
--- @param #STAGEBRIEF self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
--- @return #boolean
-function STAGEBRIEF:Execute( Mission, Client, Task )
-	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-	self:F()
-	Client:ShowMissionBriefing( Mission.MissionBriefing )
-	self.StageBriefingTime = timer.getTime()
-	return Valid 
-end
-
-function STAGEBRIEF:Validate( Mission, Client, Task )
-	local Valid = STAGE:Validate( Mission, Client, Task )
-	self:T()
-
-	if timer.getTime() - self.StageBriefingTime <= self.StageBriefingDuration then
-		return 0
-	else
-		self.StageBriefingTime = timer.getTime()
-		return 1
-	end
-  
-end
-
-
-STAGESTART = {
-  ClassName = "START",
-  MSG = { ID = "Start", TIME = 1 },
-  Name = "Start",
-  StageStartTime = 0,
-  StageStartDuration = 1
-}
-
-function STAGESTART:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGESTART:Execute( Mission, Client, Task )
-	self:F()
-	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-	if Task.TaskBriefing then
-		Client:Message( Task.TaskBriefing, 30, "Command" )
-	else
-		Client:Message( 'Task ' .. Task.TaskNumber .. '.', 30, "Command" )
-	end
-	self.StageStartTime = timer.getTime()
-	return Valid 
-end
-
-function STAGESTART:Validate( Mission, Client, Task )
-	self:F()
-	local Valid = STAGE:Validate( Mission, Client, Task )
-
-	if timer.getTime() - self.StageStartTime <= self.StageStartDuration then
-		return 0
-	else
-		self.StageStartTime = timer.getTime()
-		return 1
-	end
-  
-	return 1
-  
-end
-
-STAGE_CARGO_LOAD = {
-  ClassName = "STAGE_CARGO_LOAD"
-}
-
-function STAGE_CARGO_LOAD:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGE_CARGO_LOAD:Execute( Mission, Client, Task )
-	self:F()
-	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-
-	for LoadCargoID, LoadCargo in pairs( Task.Cargos.LoadCargos ) do
-		LoadCargo:Load( Client )
-	end
-
-	if Mission.MissionReportFlash and Client:IsTransport() then
-		Client:ShowCargo()
-	end
-
-	return Valid
-end
-
-function STAGE_CARGO_LOAD:Validate( Mission, Client, Task )
-	self:F()
-	local Valid = STAGE:Validate( Mission, Client, Task )
-
-	return 1
-end
-
-
-STAGE_CARGO_INIT = {
-  ClassName = "STAGE_CARGO_INIT"
-}
-
-function STAGE_CARGO_INIT:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGE_CARGO_INIT:Execute( Mission, Client, Task )
-	self:F()
-	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-
-	for InitLandingZoneID, InitLandingZone in pairs( Task.LandingZones.LandingZones ) do
-		self:T( InitLandingZone )
-		InitLandingZone:Spawn()
-	end
-	
-
-	self:T( Task.Cargos.InitCargos )
-	for InitCargoID, InitCargoData in pairs( Task.Cargos.InitCargos ) do
-		self:T( { InitCargoData } )
-		InitCargoData:Spawn( Client )
-	end
-	
-	return Valid
-end
-
-
-function STAGE_CARGO_INIT:Validate( Mission, Client, Task )
-	self:F()
-	local Valid = STAGE:Validate( Mission, Client, Task )
-
-	return 1
-end
-
-
-
-STAGEROUTE = {
-  ClassName = "STAGEROUTE",
-  MSG = { ID = "Route", TIME = 5 },
-  Frequency = STAGE.FREQUENCY.REPEAT,
-  Name = "Route"
-}
-
-function STAGEROUTE:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	self.MessageSwitch = true
-	return self
-end
-
-
---- Execute the routing.
--- @param #STAGEROUTE self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
-function STAGEROUTE:Execute( Mission, Client, Task )
-	self:F()
-	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
-
-	local RouteMessage = "Fly to: "
-	self:T( Task.LandingZones )
-	for LandingZoneID, LandingZoneName in pairs( Task.LandingZones.LandingZoneNames ) do
-		RouteMessage = RouteMessage .. "\n     " .. LandingZoneName .. ' at ' .. routines.getBRStringZone( { zone = LandingZoneName, ref = Client:GetClientGroupDCSUnit():getPoint(), true, true } ) .. ' km.'
-	end
-	
-	if Client:IsMultiSeated() then
-    Client:Message( RouteMessage, self.MSG.TIME, "Co-Pilot", 20, "Route" )
-	else
-    Client:Message( RouteMessage, self.MSG.TIME, "Command", 20, "Route" )
-  end	
-	
-
-	if Mission.MissionReportFlash and Client:IsTransport() then
-		Client:ShowCargo()
-	end
-
-	return Valid
-end
-
-function STAGEROUTE:Validate( Mission, Client, Task )
-	self:F()
-	local Valid = STAGE:Validate( Mission, Client, Task )
-	
-	-- check if the Client is in the landing zone
-	self:T( Task.LandingZones.LandingZoneNames )
-	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
-	
-	if  Task.CurrentLandingZoneName then
-
-		Task.CurrentLandingZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName].CargoZone
-		Task.CurrentCargoZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName]
-
-		if Task.CurrentCargoZone then 
-			if not Task.Signalled then
-				Task.Signalled = Task.CurrentCargoZone:Signal() 
-			end
-		end
-
-    self:T( 1 )
-		return 1
-	end
-  
-  self:T( 0 )
-	return 0
-end
-
-
-
-STAGELANDING = {
-  ClassName = "STAGELANDING",
-  MSG = { ID = "Landing", TIME = 10 },
-  Name = "Landing",
-  Signalled = false
-}
-
-function STAGELANDING:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
---- Execute the landing coordination.
--- @param #STAGELANDING self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
-function STAGELANDING:Execute( Mission, Client, Task )
-	self:F()
- 
-  if Client:IsMultiSeated() then
-  	Client:Message( "We have arrived at the landing zone.", self.MSG.TIME, "Co-Pilot" )
-  else
-    Client:Message( "You have arrived at the landing zone.", self.MSG.TIME, "Command" )
-  end
-
- 	Task.HostUnit = Task.CurrentCargoZone:GetHostUnit()
-	
-	self:T( { Task.HostUnit } )
-
-	if Task.HostUnit then
-	
-		Task.HostUnitName = Task.HostUnit:GetPrefix()
-		Task.HostUnitTypeName = Task.HostUnit:GetTypeName()
-		
-		local HostMessage = ""
-		Task.CargoNames = ""
-
-		local IsFirst = true
-		
-		for CargoID, Cargo in pairs( CARGOS ) do
-			if Cargo.CargoType == Task.CargoType then
-
-				if Cargo:IsLandingRequired() then
-					self:T( "Task for cargo " .. Cargo.CargoType .. " requires landing.")
-					Task.IsLandingRequired = true
-				end
-				
-				if Cargo:IsSlingLoad() then
-					self:T( "Task for cargo " .. Cargo.CargoType .. " is a slingload.")
-					Task.IsSlingLoad = true
-				end
-
-				if IsFirst then
-					IsFirst = false
-					Task.CargoNames = Task.CargoNames  .. Cargo.CargoName .. "( " .. Cargo.CargoWeight .. " )"
-				else
-					Task.CargoNames = Task.CargoNames  .. "; " .. Cargo.CargoName .. "( " .. Cargo.CargoWeight .. " )"
-				end
-			end
-		end
-		
-		if Task.IsLandingRequired then
-			HostMessage = "Land the helicopter to " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
-		else
-			HostMessage = "Use the Radio menu and F6 to find the cargo, then fly or land near the cargo and " .. Task.TEXT[1] .. " " .. Task.CargoNames .. "."
-		end
-
-    local Host = "Command"
-    if Task.HostUnitName then
-      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
-    else
-      if Client:IsMultiSeated() then
-        Host = "Co-Pilot"
-      end
-    end
-		
-		Client:Message( HostMessage, self.MSG.TIME, Host )
-		
-	end
-end
-
-function STAGELANDING:Validate( Mission, Client, Task )
-	self:F()
-  
-	Task.CurrentLandingZoneName = routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.LandingZones.LandingZoneNames, 500 )
-	if Task.CurrentLandingZoneName then
-	
-		-- Client is in de landing zone.
-		self:T( Task.CurrentLandingZoneName )
-		
-		Task.CurrentLandingZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName].CargoZone
-		Task.CurrentCargoZone = Task.LandingZones.LandingZones[Task.CurrentLandingZoneName]
-
-		if Task.CurrentCargoZone then 
-			if not Task.Signalled then
-				Task.Signalled = Task.CurrentCargoZone:Signal() 
-			end
-		end
-	else
-		if Task.CurrentLandingZone then
-			Task.CurrentLandingZone = nil
-		end
-		if Task.CurrentCargoZone then
-			Task.CurrentCargoZone = nil
-		end
-		Task.Signalled = false 
-		Task:RemoveCargoMenus( Client )
-    self:T( -1 )
-		return -1
-	end
-  
-	
-	local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
-	local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
-	
-	local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
-	local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
-  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
-	
-  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
-  if Task.IsLandingRequired and not Client:GetClientGroupDCSUnit():inAir() then
-    self:T( 1 )
-    Task.IsInAirTestRequired = true
-    return 1
-  end
-  
-	self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
-	if Task.IsLandingRequired and DCSUnitVelocity <= 0.05 and DCSUnitHeight <= Task.CurrentCargoZone.SignalHeight then
-    self:T( 1 )
-    Task.IsInAirTestRequired = false
-    return 1
-	end
-
-  self:T( 0 )
-	return 0
-end
-
-STAGELANDED = {
-  ClassName = "STAGELANDED",
-  MSG = { ID = "Land", TIME = 10 },
-  Name = "Landed",
-  MenusAdded = false
-}
-
-function STAGELANDED:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGELANDED:Execute( Mission, Client, Task )
-	self:F()
-
-	if Task.IsLandingRequired then
-
-	  local Host = "Command"
-	  if Task.HostUnitName then
-	    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
-  	else
-      if Client:IsMultiSeated() then
-        Host = "Co-Pilot"
-      end
-    end
-
-    Client:Message( 'You have landed within the landing zone. Use the radio menu (F10) to ' .. Task.TEXT[1]  .. ' the ' .. Task.CargoType .. '.', 
-                    self.MSG.TIME, Host )
-
-  	if not self.MenusAdded then
-			Task.Cargo = nil
-			Task:RemoveCargoMenus( Client )
-			Task:AddCargoMenus( Client, CARGOS, 250 )
-		end
-	end
-end
-
-
-
-function STAGELANDED:Validate( Mission, Client, Task )
-	self:F()
-
-	if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
-	    self:T( "Client is not anymore in the landing zone, go back to stage Route, and remove cargo menus." )
-		Task.Signalled = false 
-		Task:RemoveCargoMenus( Client )
-    self:T( -2 )
-		return -2
-	end
-
-  local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
-  local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
-  
-  local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
-  local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
-  local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
-  
-  self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
-  if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
-    self:T( "Client went back in the air. Go back to stage Landing." )
-    self:T( -1 )
-    return -1
-  end
-  
-  self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
-  if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
-    self:T( "It seems the Client went back in the air and over the boundary limits. Go back to stage Landing." )
-    self:T( -1 )
-    return -1
-  end
-  
-    -- Wait until cargo is selected from the menu.
-	if Task.IsLandingRequired then 
-		if not Task.Cargo then
-		  self:T( 0 )
-			return 0
-		end
-	end
-
-  self:T( 1 )
-	return 1
-end
-
-STAGEUNLOAD = {
-  ClassName = "STAGEUNLOAD",
-  MSG = { ID = "Unload", TIME = 10 },
-  Name = "Unload"
-}
-
-function STAGEUNLOAD:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
---- Coordinate UnLoading
--- @param #STAGEUNLOAD self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
-function STAGEUNLOAD:Execute( Mission, Client, Task )
-	self:F()
-	
-	if Client:IsMultiSeated() then
-  	Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-                    "Co-Pilot" )
-  else
-    Client:Message( 'You are unloading the ' .. Task.CargoType .. ' ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-                    "Command" )
-  end
-	Task:RemoveCargoMenus( Client )
-end
-
-function STAGEUNLOAD:Executing( Mission, Client, Task )
-	self:F()
-	env.info( 'STAGEUNLOAD:Executing() Task.Cargo.CargoName = ' .. Task.Cargo.CargoName )
-	
-	local TargetZoneName
-	
-	if Task.TargetZoneName then
-		TargetZoneName = Task.TargetZoneName
-	else
-		TargetZoneName = Task.CurrentLandingZoneName
-	end
-	
-	if Task.Cargo:UnLoad( Client, TargetZoneName ) then
-		Task.ExecuteStage = _TransportExecuteStage.SUCCESS
-		if Mission.MissionReportFlash then
-			Client:ShowCargo()
-		end
-	end
-end
-
---- Validate UnLoading
--- @param #STAGEUNLOAD self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
-function STAGEUNLOAD:Validate( Mission, Client, Task )
-	self:F()
-	env.info( 'STAGEUNLOAD:Validate()' )
-  
-  if routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
-  else
-    Task.ExecuteStage = _TransportExecuteStage.FAILED
-    Task:RemoveCargoMenus( Client )
-    if Client:IsMultiSeated() then
-      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-  	                _TransportStageMsgTime.DONE,  "Co-Pilot" )
-  	else
-      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-                    _TransportStageMsgTime.DONE,  "Command" )
-  	end
-    return 1
-  end
-  
-  if not Client:GetClientGroupDCSUnit():inAir() then
-  else
-    Task.ExecuteStage = _TransportExecuteStage.FAILED
-    Task:RemoveCargoMenus( Client )
-    if Client:IsMultiSeated() then
-      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-  	                _TransportStageMsgTime.DONE,  "Co-Pilot" )
-	  else
-      Client:Message( 'The ' .. Task.CargoType .. " haven't been successfully " .. Task.TEXT[3] .. '  within the landing zone. Task and mission has failed.', 
-                    _TransportStageMsgTime.DONE,  "Command" )
-	  end
-    return 1
-  end
-  
-  if  Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
-    if Client:IsMultiSeated() then
-      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE, "Co-Pilot" )
-    else
-      Client:Message( 'The ' .. Task.CargoType .. ' have been sucessfully ' .. Task.TEXT[3] .. '  within the landing zone.', _TransportStageMsgTime.DONE, "Command" )
-    end
-    Task:RemoveCargoMenus( Client )
-    Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 ) -- We set the cargo as one more goal completed in the mission.
-    return 1
-  end
-  
-  return 1
-end
-
-STAGELOAD = {
-  ClassName = "STAGELOAD",
-  MSG = { ID = "Load", TIME = 10 },
-  Name = "Load"
-}
-
-function STAGELOAD:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-function STAGELOAD:Execute( Mission, Client, Task )
-	self:F()
-	
-	if not Task.IsSlingLoad then
- 
-    local Host = "Command"
-    if Task.HostUnitName then
-      Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
-    else
-      if Client:IsMultiSeated() then
-        Host = "Co-Pilot"
-      end
-    end
-
-		Client:Message( 'The ' .. Task.CargoType .. ' are being ' .. Task.TEXT[2] .. ' within the landing zone. Wait until the helicopter is ' .. Task.TEXT[3] .. '.', 
-						_TransportStageMsgTime.EXECUTING, Host )
-
-		-- Route the cargo to the Carrier
-		
-		Task.Cargo:OnBoard( Client, Task.CurrentCargoZone, Task.OnBoardSide )
-		Task.ExecuteStage = _TransportExecuteStage.EXECUTING
-	else
-		Task.ExecuteStage = _TransportExecuteStage.EXECUTING
-	end
-end
-
-function STAGELOAD:Executing( Mission, Client, Task )
-	self:F()
-
-	-- If the Cargo is ready to be loaded, load it into the Client.
-
-  local Host = "Command"
-  if Task.HostUnitName then
-    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
-  else
-    if Client:IsMultiSeated() then
-      Host = "Co-Pilot"
-    end
-  end
-		
-	if not Task.IsSlingLoad then
-		self:T( Task.Cargo.CargoName)
-		
-		if Task.Cargo:OnBoarded( Client, Task.CurrentCargoZone ) then
-
-			-- Load the Cargo onto the Client
-			Task.Cargo:Load( Client )
-		
-			-- Message to the pilot that cargo has been loaded.
-			Client:Message( "The cargo " .. Task.Cargo.CargoName .. " has been loaded in our helicopter.", 
-							20, Host )
-			Task.ExecuteStage = _TransportExecuteStage.SUCCESS
-			
-			Client:ShowCargo()
-		end
-	else
-		Client:Message( "Hook the " .. Task.CargoNames .. " onto the helicopter " .. Task.TEXT[3] .. " within the landing zone.", 
-						_TransportStageMsgTime.EXECUTING,  Host )
-		for CargoID, Cargo in pairs( CARGOS ) do
-			self:T( "Cargo.CargoName = " .. Cargo.CargoName )
-			
-			if Cargo:IsSlingLoad() then
-				local CargoStatic = StaticObject.getByName( Cargo.CargoStaticName )
-				if CargoStatic then
-					self:T( "Cargo is found in the DCS simulator.")
-					local CargoStaticPosition = CargoStatic:getPosition().p
-					self:T( "Cargo Position x = " .. CargoStaticPosition.x .. ", y = " ..  CargoStaticPosition.y .. ", z = " ..  CargoStaticPosition.z )
-					local CargoStaticHeight = routines.GetUnitHeight( CargoStatic )
-					if CargoStaticHeight > 5 then
-						self:T( "Cargo is airborne.")
-						Cargo:StatusLoaded()
-						Task.Cargo = Cargo
-						Client:Message( 'The Cargo has been successfully hooked onto the helicopter and is now being sling loaded. Fly outside the landing zone.', 
-										self.MSG.TIME, Host  )
-						Task.ExecuteStage = _TransportExecuteStage.SUCCESS
-						break
-					end
-				else
-					self:T( "Cargo not found in the DCS simulator." )
-				end
-			end
-		end
-	end
-  
-end
-
-function STAGELOAD:Validate( Mission, Client, Task )
-	self:F()
-
-	self:T( "Task.CurrentLandingZoneName = " .. Task.CurrentLandingZoneName )
-
-  local Host = "Command"
-  if Task.HostUnitName then
-    Host = Task.HostUnitName .. " (" .. Task.HostUnitTypeName .. ")"
-  else
-    if Client:IsMultiSeated() then
-      Host = "Co-Pilot"
-    end
-  end
-
- 	if not Task.IsSlingLoad then
-		if not routines.IsUnitNearZonesRadius( Client:GetClientGroupDCSUnit(), Task.CurrentLandingZoneName, 500 ) then
-			Task:RemoveCargoMenus( Client )
-			Task.ExecuteStage = _TransportExecuteStage.FAILED
-			Task.CargoName = nil 
-			Client:Message( "The " .. Task.CargoType .. " loading has been aborted. You flew outside the pick-up zone while loading. ", 
-							self.MSG.TIME, Host )
-      self:T( -1 )
-			return -1
-		end
-
-    local DCSUnitVelocityVec3 = Client:GetClientGroupDCSUnit():getVelocity()
-    local DCSUnitVelocity = ( DCSUnitVelocityVec3.x ^2 + DCSUnitVelocityVec3.y ^2 + DCSUnitVelocityVec3.z ^2 ) ^ 0.5
-    
-    local DCSUnitPointVec3 = Client:GetClientGroupDCSUnit():getPoint()
-    local LandHeight = land.getHeight( { x = DCSUnitPointVec3.x, y = DCSUnitPointVec3.z } ) 
-    local DCSUnitHeight = DCSUnitPointVec3.y - LandHeight
-    
-    self:T( { Task.IsLandingRequired, Client:GetClientGroupDCSUnit():inAir() } )
-    if Task.IsLandingRequired and Task.IsInAirTestRequired == true and Client:GetClientGroupDCSUnit():inAir() then
-      Task:RemoveCargoMenus( Client )
-      Task.ExecuteStage = _TransportExecuteStage.FAILED
-      Task.CargoName = nil 
-      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-              self.MSG.TIME, Host )
-      self:T( -1 )
-      return -1
-    end
-    
-    self:T( { DCSUnitVelocity, DCSUnitHeight, LandHeight, Task.CurrentCargoZone.SignalHeight } )
-    if Task.IsLandingRequired and Task.IsInAirTestRequired == false and DCSUnitVelocity >= 2 and DCSUnitHeight >= Task.CurrentCargoZone.SignalHeight then
-      Task:RemoveCargoMenus( Client )
-      Task.ExecuteStage = _TransportExecuteStage.FAILED
-      Task.CargoName = nil 
-      Client:Message( "The " .. Task.CargoType .. " loading has been aborted. Re-start the " .. Task.TEXT[3] .. " process. Don't fly outside the pick-up zone.", 
-              self.MSG.TIME, Host )
-      self:T( -1 )
-      return -1
-    end
-
-		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
-			Task:RemoveCargoMenus( Client )
-			Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " within the landing zone.", 
-							self.MSG.TIME, Host )
-			Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.CargoName, 1 )
-      self:T( 1 )
-			return 1
-		end
-
-	else
-		if Task.ExecuteStage == _TransportExecuteStage.SUCCESS then
-			CargoStatic = StaticObject.getByName( Task.Cargo.CargoStaticName )
-			if CargoStatic and not routines.IsStaticInZones( CargoStatic, Task.CurrentLandingZoneName ) then
-				Client:Message( "Good Job. The " .. Task.CargoType .. " has been sucessfully " .. Task.TEXT[3] .. " and flown outside of the landing zone.", 
-								self.MSG.TIME, Host )
-				Task.MissionTask:AddGoalCompletion( Task.MissionTask.GoalVerb, Task.Cargo.CargoName, 1 )
-        self:T( 1 )
-				return 1
-			end
-		end
-	
-	end
-  
- 
-  self:T( 0 )
-	return 0
-end
-
-
-STAGEDONE = {
-  ClassName = "STAGEDONE",
-  MSG = { ID = "Done", TIME = 10 },
-  Name = "Done"
-}
-
-function STAGEDONE:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'AI'
-	return self
-end
-
-function STAGEDONE:Execute( Mission, Client, Task )
-	self:F()
-
-end
-
-function STAGEDONE:Validate( Mission, Client, Task )
-	self:F()
-
-	Task:Done()
-  
-	return 0
-end
-
-STAGEARRIVE = {
-  ClassName = "STAGEARRIVE",
-  MSG = { ID = "Arrive", TIME = 10 },
-  Name = "Arrive"
-}
-
-function STAGEARRIVE:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'CLIENT'
-	return self
-end
-
-
---- Execute Arrival
--- @param #STAGEARRIVE self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
-function STAGEARRIVE:Execute( Mission, Client, Task )
-	self:F()
- 
-  if Client:IsMultiSeated() then
-    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME, "Co-Pilot" )
-  else
-    Client:Message( 'We have arrived at ' .. Task.CurrentLandingZoneName .. ".", self.MSG.TIME, "Command" )
-  end  
-
-end
-
-function STAGEARRIVE:Validate( Mission, Client, Task )
-	self:F()
-  
-  Task.CurrentLandingZoneID  = routines.IsUnitInZones( Client:GetClientGroupDCSUnit(), Task.LandingZones )
-  if  ( Task.CurrentLandingZoneID ) then
-  else
-    return -1
-  end
-  
-  return 1
-end
-
-STAGEGROUPSDESTROYED = {
-  ClassName = "STAGEGROUPSDESTROYED",
-  DestroyGroupSize = -1,
-  Frequency = STAGE.FREQUENCY.REPEAT,
-  MSG = { ID = "DestroyGroup", TIME = 10 },
-  Name = "GroupsDestroyed"
-}
-
-function STAGEGROUPSDESTROYED:New()
-	local self = BASE:Inherit( self, STAGE:New() )
-	self:F()
-	self.StageType = 'AI'
-	return self
-end
-
---function STAGEGROUPSDESTROYED:Execute( Mission, Client, Task )
--- 
---	Client:Message( 'Task: Still ' .. DestroyGroupSize .. " of " .. Task.DestroyGroupCount .. " " .. Task.DestroyGroupType .. " to be destroyed!", self.MSG.TIME,  Mission.Name .. "/Stage" )
---
---end
-
-function STAGEGROUPSDESTROYED:Validate( Mission, Client, Task )
-	self:F()
- 
-	if Task.MissionTask:IsGoalReached() then
-		return 1
-	else
-		return 0
-	end
-end
-
-function STAGEGROUPSDESTROYED:Execute( Mission, Client, Task )
-	self:F()
-	self:T( { Task.ClassName, Task.Destroyed } )
-	--env.info( 'Event Table Task = ' .. tostring(Task) )
-
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
---[[
-  _TransportStage: Defines the different stages of which of transport missions can be in. This table is internal and is used to control the sequence of messages, actions and flow.
-  
-  - _TransportStage.START
-  - _TransportStage.ROUTE
-  - _TransportStage.LAND
-  - _TransportStage.EXECUTE
-  - _TransportStage.DONE
-  - _TransportStage.REMOVE
---]]
-_TransportStage = { 
-  HOLD = "HOLD",
-  START = "START", 
-  ROUTE = "ROUTE", 
-  LANDING = "LANDING",
-  LANDED = "LANDED",
-  EXECUTING = "EXECUTING",
-  LOAD = "LOAD",
-  UNLOAD = "UNLOAD",
-  DONE = "DONE", 
-  NEXT = "NEXT"
-}
-
-_TransportStageMsgTime = { 
-  HOLD = 10,
-  START = 60, 
-  ROUTE = 5, 
-  LANDING = 10,
-  LANDED = 30,
-  EXECUTING = 30,
-  LOAD = 30,
-  UNLOAD = 30,
-  DONE = 30, 
-  NEXT = 0
-}
-
-_TransportStageTime = { 
-  HOLD = 10,
-  START = 5, 
-  ROUTE = 5, 
-  LANDING = 1,
-  LANDED = 1,
-  EXECUTING = 5,
-  LOAD = 5,
-  UNLOAD = 5,
-  DONE = 1, 
-  NEXT = 0
-}
-
-_TransportStageAction = { 
-  REPEAT = -1,
-  NONE = 0,
-  ONCE = 1
-}
---- This module contains the TASK_BASE class.
--- 
--- 1) @{#TASK_BASE} class, extends @{Base#BASE}
--- ============================================
--- 1.1) The @{#TASK_BASE} class implements the methods for task orchestration within MOOSE. 
--- ----------------------------------------------------------------------------------------
--- The class provides a couple of methods to:
--- 
---   * @{#TASK_BASE.AssignToGroup}():Assign a task to a group (of players).
---   * @{#TASK_BASE.AddProcess}():Add a @{Process} to a task.
---   * @{#TASK_BASE.RemoveProcesses}():Remove a running @{Process} from a running task.
---   * @{#TASK_BASE.AddStateMachine}():Add a @{StateMachine} to a task.
---   * @{#TASK_BASE.RemoveStateMachines}():Remove @{StateMachine}s from a task.
---   * @{#TASK_BASE.HasStateMachine}():Enquire if the task has a @{StateMachine}
---   * @{#TASK_BASE.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK_BASE}.
---   * @{#TASK_BASE.UnAssignFromUnit}(): Unassign the task from a unit.
---   
--- 1.2) Set and enquire task status (beyond the task state machine processing).
--- ----------------------------------------------------------------------------
--- A task needs to implement as a minimum the following task states:
--- 
---   * **Success**: Expresses the successful execution and finalization of the task.
---   * **Failed**: Expresses the failure of a task.
---   * **Planned**: Expresses that the task is created, but not yet in execution and is not assigned yet.
---   * **Assigned**: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.
--- 
--- A task may also implement the following task states:
---
---   * **Rejected**: Expresses that the task is rejected by a player, who was requested to accept the task.
---   * **Cancelled**: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.
---
--- A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.
---
--- The status of tasks can be set by the methods **State** followed by the task status. An example is `StateAssigned()`.
--- The status of tasks can be enquired by the methods **IsState** followed by the task status name. An example is `if IsStateAssigned() then`.
--- 
--- 1.3) Add scoring when reaching a certain task status:
--- -----------------------------------------------------
--- Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
--- Use the method @{#TASK_BASE.AddScore}() to add scores when a status is reached.
--- 
--- 1.4) Task briefing:
--- -------------------
--- A task briefing can be given that is shown to the player when he is assigned to the task.
--- 
--- ===
--- 
--- ### Authors: FlightControl - Design and Programming
--- 
--- @module Task
-
---- The TASK_BASE class
--- @type TASK_BASE
--- @field Scheduler#SCHEDULER TaskScheduler
--- @field Mission#MISSION Mission
--- @field StateMachine#STATEMACHINE Fsm
--- @field Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @extends Base#BASE
-TASK_BASE = {
-  ClassName = "TASK_BASE",
-  TaskScheduler = nil,
-  Processes = {},
-  Players = nil,
-  Scores = {},
-  Menu = {},
-  SetGroup = nil,
-}
-
-
---- Instantiates a new TASK_BASE. Should never be used. Interface Class.
--- @param #TASK_BASE self
--- @param Mission#MISSION The mission wherein the Task is registered.
--- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
--- @param #string TaskName The name of the Task
--- @param #string TaskType The type of the Task
--- @param #string TaskCategory The category of the Task (A2G, A2A, Transport, ... )
--- @return #TASK_BASE self
-function TASK_BASE:New( Mission, SetGroup, TaskName, TaskType, TaskCategory )
-
-  local self = BASE:Inherit( self, BASE:New() )
-  self:E( "New TASK " .. TaskName )
-
-  self.Processes = {}
-  self.Fsm = {}
-
-  self.Mission = Mission
-  self.SetGroup = SetGroup
-
-  self:SetCategory( TaskCategory )
-  self:SetType( TaskType )
-  self:SetName( TaskName )
-  self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
-
-  self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
-  
-  return self
-end
-
---- Cleans all references of a TASK_BASE.
--- @param #TASK_BASE self
--- @return #nil
-function TASK_BASE:CleanUp()
-
-  _EVENTDISPATCHER:OnPlayerLeaveRemove( self )
-  _EVENTDISPATCHER:OnDeadRemove( self )
-  _EVENTDISPATCHER:OnCrashRemove( self )
-  _EVENTDISPATCHER:OnPilotDeadRemove( self )
-  
-  return nil
-end
-
-
---- Assign the @{Task}to a @{Group}.
--- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
-function TASK_BASE:AssignToGroup( TaskGroup )
-  self:F2( TaskGroup:GetName() )
-  
-  local TaskGroupName = TaskGroup:GetName()
-  
-  TaskGroup:SetState( TaskGroup, "Assigned", self )
-  
-  self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
-  
-  local TaskUnits = TaskGroup:GetUnits()
-  for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Unit#UNIT
-    local PlayerName = TaskUnit:GetPlayerName()
-    if PlayerName ~= nil or PlayerName ~= "" then
-      self:AssignToUnit( TaskUnit )
-    end
-  end
-end
-
---- Send the briefng message of the @{Task} to the assigned @{Group}s.
--- @param #TASK_BASE self
-function TASK_BASE:SendBriefingToAssignedGroups()
-  self:F2()
-  
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-
-    if self:IsAssignedToGroup( TaskGroup ) then    
-      TaskGroup:Message( self.TaskBriefing, 60 )
-    end
-  end
-end
-
-
---- Assign the @{Task} from the @{Group}s.
--- @param #TASK_BASE self
-function TASK_BASE:UnAssignFromGroups()
-  self:F2()
-  
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-
-    TaskGroup:SetState( TaskGroup, "Assigned", nil )
-    local TaskUnits = TaskGroup:GetUnits()
-    for UnitID, UnitData in pairs( TaskUnits ) do
-      local TaskUnit = UnitData -- Unit#UNIT
-      local PlayerName = TaskUnit:GetPlayerName()
-      if PlayerName ~= nil or PlayerName ~= "" then
-        self:UnAssignFromUnit( TaskUnit )
-      end
-    end
-  end
-end
-
---- Returns if the @{Task} is assigned to the Group.
--- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
--- @return #boolean
-function TASK_BASE:IsAssignedToGroup( TaskGroup )
-
-  local TaskGroupName = TaskGroup:GetName()
-  
-  if self:IsStateAssigned() then
-    if TaskGroup:GetState( TaskGroup, "Assigned" ) == self then
-      return true
-    end
-  end
-  
-  return false
-end
-
---- Assign the @{Task}to an alive @{Unit}.
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:AssignToUnit( TaskUnit )
-  self:F( TaskUnit:GetName() )
-  
-  return nil
-end
-
---- UnAssign the @{Task} from an alive @{Unit}.
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:UnAssignFromUnit( TaskUnitName )
-  self:F( TaskUnitName )
-  
-  if self:HasStateMachine( TaskUnitName ) == true then
-    self:RemoveStateMachines( TaskUnitName )
-    self:RemoveProcesses( TaskUnitName )
-  end
-
-  return self
-end
-
---- Set the menu options of the @{Task} to all the groups in the SetGroup.
--- @param #TASK_BASE self
--- @return #TASK_BASE self
-function TASK_BASE:SetPlannedMenu()
-
-  local MenuText = self:GetPlannedMenuText()
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if not self:IsAssignedToGroup( TaskGroup ) then
-      self:SetPlannedMenuForGroup( TaskGroup, MenuText )
-    end
-  end  
-end
-
---- Set the menu options of the @{Task} to all the groups in the SetGroup.
--- @param #TASK_BASE self
--- @return #TASK_BASE self
-function TASK_BASE:SetAssignedMenu()
-
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if self:IsAssignedToGroup( TaskGroup ) then
-      self:SetAssignedMenuForGroup( TaskGroup )
-    end
-  end  
-end
-
---- Remove the menu options of the @{Task} to all the groups in the SetGroup.
--- @param #TASK_BASE self
--- @return #TASK_BASE self
-function TASK_BASE:RemoveMenu()
-
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:RemoveMenuForGroup( TaskGroup )
-  end  
-end
-
---- Set the planned menu option of the @{Task}.
--- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
--- @param #string MenuText The menu text.
--- @return #TASK_BASE self
-function TASK_BASE:SetPlannedMenuForGroup( TaskGroup, MenuText )
-  self:E( TaskGroup:GetName() )
-
-  local TaskMission = self.Mission:GetName()
-  local TaskCategory = self:GetCategory()
-  local TaskType = self:GetType()
-  
-  local Mission = self.Mission
-  
-  Mission.MenuMission = Mission.MenuMission or {}
-  local MenuMission = Mission.MenuMission
-
-  Mission.MenuCategory = Mission.MenuCategory or {}
-  local MenuCategory = Mission.MenuCategory
-  
-  Mission.MenuType = Mission.MenuType or {} 
-  local MenuType = Mission.MenuType
-  
-  self.Menu = self.Menu or {}
-  local Menu = self.Menu
-  
-  local TaskGroupName = TaskGroup:GetName()
-  MenuMission[TaskGroupName] = MenuMission[TaskGroupName] or MENU_GROUP:New( TaskGroup, TaskMission, nil )
-  
-  MenuCategory[TaskGroupName] = MenuCategory[TaskGroupName] or {}
-  MenuCategory[TaskGroupName][TaskCategory] = MenuCategory[TaskGroupName][TaskCategory] or MENU_GROUP:New( TaskGroup, TaskCategory, MenuMission[TaskGroupName] )
-  
-  MenuType[TaskGroupName] = MenuType[TaskGroupName] or {}
-  MenuType[TaskGroupName][TaskType] = MenuType[TaskGroupName][TaskType] or MENU_GROUP:New( TaskGroup, TaskType, MenuCategory[TaskGroupName][TaskCategory] )
-  
-  if Menu[TaskGroupName] then
-    Menu[TaskGroupName]:Remove()
-  end
-  Menu[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, MenuType[TaskGroupName][TaskType], self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } )
-
-  return self
-end
-
---- Set the assigned menu options of the @{Task}.
--- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
--- @return #TASK_BASE self
-function TASK_BASE:SetAssignedMenuForGroup( TaskGroup )
-  self:E( TaskGroup:GetName() )
-
-  local TaskMission = self.Mission:GetName()
-  
-  local Mission = self.Mission
-
-  Mission.MenuMission = Mission.MenuMission or {}
-  local MenuMission = Mission.MenuMission
-
-  self.MenuStatus = self.MenuStatus or {}
-  local MenuStatus = self.MenuStatus
-
-  
-  self.MenuAbort = self.MenuAbort or {}
-  local MenuAbort = self.MenuAbort
-
-  local TaskGroupName = TaskGroup:GetName()
-  MenuMission[TaskGroupName] = MenuMission[TaskGroupName] or MENU_GROUP:New( TaskGroup, TaskMission, nil )
-  MenuStatus[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MenuMission[TaskGroupName], self.MenuTaskStatus, { self = self, TaskGroup = TaskGroup } )
-  MenuAbort[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MenuMission[TaskGroupName], self.MenuTaskAbort, { self = self, TaskGroup = TaskGroup } )
-
-  return self
-end
-
---- Remove the menu option of the @{Task} for a @{Group}.
--- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
--- @return #TASK_BASE self
-function TASK_BASE:RemoveMenuForGroup( TaskGroup )
-
-  local TaskGroupName = TaskGroup:GetName()
-  
-  local Mission = self.Mission
-  local MenuMission = Mission.MenuMission
-  local MenuCategory = Mission.MenuCategory
-  local MenuType = Mission.MenuType
-  local MenuStatus = self.MenuStatus
-  local MenuAbort = self.MenuAbort
-  local Menu = self.Menu
-
-  Menu = Menu or {}
-  if Menu[TaskGroupName] then
-    Menu[TaskGroupName]:Remove()
-    Menu[TaskGroupName] = nil
-  end
-
-  MenuType = MenuType or {}
-  if MenuType[TaskGroupName] then
-    for _, Menu in pairs( MenuType[TaskGroupName] ) do
-      Menu:Remove()
-    end
-    MenuType[TaskGroupName] = nil
-  end
-
-  MenuCategory = MenuCategory or {}
-  if MenuCategory[TaskGroupName] then
-    for _, Menu in pairs( MenuCategory[TaskGroupName] ) do
-      Menu:Remove()
-    end
-    MenuCategory[TaskGroupName] = nil
-  end
-  
-  MenuStatus = MenuStatus or {}
-  if MenuStatus[TaskGroupName] then
-    MenuStatus[TaskGroupName]:Remove()
-    MenuStatus[TaskGroupName] = nil
-  end
-  
-  MenuAbort = MenuAbort or {}
-  if MenuAbort[TaskGroupName] then
-    MenuAbort[TaskGroupName]:Remove()
-    MenuAbort[TaskGroupName] = nil
-  end
-
-end
-
-function TASK_BASE.MenuAssignToGroup( MenuParam )
-
-  local self = MenuParam.self
-  local TaskGroup = MenuParam.TaskGroup
-  
-  self:AssignToGroup( TaskGroup )
-end
-
-function TASK_BASE.MenuTaskStatus( MenuParam )
-
-  local self = MenuParam.self
-  local TaskGroup = MenuParam.TaskGroup
-  
-  --self:AssignToGroup( TaskGroup )
-end
-
-function TASK_BASE.MenuTaskAbort( MenuParam )
-
-  local self = MenuParam.self
-  local TaskGroup = MenuParam.TaskGroup
-  
-  --self:AssignToGroup( TaskGroup )
-end
-
-
-
---- Returns the @{Task} name.
--- @param #TASK_BASE self
--- @return #string TaskName
-function TASK_BASE:GetTaskName()
-  return self.TaskName
-end
-
-
---- Add Process to @{Task} with key @{Unit}.
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:AddProcess( TaskUnit, Process )
-  local TaskUnitName = TaskUnit:GetName()
-  self.Processes = self.Processes or {}
-  self.Processes[TaskUnitName] = self.Processes[TaskUnitName] or {}
-  self.Processes[TaskUnitName][#self.Processes[TaskUnitName]+1] = Process
-  return Process
-end
-
-
---- Remove Processes from @{Task} with key @{Unit}
--- @param #TASK_BASE self
--- @param #string TaskUnitName
--- @return #TASK_BASE self
-function TASK_BASE:RemoveProcesses( TaskUnitName )
-
-  for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
-    local Process = ProcessData -- Process#PROCESS
-    Process:StopEvents()
-    Process = nil
-    self.Processes[TaskUnitName][ProcessID] = nil
-    self:E( self.Processes[TaskUnitName][ProcessID] )
-  end
-  self.Processes[TaskUnitName] = nil
-end
-
---- Fail processes from @{Task} with key @{Unit}
--- @param #TASK_BASE self
--- @param #string TaskUnitName
--- @return #TASK_BASE self
-function TASK_BASE:FailProcesses( TaskUnitName )
-
-  for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
-    local Process = ProcessData -- Process#PROCESS
-    Process.Fsm:Fail()
-  end
-end
-
---- Add a FiniteStateMachine to @{Task} with key @{Unit}
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:AddStateMachine( TaskUnit, Fsm )
-  local TaskUnitName = TaskUnit:GetName()
-  self.Fsm[TaskUnitName] = self.Fsm[TaskUnitName] or {}
-  self.Fsm[TaskUnitName][#self.Fsm[TaskUnitName]+1] = Fsm
-  return Fsm
-end
-
---- Remove FiniteStateMachines from @{Task} with key @{Unit}
--- @param #TASK_BASE self
--- @param #string TaskUnitName
--- @return #TASK_BASE self
-function TASK_BASE:RemoveStateMachines( TaskUnitName )
-
-  for _, Fsm in pairs( self.Fsm[TaskUnitName] ) do
-    Fsm = nil
-    self.Fsm[TaskUnitName][_] = nil
-    self:E( self.Fsm[TaskUnitName][_] )
-  end
-  self.Fsm[TaskUnitName] = nil
-end
-
---- Checks if there is a FiniteStateMachine assigned to @{Unit} for @{Task}
--- @param #TASK_BASE self
--- @param #string TaskUnitName
--- @return #TASK_BASE self
-function TASK_BASE:HasStateMachine( TaskUnitName )
-
-  self:F( { TaskUnitName, self.Fsm[TaskUnitName] ~= nil } )
-  return ( self.Fsm[TaskUnitName] ~= nil )
-end
-
-
-
-
-
---- Register a potential new assignment for a new spawned @{Unit}.
--- Tasks only get assigned if there are players in it.
--- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventAssignUnit( Event )
-  if Event.IniUnit then
-    self:F( Event )
-    local TaskUnit = Event.IniUnit
-    if TaskUnit:IsAlive() then
-      local TaskPlayerName = TaskUnit:GetPlayerName()
-      if TaskPlayerName ~= nil then
-        if not self:HasStateMachine( TaskUnit ) then
-          -- Check if the task was assigned to the group, if it was assigned to the group, assign to the unit just spawned and initiate the processes.
-          local TaskGroup = TaskUnit:GetGroup()
-          if self:IsAssignedToGroup( TaskGroup ) then
-            self:AssignToUnit( TaskUnit )
-          end
-        end
-      end
-    end
-  end
-  return nil
-end
-
---- Catches the "player leave unit" event for a @{Unit}  ....
--- When a player is an air unit, and leaves the unit:
--- 
---   * and he is not at an airbase runway on the ground, he will fail its task.
---   * and he is on an airbase and on the ground, the process for him will just continue to work, he can switch airplanes, and take-off again.
--- This is important to model the change from plane types for a player during mission assignment.
--- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventPlayerLeaveUnit( Event )
-  self:F( Event )
-  if Event.IniUnit then
-    local TaskUnit = Event.IniUnit
-    local TaskUnitName = Event.IniUnitName
-    
-    -- Check if for this unit in the task there is a process ongoing.
-    if self:HasStateMachine( TaskUnitName ) then
-      if TaskUnit:IsAir() then
-        if TaskUnit:IsAboveRunway() then
-          -- do nothing
-        else
-          self:E( "IsNotAboveRunway" )
-            -- Player left airplane during an assigned task and was not at an airbase.
-            self:FailProcesses( TaskUnitName )
-            self:UnAssignFromUnit( TaskUnitName )
-          end
-        end
-      end
-    
-  end
-  return nil
-end
-
---- UnAssigns a @{Unit} that is left by a player, crashed, dead, ....
--- There are only assignments if there are players in it.
--- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventDead( Event )
-  self:F( Event )
-  if Event.IniUnit then
-    local TaskUnit = Event.IniUnit
-    local TaskUnitName = Event.IniUnitName
-
-    -- Check if for this unit in the task there is a process ongoing.
-    if self:HasStateMachine( TaskUnitName ) then
-      self:FailProcesses( TaskUnitName )
-      self:UnAssignFromUnit( TaskUnitName )
-    end
-    
-    local TaskGroup = Event.IniUnit:GetGroup()
-    TaskGroup:SetState( TaskGroup, "Assigned", nil )
-  end
-  return nil
-end
-
---- Gets the Scoring of the task
--- @param #TASK_BASE self
--- @return Scoring#SCORING Scoring
-function TASK_BASE:GetScoring()
-  return self.Mission:GetScoring()
-end
-
-
---- Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.
--- @param #TASK_BASE self
--- @return #string The Task ID
-function TASK_BASE:GetTaskIndex()
-
-  local TaskCategory = self:GetCategory()
-  local TaskType = self:GetType()
-  local TaskName = self:GetName()
-
-  return TaskCategory .. "." ..TaskType .. "." .. TaskName
-end
-
---- Sets the Name of the Task
--- @param #TASK_BASE self
--- @param #string TaskName
-function TASK_BASE:SetName( TaskName )
-  self.TaskName = TaskName
-end
-
---- Gets the Name of the Task
--- @param #TASK_BASE self
--- @return #string The Task Name
-function TASK_BASE:GetName()
-  return self.TaskName
-end
-
---- Sets the Type of the Task
--- @param #TASK_BASE self
--- @param #string TaskType
-function TASK_BASE:SetType( TaskType )
-  self.TaskType = TaskType
-end
-
---- Gets the Type of the Task
--- @param #TASK_BASE self
--- @return #string TaskType
-function TASK_BASE:GetType()
-  return self.TaskType
-end
-
---- Sets the Category of the Task
--- @param #TASK_BASE self
--- @param #string TaskCategory
-function TASK_BASE:SetCategory( TaskCategory )
-  self.TaskCategory = TaskCategory
-end
-
---- Gets the Category of the Task
--- @param #TASK_BASE self
--- @return #string TaskCategory
-function TASK_BASE:GetCategory()
-  return self.TaskCategory
-end
-
---- Sets the ID of the Task
--- @param #TASK_BASE self
--- @param #string TaskID
-function TASK_BASE:SetID( TaskID )
-  self.TaskID = TaskID
-end
-
---- Gets the ID of the Task
--- @param #TASK_BASE self
--- @return #string TaskID
-function TASK_BASE:GetID()
-  return self.TaskID
-end
-
-
---- Sets a @{Task} to status **Success**.
--- @param #TASK_BASE self
-function TASK_BASE:StateSuccess()
-  self:SetState( self, "State", "Success" )
-  return self
-end
-
---- Is the @{Task} status **Success**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStateSuccess()
-  return self:GetStateString() == "Success"
-end
-
---- Sets a @{Task} to status **Failed**.
--- @param #TASK_BASE self
-function TASK_BASE:StateFailed()
-  self:SetState( self, "State", "Failed" )
-  return self
-end
-
---- Is the @{Task} status **Failed**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStateFailed()
-  return self:GetStateString() == "Failed"
-end
-
---- Sets a @{Task} to status **Planned**.
--- @param #TASK_BASE self
-function TASK_BASE:StatePlanned()
-  self:SetState( self, "State", "Planned" )
-  return self
-end
-
---- Is the @{Task} status **Planned**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStatePlanned()
-  return self:GetStateString() == "Planned"
-end
-
---- Sets a @{Task} to status **Assigned**.
--- @param #TASK_BASE self
-function TASK_BASE:StateAssigned()
-  self:SetState( self, "State", "Assigned" )
-  return self
-end
-
---- Is the @{Task} status **Assigned**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStateAssigned()
-  return self:GetStateString() == "Assigned"
-end
-
---- Sets a @{Task} to status **Hold**.
--- @param #TASK_BASE self
-function TASK_BASE:StateHold()
-  self:SetState( self, "State", "Hold" )
-  return self
-end
-
---- Is the @{Task} status **Hold**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStateHold()
-  return self:GetStateString() == "Hold"
-end
-
---- Sets a @{Task} to status **Replanned**.
--- @param #TASK_BASE self
-function TASK_BASE:StateReplanned()
-  self:SetState( self, "State", "Replanned" )
-  return self
-end
-
---- Is the @{Task} status **Replanned**.
--- @param #TASK_BASE self
-function TASK_BASE:IsStateReplanned()
-  return self:GetStateString() == "Replanned"
-end
-
---- Gets the @{Task} status.
--- @param #TASK_BASE self
-function TASK_BASE:GetStateString()
-  return self:GetState( self, "State" )
-end
-
---- Sets a @{Task} briefing.
--- @param #TASK_BASE self
--- @param #string TaskBriefing
--- @return #TASK_BASE self
-function TASK_BASE:SetBriefing( TaskBriefing )
-  self.TaskBriefing = TaskBriefing
-  return self
-end
-
-
-
---- Adds a score for the TASK to be achieved.
--- @param #TASK_BASE self
--- @param #string TaskStatus is the status of the TASK when the score needs to be given.
--- @param #string ScoreText is a text describing the score that is given according the status.
--- @param #number Score is a number providing the score of the status.
--- @return #TASK_BASE self
-function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
-  self:F2( { TaskStatus, ScoreText, Score } )
-
-  self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
-  self.Scores[TaskStatus].ScoreText = ScoreText
-  self.Scores[TaskStatus].Score = Score
-  return self
-end
-
---- StateMachine callback function for a TASK
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Event#EVENTDATA Event
-function TASK_BASE:OnAssigned( TaskUnit, Fsm, Event, From, To )
-
-  self:E("Assigned")
-  
-  local TaskGroup = TaskUnit:GetGroup()
-  
-  TaskGroup:Message( self.TaskBriefing, 20 )
-  
-  self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
-
-end
-
-
---- StateMachine callback function for a TASK
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Event#EVENTDATA Event
-function TASK_BASE:OnSuccess( TaskUnit, Fsm, Event, From, To )
-
-  self:E("Success")
-  
-  self:UnAssignFromGroups()
-
-  local TaskGroup = TaskUnit:GetGroup()
-  self.Mission:SetPlannedMenu()
-
-  self:StateSuccess()
-  
-  -- The task has become successful, the event catchers can be cleaned.
-  self:CleanUp()
-  
-end
-
---- StateMachine callback function for a TASK
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Event#EVENTDATA Event
-function TASK_BASE:OnFailed( TaskUnit, Fsm, Event, From, To )
-
-  self:E( { "Failed for unit ", TaskUnit:GetName(), TaskUnit:GetPlayerName() } )
-  
-  -- A task cannot be "failed", so a task will always be there waiting for players to join.
-  -- When the player leaves its unit, we will need to check whether he was on the ground or not at an airbase.
-  -- When the player crashes, we will need to check whether in the group there are other players still active. It not, we reset the task from Assigned to Planned, otherwise, we just leave as Assigned.
-
-  self:UnAssignFromGroups()
-  self:StatePlanned()
-
-end
-
---- StateMachine callback function for a TASK
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Event#EVENTDATA Event
-function TASK_BASE:OnStateChange( TaskUnit, Fsm, Event, From, To )
-
-  if self:IsTrace() then
-    MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
-  end
-  
-  self:E( { Event, From, To } )
-  self:SetState( self, "State", To )
-
-  if self.Scores[To] then
-    local Scoring = self:GetScoring()
-    if Scoring then
-      Scoring:_AddMissionScore( self.Mission, self.Scores[To].ScoreText, self.Scores[To].Score )
-    end
-  end
-
-end
-
-
---- @param #TASK_BASE self
-function TASK_BASE:_Schedule()
-  self:F2()
-
-  self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
-  return self
-end
-
-
---- @param #TASK_BASE self
-function TASK_BASE._Scheduler()
-  self:F2()
-
-  return true
-end
-
-
-
-
---- A GOHOMETASK orchestrates the travel back to the home base, which is a specific zone defined within the ME.
--- @module GOHOMETASK
-
---- The GOHOMETASK class
--- @type
-GOHOMETASK = {
-  ClassName = "GOHOMETASK",
-}
-
---- Creates a new GOHOMETASK.
--- @param table{string,...}|string LandingZones Table of Landing Zone names where Home(s) are located.
--- @return GOHOMETASK
-function GOHOMETASK:New( LandingZones )
-  local self = BASE:Inherit( self, TASK:New() )
-	self:F( { LandingZones } )
-  local Valid = true
-  
-  Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
-    
-  if  Valid then
-    self.Name = 'Fly Home'
-    self.TaskBriefing = "Task: Fly back to your home base. Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to your home base."
-	if type( LandingZones ) == "table" then
-		self.LandingZones = LandingZones
-	else
-		self.LandingZones = { LandingZones }
-	end
-    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-		self.SetStage( self, 1 )
-  end
-  
-  return self
-end
---- A DESTROYBASETASK will monitor the destruction of Groups and Units. This is a BASE class, other classes are derived from this class.
--- @module DESTROYBASETASK
--- @see DESTROYGROUPSTASK
--- @see DESTROYUNITTYPESTASK
--- @see DESTROY_RADARS_TASK
-
-
-
---- The DESTROYBASETASK class
--- @type DESTROYBASETASK
-DESTROYBASETASK = {
-  ClassName = "DESTROYBASETASK",
-  Destroyed = 0,
-  GoalVerb = "Destroy",
-  DestroyPercentage = 100,
-}
-
---- Creates a new DESTROYBASETASK.
--- @param #DESTROYBASETASK self
--- @param #string DestroyGroupType Text describing the group to be destroyed. f.e. "Radar Installations", "Ships", "Vehicles", "Command Centers".
--- @param #string DestroyUnitType Text describing the unit types to be destroyed. f.e. "SA-6", "Row Boats", "Tanks", "Tents".
--- @param #list<#string> DestroyGroupPrefixes Table of Prefixes of the Groups to be destroyed before task is completed.
--- @param #number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
--- @return DESTROYBASETASK
-function DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupPrefixes, DestroyPercentage )
-	local self = BASE:Inherit( self, TASK:New() )
-	self:F()
-	
-	self.Name = 'Destroy'
-	self.Destroyed = 0
-	self.DestroyGroupPrefixes = DestroyGroupPrefixes
-	self.DestroyGroupType = DestroyGroupType
-	self.DestroyUnitType = DestroyUnitType
-	if DestroyPercentage then
-  	self.DestroyPercentage = DestroyPercentage
-  end
-	self.TaskBriefing = "Task: Destroy " .. DestroyGroupType .. "."
-    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEGROUPSDESTROYED:New(), STAGEDONE:New() }
-	self.SetStage( self, 1 )
-
-	return self
-end
-
---- Handle the S_EVENT_DEAD events to validate the destruction of units for the task monitoring.
--- @param #DESTROYBASETASK self
--- @param Event#EVENTDATA Event structure of MOOSE.
-function DESTROYBASETASK:EventDead( Event )
-	self:F( { Event } )
-	
-	if Event.IniDCSUnit then
-		local DestroyUnit = Event.IniDCSUnit
-		local DestroyUnitName = Event.IniDCSUnitName
-		local DestroyGroup = Event.IniDCSGroup
-		local DestroyGroupName = Event.IniDCSGroupName
-
-    --TODO: I need to fix here if 2 groups in the mission have a similar name with GroupPrefix equal, then i should differentiate for which group the goal was reached!
-    --I may need to test if for the goalverb that group goal was reached or something. Need to think about it a bit more ...
-		local UnitsDestroyed = 0
-		for DestroyGroupPrefixID, DestroyGroupPrefix in pairs( self.DestroyGroupPrefixes ) do
-			self:T( DestroyGroupPrefix )
-			if string.find( DestroyGroupName, DestroyGroupPrefix, 1, true ) then
-				self:T( BASE:Inherited(self).ClassName )
-				UnitsDestroyed = self:ReportGoalProgress( DestroyGroup, DestroyUnit )
-				self:T( UnitsDestroyed )
-			end
-		end
-		
-		self:T( { UnitsDestroyed } )
-		self:IncreaseGoalCount( UnitsDestroyed, self.GoalVerb )
-	end
-	
-end
-
---- Validate task completeness of DESTROYBASETASK.
--- @param 	DestroyGroup 		Group structure describing the group to be evaluated.
--- @param 	DestroyUnit 		Unit structure describing the Unit to be evaluated.
-function DESTROYBASETASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-	self:F()
-
-	return 0
-end
---- DESTROYGROUPSTASK
--- @module DESTROYGROUPSTASK
-
-
-
---- The DESTROYGROUPSTASK class
--- @type
-DESTROYGROUPSTASK = {
-  ClassName = "DESTROYGROUPSTASK",
-  GoalVerb = "Destroy Groups",
-}
-
---- Creates a new DESTROYGROUPSTASK.
--- @param #DESTROYGROUPSTASK self
--- @param #string DestroyGroupType 	String describing the group to be destroyed.
--- @param #string DestroyUnitType 	String describing the unit to be destroyed.
--- @param #list<#string> DestroyGroupNames 	Table of string containing the name of the groups to be destroyed before task is completed.
--- @param #number DestroyPercentage defines the %-tage that needs to be destroyed to achieve mission success. eg. If in the Group there are 10 units, then a value of 75 would require 8 units to be destroyed from the Group to complete the @{TASK}.
----@return DESTROYGROUPSTASK
-function DESTROYGROUPSTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage )
-	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyPercentage ) )
-	self:F()
-  
-	self.Name = 'Destroy Groups'
-	self.GoalVerb = "Destroy " .. DestroyGroupType
-	
-  _EVENTDISPATCHER:OnDead( self.EventDead , self )
-  _EVENTDISPATCHER:OnCrash( self.EventDead , self )
-
-	return self
-end
-
---- Report Goal Progress.
--- @param #DESTROYGROUPSTASK self
--- @param DCSGroup#Group DestroyGroup Group structure describing the group to be evaluated.
--- @param DCSUnit#Unit DestroyUnit Unit structure describing the Unit to be evaluated.
--- @return #number The DestroyCount reflecting the amount of units destroyed within the group.
-function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-	self:F( { DestroyGroup, DestroyUnit, self.DestroyPercentage } )
-	
-	local DestroyGroupSize = DestroyGroup:getSize() - 1 -- When a DEAD event occurs, the getSize is still one larger than the destroyed unit.
-	local DestroyGroupInitialSize = DestroyGroup:getInitialSize()
-	self:T( { DestroyGroupSize, DestroyGroupInitialSize - ( DestroyGroupInitialSize * self.DestroyPercentage / 100 ) } )
-
-	local DestroyCount = 0
-	if DestroyGroup then
-		if DestroyGroupSize <= DestroyGroupInitialSize - ( DestroyGroupInitialSize * self.DestroyPercentage / 100 ) then
-			DestroyCount = 1
-		end
-	else
-		DestroyCount = 1
-	end
-	
-	self:T( DestroyCount )
-	
-	return DestroyCount
-end
---- Task class to destroy radar installations.
--- @module DESTROYRADARSTASK 
-
-
-
---- The DESTROYRADARS class
--- @type
-DESTROYRADARSTASK = {
-  ClassName = "DESTROYRADARSTASK",
-  GoalVerb = "Destroy Radars"
-}
-
---- Creates a new DESTROYRADARSTASK.
--- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @return DESTROYRADARSTASK
-function DESTROYRADARSTASK:New( DestroyGroupNames )
-	local self = BASE:Inherit( self, DESTROYGROUPSTASK:New( 'radar installations', 'radars', DestroyGroupNames ) )
-	self:F()
-
-	self.Name = 'Destroy Radars'
-
-  _EVENTDISPATCHER:OnDead( self.EventDead , self )
-
-	return self
-end
-
---- Report Goal Progress.
--- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
-function DESTROYRADARSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-	self:F( { DestroyGroup, DestroyUnit } )
-
-	local DestroyCount = 0
-	if DestroyUnit and DestroyUnit:hasSensors( Unit.SensorType.RADAR, Unit.RadarType.AS ) then
-		if DestroyUnit and DestroyUnit:getLife() <= 1.0 then
-			self:T( 'Destroyed a radar' )
-			DestroyCount = 1
-		end
-	end
-	return DestroyCount
-end
---- Set TASK to destroy certain unit types.
--- @module DESTROYUNITTYPESTASK
-
-
-
---- The DESTROYUNITTYPESTASK class
--- @type
-DESTROYUNITTYPESTASK = {
-  ClassName = "DESTROYUNITTYPESTASK",
-	GoalVerb = "Destroy",
-}
-
---- Creates a new DESTROYUNITTYPESTASK.
--- @param string DestroyGroupType 		String describing the group to be destroyed. f.e. "Radar Installations", "Fleet", "Batallion", "Command Centers".
--- @param string DestroyUnitType 		String describing the unit to be destroyed. f.e. "radars", "ships", "tanks", "centers".
--- @param table{string,...} DestroyGroupNames 	Table of string containing the group names of which the radars are be destroyed.
--- @param string DestroyUnitTypes	 	Table of string containing the type names of the units to achieve mission success.
--- @return DESTROYUNITTYPESTASK
-function DESTROYUNITTYPESTASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes )
-	local self = BASE:Inherit( self, DESTROYBASETASK:New( DestroyGroupType, DestroyUnitType, DestroyGroupNames ) )
-	self:F( { DestroyGroupType, DestroyUnitType, DestroyGroupNames, DestroyUnitTypes } )
-  	
-	if type(DestroyUnitTypes) == 'table' then
-		self.DestroyUnitTypes = DestroyUnitTypes
-	else
-		self.DestroyUnitTypes = { DestroyUnitTypes }
-	end
-	
-	self.Name = 'Destroy Unit Types'
-	self.GoalVerb = "Destroy " .. DestroyGroupType
-
-  _EVENTDISPATCHER:OnDead( self.EventDead , self )
-
-	return self
-end
-
---- Report Goal Progress.
--- @param 	Group DestroyGroup 		Group structure describing the group to be evaluated.
--- @param 	Unit DestroyUnit 		Unit structure describing the Unit to be evaluated.
-function DESTROYUNITTYPESTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
-	self:F( { DestroyGroup, DestroyUnit } )
-
-	local DestroyCount = 0
-	for UnitTypeID, UnitType in pairs( self.DestroyUnitTypes ) do
-		if DestroyUnit and DestroyUnit:getTypeName() == UnitType then
-			if DestroyUnit and DestroyUnit:getLife() <= 1.0 then
-				DestroyCount = DestroyCount + 1
-			end
-		end
-	end
-	return DestroyCount
-end
---- A PICKUPTASK orchestrates the loading of CARGO at a specific landing zone.
--- @module PICKUPTASK
--- @parent TASK
-
---- The PICKUPTASK class
--- @type
-PICKUPTASK = {
-  ClassName = "PICKUPTASK",
-  TEXT = { "Pick-Up", "picked-up", "loaded" },
-  GoalVerb = "Pick-Up"
-}
-
---- Creates a new PICKUPTASK.
--- @param table{string,...}|string LandingZones Table of Zone names where Cargo is to be loaded.
--- @param CARGO_TYPE CargoType Type of the Cargo. The type must be of the following Enumeration:..
--- @param number OnBoardSide Reflects from which side the cargo Group will be on-boarded on the Carrier.
-function PICKUPTASK:New( CargoType, OnBoardSide )
-    local self = BASE:Inherit( self, TASK:New() )
-	self:F()
-
-    -- self holds the inherited instance of the PICKUPTASK Class to the BASE class.
-
-    local Valid = true
-  
-    if  Valid then
-		self.Name = 'Pickup Cargo'
-		self.TaskBriefing = "Task: Fly to the indicated landing zones and pickup " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the pickup zone."
-		self.CargoType = CargoType
-		self.GoalVerb = CargoType .. " " .. self.GoalVerb
-		self.OnBoardSide = OnBoardSide
-		self.IsLandingRequired = true -- required to decide whether the client needs to land or not
-		self.IsSlingLoad = false -- Indicates whether the cargo is a sling load cargo
-		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGELOAD:New(), STAGEDONE:New() }
-		self.SetStage( self, 1 )
-	end
-  
-  return self
-end
-
-function PICKUPTASK:FromZone( LandingZone )
-	self:F()
-
-	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
-	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
-	
-	return self
-end
-
-function PICKUPTASK:InitCargo( InitCargos )
-	self:F( { InitCargos } )
-
-	if type( InitCargos ) == "table" then
-		self.Cargos.InitCargos = InitCargos
-	else
-		self.Cargos.InitCargos = { InitCargos }
-	end
-
-	return self
-end
-
-function PICKUPTASK:LoadCargo( LoadCargos )
-	self:F( { LoadCargos } )
-
-	if type( LoadCargos ) == "table" then
-		self.Cargos.LoadCargos = LoadCargos
-	else
-		self.Cargos.LoadCargos = { LoadCargos }
-	end
-
-	return self
-end
-
-function PICKUPTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-	self:F()
-  
-	for CargoID, Cargo in pairs( Cargos ) do
-
-		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
-		
-		-- If the Cargo has no status, allow the menu option.
-		if Cargo:IsStatusNone() or ( Cargo:IsStatusLoading() and Client == Cargo:IsLoadingToClient() ) then
-		
-			local MenuAdd = false
-			if Cargo:IsNear( Client, self.CurrentCargoZone ) then
-				MenuAdd = true
-			end
-			
-			if MenuAdd then
-				if Client._Menus[Cargo.CargoType] == nil then
-					Client._Menus[Cargo.CargoType] = {}
-				end
-				
-				if not Client._Menus[Cargo.CargoType].PickupMenu then
-					Client._Menus[Cargo.CargoType].PickupMenu = missionCommands.addSubMenuForGroup(
-						Client:GetClientGroupID(), 
-						self.TEXT[1] .. " " .. Cargo.CargoType, 
-						nil
-					)
-					self:T( 'Added PickupMenu: ' .. self.TEXT[1] .. " " .. Cargo.CargoType )
-				end
-
-				if Client._Menus[Cargo.CargoType].PickupSubMenus == nil then
-					Client._Menus[Cargo.CargoType].PickupSubMenus = {}
-				end
-
-				Client._Menus[Cargo.CargoType].PickupSubMenus[ #Client._Menus[Cargo.CargoType].PickupSubMenus + 1 ] = missionCommands.addCommandForGroup(
-					Client:GetClientGroupID(), 
-					Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
-					Client._Menus[Cargo.CargoType].PickupMenu, 
-					self.MenuAction,
-					{ ReferenceTask = self, CargoTask = Cargo }
-				)
-				self:T( 'Added PickupSubMenu' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
-			end
-		end
-	end
-	
-end
-
-function PICKUPTASK:RemoveCargoMenus( Client )
-	self:F()
-
-	for MenuID, MenuData in pairs( Client._Menus ) do
-		for SubMenuID, SubMenuData in pairs( MenuData.PickupSubMenus ) do
-			missionCommands.removeItemForGroup( Client:GetClientGroupID(), SubMenuData )
-			self:T( "Removed PickupSubMenu " )
-			SubMenuData = nil
-		end
-		if MenuData.PickupMenu then
-			missionCommands.removeItemForGroup( Client:GetClientGroupID(), MenuData.PickupMenu )
-			self:T( "Removed PickupMenu " )
-			MenuData.PickupMenu = nil
-		end
-	end
-	
-	for CargoID, Cargo in pairs( CARGOS ) do
-		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo:IsStatusNone(), Cargo:IsStatusLoaded(), Cargo:IsStatusLoading(), Cargo:IsStatusUnLoaded() } )
-		if Cargo:IsStatusLoading() and Client == Cargo:IsLoadingToClient() then
-			Cargo:StatusNone()
-		end
-	end
-		
-end
-
-
-
-function PICKUPTASK:HasFailed( ClientDead )
-	self:F()
-
-	local TaskHasFailed = self.TaskFailed
-	return TaskHasFailed
-end
-
---- A DEPLOYTASK orchestrates the deployment of CARGO within a specific landing zone.
--- @module DEPLOYTASK
-
-
-
---- A DeployTask
--- @type DEPLOYTASK
-DEPLOYTASK = {
-  ClassName = "DEPLOYTASK",
-  TEXT = { "Deploy", "deployed", "unloaded" },
-  GoalVerb = "Deployment"
-}
-
-
---- Creates a new DEPLOYTASK object, which models the sequence of STAGEs to unload a cargo.
--- @function [parent=#DEPLOYTASK] New
--- @param #string CargoType Type of the Cargo.
--- @return #DEPLOYTASK The created DeployTask
-function DEPLOYTASK:New( CargoType )
-	local self = BASE:Inherit( self, TASK:New() )
-	self:F()
-
-	local Valid = true
-  
-    if Valid then
-		self.Name = 'Deploy Cargo'
-		self.TaskBriefing = "Fly to one of the indicated landing zones and deploy " .. CargoType .. ". Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the deployment zone."
-		self.CargoType = CargoType
-		self.GoalVerb = CargoType .. " " .. self.GoalVerb
-		self.Stages = { STAGE_CARGO_INIT:New(), STAGE_CARGO_LOAD:New(), STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGELANDING:New(), STAGELANDED:New(), STAGEUNLOAD:New(), STAGEDONE:New() }
-		self.SetStage( self, 1 )
-	end
-  
-	return self
-end
-
-function DEPLOYTASK:ToZone( LandingZone )
-	self:F()
-
-	self.LandingZones.LandingZoneNames[LandingZone.CargoZoneName] = LandingZone.CargoZoneName
-	self.LandingZones.LandingZones[LandingZone.CargoZoneName] = LandingZone
-	
-	return self
-end
-
-
-function DEPLOYTASK:InitCargo( InitCargos )
-	self:F( { InitCargos } )
-
-	if type( InitCargos ) == "table" then
-		self.Cargos.InitCargos = InitCargos
-	else
-		self.Cargos.InitCargos = { InitCargos }
-	end
-
-	return self
-end
-
-
-function DEPLOYTASK:LoadCargo( LoadCargos )
-	self:F( { LoadCargos } )
-
-	if type( LoadCargos ) == "table" then
-		self.Cargos.LoadCargos = LoadCargos
-	else
-		self.Cargos.LoadCargos = { LoadCargos }
-	end
-
-	return self
-end
-
-
---- When the cargo is unloaded, it will move to the target zone name.
--- @param string TargetZoneName Name of the Zone to where the Cargo should move after unloading.
-function DEPLOYTASK:SetCargoTargetZoneName( TargetZoneName )
-	self:F()
-  
-  local Valid = true
-  
-  Valid = routines.ValidateString( TargetZoneName, "TargetZoneName", Valid )
-  
-  if Valid then
-    self.TargetZoneName = TargetZoneName
-  end
-  
-  return Valid
-  
-end
-
-function DEPLOYTASK:AddCargoMenus( Client, Cargos, TransportRadius )
-	self:F()
-
-	local ClientGroupID = Client:GetClientGroupID()
-	
-	self:T( ClientGroupID )
-	
-	for CargoID, Cargo in pairs( Cargos ) do
-
-		self:T( { Cargo.ClassName, Cargo.CargoName, Cargo.CargoType, Cargo.CargoWeight } )
-		
-		if Cargo:IsStatusLoaded() and Client == Cargo:IsLoadedInClient() then
-
-			if Client._Menus[Cargo.CargoType] == nil then
-				Client._Menus[Cargo.CargoType] = {}
-			end
-			
-			if not Client._Menus[Cargo.CargoType].DeployMenu then
-				Client._Menus[Cargo.CargoType].DeployMenu = missionCommands.addSubMenuForGroup(
-					ClientGroupID, 
-					self.TEXT[1] .. " " .. Cargo.CargoType, 
-					nil
-				)
-				self:T( 'Added DeployMenu ' .. self.TEXT[1] )
-			end
-			
-			if Client._Menus[Cargo.CargoType].DeploySubMenus == nil then
-				Client._Menus[Cargo.CargoType].DeploySubMenus = {}
-			end
-			
-			if Client._Menus[Cargo.CargoType].DeployMenu == nil then
-				self:T( 'deploymenu is nil' )
-			end
-
-			Client._Menus[Cargo.CargoType].DeploySubMenus[ #Client._Menus[Cargo.CargoType].DeploySubMenus + 1 ] = missionCommands.addCommandForGroup(
-				ClientGroupID, 
-				Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )",
-				Client._Menus[Cargo.CargoType].DeployMenu, 
-				self.MenuAction,
-				{ ReferenceTask = self, CargoTask = Cargo }
-			)
-			self:T( 'Added DeploySubMenu ' .. Cargo.CargoType .. ":" .. Cargo.CargoName .. " ( " .. Cargo.CargoWeight .. "kg )" )
-		end
-	end
-
-end
-
-function DEPLOYTASK:RemoveCargoMenus( Client )
-	self:F()
-
-	local ClientGroupID = Client:GetClientGroupID()
-	self:T( ClientGroupID )
-
-	for MenuID, MenuData in pairs( Client._Menus ) do
-		if MenuData.DeploySubMenus ~= nil then
-			for SubMenuID, SubMenuData in pairs( MenuData.DeploySubMenus ) do
-				missionCommands.removeItemForGroup( ClientGroupID, SubMenuData )
-				self:T( "Removed DeploySubMenu " )
-				SubMenuData = nil
-			end
-		end
-		if MenuData.DeployMenu then
-			missionCommands.removeItemForGroup( ClientGroupID, MenuData.DeployMenu )
-			self:T( "Removed DeployMenu " )
-			MenuData.DeployMenu = nil
-		end
-	end
-
-end
---- A NOTASK is a dummy activity... But it will show a Mission Briefing...
--- @module NOTASK
-
---- The NOTASK class
--- @type
-NOTASK = {
-  ClassName = "NOTASK",
-}
-
---- Creates a new NOTASK.
-function NOTASK:New()
-  local self = BASE:Inherit( self, TASK:New() )
-	self:F()
-  
-  local Valid = true
-
-  if  Valid then
-    self.Name = 'Nothing'
-    self.TaskBriefing = "Task: Execute your mission."
-    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEDONE:New() }
-	self.SetStage( self, 1 )
-  end
-  
-  return self
-end
---- A ROUTETASK orchestrates the travel to a specific zone defined within the ME.
--- @module ROUTETASK
-
---- The ROUTETASK class
--- @type
-ROUTETASK = {
-  ClassName = "ROUTETASK",
-  GoalVerb = "Route",
-}
-
---- Creates a new ROUTETASK.
--- @param table{sring,...}|string LandingZones Table of Zone Names where the target is located.
--- @param string TaskBriefing (optional) Defines a text describing the briefing of the task.
--- @return ROUTETASK
-function ROUTETASK:New( LandingZones, TaskBriefing )
-  local self = BASE:Inherit( self, TASK:New() )
-	self:F( { LandingZones, TaskBriefing } )
-
-  local Valid = true
-  
-  Valid = routines.ValidateZone( LandingZones, "LandingZones", Valid )
-    
-  if  Valid then
-    self.Name = 'Route To Zone'
-	if TaskBriefing then
-		self.TaskBriefing = TaskBriefing .. " Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
-	else
-		self.TaskBriefing = "Task: Fly to specified zone(s). Your co-pilot will provide you with the directions (required flight angle in degrees) and the distance (in km) to the target objective."
-	end
-	if type( LandingZones ) == "table" then
-		self.LandingZones = LandingZones
-	else
-		self.LandingZones = { LandingZones }
-	end
-    self.Stages = { STAGEBRIEF:New(), STAGESTART:New(), STAGEROUTE:New(), STAGEARRIVE:New(), STAGEDONE:New() }
-	self.SetStage( self, 1 )
-  end
-  
-  return self
-end
-
 --- A MISSION is the main owner of a Mission orchestration within MOOSE	. The Mission framework orchestrates @{CLIENT}s, @{TASK}s, @{STAGE}s etc.
 -- A @{CLIENT} needs to be registered within the @{MISSION} through the function @{AddClient}. A @{TASK} needs to be registered within the @{MISSION} through the function @{AddTask}.
 -- @module Mission
@@ -20906,9 +18580,10 @@ end
 --   
 -- 1.1) SPAWN construction methods
 -- -------------------------------
--- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
+-- Create a new SPAWN object with the @{#SPAWN.New}() or the @{#SPAWN.NewWithAlias}() methods:
 -- 
---   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
+--   * @{#SPAWN.New}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
+--   * @{#SPAWN.NewWithAlias}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition), and gives each spawned @{Group} an different name.
 --
 -- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
 -- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
@@ -20916,27 +18591,29 @@ end
 --
 -- 1.2) SPAWN initialization methods
 -- ---------------------------------
--- A spawn object will behave differently based on the usage of initialization methods:  
+-- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
 -- 
---   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups, and for air groups also optionally the height.
---   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
---   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
---   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
+--   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+--   * @{#SPAWN.InitUncontrolled}(): Spawn plane groups uncontrolled.
+--   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
+--   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
+--   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 -- 
 -- 1.3) SPAWN spawning methods
 -- ---------------------------
 -- Groups can be spawned at different times and methods:
 -- 
---   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
---   * @{#SPAWN.ReSpawn}: Re-spawn a group based on a given index.
---   * @{#SPAWN.SpawnScheduled}: Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart} and @{#SPAWN.SpawnScheduleStop} to start and stop the schedule respectively.
---   * @{#SPAWN.SpawnFromVec3}: Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
---   * @{#SPAWN.SpawnFromVec2}: Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
---   * @{#SPAWN.SpawnFromStatic}: Spawn a new group from a structure, taking the position of a @{STATIC}.
---   * @{#SPAWN.SpawnFromUnit}: Spawn a new group taking the position of a @{UNIT}.
---   * @{#SPAWN.SpawnInZone}: Spawn a new group in a @{ZONE}.
+--   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
+--   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
+--   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart}() and @{#SPAWN.SpawnScheduleStop}() to start and stop the schedule respectively.
+--   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
+--   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
+--   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
+--   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
+--   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
 -- 
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
@@ -20947,28 +18624,128 @@ end
 -- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
 -- SPAWN provides methods to iterate through that internal GROUP object reference table:
 -- 
---   * @{#SPAWN.GetFirstAliveGroup}: Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
---   * @{#SPAWN.GetNextAliveGroup}: Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
---   * @{#SPAWN.GetLastAliveGroup}: Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+--   * @{#SPAWN.GetFirstAliveGroup}(): Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--   * @{#SPAWN.GetNextAliveGroup}(): Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--   * @{#SPAWN.GetLastAliveGroup}(): Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
 -- 
--- You can use the methods @{#SPAWN.GetFirstAliveGroup} and sequently @{#SPAWN.GetNextAliveGroup} to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
--- The method @{#SPAWN.GetGroupFromIndex} will return the GROUP object reference from the given Index, dead or alive...
+-- You can use the methods @{#SPAWN.GetFirstAliveGroup}() and sequently @{#SPAWN.GetNextAliveGroup}() to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+-- The method @{#SPAWN.GetGroupFromIndex}() will return the GROUP object reference from the given Index, dead or alive...
 -- 
 -- 1.5) SPAWN object cleaning
 -- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
--- To prevent this, a @{#SPAWN.CleanUp} initialization method has been defined that will silently monitor the status of each spawned group.
+-- To prevent this, a @{#SPAWN.InitCleanUp}() initialization method has been defined that will silently monitor the status of each spawned group.
 -- Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
 -- There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
 -- In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
--- Check the @{#SPAWN.CleanUp} for further info.
+-- Check the @{#SPAWN.InitCleanUp}() for further info.
+-- 
+-- 1.6) Catch the @{Group} spawn event in a callback function!
+-- -----------------------------------------------------------
+-- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
+-- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
+-- To SPAWN class supports this functionality through the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally. 
+-- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
+-- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
+-- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones )** added.
+-- 
+--    * This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types. 
+-- 
+-- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
+-- 
+-- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+-- 
+-- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
+-- 
+--    * This method enables the randomization of units at the first route point in a radius band at a spawn event.
+-- 
+-- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- ===
+-- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
+-- ### Contributions: 
+-- 
+--   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
 -- 
 -- 
 -- @module Spawn
--- @author FlightControl
+
+
 
 --- SPAWN Class
 -- @type SPAWN
@@ -20980,15 +18757,18 @@ end
 -- @field #number MaxAliveUnits
 -- @field #number SpawnIndex
 -- @field #number MaxAliveGroups
+-- @field #SPAWN.SpawnZoneTable SpawnZoneTable
 SPAWN = {
   ClassName = "SPAWN",
   SpawnTemplatePrefix = nil,
   SpawnAliasPrefix = nil,
 }
 
+--- @type SPAWN.SpawnZoneTable
+-- @list <Zone#ZONE_BASE> SpawnZone
 
 
---- Creates the main object to spawn a GROUP defined in the DCS ME.
+--- Creates the main object to spawn a @{Group} defined in the DCS ME.
 -- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWN
@@ -21063,7 +18843,7 @@ end
 
 --- Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
--- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+-- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this method should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
 -- @param #SPAWN self
 -- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
@@ -21075,8 +18855,8 @@ end
 -- -- NATO helicopters engaging in the battle field.
 -- -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
 -- -- There will be maximum 24 groups spawned during the whole mission lifetime. 
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )
-function SPAWN:Limit( SpawnMaxUnitsAlive, SpawnMaxGroups )
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitLimit( 2, 24 )
+function SPAWN:InitLimit( SpawnMaxUnitsAlive, SpawnMaxGroups )
 	self:F( { self.SpawnTemplatePrefix, SpawnMaxUnitsAlive, SpawnMaxGroups } )
 
 	self.SpawnMaxUnitsAlive = SpawnMaxUnitsAlive				-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
@@ -21104,8 +18884,8 @@ end
 -- -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
 -- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
 -- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
-function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeRoute( 2, 2, 2000 )
+function SPAWN:InitRandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
 	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight } )
 
 	self.SpawnRandomizeRoute = true
@@ -21121,9 +18901,34 @@ function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, Spaw
 	return self
 end
 
+--- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
+-- @param #SPAWN self
+-- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
+-- @param DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @return #SPAWN
+-- @usage
+-- -- NATO helicopters engaging in the battle field. 
+-- -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
+-- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
+-- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeRoute( 2, 2, 2000 )
+function SPAWN:InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )
+  self:F( { self.SpawnTemplatePrefix, RandomizeUnits, OuterRadius, InnerRadius } )
 
---- This function is rather complicated to understand. But I'll try to explain.
--- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+  self.SpawnRandomizeUnits = RandomizeUnits or false
+  self.SpawnOuterRadius = OuterRadius or 0
+  self.SpawnInnerRadius = InnerRadius or 0
+
+  for GroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeRoute( GroupID )
+  end
+  
+  return self
+end
+
+--- This method is rather complicated to understand. But I'll try to explain.
+-- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
@@ -21138,10 +18943,10 @@ end
 -- Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 3', 'US Tank Platoon 4', 'US Tank Platoon 5', 
 --                      'US Tank Platoon 6', 'US Tank Platoon 7', 'US Tank Platoon 8', 'US Tank Platoon 9', 'US Tank Platoon 10', 
 --                      'US Tank Platoon 11', 'US Tank Platoon 12', 'US Tank Platoon 13' }
--- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
-function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	self:F( { self.SpawnTemplatePrefix, SpawnTemplatePrefixTable } )
 
 	self.SpawnTemplatePrefixTable = SpawnTemplatePrefixTable
@@ -21154,12 +18959,33 @@ function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
 	return self
 end
 
+--TODO: Add example.
+--- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
+-- @param #SPAWN self
+-- @param #table SpawnZoneTable A table with @{Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Zone}s objects. 
+-- @return #SPAWN
+-- @usage
+-- -- NATO Tank Platoons invading Gori.
+-- -- Choose between 3 different zones for each new SPAWN the Group to be executed, regardless of the zone type. 
+function SPAWN:InitRandomizeZones( SpawnZoneTable )
+  self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
+
+  self.SpawnZoneTable = SpawnZoneTable
+  self.SpawnRandomizeZones = true
+
+  for SpawnGroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeZones( SpawnGroupID )
+  end
+  
+  return self
+end
+
 
 
 
 
 --- For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.
--- This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+-- This method is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
 -- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
 -- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
 -- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
@@ -21168,7 +18994,7 @@ end
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
--- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
+-- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():InitRandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
 function SPAWN:InitRepeat()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -21213,11 +19039,15 @@ end
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
 -- @return #SPAWN self
 -- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
-function SPAWN:CleanUp( SpawnCleanUpInterval )
+function SPAWN:InitCleanUp( SpawnCleanUpInterval )
 	self:F( { self.SpawnTemplatePrefix, SpawnCleanUpInterval } )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
+
+  local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
+  self:T( { "CleanUp Scheduler:", SpawnGroup } )
+	
 	--self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
 	self.CleanUpScheduler = SCHEDULER:New( self, self._SpawnCleanUpScheduler, {}, 1, SpawnCleanUpInterval, 0.2 )
 	return self
@@ -21235,8 +19065,8 @@ end
 -- @return #SPAWN self
 -- @usage
 -- -- Define an array of Groups.
--- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( 90, "Diamond", 10, 100, 50 )
-function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+-- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):InitLimit( 2, 24 ):InitArray( 90, "Diamond", 10, 100, 50 )
+function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	self:F( { self.SpawnTemplatePrefix, SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 
 	self.SpawnVisible = true									-- When the first Spawn executes, all the Groups need to be made visible before start.
@@ -21330,6 +19160,7 @@ end
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
+-- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
@@ -21339,20 +19170,40 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
-      _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
-      _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
-      _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+
+		  local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+		  self:T( SpawnTemplate.name )
+
+      if SpawnTemplate then
+
+        local PointVec3 = POINT_VEC3:New( SpawnTemplate.route.points[1].x, SpawnTemplate.route.points[1].alt, SpawnTemplate.route.points[1].y )
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, PointVec3 } )
+        
+        -- If RandomizeUnits, then Randomize the formation at the start point.
+        if self.SpawnRandomizeUnits then
+          for UnitID = 1, #SpawnTemplate.units do
+            local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
+            SpawnTemplate.units[UnitID].x = RandomVec2.x
+            SpawnTemplate.units[UnitID].y = RandomVec2.y
+            self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+          end
+        end
+      end
+		  
+      _EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
+      _EVENTDISPATCHER:OnCrashForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
+      _EVENTDISPATCHER:OnDeadForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
 
       if self.Repeat then
-        _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
-        _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
+        _EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
+        _EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
-        _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
+        _EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
       end
-      self:T3( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+      self:T3( SpawnTemplate.name )
 
-			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -21400,7 +19251,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 end
 
 --- Will re-start the spawning scheduler.
--- Note: This function is only required to be called when the schedule was stopped.
+-- Note: This method is only required to be called when the schedule was stopped.
 function SPAWN:SpawnScheduleStart()
   self:F( { self.SpawnTemplatePrefix } )
 
@@ -21416,16 +19267,27 @@ end
 
 
 --- Allows to place a CallFunction hook when a new group spawns.
--- The provided function will be called when a new group is spawned, including its given parameters.
+-- The provided method will be called when a new group is spawned, including its given parameters.
 -- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
 -- @param #SPAWN self
--- @param #function SpawnFunctionHook The function to be called when a group spawns.
+-- @param #function SpawnCallBackFunction The function to be called when a group spawns.
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
 -- @return #SPAWN
-function SPAWN:SpawnFunction( SpawnFunctionHook, ... )
-  self:F( SpawnFunction )
+-- @usage
+-- -- Declare SpawnObject and call a function when a new Group is spawned.
+-- local SpawnObject = SPAWN
+--   :New( "SpawnObject" )
+--   :InitLimit( 2, 10 )
+--   :OnSpawnGroup(
+--     function( SpawnGroup )
+--       SpawnGroup:E( "I am spawned" )
+--     end 
+--     )
+--   :SpawnScheduled( 300, 0.3 )
+function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
+  self:F( "OnSpawnGroup" )
 
-  self.SpawnFunctionHook = SpawnFunctionHook
+  self.SpawnFunctionHook = SpawnCallBackFunction
   self.SpawnFunctionArguments = {}
   if arg then
     self.SpawnFunctionArguments = arg
@@ -21436,18 +19298,16 @@ end
 
 
 --- Will spawn a group from a Vec3 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec3, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
 
   local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
   self:T2(PointVec3)
@@ -21464,33 +19324,30 @@ function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
     if SpawnTemplate then
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
+
+      -- Translate the position of the Group Template to the Vec3.
+      for UnitID = 1, #SpawnTemplate.units do
+        self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        local UnitTemplate = SpawnTemplate.units[UnitID]
+        local SX = UnitTemplate.x
+        local SY = UnitTemplate.y 
+        local BX = SpawnTemplate.route.points[1].x
+        local BY = SpawnTemplate.route.points[1].y
+        local TX = Vec3.x + ( SX - BX )
+        local TY = Vec3.z + ( SY - BY )
+        SpawnTemplate.units[UnitID].x = TX
+        SpawnTemplate.units[UnitID].y = TY
+        SpawnTemplate.units[UnitID].alt = Vec3.y
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      end
       
       SpawnTemplate.route.points[1].x = Vec3.x
       SpawnTemplate.route.points[1].y = Vec3.z
       SpawnTemplate.route.points[1].alt = Vec3.y
       
-      InnerRadius = InnerRadius or 0
-      OuterRadius = OuterRadius or 0
-      
-      -- Apply SpawnFormation
-      for UnitID = 1, #SpawnTemplate.units do
-        local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-        SpawnTemplate.units[UnitID].x = RandomVec2.x
-        SpawnTemplate.units[UnitID].y = RandomVec2.y
-        SpawnTemplate.units[UnitID].alt = Vec3.y
-        self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-      end
-
-      -- TODO: Need to rework this. A spawn action should always be at the random point to start from. This move is not correct to be here.      
---      local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
---      local Point = {}
---      Point.type = "Turning Point"
---      Point.x = RandomVec2.x
---      Point.y = RandomVec2.y
---      Point.action = "Cone"
---      Point.speed = 5
---      table.insert( SpawnTemplate.route.points, 2, Point )
-      
+      SpawnTemplate.x = Vec3.x
+      SpawnTemplate.y = Vec3.z
+              
       return self:SpawnWithIndex( self.SpawnIndex )
     end
   end
@@ -21499,93 +19356,86 @@ function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 --- Will spawn a group from a Vec2 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+-- This method is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec2( Vec2, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec2, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec2( Vec2, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec2, SpawnIndex } )
 
   local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
-  return self:SpawnFromVec3( PointVec2:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+  return self:SpawnFromVec3( PointVec2:GetVec3(), SpawnIndex )
 end
 
 
---- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+--- Will spawn a group from a hosting unit. This method is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, HostUnit, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
-    return self:SpawnFromVec3( HostUnit:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostUnit:GetVec3(), SpawnIndex )
   end
   
   return nil
 end
 
---- Will spawn a group from a hosting static. This function is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
+--- Will spawn a group from a hosting static. This method is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Static#STATIC HostStatic The static dropping or unloading the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, HostStatic, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, HostStatic, SpawnIndex } )
 
   if HostStatic and HostStatic:IsAlive() then
-    return self:SpawnFromVec3( HostStatic:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostStatic:GetVec3(), SpawnIndex )
   end
   
   return nil
 end
 
---- Will spawn a Group within a given @{Zone#ZONE}.
--- Once the group is spawned within the zone, it will continue on its route.
--- The first waypoint (where the group is spawned) is replaced with the zone coordinates.
+--- Will spawn a Group within a given @{Zone}.
+-- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
+-- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
+-- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
 -- @param Zone#ZONE Zone The zone where the group is to be spawned.
--- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #boolean RandomizeGroup (optional) Randomization of the @{Group} position in the zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
+function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, SpawnIndex } )
   
   if Zone then
-    if ZoneRandomize then
-      return self:SpawnFromVec2( Zone:GetVec2(), Zone:GetRadius(), 0, SpawnIndex )
+    if RandomizeGroup then
+      return self:SpawnFromVec2( Zone:GetRandomVec2(), SpawnIndex )
     else
-      return self:SpawnFromVec2( Zone:GetVec2(), 0, 0, SpawnIndex )
+      return self:SpawnFromVec2( Zone:GetVec2(), SpawnIndex )
     end
   end
   
   return nil
 end
 
-
-
-
---- Will spawn a plane group in uncontrolled mode... 
+--- (AIR) Will spawn a plane group in uncontrolled mode... 
 -- This will be similar to the uncontrolled flag setting in the ME.
+-- @param #SPAWN self
 -- @return #SPAWN self
-function SPAWN:UnControlled()
+function SPAWN:InitUnControlled()
 	self:F( { self.SpawnTemplatePrefix } )
 	
 	self.SpawnUnControlled = true
@@ -21622,12 +19472,12 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
---- Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--- Will find the first alive @{Group} it has spawned, and return the alive @{Group} object and the first Index where the first alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The GROUP object found, the new Index where the group was found.
+-- @return Group#GROUP, #number The @{Group} object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -21647,13 +19497,13 @@ function SPAWN:GetFirstAliveGroup()
 end
 
 
---- Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--- Will find the next alive @{Group} object from a given Index, and return a reference to the alive @{Group} object and the next Index where the alive @{Group} has been found.
 -- @param #SPAWN self
--- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.
--- @return Group#GROUP, #number The next alive GROUP object found, the next Index where the next alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found from the start Index position, #nil is returned.
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This method can also be used to find the first alive @{Group} object from the given Index.
+-- @return Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found from the start Index position, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -21673,12 +19523,12 @@ function SPAWN:GetNextAliveGroup( SpawnIndexStart )
   return nil, nil
 end
 
---- Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+--- Will find the last alive @{Group} object, and will return a reference to the last live @{Group} object and the last Index where the last alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The last alive GROUP object found, the last Index where the last alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found, #nil is returned.
+-- @return Group#GROUP, #number The last alive @{Group} object found, the last Index where the last alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found, #nil is returned.
 -- @usage
--- -- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the last alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
 -- if GroupPlane then -- GroupPlane can be nil!!!
 --   -- Do actions with the GroupPlane object.
@@ -21918,8 +19768,6 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	for UnitID = 1, #SpawnTemplate.units do
 		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
 		SpawnTemplate.units[UnitID].unitId = nil
-		SpawnTemplate.units[UnitID].x = SpawnTemplate.route.points[1].x
-		SpawnTemplate.units[UnitID].y = SpawnTemplate.route.points[1].y 
 	end
 	
 	self:T3( { "Template:", SpawnTemplate } )
@@ -21956,6 +19804,8 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
     end
   end
   
+  self:_RandomizeZones( SpawnIndex )
+  
   return self
 end
 
@@ -21984,6 +19834,57 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
   self:_RandomizeRoute( SpawnIndex )
   
   return self
+end
+
+--- Private method that randomizes the @{Zone}s where the Group will be spawned.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
+function SPAWN:_RandomizeZones( SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
+
+  if self.SpawnRandomizeZones then
+    local SpawnZone = nil -- Zone#ZONE_BASE
+    while not SpawnZone do
+      self:T( { SpawnZoneTableCount = #self.SpawnZoneTable, self.SpawnZoneTable } )
+      local ZoneID = math.random( #self.SpawnZoneTable )
+      self:T( ZoneID )
+      SpawnZone = self.SpawnZoneTable[ ZoneID ]:GetZoneMaybe() 
+    end
+    
+    self:T( "Preparing Spawn in Zone", SpawnZone:GetName() )
+    
+    local SpawnVec2 = SpawnZone:GetRandomVec2()
+    
+    self:T( { SpawnVec2 = SpawnVec2 } )
+    
+    local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+    
+    self:T( { Route = SpawnTemplate.route } )
+    
+    for UnitID = 1, #SpawnTemplate.units do
+      local UnitTemplate = SpawnTemplate.units[UnitID]
+      self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+      local SX = UnitTemplate.x
+      local SY = UnitTemplate.y 
+      local BX = SpawnTemplate.route.points[1].x
+      local BY = SpawnTemplate.route.points[1].y
+      local TX = SpawnVec2.x + ( SX - BX )
+      local TY = SpawnVec2.y + ( SY - BY )
+      UnitTemplate.x = TX
+      UnitTemplate.y = TY
+      -- TODO: Manage altitude based on landheight...
+      --SpawnTemplate.units[UnitID].alt = SpawnVec2:
+      self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+    end
+    SpawnTemplate.x = SpawnVec2.x
+    SpawnTemplate.y = SpawnVec2.y
+    SpawnTemplate.route.points[1].x = SpawnVec2.x
+    SpawnTemplate.route.points[1].y = SpawnVec2.y
+  end
+    
+  return self
+  
 end
 
 function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle )
@@ -22029,7 +19930,7 @@ function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, Spa
   return self
 end
 
---- Get the next index of the groups to be spawned. This function is complicated, as it is used at several spaces.
+--- Get the next index of the groups to be spawned. This method is complicated, as it is used at several spaces.
 function SPAWN:_GetSpawnIndex( SpawnIndex )
 	self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
   
@@ -22164,28 +20065,72 @@ function SPAWN:_Scheduler()
 	return true
 end
 
+--- Schedules the CleanUp of Groups
+-- @param #SPAWN self
+-- @return #boolean True = Continue Scheduler
 function SPAWN:_SpawnCleanUpScheduler()
 	self:F( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
 
-	local SpawnCursor
-	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup( SpawnCursor )
-	
+	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
 	self:T( { "CleanUp Scheduler:", SpawnGroup } )
 
 	while SpawnGroup do
-		
-		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
-			else
-				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
-					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
-					SpawnGroup:Destroy()
-				end
-			end
-		else
-			self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = nil
-		end
+
+    local SpawnUnits = SpawnGroup:GetUnits()
+	  
+	  for UnitID, UnitData in pairs( SpawnUnits ) do
+	    
+	    local SpawnUnit = UnitData -- Unit#UNIT
+	    local SpawnUnitName = SpawnUnit:GetName()
+	    
+	    
+	    self.SpawnCleanUpTimeStamps[SpawnUnitName] = self.SpawnCleanUpTimeStamps[SpawnUnitName] or {}
+	    local Stamp = self.SpawnCleanUpTimeStamps[SpawnUnitName]
+      self:T( { SpawnUnitName, Stamp } )
+	    
+	    if Stamp.Moved then
+    		if SpawnUnit:InAir() == false then
+    		  if SpawnUnit:GetVelocityKMH() < 1 then
+      		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
+      			if not Stamp.Time then
+      				Stamp.Time = timer.getTime()
+      			else
+      				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
+      					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
+      					self:ReSpawn( SpawnCursor )
+                Stamp.Moved = nil
+                Stamp.Time = nil
+      				end
+      			end
+      		else
+      		  Stamp.Time = nil
+      		end
+    		else
+    		  Stamp.Moved = nil
+    			Stamp.Time = nil
+    		end
+    	else
+        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() > 1 then
+          Stamp.Moved = true
+        else
+          -- If the plane did not move and on the runway for about 3 minutes, clean it.
+          if SpawnUnit:IsAboveRunway() and SpawnUnit:GetVelocityKMH() < 1 then
+            if not Stamp.Time then
+              Stamp.Time = timer.getTime()
+            end
+            if Stamp.Time + 180 < timer.getTime() then
+              self:T( { "CleanUp Scheduler:", "ReSpawning inactive group:", SpawnGroup:GetName() } )
+              self:ReSpawn( SpawnCursor )
+              Stamp.Moved = nil
+              Stamp.Time = nil
+            end
+          else
+            Stamp.Moved = nil
+            Stamp.Time = nil
+          end
+    	  end
+      end
+    end
 		
 		SpawnGroup, SpawnCursor = self:GetNextAliveGroup( SpawnCursor )
 		
@@ -24437,513 +22382,6 @@ function MISSILETRAINER:_TrackMissiles()
 
   return true
 end
---- This module contains the PATROLZONE class.
--- 
--- ===
--- 
--- 1) @{Patrol#PATROLZONE} class, extends @{Base#BASE}
--- ===================================================
--- The @{Patrol#PATROLZONE} class implements the core functions to patrol a @{Zone}.
--- 
--- 1.1) PATROLZONE constructor:
--- ----------------------------
--- @{PatrolZone#PATROLZONE.New}(): Creates a new PATROLZONE object.
--- 
--- 1.2) Modify the PATROLZONE parameters:
--- --------------------------------------
--- The following methods are available to modify the parameters of a PATROLZONE object:
--- 
---     * @{PatrolZone#PATROLZONE.SetGroup}(): Set the AI Patrol Group.
---     * @{PatrolZone#PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
---     * @{PatrolZone#PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
--- 
--- 1.3) Manage the out of fuel in the PATROLZONE:
--- ----------------------------------------------
--- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
--- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
--- Once the time is finished, the old PatrolGroup will return to the base.
--- Use the method @{PatrolZone#PATROLZONE.ManageFuel}() to have this proces in place.
--- 
--- ===
--- 
--- @module PatrolZone
--- @author FlightControl
-
-
---- PATROLZONE class
--- @type PATROLZONE
--- @field Group#GROUP PatrolGroup The @{Group} patrolling.
--- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @field DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
--- @extends Base#BASE
-PATROLZONE = {
-  ClassName = "PATROLZONE",
-}
-
---- Creates a new PATROLZONE object, taking a @{Group} object as a parameter. The GROUP needs to be alive.
--- @param #PATROLZONE self
--- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
--- @return #PATROLZONE self
--- @usage
--- -- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
--- PatrolZone = ZONE:New( 'PatrolZone' )
--- PatrolGroup = GROUP:FindByName( "Patrol Group" )
--- PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )
-function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
-
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
-  
-  self.PatrolZone = PatrolZone
-  self.PatrolFloorAltitude = PatrolFloorAltitude
-  self.PatrolCeilingAltitude = PatrolCeilingAltitude
-  self.PatrolMinSpeed = PatrolMinSpeed
-  self.PatrolMaxSpeed = PatrolMaxSpeed
-
-  return self
-end
-
---- Set the @{Group} to act as the Patroller.
--- @param #PATROLZONE self
--- @param Group#GROUP PatrolGroup The @{Group} patrolling.
--- @return #PATROLZONE self
-function PATROLZONE:SetGroup( PatrolGroup )
-
-  self.PatrolGroup = PatrolGroup
-  self.PatrolGroupTemplateName = PatrolGroup:GetName()
-  self:NewPatrolRoute()
-
-  if not self.PatrolOutOfFuelMonitor then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( nil, _MonitorOutOfFuelScheduled, { self }, 1, 120, 0 )
-    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
-  end
-
-  return self  
-end
-
---- Sets (modifies) the minimum and maximum speed of the patrol.
--- @param #PATROLZONE self
--- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
--- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
--- @return #PATROLZONE self
-function PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
-  self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
-  
-  self.PatrolMinSpeed = PatrolMinSpeed
-  self.PatrolMaxSpeed = PatrolMaxSpeed
-end
-
---- Sets the floor and ceiling altitude of the patrol.
--- @param #PATROLZONE self
--- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @return #PATROLZONE self
-function PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
-  self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
-  
-  self.PatrolFloorAltitude = PatrolFloorAltitude
-  self.PatrolCeilingAltitude = PatrolCeilingAltitude
-end
-
-
-
---- @param Group#GROUP PatrolGroup
-function _NewPatrolRoute( PatrolGroup )
-
-  PatrolGroup:T( "NewPatrolRoute" )
-  local PatrolZone = PatrolGroup:GetState( PatrolGroup, "PatrolZone" ) -- PatrolZone#PATROLZONE
-  PatrolZone:NewPatrolRoute()
-end
-
---- Defines a new patrol route using the @{PatrolZone} parameters and settings.
--- @param #PATROLZONE self
--- @return #PATROLZONE self
-function PATROLZONE:NewPatrolRoute()
-
-  self:F2()
-
-  local PatrolRoute = {}
-  
-  if self.PatrolGroup:IsAlive() then
-    --- Determine if the PatrolGroup is within the PatrolZone. 
-    -- If not, make a waypoint within the to that the PatrolGroup will fly at maximum speed to that point.
-    
---    --- Calculate the current route point.
---    local CurrentVec2 = self.PatrolGroup:GetVec2()
---    local CurrentAltitude = self.PatrolGroup:GetUnit(1):GetAltitude()
---    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
---    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
---        POINT_VEC3.RoutePointAltType.BARO, 
---        POINT_VEC3.RoutePointType.TurningPoint, 
---        POINT_VEC3.RoutePointAction.TurningPoint, 
---        ToPatrolZoneSpeed, 
---        true 
---      )
---    
---    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
-    
-    self:T2( PatrolRoute )
-  
-    if self.PatrolGroup:IsNotInZone( self.PatrolZone ) then
-      --- Find a random 2D point in PatrolZone.
-      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
-      self:T2( ToPatrolZoneVec2 )
-      
-      --- Define Speed and Altitude.
-      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
-      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      self:T2( ToPatrolZoneSpeed )
-      
-      --- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
-      
-      --- Create a route point of type air.
-      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToPatrolZoneSpeed, 
-        true 
-      )
-
-    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
-
-    end
-    
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
-    
-      --- Find a random 2D point in PatrolZone.
-    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
-    self:T2( ToTargetVec2 )
-
-    --- Define Speed and Altitude.
-    local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
-    
-    --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
-    
-    --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
-      true 
-    )
-    
-    --ToTargetPointVec3:SmokeRed()
-
-    PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
-    
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the PatrolGroup...
-    self.PatrolGroup:WayPointInitialize( PatrolRoute )
-    
-    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the PatrolGroup in a temporary variable ...
-    self.PatrolGroup:SetState( self.PatrolGroup, "PatrolZone", self )
-    self.PatrolGroup:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
-
-    --- NOW ROUTE THE GROUP!
-    self.PatrolGroup:WayPointExecute( 1, 2 )
-  end
-  
-end
-
---- When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
--- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
--- Once the time is finished, the old PatrolGroup will return to the base.
--- @param #PATROLZONE self
--- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the PatrolGroup is considered to get out of fuel.
--- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel PatrolGroup will orbit before returning to the base.
--- @return #PATROLZONE self
-function PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
-
-  self.PatrolManageFuel = true
-  self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
-  self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
-  
-  if self.PatrolGroup then
-    self.PatrolOutOfFuelMonitor = SCHEDULER:New( self, self._MonitorOutOfFuelScheduled, {}, 1, 120, 0 )
-    self.SpawnPatrolGroup = SPAWN:New( self.PatrolGroupTemplateName )
-  end
-  return self
-end
-
---- @param #PATROLZONE self
-function _MonitorOutOfFuelScheduled( self )
-  self:F2( "_MonitorOutOfFuelScheduled" )
-
-  if self.PatrolGroup and self.PatrolGroup:IsAlive() then
-  
-    local Fuel = self.PatrolGroup:GetUnit(1):GetFuel()
-    if Fuel < self.PatrolFuelTresholdPercentage then
-      local OldPatrolGroup = self.PatrolGroup
-      local PatrolGroupTemplate = self.PatrolGroup:GetTemplate()
-      
-      local OrbitTask = OldPatrolGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
-      local TimedOrbitTask = OldPatrolGroup:TaskControlled( OrbitTask, OldPatrolGroup:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
-      OldPatrolGroup:SetTask( TimedOrbitTask, 10 )
-      
-      local NewPatrolGroup = self.SpawnPatrolGroup:Spawn()
-      self.PatrolGroup = NewPatrolGroup
-      self:NewPatrolRoute()
-    end
-  else
-    self.PatrolOutOfFuelMonitor:Stop()
-  end
-end--- This module contains the AIBALANCER class.
--- 
--- ===
--- 
--- 1) @{AIBalancer#AIBALANCER} class, extends @{Base#BASE}
--- ================================================
--- The @{AIBalancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
--- There will be as many AI GROUPS spawned as there at CLIENTS in SET_CLIENT not spawned.
--- 
--- 1.1) AIBALANCER construction method:
--- ------------------------------------
--- Create a new AIBALANCER object with the @{#AIBALANCER.New} method:
--- 
---    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
--- 
--- 1.2) AIBALANCER returns AI to Airbases:
--- ---------------------------------------
--- You can configure to have the AI to return to:
--- 
---    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
---    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
--- 
--- 1.3) AIBALANCER allows AI to patrol specific zones:
--- ---------------------------------------------------
--- Use @{AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
---
--- ===
--- 
--- ### Contributions: 
--- 
---   * **Dutch_Baron (James)** Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AIBALANCER class.  
---   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
--- 
---   * **SNAFU**
---   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AIBALANCER moose class.
--- 
--- ### Authors: 
--- 
---   * FlightControl - Framework Design &  Programming
--- 
--- @module AIBalancer
-
---- AIBALANCER class
--- @type AIBALANCER
--- @field Set#SET_CLIENT SetClient
--- @field Spawn#SPAWN SpawnAI
--- @field #boolean ToNearestAirbase
--- @field Set#SET_AIRBASE ReturnAirbaseSet
--- @field DCSTypes#Distance ReturnTresholdRange
--- @field #boolean ToHomeAirbase
--- @field PatrolZone#PATROLZONE PatrolZone
--- @extends Base#BASE
-AIBALANCER = {
-  ClassName = "AIBALANCER",
-  PatrolZones = {},
-  AIGroups = {},
-}
-
---- Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
--- @param #AIBALANCER self
--- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
--- @param SpawnAI A SPAWN object that will spawn the AI units required, balancing the SetClient.
--- @return #AIBALANCER self
-function AIBALANCER:New( SetClient, SpawnAI )
-
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
-  
-  self.SetClient = SetClient
-  if type( SpawnAI ) == "table" then
-    if SpawnAI.ClassName and SpawnAI.ClassName == "SPAWN" then
-      self.SpawnAI = { SpawnAI }
-    else
-      local SpawnObjects = true
-      for SpawnObjectID, SpawnObject in pairs( SpawnAI ) do
-        if SpawnObject.ClassName and SpawnObject.ClassName == "SPAWN" then
-          self:E( SpawnObject.ClassName )
-        else
-          self:E( "other object" )
-          SpawnObjects = false
-        end
-      end
-      if SpawnObjects == true then
-        self.SpawnAI = SpawnAI
-      else
-        error( "No SPAWN object given in parameter SpawnAI, either as a single object or as a table of objects!" )
-      end
-    end
-  end
-
-  self.ToNearestAirbase = false
-  self.ReturnHomeAirbase = false
-
-  self.AIMonitorSchedule = SCHEDULER:New( self, self._ClientAliveMonitorScheduler, {}, 1, 10, 0 ) 
-  
-  return self
-end
-
---- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
--- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
--- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
-function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
-
-  self.ToNearestAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
-  self.ReturnAirbaseSet = ReturnAirbaseSet
-end
-
---- Returns the AI to the home @{Airbase#AIRBASE}.
--- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
-function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
-
-  self.ToHomeAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
-end
-
---- Let the AI patrol a @{Zone} with a given Speed range and Altitude range.
--- @param #AIBALANCER self
--- @param PatrolZone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
--- @return PatrolZone#PATROLZONE self
-function AIBALANCER:SetPatrolZone( PatrolZone )
-
-  self.PatrolZone = PatrolZone
-end
-
---- @param #AIBALANCER self
-function AIBALANCER:_ClientAliveMonitorScheduler()
-
-  self.SetClient:ForEachClient(
-    --- @param Client#CLIENT Client
-    function( Client )
-      local ClientAIAliveState = Client:GetState( self, 'AIAlive' )
-      self:T( ClientAIAliveState )
-      if Client:IsAlive() then
-        if ClientAIAliveState == true then
-          Client:SetState( self, 'AIAlive', false )
-          
-          local AIGroup = self.AIGroups[Client.UnitName] -- Group#GROUP
-          
---          local PatrolZone = Client:GetState( self, "PatrolZone" )
---          if PatrolZone then
---            PatrolZone = nil
---            Client:ClearState( self, "PatrolZone" )
---          end
-          
-          if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
-            AIGroup:Destroy()
-          else
-            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
-            -- If there is a CLIENT, the AI stays engaged and will not return.
-            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
-
-            local PlayerInRange = { Value = false }          
-            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
-            
-            self:E( RangeZone )
-            
-            _DATABASE:ForEachPlayer(
-              --- @param Unit#UNIT RangeTestUnit
-              function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
-                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
-                if RangeTestUnit:IsInZone( RangeZone ) == true then
-                  self:E( "in zone" )
-                  if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
-                    self:E( "in range" )
-                    PlayerInRange.Value = true
-                  end
-                end
-              end,
-              
-              --- @param Zone#ZONE_RADIUS RangeZone
-              -- @param Group#GROUP AIGroup
-              function( RangeZone, AIGroup, PlayerInRange )
-                local AIGroupTemplate = AIGroup:GetTemplate()
-                if PlayerInRange.Value == false then
-                  if self.ToHomeAirbase == true then
-                    local WayPointCount = #AIGroupTemplate.route.points
-                    local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
-                    AIGroup:SetCommand( SwitchWayPointCommand )
-                    AIGroup:MessageToRed( "Returning to home base ...", 30 )
-                  else
-                    -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
-                    --TODO: i need to rework the POINT_VEC2 thing.
-                    local PointVec2 = POINT_VEC2:New( AIGroup:GetVec2().x, AIGroup:GetVec2().y  )
-                    local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
-                    self:T( ClosestAirbase.AirbaseName )
-                    AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
-                    local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
-                    AIGroupTemplate.route = RTBRoute
-                    AIGroup:Respawn( AIGroupTemplate )
-                  end
-                end
-              end
-              , RangeZone, AIGroup, PlayerInRange
-            )
-            
-          end
-        end
-      else
-        if not ClientAIAliveState or ClientAIAliveState == false then
-          Client:SetState( self, 'AIAlive', true )
-          
-          
-          -- OK, spawn a new group from the SpawnAI objects provided.
-          local SpawnAICount = #self.SpawnAI
-          local SpawnAIIndex = math.random( 1, SpawnAICount )
-          local AIGroup = self.SpawnAI[SpawnAIIndex]:Spawn()
-          AIGroup:E( "spawning new AIGroup" )
-          --TODO: need to rework UnitName thing ...
-          self.AIGroups[Client.UnitName] = AIGroup
-          
-          --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
-          if self.PatrolZone then
-            self.PatrolZones[#self.PatrolZones+1] = PATROLZONE:New(
-              self.PatrolZone.PatrolZone,
-              self.PatrolZone.PatrolFloorAltitude,
-              self.PatrolZone.PatrolCeilingAltitude,
-              self.PatrolZone.PatrolMinSpeed,
-              self.PatrolZone.PatrolMaxSpeed
-            )
-            
-            if self.PatrolZone.PatrolManageFuel == true then
-              self.PatrolZones[#self.PatrolZones]:ManageFuel( self.PatrolZone.PatrolFuelTresholdPercentage, self.PatrolZone.PatrolOutOfFuelOrbitTime )
-            end 
-            self.PatrolZones[#self.PatrolZones]:SetGroup( AIGroup )
-            
-            --self.PatrolZones[#self.PatrolZones+1] = PatrolZone
-            
-            --Client:SetState( self, "PatrolZone", PatrolZone )
-          end
-        end
-      end
-    end
-  )
-  return true
-end
-
-
-
 --- This module contains the AIRBASEPOLICE classes.
 --
 -- ===
@@ -27647,6 +25085,7 @@ end--- This module contains the STATEMACHINE class.
 
 --- STATEMACHINE class
 -- @type STATEMACHINE
+-- @extends Base#BASE
 STATEMACHINE = {
   ClassName = "STATEMACHINE",
 }
@@ -27676,7 +25115,10 @@ function STATEMACHINE:New( options )
 
   for _, event in ipairs(options.events or {}) do
     local name = event.name
+    local __name = "__" .. event.name
     self[name] = self[name] or self:_create_transition(name)
+    self[__name] = self[__name] or self:_delayed_transition(name)
+    self:T( "Added methods: " .. name .. ", " .. __name )
     self.events[name] = self.events[name] or { map = {} }
     self:_add_to_map(self.events[name].map, event)
   end
@@ -27720,60 +25162,85 @@ end
 
 function STATEMACHINE:_call_handler(handler, params)
   if handler then
-    return handler(unpack(params))
+    return handler( self, unpack(params) )
   end
 end
 
-function STATEMACHINE:_create_transition(name)
-  self:E( { name = name } )
-  return function(self, ...)
-    local can, to = self:can(name)
-    self:T( { name, can, to } )
+function STATEMACHINE._handler( self, EventName, ... )
 
-    if can then
-      local from = self.current
-      local params = { self, name, from, to, ... }
+  self:F( EventName )
 
-      if self:_call_handler(self["onbefore" .. name], params) == false
-      or self:_call_handler(self["onleave" .. from], params) == false then
-        return false
-      end
+  local can, to = self:can(EventName)
+  self:T( { EventName, can, to } )
+  
+  local ReturnValues = nil
 
-      self.current = to
-      
-      local execute = true
-      
-      local subtable = self:_gosub( to, name )
-      for _, sub in pairs( subtable ) do
-        self:F( "calling sub: " .. sub.event )
-        sub.fsm.fsmparent = self
-        sub.fsm.returnevents = sub.returnevents
-        sub.fsm[sub.event]( sub.fsm )
-        execute = true
-      end
-        
-      local fsmparent, event = self:_isendstate( to )
-      if fsmparent and event then
-        self:F( { "end state: ", fsmparent, event } )
-        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-        self:_call_handler(self["onstatechange"], params)
-        fsmparent[event]( fsmparent )
-        execute = false
-      end
+  if can then
+    local from = self.current
+    local params = { ..., EventName, from, to  }
 
-      if execute then      
-        self:F( { "execute: " .. to, name } )
-        self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-        self:_call_handler(self["onafter" .. name] or self["on" .. name], params)
-        self:_call_handler(self["onstatechange"], params)
-      end
-      
-      return true
+    if self:_call_handler(self["onbefore" .. EventName], params) == false
+    or self:_call_handler(self["onleave" .. from], params) == false then
+      return false
     end
 
-    return false
+    self.current = to
+    
+    local execute = true
+    
+    local subtable = self:_gosub( to, EventName )
+    for _, sub in pairs( subtable ) do
+      self:F2( "calling sub: " .. sub.event )
+      sub.fsm.fsmparent = self
+      sub.fsm.returnevents = sub.returnevents
+      sub.fsm[sub.event]( sub.fsm )
+      execute = true
+    end
+      
+    local fsmparent, event = self:_isendstate( to )
+    if fsmparent and event then
+      self:F2( { "end state: ", fsmparent, event } )
+      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+      self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
+      self:_call_handler(self["onstatechange"], params)
+      fsmparent[event]( fsmparent )
+      execute = false
+    end
+
+    if execute then
+      self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+      
+      self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
+      if ( self:_call_handler(self["OnBefore" .. to], params ) ~= false ) then
+
+        self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
+        self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
+        
+        self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
+        ReturnValues = self:_call_handler(self["OnAfter" .. to], params )
+      end
+
+      self:_call_handler(self["onstatechange"], params)
+    end
+    
+    return ReturnValues
   end
+
+  return nil
+end
+
+function STATEMACHINE:_delayed_transition( EventName )
+  self:E( { EventName = EventName } )
+  return function( self, DelaySeconds, ... )
+    self:T( "Delayed Event: " .. EventName )
+    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds ) 
+  end
+end
+
+function STATEMACHINE:_create_transition( EventName )
+  self:E( { Event =  EventName  } )
+  return function( self, ... ) return self._handler( self,  EventName , ... ) end
 end
 
 function STATEMACHINE:_gosub( parentstate, parentevent )
@@ -27917,7 +25384,53 @@ function STATEMACHINE_TASK:_call_handler( handler, params )
     return handler( self.Task, self.TaskUnit, unpack( params ) )
   end
 end
---- @module Process
+
+--- STATEMACHINE_CONTROLLABLE class
+-- @type STATEMACHINE_CONTROLLABLE
+-- @field Controllable#CONTROLLABLE Controllable
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_CONTROLLABLE = {
+  ClassName = "STATEMACHINE_CONTROLLABLE",
+}
+
+--- Creates a new STATEMACHINE_CONTROLLABLE object.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param #table FSMT Finite State Machine Table
+-- @param Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
+  
+  if Controllable then
+    self:SetControllable( Controllable )
+  end
+
+  return self
+end
+
+--- Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @param Controllable#CONTROLLABLE Controllable
+-- @return #STATEMACHINE_CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:SetControllable( FSMControllable )
+  self:F( FSMControllable )
+  self.Controllable = FSMControllable
+end
+
+--- Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param #STATEMACHINE_CONTROLLABLE self
+-- @return Controllable#CONTROLLABLE
+function STATEMACHINE_CONTROLLABLE:GetControllable()
+  return self.Controllable
+end
+
+function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
+  if handler then
+    return handler( self, self.Controllable, unpack( params ) )
+  end
+end--- @module Process
 
 --- The PROCESS class
 -- @type PROCESS
@@ -29924,6 +27437,377 @@ end
 
 
 
+--- This module contains the AI\_PATROLZONE class.
+-- 
+-- ===
+-- 
+-- 1) @{#AI_PATROLZONE} class, extends @{StateMachine#STATEMACHINE}
+-- ================================================================
+-- The @{#AI_PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable}.
+-- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
+-- a random point is selected as the route point within the 3D space, within the given boundary limits.
+-- The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
+-- Upon arrival at the random 3D point, a new 3D random point will be selected within the patrol zone using the given limits.
+-- This cycle will continue until a fuel treshold has been reached by the airplane.
+-- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- 
+-- 1.1) AI\_PATROLZONE constructor:
+-- ----------------------------
+--   
+--   * @{#AI_PATROLZONE.New}(): Creates a new AI\_PATROLZONE object.
+-- 
+-- 1.2) AI\_PATROLZONE state machine:
+-- ----------------------------------
+-- The AI\_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
+-- 
+-- ### 1.2.1) AI\_PATROLZONE Events:
+-- 
+--   * @{#AI_PATROLZONE.Route}( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
+--   * @{#AI_PATROLZONE.Patrol}( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.
+--   * @{#AI_PATROLZONE.RTB}( AIControllable ): The AIControllable will report return to base.
+--   * @{#AI_PATROLZONE.End}( AIControllable ): The end of the AI\_PATROLZONE process.
+--   * @{#AI_PATROLZONE.Dead}( AIControllable ): The AIControllable is dead. The AI\_PATROLZONE process will be ended.
+-- 
+-- ### 1.2.2) AI\_PATROLZONE States:
+-- 
+--   * **Route**: A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
+--   * **Patrol**: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition function can be used.
+--   * **RTB**: The AIControllable reports it wants to return to the base.
+--   * **Dead**: The AIControllable is dead ...
+--   * **End**: The process has come to an end.
+--   
+-- ### 1.2.3) AI\_PATROLZONE state transition functions:
+-- 
+-- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
+-- There are 2 moments when state transition functions will be called by the state machine:
+-- 
+--   * **Before** the state transition. 
+--     The state transition function needs to start with the name **OnBefore + the name of the state**. 
+--     If the state transition function returns false, then the processing of the state transition will not be done!
+--     If you want to change the behaviour of the AIControllable at this event, return false, 
+--     but then you'll need to specify your own logic using the AIControllable!
+--   
+--   * **After** the state transition. 
+--     The state transition function needs to start with the name **OnAfter + the name of the state**. 
+--     These state transition functions need to provide a return value, which is specified at the function description.
+--
+-- An example how to manage a state transition for an AI\_PATROLZONE object **Patrol** for the state **RTB**:
+-- 
+--      local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone" )
+--      local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
+--
+--      local PatrolSpawn = SPAWN:New( "Patrol Group" )
+--      local PatrolGroup = PatrolSpawn:Spawn()
+--
+--      local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
+--      Patrol:SetControllable( PatrolGroup )
+--      Patrol:ManageFuel( 0.2, 60 )
+--
+-- **OnBefore**RTB( AIGroup ) will be called by the AI\_PATROLZONE object when the AIGroup reports RTB, but **before** the RTB default action is processed by the AI_PATROLZONE object.
+--
+--      --- State transition function for the AI\_PATROLZONE **Patrol** object
+--      -- @param #AI_PATROLZONE self 
+--      -- @param Controllable#CONTROLLABLE AIGroup
+--      -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
+--      function Patrol:OnBeforeRTB( AIGroup )
+--        AIGroup:MessageToRed( "Returning to base", 20 )
+--      end
+--       
+-- **OnAfter**RTB( AIGroup ) will be called by the AI\_PATROLZONE object when the AIGroup reports RTB, but **after** the RTB default action was processed by the AI_PATROLZONE object.
+--
+--      --- State transition function for the AI\_PATROLZONE **Patrol** object
+--      -- @param #AI_PATROLZONE self 
+--      -- @param Controllable#CONTROLLABLE AIGroup
+--      -- @return #Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
+--      function Patrol:OnAfterRTB( AIGroup )
+--        return PatrolSpawn:Spawn()
+--      end 
+--    
+-- 1.3) Manage the AI\_PATROLZONE parameters:
+-- ------------------------------------------
+-- The following methods are available to modify the parameters of a AI\_PATROLZONE object:
+-- 
+--   * @{#AI_PATROLZONE.SetControllable}(): Set the AIControllable.
+--   * @{#AI_PATROLZONE.GetControllable}(): Get the AIControllable.
+--   * @{#AI_PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
+--   * @{#AI_PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+-- 
+-- 1.3) Manage the out of fuel in the AI\_PATROLZONE:
+-- ----------------------------------------------
+-- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI\_PATROLZONE.
+-- Once the time is finished, the old AIControllable will return to the base.
+-- Use the method @{#AI_PATROLZONE.ManageFuel}() to have this proces in place.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-17: AI\_PATROLZONE:New( **PatrolSpawn,** PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces AI\_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- 
+-- 2016-07-01: Initial class and API.
+-- 
+-- ===
+-- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
+-- ### Contributions: 
+-- 
+--   * **DutchBaron**: Testing.
+--   * **Pikey**: Testing and API concept review.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming.
+-- 
+-- 
+-- @module AI_PatrolZone
+
+
+
+--- AI\_PATROLZONE class
+-- @type AI_PATROLZONE
+-- @field Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @extends StateMachine#STATEMACHINE_CONTROLLABLE
+AI_PATROLZONE = {
+  ClassName = "AI_PATROLZONE",
+}
+
+
+
+--- Creates a new AI\_PATROLZONE object
+-- @param #AI_PATROLZONE self
+-- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @return #AI_PATROLZONE self
+-- @usage
+-- -- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- PatrolZone = ZONE:New( 'PatrolZone' )
+-- PatrolSpawn = SPAWN:New( 'Patrol Group' )
+-- PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )
+function AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+
+  local FSMT = {
+    initial = 'None',
+    events = {
+      { name = 'Start',   from = '*',                       to = 'Route' },
+      { name = 'Route',   from = '*',                       to = 'Route' },
+      { name = 'Patrol',  from = { 'Patrol', 'Route' },     to = 'Patrol' },
+      { name = 'RTB',     from = 'Patrol',                  to = 'RTB' },
+      { name = 'End',     from = '*',                       to = 'End' },
+      { name = 'Dead',    from = '*',                       to = 'End' }, 
+    },
+  }
+  
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) )
+  
+  self.PatrolZone = PatrolZone
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+
+  return self
+end
+
+
+
+
+--- Sets (modifies) the minimum and maximum speed of the patrol.
+-- @param #AI_PATROLZONE self
+-- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @return #AI_PATROLZONE self
+function AI_PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
+  self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
+  
+  self.PatrolMinSpeed = PatrolMinSpeed
+  self.PatrolMaxSpeed = PatrolMaxSpeed
+end
+
+
+
+--- Sets the floor and ceiling altitude of the patrol.
+-- @param #AI_PATROLZONE self
+-- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @return #AI_PATROLZONE self
+function AI_PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
+  self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
+  
+  self.PatrolFloorAltitude = PatrolFloorAltitude
+  self.PatrolCeilingAltitude = PatrolCeilingAltitude
+end
+
+
+
+--- @param Controllable#CONTROLLABLE AIControllable
+function _NewPatrolRoute( AIControllable )
+
+  AIControllable:T( "NewPatrolRoute" )
+  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolZone#AI_PATROLZONE
+  PatrolZone:__Route( 1 )
+end
+
+
+
+
+--- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
+-- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+-- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI\_PATROLZONE.
+-- Once the time is finished, the old AIControllable will return to the base.
+-- @param #AI_PATROLZONE self
+-- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
+-- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
+-- @return #AI_PATROLZONE self
+function AI_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+
+  self.PatrolManageFuel = true
+  self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
+  self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
+  
+  return self
+end
+
+--- Defines a new patrol route using the @{AI_PatrolZone} parameters and settings.
+-- @param #AI_PATROLZONE self
+-- @return #AI_PATROLZONE self
+function AI_PATROLZONE:onenterRoute()
+
+  self:F2()
+
+  local PatrolRoute = {}
+  
+  if self.Controllable:IsAlive() then
+    --- Determine if the AIControllable is within the PatrolZone. 
+    -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
+    
+--    --- Calculate the current route point.
+--    local CurrentVec2 = self.Controllable:GetVec2()
+--    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+--    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+--    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+--        POINT_VEC3.RoutePointAltType.BARO, 
+--        POINT_VEC3.RoutePointType.TurningPoint, 
+--        POINT_VEC3.RoutePointAction.TurningPoint, 
+--        ToPatrolZoneSpeed, 
+--        true 
+--      )
+--    
+--    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    
+    self:T2( PatrolRoute )
+  
+    if self.Controllable:IsNotInZone( self.PatrolZone ) then
+      --- Find a random 2D point in PatrolZone.
+      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
+      self:T2( ToPatrolZoneVec2 )
+      
+      --- Define Speed and Altitude.
+      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      self:T2( ToPatrolZoneSpeed )
+      
+      --- Obtain a 3D @{Point} from the 2D point + altitude.
+      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
+      
+      --- Create a route point of type air.
+      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToPatrolZoneSpeed, 
+        true 
+      )
+
+    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
+
+    end
+    
+    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    
+      --- Find a random 2D point in PatrolZone.
+    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Define Speed and Altitude.
+    local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
+    
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      POINT_VEC3.RoutePointAltType.BARO, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+    
+    --ToTargetPointVec3:SmokeRed()
+
+    PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    self.Controllable:WayPointInitialize( PatrolRoute )
+    
+    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
+    self.Controllable:SetState( self.Controllable, "PatrolZone", self )
+    self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
+
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1 )
+    
+    self:__Patrol( 30 )
+  end
+  
+end
+
+
+--- @param #AI_PATROLZONE self
+function AI_PATROLZONE:onenterPatrol()
+  self:F2()
+
+  if self.Controllable and self.Controllable:IsAlive() then
+  
+    local Fuel = self.Controllable:GetUnit(1):GetFuel()
+    if Fuel < self.PatrolFuelTresholdPercentage then
+      local OldAIControllable = self.Controllable
+      local AIControllableTemplate = self.Controllable:GetTemplate()
+      
+      local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+      local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
+      OldAIControllable:SetTask( TimedOrbitTask, 10 )
+
+      self:RTB()
+    else
+      self:__Patrol( 30 ) -- Execute the Patrol event after 30 seconds.
+    end
+  end
+  
+end
 
 BASE:TraceOnOff( false )
 env.info( '*** MOOSE INCLUDE END *** ' ) 

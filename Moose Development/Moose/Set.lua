@@ -218,13 +218,12 @@
 -- 
 -- ====
 -- 
--- ### Contributions: 
--- 
---   * Mechanist : Concept & Testing
--- 
 -- ### Authors: 
 -- 
 --   * FlightControl : Design & Programming
+--   
+-- ### Contributions: 
+-- 
 -- 
 -- @module Set
 

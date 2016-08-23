@@ -26,9 +26,10 @@
 --   
 -- 1.1) SPAWN construction methods
 -- -------------------------------
--- Create a new SPAWN object with the @{#SPAWN.New} or the @{#SPAWN.NewWithAlias} methods:
+-- Create a new SPAWN object with the @{#SPAWN.New}() or the @{#SPAWN.NewWithAlias}() methods:
 -- 
---   * @{#SPAWN.New}: Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
+--   * @{#SPAWN.New}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
+--   * @{#SPAWN.NewWithAlias}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition), and gives each spawned @{Group} an different name.
 --
 -- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
 -- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
@@ -36,27 +37,29 @@
 --
 -- 1.2) SPAWN initialization methods
 -- ---------------------------------
--- A spawn object will behave differently based on the usage of initialization methods:  
+-- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
 -- 
---   * @{#SPAWN.Limit}: Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.RandomizeRoute}: Randomize the routes of spawned groups, and for air groups also optionally the height.
---   * @{#SPAWN.RandomizeTemplate}: Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
---   * @{#SPAWN.Uncontrolled}: Spawn plane groups uncontrolled.
---   * @{#SPAWN.Array}: Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}: Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
+--   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+--   * @{#SPAWN.InitUncontrolled}(): Spawn plane groups uncontrolled.
+--   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
+--   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
+--   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 -- 
 -- 1.3) SPAWN spawning methods
 -- ---------------------------
 -- Groups can be spawned at different times and methods:
 -- 
---   * @{#SPAWN.Spawn}: Spawn one new group based on the last spawned index.
---   * @{#SPAWN.ReSpawn}: Re-spawn a group based on a given index.
---   * @{#SPAWN.SpawnScheduled}: Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart} and @{#SPAWN.SpawnScheduleStop} to start and stop the schedule respectively.
---   * @{#SPAWN.SpawnFromVec3}: Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
---   * @{#SPAWN.SpawnFromVec2}: Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
---   * @{#SPAWN.SpawnFromStatic}: Spawn a new group from a structure, taking the position of a @{STATIC}.
---   * @{#SPAWN.SpawnFromUnit}: Spawn a new group taking the position of a @{UNIT}.
---   * @{#SPAWN.SpawnInZone}: Spawn a new group in a @{ZONE}.
+--   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
+--   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
+--   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart}() and @{#SPAWN.SpawnScheduleStop}() to start and stop the schedule respectively.
+--   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
+--   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
+--   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
+--   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
+--   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
 -- 
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
@@ -67,28 +70,128 @@
 -- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
 -- SPAWN provides methods to iterate through that internal GROUP object reference table:
 -- 
---   * @{#SPAWN.GetFirstAliveGroup}: Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
---   * @{#SPAWN.GetNextAliveGroup}: Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
---   * @{#SPAWN.GetLastAliveGroup}: Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+--   * @{#SPAWN.GetFirstAliveGroup}(): Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--   * @{#SPAWN.GetNextAliveGroup}(): Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--   * @{#SPAWN.GetLastAliveGroup}(): Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
 -- 
--- You can use the methods @{#SPAWN.GetFirstAliveGroup} and sequently @{#SPAWN.GetNextAliveGroup} to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
--- The method @{#SPAWN.GetGroupFromIndex} will return the GROUP object reference from the given Index, dead or alive...
+-- You can use the methods @{#SPAWN.GetFirstAliveGroup}() and sequently @{#SPAWN.GetNextAliveGroup}() to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+-- The method @{#SPAWN.GetGroupFromIndex}() will return the GROUP object reference from the given Index, dead or alive...
 -- 
 -- 1.5) SPAWN object cleaning
 -- --------------------------
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
--- To prevent this, a @{#SPAWN.CleanUp} initialization method has been defined that will silently monitor the status of each spawned group.
+-- To prevent this, a @{#SPAWN.InitCleanUp}() initialization method has been defined that will silently monitor the status of each spawned group.
 -- Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
 -- There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
 -- In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
--- Check the @{#SPAWN.CleanUp} for further info.
+-- Check the @{#SPAWN.InitCleanUp}() for further info.
+-- 
+-- 1.6) Catch the @{Group} spawn event in a callback function!
+-- -----------------------------------------------------------
+-- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
+-- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
+-- To SPAWN class supports this functionality through the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally. 
+-- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
+-- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
+-- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- 
+-- ====
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones )** added.
+-- 
+--    * This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types. 
+-- 
+-- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
+-- 
+-- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+--
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
+-- 
+--    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
+--    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
+-- 
+-- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
+-- 
+--    * This method enables the randomization of units at the first route point in a radius band at a spawn event.
+-- 
+-- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- ===
+-- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
+-- ### Contributions: 
+-- 
+--   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
 -- 
 -- 
 -- @module Spawn
--- @author FlightControl
+
+
 
 --- SPAWN Class
 -- @type SPAWN
@@ -100,15 +203,18 @@
 -- @field #number MaxAliveUnits
 -- @field #number SpawnIndex
 -- @field #number MaxAliveGroups
+-- @field #SPAWN.SpawnZoneTable SpawnZoneTable
 SPAWN = {
   ClassName = "SPAWN",
   SpawnTemplatePrefix = nil,
   SpawnAliasPrefix = nil,
 }
 
+--- @type SPAWN.SpawnZoneTable
+-- @list <Zone#ZONE_BASE> SpawnZone
 
 
---- Creates the main object to spawn a GROUP defined in the DCS ME.
+--- Creates the main object to spawn a @{Group} defined in the DCS ME.
 -- @param #SPAWN self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWN
@@ -183,7 +289,7 @@ end
 
 --- Limits the Maximum amount of Units that can be alive at the same time, and the maximum amount of groups that can be spawned.
 -- Note that this method is exceptionally important to balance the performance of the mission. Depending on the machine etc, a mission can only process a maximum amount of units.
--- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this function should be used...
+-- If the time interval must be short, but there should not be more Units or Groups alive than a maximum amount of units, then this method should be used...
 -- When a @{#SPAWN.New} is executed and the limit of the amount of units alive is reached, then no new spawn will happen of the group, until some of these units of the spawn object will be destroyed.
 -- @param #SPAWN self
 -- @param #number SpawnMaxUnitsAlive The maximum amount of units that can be alive at runtime.    
@@ -195,8 +301,8 @@ end
 -- -- NATO helicopters engaging in the battle field.
 -- -- This helicopter group consists of one Unit. So, this group will SPAWN maximum 2 groups simultaneously within the DCSRTE.
 -- -- There will be maximum 24 groups spawned during the whole mission lifetime. 
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Limit( 2, 24 )
-function SPAWN:Limit( SpawnMaxUnitsAlive, SpawnMaxGroups )
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitLimit( 2, 24 )
+function SPAWN:InitLimit( SpawnMaxUnitsAlive, SpawnMaxGroups )
 	self:F( { self.SpawnTemplatePrefix, SpawnMaxUnitsAlive, SpawnMaxGroups } )
 
 	self.SpawnMaxUnitsAlive = SpawnMaxUnitsAlive				-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
@@ -224,8 +330,8 @@ end
 -- -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
 -- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
 -- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
--- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):RandomizeRoute( 2, 2, 2000 )
-function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeRoute( 2, 2, 2000 )
+function SPAWN:InitRandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
 	self:F( { self.SpawnTemplatePrefix, SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight } )
 
 	self.SpawnRandomizeRoute = true
@@ -241,9 +347,34 @@ function SPAWN:RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, Spaw
 	return self
 end
 
+--- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
+-- @param #SPAWN self
+-- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
+-- @param DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @return #SPAWN
+-- @usage
+-- -- NATO helicopters engaging in the battle field. 
+-- -- The KA-50 has waypoints Start point ( =0 or SP ), 1, 2, 3, 4, End point (= 5 or DP). 
+-- -- Waypoints 2 and 3 will only be randomized. The others will remain on their original position with each new spawn of the helicopter.
+-- -- The randomization of waypoint 2 and 3 will take place within a radius of 2000 meters.
+-- Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):InitRandomizeRoute( 2, 2, 2000 )
+function SPAWN:InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )
+  self:F( { self.SpawnTemplatePrefix, RandomizeUnits, OuterRadius, InnerRadius } )
 
---- This function is rather complicated to understand. But I'll try to explain.
--- This function becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+  self.SpawnRandomizeUnits = RandomizeUnits or false
+  self.SpawnOuterRadius = OuterRadius or 0
+  self.SpawnInnerRadius = InnerRadius or 0
+
+  for GroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeRoute( GroupID )
+  end
+  
+  return self
+end
+
+--- This method is rather complicated to understand. But I'll try to explain.
+-- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
@@ -258,10 +389,10 @@ end
 -- Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 3', 'US Tank Platoon 4', 'US Tank Platoon 5', 
 --                      'US Tank Platoon 6', 'US Tank Platoon 7', 'US Tank Platoon 8', 'US Tank Platoon 9', 'US Tank Platoon 10', 
 --                      'US Tank Platoon 11', 'US Tank Platoon 12', 'US Tank Platoon 13' }
--- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
--- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):Limit( 12, 150 ):Schedule( 200, 0.4 ):RandomizeTemplate( Spawn_US_Platoon ):RandomizeRoute( 3, 3, 2000 )
-function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
+function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	self:F( { self.SpawnTemplatePrefix, SpawnTemplatePrefixTable } )
 
 	self.SpawnTemplatePrefixTable = SpawnTemplatePrefixTable
@@ -274,12 +405,33 @@ function SPAWN:RandomizeTemplate( SpawnTemplatePrefixTable )
 	return self
 end
 
+--TODO: Add example.
+--- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
+-- @param #SPAWN self
+-- @param #table SpawnZoneTable A table with @{Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Zone}s objects. 
+-- @return #SPAWN
+-- @usage
+-- -- NATO Tank Platoons invading Gori.
+-- -- Choose between 3 different zones for each new SPAWN the Group to be executed, regardless of the zone type. 
+function SPAWN:InitRandomizeZones( SpawnZoneTable )
+  self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
+
+  self.SpawnZoneTable = SpawnZoneTable
+  self.SpawnRandomizeZones = true
+
+  for SpawnGroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeZones( SpawnGroupID )
+  end
+  
+  return self
+end
+
 
 
 
 
 --- For planes and helicopters, when these groups go home and land on their home airbases and farps, they normally would taxi to the parking spot, shut-down their engines and wait forever until the Group is removed by the runtime environment.
--- This function is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
+-- This method is used to re-spawn automatically (so no extra call is needed anymore) the same group after it has landed. 
 -- This will enable a spawned group to be re-spawned after it lands, until it is destroyed...
 -- Note: When the group is respawned, it will re-spawn from the original airbase where it took off. 
 -- So ensure that the routes for groups that respawn, always return to the original airbase, or players may get confused ...
@@ -288,7 +440,7 @@ end
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
--- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():RandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
+-- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():InitRandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
 function SPAWN:InitRepeat()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -333,11 +485,15 @@ end
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
 -- @return #SPAWN self
 -- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
-function SPAWN:CleanUp( SpawnCleanUpInterval )
+function SPAWN:InitCleanUp( SpawnCleanUpInterval )
 	self:F( { self.SpawnTemplatePrefix, SpawnCleanUpInterval } )
 
 	self.SpawnCleanUpInterval = SpawnCleanUpInterval
 	self.SpawnCleanUpTimeStamps = {}
+
+  local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
+  self:T( { "CleanUp Scheduler:", SpawnGroup } )
+	
 	--self.CleanUpFunction = routines.scheduleFunction( self._SpawnCleanUpScheduler, { self }, timer.getTime() + 1, SpawnCleanUpInterval )
 	self.CleanUpScheduler = SCHEDULER:New( self, self._SpawnCleanUpScheduler, {}, 1, SpawnCleanUpInterval, 0.2 )
 	return self
@@ -355,8 +511,8 @@ end
 -- @return #SPAWN self
 -- @usage
 -- -- Define an array of Groups.
--- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):Limit( 2, 24 ):Visible( 90, "Diamond", 10, 100, 50 )
-function SPAWN:Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+-- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):InitLimit( 2, 24 ):InitArray( 90, "Diamond", 10, 100, 50 )
+function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	self:F( { self.SpawnTemplatePrefix, SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 
 	self.SpawnVisible = true									-- When the first Spawn executes, all the Groups need to be made visible before start.
@@ -450,6 +606,7 @@ end
 --- Will spawn a group with a specified index number.
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
+-- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
@@ -459,20 +616,40 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 		if self.SpawnGroups[self.SpawnIndex].Visible then
 			self.SpawnGroups[self.SpawnIndex].Group:Activate()
 		else
-      _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnBirth, self )
-      _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
-      _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnDeadOrCrash, self )
+
+		  local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+		  self:T( SpawnTemplate.name )
+
+      if SpawnTemplate then
+
+        local PointVec3 = POINT_VEC3:New( SpawnTemplate.route.points[1].x, SpawnTemplate.route.points[1].alt, SpawnTemplate.route.points[1].y )
+        self:T( { "Current point of ", self.SpawnTemplatePrefix, PointVec3 } )
+        
+        -- If RandomizeUnits, then Randomize the formation at the start point.
+        if self.SpawnRandomizeUnits then
+          for UnitID = 1, #SpawnTemplate.units do
+            local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
+            SpawnTemplate.units[UnitID].x = RandomVec2.x
+            SpawnTemplate.units[UnitID].y = RandomVec2.y
+            self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+          end
+        end
+      end
+		  
+      _EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
+      _EVENTDISPATCHER:OnCrashForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
+      _EVENTDISPATCHER:OnDeadForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
 
       if self.Repeat then
-        _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnTakeOff, self )
-        _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnLand, self )
+        _EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
+        _EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
-        _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[self.SpawnIndex].SpawnTemplate, self._OnEngineShutDown, self )
+        _EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
       end
-      self:T3( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+      self:T3( SpawnTemplate.name )
 
-			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( self.SpawnGroups[self.SpawnIndex].SpawnTemplate )
+			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -520,7 +697,7 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 end
 
 --- Will re-start the spawning scheduler.
--- Note: This function is only required to be called when the schedule was stopped.
+-- Note: This method is only required to be called when the schedule was stopped.
 function SPAWN:SpawnScheduleStart()
   self:F( { self.SpawnTemplatePrefix } )
 
@@ -536,16 +713,27 @@ end
 
 
 --- Allows to place a CallFunction hook when a new group spawns.
--- The provided function will be called when a new group is spawned, including its given parameters.
+-- The provided method will be called when a new group is spawned, including its given parameters.
 -- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
 -- @param #SPAWN self
--- @param #function SpawnFunctionHook The function to be called when a group spawns.
+-- @param #function SpawnCallBackFunction The function to be called when a group spawns.
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
 -- @return #SPAWN
-function SPAWN:SpawnFunction( SpawnFunctionHook, ... )
-  self:F( SpawnFunction )
+-- @usage
+-- -- Declare SpawnObject and call a function when a new Group is spawned.
+-- local SpawnObject = SPAWN
+--   :New( "SpawnObject" )
+--   :InitLimit( 2, 10 )
+--   :OnSpawnGroup(
+--     function( SpawnGroup )
+--       SpawnGroup:E( "I am spawned" )
+--     end 
+--     )
+--   :SpawnScheduled( 300, 0.3 )
+function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
+  self:F( "OnSpawnGroup" )
 
-  self.SpawnFunctionHook = SpawnFunctionHook
+  self.SpawnFunctionHook = SpawnCallBackFunction
   self.SpawnFunctionArguments = {}
   if arg then
     self.SpawnFunctionArguments = arg
@@ -556,18 +744,16 @@ end
 
 
 --- Will spawn a group from a Vec3 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec3, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
 
   local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
   self:T2(PointVec3)
@@ -584,33 +770,30 @@ function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
     if SpawnTemplate then
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
+
+      -- Translate the position of the Group Template to the Vec3.
+      for UnitID = 1, #SpawnTemplate.units do
+        self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        local UnitTemplate = SpawnTemplate.units[UnitID]
+        local SX = UnitTemplate.x
+        local SY = UnitTemplate.y 
+        local BX = SpawnTemplate.route.points[1].x
+        local BY = SpawnTemplate.route.points[1].y
+        local TX = Vec3.x + ( SX - BX )
+        local TY = Vec3.z + ( SY - BY )
+        SpawnTemplate.units[UnitID].x = TX
+        SpawnTemplate.units[UnitID].y = TY
+        SpawnTemplate.units[UnitID].alt = Vec3.y
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      end
       
       SpawnTemplate.route.points[1].x = Vec3.x
       SpawnTemplate.route.points[1].y = Vec3.z
       SpawnTemplate.route.points[1].alt = Vec3.y
       
-      InnerRadius = InnerRadius or 0
-      OuterRadius = OuterRadius or 0
-      
-      -- Apply SpawnFormation
-      for UnitID = 1, #SpawnTemplate.units do
-        local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-        SpawnTemplate.units[UnitID].x = RandomVec2.x
-        SpawnTemplate.units[UnitID].y = RandomVec2.y
-        SpawnTemplate.units[UnitID].alt = Vec3.y
-        self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
-      end
-
-      -- TODO: Need to rework this. A spawn action should always be at the random point to start from. This move is not correct to be here.      
---      local RandomVec2 = PointVec3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
---      local Point = {}
---      Point.type = "Turning Point"
---      Point.x = RandomVec2.x
---      Point.y = RandomVec2.y
---      Point.action = "Cone"
---      Point.speed = 5
---      table.insert( SpawnTemplate.route.points, 2, Point )
-      
+      SpawnTemplate.x = Vec3.x
+      SpawnTemplate.y = Vec3.z
+              
       return self:SpawnWithIndex( self.SpawnIndex )
     end
   end
@@ -619,93 +802,86 @@ function SPAWN:SpawnFromVec3( Vec3, OuterRadius, InnerRadius, SpawnIndex )
 end
 
 --- Will spawn a group from a Vec2 in 3D space. 
--- This function is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+-- This method is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec2( Vec2, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec2, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromVec2( Vec2, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Vec2, SpawnIndex } )
 
   local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
-  return self:SpawnFromVec3( PointVec2:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+  return self:SpawnFromVec3( PointVec2:GetVec3(), SpawnIndex )
 end
 
 
---- Will spawn a group from a hosting unit. This function is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
+--- Will spawn a group from a hosting unit. This method is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, OuterRadius, InnerRadius, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, HostUnit, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, HostUnit, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
-    return self:SpawnFromVec3( HostUnit:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostUnit:GetVec3(), SpawnIndex )
   end
   
   return nil
 end
 
---- Will spawn a group from a hosting static. This function is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
+--- Will spawn a group from a hosting static. This method is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Static#STATIC HostStatic The static dropping or unloading the group.
--- @param #number OuterRadius (Optional) The outer radius in meters where the new group will be spawned.
--- @param #number InnerRadius (Optional) The inner radius in meters where the new group will NOT be spawned.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromStatic( HostStatic, OuterRadius, InnerRadius, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, HostStatic, OuterRadius, InnerRadius, SpawnIndex } )
+function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, HostStatic, SpawnIndex } )
 
   if HostStatic and HostStatic:IsAlive() then
-    return self:SpawnFromVec3( HostStatic:GetVec3(), OuterRadius, InnerRadius, SpawnIndex )
+    return self:SpawnFromVec3( HostStatic:GetVec3(), SpawnIndex )
   end
   
   return nil
 end
 
---- Will spawn a Group within a given @{Zone#ZONE}.
--- Once the group is spawned within the zone, it will continue on its route.
--- The first waypoint (where the group is spawned) is replaced with the zone coordinates.
+--- Will spawn a Group within a given @{Zone}.
+-- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
+-- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
+-- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
 -- @param Zone#ZONE Zone The zone where the group is to be spawned.
--- @param #number ZoneRandomize (Optional) Set to true if you want to randomize the starting point in the zone.
--- @param #number SpawnIndex (Optional) The index which group to spawn within the given zone.
+-- @param #boolean RandomizeGroup (optional) Randomization of the @{Group} position in the zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, ZoneRandomize, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, ZoneRandomize, SpawnIndex } )
+function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, SpawnIndex } )
   
   if Zone then
-    if ZoneRandomize then
-      return self:SpawnFromVec2( Zone:GetVec2(), Zone:GetRadius(), 0, SpawnIndex )
+    if RandomizeGroup then
+      return self:SpawnFromVec2( Zone:GetRandomVec2(), SpawnIndex )
     else
-      return self:SpawnFromVec2( Zone:GetVec2(), 0, 0, SpawnIndex )
+      return self:SpawnFromVec2( Zone:GetVec2(), SpawnIndex )
     end
   end
   
   return nil
 end
 
-
-
-
---- Will spawn a plane group in uncontrolled mode... 
+--- (AIR) Will spawn a plane group in uncontrolled mode... 
 -- This will be similar to the uncontrolled flag setting in the ME.
+-- @param #SPAWN self
 -- @return #SPAWN self
-function SPAWN:UnControlled()
+function SPAWN:InitUnControlled()
 	self:F( { self.SpawnTemplatePrefix } )
 	
 	self.SpawnUnControlled = true
@@ -742,12 +918,12 @@ function SPAWN:SpawnGroupName( SpawnIndex )
 	
 end
 
---- Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--- Will find the first alive @{Group} it has spawned, and return the alive @{Group} object and the first Index where the first alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The GROUP object found, the new Index where the group was found.
+-- @return Group#GROUP, #number The @{Group} object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -767,13 +943,13 @@ function SPAWN:GetFirstAliveGroup()
 end
 
 
---- Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--- Will find the next alive @{Group} object from a given Index, and return a reference to the alive @{Group} object and the next Index where the alive @{Group} has been found.
 -- @param #SPAWN self
--- @param #number SpawnIndexStart A Index holding the start position to search from. This function can also be used to find the first alive GROUP object from the given Index.
--- @return Group#GROUP, #number The next alive GROUP object found, the next Index where the next alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found from the start Index position, #nil is returned.
+-- @param #number SpawnIndexStart A Index holding the start position to search from. This method can also be used to find the first alive @{Group} object from the given Index.
+-- @return Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found from the start Index position, #nil is returned.
 -- @usage
--- -- Find the first alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetFirstAliveGroup()
 -- while GroupPlane ~= nil do
 --   -- Do actions with the GroupPlane object.
@@ -793,12 +969,12 @@ function SPAWN:GetNextAliveGroup( SpawnIndexStart )
   return nil, nil
 end
 
---- Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+--- Will find the last alive @{Group} object, and will return a reference to the last live @{Group} object and the last Index where the last alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The last alive GROUP object found, the last Index where the last alive GROUP object was found.
--- @return #nil, #nil When no alive GROUP object is found, #nil is returned.
+-- @return Group#GROUP, #number The last alive @{Group} object found, the last Index where the last alive @{Group} object was found.
+-- @return #nil, #nil When no alive @{Group} object is found, #nil is returned.
 -- @usage
--- -- Find the last alive GROUP object of the SpawnPlanes SPAWN object GROUP collection that it has spawned during the mission.
+-- -- Find the last alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
 -- local GroupPlane, Index = SpawnPlanes:GetLastAliveGroup()
 -- if GroupPlane then -- GroupPlane can be nil!!!
 --   -- Do actions with the GroupPlane object.
@@ -1038,8 +1214,6 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	for UnitID = 1, #SpawnTemplate.units do
 		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
 		SpawnTemplate.units[UnitID].unitId = nil
-		SpawnTemplate.units[UnitID].x = SpawnTemplate.route.points[1].x
-		SpawnTemplate.units[UnitID].y = SpawnTemplate.route.points[1].y 
 	end
 	
 	self:T3( { "Template:", SpawnTemplate } )
@@ -1076,6 +1250,8 @@ function SPAWN:_RandomizeRoute( SpawnIndex )
     end
   end
   
+  self:_RandomizeZones( SpawnIndex )
+  
   return self
 end
 
@@ -1104,6 +1280,57 @@ function SPAWN:_RandomizeTemplate( SpawnIndex )
   self:_RandomizeRoute( SpawnIndex )
   
   return self
+end
+
+--- Private method that randomizes the @{Zone}s where the Group will be spawned.
+-- @param #SPAWN self
+-- @param #number SpawnIndex
+-- @return #SPAWN self
+function SPAWN:_RandomizeZones( SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
+
+  if self.SpawnRandomizeZones then
+    local SpawnZone = nil -- Zone#ZONE_BASE
+    while not SpawnZone do
+      self:T( { SpawnZoneTableCount = #self.SpawnZoneTable, self.SpawnZoneTable } )
+      local ZoneID = math.random( #self.SpawnZoneTable )
+      self:T( ZoneID )
+      SpawnZone = self.SpawnZoneTable[ ZoneID ]:GetZoneMaybe() 
+    end
+    
+    self:T( "Preparing Spawn in Zone", SpawnZone:GetName() )
+    
+    local SpawnVec2 = SpawnZone:GetRandomVec2()
+    
+    self:T( { SpawnVec2 = SpawnVec2 } )
+    
+    local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+    
+    self:T( { Route = SpawnTemplate.route } )
+    
+    for UnitID = 1, #SpawnTemplate.units do
+      local UnitTemplate = SpawnTemplate.units[UnitID]
+      self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+      local SX = UnitTemplate.x
+      local SY = UnitTemplate.y 
+      local BX = SpawnTemplate.route.points[1].x
+      local BY = SpawnTemplate.route.points[1].y
+      local TX = SpawnVec2.x + ( SX - BX )
+      local TY = SpawnVec2.y + ( SY - BY )
+      UnitTemplate.x = TX
+      UnitTemplate.y = TY
+      -- TODO: Manage altitude based on landheight...
+      --SpawnTemplate.units[UnitID].alt = SpawnVec2:
+      self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+    end
+    SpawnTemplate.x = SpawnVec2.x
+    SpawnTemplate.y = SpawnVec2.y
+    SpawnTemplate.route.points[1].x = SpawnVec2.x
+    SpawnTemplate.route.points[1].y = SpawnVec2.y
+  end
+    
+  return self
+  
 end
 
 function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle )
@@ -1149,7 +1376,7 @@ function SPAWN:_TranslateRotate( SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, Spa
   return self
 end
 
---- Get the next index of the groups to be spawned. This function is complicated, as it is used at several spaces.
+--- Get the next index of the groups to be spawned. This method is complicated, as it is used at several spaces.
 function SPAWN:_GetSpawnIndex( SpawnIndex )
 	self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
   
@@ -1284,28 +1511,72 @@ function SPAWN:_Scheduler()
 	return true
 end
 
+--- Schedules the CleanUp of Groups
+-- @param #SPAWN self
+-- @return #boolean True = Continue Scheduler
 function SPAWN:_SpawnCleanUpScheduler()
 	self:F( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
 
-	local SpawnCursor
-	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup( SpawnCursor )
-	
+	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
 	self:T( { "CleanUp Scheduler:", SpawnGroup } )
 
 	while SpawnGroup do
-		
-		if SpawnGroup:AllOnGround() and SpawnGroup:GetMaxVelocity() < 1 then
-			if not self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] then
-				self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = timer.getTime()
-			else
-				if self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] + self.SpawnCleanUpInterval < timer.getTime() then
-					self:T( { "CleanUp Scheduler:", "Cleaning:", SpawnGroup } )
-					SpawnGroup:Destroy()
-				end
-			end
-		else
-			self.SpawnCleanUpTimeStamps[SpawnGroup:GetName()] = nil
-		end
+
+    local SpawnUnits = SpawnGroup:GetUnits()
+	  
+	  for UnitID, UnitData in pairs( SpawnUnits ) do
+	    
+	    local SpawnUnit = UnitData -- Unit#UNIT
+	    local SpawnUnitName = SpawnUnit:GetName()
+	    
+	    
+	    self.SpawnCleanUpTimeStamps[SpawnUnitName] = self.SpawnCleanUpTimeStamps[SpawnUnitName] or {}
+	    local Stamp = self.SpawnCleanUpTimeStamps[SpawnUnitName]
+      self:T( { SpawnUnitName, Stamp } )
+	    
+	    if Stamp.Moved then
+    		if SpawnUnit:InAir() == false then
+    		  if SpawnUnit:GetVelocityKMH() < 1 then
+      		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
+      			if not Stamp.Time then
+      				Stamp.Time = timer.getTime()
+      			else
+      				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
+      					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
+      					self:ReSpawn( SpawnCursor )
+                Stamp.Moved = nil
+                Stamp.Time = nil
+      				end
+      			end
+      		else
+      		  Stamp.Time = nil
+      		end
+    		else
+    		  Stamp.Moved = nil
+    			Stamp.Time = nil
+    		end
+    	else
+        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() > 1 then
+          Stamp.Moved = true
+        else
+          -- If the plane did not move and on the runway for about 3 minutes, clean it.
+          if SpawnUnit:IsAboveRunway() and SpawnUnit:GetVelocityKMH() < 1 then
+            if not Stamp.Time then
+              Stamp.Time = timer.getTime()
+            end
+            if Stamp.Time + 180 < timer.getTime() then
+              self:T( { "CleanUp Scheduler:", "ReSpawning inactive group:", SpawnGroup:GetName() } )
+              self:ReSpawn( SpawnCursor )
+              Stamp.Moved = nil
+              Stamp.Time = nil
+            end
+          else
+            Stamp.Moved = nil
+            Stamp.Time = nil
+          end
+    	  end
+      end
+    end
 		
 		SpawnGroup, SpawnCursor = self:GetNextAliveGroup( SpawnCursor )
 		

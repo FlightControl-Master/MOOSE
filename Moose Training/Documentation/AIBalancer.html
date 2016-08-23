@@ -18,10 +18,11 @@
 			</li></ul>
 		<ul>
 					<li>AIBalancer</li>
+					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -38,17 +39,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,18 +51,15 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -80,9 +72,11 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -100,7 +94,8 @@
 
 <h1>1) <a href="AIBalancer.html##(AIBALANCER)">AIBalancer#AIBALANCER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>The <a href="AIBalancer.html##(AIBALANCER)">AIBalancer#AIBALANCER</a> class controls the dynamic spawning of AI GROUPS depending on a SET<em>CLIENT.
-There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT not spawned.</p>
+There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT not spawned.
+The AIBalancer uses the <a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a> class to make AI patrol an zone until the fuel treshold is reached.</p>
 
 <h2>1.1) AIBALANCER construction method:</h2>
 <p>Create a new AIBALANCER object with the <a href="##(AIBALANCER).New">AIBALANCER.New</a> method:</p>
@@ -122,13 +117,35 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 
 <hr/>
 
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2016-08-17: SPAWN:<strong>InitCleanUp</strong>( SpawnCleanUpInterval ) replaces SPAWN:<em>CleanUp</em>( SpawnCleanUpInterval )</p>
+
+<ul>
+    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
+    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
+</ul>
+
+<hr/>
+
+<h1>AUTHORS and CONTRIBUTIONS</h1>
+
 <h3>Contributions:</h3>
 
 <ul>
-    <li><p><strong>Dutch_Baron (James)</strong> Who you can search on the Eagle Dynamics Forums. <br/>
+    <li><p><strong>Dutch_Baron (James)</strong>: Who you can search on the Eagle Dynamics Forums. <br/>
     Working together with James has resulted in the creation of the AIBALANCER class. <br/>
     James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p></li>
-    <li><p><strong>SNAFU</strong>
+    <li><p><strong>SNAFU</strong>:
     Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
     None of the script code has been used however within the new AIBALANCER moose class.</p></li>
 </ul>
@@ -136,7 +153,7 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 <h3>Authors:</h3>
 
 <ul>
-    <li>FlightControl - Framework Design &amp;  Programming</li>
+    <li>FlightControl: Framework Design &amp;  Programming</li>
 </ul>
 
 
@@ -161,6 +178,12 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).ClassName">AIBALANCER.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).GetPatrolZone">AIBALANCER:GetPatrolZone()</a></td>
+		<td class="summary">
+<p>Get the <a href="PatrolZone.html">PatrolZone</a> object assigned by the <a href="AIBalancer.html">AIBalancer</a> object.</p>
 </td>
 		</tr>
 		<tr>
@@ -212,7 +235,7 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SetPatrolZone">AIBALANCER:SetPatrolZone(PatrolZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIBALANCER).SetPatrolZone">AIBALANCER:SetPatrolZone(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Let the AI patrol a <a href="Zone.html">Zone</a> with a given Speed range and Altitude range.</p>
 </td>
@@ -290,6 +313,24 @@ There will be as many AI GROUPS spawned as there at CLIENTS in SET</em>CLIENT no
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIBALANCER).GetPatrolZone" >
+<strong>AIBALANCER:GetPatrolZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the <a href="PatrolZone.html">PatrolZone</a> object assigned by the <a href="AIBalancer.html">AIBalancer</a> object.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a>:</em>
+PatrolZone The <a href="PatrolZone.html">PatrolZone</a> where the AI needs to patrol.</p>
 
 </dd>
 </dl>
@@ -450,19 +491,39 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 <dt>
 
 <a id="#(AIBALANCER).SetPatrolZone" >
-<strong>AIBALANCER:SetPatrolZone(PatrolZone)</strong>
+<strong>AIBALANCER:SetPatrolZone(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Let the AI patrol a <a href="Zone.html">Zone</a> with a given Speed range and Altitude range.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="PatrolZone.html##(PATROLZONE)">PatrolZone#PATROLZONE</a> PatrolZone </em></code>: 
 The <a href="PatrolZone.html">PatrolZone</a> where the AI needs to patrol.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> PatrolFloorAltitude </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PatrolCeilingAltitude </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PatrolMinSpeed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PatrolMaxSpeed </em></code>: </p>
 
 				</li>
 		</ul>
