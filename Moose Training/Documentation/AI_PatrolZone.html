@@ -93,7 +93,7 @@
 <hr/>
 
 <h1>1) <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class, extends <a href="StateMachine.html##(STATEMACHINE)">StateMachine#STATEMACHINE</a></h1>
-<p>The <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Group.html">Group</a>.
+<p>The <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a>.
 The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
 a random point is selected as the route point within the 3D space, within the given boundary limits.
 The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
@@ -108,25 +108,25 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 </ul>
 
 <h2>1.2) AI_PATROLZONE state machine:</h2>
-<p>The AI_PATROLZONE is a state machine: it manages the different events and states of the AIGroup it is controlling.</p>
+<p>The AI_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.</p>
 
 <h3>1.2.1) AI_PATROLZONE Events:</h3>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).Route">AI_PATROLZONE.Route</a>( AIGroup ):  A new 3D route point is selected and the AIGroup will fly towards that point with the given speed.</li>
-    <li><a href="##(AI_PATROLZONE).Patrol">AI_PATROLZONE.Patrol</a>( AIGroup ): The AIGroup reports it is patrolling. This event is called every 30 seconds.</li>
-    <li><a href="##(AI_PATROLZONE).RTB">AI_PATROLZONE.RTB</a>( AIGroup ): The AIGroup will report return to base.</li>
-    <li><a href="##(AI_PATROLZONE).End">AI_PATROLZONE.End</a>( AIGroup ): The end of the AI_PATROLZONE process.</li>
-    <li><a href="##(AI_PATROLZONE).Dead">AI_PATROLZONE.Dead</a>( AIGroup ): The AIGroup is dead. The AI_PATROLZONE process will be ended.</li>
+    <li><a href="##(AI_PATROLZONE).Route">AI_PATROLZONE.Route</a>( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.</li>
+    <li><a href="##(AI_PATROLZONE).Patrol">AI_PATROLZONE.Patrol</a>( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.</li>
+    <li><a href="##(AI_PATROLZONE).RTB">AI_PATROLZONE.RTB</a>( AIControllable ): The AIControllable will report return to base.</li>
+    <li><a href="##(AI_PATROLZONE).End">AI_PATROLZONE.End</a>( AIControllable ): The end of the AI_PATROLZONE process.</li>
+    <li><a href="##(AI_PATROLZONE).Dead">AI_PATROLZONE.Dead</a>( AIControllable ): The AIControllable is dead. The AI_PATROLZONE process will be ended.</li>
 </ul>
 
 <h3>1.2.2) AI_PATROLZONE States:</h3>
 
 <ul>
-    <li><strong>Route</strong>: A new 3D route point is selected and the AIGroup will fly towards that point with the given speed.</li>
-    <li><strong>Patrol</strong>: The AIGroup is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition function can be used.</li>
-    <li><strong>RTB</strong>: The AIGroup reports it wants to return to the base.</li>
-    <li><strong>Dead</strong>: The AIGroup is dead ...</li>
+    <li><strong>Route</strong>: A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.</li>
+    <li><strong>Patrol</strong>: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition function can be used.</li>
+    <li><strong>RTB</strong>: The AIControllable reports it wants to return to the base.</li>
+    <li><strong>Dead</strong>: The AIControllable is dead ...</li>
     <li><strong>End</strong>: The process has come to an end.</li>
 </ul>
 
@@ -139,8 +139,8 @@ There are 2 moments when state transition functions will be called by the state 
     <li><p><strong>Before</strong> the state transition. 
     The state transition function needs to start with the name <strong>OnBefore + the name of the state</strong>. 
     If the state transition function returns false, then the processing of the state transition will not be done!
-    If you want to change the behaviour of the AIGroup at this event, return false, 
-    but then you'll need to specify your own logic using the AIGroup!</p></li>
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
     <li><p><strong>After</strong> the state transition. 
     The state transition function needs to start with the name <strong>OnAfter + the name of the state</strong>. 
     These state transition functions need to provide a return value, which is specified at the function description.</p></li>
@@ -155,7 +155,7 @@ There are 2 moments when state transition functions will be called by the state 
  local PatrolGroup = PatrolSpawn:Spawn()
 
  local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
- Patrol:AddGroup( PatrolGroup )
+ Patrol:SetControllable( PatrolGroup )
  Patrol:ManageFuel( 0.2, 60 )
 </code></pre>
 
@@ -163,7 +163,7 @@ There are 2 moments when state transition functions will be called by the state 
 
 <pre><code> --- State transition function for the AI\_PATROLZONE **Patrol** object
  -- @param #AI_PATROLZONE self 
- -- @param Group#GROUP AIGroup
+ -- @param Controllable#CONTROLLABLE AIGroup
  -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
  function Patrol:OnBeforeRTB( AIGroup )
    AIGroup:MessageToRed( "Returning to base", 20 )
@@ -174,27 +174,28 @@ There are 2 moments when state transition functions will be called by the state 
 
 <pre><code> --- State transition function for the AI\_PATROLZONE **Patrol** object
  -- @param #AI_PATROLZONE self 
- -- @param Group#GROUP AIGroup
- -- @return #Group#GROUP The new AIGroup object that is set to be patrolling the zone.
+ -- @param Controllable#CONTROLLABLE AIGroup
+ -- @return #Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
  function Patrol:OnAfterRTB( AIGroup )
    return PatrolSpawn:Spawn()
  end 
 </code></pre>
 
-<h2>1.3) Modify the AI_PATROLZONE parameters:</h2>
+<h2>1.3) Manage the AI_PATROLZONE parameters:</h2>
 <p>The following methods are available to modify the parameters of a AI_PATROLZONE object:</p>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).SetGroup">AI_PATROLZONE.SetGroup</a>(): Set the AI Patrol Group.</li>
+    <li><a href="##(AI_PATROLZONE).SetControllable">AI_PATROLZONE.SetControllable</a>(): Set the AIControllable.</li>
+    <li><a href="##(AI_PATROLZONE).GetControllable">AI_PATROLZONE.GetControllable</a>(): Get the AIControllable.</li>
     <li><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE.SetSpeed</a>(): Set the patrol speed of the AI, for the next patrol.</li>
     <li><a href="##(AI_PATROLZONE).SetAltitude">AI_PATROLZONE.SetAltitude</a>(): Set altitude of the AI, for the next patrol.</li>
 </ul>
 
 <h2>1.3) Manage the out of fuel in the AI_PATROLZONE:</h2>
-<p>When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
+<p>When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
 Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the AI_PATROLZONE.
-Once the time is finished, the old PatrolGroup will return to the base.
+When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
+Once the time is finished, the old AIControllable will return to the base.
 Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
 
 <hr/>
@@ -222,12 +223,13 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 
 <ul>
     <li><strong>DutchBaron</strong>: Testing.</li>
+    <li><strong>Pikey</strong>: Testing and API concept review.</li>
 </ul>
 
 <h3>Authors:</h3>
 
 <ul>
-    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+    <li><strong>FlightControl</strong>: Design &amp; Programming.</li>
 </ul>
 
 
@@ -241,7 +243,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_NewPatrolRoute">_NewPatrolRoute(PatrolGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="#_NewPatrolRoute">_NewPatrolRoute(AIControllable)</a></td>
 		<td class="summary">
 
 </td>
@@ -249,6 +251,12 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 	</table>
 			<h2><a id="#(AI_PATROLZONE)">Type <code>AI_PATROLZONE</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).AIControllable">AI_PATROLZONE.AIControllable</a></td>
+		<td class="summary">
+<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ClassName">AI_PATROLZONE.ClassName</a></td>
 		<td class="summary">
@@ -258,7 +266,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
 		<td class="summary">
-<p>When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.</p>
+<p>When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.</p>
 </td>
 		</tr>
 		<tr>
@@ -286,18 +294,6 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolGroup">AI_PATROLZONE.PatrolGroup</a></td>
-		<td class="summary">
-<p>The <a href="Group.html">Group</a> patrolling.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolGroupTemplateName">AI_PATROLZONE.PatrolGroupTemplateName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolManageFuel">AI_PATROLZONE.PatrolManageFuel</a></td>
 		<td class="summary">
 
@@ -306,13 +302,13 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMaxSpeed">AI_PATROLZONE.PatrolMaxSpeed</a></td>
 		<td class="summary">
-<p>The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
+<p>The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMinSpeed">AI_PATROLZONE.PatrolMinSpeed</a></td>
 		<td class="summary">
-<p>The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
+<p>The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
@@ -334,27 +330,21 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetGroup">AI_PATROLZONE:SetGroup(PatrolGroup)</a></td>
-		<td class="summary">
-<p>Set the <a href="Group.html">Group</a> to act as the Patroller.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE)._EnterPatrol">AI_PATROLZONE:_EnterPatrol(AIGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onenterPatrol">AI_PATROLZONE:onenterPatrol()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE)._EnterRoute">AI_PATROLZONE:_EnterRoute(AIGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onenterRoute">AI_PATROLZONE:onenterRoute()</a></td>
 		<td class="summary">
-<p>Defines a new patrol route using the <a href="PatrolZone.html">PatrolZone</a> parameters and settings.</p>
+<p>Defines a new patrol route using the <a href="AI_PatrolZone.html">AI_PatrolZone</a> parameters and settings.</p>
 </td>
 		</tr>
 	</table>
@@ -378,7 +368,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 <dt>
 
 <a id="_NewPatrolRoute" >
-<strong>_NewPatrolRoute(PatrolGroup)</strong>
+<strong>_NewPatrolRoute(AIControllable)</strong>
 </a>
 </dt>
 <dd>
@@ -389,7 +379,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> PatrolGroup </em></code>: </p>
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
 
 				</li>
 		</ul>
@@ -402,6 +392,20 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 <p>AI_PATROLZONE class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></em>
+<a id="#(AI_PATROLZONE).AIControllable" >
+<strong>AI_PATROLZONE.AIControllable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -425,25 +429,25 @@ Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</
 </dt>
 <dd>
 	
-<p>When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.</p>
+<p>When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.</p>
 
 	
 <p>Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the AI_PATROLZONE.
-Once the time is finished, the old PatrolGroup will return to the base.</p>
+When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
+Once the time is finished, the old AIControllable will return to the base.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number PatrolFuelTresholdPercentage </em></code>: 
-The treshold in percentage (between 0 and 1) when the PatrolGroup is considered to get out of fuel.</p>
+The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.</p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number PatrolOutOfFuelOrbitTime </em></code>: 
-The amount of seconds the out of fuel PatrolGroup will orbit before returning to the base.</p>
+The amount of seconds the out of fuel AIControllable will orbit before returning to the base.</p>
 
 				</li>
 		</ul>
@@ -488,13 +492,13 @@ The highest altitude in meters where to execute the patrol.</p>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
-The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
+The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
-The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
+The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 		</ul>
@@ -504,7 +508,7 @@ The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 self</p>
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new AI_PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+		<pre class="example"><code>-- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
 PatrolSpawn = SPAWN:New( 'Patrol Group' )
 PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
@@ -556,34 +560,6 @@ PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="Group.html##(GROUP)">Group#GROUP</a></em>
-<a id="#(AI_PATROLZONE).PatrolGroup" >
-<strong>AI_PATROLZONE.PatrolGroup</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The <a href="Group.html">Group</a> patrolling.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AI_PATROLZONE).PatrolGroupTemplateName" >
-<strong>AI_PATROLZONE.PatrolGroupTemplateName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em>#boolean</em>
 <a id="#(AI_PATROLZONE).PatrolManageFuel" >
 <strong>AI_PATROLZONE.PatrolManageFuel</strong>
@@ -605,7 +581,7 @@ PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 </dt>
 <dd>
 	
-<p>The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
+<p>The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 </dd>
 </dl>
@@ -619,7 +595,7 @@ PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 </dt>
 <dd>
 	
-<p>The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
+<p>The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 </dd>
 </dl>
@@ -687,33 +663,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetGroup" >
-<strong>AI_PATROLZONE:SetGroup(PatrolGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the <a href="Group.html">Group</a> to act as the Patroller.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> PatrolGroup </em></code>: 
-The <a href="Group.html">Group</a> patrolling.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(AI_PATROLZONE).SetSpeed" >
 <strong>AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
@@ -727,13 +676,13 @@ self</p>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
-The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
+The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
-The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
+The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 		</ul>
@@ -747,43 +696,27 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE)._EnterPatrol" >
-<strong>AI_PATROLZONE:_EnterPatrol(AIGroup)</strong>
+<a id="#(AI_PATROLZONE).onenterPatrol" >
+<strong>AI_PATROLZONE:onenterPatrol()</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> AIGroup </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE)._EnterRoute" >
-<strong>AI_PATROLZONE:_EnterRoute(AIGroup)</strong>
+<a id="#(AI_PATROLZONE).onenterRoute" >
+<strong>AI_PATROLZONE:onenterRoute()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Defines a new patrol route using the <a href="PatrolZone.html">PatrolZone</a> parameters and settings.</p>
+<p>Defines a new patrol route using the <a href="AI_PatrolZone.html">AI_PatrolZone</a> parameters and settings.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> AIGroup </em></code>: </p>
-
-				</li>
-		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>

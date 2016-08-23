@@ -110,6 +110,12 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_CONTROLLABLE">STATEMACHINE_CONTROLLABLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_PROCESS">STATEMACHINE_PROCESS</a></td>
 		<td class="summary">
 
@@ -216,6 +222,46 @@ It is a fantastic development, this module.</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(STATEMACHINE_CONTROLLABLE)">Type <code>STATEMACHINE_CONTROLLABLE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).ClassName">STATEMACHINE_CONTROLLABLE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).Controllable">STATEMACHINE_CONTROLLABLE.Controllable</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).GetControllable">STATEMACHINE_CONTROLLABLE:GetControllable()</a></td>
+		<td class="summary">
+<p>Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).New">STATEMACHINE_CONTROLLABLE:New(FSMT, Controllable)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_CONTROLLABLE object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).SetControllable">STATEMACHINE_CONTROLLABLE:SetControllable(Controllable, FSMControllable)</a></td>
+		<td class="summary">
+<p>Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE)._call_handler">STATEMACHINE_CONTROLLABLE:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(STATEMACHINE_PROCESS)">Type <code>STATEMACHINE_PROCESS</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -279,6 +325,20 @@ It is a fantastic development, this module.</p>
 		<em><a href="##(STATEMACHINE)">#STATEMACHINE</a></em>
 <a id="STATEMACHINE" >
 <strong>STATEMACHINE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a></em>
+<a id="STATEMACHINE_CONTROLLABLE" >
+<strong>STATEMACHINE_CONTROLLABLE</strong>
 </a>
 </dt>
 <dd>
@@ -660,6 +720,148 @@ It is a fantastic development, this module.</p>
 				<li>
 				
 <p><code><em> filename </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(STATEMACHINE_CONTROLLABLE)" >Type <code>STATEMACHINE_CONTROLLABLE</code></a></h2>
+				
+<p>STATEMACHINE_CONTROLLABLE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_CONTROLLABLE).ClassName" >
+<strong>STATEMACHINE_CONTROLLABLE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></em>
+<a id="#(STATEMACHINE_CONTROLLABLE).Controllable" >
+<strong>STATEMACHINE_CONTROLLABLE.Controllable</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).GetControllable" >
+<strong>STATEMACHINE_CONTROLLABLE:GetControllable()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).New" >
+<strong>STATEMACHINE_CONTROLLABLE:New(FSMT, Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_CONTROLLABLE object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table FSMT </em></code>: 
+Finite State Machine Table</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+(optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).SetControllable" >
+<strong>STATEMACHINE_CONTROLLABLE:SetControllable(Controllable, FSMControllable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FSMControllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE)._call_handler" >
+<strong>STATEMACHINE_CONTROLLABLE:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
 
 				</li>
 		</ul>

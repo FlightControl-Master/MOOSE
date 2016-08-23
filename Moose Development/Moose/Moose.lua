@@ -34,7 +34,6 @@ Include.File( "Movement" )
 Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
-Include.File( "AI_PatrolZone" )
 --Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
 Include.File( "Detection" )
@@ -54,6 +53,9 @@ Include.File( "Process_JTAC" )
 Include.File( "Task" )
 Include.File( "Task_SEAD" )
 Include.File( "Task_A2G" )
+
+--- AI Handling Classes
+Include.File( "AI_PatrolZone" )
 
 -- The order of the declarations is important here. Don't touch it.
 

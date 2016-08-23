@@ -1,12 +1,17 @@
-2016-08-17
+2016-08-21
 
-	- Making the PATROLZONE class work with a SPAWN object, instead of a GROUP object.
-		-- The SPAWN object is needed to make the FuelManagement logic work correctly. New planes need to be spawned when old planes are out of fuel.
-		-- Changed the PATROLZONE:New() method to work with a SPAWN object instead of a GROUP object.
+	- Made a new STATEMACHINE_CONTROLLABLE object, which models a base state machine class to be inherited by AI controllable classes.
+		-- Created the class as such that intherited AI classes become "finite state machines".
+		-- Each STATEMACHINE_CONTROLLABLE class contains a Controllable object, which is one Unit, Client or Group object.
+		-- Added state transition functions that are called before and after the state transition.
+		-- Event functions are automatically added to the class, based on the FSMT.
+		-- Added immediate and delayed event processing as part of the STATEMACHINE_CONTROLLABLE class.
+			--- Events that start with __Event are processed with a delay. The delay is given in seconds as a parameter.
 	
-	- Making the AIBALANCER class work with the modified PATROLZONE class SPAWN object.
-		-- Added AIBALANCER:GetPatrolZone() method.
-
+	- Created a new AI_PATROLZONE class, which inherites STATEMACHINE_CONTROLLABLE.
+		-- This class implements a complete new revamped patrol zone AI pattern.
+		-- Created a new test directory: Moose_Test_AI_PATROLZONE with test missions.
+	
 2016-08-15
 
 	- Removed the old classes and moved into an "Old" folder in the Moose/Development folder.
