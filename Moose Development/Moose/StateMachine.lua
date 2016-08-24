@@ -1,15 +1,15 @@
 --- This module contains the STATEMACHINE class.
--- This development is based on a state machine implementation made by Conroy Kyle.  
--- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  
--- 
--- I've taken the development and enhanced it to make the state machine hierarchical... 
+-- This development is based on a state machine implementation made by Conroy Kyle.
+-- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
+--
+-- I've taken the development and enhanced it to make the state machine hierarchical...
 -- It is a fantastic development, this module.
--- 
+--
 -- ===
--- 
+--
 -- 1) @{Workflow#STATEMACHINE} class, extends @{Base#BASE}
 -- ==============================================
--- 
+--
 -- 1.1) Add or remove objects from the STATEMACHINE
 -- --------------------------------------------
 -- @module StateMachine
@@ -55,15 +55,15 @@ function STATEMACHINE:New( options )
     self.events[name] = self.events[name] or { map = {} }
     self:_add_to_map(self.events[name].map, event)
   end
-  
+
   for name, callback in pairs(options.callbacks or {}) do
     self[name] = callback
   end
-  
+
   for name, sub in pairs( options.subs or {} ) do
     self:_submap( self.subs, sub, name )
   end
-  
+
   for name, endstate in pairs( options.endstates or {} ) do
     self.endstates[endstate] = endstate
   end
@@ -105,7 +105,7 @@ function STATEMACHINE._handler( self, EventName, ... )
 
   local can, to = self:can(EventName)
   self:T( { EventName, can, to } )
-  
+
   local ReturnValues = nil
 
   if can then
@@ -113,14 +113,14 @@ function STATEMACHINE._handler( self, EventName, ... )
     local params = { ..., EventName, from, to  }
 
     if self:_call_handler(self["onbefore" .. EventName], params) == false
-    or self:_call_handler(self["onleave" .. from], params) == false then
+      or self:_call_handler(self["onleave" .. from], params) == false then
       return false
     end
 
     self.current = to
-    
+
     local execute = true
-    
+
     local subtable = self:_gosub( to, EventName )
     for _, sub in pairs( subtable ) do
       self:F2( "calling sub: " .. sub.event )
@@ -129,7 +129,7 @@ function STATEMACHINE._handler( self, EventName, ... )
       sub.fsm[sub.event]( sub.fsm )
       execute = true
     end
-      
+
     local fsmparent, event = self:_isendstate( to )
     if fsmparent and event then
       self:F2( { "end state: ", fsmparent, event } )
@@ -143,20 +143,20 @@ function STATEMACHINE._handler( self, EventName, ... )
     if execute then
       self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
       self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-      
+
       self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
       if ( self:_call_handler(self["OnBefore" .. to], params ) ~= false ) then
 
         self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
         self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
-        
+
         self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
         ReturnValues = self:_call_handler(self["OnAfter" .. to], params )
       end
 
       self:_call_handler(self["onstatechange"], params)
     end
-    
+
     return ReturnValues
   end
 
@@ -167,7 +167,7 @@ function STATEMACHINE:_delayed_transition( EventName )
   self:E( { EventName = EventName } )
   return function( self, DelaySeconds, ... )
     self:T( "Delayed Event: " .. EventName )
-    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds ) 
+    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds )
   end
 end
 
@@ -305,7 +305,7 @@ function STATEMACHINE_TASK:New( Task, TaskUnit, options )
   FsmTask["onAssigned"] = Task.OnAssigned
   FsmTask["onSuccess"] = Task.OnSuccess
   FsmTask["onFailed"] = Task.OnFailed
-  
+
   FsmTask.Task = Task
   FsmTask.TaskUnit = TaskUnit
 
@@ -335,7 +335,7 @@ function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
-  
+
   if Controllable then
     self:SetControllable( Controllable )
   end
@@ -363,4 +363,55 @@ function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
   if handler then
     return handler( self, self.Controllable, unpack( params ) )
   end
+end
+
+do -- STATEMACHINE_SET
+
+--- STATEMACHINE_SET class
+-- @type STATEMACHINE_SET
+-- @field Set#SET_BASE Set
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_SET = {
+  ClassName = "STATEMACHINE_SET",
+}
+
+--- Creates a new STATEMACHINE_SET object.
+-- @param #STATEMACHINE_SET self
+-- @param #table FSMT Finite State Machine Table
+-- @param Set_SET_BASE FSMSet (optional) The Set object that the STATEMACHINE_SET governs.
+-- @return #STATEMACHINE_SET
+function STATEMACHINE_SET:New( FSMT, FSMSet )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_SET
+
+  if FSMSet then
+    self:Set( FSMSet )
+  end
+
+  return self
+end
+
+--- Sets the SET_BASE object that the STATEMACHINE_SET governs.
+-- @param #STATEMACHINE_SET self
+-- @param Set#SET_BASE FSMSet
+-- @return #STATEMACHINE_SET
+function STATEMACHINE_SET:Set( FSMSet )
+  self:F( FSMSet )
+  self.Set = FSMSet
+end
+
+--- Gets the SET_BASE object that the STATEMACHINE_SET governs.
+-- @param #STATEMACHINE_SET self
+-- @return Set#SET_BASE
+function STATEMACHINE_SET:Get()
+  return self.Controllable
+end
+
+function STATEMACHINE_SET:_call_handler( handler, params )
+  if handler then
+    return handler( self, self.Set, unpack( params ) )
+  end
+end
+
 end

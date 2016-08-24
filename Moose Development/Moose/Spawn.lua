@@ -1534,47 +1534,35 @@ function SPAWN:_SpawnCleanUpScheduler()
 	    local Stamp = self.SpawnCleanUpTimeStamps[SpawnUnitName]
       self:T( { SpawnUnitName, Stamp } )
 	    
-	    if Stamp.Moved then
-    		if SpawnUnit:InAir() == false then
-    		  if SpawnUnit:GetVelocityKMH() < 1 then
+	    if Stamp.Vec2 then
+    		if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1 then
+    		  local NewVec2 = SpawnUnit:GetVec2()
+    		  if Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y then
       		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
-      			if not Stamp.Time then
-      				Stamp.Time = timer.getTime()
-      			else
-      				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
-      					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
-      					self:ReSpawn( SpawnCursor )
-                Stamp.Moved = nil
-                Stamp.Time = nil
-      				end
-      			end
+    				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
+    					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
+    					self:ReSpawn( SpawnCursor )
+              Stamp.Vec2 = nil
+              Stamp.Time = nil
+    				end
       		else
-      		  Stamp.Time = nil
+      		  Stamp.Time = timer.getTime()
+            Stamp.Vec2 = SpawnUnit:GetVec2()
       		end
     		else
-    		  Stamp.Moved = nil
+    		  Stamp.Vec2 = nil
     			Stamp.Time = nil
     		end
     	else
-        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() > 1 then
-          Stamp.Moved = true
-        else
-          -- If the plane did not move and on the runway for about 3 minutes, clean it.
-          if SpawnUnit:IsAboveRunway() and SpawnUnit:GetVelocityKMH() < 1 then
-            if not Stamp.Time then
-              Stamp.Time = timer.getTime()
-            end
-            if Stamp.Time + 180 < timer.getTime() then
-              self:T( { "CleanUp Scheduler:", "ReSpawning inactive group:", SpawnGroup:GetName() } )
-              self:ReSpawn( SpawnCursor )
-              Stamp.Moved = nil
-              Stamp.Time = nil
-            end
-          else
-            Stamp.Moved = nil
-            Stamp.Time = nil
+        if SpawnUnit:InAir() == false then
+          Stamp.Vec2 = SpawnUnit:GetVec2()
+          if SpawnUnit:GetVelocityKMH() < 1 then
+            Stamp.Time = timer.getTime()
           end
-    	  end
+        else
+          Stamp.Time = nil
+          Stamp.Vec2 = nil
+        end
       end
     end
 		

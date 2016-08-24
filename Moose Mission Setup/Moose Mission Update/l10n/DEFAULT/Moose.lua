@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20160823_0655' ) 
+env.info( 'Moose Generation Timestamp: 20160824_1433' ) 
 local base = _G
 
 Include = {}
@@ -3142,7 +3142,7 @@ function BASE:GetState( Object, StateName )
   local ClassNameAndID = Object:GetClassNameAndID()
 
   if self.States[ClassNameAndID] then
-    local State = self.States[ClassNameAndID][StateName]
+    local State = self.States[ClassNameAndID][StateName] or false
     self:T2( { ClassNameAndID, StateName, State } )
     return State
   end
@@ -12462,6 +12462,21 @@ function SET_BASE:Remove( ObjectName )
   
 end
 
+--- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+-- @param #SET_BASE self
+-- @param #string ObjectName
+-- @return Base#BASE
+function SET_BASE:Get( ObjectName )
+  self:F( ObjectName )
+
+  local t = self.Set[ObjectName]
+  
+  self:T3( { ObjectName, t } )
+  
+  return t
+  
+end
+
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
@@ -15082,7 +15097,6 @@ Include.File( "Movement" )
 Include.File( "Sead" )
 Include.File( "Escort" )
 Include.File( "MissileTrainer" )
---Include.File( "AIBalancer" )
 Include.File( "AirbasePolice" )
 Include.File( "Detection" )
 
@@ -15102,7 +15116,10 @@ Include.File( "Task" )
 Include.File( "Task_SEAD" )
 Include.File( "Task_A2G" )
 
---- AI Handling Classes
+--- AI Set Handling Classes
+Include.File( "AISet_Balancer" )
+
+--- AI Task Handling Classes
 Include.File( "AI_PatrolZone" )
 
 -- The order of the declarations is important here. Don't touch it.
@@ -20088,47 +20105,35 @@ function SPAWN:_SpawnCleanUpScheduler()
 	    local Stamp = self.SpawnCleanUpTimeStamps[SpawnUnitName]
       self:T( { SpawnUnitName, Stamp } )
 	    
-	    if Stamp.Moved then
-    		if SpawnUnit:InAir() == false then
-    		  if SpawnUnit:GetVelocityKMH() < 1 then
+	    if Stamp.Vec2 then
+    		if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() < 1 then
+    		  local NewVec2 = SpawnUnit:GetVec2()
+    		  if Stamp.Vec2.x == NewVec2.x and Stamp.Vec2.y == NewVec2.y then
       		  -- If the plane is not moving, and is on the ground, assign it with a timestamp...
-      			if not Stamp.Time then
-      				Stamp.Time = timer.getTime()
-      			else
-      				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
-      					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
-      					self:ReSpawn( SpawnCursor )
-                Stamp.Moved = nil
-                Stamp.Time = nil
-      				end
-      			end
+    				if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
+    					self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
+    					self:ReSpawn( SpawnCursor )
+              Stamp.Vec2 = nil
+              Stamp.Time = nil
+    				end
       		else
-      		  Stamp.Time = nil
+      		  Stamp.Time = timer.getTime()
+            Stamp.Vec2 = SpawnUnit:GetVec2()
       		end
     		else
-    		  Stamp.Moved = nil
+    		  Stamp.Vec2 = nil
     			Stamp.Time = nil
     		end
     	else
-        if SpawnUnit:InAir() == false and SpawnUnit:GetVelocityKMH() > 1 then
-          Stamp.Moved = true
-        else
-          -- If the plane did not move and on the runway for about 3 minutes, clean it.
-          if SpawnUnit:IsAboveRunway() and SpawnUnit:GetVelocityKMH() < 1 then
-            if not Stamp.Time then
-              Stamp.Time = timer.getTime()
-            end
-            if Stamp.Time + 180 < timer.getTime() then
-              self:T( { "CleanUp Scheduler:", "ReSpawning inactive group:", SpawnGroup:GetName() } )
-              self:ReSpawn( SpawnCursor )
-              Stamp.Moved = nil
-              Stamp.Time = nil
-            end
-          else
-            Stamp.Moved = nil
-            Stamp.Time = nil
+        if SpawnUnit:InAir() == false then
+          Stamp.Vec2 = SpawnUnit:GetVec2()
+          if SpawnUnit:GetVelocityKMH() < 1 then
+            Stamp.Time = timer.getTime()
           end
-    	  end
+        else
+          Stamp.Time = nil
+          Stamp.Vec2 = nil
+        end
       end
     end
 		
@@ -25066,17 +25071,17 @@ do -- DETECTION_DISPATCHER
   end
 
 end--- This module contains the STATEMACHINE class.
--- This development is based on a state machine implementation made by Conroy Kyle.  
--- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  
--- 
--- I've taken the development and enhanced it to make the state machine hierarchical... 
+-- This development is based on a state machine implementation made by Conroy Kyle.
+-- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
+--
+-- I've taken the development and enhanced it to make the state machine hierarchical...
 -- It is a fantastic development, this module.
--- 
+--
 -- ===
--- 
+--
 -- 1) @{Workflow#STATEMACHINE} class, extends @{Base#BASE}
 -- ==============================================
--- 
+--
 -- 1.1) Add or remove objects from the STATEMACHINE
 -- --------------------------------------------
 -- @module StateMachine
@@ -25122,15 +25127,15 @@ function STATEMACHINE:New( options )
     self.events[name] = self.events[name] or { map = {} }
     self:_add_to_map(self.events[name].map, event)
   end
-  
+
   for name, callback in pairs(options.callbacks or {}) do
     self[name] = callback
   end
-  
+
   for name, sub in pairs( options.subs or {} ) do
     self:_submap( self.subs, sub, name )
   end
-  
+
   for name, endstate in pairs( options.endstates or {} ) do
     self.endstates[endstate] = endstate
   end
@@ -25172,7 +25177,7 @@ function STATEMACHINE._handler( self, EventName, ... )
 
   local can, to = self:can(EventName)
   self:T( { EventName, can, to } )
-  
+
   local ReturnValues = nil
 
   if can then
@@ -25180,14 +25185,14 @@ function STATEMACHINE._handler( self, EventName, ... )
     local params = { ..., EventName, from, to  }
 
     if self:_call_handler(self["onbefore" .. EventName], params) == false
-    or self:_call_handler(self["onleave" .. from], params) == false then
+      or self:_call_handler(self["onleave" .. from], params) == false then
       return false
     end
 
     self.current = to
-    
+
     local execute = true
-    
+
     local subtable = self:_gosub( to, EventName )
     for _, sub in pairs( subtable ) do
       self:F2( "calling sub: " .. sub.event )
@@ -25196,7 +25201,7 @@ function STATEMACHINE._handler( self, EventName, ... )
       sub.fsm[sub.event]( sub.fsm )
       execute = true
     end
-      
+
     local fsmparent, event = self:_isendstate( to )
     if fsmparent and event then
       self:F2( { "end state: ", fsmparent, event } )
@@ -25210,20 +25215,20 @@ function STATEMACHINE._handler( self, EventName, ... )
     if execute then
       self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
       self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-      
+
       self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
       if ( self:_call_handler(self["OnBefore" .. to], params ) ~= false ) then
 
         self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
         self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
-        
+
         self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
         ReturnValues = self:_call_handler(self["OnAfter" .. to], params )
       end
 
       self:_call_handler(self["onstatechange"], params)
     end
-    
+
     return ReturnValues
   end
 
@@ -25234,7 +25239,7 @@ function STATEMACHINE:_delayed_transition( EventName )
   self:E( { EventName = EventName } )
   return function( self, DelaySeconds, ... )
     self:T( "Delayed Event: " .. EventName )
-    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds ) 
+    SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds )
   end
 end
 
@@ -25372,7 +25377,7 @@ function STATEMACHINE_TASK:New( Task, TaskUnit, options )
   FsmTask["onAssigned"] = Task.OnAssigned
   FsmTask["onSuccess"] = Task.OnSuccess
   FsmTask["onFailed"] = Task.OnFailed
-  
+
   FsmTask.Task = Task
   FsmTask.TaskUnit = TaskUnit
 
@@ -25402,7 +25407,7 @@ function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
-  
+
   if Controllable then
     self:SetControllable( Controllable )
   end
@@ -25430,7 +25435,59 @@ function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
   if handler then
     return handler( self, self.Controllable, unpack( params ) )
   end
-end--- @module Process
+end
+
+do -- STATEMACHINE_SET
+
+--- STATEMACHINE_SET class
+-- @type STATEMACHINE_SET
+-- @field Set#SET_BASE Set
+-- @extends StateMachine#STATEMACHINE
+STATEMACHINE_SET = {
+  ClassName = "STATEMACHINE_SET",
+}
+
+--- Creates a new STATEMACHINE_SET object.
+-- @param #STATEMACHINE_SET self
+-- @param #table FSMT Finite State Machine Table
+-- @param Set_SET_BASE FSMSet (optional) The Set object that the STATEMACHINE_SET governs.
+-- @return #STATEMACHINE_SET
+function STATEMACHINE_SET:New( FSMT, FSMSet )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_SET
+
+  if FSMSet then
+    self:Set( FSMSet )
+  end
+
+  return self
+end
+
+--- Sets the SET_BASE object that the STATEMACHINE_SET governs.
+-- @param #STATEMACHINE_SET self
+-- @param Set#SET_BASE FSMSet
+-- @return #STATEMACHINE_SET
+function STATEMACHINE_SET:Set( FSMSet )
+  self:F( FSMSet )
+  self.Set = FSMSet
+end
+
+--- Gets the SET_BASE object that the STATEMACHINE_SET governs.
+-- @param #STATEMACHINE_SET self
+-- @return Set#SET_BASE
+function STATEMACHINE_SET:Get()
+  return self.Controllable
+end
+
+function STATEMACHINE_SET:_call_handler( handler, params )
+  if handler then
+    return handler( self, self.Set, unpack( params ) )
+  end
+end
+
+end
+--- @module Process
 
 --- The PROCESS class
 -- @type PROCESS
@@ -27433,6 +27490,259 @@ do -- TASK_A2G
     return true
   end
   
+end
+
+
+
+--- This module contains the AISET_BALANCER class.
+-- 
+-- ===
+-- 
+-- 1) @{AISet_Balancer#AISET_BALANCER} class, extends @{StateMachine#STATEMACHINE_SET}
+-- ===================================================================================
+-- The @{AISet_Balancer#AISET_BALANCER} class monitors and manages as many AI GROUPS as there are
+-- CLIENTS in a SET_CLIENT collection not occupied by players.
+-- The AI_BALANCER class manages internally a collection of AI_MANAGEMENT objects, which govern the behaviour 
+-- of the underlying AI GROUPS.
+-- 
+-- The parent class @{StateMachine#STATEMACHINE_SET} manages the functionality to control the Finite State Machine (FSM) 
+-- and calls for each event the state transition functions providing the internal @{StateMachine#STATEMACHINE_SET.Set} object containing the
+-- SET_GROUP and additional event parameters provided during the event.
+-- 
+-- 1.1) AISET_BALANCER construction method
+-- ---------------------------------------
+-- Create a new AISET_BALANCER object with the @{#AISET_BALANCER.New} method:
+-- 
+--    * @{#AISET_BALANCER.New}: Creates a new AISET_BALANCER object.
+--    
+-- 1.2) 
+-- ----
+--    * Add
+--    * Remove
+-- 
+-- 1.2) AISET_BALANCER returns AI to Airbases
+-- ------------------------------------------
+-- You can configure to have the AI to return to:
+-- 
+--    * @{#AISET_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
+--    * @{#AISET_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- --
+-- ===
+-- 
+-- **API CHANGE HISTORY**
+-- ======================
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2016-08-17: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
+-- 
+--    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
+--    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 
+-- ===
+-- 
+-- AUTHORS and CONTRIBUTIONS
+-- =========================
+-- 
+-- ### Contributions: 
+-- 
+--   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
+--   Working together with James has resulted in the creation of the AISET_BALANCER class.  
+--   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
+--   * **SNAFU**:
+--   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
+--   None of the script code has been used however within the new AISET_BALANCER moose class.
+-- 
+-- ### Authors: 
+-- 
+--   * FlightControl: Framework Design &  Programming
+-- 
+-- @module AISet_Balancer
+
+
+
+--- AISET_BALANCER class
+-- @type AISET_BALANCER
+-- @field Set#SET_CLIENT SetClient
+-- @extends StateMachine#STATEMACHINE_SET
+AISET_BALANCER = {
+  ClassName = "AISET_BALANCER",
+  PatrolZones = {},
+  AIGroups = {},
+}
+
+--- Creates a new AI\_SET\_BALANCER object
+-- @param #AISET_BALANCER self
+-- @param Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
+-- @param Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
+-- @return #AISET_BALANCER
+-- @usage
+-- -- Define a new AISET_BALANCER Object.
+function AISET_BALANCER:New( SetClient, SpawnAI )
+
+  local FSMT = {
+    initial = 'None',
+    events = {
+      { name = 'Start',             from = '*',                       to = 'Monitoring' },
+      { name = 'Monitor',           from = '*',                       to = 'Monitoring' },
+      { name = 'Spawn',             from = '*',                       to = 'Spawning' },
+      { name = 'Destroy',           from = '*',                       to = 'Destroying' },
+      { name = 'Return',            from = '*',                       to = 'Returning' },
+      { name = 'End',               from = '*',                       to = 'End' },
+      { name = 'Dead',              from = '*',                       to = 'End' }, 
+    },
+  }
+  
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, STATEMACHINE_SET:New( FSMT, SET_GROUP:New() ) )
+  
+  self.SetClient = SetClient
+  self.SpawnAI = SpawnAI
+  self.ToNearestAirbase = false
+  self.ToHomeAirbase = false
+  
+  self:__Start( 1 )
+
+  return self
+end
+
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+-- @param #AISET_BALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+function AISET_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+
+  self.ToNearestAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnAirbaseSet = ReturnAirbaseSet
+end
+
+--- Returns the AI to the home @{Airbase#AIRBASE}.
+-- @param #AISET_BALANCER self
+-- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+function AISET_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+
+  self.ToHomeAirbase = true
+  self.ReturnTresholdRange = ReturnTresholdRange
+end
+
+--- @param #AISET_BALANCER self
+-- @param Set#SET_GROUP SetGroup
+-- @param #string ClientName
+-- @param Group#GROUP AIGroup
+function AISET_BALANCER:onenterSpawning( SetGroup, ClientName )
+
+  -- OK, Spawn a new group from the default SpawnAI object provided.
+  local AIGroup = self.SpawnAI:Spawn()
+  AIGroup:E( "Spawning new AIGroup" )
+  --TODO: need to rework UnitName thing ...
+  
+  SetGroup:Add( ClientName, AIGroup )
+end
+
+--- @param #AISET_BALANCER self
+-- @param Set#SET_GROUP SetGroup
+-- @param Group#GROUP AIGroup
+function AISET_BALANCER:onenterDestroying( SetGroup, AIGroup )
+
+  AIGroup:Destroy()
+end
+
+--- @param #AISET_BALANCER self
+-- @param Set#SET_GROUP SetGroup
+-- @param Group#GROUP AIGroup
+function AISET_BALANCER:onenterReturning( SetGroup, AIGroup )
+
+    local AIGroupTemplate = AIGroup:GetTemplate()
+    if self.ToHomeAirbase == true then
+      local WayPointCount = #AIGroupTemplate.route.points
+      local SwitchWayPointCommand = AIGroup:CommandSwitchWayPoint( 1, WayPointCount, 1 )
+      AIGroup:SetCommand( SwitchWayPointCommand )
+      AIGroup:MessageToRed( "Returning to home base ...", 30 )
+    else
+      -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
+      --TODO: i need to rework the POINT_VEC2 thing.
+      local PointVec2 = POINT_VEC2:New( AIGroup:GetVec2().x, AIGroup:GetVec2().y  )
+      local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
+      self:T( ClosestAirbase.AirbaseName )
+      AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
+      local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
+      AIGroupTemplate.route = RTBRoute
+      AIGroup:Respawn( AIGroupTemplate )
+    end
+
+end
+
+
+--- @param #AISET_BALANCER self
+function AISET_BALANCER:onenterMonitoring( SetGroup )
+
+  self.SetClient:ForEachClient(
+    --- @param Client#CLIENT Client
+    function( Client )
+      self:E(Client.ClientName)
+
+      local AIGroup = self.Set:Get( Client.UnitName ) -- Group#GROUP
+      if Client:IsAlive() then
+
+        if AIGroup and AIGroup:IsAlive() == true then
+
+          if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
+            self:Destroy( AIGroup )
+          else
+            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
+            -- If there is a CLIENT, the AI stays engaged and will not return.
+            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
+
+            local PlayerInRange = { Value = false }          
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
+            
+            self:E( RangeZone )
+            
+            _DATABASE:ForEachPlayer(
+              --- @param Unit#UNIT RangeTestUnit
+              function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
+                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                if RangeTestUnit:IsInZone( RangeZone ) == true then
+                  self:E( "in zone" )
+                  if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
+                    self:E( "in range" )
+                    PlayerInRange.Value = true
+                  end
+                end
+              end,
+              
+              --- @param Zone#ZONE_RADIUS RangeZone
+              -- @param Group#GROUP AIGroup
+              function( RangeZone, AIGroup, PlayerInRange )
+                if PlayerInRange.Value == false then
+                  self:Return( AIGroup )
+                end
+              end
+              , RangeZone, AIGroup, PlayerInRange
+            )
+            
+          end
+          self.Set:Remove( Client.UnitName )
+        end
+      else
+        if not AIGroup or not AIGroup:IsAlive() == true then
+          self:E("client not alive")
+          self:Spawn( Client.UnitName )
+          self:E("text after spawn")
+        end
+      end
+      return true
+    end
+  )
+  
+  self:__Monitor( 10 )
 end
 
 

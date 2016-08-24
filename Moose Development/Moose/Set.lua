@@ -349,6 +349,21 @@ function SET_BASE:Remove( ObjectName )
   
 end
 
+--- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+-- @param #SET_BASE self
+-- @param #string ObjectName
+-- @return Base#BASE
+function SET_BASE:Get( ObjectName )
+  self:F( ObjectName )
+
+  local t = self.Set[ObjectName]
+  
+  self:T3( { ObjectName, t } )
+  
+  return t
+  
+end
+
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count

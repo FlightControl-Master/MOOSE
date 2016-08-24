@@ -73,7 +73,6 @@ COPY /b Moose.lua + %1\Movement.lua              							Moose.lua
 COPY /b Moose.lua + %1\Sead.lua                  							Moose.lua
 COPY /b Moose.lua + %1\Escort.lua                							Moose.lua
 COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
-rem COPY /b Moose.lua + %1\AIBalancer.lua            							Moose.lua
 COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
 COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
 
@@ -93,7 +92,10 @@ COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
 COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
 COPY /b Moose.lua + %1\Task_A2G.lua         	  							Moose.lua
 
-rem AI Handling Classes
+rem AI Set Handling Classes
+COPY /b Moose.lua + %1\AISet_Balancer.lua           						Moose.lua
+
+rem AI Task Handling Classes
 COPY /b Moose.lua + %1\AI_PatrolZone.lua           							Moose.lua
 
 

@@ -350,7 +350,7 @@ function BASE:GetState( Object, StateName )
   local ClassNameAndID = Object:GetClassNameAndID()
 
   if self.States[ClassNameAndID] then
-    local State = self.States[ClassNameAndID][StateName]
+    local State = self.States[ClassNameAndID][StateName] or false
     self:T2( { ClassNameAndID, StateName, State } )
     return State
   end
