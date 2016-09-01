@@ -18,7 +18,6 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
-					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
@@ -52,12 +51,12 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_PatrolZone.html">Process_PatrolZone</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -1704,9 +1703,6 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
-	
-<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2181,7 +2177,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2198,7 +2194,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -2501,7 +2497,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
+<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
 
 </dd>
 </dl>

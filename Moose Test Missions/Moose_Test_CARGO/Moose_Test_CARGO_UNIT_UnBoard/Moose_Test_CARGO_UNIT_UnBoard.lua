@@ -6,8 +6,8 @@ local InfantryCargo = CARGO_UNIT:New( Mission, CargoEngineer, "Engineer", "Engin
 
 local CargoCarrier = UNIT:FindByName( "Carrier" )
 
--- This will Load the Cargo into the Carrier, regardless where the Cargo is.
+-- This will Load immediately the Cargo into the Carrier, regardless where the Cargo is.
 InfantryCargo:Load( CargoCarrier )
 
 -- This will Unboard the Cargo from the Carrier.
-InfantryCargo:UnLoad()
+InfantryCargo:UnBoard()

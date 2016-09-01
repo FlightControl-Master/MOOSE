@@ -1,10 +1,10 @@
---- This module contains the AI\_PATROLZONE class.
+--- This module contains the PROCESS\_PATROLZONE class.
 -- 
 -- ===
 -- 
--- 1) @{#AI_PATROLZONE} class, extends @{StateMachine#STATEMACHINE}
+-- 1) @{#PROCESS_PATROLZONE} class, extends @{StateMachine#STATEMACHINE}
 -- ================================================================
--- The @{#AI_PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable}.
+-- The @{#PROCESS_PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable}.
 -- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
 -- a random point is selected as the route point within the 3D space, within the given boundary limits.
 -- The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
@@ -12,24 +12,24 @@
 -- This cycle will continue until a fuel treshold has been reached by the airplane.
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
--- 1.1) AI\_PATROLZONE constructor:
+-- 1.1) PROCESS\_PATROLZONE constructor:
 -- ----------------------------
 --   
---   * @{#AI_PATROLZONE.New}(): Creates a new AI\_PATROLZONE object.
+--   * @{#PROCESS_PATROLZONE.New}(): Creates a new PROCESS\_PATROLZONE object.
 -- 
--- 1.2) AI\_PATROLZONE state machine:
+-- 1.2) PROCESS\_PATROLZONE state machine:
 -- ----------------------------------
--- The AI\_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
+-- The PROCESS\_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
 -- 
--- ### 1.2.1) AI\_PATROLZONE Events:
+-- ### 1.2.1) PROCESS\_PATROLZONE Events:
 -- 
---   * @{#AI_PATROLZONE.Route}( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
---   * @{#AI_PATROLZONE.Patrol}( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.
---   * @{#AI_PATROLZONE.RTB}( AIControllable ): The AIControllable will report return to base.
---   * @{#AI_PATROLZONE.End}( AIControllable ): The end of the AI\_PATROLZONE process.
---   * @{#AI_PATROLZONE.Dead}( AIControllable ): The AIControllable is dead. The AI\_PATROLZONE process will be ended.
+--   * @{#PROCESS_PATROLZONE.Route}( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
+--   * @{#PROCESS_PATROLZONE.Patrol}( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.
+--   * @{#PROCESS_PATROLZONE.RTB}( AIControllable ): The AIControllable will report return to base.
+--   * @{#PROCESS_PATROLZONE.End}( AIControllable ): The end of the PROCESS\_PATROLZONE process.
+--   * @{#PROCESS_PATROLZONE.Dead}( AIControllable ): The AIControllable is dead. The PROCESS\_PATROLZONE process will be ended.
 -- 
--- ### 1.2.2) AI\_PATROLZONE States:
+-- ### 1.2.2) PROCESS\_PATROLZONE States:
 -- 
 --   * **Route**: A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
 --   * **Patrol**: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition function can be used.
@@ -37,7 +37,7 @@
 --   * **Dead**: The AIControllable is dead ...
 --   * **End**: The process has come to an end.
 --   
--- ### 1.2.3) AI\_PATROLZONE state transition functions:
+-- ### 1.2.3) PROCESS\_PATROLZONE state transition functions:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition functions will be called by the state machine:
@@ -52,7 +52,7 @@
 --     The state transition function needs to start with the name **OnAfter + the name of the state**. 
 --     These state transition functions need to provide a return value, which is specified at the function description.
 --
--- An example how to manage a state transition for an AI\_PATROLZONE object **Patrol** for the state **RTB**:
+-- An example how to manage a state transition for an PROCESS\_PATROLZONE object **Patrol** for the state **RTB**:
 -- 
 --      local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone" )
 --      local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
@@ -60,46 +60,46 @@
 --      local PatrolSpawn = SPAWN:New( "Patrol Group" )
 --      local PatrolGroup = PatrolSpawn:Spawn()
 --
---      local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
+--      local Patrol = PROCESS_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
 --      Patrol:SetControllable( PatrolGroup )
 --      Patrol:ManageFuel( 0.2, 60 )
 --
--- **OnBefore**RTB( AIGroup ) will be called by the AI\_PATROLZONE object when the AIGroup reports RTB, but **before** the RTB default action is processed by the AI_PATROLZONE object.
+-- **OnBefore**RTB( AIGroup ) will be called by the PROCESS\_PATROLZONE object when the AIGroup reports RTB, but **before** the RTB default action is processed by the PROCESS_PATROLZONE object.
 --
---      --- State transition function for the AI\_PATROLZONE **Patrol** object
---      -- @param #AI_PATROLZONE self 
+--      --- State transition function for the PROCESS\_PATROLZONE **Patrol** object
+--      -- @param #PROCESS_PATROLZONE self 
 --      -- @param Controllable#CONTROLLABLE AIGroup
 --      -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
 --      function Patrol:OnBeforeRTB( AIGroup )
 --        AIGroup:MessageToRed( "Returning to base", 20 )
 --      end
 --       
--- **OnAfter**RTB( AIGroup ) will be called by the AI\_PATROLZONE object when the AIGroup reports RTB, but **after** the RTB default action was processed by the AI_PATROLZONE object.
+-- **OnAfter**RTB( AIGroup ) will be called by the PROCESS\_PATROLZONE object when the AIGroup reports RTB, but **after** the RTB default action was processed by the PROCESS_PATROLZONE object.
 --
---      --- State transition function for the AI\_PATROLZONE **Patrol** object
---      -- @param #AI_PATROLZONE self 
+--      --- State transition function for the PROCESS\_PATROLZONE **Patrol** object
+--      -- @param #PROCESS_PATROLZONE self 
 --      -- @param Controllable#CONTROLLABLE AIGroup
 --      -- @return #Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
 --      function Patrol:OnAfterRTB( AIGroup )
 --        return PatrolSpawn:Spawn()
 --      end 
 --    
--- 1.3) Manage the AI\_PATROLZONE parameters:
+-- 1.3) Manage the PROCESS\_PATROLZONE parameters:
 -- ------------------------------------------
--- The following methods are available to modify the parameters of a AI\_PATROLZONE object:
+-- The following methods are available to modify the parameters of a PROCESS\_PATROLZONE object:
 -- 
---   * @{#AI_PATROLZONE.SetControllable}(): Set the AIControllable.
---   * @{#AI_PATROLZONE.GetControllable}(): Get the AIControllable.
---   * @{#AI_PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
---   * @{#AI_PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+--   * @{#PROCESS_PATROLZONE.SetControllable}(): Set the AIControllable.
+--   * @{#PROCESS_PATROLZONE.GetControllable}(): Get the AIControllable.
+--   * @{#PROCESS_PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
+--   * @{#PROCESS_PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
 -- 
--- 1.3) Manage the out of fuel in the AI\_PATROLZONE:
+-- 1.3) Manage the out of fuel in the PROCESS\_PATROLZONE:
 -- ----------------------------------------------
 -- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI\_PATROLZONE.
+-- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the PROCESS\_PATROLZONE.
 -- Once the time is finished, the old AIControllable will return to the base.
--- Use the method @{#AI_PATROLZONE.ManageFuel}() to have this proces in place.
+-- Use the method @{#PROCESS_PATROLZONE.ManageFuel}() to have this proces in place.
 -- 
 -- ====
 -- 
@@ -113,7 +113,7 @@
 -- 
 -- Hereby the change log:
 -- 
--- 2016-08-17: AI\_PATROLZONE:New( **PatrolSpawn,** PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces AI\_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- 2016-08-17: PROCESS\_PATROLZONE:New( **PatrolSpawn,** PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces PROCESS\_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 -- 
 -- 2016-07-01: Initial class and API.
 -- 
@@ -132,12 +132,25 @@
 --   * **FlightControl**: Design & Programming.
 -- 
 -- 
--- @module AI_PatrolZone
+-- @module Process_PatrolZone
+
+-- State Transition Functions
+
+--- OnBefore State Transition Function
+-- @function [parent=#PROCESS_PATROLZONE] OnBeforeRoute
+-- @param #PROCESS_PATROLZONE self
+-- @param Controllable#CONTROLLABLE Controllable
+-- @return #boolean
+
+--- OnAfter State Transition Function
+-- @function [parent=#PROCESS_PATROLZONE] OnAfterRoute
+-- @param #PROCESS_PATROLZONE self
+-- @param Controllable#CONTROLLABLE Controllable
 
 
 
---- AI\_PATROLZONE class
--- @type AI_PATROLZONE
+--- PROCESS\_PATROLZONE class
+-- @type PROCESS_PATROLZONE
 -- @field Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
 -- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
@@ -145,26 +158,26 @@
 -- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
 -- @extends StateMachine#STATEMACHINE_CONTROLLABLE
-AI_PATROLZONE = {
-  ClassName = "AI_PATROLZONE",
+PROCESS_PATROLZONE = {
+  ClassName = "PROCESS_PATROLZONE",
 }
 
 
 
---- Creates a new AI\_PATROLZONE object
--- @param #AI_PATROLZONE self
+--- Creates a new PROCESS\_PATROLZONE object
+-- @param #PROCESS_PATROLZONE self
 -- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @return #AI_PATROLZONE self
+-- @return #PROCESS_PATROLZONE self
 -- @usage
--- -- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- -- Define a new PROCESS_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
 -- PatrolSpawn = SPAWN:New( 'Patrol Group' )
--- PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )
-function AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- PatrolArea = PROCESS_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )
+function PROCESS_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
   local FSMT = {
     initial = 'None',
@@ -194,11 +207,11 @@ end
 
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
--- @param #AI_PATROLZONE self
+-- @param #PROCESS_PATROLZONE self
 -- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
+-- @return #PROCESS_PATROLZONE self
+function PROCESS_PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
   
   self.PatrolMinSpeed = PatrolMinSpeed
@@ -208,11 +221,11 @@ end
 
 
 --- Sets the floor and ceiling altitude of the patrol.
--- @param #AI_PATROLZONE self
+-- @param #PROCESS_PATROLZONE self
 -- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
+-- @return #PROCESS_PATROLZONE self
+function PROCESS_PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
   
   self.PatrolFloorAltitude = PatrolFloorAltitude
@@ -225,7 +238,7 @@ end
 function _NewPatrolRoute( AIControllable )
 
   AIControllable:T( "NewPatrolRoute" )
-  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolZone#AI_PATROLZONE
+  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolZone#PROCESS_PATROLZONE
   PatrolZone:__Route( 1 )
 end
 
@@ -234,13 +247,13 @@ end
 
 --- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI\_PATROLZONE.
+-- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the PROCESS\_PATROLZONE.
 -- Once the time is finished, the old AIControllable will return to the base.
--- @param #AI_PATROLZONE self
+-- @param #PROCESS_PATROLZONE self
 -- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
 -- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+-- @return #PROCESS_PATROLZONE self
+function PROCESS_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
 
   self.PatrolManageFuel = true
   self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
@@ -249,10 +262,10 @@ function AI_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuel
   return self
 end
 
---- Defines a new patrol route using the @{AI_PatrolZone} parameters and settings.
--- @param #AI_PATROLZONE self
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:onenterRoute()
+--- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+-- @param #PROCESS_PATROLZONE self
+-- @return #PROCESS_PATROLZONE self
+function PROCESS_PATROLZONE:onenterRoute()
 
   self:F2()
 
@@ -347,8 +360,8 @@ function AI_PATROLZONE:onenterRoute()
 end
 
 
---- @param #AI_PATROLZONE self
-function AI_PATROLZONE:onenterPatrol()
+--- @param #PROCESS_PATROLZONE self
+function PROCESS_PATROLZONE:onenterPatrol()
   self:F2()
 
   if self.Controllable and self.Controllable:IsAlive() then

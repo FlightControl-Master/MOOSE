@@ -87,16 +87,14 @@ COPY /b Moose.lua + %1\Process_Route.lua   		  							Moose.lua
 COPY /b Moose.lua + %1\Process_Smoke.lua    		  						Moose.lua
 COPY /b Moose.lua + %1\Process_Destroy.lua 		  							Moose.lua
 COPY /b Moose.lua + %1\Process_JTAC.lua 		  							Moose.lua
+COPY /b Moose.lua + %1\Process_PatrolZone.lua           					Moose.lua
 
 COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
 COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
 COPY /b Moose.lua + %1\Task_A2G.lua         	  							Moose.lua
 
 rem AI Set Handling Classes
-COPY /b Moose.lua + %1\AISet_Balancer.lua           						Moose.lua
-
-rem AI Task Handling Classes
-COPY /b Moose.lua + %1\AI_PatrolZone.lua           							Moose.lua
+COPY /b Moose.lua + %1\AIBalancer.lua       	    						Moose.lua
 
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua

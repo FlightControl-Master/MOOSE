@@ -1,35 +1,35 @@
---- This module contains the AISET_BALANCER class.
+--- This module contains the AIBALANCER class.
 -- 
 -- ===
 -- 
--- 1) @{AISet_Balancer#AISET_BALANCER} class, extends @{StateMachine#STATEMACHINE_SET}
+-- 1) @{AIBalancer#AIBALANCER} class, extends @{StateMachine#STATEMACHINE_SET}
 -- ===================================================================================
--- The @{AISet_Balancer#AISET_BALANCER} class monitors and manages as many AI GROUPS as there are
+-- The @{AIBalancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
 -- CLIENTS in a SET_CLIENT collection not occupied by players.
--- The AI_BALANCER class manages internally a collection of AI_MANAGEMENT objects, which govern the behaviour 
+-- The AIBALANCER class manages internally a collection of AI management objects, which govern the behaviour 
 -- of the underlying AI GROUPS.
 -- 
 -- The parent class @{StateMachine#STATEMACHINE_SET} manages the functionality to control the Finite State Machine (FSM) 
 -- and calls for each event the state transition functions providing the internal @{StateMachine#STATEMACHINE_SET.Set} object containing the
 -- SET_GROUP and additional event parameters provided during the event.
 -- 
--- 1.1) AISET_BALANCER construction method
+-- 1.1) AIBALANCER construction method
 -- ---------------------------------------
--- Create a new AISET_BALANCER object with the @{#AISET_BALANCER.New} method:
+-- Create a new AIBALANCER object with the @{#AIBALANCER.New} method:
 -- 
---    * @{#AISET_BALANCER.New}: Creates a new AISET_BALANCER object.
+--    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
 --    
 -- 1.2) 
 -- ----
 --    * Add
 --    * Remove
 -- 
--- 1.2) AISET_BALANCER returns AI to Airbases
+-- 1.2) AIBALANCER returns AI to Airbases
 -- ------------------------------------------
 -- You can configure to have the AI to return to:
 -- 
---    * @{#AISET_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
---    * @{#AISET_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- --
 -- ===
 -- 
@@ -56,39 +56,39 @@
 -- ### Contributions: 
 -- 
 --   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AISET_BALANCER class.  
+--   Working together with James has resulted in the creation of the AIBALANCER class.  
 --   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
 --   * **SNAFU**:
 --   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AISET_BALANCER moose class.
+--   None of the script code has been used however within the new AIBALANCER moose class.
 -- 
 -- ### Authors: 
 -- 
 --   * FlightControl: Framework Design &  Programming
 -- 
--- @module AISet_Balancer
+-- @module AIBalancer
 
 
 
---- AISET_BALANCER class
--- @type AISET_BALANCER
+--- AIBALANCER class
+-- @type AIBALANCER
 -- @field Set#SET_CLIENT SetClient
 -- @extends StateMachine#STATEMACHINE_SET
-AISET_BALANCER = {
-  ClassName = "AISET_BALANCER",
+AIBALANCER = {
+  ClassName = "AIBALANCER",
   PatrolZones = {},
   AIGroups = {},
 }
 
---- Creates a new AI\_SET\_BALANCER object
--- @param #AISET_BALANCER self
+--- Creates a new AIBALANCER object
+-- @param #AIBALANCER self
 -- @param Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
 -- @param Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
--- @return #AISET_BALANCER
+-- @return #AIBALANCER
 -- @usage
--- -- Define a new AISET_BALANCER Object.
-function AISET_BALANCER:New( SetClient, SpawnAI )
+-- -- Define a new AIBALANCER Object.
+function AIBALANCER:New( SetClient, SpawnAI )
 
   local FSMT = {
     initial = 'None',
@@ -117,10 +117,10 @@ function AISET_BALANCER:New( SetClient, SpawnAI )
 end
 
 --- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
--- @param #AISET_BALANCER self
+-- @param #AIBALANCER self
 -- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 -- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
-function AISET_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
@@ -128,19 +128,19 @@ function AISET_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirb
 end
 
 --- Returns the AI to the home @{Airbase#AIRBASE}.
--- @param #AISET_BALANCER self
+-- @param #AIBALANCER self
 -- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
-function AISET_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
---- @param #AISET_BALANCER self
+--- @param #AIBALANCER self
 -- @param Set#SET_GROUP SetGroup
 -- @param #string ClientName
 -- @param Group#GROUP AIGroup
-function AISET_BALANCER:onenterSpawning( SetGroup, ClientName )
+function AIBALANCER:onenterSpawning( SetGroup, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
   local AIGroup = self.SpawnAI:Spawn()
@@ -150,18 +150,18 @@ function AISET_BALANCER:onenterSpawning( SetGroup, ClientName )
   SetGroup:Add( ClientName, AIGroup )
 end
 
---- @param #AISET_BALANCER self
+--- @param #AIBALANCER self
 -- @param Set#SET_GROUP SetGroup
 -- @param Group#GROUP AIGroup
-function AISET_BALANCER:onenterDestroying( SetGroup, AIGroup )
+function AIBALANCER:onenterDestroying( SetGroup, AIGroup )
 
   AIGroup:Destroy()
 end
 
---- @param #AISET_BALANCER self
+--- @param #AIBALANCER self
 -- @param Set#SET_GROUP SetGroup
 -- @param Group#GROUP AIGroup
-function AISET_BALANCER:onenterReturning( SetGroup, AIGroup )
+function AIBALANCER:onenterReturning( SetGroup, AIGroup )
 
     local AIGroupTemplate = AIGroup:GetTemplate()
     if self.ToHomeAirbase == true then
@@ -184,8 +184,8 @@ function AISET_BALANCER:onenterReturning( SetGroup, AIGroup )
 end
 
 
---- @param #AISET_BALANCER self
-function AISET_BALANCER:onenterMonitoring( SetGroup )
+--- @param #AIBALANCER self
+function AIBALANCER:onenterMonitoring( SetGroup )
 
   self.SetClient:ForEachClient(
     --- @param Client#CLIENT Client

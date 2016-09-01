@@ -18,7 +18,6 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
-					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
@@ -52,12 +51,12 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_PatrolZone.html">Process_PatrolZone</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -106,6 +105,46 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
     <li>CARGO_SLINGLOAD, represented by a <a href="Cargo.html">Cargo</a> that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.</li>
 </ul>
 
+<h2>1.2) CARGO state machine:</h2>
+<p>The CARGO is a state machine: it manages the different events and states of the <a href="Controllable.html">Controllable</a> it is controlling.</p>
+
+<h3>1.2.1) CARGO Events:</h3>
+
+<ul>
+    <li><a href="##(CARGO).Board">CARGO.Board</a>( ToCarrier ):  Boards the cargo to a Carrier.</li>
+    <li><a href="##(CARGO).Load">CARGO.Load</a>( ToCarrier ): Loads the cargo into a Carrier, regardless of its position.</li>
+    <li><a href="##(CARGO).UnBoard">CARGO.UnBoard</a>( ToPointVec2 ): UnBoard the cargo from a Carrier. This will trigger a movement of the cargo to the option ToPointVec2.</li>
+    <li><a href="##(CARGO).UnLoad">CARGO.UnLoad</a>( ToPointVec2 ): UnLoads the cargo from a Carrier.</li>
+    <li><a href="##(CARGO).Dead">CARGO.Dead</a>( Controllable ): The cargo is dead. The cargo process will be ended.</li>
+</ul>
+
+<h3>1.2.2) PROCESS_PATROLZONE States:</h3>
+
+<ul>
+    <li><strong>UnLoaded</strong>: The cargo is unloaded from a carrier.</li>
+    <li><strong>Boarding</strong>: The cargo is currently boarding (= running) into a carrier.</li>
+    <li><strong>Loaded</strong>: The cargo is loaded into a carrier.</li>
+    <li><strong>UnBoarding</strong>: The cargo is currently unboarding (=running) from a carrier.</li>
+    <li><strong>Dead</strong>: The cargo is dead ...</li>
+    <li><strong>End</strong>: The process has come to an end.</li>
+</ul>
+
+<h3>1.2.3) PROCESS_PATROLZONE state transition functions:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition functions will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition function returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition functions need to provide a return value, which is specified at the function description.</p>
+    </li>
+</ul>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -134,25 +173,13 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#CARGO_SLINGLOAD">CARGO_SLINGLOAD</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CARGO_UNIT">CARGO_UNIT</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#CARGO_ZONE">CARGO_ZONE</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#CargoStatic">CargoStatic</a></td>
+		<td class="name" nowrap="nowrap"><a href="#FSMT">FSMT</a></td>
 		<td class="summary">
 
 </td>
@@ -161,9 +188,9 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 			<h2><a id="#(CARGO)">Type <code>CARGO</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).Board">CARGO:Board(CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Board">CARGO:Board(ToPointVec2)</a></td>
 		<td class="summary">
-<p>Board Cargo to a Carrier with a defined Speed.</p>
+<p>Event Function.</p>
 </td>
 		</tr>
 		<tr>
@@ -197,21 +224,15 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).FsmP">CARGO.FsmP</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsNear">CARGO:IsNear(PointVec2)</a></td>
 		<td class="summary">
 <p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).Load">CARGO:Load(CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Load">CARGO:Load(ToCarrier)</a></td>
 		<td class="summary">
-<p>Load Cargo to a Carrier.</p>
+<p>Event Function.</p>
 </td>
 		</tr>
 		<tr>
@@ -239,15 +260,51 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnLoaded">CARGO:OnLoaded(CallBackFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnAfterBoarding">CARGO:OnAfterBoarding(Controllable)</a></td>
 		<td class="summary">
-<p>On Loaded callback function.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnUnLoaded">CARGO:OnUnLoaded(CallBackFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnAfterLoaded">CARGO:OnAfterLoaded(Controllable)</a></td>
 		<td class="summary">
-<p>On UnLoaded callback function.</p>
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnAfterUnBoarding">CARGO:OnAfterUnBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnAfterUnLoaded">CARGO:OnAfterUnLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnBeforeBoarding">CARGO:OnBeforeBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnBeforeLoaded">CARGO:OnBeforeLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnBeforeUnBoarding">CARGO:OnBeforeUnBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnBeforeUnLoaded">CARGO:OnBeforeUnLoaded(Controllable)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -281,27 +338,15 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).UnLoad">CARGO:UnLoad(UnLoadDistance, Angle, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).UnBoard">CARGO:UnBoard(ToPointVec2)</a></td>
 		<td class="summary">
-<p>UnLoad Cargo from a Carrier with a UnLoadDistance and an Angle.</p>
+<p>Event Function.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).Weight">CARGO.Weight</a></td>
 		<td class="summary">
 <p>A number defining the weight of the cargo. The weight is expressed in kg.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO)._Next">CARGO:_Next(NextEvent, ...)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO)._NextEvent">CARGO:_NextEvent(NextEvent, ...)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 	</table>
@@ -339,37 +384,37 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnBoard">CARGO_PACKAGE:OnBoard(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</a></td>
-		<td class="summary">
-<p>Board Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnBoarded">CARGO_PACKAGE:OnBoarded(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</a></td>
-		<td class="summary">
-<p>Boarded Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnLoad">CARGO_PACKAGE:OnLoad(FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterLoad">CARGO_PACKAGE:onafterLoad(FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</a></td>
 		<td class="summary">
 <p>Load Event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnUnBoard">CARGO_PACKAGE:OnUnBoard(FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterOnBoard">CARGO_PACKAGE:onafterOnBoard(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</a></td>
+		<td class="summary">
+<p>Board Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterOnBoarded">CARGO_PACKAGE:onafterOnBoarded(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</a></td>
+		<td class="summary">
+<p>Boarded Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnBoard">CARGO_PACKAGE:onafterUnBoard(FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</a></td>
 		<td class="summary">
 <p>UnBoard Event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnUnBoarded">CARGO_PACKAGE:OnUnBoarded(FsmP, Event, From, To, CargoCarrier, Speed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnBoarded">CARGO_PACKAGE:onafterUnBoarded(FsmP, Event, From, To, CargoCarrier, Speed)</a></td>
 		<td class="summary">
 <p>UnBoarded Event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).OnUnLoad">CARGO_PACKAGE:OnUnLoad(FsmP, Event, From, To, Distance, Angle, CargoCarrier, Speed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnLoad">CARGO_PACKAGE:onafterUnLoad(FsmP, Event, From, To, Distance, Angle, CargoCarrier, Speed)</a></td>
 		<td class="summary">
 <p>UnLoad Event.</p>
 </td>
@@ -407,69 +452,15 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).ClassName">CARGO_UNIT.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoObject">CARGO_UNIT.CargoObject</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EnterStateBoarding">CARGO_UNIT:EnterStateBoarding(FsmP, Event, From, To, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).ClassName">CARGO_UNIT.ClassName</a></td>
 		<td class="summary">
-<p>Enter Boarding State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EnterStateLoaded">CARGO_UNIT:EnterStateLoaded(FsmP, Event, From, To, CargoCarrier)</a></td>
-		<td class="summary">
-<p>Loaded State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EnterStateUnBoarding">CARGO_UNIT:EnterStateUnBoarding(FsmP, Event, From, To, ToPointVec2)</a></td>
-		<td class="summary">
-<p>Enter UnBoarding State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EnterStateUnLoaded">CARGO_UNIT:EnterStateUnLoaded(FsmP, Event, From, To, ToPointVec2)</a></td>
-		<td class="summary">
-<p>Enter UnLoaded State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EventBoard">CARGO_UNIT:EventBoard(FsmP, Event, From, To, CargoCarrier)</a></td>
-		<td class="summary">
-<p>Board Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EventLoad">CARGO_UNIT:EventLoad(FsmP, Event, From, To, CargoCarrier)</a></td>
-		<td class="summary">
-<p>Load Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EventUnBoard">CARGO_UNIT:EventUnBoard(FsmP, Event, From, To)</a></td>
-		<td class="summary">
-<p>UnBoard Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).EventUnLoad">CARGO_UNIT:EventUnLoad(FsmP, Event, From, To)</a></td>
-		<td class="summary">
-<p>UnLoad Event.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).LeaveStateBoarding">CARGO_UNIT:LeaveStateBoarding(FsmP, Event, From, To, CargoCarrier)</a></td>
-		<td class="summary">
-<p>Leave Boarding State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).LeaveStateUnBoarding">CARGO_UNIT:LeaveStateUnBoarding(FsmP, Event, From, To, ToPointVec2)</a></td>
-		<td class="summary">
-<p>Leave UnBoarding State.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -488,6 +479,54 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).OnUnLoadedCallBack">CARGO_UNIT.OnUnLoadedCallBack</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterBoard">CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier)</a></td>
+		<td class="summary">
+<p>Board Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterUnBoarded">CARGO_UNIT:onafterUnBoarded(ToPointVec2, Event, From, To)</a></td>
+		<td class="summary">
+<p>UnBoard Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterBoarding">CARGO_UNIT:onenterBoarding(CargoCarrier, Event, From, To)</a></td>
+		<td class="summary">
+<p>Enter Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterLoaded">CARGO_UNIT:onenterLoaded(CargoCarrier, Event, From, To)</a></td>
+		<td class="summary">
+<p>Loaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnBoarding">CARGO_UNIT:onenterUnBoarding(ToPointVec2, Event, From, To)</a></td>
+		<td class="summary">
+<p>Enter UnBoarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnLoaded">CARGO_UNIT:onenterUnLoaded(Point, Event, From, To, ToPointVec2)</a></td>
+		<td class="summary">
+<p>Enter UnLoaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveBoarding">CARGO_UNIT:onleaveBoarding(CargoCarrier, Event, From, To)</a></td>
+		<td class="summary">
+<p>Leave Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveUnBoarding">CARGO_UNIT:onleaveUnBoarding(ToPointVec2, Event, From, To)</a></td>
+		<td class="summary">
+<p>Leave UnBoarding State.</p>
 </td>
 		</tr>
 	</table>
@@ -552,20 +591,6 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="CARGO_SLINGLOAD" >
-<strong>CARGO_SLINGLOAD</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a></em>
 <a id="CARGO_UNIT" >
 <strong>CARGO_UNIT</strong>
@@ -581,22 +606,8 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 <dt>
 
 		<em></em>
-<a id="CARGO_ZONE" >
-<strong>CARGO_ZONE</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="CargoStatic" >
-<strong>CargoStatic</strong>
+<a id="FSMT" >
+<strong>FSMT</strong>
 </a>
 </dt>
 <dd>
@@ -613,18 +624,23 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 <dt>
 
 <a id="#(CARGO).Board" >
-<strong>CARGO:Board(CargoCarrier)</strong>
+<strong>CARGO:Board(ToPointVec2)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Board Cargo to a Carrier with a defined Speed.</p>
+<p>Event Function.</p>
+
+	
+<p>The cargo must be in the <strong>Loaded</strong> state.
+UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -703,20 +719,6 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CARGO).FsmP" >
-<strong>CARGO.FsmP</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CARGO).IsNear" >
 <strong>CARGO:IsNear(PointVec2)</strong>
 </a>
@@ -744,18 +746,23 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 <dt>
 
 <a id="#(CARGO).Load" >
-<strong>CARGO:Load(CargoCarrier)</strong>
+<strong>CARGO:Load(ToCarrier)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Load Cargo to a Carrier.</p>
+<p>Event Function.</p>
+
+	
+<p>The cargo must be in the <strong>UnLoaded</strong> state.
+Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> ToCarrier </em></code>: 
+The Carrier that will hold the cargo.</p>
 
 				</li>
 		</ul>
@@ -814,6 +821,9 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 	
 <p>CARGO Constructor.</p>
 
+	
+<p>This class is an abstract class and should not be instantiated.</p>
+
 		<h3>Parameters</h3>
 		<ul>
 				<li>
@@ -859,24 +869,19 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO).OnLoaded" >
-<strong>CARGO:OnLoaded(CallBackFunction, ...)</strong>
+<a id="#(CARGO).OnAfterBoarding" >
+<strong>CARGO:OnAfterBoarding(Controllable)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>On Loaded callback function.</p>
 
-		<h3>Parameters</h3>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> CallBackFunction </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
 
 				</li>
 		</ul>
@@ -885,27 +890,168 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO).OnUnLoaded" >
-<strong>CARGO:OnUnLoaded(CallBackFunction, ...)</strong>
+<a id="#(CARGO).OnAfterLoaded" >
+<strong>CARGO:OnAfterLoaded(Controllable)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>On UnLoaded callback function.</p>
 
-		<h3>Parameters</h3>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> CallBackFunction </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnAfterUnBoarding" >
+<strong>CARGO:OnAfterUnBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnAfterUnLoaded" >
+<strong>CARGO:OnAfterUnLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnBeforeBoarding" >
+<strong>CARGO:OnBeforeBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnBeforeLoaded" >
+<strong>CARGO:OnBeforeLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnBeforeUnBoarding" >
+<strong>CARGO:OnBeforeUnBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnBeforeUnLoaded" >
+<strong>CARGO:OnBeforeUnLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -993,29 +1139,24 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO).UnLoad" >
-<strong>CARGO:UnLoad(UnLoadDistance, Angle, CargoCarrier)</strong>
+<a id="#(CARGO).UnBoard" >
+<strong>CARGO:UnBoard(ToPointVec2)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>UnLoad Cargo from a Carrier with a UnLoadDistance and an Angle.</p>
+<p>Event Function.</p>
 
-		<h3>Parameters</h3>
+	
+<p>The cargo must be in the <strong>Loaded</strong> state.
+UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.</p>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number UnLoadDistance </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Angle </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> CargoCarrier </em></code>: </p>
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -1033,58 +1174,6 @@ A cargo is a logical object defined within a <a href="Mission.html">Mission</a>,
 	
 <p>A number defining the weight of the cargo. The weight is expressed in kg.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO)._Next" >
-<strong>CARGO:_Next(NextEvent, ...)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> NextEvent </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO)._NextEvent" >
-<strong>CARGO:_NextEvent(NextEvent, ...)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> NextEvent </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 
@@ -1222,8 +1311,64 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO_PACKAGE).OnBoard" >
-<strong>CARGO_PACKAGE:OnBoard(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</strong>
+<a id="#(CARGO_PACKAGE).onafterLoad" >
+<strong>CARGO_PACKAGE:onafterLoad(FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Load Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number LoadDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Angle </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterOnBoard" >
+<strong>CARGO_PACKAGE:onafterOnBoard(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</strong>
 </a>
 </dt>
 <dd>
@@ -1283,8 +1428,8 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO_PACKAGE).OnBoarded" >
-<strong>CARGO_PACKAGE:OnBoarded(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</strong>
+<a id="#(CARGO_PACKAGE).onafterOnBoarded" >
+<strong>CARGO_PACKAGE:onafterOnBoarded(FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</strong>
 </a>
 </dt>
 <dd>
@@ -1344,64 +1489,8 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO_PACKAGE).OnLoad" >
-<strong>CARGO_PACKAGE:OnLoad(FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Load Event.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Speed </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number LoadDistance </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Angle </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_PACKAGE).OnUnBoard" >
-<strong>CARGO_PACKAGE:OnUnBoard(FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</strong>
+<a id="#(CARGO_PACKAGE).onafterUnBoard" >
+<strong>CARGO_PACKAGE:onafterUnBoard(FsmP, Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</strong>
 </a>
 </dt>
 <dd>
@@ -1466,8 +1555,8 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO_PACKAGE).OnUnBoarded" >
-<strong>CARGO_PACKAGE:OnUnBoarded(FsmP, Event, From, To, CargoCarrier, Speed)</strong>
+<a id="#(CARGO_PACKAGE).onafterUnBoarded" >
+<strong>CARGO_PACKAGE:onafterUnBoarded(FsmP, Event, From, To, CargoCarrier, Speed)</strong>
 </a>
 </dt>
 <dd>
@@ -1512,8 +1601,8 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CARGO_PACKAGE).OnUnLoad" >
-<strong>CARGO_PACKAGE:OnUnLoad(FsmP, Event, From, To, Distance, Angle, CargoCarrier, Speed)</strong>
+<a id="#(CARGO_PACKAGE).onafterUnLoad" >
+<strong>CARGO_PACKAGE:onafterUnLoad(FsmP, Event, From, To, Distance, Angle, CargoCarrier, Speed)</strong>
 </a>
 </dt>
 <dd>
@@ -1646,7 +1735,6 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(CARGO_UNIT).CargoCarrier" >
 <strong>CARGO_UNIT.CargoCarrier</strong>
 </a>
@@ -1674,6 +1762,20 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(CARGO_UNIT).CargoObject" >
+<strong>CARGO_UNIT.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(CARGO_UNIT).ClassName" >
 <strong>CARGO_UNIT.ClassName</strong>
@@ -1683,406 +1785,6 @@ The UNIT carrying the package.</p>
 	
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EnterStateBoarding" >
-<strong>CARGO_UNIT:EnterStateBoarding(FsmP, Event, From, To, CargoCarrier)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Enter Boarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EnterStateLoaded" >
-<strong>CARGO_UNIT:EnterStateLoaded(FsmP, Event, From, To, CargoCarrier)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Loaded State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EnterStateUnBoarding" >
-<strong>CARGO_UNIT:EnterStateUnBoarding(FsmP, Event, From, To, ToPointVec2)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Enter UnBoarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EnterStateUnLoaded" >
-<strong>CARGO_UNIT:EnterStateUnLoaded(FsmP, Event, From, To, ToPointVec2)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Enter UnLoaded State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ToPointVec2 </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EventBoard" >
-<strong>CARGO_UNIT:EventBoard(FsmP, Event, From, To, CargoCarrier)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Board Event.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> CargoCarrier </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EventLoad" >
-<strong>CARGO_UNIT:EventLoad(FsmP, Event, From, To, CargoCarrier)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Load Event.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EventUnBoard" >
-<strong>CARGO_UNIT:EventUnBoard(FsmP, Event, From, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>UnBoard Event.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).EventUnLoad" >
-<strong>CARGO_UNIT:EventUnLoad(FsmP, Event, From, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>UnLoad Event.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).LeaveStateBoarding" >
-<strong>CARGO_UNIT:LeaveStateBoarding(FsmP, Event, From, To, CargoCarrier)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Leave Boarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).LeaveStateUnBoarding" >
-<strong>CARGO_UNIT:LeaveStateUnBoarding(FsmP, Event, From, To, ToPointVec2)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Leave UnBoarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_PROCESS)">StateMachine#STATEMACHINE_PROCESS</a> FsmP </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2169,9 +1871,301 @@ The UNIT carrying the package.</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
 
-			<h2><a id="#(CARGO_ZONE)" >Type <code>CARGO_ZONE</code></a></h2>
-			
+<a id="#(CARGO_UNIT).onafterBoard" >
+<strong>CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Board Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onafterUnBoarded" >
+<strong>CARGO_UNIT:onafterUnBoarded(ToPointVec2, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoard Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterBoarding" >
+<strong>CARGO_UNIT:onenterBoarding(CargoCarrier, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterLoaded" >
+<strong>CARGO_UNIT:onenterLoaded(CargoCarrier, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterUnBoarding" >
+<strong>CARGO_UNIT:onenterUnBoarding(ToPointVec2, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterUnLoaded" >
+<strong>CARGO_UNIT:onenterUnLoaded(Point, Event, From, To, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnLoaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Point </em></code>: 
+POINT_VEC2</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToPointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onleaveBoarding" >
+<strong>CARGO_UNIT:onleaveBoarding(CargoCarrier, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onleaveUnBoarding" >
+<strong>CARGO_UNIT:onleaveUnBoarding(ToPointVec2, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
 </div>
 
 </div>

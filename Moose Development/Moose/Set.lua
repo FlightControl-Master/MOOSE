@@ -284,7 +284,7 @@ function SET_BASE:GetSet()
   return self.Set
 end
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @param Base#BASE Object
@@ -309,6 +309,21 @@ function SET_BASE:Add( ObjectName, Object )
   self.Set[ObjectName] = t._
   
 end
+
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+-- @param #SET_BASE self
+-- @param Object#OBJECT Object
+-- @return Base#BASE The added BASE Object.
+function SET_BASE:AddObject( Object )
+  self:F2( Object.ObjectName )
+  
+  self:T( Object.UnitName )
+  self:T( Object.ObjectName )
+  self:Add( Object.ObjectName, Object )
+  
+end
+
+
 
 --- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
@@ -589,6 +604,9 @@ end
 -- @return #SET_BASE self
 function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
   self:F3( arg )
+  
+  Set = Set or self:GetSet()
+  arg = arg or {}
   
   local function CoRoutine()
     local Count = 0

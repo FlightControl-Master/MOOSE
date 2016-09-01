@@ -1,0 +1,31 @@
+
+local Mission = MISSION:New( "Transfer Cargo", "High", "Test for Cargo", coalition.side.RED )
+
+local CargoSet = SET_BASE:New()
+CargoSet:Add( "Engineer1", CARGO_UNIT:New( Mission, UNIT:FindByName( "Engineer1" ), "Engineers", "Engineer", 81, 2000, 25 ) )
+CargoSet:Add( "Engineer2", CARGO_UNIT:New( Mission, UNIT:FindByName( "Engineer2" ), "Engineers", "Engineer", 64, 2000, 25 ) )
+CargoSet:Add( "Engineer3", CARGO_UNIT:New( Mission, UNIT:FindByName( "Engineer3" ), "Engineers", "Engineer", 72, 2000, 25 ) )
+CargoSet:Add( "Engineer4", CARGO_UNIT:New( Mission, UNIT:FindByName( "Engineer4" ), "Engineers", "Engineer", 69, 2000, 25 ) )
+
+local InfantryCargo = CARGO_GROUPED:New( CargoSet, "Engineers", "Engineers", 2000, 25 )
+
+local CargoCarrierFrom = UNIT:FindByName( "CarrierFrom" )
+
+local CargoCarrierTo = UNIT:FindByName( "CarrierTo" )
+
+-- This call will make the Cargo run to the CargoCarrier.
+-- Upon arrival at the CargoCarrier, the Cargo will be Loaded into the Carrier.
+-- This process is now fully automated.
+InfantryCargo:Board( CargoCarrierFrom )
+
+-- Once the Cargo has been loaded into the Carrier, drive to a point and unload the Cargo.
+function InfantryCargo:OnAfterLoaded()  
+  self:__UnBoard( 1 )
+  self.OnAfterLoaded = nil
+end
+
+-- Once the Cargo has been unloaded from the Carrier (the Cargo has arrived to the unload gathering point), OnBoard the Cargo in the other Carrier.
+function InfantryCargo:OnAfterUnLoaded() 
+  self:__Board( 1, CargoCarrierTo )
+  self.OnAfterUnLoaded = nil
+end

@@ -48,16 +48,15 @@ Include.File( "Process_Route" )
 Include.File( "Process_Smoke" )
 Include.File( "Process_Destroy" )
 Include.File( "Process_JTAC" )
+Include.File( "Process_PatrolZone" )
 
 Include.File( "Task" )
 Include.File( "Task_SEAD" )
 Include.File( "Task_A2G" )
 
 --- AI Set Handling Classes
-Include.File( "AISet_Balancer" )
+Include.File( "AIBalancer" )
 
---- AI Task Handling Classes
-Include.File( "AI_PatrolZone" )
 
 -- The order of the declarations is important here. Don't touch it.
 

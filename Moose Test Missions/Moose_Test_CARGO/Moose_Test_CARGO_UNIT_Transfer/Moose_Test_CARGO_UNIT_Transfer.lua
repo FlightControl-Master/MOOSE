@@ -14,15 +14,13 @@ local CargoCarrierTo = UNIT:FindByName( "CarrierTo" )
 InfantryCargo:Board( CargoCarrierFrom )
 
 -- Once the Cargo has been loaded into the Carrier, drive to a point and unload the Cargo.
-InfantryCargo:OnLoaded( 
-  function( Cargo ) 
-    Cargo:UnLoad() 
-  end 
-)
+function InfantryCargo:OnAfterLoaded()  
+  self:__UnBoard( 1 )
+  self.OnAfterLoaded = nil
+end
 
 -- Once the Cargo has been unloaded from the Carrier (the Cargo has arrived to the unload gathering point), OnBoard the Cargo in the other Carrier.
-InfantryCargo:OnUnLoaded( 
-  function( Cargo ) 
-    Cargo:Board( CargoCarrierTo ) 
-  end 
-)
+function InfantryCargo:OnAfterUnLoaded() 
+  self:__Board( 1, CargoCarrierTo )
+  self.OnAfterUnLoaded = nil
+end

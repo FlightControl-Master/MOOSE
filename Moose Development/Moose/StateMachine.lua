@@ -101,7 +101,7 @@ end
 
 function STATEMACHINE._handler( self, EventName, ... )
 
-  self:F( EventName )
+  self:F( { EventName, ... } )
 
   local can, to = self:can(EventName)
   self:T( { EventName, can, to } )
@@ -262,23 +262,16 @@ STATEMACHINE_PROCESS = {
 --- Creates a new STATEMACHINE_PROCESS object.
 -- @param #STATEMACHINE_PROCESS self
 -- @return #STATEMACHINE_PROCESS
-function STATEMACHINE_PROCESS:New( Process, options )
+function STATEMACHINE_PROCESS:New( FSMT )
 
-  local FsmProcess = routines.utils.deepCopy( self ) -- Create a new self instance
-  local Parent = STATEMACHINE:New(options)
+  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
 
-  setmetatable( FsmProcess, Parent )
-  FsmProcess.__index = FsmProcess
-
-  FsmProcess["onstatechange"] = Process.OnStateChange
-  FsmProcess.Process = Process
-
-  return FsmProcess
+  return self
 end
 
 function STATEMACHINE_PROCESS:_call_handler( handler, params )
   if handler then
-    return handler( self.Process, unpack( params ) )
+    return handler( self, unpack( params ) )
   end
 end
 

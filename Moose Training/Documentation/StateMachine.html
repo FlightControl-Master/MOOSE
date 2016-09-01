@@ -18,7 +18,6 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
-					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
@@ -52,12 +51,12 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_PatrolZone.html">Process_PatrolZone</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
@@ -89,10 +88,10 @@
 <p>This module contains the STATEMACHINE class.</p>
 
    
-<p>This development is based on a state machine implementation made by Conroy Kyle. <br/>
-The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  </p>
+<p>This development is based on a state machine implementation made by Conroy Kyle.
+The state machine can be found here: https://github.com/kyleconroy/lua-state-machine</p>
 
-<p>I've taken the development and enhanced it to make the state machine hierarchical... 
+<p>I've taken the development and enhanced it to make the state machine hierarchical...
 It is a fantastic development, this module.</p>
 
 <hr/>
@@ -117,6 +116,12 @@ It is a fantastic development, this module.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_PROCESS">STATEMACHINE_PROCESS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_SET">STATEMACHINE_SET</a></td>
 		<td class="summary">
 
 </td>
@@ -271,7 +276,7 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).New">STATEMACHINE_PROCESS:New(Process, options)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).New">STATEMACHINE_PROCESS:New(FSMT)</a></td>
 		<td class="summary">
 <p>Creates a new STATEMACHINE_PROCESS object.</p>
 </td>
@@ -284,6 +289,40 @@ It is a fantastic development, this module.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS)._call_handler">STATEMACHINE_PROCESS:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(STATEMACHINE_SET)">Type <code>STATEMACHINE_SET</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).ClassName">STATEMACHINE_SET.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).Get">STATEMACHINE_SET:Get()</a></td>
+		<td class="summary">
+<p>Gets the SET<em>BASE object that the STATEMACHINE</em>SET governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).New">STATEMACHINE_SET:New(FSMT, Set_SET_BASE, FSMSet)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_SET object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).Set">STATEMACHINE_SET.Set</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET)._call_handler">STATEMACHINE_SET:_call_handler(handler, params)</a></td>
 		<td class="summary">
 
 </td>
@@ -353,6 +392,20 @@ It is a fantastic development, this module.</p>
 		<em><a href="##(STATEMACHINE_PROCESS)">#STATEMACHINE_PROCESS</a></em>
 <a id="STATEMACHINE_PROCESS" >
 <strong>STATEMACHINE_PROCESS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE_SET)">#STATEMACHINE_SET</a></em>
+<a id="STATEMACHINE_SET" >
+<strong>STATEMACHINE_SET</strong>
 </a>
 </dt>
 <dd>
@@ -891,23 +944,18 @@ Finite State Machine Table</p>
 <dt>
 
 <a id="#(STATEMACHINE_PROCESS).New" >
-<strong>STATEMACHINE_PROCESS:New(Process, options)</strong>
+<strong>STATEMACHINE_PROCESS:New(FSMT)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Creates a new STATEMACHINE_PROCESS object.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Process </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> options </em></code>: </p>
+<p><code><em> FSMT </em></code>: </p>
 
 				</li>
 		</ul>
@@ -937,6 +985,122 @@ Finite State Machine Table</p>
 
 <a id="#(STATEMACHINE_PROCESS)._call_handler" >
 <strong>STATEMACHINE_PROCESS:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(STATEMACHINE_SET)" >Type <code>STATEMACHINE_SET</code></a></h2>
+				
+<p>STATEMACHINE_SET class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_SET).ClassName" >
+<strong>STATEMACHINE_SET.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET).Get" >
+<strong>STATEMACHINE_SET:Get()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the SET<em>BASE object that the STATEMACHINE</em>SET governs.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Set.html##(SET_BASE)">Set#SET_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET).New" >
+<strong>STATEMACHINE_SET:New(FSMT, Set_SET_BASE, FSMSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_SET object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table FSMT </em></code>: 
+Finite State Machine Table</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Set<em>SET</em>BASE </em></code>: 
+FSMSet (optional) The Set object that the STATEMACHINE_SET governs.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FSMSet </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_SET)">#STATEMACHINE_SET</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_BASE)">Set#SET_BASE</a></em>
+<a id="#(STATEMACHINE_SET).Set" >
+<strong>STATEMACHINE_SET.Set</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET)._call_handler" >
+<strong>STATEMACHINE_SET:_call_handler(handler, params)</strong>
 </a>
 </dt>
 <dd>

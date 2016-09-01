@@ -189,13 +189,14 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
 
   local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
   self:T( SpawnGroupTemplate )
+
   local SpawnGroup = self:GetGroup()
   
   if SpawnGroup then
   
     local Vec3 = SpawnGroup:GetVec3()
-    SpawnGroupTemplate.x = Vec3.x
-    SpawnGroupTemplate.y = Vec3.z
+    SpawnGroupTemplate.x = SpawnVec3.x
+    SpawnGroupTemplate.y = SpawnVec3.z
     
     self:E( #SpawnGroupTemplate.units )
     for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
@@ -222,6 +223,36 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
       SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
       SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
       self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+    else
+      self:E( SpawnGroupTemplate.units[UnitTemplateID].name )
+      local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- Unit#UNIT
+      if GroupUnit and GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        UnitTemplateData.alt = GroupUnitVec3.y
+        UnitTemplateData.x = GroupUnitVec3.x
+        UnitTemplateData.y = GroupUnitVec3.z
+        UnitTemplateData.heading = GroupUnitHeading
+      else
+        if SpawnGroupTemplate.units[UnitTemplateID].name ~= self:Name() then
+          self:T("nilling")
+          SpawnGroupTemplate.units[UnitTemplateID].delete = true
+        end
+      end
+    end
+  end
+
+  -- Remove obscolete units from the group structure
+  i = 1
+  while i <= #SpawnGroupTemplate.units do
+
+    local UnitTemplateData = SpawnGroupTemplate.units[i]
+    self:T( UnitTemplateData.name )
+
+    if UnitTemplateData.delete then
+      table.remove( SpawnGroupTemplate.units, i )
+    else
+      i = i + 1
     end
   end
 
