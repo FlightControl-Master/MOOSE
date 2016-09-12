@@ -1,61 +1,60 @@
 --- The main include file for the MOOSE system.
 
 --- Core Routines
-Include.File( "Routines" )
-Include.File( "Utils" )
+Include.File( "Utilities/Routines" )
+Include.File( "Utilities/Utils" )
 
 --- Core Classes
-Include.File( "Base" )
-Include.File( "Object" )
-Include.File( "Identifiable" )
-Include.File( "Positionable" )
-Include.File( "Controllable" )
-Include.File( "Scheduler" )
-Include.File( "Event" )
-Include.File( "Menu" )
-Include.File( "Group" )
-Include.File( "Unit" )
-Include.File( "Zone" )
-Include.File( "Client" )
-Include.File( "Static" )
-Include.File( "Airbase" )
-Include.File( "Database" )
-Include.File( "Set" )
-Include.File( "Point" )
-Include.File( "Scoring" )
+Include.File( "Core/Base" )
+Include.File( "Core/Scheduler" )
+Include.File( "Core/Event" )
+Include.File( "Core/Menu" )
+Include.File( "Core/Zone" )
+Include.File( "Core/Database" )
+Include.File( "Core/Set" )
+Include.File( "Core/Point" )
+Include.File( "Core/Message" )
+Include.File( "Core/StateMachine" )
+
+--- Wrapper Classes
+Include.File( "Wrapper/Object" )
+Include.File( "Wrapper/Identifiable" )
+Include.File( "Wrapper/Positionable" )
+Include.File( "Wrapper/Controllable" )
+Include.File( "Wrapper/Group" )
+Include.File( "Wrapper/Unit" )
+Include.File( "Wrapper/Client" )
+Include.File( "Wrapper/Static" )
+Include.File( "Wrapper/Airbase" )
 
 --- Functional Classes
-Include.File( "Cargo" )
-Include.File( "Message" )
-Include.File( "Mission" )
-Include.File( "CleanUp" )
-Include.File( "Spawn" )
-Include.File( "Movement" )
-Include.File( "Sead" )
-Include.File( "Escort" )
-Include.File( "MissileTrainer" )
-Include.File( "AirbasePolice" )
-Include.File( "Detection" )
+Include.File( "Functional/Scoring" )
+Include.File( "Functional/CleanUp" )
+Include.File( "Functional/Spawn" )
+Include.File( "Functional/Movement" )
+Include.File( "Functional/Sead" )
+Include.File( "Functional/Escort" )
+Include.File( "Functional/MissileTrainer" )
+Include.File( "Functional/AirbasePolice" )
+Include.File( "Functional/Detection" )
+Include.File( "Functional/AIBalancer" )
+
+--- Process Classes
+Include.File( "Fsm/Process" )
+Include.File( "Fsm/Assign" )
+Include.File( "Fsm/Route" )
+Include.File( "Fsm/Process_Smoke" )
+Include.File( "Fsm/Account" )
+Include.File( "Fsm/Process_JTAC" )
+Include.File( "Fsm/Patrol" )
+Include.File( "Fsm/Cargo" )
 
 --- Task Handling Classes
-Include.File( "DetectionManager" )
-
-Include.File( "StateMachine" )
-
-Include.File( "Process" )
-Include.File( "Process_Assign" )
-Include.File( "Process_Route" )
-Include.File( "Process_Smoke" )
-Include.File( "Process_Destroy" )
-Include.File( "Process_JTAC" )
-Include.File( "Process_PatrolZone" )
-
-Include.File( "Task" )
-Include.File( "Task_SEAD" )
-Include.File( "Task_A2G" )
-
---- AI Set Handling Classes
-Include.File( "AIBalancer" )
+Include.File( "Tasking/Mission" )
+Include.File( "Tasking/Task" )
+Include.File( "Tasking/DetectionManager" )
+Include.File( "Tasking/Task_SEAD" )
+Include.File( "Tasking/Task_A2G" )
 
 
 -- The order of the declarations is important here. Don't touch it.

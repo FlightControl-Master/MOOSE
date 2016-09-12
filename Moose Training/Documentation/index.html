@@ -18,8 +18,10 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -51,14 +53,14 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
-					<li><a href="Process_PatrolZone.html">Process_PatrolZone</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
+					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -69,17 +71,13 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
-					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
-					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -89,6 +87,12 @@
 			<td class="name" nowrap="nowrap"><a href="AIBalancer.html">AIBalancer</a></td>
 			<td class="summary">
 <p>This module contains the AIBALANCER class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Account.html">Account</a></td>
+			<td class="summary">
+<p>(SP) (MP) (FSM) Account for (Detect, count and report) DCS events occuring on DCS objects (units).</p>
 </td>
 			</tr>
 			<tr>
@@ -104,6 +108,12 @@
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Assign.html">Assign</a></td>
+			<td class="summary">
+<p>(SP) (MP) (FSM) Accept or reject process for player (task) assignments.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Base.html">Base</a></td>
 			<td class="summary">
 <p>This module contains the BASE class.</p>
@@ -112,7 +122,7 @@
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>This module contains the CARGO classes.</p>
+<p>Management of logical cargo objects, that can be transported from and to transportation carriers.</p>
 </td>
 			</tr>
 			<tr>
@@ -290,6 +300,12 @@
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Patrol.html">Patrol</a></td>
+			<td class="summary">
+<p>(AI) (FSM) Make AI patrol routes or zones.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Point.html">Point</a></td>
 			<td class="summary">
 <p>This module contains the POINT classes.</p>
@@ -308,21 +324,9 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="Process_Destroy.html">Process_Destroy</a></td>
-			<td class="summary">
-
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Process_JTAC.html">Process_JTAC</a></td>
 			<td class="summary">
 
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="Process_PatrolZone.html">Process_PatrolZone</a></td>
-			<td class="summary">
-<p>This module contains the PROCESS_PATROLZONE class.</p>
 </td>
 			</tr>
 			<tr>
@@ -335,6 +339,12 @@
 			<td class="name" nowrap="nowrap"><a href="Process_Smoke.html">Process_Smoke</a></td>
 			<td class="summary">
 
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Route.html">Route</a></td>
+			<td class="summary">
+<p>(SP) (MP) (FSM) Route AI or players to waypoints or zones.</p>
 </td>
 			</tr>
 			<tr>
@@ -394,13 +404,7 @@
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task_A2G.html">Task_A2G</a></td>
 			<td class="summary">
-<p>This module contains the TASK_A2G classes.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="Task_Assign.html">Task_Assign</a></td>
-			<td class="summary">
-<p>This module contains the PROCESS_ASSIGN classes.</p>
+<p>(AI) (SP) (MP) Tasking for Air to Ground Processes.</p>
 </td>
 			</tr>
 			<tr>
@@ -416,12 +420,6 @@
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="Task_Route.html">Task_Route</a></td>
-			<td class="summary">
-
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task_SEAD.html">Task_SEAD</a></td>
 			<td class="summary">
 <p>This module contains the TASK_SEAD classes.</p>
@@ -431,13 +429,6 @@
 			<td class="name" nowrap="nowrap"><a href="Unit.html">Unit</a></td>
 			<td class="summary">
 <p>This module contains the UNIT class.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="Utils.html">Utils</a></td>
-			<td class="summary">
-<p>This module contains derived utilities taken from the MIST framework, 
-which are excellent tools to be reused in an OO environment!.</p>
 </td>
 			</tr>
 			<tr>
@@ -456,12 +447,6 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<td class="name" nowrap="nowrap"><a href="land.html">land</a></td>
 			<td class="summary">
 
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="routines.html">routines</a></td>
-			<td class="summary">
-<p>Various routines</p>
 </td>
 			</tr>
 	</table>

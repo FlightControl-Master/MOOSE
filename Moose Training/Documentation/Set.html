@@ -18,8 +18,10 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
@@ -51,14 +53,14 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
-					<li><a href="Process_PatrolZone.html">Process_PatrolZone</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
+					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -69,17 +71,13 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
-					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
-					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -479,6 +477,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Add">SET_BASE:Add(ObjectName, Object)</a></td>
+		<td class="summary">
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using a given ObjectName as the index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).AddObject">SET_BASE:AddObject(Object)</a></td>
 		<td class="summary">
 <p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using the Object Name as the index.</p>
 </td>
@@ -1559,7 +1563,7 @@ A single name or an array of AIRBASE names.</p>
 </dt>
 <dd>
 	
-<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using the Object Name as the index.</p>
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using a given ObjectName as the index.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1571,6 +1575,32 @@ A single name or an array of AIRBASE names.</p>
 				<li>
 				
 <p><code><em><a href="Base.html##(BASE)">Base#BASE</a> Object </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Base.html##(BASE)">Base#BASE</a>:</em>
+The added BASE Object.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE).AddObject" >
+<strong>SET_BASE:AddObject(Object)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using the Object Name as the index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Object.html##(OBJECT)">Object#OBJECT</a> Object </em></code>: </p>
 
 				</li>
 		</ul>

@@ -1,8 +1,6 @@
 
-local Mission = MISSION:New( "Pickup Cargo", "High", "Test for Cargo Pickup", coalition.side.RED )
-
 local DeliveryUnit = UNIT:FindByName( "Delivery" )
-local Letter = CARGO_PACKAGE:New( Mission, DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
+local Letter = CARGO_PACKAGE:New( DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
 
 local CargoCarrier = UNIT:FindByName( "Carrier" )
 

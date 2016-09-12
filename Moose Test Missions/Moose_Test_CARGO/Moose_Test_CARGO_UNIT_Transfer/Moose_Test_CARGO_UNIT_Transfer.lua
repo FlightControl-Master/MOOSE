@@ -1,8 +1,6 @@
 
-local Mission = MISSION:New( "Transfer Cargo", "High", "Test for Cargo", coalition.side.RED )
-
 local CargoEngineer = UNIT:FindByName( "Engineer" )
-local InfantryCargo = CARGO_UNIT:New( Mission, CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
+local InfantryCargo = CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
 
 local CargoCarrierFrom = UNIT:FindByName( "CarrierFrom" )
 

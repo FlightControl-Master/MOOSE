@@ -75,24 +75,22 @@
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
-					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
-					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Process_PatrolZone</code></h1>
    
-<p>This module contains the PROCESS_PATROLZONE class.</p>
+<p>(AI) Make AI patrol routes or zones.</p>
 
    
 
 <hr/>
 
 <h1>1) <a href="##(PROCESS_PATROLZONE)">#PROCESS_PATROLZONE</a> class, extends <a href="StateMachine.html##(STATEMACHINE)">StateMachine#STATEMACHINE</a></h1>
-<p>The <a href="##(PROCESS_PATROLZONE)">#PROCESS_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a>.
+<p>The <a href="##(PROCESS_PATROLZONE)">#PROCESS_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> <a href="Group.html">Group</a>.
 The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
 a random point is selected as the route point within the 3D space, within the given boundary limits.
 The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
@@ -210,9 +208,7 @@ Use the method <a href="##(PROCESS_PATROLZONE).ManageFuel">PROCESS_PATROLZONE.Ma
 
 <p>Hereby the change log:</p>
 
-<p>2016-08-17: PROCESS_PATROLZONE:New( <strong>PatrolSpawn,</strong> PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces PROCESS_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )</p>
-
-<p>2016-07-01: Initial class and API.</p>
+<p>2016-09-01: Initial class and API.</p>
 
 <hr/>
 

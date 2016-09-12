@@ -1,0 +1,788 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li>Assign</li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process.html">Process</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="StateMachine.html">StateMachine</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Assign</code></h1>
+   
+<p>(SP) (MP) (FSM) Accept or reject process for player (task) assignments.</p>
+
+   
+
+<hr/>
+
+<h1>1) <a href="##(ASSIGN_ACCEPT)">#ASSIGN_ACCEPT</a> class, extends <a href="Process.html##(PROCESS)">Process#PROCESS</a></h1>
+<p>The <a href="##(ASSIGN_ACCEPT)">#ASSIGN_ACCEPT</a> class accepts by default a task for a player. No player intervention is allowed to reject the task.</p>
+
+<h2>1.1) ASSIGN_ACCEPT constructor:</h2>
+
+<ul>
+    <li><a href="##(ASSIGN_ACCEPT).New">ASSIGN_ACCEPT.New</a>(): Creates a new ASSIGN_ACCEPT object.</li>
+</ul>
+
+<h2>1.2) ASSIGN_ACCEPT state machine:</h2>
+<p>The ASSIGN_ACCEPT is a state machine: it manages the different events and states of the Controllable it is controlling.</p>
+
+<h3>1.2.1) ASSIGN_ACCEPT Events:</h3>
+
+<ul>
+    <li><a href="##(ASSIGN_ACCEPT).Start">ASSIGN_ACCEPT.Start</a>( ProcessUnit ):  Start the tasking acceptance process.</li>
+    <li><a href="##(ASSIGN_ACCEPT).Assign">ASSIGN_ACCEPT.Assign</a>( ProcessUnit ):  Assign the task.</li>
+</ul>
+
+<h3>1.2.2) ASSIGN_ACCEPT States:</h3>
+
+<ul>
+    <li><strong>UnAssigned</strong>: The player has not accepted the task.</li>
+    <li><strong>Assigned</strong>: The player has accepted the task.</li>
+</ul>
+
+<h3>1.2.3) ASSIGN_ACCEPT state transition functions:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition functions will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition function returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition functions need to provide a return value, which is specified at the function description.</p></li>
+</ul>
+
+<h2>1.3) Manage the ASSIGN_ACCEPT parameters:</h2>
+<p>The following methods are available to modify the parameters of a ASSIGN_ACCEPT object:</p>
+
+<hr/>
+
+<h1>2) <a href="##(ASSIGN_MENU_ACCEPT)">#ASSIGN<em>MENU</em>ACCEPT</a> class, extends <a href="Process.html##(PROCESS)">Process#PROCESS</a></h1>
+<p>The <a href="##(ASSIGN_MENU_ACCEPT)">#ASSIGN<em>MENU</em>ACCEPT</a> class accepts a task when the player accepts the task through an added menu option.
+This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
+The assignment type also allows to reject the task.</p>
+
+<h2>1.1) ASSIGN<em>MENU</em>ACCEPT constructor:</h2>
+
+<ul>
+    <li><a href="##(ASSIGN_MENU_ACCEPT).New">ASSIGN<em>MENU</em>ACCEPT.New</a>(): Creates a new ASSIGN<em>MENU</em>ACCEPT object.</li>
+</ul>
+
+<h2>1.2) ASSIGN<em>MENU</em>ACCEPT state machine:</h2>
+<p>The ASSIGN<em>MENU</em>ACCEPT is a state machine: it manages the different events and states of the Controllable it is controlling.</p>
+
+<h3>1.2.1) ASSIGN<em>MENU</em>ACCEPT Events:</h3>
+
+<ul>
+    <li><a href="##(ASSIGN_MENU_ACCEPT).Start">ASSIGN<em>MENU</em>ACCEPT.Start</a>( ProcessUnit ):  Start the tasking acceptance process.</li>
+    <li><a href="##(ASSIGN_MENU_ACCEPT).Assign">ASSIGN<em>MENU</em>ACCEPT.Assign</a>( ProcessUnit ):  Assign the task.</li>
+    <li><a href="##(ASSIGN_MENU_ACCEPT).Reject">ASSIGN<em>MENU</em>ACCEPT.Reject</a>( ProcessUnit ):  Reject the task..</li>
+</ul>
+
+<h3>1.2.2) ASSIGN<em>MENU</em>ACCEPT States:</h3>
+
+<ul>
+    <li><strong>UnAssigned</strong>: The player has not accepted the task.</li>
+    <li><strong>Assigned</strong>: The player has accepted the task.</li>
+    <li><strong>Rejected</strong>: The player has rejected the task.</li>
+</ul>
+
+<h3>1.2.3) ASSIGN<em>MENU</em>ACCEPT state transition functions:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition functions will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition function returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition function needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition functions need to provide a return value, which is specified at the function description.</p></li>
+</ul>
+
+<h2>1.3) Manage the ASSIGN<em>MENU</em>ACCEPT parameters:</h2>
+<p>The following methods are available to modify the parameters of a ASSIGN<em>MENU</em>ACCEPT object:</p>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ASSIGN_ACCEPT">ASSIGN_ACCEPT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ASSIGN_MENU_ACCEPT">ASSIGN_MENU_ACCEPT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(ASSIGN_ACCEPT)">Type <code>ASSIGN_ACCEPT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).ClassName">ASSIGN_ACCEPT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).New">ASSIGN_ACCEPT:New(ProcessUnit, TaskBriefing)</a></td>
+		<td class="summary">
+<p>Creates a new task assignment state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).ProcessUnit">ASSIGN_ACCEPT.ProcessUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).TargetZone">ASSIGN_ACCEPT.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).Task">ASSIGN_ACCEPT.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_ACCEPT).TaskBriefing">ASSIGN_ACCEPT.TaskBriefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ASSIGN_MENU_ACCEPT)">Type <code>ASSIGN_MENU_ACCEPT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).ClassName">ASSIGN_MENU_ACCEPT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).Menu">ASSIGN_MENU_ACCEPT.Menu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).MenuAcceptTask">ASSIGN_MENU_ACCEPT.MenuAcceptTask</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).MenuAssign">ASSIGN_MENU_ACCEPT:MenuAssign()</a></td>
+		<td class="summary">
+<p>Menu function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).MenuReject">ASSIGN_MENU_ACCEPT:MenuReject()</a></td>
+		<td class="summary">
+<p>Menu function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).MenuRejectTask">ASSIGN_MENU_ACCEPT.MenuRejectTask</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).New">ASSIGN_MENU_ACCEPT:New(ProcessUnit, TaskBriefing, TaskName)</a></td>
+		<td class="summary">
+<p>Creates a new task assignment state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).ProcessUnit">ASSIGN_MENU_ACCEPT.ProcessUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).TargetZone">ASSIGN_MENU_ACCEPT.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).Task">ASSIGN_MENU_ACCEPT.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).TaskBriefing">ASSIGN_MENU_ACCEPT.TaskBriefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).TaskName">ASSIGN_MENU_ACCEPT.TaskName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).onafterAssign">ASSIGN_MENU_ACCEPT:onafterAssign(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).onafterReject">ASSIGN_MENU_ACCEPT:onafterReject(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ASSIGN_MENU_ACCEPT).onafterStart">ASSIGN_MENU_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ASSIGN_ACCEPT)">#ASSIGN_ACCEPT</a></em>
+<a id="ASSIGN_ACCEPT" >
+<strong>ASSIGN_ACCEPT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ASSIGN_MENU_ACCEPT)">#ASSIGN_MENU_ACCEPT</a></em>
+<a id="ASSIGN_MENU_ACCEPT" >
+<strong>ASSIGN_MENU_ACCEPT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Assign)" >Type <code>Assign</code></a></h2>
+	
+			<h2><a id="#(ASSIGN_ACCEPT)" >Type <code>ASSIGN_ACCEPT</code></a></h2>
+				
+<p>ASSIGN_ACCEPT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ASSIGN_ACCEPT).ClassName" >
+<strong>ASSIGN_ACCEPT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_ACCEPT).New" >
+<strong>ASSIGN_ACCEPT:New(ProcessUnit, TaskBriefing)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new task assignment state machine.</p>
+
+	
+<p>The process will accept the task by default, no player intervention accepted.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ASSIGN_ACCEPT)">#ASSIGN_ACCEPT</a>:</em>
+The task acceptance process.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+<a id="#(ASSIGN_ACCEPT).ProcessUnit" >
+<strong>ASSIGN_ACCEPT.ProcessUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></em>
+<a id="#(ASSIGN_ACCEPT).TargetZone" >
+<strong>ASSIGN_ACCEPT.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></em>
+<a id="#(ASSIGN_ACCEPT).Task" >
+<strong>ASSIGN_ACCEPT.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_ACCEPT).TaskBriefing" >
+<strong>ASSIGN_ACCEPT.TaskBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(ASSIGN_MENU_ACCEPT)" >Type <code>ASSIGN_MENU_ACCEPT</code></a></h2>
+				
+<p>ASSIGN<em>MENU</em>ACCEPT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ASSIGN_MENU_ACCEPT).ClassName" >
+<strong>ASSIGN_MENU_ACCEPT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_MENU_ACCEPT).Menu" >
+<strong>ASSIGN_MENU_ACCEPT.Menu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_MENU_ACCEPT).MenuAcceptTask" >
+<strong>ASSIGN_MENU_ACCEPT.MenuAcceptTask</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).MenuAssign" >
+<strong>ASSIGN_MENU_ACCEPT:MenuAssign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu function.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).MenuReject" >
+<strong>ASSIGN_MENU_ACCEPT:MenuReject()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu function.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_MENU_ACCEPT).MenuRejectTask" >
+<strong>ASSIGN_MENU_ACCEPT.MenuRejectTask</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).New" >
+<strong>ASSIGN_MENU_ACCEPT:New(ProcessUnit, TaskBriefing, TaskName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new task assignment state machine.</p>
+
+	
+<p>The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ASSIGN_MENU_ACCEPT)">#ASSIGN<em>MENU</em>ACCEPT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+<a id="#(ASSIGN_MENU_ACCEPT).ProcessUnit" >
+<strong>ASSIGN_MENU_ACCEPT.ProcessUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></em>
+<a id="#(ASSIGN_MENU_ACCEPT).TargetZone" >
+<strong>ASSIGN_MENU_ACCEPT.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></em>
+<a id="#(ASSIGN_MENU_ACCEPT).Task" >
+<strong>ASSIGN_MENU_ACCEPT.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_MENU_ACCEPT).TaskBriefing" >
+<strong>ASSIGN_MENU_ACCEPT.TaskBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ASSIGN_MENU_ACCEPT).TaskName" >
+<strong>ASSIGN_MENU_ACCEPT.TaskName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).onafterAssign" >
+<strong>ASSIGN_MENU_ACCEPT:onafterAssign(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).onafterReject" >
+<strong>ASSIGN_MENU_ACCEPT:onafterReject(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ASSIGN_MENU_ACCEPT).onafterStart" >
+<strong>ASSIGN_MENU_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>
