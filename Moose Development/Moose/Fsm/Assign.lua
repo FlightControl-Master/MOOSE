@@ -207,9 +207,10 @@ do -- ASSIGN_MENU_ACCEPT
     MESSAGE:New( self.TaskBriefing .. "\nAccess the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", 30, "Task Assignment" ):ToGroup( ProcessUnit:GetGroup() )
    
     local ProcessGroup = ProcessUnit:GetGroup() 
+    
     self.Menu = MENU_GROUP:New( ProcessGroup, "Task " .. self.TaskName .. " acceptance" )
-    self.MenuAcceptTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Accept task " .. self.MenuText, self.Menu, self.MenuAssign, self )
-    self.MenuRejectTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Reject task " .. self.MenuText, self.Menu, self.MenuReject, self )
+    self.MenuAcceptTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Accept task " .. self.TaskName, self.Menu, self.MenuAssign, self )
+    self.MenuRejectTask = MENU_GROUP_COMMAND:New( ProcessGroup, "Reject task " .. self.TaskName, self.Menu, self.MenuReject, self )
   end
   
   --- Menu function.

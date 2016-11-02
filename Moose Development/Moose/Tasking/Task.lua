@@ -414,11 +414,12 @@ function TASK_BASE:AssignProcess( ProcessUnit, ProcessName )
   local ProcessUnitName = ProcessUnit:GetName()
   
   -- Create the Process instance base on the ProcessClasses collection assigned to the Task
-  local ProcessClass, ProcessArguments 
-  ProcessClass, ProcessArguments = self:GetProcessClass( ProcessName )
+  local ProcessTemplate, ProcessArguments 
+  ProcessTemplate = self:GetProcessTemplate( ProcessName )
   
-  local Process = ProcessClass:New( unpack( ProcessArguments ) ) -- Process#PROCESS
-  Process:SetControllable( ProcessUnit )
+  self:E( "Deepcopy" )
+  local Process = UTILS.DeepCopy( ProcessTemplate ) -- Process#PROCESS
+  Process:Assign( ProcessUnit )
   
   self.Processes = self.Processes or {}
   self.Processes[ProcessUnitName] = self.Processes[ProcessUnitName] or {}
@@ -429,33 +430,28 @@ function TASK_BASE:AssignProcess( ProcessUnit, ProcessName )
 end
 
 
---- Get the default or currently assigned @{Process} class with key ProcessName.
+--- Get the default or currently assigned @{Process} template with key ProcessName.
 -- @param #TASK_BASE self
 -- @param #string ProcessName
 -- @return Process#PROCESS
--- @return #table
-function TASK_BASE:GetProcessClass( ProcessName )
+function TASK_BASE:GetProcessTemplate( ProcessName )
 
-  local ProcessClass = self.ProcessClasses[ProcessName].Class
-  local ProcessArguments = self.ProcessClasses[ProcessName].Arguments
+  local ProcessTemplate = self.ProcessClasses[ProcessName]
   
-  return ProcessClass, ProcessArguments
+  return ProcessTemplate
 end
 
 
---- Set the Process default class with key ProcessName providing the ProcessClass and the constructor initialization parameters when it is assigned to a Unit by the task.
+--- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
 -- @param #TASK_BASE self
 -- @param #string ProcessName
--- @param Process#PROCESS ProcessClass
--- @param #table ... The parameters for the New() constructor of the ProcessClass, when the Task is assigning a new Process to the Unit.
+-- @param Process#PROCESS ProcessTemplate
 -- @return Process#PROCESS
-function TASK_BASE:SetProcessClass( ProcessName, ProcessClass, ... )
+function TASK_BASE:SetProcessTemplate( ProcessName, ProcessTemplate )
 
-  self.ProcessClasses[ProcessName] = self.ProcessClasses[ProcessName] or {}
-  self.ProcessClasses[ProcessName].Class = ProcessClass
-  self.ProcessClasses[ProcessName].Arguments = ...
+  self.ProcessClasses[ProcessName] = ProcessTemplate
   
-  return ProcessClass
+  return ProcessTemplate
 end
 
 

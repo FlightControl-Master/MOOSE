@@ -45,14 +45,9 @@ do -- TASK_SEAD
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     
-    -- ASSIGN_ACCEPT:New(TaskBriefing)
-    self:SetProcessClass( "ASSIGN", ASSIGN_ACCEPT, self.TaskBriefing )
-    
-    -- ROUTE_ZONE:New(TargetZone)
-    self:SetProcessClass( "ROUTE", ROUTE_ZONE, self.TargetZone )
-    
-    -- ACCOUNT_DEADS:New(TargetSetUnit,TaskName)
-    self:SetProcessClass( "ACCOUNT", ACCOUNT_DEADS, self.TargetSetUnit, "SEAD" )
+    self:SetProcessTemplate( "ASSIGN", ASSIGN_ACCEPT:New( self.TaskBriefing ) )
+    self:SetProcessTemplate( "ROUTE", ROUTE_ZONE:New( self.TargetZone ) )
+    self:SetProcessTemplate( "ACCOUNT", ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ) )
     
     -- SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone )
     --self:SetProcessClass( "SMOKE", SMOKE_TARGETS_ZONE, self.TargetSetUnit, self.TargetZone )

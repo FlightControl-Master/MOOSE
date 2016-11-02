@@ -16,17 +16,32 @@ PROCESS = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #PROCESS self
 -- @param #string ProcessName
--- @param Task#TASK_BASE Task
 -- @param Unit#UNIT ProcessUnit
 -- @return #PROCESS self
-function PROCESS:New( FSMT, ProcessUnit, ProcessName )
+function PROCESS:New( FSMT, ProcessName, ProcessUnit )
   local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT, ProcessUnit ) )
   self:F()
 
-  self.ProcessGroup = ProcessUnit:GetGroup()
+  if ProcessUnit then
+    self.ProcessGroup = ProcessUnit:GetGroup()
+  end
+  
   --self.MissionMenu = Task.Mission:GetMissionMenu( self.ProcessGroup )
   self.ProcessName = ProcessName
   
+  return self
+end
+
+--- Assign the process to a @{Unit} and activate the process.
+-- @param #PROCESS self
+-- @param Unit#UNIT ProcessUnit
+-- @return #PROCESS self
+function PROCESS:Assign( ProcessUnit )
+
+  self:SetControllable( ProcessUnit )
+  self.ProcessGroup = ProcessUnit:GetGroup()
+  --self:Activate()
+
   return self
 end
 
