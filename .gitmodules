@@ -1,0 +1,4 @@
+[submodule "Moose Development/Dcs"]
+	path = Moose Development/Dcs
+	url = https://github.com/birgersp/dcs-sse-luadoc.git
+	branch = master
