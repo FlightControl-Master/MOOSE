@@ -968,7 +968,7 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
   return DCSTask
 end
 
--- EN-ROUTE TASKS FOR AIRBORNE CONTROLLABLES
+-- EN-PROCESS_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
 
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self

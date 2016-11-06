@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#ASSIGN} FSM class, extends @{Process#PROCESS}
+-- # @{#PROCESS_ASSIGN} FSM class, extends @{Process#PROCESS}
 -- 
--- ## ASSIGN state machine:
+-- ## PROCESS_ASSIGN state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### ASSIGN **Events**:
+-- ### PROCESS_ASSIGN **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -19,7 +19,7 @@
 --   * **Assign**:  Assign the task.
 --   * **Reject**:  Reject the task..
 -- 
--- ### ASSIGN **Event methods**:
+-- ### PROCESS_ASSIGN **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -27,7 +27,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### ASSIGN **States**:
+-- ### PROCESS_ASSIGN **States**:
 -- 
 --   * **UnAssigned**: The player has not accepted the task.
 --   * **Assigned (*)**: The player has accepted the task.
@@ -37,7 +37,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### ASSIGN state transition methods:
+-- ### PROCESS_ASSIGN state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -54,49 +54,49 @@
 -- 
 -- ===
 -- 
--- # 1) @{#ASSIGN_ACCEPT} class, extends @{Assign#ASSIGN}
+-- # 1) @{#PROCESS_ASSIGN_ACCEPT} class, extends @{Assign#PROCESS_ASSIGN}
 -- 
--- The ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
+-- The PROCESS_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 -- 
--- ## 1.1) ASSIGN_ACCEPT constructor:
+-- ## 1.1) PROCESS_ASSIGN_ACCEPT constructor:
 --   
---   * @{#ASSIGN_ACCEPT.New}(): Creates a new ASSIGN_ACCEPT object.
+--   * @{#PROCESS_ASSIGN_ACCEPT.New}(): Creates a new PROCESS_ASSIGN_ACCEPT object.
 -- 
 -- ===
 -- 
--- # 2) @{#ASSIGN_MENU_ACCEPT} class, extends @{Assign#ASSIGN}
+-- # 2) @{#PROCESS_ASSIGN_MENU_ACCEPT} class, extends @{Assign#PROCESS_ASSIGN}
 -- 
--- The ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
+-- The PROCESS_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
 -- The assignment type also allows to reject the task.
 -- 
--- ## 2.1) ASSIGN_MENU_ACCEPT constructor:
+-- ## 2.1) PROCESS_ASSIGN_MENU_ACCEPT constructor:
 -- -----------------------------------------
 --   
---   * @{#ASSIGN_MENU_ACCEPT.New}(): Creates a new ASSIGN_MENU_ACCEPT object.
+--   * @{#PROCESS_ASSIGN_MENU_ACCEPT.New}(): Creates a new PROCESS_ASSIGN_MENU_ACCEPT object.
 -- 
 -- ===
 -- 
 -- @module Assign
 
 
-do -- ASSIGN
+do -- PROCESS_ASSIGN
 
-  --- ASSIGN class
-  -- @type ASSIGN
+  --- PROCESS_ASSIGN class
+  -- @type PROCESS_ASSIGN
   -- @field Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Process#PROCESS
-  ASSIGN = { 
-    ClassName = "ASSIGN",
+  -- @extends Fsm.Process#PROCESS
+  PROCESS_ASSIGN = { 
+    ClassName = "PROCESS_ASSIGN",
   }
   
   
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
-  -- @param #ASSIGN self
-  -- @return #ASSIGN The task acceptance process.
-  function ASSIGN:New()
+  -- @param #PROCESS_ASSIGN self
+  -- @return #PROCESS_ASSIGN The task acceptance process.
+  function PROCESS_ASSIGN:New()
 
     local FSMT = {
       initial = 'UnAssigned',
@@ -112,36 +112,36 @@ do -- ASSIGN
     }
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "ASSIGN" ) ) -- #ASSIGN
+    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_ASSIGN" ) ) -- #PROCESS_ASSIGN
     
     return self
   end
   
-end -- ASSIGN
+end -- PROCESS_ASSIGN
 
 
 
-do -- ASSIGN_ACCEPT
+do -- PROCESS_ASSIGN_ACCEPT
 
-  --- ASSIGN_ACCEPT class
-  -- @type ASSIGN_ACCEPT
+  --- PROCESS_ASSIGN_ACCEPT class
+  -- @type PROCESS_ASSIGN_ACCEPT
   -- @field Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
   -- @extends Process#PROCESS
-  ASSIGN_ACCEPT = { 
-    ClassName = "ASSIGN_ACCEPT",
+  PROCESS_ASSIGN_ACCEPT = { 
+    ClassName = "PROCESS_ASSIGN_ACCEPT",
   }
   
   
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
-  -- @param #ASSIGN_ACCEPT self
+  -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
-  -- @return #ASSIGN_ACCEPT The task acceptance process.
-  function ASSIGN_ACCEPT:New( TaskBriefing )
+  -- @return #PROCESS_ASSIGN_ACCEPT The task acceptance process.
+  function PROCESS_ASSIGN_ACCEPT:New( TaskBriefing )
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, ASSIGN:New() ) -- #ASSIGN_ACCEPT
+    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_ACCEPT
     
     self.TaskBriefing = TaskBriefing
     
@@ -150,12 +150,12 @@ do -- ASSIGN_ACCEPT
 
 
   --- StateMachine callback function
-  -- @param #ASSIGN_ACCEPT self
+  -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
+  function PROCESS_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
     MESSAGE:New( self.TaskBriefing, 30, "Task Assignment" ):ToGroup( ProcessUnit:GetGroup() )
@@ -163,31 +163,31 @@ do -- ASSIGN_ACCEPT
     self:__Assign( 1 )   
   end
   
-end -- ASSIGN_ACCEPT
+end -- PROCESS_ASSIGN_ACCEPT
 
 
-do -- ASSIGN_MENU_ACCEPT
+do -- PROCESS_ASSIGN_MENU_ACCEPT
 
-  --- ASSIGN_MENU_ACCEPT class
-  -- @type ASSIGN_MENU_ACCEPT
+  --- PROCESS_ASSIGN_MENU_ACCEPT class
+  -- @type PROCESS_ASSIGN_MENU_ACCEPT
   -- @field Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Task2#TASK2
-  ASSIGN_MENU_ACCEPT = { 
-    ClassName = "ASSIGN_MENU_ACCEPT",
+  -- @extends #PROCESS_ASSIGN
+  PROCESS_ASSIGN_MENU_ACCEPT = { 
+    ClassName = "PROCESS_ASSIGN_MENU_ACCEPT",
   }
   
   
   --- Creates a new task assignment state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param #string TaskName
   -- @param #string TaskBriefing
-  -- @return #ASSIGN_MENU_ACCEPT self
-  function ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
+  -- @return #PROCESS_ASSIGN_MENU_ACCEPT self
+  function PROCESS_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, ASSIGN:New() ) -- #ASSIGN_MENU_ACCEPT
+    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_MENU_ACCEPT
     
     self.TaskBriefing = TaskBriefing
     self.TaskName = TaskName
@@ -196,12 +196,12 @@ do -- ASSIGN_MENU_ACCEPT
   end
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
+  function PROCESS_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
     MESSAGE:New( self.TaskBriefing .. "\nAccess the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", 30, "Task Assignment" ):ToGroup( ProcessUnit:GetGroup() )
@@ -214,40 +214,40 @@ do -- ASSIGN_MENU_ACCEPT
   end
   
   --- Menu function.
-  -- @param #ASSIGN_MENU_ACCEPT self
-  function ASSIGN_MENU_ACCEPT:MenuAssign()
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
+  function PROCESS_ASSIGN_MENU_ACCEPT:MenuAssign()
     self:E( )
   
     self:__Assign( 1 )
   end
   
   --- Menu function.
-  -- @param #ASSIGN_MENU_ACCEPT self
-  function ASSIGN_MENU_ACCEPT:MenuReject()
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
+  function PROCESS_ASSIGN_MENU_ACCEPT:MenuReject()
     self:E( )
   
     self:__Reject( 1 )
   end
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, Event, From, To )
+  function PROCESS_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit.UnitNameEvent, From, To } )
   
     self.Menu:Remove()
   end
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, Event, From, To )
+  function PROCESS_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit.UnitName, Event, From, To } )
   
     self.Menu:Remove()
@@ -256,4 +256,4 @@ do -- ASSIGN_MENU_ACCEPT
     ProcessUnit:Destroy()
   end
 
-end -- ASSIGN_MENU_ACCEPT
+end -- PROCESS_ASSIGN_MENU_ACCEPT

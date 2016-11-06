@@ -915,7 +915,7 @@ end
   _TransportStage: Defines the different stages of which of transport missions can be in. This table is internal and is used to control the sequence of messages, actions and flow.
   
   - _TransportStage.START
-  - _TransportStage.ROUTE
+  - _TransportStage.PROCESS_ROUTE
   - _TransportStage.LAND
   - _TransportStage.EXECUTE
   - _TransportStage.DONE
@@ -924,7 +924,7 @@ end
 _TransportStage = { 
   HOLD = "HOLD",
   START = "START", 
-  ROUTE = "ROUTE", 
+  PROCESS_ROUTE = "PROCESS_ROUTE", 
   LANDING = "LANDING",
   LANDED = "LANDED",
   EXECUTING = "EXECUTING",
@@ -937,7 +937,7 @@ _TransportStage = {
 _TransportStageMsgTime = { 
   HOLD = 10,
   START = 60, 
-  ROUTE = 5, 
+  PROCESS_ROUTE = 5, 
   LANDING = 10,
   LANDED = 30,
   EXECUTING = 30,
@@ -950,7 +950,7 @@ _TransportStageMsgTime = {
 _TransportStageTime = { 
   HOLD = 10,
   START = 5, 
-  ROUTE = 5, 
+  PROCESS_ROUTE = 5, 
   LANDING = 1,
   LANDED = 1,
   EXECUTING = 5,

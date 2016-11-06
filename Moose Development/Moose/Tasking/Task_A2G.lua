@@ -23,7 +23,7 @@ do -- TASK_A2G
 
   --- The TASK_A2G class
   -- @type TASK_A2G
-  -- @extends Task#TASK_BASE
+  -- @extends Tasking.Task#TASK_BASE
   TASK_A2G = {
     ClassName = "TASK_A2G",
   }
@@ -44,6 +44,13 @@ do -- TASK_A2G
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     self.FACUnit = FACUnit
+
+    self:SetProcessTemplate( "PROCESS_ASSIGN", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ) )
+    self:SetProcessTemplate( "PROCESS_ROUTE", PROCESS_ROUTE_ZONE:New( self.TargetZone ) )
+    self:SetProcessTemplate( "PROCESS_ACCOUNT", PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "A2G" ) )
+    
+    local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS_ZONE:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
+    local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
 
     _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
     _EVENTDISPATCHER:OnDead( self._EventDead, self )
@@ -71,11 +78,11 @@ do -- TASK_A2G
   function TASK_A2G:AssignToUnit( TaskUnit )
     self:F( TaskUnit:GetName() )
   
-    local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
-    local ProcessRoute = self:AddProcess( TaskUnit, PROCESS_ROUTE:New( self, TaskUnit, self.TargetZone ) )
-    local ProcessDestroy = self:AddProcess( TaskUnit, PROCESS_DESTROY:New( self, self.TaskType, TaskUnit, self.TargetSetUnit ) )
-    local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
-    local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
+    local ProcessAssign = self:AssignProcess( TaskUnit, "PROCESS_ASSIGN" )
+    local ProcessRoute = self:AssignProcess( TaskUnit, "PROCESS_ROUTE" )
+    local ProcessDestroy = self:AssignProcess( TaskUnit, "PROCESS_ACCOUNT" )
+    --local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS_ZONE:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
+    --local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
     
     local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( self, TaskUnit, {
         initial = 'None',

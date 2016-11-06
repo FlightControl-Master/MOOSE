@@ -2,9 +2,9 @@
 
 --- The PROCESS class
 -- @type PROCESS
+-- @field Task#TASK_BASE ProcessTask
 -- @field Group#GROUP ProcessGroup
 -- @field Menu#MENU_GROUP MissionMenu
--- @field Task#TASK_BASE Task
 -- @field #string ProcessName
 -- @extends StateMachine#STATEMACHINE_CONTROLLABLE
 PROCESS = {
@@ -16,8 +16,8 @@ PROCESS = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #PROCESS self
 -- @param #string ProcessName
--- @param Unit#UNIT ProcessUnit
--- @return #PROCESS self
+-- @param Unit#UNIT ProcessUnit (Optional) If provided, it defines the UNIT for which the process is running.
+-- @return #PROCESS
 function PROCESS:New( FSMT, ProcessName, ProcessUnit )
   local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT, ProcessUnit ) )
   self:F()
@@ -32,13 +32,50 @@ function PROCESS:New( FSMT, ProcessName, ProcessUnit )
   return self
 end
 
+--- Gets the Group of the process.
+-- @param #PROCESS self
+-- @return Group#GROUP
+function PROCESS:GetGroup()
+
+  return self.ProcessGroup
+end
+
+--- Sets the task of the process.
+-- @param #PROCESS self
+-- @param Tasking.Task#TASK_BASE ProcessTask
+-- @return #PROCESS
+function PROCESS:SetTask( ProcessTask )
+
+  self.ProcessTask = ProcessTask
+
+  return self
+end
+
+--- Gets the task of the process.
+-- @param #PROCESS self
+-- @return Task#TASK_BASE
+function PROCESS:GetTask()
+
+  return self.ProcessTask
+end
+
+--- Gets the mission of the process.
+-- @param #PROCESS self
+-- @return Mission#MISSION
+function PROCESS:GetMission()
+
+  return self.ProcessTask.Mission
+end
+
 --- Assign the process to a @{Unit} and activate the process.
 -- @param #PROCESS self
 -- @param Unit#UNIT ProcessUnit
 -- @return #PROCESS self
-function PROCESS:Assign( ProcessUnit )
+function PROCESS:Assign( ProcessTask, ProcessUnit )
 
   self:SetControllable( ProcessUnit )
+  self:SetTask( ProcessTask )
+  
   self.ProcessGroup = ProcessUnit:GetGroup()
   --self:Activate()
 

@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#ACCOUNT} FSM class, extends @{Process#PROCESS}
+-- # @{#PROCESS_ACCOUNT} FSM class, extends @{Process#PROCESS}
 -- 
--- ## ACCOUNT state machine:
+-- ## PROCESS_ACCOUNT state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### ACCOUNT **Events**:
+-- ### PROCESS_ACCOUNT **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -21,7 +21,7 @@
 --   * **More**:  There are more DCS events that need to be accounted for. The process will go back into the Report state.
 --   * **NoMore**:  There are no more DCS events that need to be accounted for. The process will go into the Success state.
 -- 
--- ### ACCOUNT **Event methods**:
+-- ### PROCESS_ACCOUNT **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -29,7 +29,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### ACCOUNT **States**:
+-- ### PROCESS_ACCOUNT **States**:
 -- 
 --   * **Assigned**: The player is assigned to the task. This is the initialization state for the process.
 --   * **Waiting**: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.
@@ -40,7 +40,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### ACCOUNT state transition methods:
+-- ### PROCESS_ACCOUNT state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -55,38 +55,38 @@
 --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 --
--- # 1) @{#ACCOUNT_DEADS} FSM class, extends @{Account#ACCOUNT}
+-- # 1) @{#PROCESS_ACCOUNT_DEADS} FSM class, extends @{Account#PROCESS_ACCOUNT}
 -- 
--- The ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
+-- The PROCESS_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
 -- The process is given a @{Set} of units that will be tracked upon successful destruction.
 -- The process will end after each target has been successfully destroyed.
 -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
 -- 
 -- 
--- ## ACCOUNT_DEADS constructor:
+-- ## PROCESS_ACCOUNT_DEADS constructor:
 -- 
---   * @{#ACCOUNT_DEADS.New}(): Creates a new ACCOUNT_DEADS object.
+--   * @{#PROCESS_ACCOUNT_DEADS.New}(): Creates a new PROCESS_ACCOUNT_DEADS object.
 -- 
 -- === 
 -- 
 -- @module Account
 
 
-do -- ACCOUNT
+do -- PROCESS_ACCOUNT
   
-  --- ACCOUNT class
-  -- @type ACCOUNT
+  --- PROCESS_ACCOUNT class
+  -- @type PROCESS_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Process#PROCESS
-  ACCOUNT = { 
-    ClassName = "ACCOUNT",
+  -- @extends Fsm.Process#PROCESS
+  PROCESS_ACCOUNT = { 
+    ClassName = "PROCESS_ACCOUNT",
     TargetSetUnit = nil,
   }
   
   --- Creates a new DESTROY process.
-  -- @param #ACCOUNT self
-  -- @return #ACCOUNT
-  function ACCOUNT:New()
+  -- @param #PROCESS_ACCOUNT self
+  -- @return #PROCESS_ACCOUNT
+  function PROCESS_ACCOUNT:New()
   
     local FSMT = {
       initial = 'Assigned',
@@ -103,7 +103,7 @@ do -- ACCOUNT
     }
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "ACCOUNT" ) ) -- #ACCOUNT
+    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_ACCOUNT" ) ) -- #PROCESS_ACCOUNT
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
@@ -117,23 +117,23 @@ do -- ACCOUNT
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #ACCOUNT self
+  -- @param #PROCESS_ACCOUNT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
+  function PROCESS_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
   
     self:__Wait( 1 )
   end
   
     --- StateMachine callback function
-    -- @param #ACCOUNT self
+    -- @param #PROCESS_ACCOUNT self
     -- @param Controllable#CONTROLLABLE ProcessUnit
     -- @param #string Event
     -- @param #string From
     -- @param #string To
-  function ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
+  function PROCESS_ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
   
     if self.DisplayCount >= self.DisplayInterval then
       self:Report()
@@ -146,39 +146,39 @@ do -- ACCOUNT
   end
   
   --- StateMachine callback function
-  -- @param #ACCOUNT self
+  -- @param #PROCESS_ACCOUNT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
+  function PROCESS_ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
   
     self:__NoMore( 1 )
   end
   
-end -- ACCOUNT
+end -- PROCESS_ACCOUNT
 
-do -- ACCOUNT_DEADS
+do -- PROCESS_ACCOUNT_DEADS
 
-  --- ACCOUNT_DEADS class
-  -- @type ACCOUNT_DEADS
+  --- PROCESS_ACCOUNT_DEADS class
+  -- @type PROCESS_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Process#PROCESS
-  ACCOUNT_DEADS = { 
-    ClassName = "ACCOUNT_DEADS",
+  PROCESS_ACCOUNT_DEADS = { 
+    ClassName = "PROCESS_ACCOUNT_DEADS",
     TargetSetUnit = nil,
   }
   
   
   --- Creates a new DESTROY process.
-  -- @param #ACCOUNT_DEADS self
+  -- @param #PROCESS_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  -- @return #ACCOUNT_DEADS self
-  function ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  -- @return #PROCESS_ACCOUNT_DEADS self
+  function PROCESS_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, ACCOUNT:New() ) -- #ACCOUNT_DEADS
+    local self = BASE:Inherit( self, PROCESS_ACCOUNT:New() ) -- #PROCESS_ACCOUNT_DEADS
     
     self.TargetSetUnit = TargetSetUnit
     self.TaskName = TaskName
@@ -191,12 +191,12 @@ do -- ACCOUNT_DEADS
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
+  function PROCESS_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
   
     local TaskGroup = ProcessUnit:GetGroup()
     MESSAGE:New( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 5, "HQ" ):ToGroup( TaskGroup )
@@ -204,12 +204,12 @@ do -- ACCOUNT_DEADS
   
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, Event )
+  function PROCESS_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, Event )
   
     self.TargetSetUnit:Flush()
     
@@ -221,12 +221,12 @@ do -- ACCOUNT_DEADS
   end
   
   --- StateMachine callback function
-  -- @param #ASSIGN_MENU_ACCEPT self
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, Event )
+  function PROCESS_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, Event )
   
     if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
@@ -237,13 +237,13 @@ do -- ACCOUNT_DEADS
   
   --- DCS Events
   
-  --- @param #ACCOUNT_DEADS self
+  --- @param #PROCESS_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA Event
-  function ACCOUNT_DEADS:EventDead( Event )
+  function PROCESS_ACCOUNT_DEADS:EventDead( Event )
   
     if Event.IniDCSUnit then
       self:__Event( 1 )
     end
   end
 
-end -- ACCOUNT DEADS
+end -- PROCESS_ACCOUNT DEADS

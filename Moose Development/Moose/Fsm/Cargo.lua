@@ -20,15 +20,15 @@
 -- The CARGO_BASE is a state machine: it manages the different events and states of the cargo.
 -- All derived classes from CARGO_BASE follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
 -- 
--- ## 1.2.1) CARBO_BASE Events:
+-- ## 1.2.1) CARGO_BASE Events:
 -- 
---   * @{#CARBO_BASE.Board}( ToCarrier ):  Boards the cargo to a carrier.
---   * @{#CARBO_BASE.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
---   * @{#CARBO_BASE.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
---   * @{#CARBO_BASE.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
---   * @{#CARBO_BASE.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
+--   * @{#CARGO_BASE.Board}( ToCarrier ):  Boards the cargo to a carrier.
+--   * @{#CARGO_BASE.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
+--   * @{#CARGO_BASE.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
+--   * @{#CARGO_BASE.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
+--   * @{#CARGO_BASE.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
 -- 
--- ## 1.2.2) CARBO_BASE States:
+-- ## 1.2.2) CARGO_BASE States:
 -- 
 --   * **UnLoaded**: The cargo is unloaded from a carrier.
 --   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
@@ -37,7 +37,7 @@
 --   * **Dead**: The cargo is dead ...
 --   * **End**: The process has come to an end.
 --   
--- ## 1.2.3) CARBO_BASE state transition methods:
+-- ## 1.2.3) CARGO_BASE state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -72,14 +72,14 @@
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#CARBO_BASE] Board
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] Board
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#CARBO_BASE] __Board
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] __Board
+-- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
@@ -88,14 +88,14 @@
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#CARBO_BASE] UnBoard
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] UnBoard
+-- @param #CARGO_BASE self
 -- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#CARBO_BASE] __UnBoard
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] __UnBoard
+-- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
@@ -104,14 +104,14 @@
 
 --- Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#CARBO_BASE] Load
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] Load
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 --- Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#CARBO_BASE] __Load
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] __Load
+-- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
@@ -120,14 +120,14 @@
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#CARBO_BASE] UnLoad
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] UnLoad
+-- @param #CARGO_BASE self
 -- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#CARBO_BASE] __UnLoad
--- @param #CARBO_BASE self
+-- @function [parent=#CARGO_BASE] __UnLoad
+-- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
@@ -135,46 +135,46 @@
 
 -- UnLoaded
 
---- @function [parent=#CARBO_BASE] OnBeforeUnLoaded
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnBeforeUnLoaded
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#CARBO_BASE] OnAfterUnLoaded
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnAfterUnLoaded
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 
 -- Loaded
 
---- @function [parent=#CARBO_BASE] OnBeforeLoaded
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnBeforeLoaded
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#CARBO_BASE] OnAfterLoaded
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnAfterLoaded
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 
 -- Boarding
 
---- @function [parent=#CARBO_BASE] OnBeforeBoarding
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnBeforeBoarding
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#CARBO_BASE] OnAfterBoarding
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnAfterBoarding
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 
 -- UnBoarding
 
---- @function [parent=#CARBO_BASE] OnBeforeUnBoarding
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnBeforeUnBoarding
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#CARBO_BASE] OnAfterUnBoarding
--- @param #CARBO_BASE self
+--- @function [parent=#CARGO_BASE] OnAfterUnBoarding
+-- @param #CARGO_BASE self
 -- @param Controllable#CONTROLLABLE Controllable
 
 
@@ -182,9 +182,9 @@
 
 CARGOS = {}
 
-do -- CARBO_BASE
+do -- CARGO_BASE
 
-  --- @type CARBO_BASE
+  --- @type CARGO_BASE
   -- @extends StateMachine#STATEMACHINE_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
@@ -197,8 +197,8 @@ do -- CARBO_BASE
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
-  CARBO_BASE = {
-    ClassName = "CARBO_BASE",
+  CARGO_BASE = {
+    ClassName = "CARGO_BASE",
     Type = nil,
     Name = nil,
     Weight = nil,
@@ -210,19 +210,19 @@ do -- CARBO_BASE
     Containable = false,
   }
 
---- @type CARBO_BASE.CargoObjects
+--- @type CARGO_BASE.CargoObjects
 -- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
 
 
---- CARBO_BASE Constructor. This class is an abstract class and should not be instantiated.
--- @param #CARBO_BASE self
+--- CARGO_BASE Constructor. This class is an abstract class and should not be instantiated.
+-- @param #CARGO_BASE self
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
 -- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
--- @return #CARBO_BASE
-function CARBO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
+-- @return #CARGO_BASE
+function CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
 
   FSMT = {
     initial = 'UnLoaded',
@@ -238,7 +238,7 @@ function CARBO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
     },
   }
 
-  local self = BASE:Inherit( self, STATEMACHINE_PROCESS:New( FSMT ) ) -- #CARBO_BASE
+  local self = BASE:Inherit( self, STATEMACHINE_PROCESS:New( FSMT ) ) -- #CARGO_BASE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
 
@@ -263,20 +263,20 @@ function CARBO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
 end
 
 
---- Template method to spawn a new representation of the CARBO_BASE in the simulator.
--- @param #CARBO_BASE self
--- @return #CARBO_BASE
-function CARBO_BASE:Spawn( PointVec2 )
+--- Template method to spawn a new representation of the CARGO_BASE in the simulator.
+-- @param #CARGO_BASE self
+-- @return #CARGO_BASE
+function CARGO_BASE:Spawn( PointVec2 )
   self:F()
 
 end
 
 
 --- Check if CargoCarrier is near the Cargo to be Loaded.
--- @param #CARBO_BASE self
+-- @param #CARGO_BASE self
 -- @param Point#POINT_VEC2 PointVec2
 -- @return #boolean
-function CARBO_BASE:IsNear( PointVec2 )
+function CARGO_BASE:IsNear( PointVec2 )
   self:F( { PointVec2 } )
 
   local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
@@ -294,7 +294,7 @@ end
 do -- CARGO_REPRESENTABLE
 
   --- @type CARGO_REPRESENTABLE
-  -- @extends #CARBO_BASE
+  -- @extends #CARGO_BASE
   CARGO_REPRESENTABLE = {
     ClassName = "CARGO_REPRESENTABLE"
   }
@@ -309,7 +309,7 @@ do -- CARGO_REPRESENTABLE
 -- @param #number NearRadius (optional)
 -- @return #CARGO_REPRESENTABLE
 function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARBO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARBO_BASE
+  local self = BASE:Inherit( self, CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_BASE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
   
@@ -338,7 +338,7 @@ function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
   return self  
 end
 
-end -- CARBO_BASE
+end -- CARGO_BASE
 
 do -- CARGO_UNIT
 
@@ -816,7 +816,7 @@ end
 do -- CARGO_GROUP
 
   --- @type CARGO_GROUP
-  -- @extends Cargo#CARBO_BASE
+  -- @extends Cargo#CARGO_BASE
   -- @field Set#SET_BASE CargoSet A set of cargo objects.
   -- @field #string Name A string defining the name of the cargo group. The name is the unique identifier of the cargo.
   CARGO_GROUP = {
@@ -833,7 +833,7 @@ do -- CARGO_GROUP
 -- @param #number NearRadius (optional)
 -- @return #CARGO_GROUP
 function CARGO_GROUP:New( CargoSet, Type, Name, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARBO_BASE:New( Type, Name, 0, ReportRadius, NearRadius ) ) -- #CARGO_GROUP
+  local self = BASE:Inherit( self, CARGO_BASE:New( Type, Name, 0, ReportRadius, NearRadius ) ) -- #CARGO_GROUP
   self:F( { Type, Name, ReportRadius, NearRadius } )
 
   self.CargoSet = CargoSet

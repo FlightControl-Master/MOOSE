@@ -39,15 +39,17 @@ Include.File( "Functional/AirbasePolice" )
 Include.File( "Functional/Detection" )
 Include.File( "Functional/AIBalancer" )
 
---- Process Classes
+--- Fsm Classes
 Include.File( "Fsm/Process" )
-Include.File( "Fsm/Assign" )
-Include.File( "Fsm/Route" )
-Include.File( "Fsm/Process_Smoke" )
-Include.File( "Fsm/Account" )
 Include.File( "Fsm/Process_JTAC" )
 Include.File( "Fsm/Patrol" )
 Include.File( "Fsm/Cargo" )
+
+--- Process Classes
+Include.File( "Process/Assign" )
+Include.File( "Process/Route" )
+Include.File( "Process/Account" )
+Include.File( "Process/Smoke" )
 
 --- Task Handling Classes
 Include.File( "Tasking/Mission" )

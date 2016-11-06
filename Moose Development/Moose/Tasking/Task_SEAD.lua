@@ -25,7 +25,7 @@ do -- TASK_SEAD
   --- The TASK_SEAD class
   -- @type TASK_SEAD
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Task#TASK_BASE
+  -- @extends Tasking.Task#TASK_BASE
   TASK_SEAD = {
     ClassName = "TASK_SEAD",
   }
@@ -45,13 +45,11 @@ do -- TASK_SEAD
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     
-    self:SetProcessTemplate( "ASSIGN", ASSIGN_ACCEPT:New( self.TaskBriefing ) )
-    self:SetProcessTemplate( "ROUTE", ROUTE_ZONE:New( self.TargetZone ) )
-    self:SetProcessTemplate( "ACCOUNT", ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ) )
+    self:SetProcessTemplate( "ASSIGN", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ) )
+    self:SetProcessTemplate( "ROUTE", PROCESS_ROUTE_ZONE:New( self.TargetZone ) )
+    self:SetProcessTemplate( "ACCOUNT", PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ) )
+    self:SetProcessTemplate( "SMOKE", PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     
-    -- SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone )
-    --self:SetProcessClass( "SMOKE", SMOKE_TARGETS_ZONE, self.TargetSetUnit, self.TargetZone )
-
     _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
     _EVENTDISPATCHER:OnDead( self._EventDead, self )
     _EVENTDISPATCHER:OnCrash( self._EventDead, self )
@@ -81,8 +79,8 @@ do -- TASK_SEAD
     
     local ProcessAssign = self:AssignProcess( TaskUnit, "ASSIGN" )
     local ProcessRoute = self:AssignProcess( TaskUnit, "ROUTE" )
-    local ProcessSEAD = self:AssignProcess( TaskUnit, "ACCOUNT" )
-    --local ProcessSmoke = self:AssignProcess( TaskUnit, "SMOKE" )
+    local ProcessAccount = self:AssignProcess( TaskUnit, "ACCOUNT" )
+    local ProcessSmoke = self:AssignProcess( TaskUnit, "SMOKE" )
     
     local FSMT = {
         initial = 'None',
@@ -97,8 +95,8 @@ do -- TASK_SEAD
         subs = {
           Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',         fsm = ProcessAssign,        event = 'Start',      returnevents = { 'Next', 'Reject' } },
           Route = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessRoute,         event = 'Start'       },
-          Sead = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSEAD,          event = 'Start',      returnevents = { 'Next' } },
-          --Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke,         event = 'Start',      }
+          Sead = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessAccount,       event = 'Start',      returnevents = { 'Next' } },
+          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke,         event = 'Start',      }
         }
       }
     

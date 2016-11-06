@@ -55,7 +55,7 @@
 -- @field Mission#MISSION Mission
 -- @field StateMachine#STATEMACHINE Fsm
 -- @field Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 TASK_BASE = {
   ClassName = "TASK_BASE",
   TaskScheduler = nil,
@@ -418,8 +418,9 @@ function TASK_BASE:AssignProcess( ProcessUnit, ProcessName )
   ProcessTemplate = self:GetProcessTemplate( ProcessName )
   
   self:E( "Deepcopy" )
-  local Process = UTILS.DeepCopy( ProcessTemplate ) -- Process#PROCESS
-  Process:Assign( ProcessUnit )
+  -- This statement copies the process template assigned to the task and creates a new process.
+  local Process = UTILS.DeepCopy( ProcessTemplate ) -- Fsm.Process#PROCESS
+  Process:Assign( self, ProcessUnit )
   
   self.Processes = self.Processes or {}
   self.Processes[ProcessUnitName] = self.Processes[ProcessUnitName] or {}
