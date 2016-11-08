@@ -192,6 +192,29 @@ function BASE:Event()
   return _EVENTDISPATCHER
 end
 
+--- Remove all subscribed events
+-- @param #BASE self
+-- @return #BASE
+function BASE:EventRemoveAll()
+
+  _EVENTDISPATCHER:RemoveAll( self )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_DEAD event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnDead( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_DEAD )
+  
+  return self
+end
+
+
+
 
 
 

@@ -251,29 +251,6 @@ function STATEMACHINE:todot(filename)
   dotfile:close()
 end
 
---- STATEMACHINE_PROCESS class
--- @type STATEMACHINE_PROCESS
--- @field Process#PROCESS Process
--- @extends StateMachine#STATEMACHINE
-STATEMACHINE_PROCESS = {
-  ClassName = "STATEMACHINE_PROCESS",
-}
-
---- Creates a new STATEMACHINE_PROCESS object.
--- @param #STATEMACHINE_PROCESS self
--- @return #STATEMACHINE_PROCESS
-function STATEMACHINE_PROCESS:New( FSMT )
-
-  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
-
-  return self
-end
-
-function STATEMACHINE_PROCESS:_call_handler( handler, params )
-  if handler then
-    return handler( self, unpack( params ) )
-  end
-end
 
 --- STATEMACHINE_TASK class
 -- @type STATEMACHINE_TASK
@@ -355,6 +332,24 @@ function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
   if handler then
     return handler( self, self.Controllable, unpack( params ) )
   end
+end
+
+--- STATEMACHINE_PROCESS class
+-- @type STATEMACHINE_PROCESS
+-- @field Process#PROCESS Process
+-- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
+STATEMACHINE_PROCESS = {
+  ClassName = "STATEMACHINE_PROCESS",
+}
+
+--- Creates a new STATEMACHINE_PROCESS object.
+-- @param #STATEMACHINE_PROCESS self
+-- @return #STATEMACHINE_PROCESS
+function STATEMACHINE_PROCESS:New( FSMT )
+
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
+
+  return self
 end
 
 do -- STATEMACHINE_SET

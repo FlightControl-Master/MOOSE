@@ -67,6 +67,15 @@ function PROCESS:GetMission()
   return self.ProcessTask.Mission
 end
 
+function PROCESS:StartEvents()
+
+end
+
+function PROCESS:StopEvents()
+
+  self:EventRemoveAll()
+end
+
 --- Assign the process to a @{Unit} and activate the process.
 -- @param #PROCESS self
 -- @param Unit#UNIT ProcessUnit
@@ -75,6 +84,8 @@ function PROCESS:Assign( ProcessTask, ProcessUnit )
 
   self:SetControllable( ProcessUnit )
   self:SetTask( ProcessTask )
+  
+  self:StartEvents()
   
   self.ProcessGroup = ProcessUnit:GetGroup()
   --self:Activate()

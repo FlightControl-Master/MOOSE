@@ -186,7 +186,7 @@ function TASK_BASE:IsAssignedToGroup( TaskGroup )
   return false
 end
 
---- Assign the @{Task}to an alive @{Unit}.
+--- Assign the @{Task} to an alive @{Unit}.
 -- @param #TASK_BASE self
 -- @param Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
@@ -463,7 +463,7 @@ end
 function TASK_BASE:RemoveProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
-    local Process = ProcessData -- Process#PROCESS
+    local Process = ProcessData -- Process.Process#PROCESS
     Process:StopEvents()
     Process = nil
     self.Processes[TaskUnitName][ProcessID] = nil
@@ -827,15 +827,14 @@ function TASK_BASE:OnSuccess( TaskUnit, Fsm, Event, From, To )
   self:E("Success")
   
   self:UnAssignFromGroups()
+  self:RemoveMenu()
 
   local TaskGroup = TaskUnit:GetGroup()
-  self.Mission:SetPlannedMenu()
 
   self:StateSuccess()
   
   -- The task has become successful, the event catchers can be cleaned.
-  self:CleanUp()
-  
+  self:EventRemoveAll()
 end
 
 --- StateMachine callback function for a TASK

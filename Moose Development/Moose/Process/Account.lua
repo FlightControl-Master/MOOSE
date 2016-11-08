@@ -168,7 +168,7 @@ do -- PROCESS_ACCOUNT_DEADS
     ClassName = "PROCESS_ACCOUNT_DEADS",
     TargetSetUnit = nil,
   }
-  
+
   
   --- Creates a new DESTROY process.
   -- @param #PROCESS_ACCOUNT_DEADS self
@@ -183,9 +183,11 @@ do -- PROCESS_ACCOUNT_DEADS
     self.TargetSetUnit = TargetSetUnit
     self.TaskName = TaskName
   
-    _EVENTDISPATCHER:OnDead( self.EventDead, self )
-    
     return self
+  end
+  
+  function PROCESS_ACCOUNT_DEADS:StartEvents()
+    self:EventOnDead( self.EventDead )
   end
   
   --- Process Events
@@ -209,13 +211,16 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function PROCESS_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, Event )
+  function PROCESS_ACCOUNT_DEADS:onenterAccount( ProcessUnit, EventData, Event, From, To )
+    self:T( { ProcessUnit, EventData, Event, From, To } )
+    
+    self:T({self.Controllable})
   
     self.TargetSetUnit:Flush()
     
-    if self.TargetSetUnit:FindUnit( Event.IniUnitName ) then
-      self.TargetSetUnit:RemoveUnitsByName( Event.IniUnitName )
+    if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
       local TaskGroup = ProcessUnit:GetGroup()
+      self.TargetSetUnit:RemoveUnitsByName( EventData.IniUnitName )
       MESSAGE:New( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
     end
   end
@@ -226,7 +231,7 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function PROCESS_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, Event )
+  function PROCESS_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, EventData )
   
     if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
@@ -238,11 +243,12 @@ do -- PROCESS_ACCOUNT_DEADS
   --- DCS Events
   
   --- @param #PROCESS_ACCOUNT_DEADS self
-  -- @param Event#EVENTDATA Event
-  function PROCESS_ACCOUNT_DEADS:EventDead( Event )
-  
-    if Event.IniDCSUnit then
-      self:__Event( 1 )
+  -- @param Event#EVENTDATA EventData
+  function PROCESS_ACCOUNT_DEADS:EventDead( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      self:__Event( 1, EventData )
     end
   end
 

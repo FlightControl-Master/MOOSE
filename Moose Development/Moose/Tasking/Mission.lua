@@ -88,8 +88,9 @@ end
 -- @param #MISSION self
 function MISSION:SetPlannedMenu()
   
-  for _, Task in pairs( self.Tasks ) do
-    local Task = Task -- Task#TASK_BASE
+  self:E( self.Tasks )
+  for _, TaskData in pairs( self.Tasks ) do
+    local Task = TaskData -- Tasking.Task#TASK_BASE
     Task:RemoveMenu()
     Task:SetPlannedMenu()  
   end
