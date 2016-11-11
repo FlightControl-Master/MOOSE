@@ -28,7 +28,7 @@
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE
--- @extends Identifiable#IDENTIFIABLE
+-- @extends Wrapper.Identifiable#IDENTIFIABLE
 -- @field #string PositionableName The name of the measurable.
 POSITIONABLE = {
   ClassName = "POSITIONABLE",

@@ -127,7 +127,7 @@
 
 --- The CONTROLLABLE class
 -- @type CONTROLLABLE
--- @extends Positionable#POSITIONABLE
+-- @extends Wrapper.Positionable#POSITIONABLE
 -- @field DCSControllable#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
 CONTROLLABLE = {

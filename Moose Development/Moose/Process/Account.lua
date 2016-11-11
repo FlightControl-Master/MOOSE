@@ -186,7 +186,7 @@ do -- PROCESS_ACCOUNT_DEADS
     return self
   end
   
-  function PROCESS_ACCOUNT_DEADS:StartEvents()
+  function PROCESS_ACCOUNT_DEADS:ProcessStart()
     self:EventOnDead( self.EventDead )
   end
   

@@ -67,11 +67,12 @@ function PROCESS:GetMission()
   return self.ProcessTask.Mission
 end
 
-function PROCESS:StartEvents()
+function PROCESS:ProcessStart()
 
 end
 
-function PROCESS:StopEvents()
+function PROCESS:ProcessStop()
+  self:E("ProcessStop Base Class")
 
   self:EventRemoveAll()
 end
@@ -85,7 +86,7 @@ function PROCESS:Assign( ProcessTask, ProcessUnit )
   self:SetControllable( ProcessUnit )
   self:SetTask( ProcessTask )
   
-  self:StartEvents()
+  self:ProcessStart()
   
   self.ProcessGroup = ProcessUnit:GetGroup()
   --self:Activate()

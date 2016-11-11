@@ -27,7 +27,7 @@
 
 --- The OBJECT class
 -- @type OBJECT
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 -- @field #string ObjectName The name of the Object.
 OBJECT = {
   ClassName = "OBJECT",

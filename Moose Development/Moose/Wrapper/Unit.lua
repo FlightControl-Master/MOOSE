@@ -74,7 +74,7 @@
 
 --- The UNIT class
 -- @type UNIT
--- @extends Controllable#CONTROLLABLE
+-- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #UNIT.FlareColor FlareColor
 -- @field #UNIT.SmokeColor SmokeColor
 UNIT = {

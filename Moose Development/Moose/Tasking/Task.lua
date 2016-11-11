@@ -160,10 +160,10 @@ function TASK_BASE:UnAssignFromGroups()
     TaskGroup:SetState( TaskGroup, "Assigned", nil )
     local TaskUnits = TaskGroup:GetUnits()
     for UnitID, UnitData in pairs( TaskUnits ) do
-      local TaskUnit = UnitData -- Unit#UNIT
+      local TaskUnit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = TaskUnit:GetPlayerName()
       if PlayerName ~= nil or PlayerName ~= "" then
-        self:UnAssignFromUnit( TaskUnit )
+        self:UnAssignFromUnit( TaskUnit:GetName() )
       end
     end
   end
@@ -204,7 +204,9 @@ function TASK_BASE:UnAssignFromUnit( TaskUnitName )
   self:F( TaskUnitName )
   
   if self:HasStateMachine( TaskUnitName ) == true then
+    self:E("RemoveStateMachines")
     self:RemoveStateMachines( TaskUnitName )
+    self:E("RemoveProcesses")
     self:RemoveProcesses( TaskUnitName )
   end
 
@@ -461,10 +463,11 @@ end
 -- @param #string TaskUnitName
 -- @return #TASK_BASE self
 function TASK_BASE:RemoveProcesses( TaskUnitName )
+  self:E( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
     local Process = ProcessData -- Process.Process#PROCESS
-    Process:StopEvents()
+    Process:ProcessStop()
     Process = nil
     self.Processes[TaskUnitName][ProcessID] = nil
     self:E( self.Processes[TaskUnitName][ProcessID] )

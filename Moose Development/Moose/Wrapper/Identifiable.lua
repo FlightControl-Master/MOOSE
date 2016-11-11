@@ -33,7 +33,7 @@
 
 --- The IDENTIFIABLE class
 -- @type IDENTIFIABLE
--- @extends Object#OBJECT
+-- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 IDENTIFIABLE = {
   ClassName = "IDENTIFIABLE",
@@ -81,7 +81,7 @@ end
 
 --- Returns DCS Identifiable object name. 
 -- The function provides access to non-activated objects too.
--- @param Identifiable#IDENTIFIABLE self
+-- @param Wrapper.Identifiable#IDENTIFIABLE self
 -- @return #string The name of the DCS Identifiable.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetName()
