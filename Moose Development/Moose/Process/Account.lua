@@ -124,8 +124,11 @@ do -- PROCESS_ACCOUNT
   -- @param #string To
   function PROCESS_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
   
+    self:EventOnDead( self.EventDead )
+
     self:__Wait( 1 )
   end
+
   
     --- StateMachine callback function
     -- @param #PROCESS_ACCOUNT self
@@ -169,6 +172,15 @@ do -- PROCESS_ACCOUNT_DEADS
     TargetSetUnit = nil,
   }
 
+
+  --- Creates a new DESTROY process.
+  -- @param #PROCESS_ACCOUNT_DEADS self
+  -- @param Set#SET_UNIT TargetSetUnit
+  -- @param #string TaskName
+  function PROCESS_ACCOUNT_DEADS:Template( TargetSetUnit, TaskName )
+    return { self, arg }
+  end
+
   
   --- Creates a new DESTROY process.
   -- @param #PROCESS_ACCOUNT_DEADS self
@@ -182,12 +194,15 @@ do -- PROCESS_ACCOUNT_DEADS
     
     self.TargetSetUnit = TargetSetUnit
     self.TaskName = TaskName
-  
+    
     return self
   end
+
+  function PROCESS_ACCOUNT_DEADS:_Destructor()
+    self:E("_Destructor")
   
-  function PROCESS_ACCOUNT_DEADS:ProcessStart()
-    self:EventOnDead( self.EventDead )
+    self:RemoveEventsAll()
+  
   end
   
   --- Process Events

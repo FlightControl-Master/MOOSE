@@ -6,7 +6,7 @@
 -- @field Group#GROUP ProcessGroup
 -- @field Menu#MENU_GROUP MissionMenu
 -- @field #string ProcessName
--- @extends StateMachine#STATEMACHINE_CONTROLLABLE
+-- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
 PROCESS = {
   ClassName = "PROCESS",
   NextEvent = nil,
@@ -28,6 +28,7 @@ function PROCESS:New( FSMT, ProcessName, ProcessUnit )
   
   --self.MissionMenu = Task.Mission:GetMissionMenu( self.ProcessGroup )
   self.ProcessName = ProcessName
+  
   
   return self
 end
@@ -67,15 +68,6 @@ function PROCESS:GetMission()
   return self.ProcessTask.Mission
 end
 
-function PROCESS:ProcessStart()
-
-end
-
-function PROCESS:ProcessStop()
-  self:E("ProcessStop Base Class")
-
-  self:EventRemoveAll()
-end
 
 --- Assign the process to a @{Unit} and activate the process.
 -- @param #PROCESS self
@@ -85,8 +77,6 @@ function PROCESS:Assign( ProcessTask, ProcessUnit )
 
   self:SetControllable( ProcessUnit )
   self:SetTask( ProcessTask )
-  
-  self:ProcessStart()
   
   self.ProcessGroup = ProcessUnit:GetGroup()
   --self:Activate()

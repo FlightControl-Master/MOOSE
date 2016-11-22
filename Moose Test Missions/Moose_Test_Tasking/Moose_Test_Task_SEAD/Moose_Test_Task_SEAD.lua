@@ -1,4 +1,6 @@
 
+env.info( "Lua Version = " .. _VERSION )
+
 local Mission = MISSION:New( 'SEAD Targets', "Strategic", "SEAD the enemy", coalition.side.RED )
 local Scoring = SCORING:New( "SEAD" )
 
@@ -9,23 +11,31 @@ local TargetSet = SET_UNIT:New():FilterPrefixes( "US Hawk SR" ):FilterOnce()
 
 local TargetZone = ZONE:New( "Target Zone" )
 
-local TaskSEAD = TASK_SEAD
-  :New( Mission, SEADSet, "SEAD Radars", TargetSet, TargetZone )
+local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars", "A2G", "SEAD" ) -- Tasking.Task#TASK_BASE
+  --:New( Mission, SEADSet, "SEAD Radars", TargetSet, TargetZone )
   
-TaskSEAD:AddScore( "Success", "Destroyed all target radars", 250 )
-TaskSEAD:AddScore( "Failed", "Failed to destroy all target radars", -100 )
+local FsmSEAD = TaskSEAD:GetFsmTemplate()
 
-local AssignProcess = TaskSEAD:SetProcessTemplate( "ASSIGN", PROCESS_ASSIGN_MENU_ACCEPT:New( "SEAD", "Hello World" ) )
-AssignProcess:AddScore( TaskSEAD, "Assign", "You are assigned to the task", 10 )
+FsmSEAD:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+FsmSEAD:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( TargetZone, 3000 ), { Arrived = "Update" } )
+FsmSEAD:AddAction ( "Rejected",   "Eject",    "Planned" )
+FsmSEAD:AddAction ( "Arrived",    "Update",   "Updated" ) 
+FsmSEAD:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Destroyed = "Success" } )
+FsmSEAD:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
+FsmSEAD:AddAction ( "Destroyed",  "Success",  "Success" )
+FsmSEAD:AddAction ( "Failed",     "Fail",     "Failed" )
 
-local AccountProcess = TaskSEAD:SetProcessTemplate( "ACCOUNT", PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ) )
-AccountProcess:AddScore( TaskSEAD, "Account", "destroyed a radar", 25 )
-AccountProcess:AddScore( TaskSEAD, "Failed", "failed to destroy a radar", -100 )
+--TaskSEAD:AddScoreTask( "Success", "Destroyed all target radars", 250 )
+--TaskSEAD:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
+--TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
+--TaskSEAD:AddScoreProcess( "Smoke", "Failed", "failed to destroy a radar", -100 )
 
---local SmokeProcess = TaskSEAD:SetProcessTemplate( "SMOKE", PROCESS_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
---SmokeProcess:SetAttackGroup( GROUP:FindByName( "SmokeGroup" ), "Watchdog" )
---SmokeProcess:AddScore( TaskSEAD, "Account", "destroyed a radar", 25 )
---SmokeProcess:AddScore( TaskSEAD, "Failed", "failed to destroy a radar", -100 )
+function FsmSEAD:onenterUpdated( TaskUnit )
+  TaskSEAD:Account()
+  TaskSEAD:Smoke()
+end
 
+-- Needs to be checked, should not be necessary ...
 TaskSEAD:AssignToGroup( SEADSet:Get( "Test SEAD" ) )
 
+Mission:AddTask( TaskSEAD )

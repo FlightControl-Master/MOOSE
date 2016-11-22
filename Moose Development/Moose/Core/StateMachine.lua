@@ -18,7 +18,7 @@
 
 --- STATEMACHINE class
 -- @type STATEMACHINE
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 STATEMACHINE = {
   ClassName = "STATEMACHINE",
 }
@@ -34,7 +34,7 @@ function STATEMACHINE:New( options )
 
   --local self = routines.utils.deepCopy( self ) -- Create a new self instance
 
-  assert(options.events)
+  --assert(options.events)
 
   --local MT = {}
   --setmetatable( self, MT )
@@ -46,30 +46,69 @@ function STATEMACHINE:New( options )
   self.subs = {}
   self.endstates = {}
 
-  for _, event in ipairs(options.events or {}) do
-    local name = event.name
-    local __name = "__" .. event.name
-    self[name] = self[name] or self:_create_transition(name)
-    self[__name] = self[__name] or self:_delayed_transition(name)
-    self:T( "Added methods: " .. name .. ", " .. __name )
-    self.events[name] = self.events[name] or { map = {} }
-    self:_add_to_map(self.events[name].map, event)
+  for _, event in pairs(options.events or {}) do
+    self:E({ "events", event })
+    self:_eventmap( self.events, event )
   end
 
   for name, callback in pairs(options.callbacks or {}) do
+    self:E("callbacks")
     self[name] = callback
   end
 
   for name, sub in pairs( options.subs or {} ) do
+    self:E("sub")
     self:_submap( self.subs, sub, name )
   end
 
   for name, endstate in pairs( options.endstates or {} ) do
+    self:E("endstate")
     self.endstates[endstate] = endstate
   end
 
   return self
 end
+
+function STATEMACHINE:SetInitialState( State )
+  self.current = State
+end
+
+function STATEMACHINE:AddAction( From, Event, To )
+
+  local event = {}
+  event.from = From
+  event.name = Event
+  event.to = To
+
+  self:E( event )
+
+  self:_eventmap( self.events, event )
+end
+
+
+--- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
+-- @return Process#PROCESS
+function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
+
+  local sub = {}
+  sub.FromParent = From
+  sub.EventParent = Event
+  sub.fsm = Process
+  sub.event = "Start"
+  sub.ReturnEvents = ReturnEvents
+
+  self:_submap( self.subs, sub, nil )
+  
+  self:AddAction( From, Event, "*" )
+
+  return Process
+end
+
+function STATEMACHINE:GetSubs()
+
+  return self.options.subs
+end
+
 
 function STATEMACHINE:LoadCallBacks( CallBackTable )
 
@@ -79,17 +118,29 @@ function STATEMACHINE:LoadCallBacks( CallBackTable )
 
 end
 
+function STATEMACHINE:_eventmap( events, event )
+
+    local name = event.name
+    local __name = "__" .. event.name
+    self[name] = self[name] or self:_create_transition(name)
+    self[__name] = self[__name] or self:_delayed_transition(name)
+    self:T( "Added methods: " .. name .. ", " .. __name )
+    events[name] = self.events[name] or { map = {} }
+    self:_add_to_map( events[name].map, event )
+
+end
+
 function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )
-  subs[sub.onstateparent] = subs[sub.onstateparent] or {}
-  subs[sub.onstateparent][sub.oneventparent] = subs[sub.onstateparent][sub.oneventparent] or {}
-  local Index = #subs[sub.onstateparent][sub.oneventparent] + 1
-  subs[sub.onstateparent][sub.oneventparent][Index] = {}
-  subs[sub.onstateparent][sub.oneventparent][Index].fsm = sub.fsm
-  subs[sub.onstateparent][sub.oneventparent][Index].event = sub.event
-  subs[sub.onstateparent][sub.oneventparent][Index].returnevents = sub.returnevents -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
-  subs[sub.onstateparent][sub.oneventparent][Index].name = name
-  subs[sub.onstateparent][sub.oneventparent][Index].fsmparent = self
+  subs[sub.FromParent] = subs[sub.FromParent] or {}
+  subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
+  local Index = #subs[sub.FromParent][sub.EventParent] + 1
+  subs[sub.FromParent][sub.EventParent][Index] = {}
+  subs[sub.FromParent][sub.EventParent][Index].fsm = sub.fsm
+  subs[sub.FromParent][sub.EventParent][Index].event = sub.event
+  subs[sub.FromParent][sub.EventParent][Index].ReturnEvents = sub.ReturnEvents or {} -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
+  subs[sub.FromParent][sub.EventParent][Index].name = name
+  subs[sub.FromParent][sub.EventParent][Index].fsmparent = self
 end
 
 
@@ -121,11 +172,15 @@ function STATEMACHINE._handler( self, EventName, ... )
 
     local execute = true
 
-    local subtable = self:_gosub( to, EventName )
+    local subtable = self:_gosub( from, EventName )
     for _, sub in pairs( subtable ) do
+      --if sub.nextevent then
+      --  self:F2( "nextevent = " .. sub.nextevent )
+      --  self[sub.nextevent]( self )
+      --end
       self:F2( "calling sub: " .. sub.event )
       sub.fsm.fsmparent = self
-      sub.fsm.returnevents = sub.returnevents
+      sub.fsm.ReturnEvents = sub.ReturnEvents
       sub.fsm[sub.event]( sub.fsm )
       execute = true
     end
@@ -176,32 +231,30 @@ function STATEMACHINE:_create_transition( EventName )
   return function( self, ... ) return self._handler( self,  EventName , ... ) end
 end
 
-function STATEMACHINE:_gosub( parentstate, parentevent )
+function STATEMACHINE:_gosub( ParentFrom, ParentEvent )
   local fsmtable = {}
-  if self.subs[parentstate] and self.subs[parentstate][parentevent] then
-    return self.subs[parentstate][parentevent]
+  self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom] } )
+  if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
+    return self.subs[ParentFrom][ParentEvent]
   else
     return {}
   end
 end
 
-function STATEMACHINE:_isendstate( state )
-  local fsmparent = self.fsmparent
-  if fsmparent and self.endstates[state] then
-    self:E( { state = state, endstates = self.endstates, endstate = self.endstates[state] } )
-    local returnevent = nil
-    local fromstate = fsmparent.current
-    self:E( fromstate )
-    self:E( self.returnevents )
-    for _, eventname in pairs( self.returnevents ) do
-      local event = fsmparent.events[eventname]
-      self:E( event )
-      local to = event and event.map[fromstate] or event.map['*']
-      if to and to == state then
-        return fsmparent, eventname
-      else
-        self:E( { "could not find parent event name for state", fromstate, to } )
-      end
+function STATEMACHINE:_isendstate( Current )
+  local FSMParent = self.fsmparent
+  if FSMParent and self.endstates[Current] then
+    self:E( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
+    FSMParent.current = Current
+    local ParentFrom = FSMParent.current
+    self:E( ParentFrom )
+    self:E( self.ReturnEvents )
+    local Event = self.ReturnEvents[Current]
+    self:E( { ParentFrom, Event, self.ReturnEvents } )
+    if Event then
+      return FSMParent, Event
+    else
+      self:E( { "Could not find parent event name for state ", ParentFrom } )
     end
   end
 
@@ -209,6 +262,7 @@ function STATEMACHINE:_isendstate( state )
 end
 
 function STATEMACHINE:_add_to_map(map, event)
+  self:E( { map, event } )
   if type(event.from) == 'string' then
     map[event.from] = event.to
   else
@@ -216,6 +270,7 @@ function STATEMACHINE:_add_to_map(map, event)
       map[from] = event.to
     end
   end
+  self:E( { map, event } )
 end
 
 function STATEMACHINE:is(state)
@@ -224,6 +279,7 @@ end
 
 function STATEMACHINE:can(e)
   local event = self.events[e]
+  self:E( { self.current, event } )
   local to = event and event.map[self.current] or event.map['*']
   return to ~= nil, to
 end
@@ -290,7 +346,7 @@ end
 --- STATEMACHINE_CONTROLLABLE class
 -- @type STATEMACHINE_CONTROLLABLE
 -- @field Controllable#CONTROLLABLE Controllable
--- @extends StateMachine#STATEMACHINE
+-- @extends Core.StateMachine#STATEMACHINE
 STATEMACHINE_CONTROLLABLE = {
   ClassName = "STATEMACHINE_CONTROLLABLE",
 }
