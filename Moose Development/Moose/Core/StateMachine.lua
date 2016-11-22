@@ -18,7 +18,7 @@
 
 --- STATEMACHINE class
 -- @type STATEMACHINE
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 STATEMACHINE = {
   ClassName = "STATEMACHINE",
 }
@@ -34,42 +34,84 @@ function STATEMACHINE:New( options )
 
   --local self = routines.utils.deepCopy( self ) -- Create a new self instance
 
-  assert(options.events)
+  --assert(options.events)
 
   --local MT = {}
   --setmetatable( self, MT )
   --self.__index = self
 
   self.options = options
+  self.options.subs = self.options.subs or {}
   self.current = options.initial or 'none'
   self.events = {}
   self.subs = {}
   self.endstates = {}
 
-  for _, event in ipairs(options.events or {}) do
-    local name = event.name
-    local __name = "__" .. event.name
-    self[name] = self[name] or self:_create_transition(name)
-    self[__name] = self[__name] or self:_delayed_transition(name)
-    self:T( "Added methods: " .. name .. ", " .. __name )
-    self.events[name] = self.events[name] or { map = {} }
-    self:_add_to_map(self.events[name].map, event)
+  for _, event in pairs(options.events or {}) do
+    self:E({ "events", event })
+    self:_eventmap( self.events, event )
   end
 
   for name, callback in pairs(options.callbacks or {}) do
+    self:E("callbacks")
     self[name] = callback
   end
 
   for name, sub in pairs( options.subs or {} ) do
+    self:E("sub")
     self:_submap( self.subs, sub, name )
   end
 
   for name, endstate in pairs( options.endstates or {} ) do
+    self:E("endstate")
     self.endstates[endstate] = endstate
   end
 
   return self
 end
+
+function STATEMACHINE:SetInitialState( State )
+  self.current = State
+end
+
+function STATEMACHINE:AddAction( From, Event, To )
+
+  local event = {}
+  event.from = From
+  event.name = Event
+  event.to = To
+
+  self:E( event )
+
+  self:_eventmap( self.events, event )
+end
+
+
+--- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
+-- @return Process#PROCESS
+function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
+
+  local sub = {}
+  sub.FromParent = From
+  sub.EventParent = Event
+  sub.fsm = Process
+  sub.event = "Start"
+  sub.ReturnEvents = ReturnEvents
+  
+  self.options.subs[Event] = sub
+
+  self:_submap( self.subs, sub, nil )
+  
+  self:AddAction( From, Event, "*" )
+
+  return Process
+end
+
+function STATEMACHINE:GetSubs()
+
+  return self.options.subs
+end
+
 
 function STATEMACHINE:LoadCallBacks( CallBackTable )
 
@@ -79,41 +121,54 @@ function STATEMACHINE:LoadCallBacks( CallBackTable )
 
 end
 
+function STATEMACHINE:_eventmap( events, event )
+
+    local name = event.name
+    local __name = "__" .. event.name
+    self[name] = self[name] or self:_create_transition(name)
+    self[__name] = self[__name] or self:_delayed_transition(name)
+    self:T( "Added methods: " .. name .. ", " .. __name )
+    events[name] = self.events[name] or { map = {} }
+    self:_add_to_map( events[name].map, event )
+
+end
+
 function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )
-  subs[sub.onstateparent] = subs[sub.onstateparent] or {}
-  subs[sub.onstateparent][sub.oneventparent] = subs[sub.onstateparent][sub.oneventparent] or {}
-  local Index = #subs[sub.onstateparent][sub.oneventparent] + 1
-  subs[sub.onstateparent][sub.oneventparent][Index] = {}
-  subs[sub.onstateparent][sub.oneventparent][Index].fsm = sub.fsm
-  subs[sub.onstateparent][sub.oneventparent][Index].event = sub.event
-  subs[sub.onstateparent][sub.oneventparent][Index].returnevents = sub.returnevents -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
-  subs[sub.onstateparent][sub.oneventparent][Index].name = name
-  subs[sub.onstateparent][sub.oneventparent][Index].fsmparent = self
+  subs[sub.FromParent] = subs[sub.FromParent] or {}
+  subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
+  local Index = #subs[sub.FromParent][sub.EventParent] + 1
+  subs[sub.FromParent][sub.EventParent][Index] = {}
+  subs[sub.FromParent][sub.EventParent][Index].fsm = sub.fsm
+  subs[sub.FromParent][sub.EventParent][Index].event = sub.event
+  subs[sub.FromParent][sub.EventParent][Index].ReturnEvents = sub.ReturnEvents or {} -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
+  subs[sub.FromParent][sub.EventParent][Index].name = name
+  subs[sub.FromParent][sub.EventParent][Index].fsmparent = self
 end
 
 
 function STATEMACHINE:_call_handler(handler, params)
-  if handler then
-    return handler( self, unpack(params) )
+  if self[handler] then
+    self:E( "Calling " .. handler )
+    return self[handler]( self, unpack(params) )
   end
 end
 
 function STATEMACHINE._handler( self, EventName, ... )
 
-  self:F( { EventName, ... } )
+  self:E( { EventName, ... } )
 
-  local can, to = self:can(EventName)
-  self:T( { EventName, can, to } )
+  local can, to = self:can( EventName )
+  self:E( { EventName, can, to } )
 
   local ReturnValues = nil
 
   if can then
     local from = self.current
-    local params = { ..., EventName, from, to  }
+    local params = { EventName, from, to, ...  }
 
-    if self:_call_handler(self["onbefore" .. EventName], params) == false
-      or self:_call_handler(self["onleave" .. from], params) == false then
+    if self:_call_handler("onbefore" .. EventName, params) == false
+      or self:_call_handler("onleave" .. from, params) == false then
       return false
     end
 
@@ -121,11 +176,15 @@ function STATEMACHINE._handler( self, EventName, ... )
 
     local execute = true
 
-    local subtable = self:_gosub( to, EventName )
+    local subtable = self:_gosub( from, EventName )
     for _, sub in pairs( subtable ) do
+      --if sub.nextevent then
+      --  self:F2( "nextevent = " .. sub.nextevent )
+      --  self[sub.nextevent]( self )
+      --end
       self:F2( "calling sub: " .. sub.event )
       sub.fsm.fsmparent = self
-      sub.fsm.returnevents = sub.returnevents
+      sub.fsm.ReturnEvents = sub.ReturnEvents
       sub.fsm[sub.event]( sub.fsm )
       execute = true
     end
@@ -133,28 +192,28 @@ function STATEMACHINE._handler( self, EventName, ... )
     local fsmparent, event = self:_isendstate( to )
     if fsmparent and event then
       self:F2( { "end state: ", fsmparent, event } )
-      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
-      self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
-      self:_call_handler(self["onstatechange"], params)
+      self:_call_handler("onenter" .. to, params)
+      self:_call_handler("onafter" .. EventName, params)
+      self:_call_handler("onstatechange", params)
       fsmparent[event]( fsmparent )
       execute = false
     end
 
     if execute then
       self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
-      self:_call_handler(self["onenter" .. to] or self["on" .. to], params)
+      self:_call_handler("onenter" .. to, params)
 
       self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
-      if ( self:_call_handler(self["OnBefore" .. to], params ) ~= false ) then
+      if ( self:_call_handler("OnBefore" .. to, params ) ~= false ) then
 
         self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
-        self:_call_handler(self["onafter" .. EventName] or self["on" .. EventName], params)
+        self:_call_handler("onafter" .. EventName, params)
 
         self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
-        ReturnValues = self:_call_handler(self["OnAfter" .. to], params )
+        ReturnValues = self:_call_handler("OnAfter" .. to, params )
       end
 
-      self:_call_handler(self["onstatechange"], params)
+      self:_call_handler("onstatechange", params)
     end
 
     return ReturnValues
@@ -176,32 +235,30 @@ function STATEMACHINE:_create_transition( EventName )
   return function( self, ... ) return self._handler( self,  EventName , ... ) end
 end
 
-function STATEMACHINE:_gosub( parentstate, parentevent )
+function STATEMACHINE:_gosub( ParentFrom, ParentEvent )
   local fsmtable = {}
-  if self.subs[parentstate] and self.subs[parentstate][parentevent] then
-    return self.subs[parentstate][parentevent]
+  if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
+    self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom] } )
+    return self.subs[ParentFrom][ParentEvent]
   else
     return {}
   end
 end
 
-function STATEMACHINE:_isendstate( state )
-  local fsmparent = self.fsmparent
-  if fsmparent and self.endstates[state] then
-    self:E( { state = state, endstates = self.endstates, endstate = self.endstates[state] } )
-    local returnevent = nil
-    local fromstate = fsmparent.current
-    self:E( fromstate )
-    self:E( self.returnevents )
-    for _, eventname in pairs( self.returnevents ) do
-      local event = fsmparent.events[eventname]
-      self:E( event )
-      local to = event and event.map[fromstate] or event.map['*']
-      if to and to == state then
-        return fsmparent, eventname
-      else
-        self:E( { "could not find parent event name for state", fromstate, to } )
-      end
+function STATEMACHINE:_isendstate( Current )
+  local FSMParent = self.fsmparent
+  if FSMParent and self.endstates[Current] then
+    self:E( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
+    FSMParent.current = Current
+    local ParentFrom = FSMParent.current
+    self:E( ParentFrom )
+    self:E( self.ReturnEvents )
+    local Event = self.ReturnEvents[Current]
+    self:E( { ParentFrom, Event, self.ReturnEvents } )
+    if Event then
+      return FSMParent, Event
+    else
+      self:E( { "Could not find parent event name for state ", ParentFrom } )
     end
   end
 
@@ -209,6 +266,7 @@ function STATEMACHINE:_isendstate( state )
 end
 
 function STATEMACHINE:_add_to_map(map, event)
+  self:E( { map, event } )
   if type(event.from) == 'string' then
     map[event.from] = event.to
   else
@@ -216,6 +274,7 @@ function STATEMACHINE:_add_to_map(map, event)
       map[from] = event.to
     end
   end
+  self:E( { map, event } )
 end
 
 function STATEMACHINE:is(state)
@@ -224,6 +283,7 @@ end
 
 function STATEMACHINE:can(e)
   local event = self.events[e]
+  self:E( { self.current, event } )
   local to = event and event.map[self.current] or event.map['*']
   return to ~= nil, to
 end
@@ -252,45 +312,11 @@ function STATEMACHINE:todot(filename)
 end
 
 
---- STATEMACHINE_TASK class
--- @type STATEMACHINE_TASK
--- @field Task#TASK_BASE Task
--- @extends StateMachine#STATEMACHINE
-STATEMACHINE_TASK = {
-  ClassName = "STATEMACHINE_TASK",
-}
-
---- Creates a new STATEMACHINE_TASK object.
--- @param #STATEMACHINE_TASK self
--- @param #table FSMT
--- @param Task#TASK_BASE Task
--- @param Unit#UNIT TaskUnit
--- @return #STATEMACHINE_TASK
-function STATEMACHINE_TASK:New( FSMT, Task, TaskUnit )
-
-  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
-
-  self["onstatechange"] = Task.OnStateChange
-  self["onAssigned"] = Task.OnAssigned
-  self["onSuccess"] = Task.OnSuccess
-  self["onFailed"] = Task.OnFailed
-
-  self.Task = Task
-  self.TaskUnit = TaskUnit
-
-  return self
-end
-
-function STATEMACHINE_TASK:_call_handler( handler, params )
-  if handler then
-    return handler( self.Task, self.TaskUnit, unpack( params ) )
-  end
-end
 
 --- STATEMACHINE_CONTROLLABLE class
 -- @type STATEMACHINE_CONTROLLABLE
 -- @field Controllable#CONTROLLABLE Controllable
--- @extends StateMachine#STATEMACHINE
+-- @extends Core.StateMachine#STATEMACHINE
 STATEMACHINE_CONTROLLABLE = {
   ClassName = "STATEMACHINE_CONTROLLABLE",
 }
@@ -329,14 +355,16 @@ function STATEMACHINE_CONTROLLABLE:GetControllable()
 end
 
 function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
-  if handler then
-    return handler( self, self.Controllable, unpack( params ) )
+  if self[handler] then
+    self:E( "Calling " .. handler )
+    return self[handler]( self, self.Controllable, unpack( params ) )
   end
 end
 
 --- STATEMACHINE_PROCESS class
 -- @type STATEMACHINE_PROCESS
 -- @field Process#PROCESS Process
+-- @field Tasking.Task#TASK_BASE Task
 -- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
 STATEMACHINE_PROCESS = {
   ClassName = "STATEMACHINE_PROCESS",
@@ -350,6 +378,92 @@ function STATEMACHINE_PROCESS:New( FSMT )
   local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
 
   return self
+end
+
+--- Sets the task of the process.
+-- @param #PROCESS self
+-- @param Tasking.Task#TASK_BASE Task
+-- @return #PROCESS
+function STATEMACHINE_PROCESS:SetTask( Task )
+
+  self.Task = Task
+
+  return self
+end
+
+--- Gets the task of the process.
+-- @param #PROCESS self
+-- @return Task#TASK_BASE
+function STATEMACHINE_PROCESS:GetTask()
+
+  return self.Task
+end
+
+--- Gets the mission of the process.
+-- @param #PROCESS self
+-- @return Mission#MISSION
+function STATEMACHINE_PROCESS:GetMission()
+
+  return self.Task.Mission
+end
+
+
+--- Assign the process to a @{Unit} and activate the process.
+-- @param #PROCESS self
+-- @param Task.Tasking#TASK_BASE Task
+-- @param Wrapper.Unit#UNIT ProcessUnit
+-- @return #PROCESS self
+function STATEMACHINE_PROCESS:Assign( Task, ProcessUnit )
+  self:E( { Task, ProcessUnit } )
+
+  self:SetControllable( ProcessUnit )
+  self:SetTask( Task )
+  
+  self.ProcessGroup = ProcessUnit:GetGroup()
+    
+  --self:Activate()
+
+  return self
+end
+
+function STATEMACHINE_PROCESS:onenterAssigned( ProcessUnit )
+
+  self.Task:Assign()
+end
+
+function STATEMACHINE_PROCESS:onenterSuccess( ProcessUnit )
+
+  self.Task:Success()
+end
+
+--- STATEMACHINE_TASK class
+-- @type STATEMACHINE_TASK
+-- @field Task#TASK_BASE Task
+-- @extends Core.StateMachine#STATEMACHINE
+STATEMACHINE_TASK = {
+  ClassName = "STATEMACHINE_TASK",
+}
+
+--- Creates a new STATEMACHINE_TASK object.
+-- @param #STATEMACHINE_TASK self
+-- @param #table FSMT
+-- @param Task#TASK_BASE Task
+-- @param Unit#UNIT TaskUnit
+-- @return #STATEMACHINE_TASK
+function STATEMACHINE_TASK:New( FSMT )
+
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Core.StateMachine#STATEMACHINE_TASK
+
+  self["onstatechange"] = self.OnStateChange
+
+  return self
+end
+
+function STATEMACHINE_TASK:_call_handler( handler, params )
+  if self[handler] then
+    self:E( "Calling " .. handler )
+    return self[handler]( self, unpack( params ) )
+  end
 end
 
 do -- STATEMACHINE_SET
@@ -396,8 +510,9 @@ function STATEMACHINE_SET:Get()
 end
 
 function STATEMACHINE_SET:_call_handler( handler, params )
-  if handler then
-    return handler( self, self.Set, unpack( params ) )
+  if self[handler] then
+    self:E( "Calling " .. handler )
+    return self[handler]( self, self.Set, unpack( params ) )
   end
 end
 

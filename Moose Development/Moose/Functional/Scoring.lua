@@ -275,18 +275,20 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
   local MissionName = Mission:GetName()
 
   self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+  
+  local PlayerData = self.Players[PlayerName]
 
-  if not self.Players[PlayerName].Mission[MissionName] then
-    self.Players[PlayerName].Mission[MissionName] = {}
-    self.Players[PlayerName].Mission[MissionName].ScoreTask = 0
-    self.Players[PlayerName].Mission[MissionName].ScoreMission = 0
+  if not PlayerData.Mission[MissionName] then
+    PlayerData.Mission[MissionName] = {}
+    PlayerData.Mission[MissionName].ScoreTask = 0
+    PlayerData.Mission[MissionName].ScoreMission = 0
   end
 
   self:T( PlayerName )
-  self:T( self.Players[PlayerName].Mission[MissionName] )
+  self:T( PlayerData.Mission[MissionName] )
 
-  self.Players[PlayerName].Score = self.Players[PlayerName].Score + Score
-  self.Players[PlayerName].Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+  PlayerData.Score = self.Players[PlayerName].Score + Score
+  PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
 
   MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
     Score .. " task score!",
@@ -306,10 +308,12 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
   
   local MissionName = Mission:GetName()
 
-  self:F( { Mission, Text, Score } )
+  self:E( { Mission, Text, Score } )
+  self:E( self.Players )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
 
+    self:E( PlayerData )
     if PlayerData.Mission[MissionName] then
 
       PlayerData.Score = PlayerData.Score + Score

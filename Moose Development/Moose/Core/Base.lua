@@ -116,8 +116,17 @@ function BASE:New()
 	self.__index = self
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
+
+	
 	return self
 end
+
+function BASE:_Destructor()
+  --self:E("_Destructor")
+
+  self:EventRemoveAll()
+end
+
 
 --- This is the worker method to inherit from a parent class.
 -- @param #BASE self
@@ -131,6 +140,22 @@ function BASE:Inherit( Child, Parent )
 	if Child ~= nil then
 		setmetatable( Child, Parent )
 		Child.__index = Child
+		
+    local proxy = newproxy(true)
+    local proxyMeta = getmetatable(proxy)
+
+    proxyMeta.__gc = function ()
+      -- env.info("In __gc for " .. Child:GetClassNameAndID() )
+      if Child._Destructor then
+          Child:_Destructor()
+      end
+    end
+
+    -- keep the userdata from newproxy reachable until the object
+    -- table is about to be garbage-collected - then the __gc hook
+    -- will be invoked and the destructor called
+    rawset(Child, '__proxy', proxy)
+		
 	end
 	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child

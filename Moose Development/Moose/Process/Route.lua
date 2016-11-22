@@ -107,7 +107,7 @@ do -- PROCESS_ROUTE
         { name = 'Fail',            from = '*',                   to = 'Failed' },
       },
       endstates = {
-        'Arrived', 'Failed', 'Success'
+        'Arrived', 'Failed'
       },
     }
   
@@ -150,10 +150,10 @@ do -- PROCESS_ROUTE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function PROCESS_ROUTE:onafterRoute( ProcessUnit, Event, From, To )
+  function PROCESS_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
   
     if ProcessUnit:IsAlive() then
-      local HasArrived = self:HasArrived( ProcessUnit )
+      local HasArrived = self:HasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
         if not HasArrived then
@@ -165,7 +165,12 @@ do -- PROCESS_ROUTE
       end
       
       self:T( { DisplayCount = self.DisplayCount } )
-      self:__Route( 1 )
+      
+      if HasArrived then
+        self:__Arrive( 1 )
+      else
+        self:__Route( 1 )
+      end
     
       return HasArrived -- if false, then the event will not be executed...
     end
@@ -189,6 +194,14 @@ do -- PROCESS_ROUTE_ZONE
   PROCESS_ROUTE_ZONE = { 
     ClassName = "PROCESS_ROUTE_ZONE",
   }
+
+
+  --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
+  -- @param #PROCESS_ROUTE_ZONE self
+  -- @param Zone#ZONE_BASE TargetZone
+  function PROCESS_ROUTE_ZONE:Template( TargetZone )
+    return { self, arg }
+  end
   
   
   --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
@@ -206,9 +219,15 @@ do -- PROCESS_ROUTE_ZONE
 
   --- Method override to check if the controllable has arrived.
   -- @param #PROCESS_ROUTE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
   function PROCESS_ROUTE_ZONE:HasArrived( ProcessUnit )
+
+    if ProcessUnit:IsInZone( self.TargetZone ) then
+      local RouteText = ProcessUnit:GetCallsign() .. ": You have arrived within the zone!"
+      MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( ProcessUnit:GetGroup() )
+    end
+
     return ProcessUnit:IsInZone( self.TargetZone )
   end
   

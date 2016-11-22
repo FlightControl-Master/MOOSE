@@ -137,6 +137,14 @@ do -- PROCESS_ASSIGN_ACCEPT
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
   -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
+  function PROCESS_ASSIGN_ACCEPT:Template( TaskBriefing )
+    return { self, { TaskBriefing } }
+  end
+
+
+  --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
+  -- @param #PROCESS_ASSIGN_ACCEPT self
+  -- @param #string TaskBriefing
   -- @return #PROCESS_ASSIGN_ACCEPT The task acceptance process.
   function PROCESS_ASSIGN_ACCEPT:New( TaskBriefing )
 

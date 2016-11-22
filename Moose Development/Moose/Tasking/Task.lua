@@ -9,8 +9,8 @@
 --   * @{#TASK_BASE.AssignToGroup}():Assign a task to a group (of players).
 --   * @{#TASK_BASE.AddProcess}():Add a @{Process} to a task.
 --   * @{#TASK_BASE.RemoveProcesses}():Remove a running @{Process} from a running task.
---   * @{#TASK_BASE.AddStateMachine}():Add a @{StateMachine} to a task.
---   * @{#TASK_BASE.RemoveStateMachines}():Remove @{StateMachine}s from a task.
+--   * @{#TASK_BASE.SetStateMachine}():Set a @{StateMachine} to a task.
+--   * @{#TASK_BASE.RemoveStateMachine}():Remove @{StateMachine} from a task.
 --   * @{#TASK_BASE.HasStateMachine}():Enquire if the task has a @{StateMachine}
 --   * @{#TASK_BASE.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK_BASE}.
 --   * @{#TASK_BASE.UnAssignFromUnit}(): Unassign the task from a unit.
@@ -69,22 +69,29 @@ TASK_BASE = {
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
 -- @param #TASK_BASE self
--- @param Mission#MISSION The mission wherein the Task is registered.
--- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+-- @param Mission#MISSION Mission The mission wherein the Task is registered.
+-- @param Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
 -- @param #string TaskName The name of the Task
 -- @param #string TaskType The type of the Task
 -- @param #string TaskCategory The category of the Task (A2G, A2A, Transport, ... )
 -- @return #TASK_BASE self
-function TASK_BASE:New( Mission, SetGroup, TaskName, TaskType, TaskCategory )
+function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategory )
 
-  local self = BASE:Inherit( self, BASE:New() )
+
+  local self = BASE:Inherit( self, STATEMACHINE_TASK:New( {} ) )
+
+  self:SetInitialState( "Planned" )
+  self:AddAction( "Planned", "Assign", "Assigned" )
+  self:AddAction( "Assigned", "Success", "Success" )
+  self:AddAction( "*", "Fail", "Failed" )
+
   self:E( "New TASK " .. TaskName )
 
   self.Processes = {}
   self.Fsm = {}
 
   self.Mission = Mission
-  self.SetGroup = SetGroup
+  self.SetGroup = SetGroupAssign
 
   self:SetCategory( TaskCategory )
   self:SetType( TaskType )
@@ -92,6 +99,9 @@ function TASK_BASE:New( Mission, SetGroup, TaskName, TaskType, TaskCategory )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
 
   self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
+
+  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_PROCESS:New( {} )
+  self.FsmTemplate:SetTask( self )
   
   return self
 end
@@ -109,6 +119,10 @@ function TASK_BASE:CleanUp()
   return nil
 end
 
+function TASK_BASE:GetFsmTemplate()
+
+  return self.FsmTemplate
+end
 
 --- Assign the @{Task}to a @{Group}.
 -- @param #TASK_BASE self
@@ -128,6 +142,7 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   for UnitID, UnitData in pairs( TaskUnits ) do
     local TaskUnit = UnitData -- Unit#UNIT
     local PlayerName = TaskUnit:GetPlayerName()
+    self:E(PlayerName)
     if PlayerName ~= nil or PlayerName ~= "" then
       self:AssignToUnit( TaskUnit )
     end
@@ -135,6 +150,66 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   
   return self
 end
+
+--- Assign the @{Task} to an alive @{Unit}.
+-- @param #TASK_BASE self
+-- @param Unit#UNIT TaskUnit
+-- @return #TASK_BASE self
+function TASK_BASE:AssignToUnit( TaskUnit )
+  self:F( TaskUnit:GetName() )
+  
+  -- Copy the FsmTemplate, which is not assigned to a Unit.
+  -- Assign the FsmTemplate to the TaskUnit.
+  local FsmTemplate = self:GetFsmTemplate()
+  local FsmUnit = UTILS.DeepCopy( FsmTemplate )
+  FsmUnit:Assign( self, TaskUnit )
+  
+  -- Assign each FsmSub in FsmUnit to the TaskUnit.
+  -- (This is not done during the copy).
+  self:E(FsmUnit:GetSubs())
+  for FsmSubID, FsmSub in pairs( FsmUnit:GetSubs() ) do
+    self:E( { "Sub ID", FsmSub.fsm:GetClassNameAndID(), FsmSubID } )
+    FsmSub.fsm:Assign( self, TaskUnit )
+  end
+  
+  
+--  for TransitionID, TransitionTemplate in ipairs( self.TransitionTemplates ) do
+--    self:E( TransitionTemplate )
+--    FSM:AddTransition( TransitionTemplate.From, TransitionTemplate.Event, TransitionTemplate.To )
+--  end
+  
+  -- Copy each ProcessTemplate for the TaskUnit that is alive, as set as a template at the Parent.
+  -- Each Process will start From a state, upon a fired Event.
+  -- Upon finalization of the Process, the ReturnEvents contain for which Return state which Event of the Parent needs to be fired.
+  -- The Return state of the Process is transferred to the Parent.
+--  for ProcessID, ProcessTemplate in ipairs( self.ProcessTemplates ) do
+--    FSM:AddProcess( ProcessTemplate.From, ProcessTemplate.Event, Process, ProcessTemplate.ReturnEvents )
+--    self:E( { "Process ID", Process:GetClassNameAndID() } )
+--    Process:Assign( self, TaskUnit )
+--  end
+
+  FsmUnit:SetInitialState( "Planned" )
+  FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
+
+  return self
+end
+
+--- UnAssign the @{Task} from an alive @{Unit}.
+-- @param #TASK_BASE self
+-- @param Unit#UNIT TaskUnit
+-- @return #TASK_BASE self
+function TASK_BASE:UnAssignFromUnit( TaskUnitName )
+  self:F( TaskUnitName )
+  
+  if self:HasStateMachine( TaskUnitName ) == true then
+    self:E("RemoveStateMachines")
+    self:RemoveStateMachine( TaskUnitName )
+  end
+
+  return self
+end
+
+
 
 --- Send the briefng message of the @{Task} to the assigned @{Group}s.
 -- @param #TASK_BASE self
@@ -184,33 +259,6 @@ function TASK_BASE:IsAssignedToGroup( TaskGroup )
   end
   
   return false
-end
-
---- Assign the @{Task} to an alive @{Unit}.
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:AssignToUnit( TaskUnit )
-  self:F( TaskUnit:GetName() )
-  
-  return nil
-end
-
---- UnAssign the @{Task} from an alive @{Unit}.
--- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @return #TASK_BASE self
-function TASK_BASE:UnAssignFromUnit( TaskUnitName )
-  self:F( TaskUnitName )
-  
-  if self:HasStateMachine( TaskUnitName ) == true then
-    self:E("RemoveStateMachines")
-    self:RemoveStateMachines( TaskUnitName )
-    self:E("RemoveProcesses")
-    self:RemoveProcesses( TaskUnitName )
-  end
-
-  return self
 end
 
 --- Set the menu options of the @{Task} to all the groups in the SetGroup.
@@ -406,31 +454,6 @@ function TASK_BASE:GetTaskName()
 end
 
 
---- This is the key worker function for the class. Instantiate a new Process based on the ProcessName to @{Task} and assign it to the ProcessUnit.
--- @param #TASK_BASE self
--- @param Unit#UNIT ProcessUnit The unit to which the process should be assigned.
--- @param #string ProcessName The name of the Process.
--- @return Process#PROCESS The Process that was added.
-function TASK_BASE:AssignProcess( ProcessUnit, ProcessName )
-  self:F( { ProcessName } )
-  local ProcessUnitName = ProcessUnit:GetName()
-  
-  -- Create the Process instance base on the ProcessClasses collection assigned to the Task
-  local ProcessTemplate, ProcessArguments 
-  ProcessTemplate = self:GetProcessTemplate( ProcessName )
-  
-  self:E( "Deepcopy" )
-  -- This statement copies the process template assigned to the task and creates a new process.
-  local Process = UTILS.DeepCopy( ProcessTemplate ) -- Fsm.Process#PROCESS
-  Process:Assign( self, ProcessUnit )
-  
-  self.Processes = self.Processes or {}
-  self.Processes[ProcessUnitName] = self.Processes[ProcessUnitName] or {}
-    
-  self.Processes[ProcessUnitName][ProcessName] = Process
-  
-  return Process
-end
 
 
 --- Get the default or currently assigned @{Process} template with key ProcessName.
@@ -445,35 +468,6 @@ function TASK_BASE:GetProcessTemplate( ProcessName )
 end
 
 
---- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
--- @param #TASK_BASE self
--- @param #string ProcessName
--- @param Process#PROCESS ProcessTemplate
--- @return Process#PROCESS
-function TASK_BASE:SetProcessTemplate( ProcessName, ProcessTemplate )
-
-  self.ProcessClasses[ProcessName] = ProcessTemplate
-  
-  return ProcessTemplate
-end
-
-
---- Remove Processes from @{Task} with key @{Unit}
--- @param #TASK_BASE self
--- @param #string TaskUnitName
--- @return #TASK_BASE self
-function TASK_BASE:RemoveProcesses( TaskUnitName )
-  self:E( TaskUnitName )
-
-  for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
-    local Process = ProcessData -- Process.Process#PROCESS
-    Process:ProcessStop()
-    Process = nil
-    self.Processes[TaskUnitName][ProcessID] = nil
-    self:E( self.Processes[TaskUnitName][ProcessID] )
-  end
-  self.Processes[TaskUnitName] = nil
-end
 
 --- Fail processes from @{Task} with key @{Unit}
 -- @param #TASK_BASE self
@@ -491,10 +485,10 @@ end
 -- @param #TASK_BASE self
 -- @param Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
-function TASK_BASE:AddStateMachine( TaskUnit, Fsm )
+function TASK_BASE:SetStateMachine( TaskUnit, Fsm )
   local TaskUnitName = TaskUnit:GetName()
-  self.Fsm[TaskUnitName] = self.Fsm[TaskUnitName] or {}
-  self.Fsm[TaskUnitName][#self.Fsm[TaskUnitName]+1] = Fsm
+  self.Fsm[TaskUnitName] = Fsm
+    
   return Fsm
 end
 
@@ -502,14 +496,10 @@ end
 -- @param #TASK_BASE self
 -- @param #string TaskUnitName
 -- @return #TASK_BASE self
-function TASK_BASE:RemoveStateMachines( TaskUnitName )
+function TASK_BASE:RemoveStateMachine( TaskUnitName )
 
-  for _, Fsm in pairs( self.Fsm[TaskUnitName] ) do
-    Fsm = nil
-    self.Fsm[TaskUnitName][_] = nil
-    self:E( self.Fsm[TaskUnitName][_] )
-  end
   self.Fsm[TaskUnitName] = nil
+  collectgarbage()
 end
 
 --- Checks if there is a FiniteStateMachine assigned to @{Unit} for @{Task}
@@ -609,7 +599,7 @@ end
 
 --- Gets the Scoring of the task
 -- @param #TASK_BASE self
--- @return Scoring#SCORING Scoring
+-- @return Functional.Scoring#SCORING Scoring
 function TASK_BASE:GetScoring()
   return self.Mission:GetScoring()
 end
@@ -785,7 +775,7 @@ end
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
 -- @return #TASK_BASE self
-function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
+function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
   self:F2( { TaskStatus, ScoreText, Score } )
 
   self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
@@ -794,26 +784,35 @@ function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
   return self
 end
 
+--- Adds a score for the TASK to be achieved.
+-- @param #TASK_BASE self
+-- @param #string TaskStatus is the status of the TASK when the score needs to be given.
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #TASK_BASE self
+function TASK_BASE:AddScoreProcess( Event, State, ScoreText, Score )
+  self:F2( { State, ScoreText, Score } )
+
+
+  self:E( self:GetFsmTemplate():GetSubs()[Event].fsm )
+  local Process = self:GetFsmTemplate():GetSubs()[Event].fsm
+  
+  Process:AddScore( State, ScoreText, Score )
+
+  return self
+end
+
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnAssigned( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterAssigned( Fsm, Event, From, To )
 
   self:E("Assigned")
-  
-  local TaskGroup = TaskUnit:GetGroup()
-  
-  TaskGroup:Message( self.TaskBriefing, 20 )
-  
-  self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
-
 end
 
 
@@ -825,19 +824,9 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnSuccess( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterSuccess( TaskUnit, Fsm, Event, From, To )
 
   self:E("Success")
-  
-  self:UnAssignFromGroups()
-  self:RemoveMenu()
-
-  local TaskGroup = TaskUnit:GetGroup()
-
-  self:StateSuccess()
-  
-  -- The task has become successful, the event catchers can be cleaned.
-  self:EventRemoveAll()
 end
 
 --- StateMachine callback function for a TASK
@@ -869,17 +858,18 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnStateChange( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onstatechange( Event, From, To )
 
   if self:IsTrace() then
     MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
   end
   
-  self:E( { Event, From, To } )
-  self:SetState( self, "State", To )
+  self:E( { Event, From, To, self:IsTrace() } )
+  self:E( self.Scores )
 
   if self.Scores[To] then
     local Scoring = self:GetScoring()
+    self:E( Scoring )
     if Scoring then
       Scoring:_AddMissionScore( self.Mission, self.Scores[To].ScoreText, self.Scores[To].Score )
     end

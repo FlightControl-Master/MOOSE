@@ -67,8 +67,7 @@ do -- TASK_SEAD
     
     return nil
   end
-  
-  
+
   
   --- Assign the @{Task} to a @{Unit}.
   -- @param #TASK_SEAD self
@@ -85,7 +84,7 @@ do -- TASK_SEAD
     local FSMT = {
         initial = 'None',
         events = {
-          { name = 'Next',    from = 'None',          to = 'Planned' },
+          { name = 'Start',   from = 'None',          to = 'Planned' },
           { name = 'Next',    from = 'Planned',       to = 'Assigned' },
           { name = 'Reject',  from = 'Planned',       to = 'Rejected' }, 
           { name = 'Next',    from = 'Assigned',      to = 'Success' },

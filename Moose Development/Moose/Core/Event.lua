@@ -85,9 +85,16 @@ end
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
   self:F3( { _EVENTCODES[EventID], EventClass } )
-  if not self.Events[EventID] then
+
+  if not self.Events[EventID] then 
     self.Events[EventID] = {}
+
+    -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
+    local Meta = {}
+    setmetatable( self.Events[EventID], Meta )
+    Meta.__mode = "k"
   end
+
   if not self.Events[EventID][EventClass] then
      self.Events[EventID][EventClass] = {}
   end
