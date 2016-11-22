@@ -96,10 +96,10 @@ do -- PROCESS_ACCOUNT
         { name = 'Report',        from = '*',               to = 'Report'  },
         { name = 'Event',         from = '*',               to = 'Account' },
         { name = 'More',          from = 'Account',         to = 'Wait'  },
-        { name = 'NoMore',        from = 'Account',         to = 'Success' },      
+        { name = 'NoMore',        from = 'Account',         to = 'Accounted' },      
         { name = 'Fail',          from = '*',               to = 'Failed' },
       },
-      endstates = { 'Success', 'Failed' }
+      endstates = { 'Accounted', 'Failed' }
     }
   
     -- Inherits from BASE
@@ -214,6 +214,7 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param #string From
   -- @param #string To
   function PROCESS_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
+    self:E( { ProcessUnit, Event, From, To } )
   
     local TaskGroup = ProcessUnit:GetGroup()
     MESSAGE:New( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 5, "HQ" ):ToGroup( TaskGroup )
@@ -226,7 +227,7 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function PROCESS_ACCOUNT_DEADS:onenterAccount( ProcessUnit, EventData, Event, From, To )
+  function PROCESS_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, EventData  )
     self:T( { ProcessUnit, EventData, Event, From, To } )
     
     self:T({self.Controllable})

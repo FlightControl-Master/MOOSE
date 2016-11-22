@@ -20,19 +20,20 @@ FsmSEAD:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "SEAD t
 FsmSEAD:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( TargetZone, 3000 ), { Arrived = "Update" } )
 FsmSEAD:AddAction ( "Rejected",   "Eject",    "Planned" )
 FsmSEAD:AddAction ( "Arrived",    "Update",   "Updated" ) 
-FsmSEAD:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Destroyed = "Success" } )
+FsmSEAD:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
 FsmSEAD:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
-FsmSEAD:AddAction ( "Destroyed",  "Success",  "Success" )
+FsmSEAD:AddAction ( "Accounted",  "Success",  "Success" )
 FsmSEAD:AddAction ( "Failed",     "Fail",     "Failed" )
 
---TaskSEAD:AddScoreTask( "Success", "Destroyed all target radars", 250 )
---TaskSEAD:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
---TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
---TaskSEAD:AddScoreProcess( "Smoke", "Failed", "failed to destroy a radar", -100 )
+TaskSEAD:AddScoreTask( "Success", "Destroyed all target radars", 250 )
+TaskSEAD:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
+TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
+TaskSEAD:AddScoreProcess( "Account", "Fail", "failed to destroy a radar", -100 )
 
 function FsmSEAD:onenterUpdated( TaskUnit )
-  TaskSEAD:Account()
-  TaskSEAD:Smoke()
+  self:E( { self } )
+  self:Account()
+  self:Smoke()
 end
 
 -- Needs to be checked, should not be necessary ...

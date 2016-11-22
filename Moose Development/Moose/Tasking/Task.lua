@@ -77,7 +77,14 @@ TASK_BASE = {
 -- @return #TASK_BASE self
 function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategory )
 
-  local self = BASE:Inherit( self, BASE:New() )
+
+  local self = BASE:Inherit( self, STATEMACHINE_TASK:New( {} ) )
+
+  self:SetInitialState( "Planned" )
+  self:AddAction( "Planned", "Assign", "Assigned" )
+  self:AddAction( "Assigned", "Success", "Success" )
+  self:AddAction( "*", "Fail", "Failed" )
+
   self:E( "New TASK " .. TaskName )
 
   self.Processes = {}
@@ -93,7 +100,8 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategor
 
   self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
 
-  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_TASK:New( {}, self )
+  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_PROCESS:New( {} )
+  self.FsmTemplate:SetTask( self )
   
   return self
 end
@@ -158,9 +166,10 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   
   -- Assign each FsmSub in FsmUnit to the TaskUnit.
   -- (This is not done during the copy).
-  for FsmSubID, FsmSub in ipairs( FsmUnit:GetSubs() ) do
-    self:E( { "Sub ID", FsmSub:GetClassNameAndID() } )
-    FsmSub:Assign( self, TaskUnit )
+  self:E(FsmUnit:GetSubs())
+  for FsmSubID, FsmSub in pairs( FsmUnit:GetSubs() ) do
+    self:E( { "Sub ID", FsmSub.fsm:GetClassNameAndID(), FsmSubID } )
+    FsmSub.fsm:Assign( self, TaskUnit )
   end
   
   
@@ -590,7 +599,7 @@ end
 
 --- Gets the Scoring of the task
 -- @param #TASK_BASE self
--- @return Scoring#SCORING Scoring
+-- @return Functional.Scoring#SCORING Scoring
 function TASK_BASE:GetScoring()
   return self.Mission:GetScoring()
 end
@@ -766,7 +775,7 @@ end
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
 -- @return #TASK_BASE self
-function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
+function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
   self:F2( { TaskStatus, ScoreText, Score } )
 
   self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
@@ -775,26 +784,35 @@ function TASK_BASE:AddScore( TaskStatus, ScoreText, Score )
   return self
 end
 
+--- Adds a score for the TASK to be achieved.
+-- @param #TASK_BASE self
+-- @param #string TaskStatus is the status of the TASK when the score needs to be given.
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #TASK_BASE self
+function TASK_BASE:AddScoreProcess( Event, State, ScoreText, Score )
+  self:F2( { State, ScoreText, Score } )
+
+
+  self:E( self:GetFsmTemplate():GetSubs()[Event].fsm )
+  local Process = self:GetFsmTemplate():GetSubs()[Event].fsm
+  
+  Process:AddScore( State, ScoreText, Score )
+
+  return self
+end
+
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
 -- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnAssigned( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterAssigned( Fsm, Event, From, To )
 
   self:E("Assigned")
-  
-  local TaskGroup = TaskUnit:GetGroup()
-  
-  TaskGroup:Message( self.TaskBriefing, 20 )
-  
-  self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
-
 end
 
 
@@ -806,19 +824,9 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnSuccess( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterSuccess( TaskUnit, Fsm, Event, From, To )
 
   self:E("Success")
-  
-  self:UnAssignFromGroups()
-  self:RemoveMenu()
-
-  local TaskGroup = TaskUnit:GetGroup()
-
-  self:StateSuccess()
-  
-  -- The task has become successful, the event catchers can be cleaned.
-  self:EventRemoveAll()
 end
 
 --- StateMachine callback function for a TASK
@@ -850,17 +858,18 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:OnStateChange( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onstatechange( Event, From, To )
 
   if self:IsTrace() then
     MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
   end
   
-  self:T2( { Event, From, To } )
-  self:SetState( self, "State", To )
+  self:E( { Event, From, To, self:IsTrace() } )
+  self:E( self.Scores )
 
   if self.Scores[To] then
     local Scoring = self:GetScoring()
+    self:E( Scoring )
     if Scoring then
       Scoring:_AddMissionScore( self.Mission, self.Scores[To].ScoreText, self.Scores[To].Score )
     end
