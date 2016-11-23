@@ -1,6 +1,13 @@
 
 env.info( "Lua Version = " .. _VERSION )
 
+-- Test Garbage control of one declared PROCESS.
+do
+  local Process = PROCESS_ASSIGN_ACCEPT:New( "SEAD the Area" )
+end
+
+collectgarbage()
+
 local Mission = MISSION:New( 'SEAD Targets', "Strategic", "SEAD the enemy", coalition.side.RED )
 local Scoring = SCORING:New( "SEAD" )
 

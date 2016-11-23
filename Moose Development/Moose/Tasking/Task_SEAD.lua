@@ -45,80 +45,31 @@ do -- TASK_SEAD
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     
-    self:SetProcessTemplate( "ASSIGN", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ) )
-    self:SetProcessTemplate( "ROUTE", PROCESS_ROUTE_ZONE:New( self.TargetZone ) )
-    self:SetProcessTemplate( "ACCOUNT", PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ) )
-    self:SetProcessTemplate( "SMOKE", PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    local Fsm = self:GetFsmTemplate()
+
+    Fsm:AddProcess( "Planned",    "Accept",   "Planned", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
+    Fsm:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
+    Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
+    Fsm:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    Fsm:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddAction ( "Accounted",  "Success",  "Success" )
+    Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
     
-    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
-    _EVENTDISPATCHER:OnDead( self._EventDead, self )
-    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
-    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
+    function Fsm:onenterUpdated( TaskUnit )
+      self:E( { self } )
+      self:Account()
+      self:Smoke()
+    end
+
+--    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
+--    _EVENTDISPATCHER:OnDead( self._EventDead, self )
+--    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
+--    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
   
     return self
   end
-
-  --- Removes a TASK_SEAD.
-  -- @param #TASK_SEAD self
-  -- @return #nil
-  function TASK_SEAD:CleanUp()
-
-    self:GetParent(self):CleanUp()
-    
-    return nil
-  end
-
-  
-  --- Assign the @{Task} to a @{Unit}.
-  -- @param #TASK_SEAD self
-  -- @param Unit#UNIT TaskUnit
-  -- @return #TASK_SEAD self
-  function TASK_SEAD:AssignToUnit( TaskUnit )
-    self:F( TaskUnit:GetName() )
-    
-    local ProcessAssign = self:AssignProcess( TaskUnit, "ASSIGN" )
-    local ProcessRoute = self:AssignProcess( TaskUnit, "ROUTE" )
-    local ProcessAccount = self:AssignProcess( TaskUnit, "ACCOUNT" )
-    local ProcessSmoke = self:AssignProcess( TaskUnit, "SMOKE" )
-    
-    local FSMT = {
-        initial = 'None',
-        events = {
-          { name = 'Start',   from = 'None',          to = 'Planned' },
-          { name = 'Next',    from = 'Planned',       to = 'Assigned' },
-          { name = 'Reject',  from = 'Planned',       to = 'Rejected' }, 
-          { name = 'Next',    from = 'Assigned',      to = 'Success' },
-          { name = 'Fail',    from = 'Assigned',      to = 'Failed' }, 
-          { name = 'Fail',    from = 'Arrived',       to = 'Failed' }     
-        },
-        subs = {
-          Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',         fsm = ProcessAssign,        event = 'Start',      returnevents = { 'Next', 'Reject' } },
-          Route = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessRoute,         event = 'Start'       },
-          Sead = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessAccount,       event = 'Start',      returnevents = { 'Next' } },
-          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke,         event = 'Start',      }
-        }
-      }
-    
-    local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( FSMT, self, TaskUnit ) )
-
-    Process:Next()
-  
-    return self
-  end
-  
-  --- StateMachine callback function for a TASK
-  -- @param #TASK_SEAD self
-  -- @param StateMachine#STATEMACHINE_TASK Fsm
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Event#EVENTDATA Event
-  function TASK_SEAD:onafterNext( Fsm, Event, From, To )
-  
-    self:SetState( self, "State", To )
-  
-  end
-  
+ 
   --- @param #TASK_SEAD self
   function TASK_SEAD:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"

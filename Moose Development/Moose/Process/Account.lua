@@ -201,7 +201,7 @@ do -- PROCESS_ACCOUNT_DEADS
   function PROCESS_ACCOUNT_DEADS:_Destructor()
     self:E("_Destructor")
   
-    self:RemoveEventsAll()
+    self:EventRemoveAll()
   
   end
   

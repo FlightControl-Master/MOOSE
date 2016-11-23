@@ -144,12 +144,12 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
     ClassName = "PROCESS_SMOKE_TARGETS_ZONE",
   }
   
-  function PROCESS_SMOKE_TARGETS_ZONE:_Destructor()
-    self:E("_Destructor")
-  
-    self.Menu:Remove()
-    self:EventRemoveAll()
-  end
+--  function PROCESS_SMOKE_TARGETS_ZONE:_Destructor()
+--    self:E("_Destructor")
+--  
+--    self.Menu:Remove()
+--    self:EventRemoveAll()
+--  end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #PROCESS_SMOKE_TARGETS_ZONE self

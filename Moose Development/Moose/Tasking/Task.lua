@@ -170,6 +170,11 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   for FsmSubID, FsmSub in pairs( FsmUnit:GetSubs() ) do
     self:E( { "Sub ID", FsmSub.fsm:GetClassNameAndID(), FsmSubID } )
     FsmSub.fsm:Assign( self, TaskUnit )
+    --FsmSub.fsm:_SetDestructor()
+    
+    
+    --FsmSub.fsm = nil
+    --collectgarbage()
   end
   
   
@@ -190,6 +195,8 @@ function TASK_BASE:AssignToUnit( TaskUnit )
 
   FsmUnit:SetInitialState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
+  
+  
 
   return self
 end

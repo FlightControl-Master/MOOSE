@@ -98,6 +98,8 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
   sub.event = "Start"
   sub.ReturnEvents = ReturnEvents
   
+  -- Make the reference table weak.
+  setmetatable( self.options.subs, { __mode = "v" } )
   self.options.subs[Event] = sub
 
   self:_submap( self.subs, sub, nil )
@@ -137,13 +139,16 @@ function STATEMACHINE:_submap( subs, sub, name )
   self:E( { sub = sub, name = name } )
   subs[sub.FromParent] = subs[sub.FromParent] or {}
   subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
-  local Index = #subs[sub.FromParent][sub.EventParent] + 1
-  subs[sub.FromParent][sub.EventParent][Index] = {}
-  subs[sub.FromParent][sub.EventParent][Index].fsm = sub.fsm
-  subs[sub.FromParent][sub.EventParent][Index].event = sub.event
-  subs[sub.FromParent][sub.EventParent][Index].ReturnEvents = sub.ReturnEvents or {} -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
-  subs[sub.FromParent][sub.EventParent][Index].name = name
-  subs[sub.FromParent][sub.EventParent][Index].fsmparent = self
+  
+  -- Make the reference table weak.
+  setmetatable( subs[sub.FromParent][sub.EventParent], { __mode = "k" } )
+  
+  subs[sub.FromParent][sub.EventParent][sub] = {}
+  subs[sub.FromParent][sub.EventParent][sub].fsm = sub.fsm
+  subs[sub.FromParent][sub.EventParent][sub].event = sub.event
+  subs[sub.FromParent][sub.EventParent][sub].ReturnEvents = sub.ReturnEvents or {} -- these events need to be given to find the correct continue event ... if none given, the processing will stop.
+  subs[sub.FromParent][sub.EventParent][sub].name = name
+  subs[sub.FromParent][sub.EventParent][sub].fsmparent = self
 end
 
 

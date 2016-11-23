@@ -127,6 +127,24 @@ function BASE:_Destructor()
   self:EventRemoveAll()
 end
 
+function BASE:_SetDestructor()
+
+  local proxy = newproxy(true)
+  local proxyMeta = getmetatable(proxy)
+
+  proxyMeta.__gc = function ()
+    -- env.info("In __gc for " .. Child:GetClassNameAndID() )
+    if self._Destructor then
+        self:_Destructor()
+    end
+  end
+
+  -- keep the userdata from newproxy reachable until the object
+  -- table is about to be garbage-collected - then the __gc hook
+  -- will be invoked and the destructor called
+  rawset( self, '__proxy', proxy )
+
+end
 
 --- This is the worker method to inherit from a parent class.
 -- @param #BASE self
@@ -141,21 +159,7 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 		
-    local proxy = newproxy(true)
-    local proxyMeta = getmetatable(proxy)
-
-    proxyMeta.__gc = function ()
-      -- env.info("In __gc for " .. Child:GetClassNameAndID() )
-      if Child._Destructor then
-          Child:_Destructor()
-      end
-    end
-
-    -- keep the userdata from newproxy reachable until the object
-    -- table is about to be garbage-collected - then the __gc hook
-    -- will be invoked and the destructor called
-    rawset(Child, '__proxy', proxy)
-		
+		Child:_SetDestructor()
 	end
 	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child

@@ -44,89 +44,33 @@ do -- TASK_A2G
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     self.FACUnit = FACUnit
-
-    self:SetProcessTemplate( "PROCESS_ASSIGN", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ) )
-    self:SetProcessTemplate( "PROCESS_ROUTE", PROCESS_ROUTE_ZONE:New( self.TargetZone ) )
-    self:SetProcessTemplate( "PROCESS_ACCOUNT", PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "A2G" ) )
     
-    local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS_ZONE:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
-    local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
+    local Fsm = self:GetFsmTemplate()
 
-    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
-    _EVENTDISPATCHER:OnDead( self._EventDead, self )
-    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
-    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
+    Fsm:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+    Fsm:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
+    Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
+    Fsm:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
+    Fsm:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    --Fsm:AddProcess( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
+    Fsm:AddAction ( "Accounted",  "Success",  "Success" )
+    Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
+    
+    function Fsm:onenterUpdated( TaskUnit )
+      self:E( { self } )
+      self:Account()
+      self:Smoke()
+    end
+
+    
+    
+    --_EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
+    --_EVENTDISPATCHER:OnDead( self._EventDead, self )
+    --_EVENTDISPATCHER:OnCrash( self._EventDead, self )
+    --_EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
 
     return self
-  end
-  
-  --- Removes a TASK_A2G.
-  -- @param #TASK_A2G self
-  -- @return #nil
-  function TASK_A2G:CleanUp()
-
-    self:GetParent( self ):CleanUp()
-    
-    return nil
-  end
-  
-  
-  --- Assign the @{Task} to a @{Unit}.
-  -- @param #TASK_A2G self
-  -- @param Unit#UNIT TaskUnit
-  -- @return #TASK_A2G self
-  function TASK_A2G:AssignToUnit( TaskUnit )
-    self:F( TaskUnit:GetName() )
-  
-    local ProcessAssign = self:AssignProcess( TaskUnit, "PROCESS_ASSIGN" )
-    local ProcessRoute = self:AssignProcess( TaskUnit, "PROCESS_ROUTE" )
-    local ProcessDestroy = self:AssignProcess( TaskUnit, "PROCESS_ACCOUNT" )
-    --local ProcessSmoke = self:AddProcess( TaskUnit, PROCESS_SMOKE_TARGETS_ZONE:New( self, TaskUnit, self.TargetSetUnit, self.TargetZone ) )
-    --local ProcessJTAC = self:AddProcess( TaskUnit, PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit ) )
-    
-    local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( self, TaskUnit, {
-        initial = 'None',
-        events = {
-          { name = 'Next',   from = 'None',           to = 'Planned' },
-          { name = 'Next',    from = 'Planned',       to = 'Assigned' },
-          { name = 'Reject',  from = 'Planned',       to = 'Rejected' }, 
-          { name = 'Next',    from = 'Assigned',      to = 'Success' },
-          { name = 'Fail',    from = 'Assigned',      to = 'Failed' }, 
-          { name = 'Fail',    from = 'Arrived',       to = 'Failed' }     
-        },
-        callbacks = {
-          onNext = self.OnNext,
-          onRemove = self.OnRemove,
-        },
-        subs = {
-          Assign = {  onstateparent = 'Planned',          oneventparent = 'Next',         fsm = ProcessAssign.Fsm,        event = 'Start',      returnevents = { 'Next', 'Reject' } },
-          Route = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessRoute.Fsm,         event = 'Start'       },
-          Destroy = { onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessDestroy.Fsm,       event = 'Start',      returnevents = { 'Next' } },
-          Smoke = {   onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessSmoke.Fsm,         event = 'Start',      },
-          JTAC = {    onstateparent = 'Assigned',         oneventparent = 'Next',         fsm = ProcessJTAC.Fsm,          event = 'Start',      },
-        }
-      } ) )
-    
-    ProcessRoute:AddScore( "Failed", "failed to destroy a ground unit", -100 )
-    ProcessDestroy:AddScore( "Destroy", "destroyed a ground unit", 25 )
-    ProcessDestroy:AddScore( "Failed", "failed to destroy a ground unit", -100 )
-    
-    Process:Next()
-  
-    return self
-  end
-  
-  --- StateMachine callback function for a TASK
-  -- @param #TASK_A2G self
-  -- @param StateMachine#STATEMACHINE_TASK Fsm
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Event#EVENTDATA Event
-  function TASK_A2G:OnNext( Fsm, Event, From, To, Event )
-  
-    self:SetState( self, "State", To )
-  
   end
   
     --- @param #TASK_A2G self
@@ -134,24 +78,7 @@ do -- TASK_A2G
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
   
-  
-  --- @param #TASK_A2G self
-  function TASK_A2G:_Schedule()
-    self:F2()
-  
-    self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
-    return self
   end
-  
-  
-  --- @param #TASK_A2G self
-  function TASK_A2G._Scheduler()
-    self:F2()
-  
-    return true
-  end
-  
-end
 
 
 
