@@ -381,6 +381,7 @@ do -- DETECTION_DISPATCHER
     
     if Task then
       if Task:IsStatePlanned() and DetectedArea.Changed == true then
+        self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTaskMenu( Task )
         Task = Mission:RemoveTask( Task )
       end
@@ -420,10 +421,11 @@ do -- DETECTION_DISPATCHER
       if not SEADTask then
         local TargetSetUnit = self:EvaluateSEAD( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          SEADTask = Mission:AddTask( TASK_SEAD:New( Mission, self.SetGroup, "SEAD." .. AreaID, TargetSetUnit , DetectedZone ) ):StatePlanned()
+          SEADTask = Mission:AddTask( TASK_SEAD:New( Mission, self.SetGroup, "SEAD." .. AreaID, TargetSetUnit , DetectedZone ) )
         end
       end        
       if SEADTask and SEADTask:IsStatePlanned() then
+        self:E( "Planned" )
         SEADTask:SetPlannedMenu()
         TaskMsg[#TaskMsg+1] = "  - " .. SEADTask:GetStateString() .. " SEAD " .. AreaID .. " - " .. SEADTask.TargetSetUnit:GetUnitTypesText()
       end
@@ -434,7 +436,7 @@ do -- DETECTION_DISPATCHER
       if not CASTask then
         local TargetSetUnit = self:EvaluateCAS( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
+          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
@@ -448,7 +450,7 @@ do -- DETECTION_DISPATCHER
       if not BAITask then
         local TargetSetUnit = self:EvaluateBAI( DetectedArea, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) ):StatePlanned()
+          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then

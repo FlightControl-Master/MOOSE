@@ -133,7 +133,7 @@ function BASE:_SetDestructor()
   local proxyMeta = getmetatable(proxy)
 
   proxyMeta.__gc = function ()
-    -- env.info("In __gc for " .. Child:GetClassNameAndID() )
+    env.info("In __gc for " .. self:GetClassNameAndID() )
     if self._Destructor then
         self:_Destructor()
     end

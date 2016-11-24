@@ -47,12 +47,12 @@ do -- TASK_SEAD
     
     local Fsm = self:GetFsmTemplate()
 
-    Fsm:AddProcess( "Planned",    "Accept",   "Planned", PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
+    Fsm:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
     Fsm:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
     Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
     Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddProcess( "*",          "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    Fsm:AddProcess( "*",          "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     Fsm:AddAction ( "Accounted",  "Success",  "Success" )
     Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
     

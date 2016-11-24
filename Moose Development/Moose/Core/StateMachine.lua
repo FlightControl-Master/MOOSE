@@ -48,22 +48,22 @@ function STATEMACHINE:New( options )
   self.endstates = {}
 
   for _, event in pairs(options.events or {}) do
-    self:E({ "events", event })
+    self:T3({ "events", event })
     self:_eventmap( self.events, event )
   end
 
   for name, callback in pairs(options.callbacks or {}) do
-    self:E("callbacks")
+    self:T3("callbacks")
     self[name] = callback
   end
 
   for name, sub in pairs( options.subs or {} ) do
-    self:E("sub")
+    self:T3("sub")
     self:_submap( self.subs, sub, name )
   end
 
   for name, endstate in pairs( options.endstates or {} ) do
-    self:E("endstate")
+    self:T3("endstate")
     self.endstates[endstate] = endstate
   end
 
@@ -99,7 +99,7 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
   sub.ReturnEvents = ReturnEvents
   
   -- Make the reference table weak.
-  setmetatable( self.options.subs, { __mode = "v" } )
+  -- setmetatable( self.options.subs, { __mode = "v" } )
   self.options.subs[Event] = sub
 
   self:_submap( self.subs, sub, nil )
@@ -136,7 +136,7 @@ function STATEMACHINE:_eventmap( events, event )
 end
 
 function STATEMACHINE:_submap( subs, sub, name )
-  self:E( { sub = sub, name = name } )
+  self:F( { sub = sub, name = name } )
   subs[sub.FromParent] = subs[sub.FromParent] or {}
   subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
   
@@ -187,7 +187,7 @@ function STATEMACHINE._handler( self, EventName, ... )
       --  self:F2( "nextevent = " .. sub.nextevent )
       --  self[sub.nextevent]( self )
       --end
-      self:F2( "calling sub: " .. sub.event )
+      self:E( "calling sub event: " .. sub.event )
       sub.fsm.fsmparent = self
       sub.fsm.ReturnEvents = sub.ReturnEvents
       sub.fsm[sub.event]( sub.fsm )
@@ -243,7 +243,7 @@ end
 function STATEMACHINE:_gosub( ParentFrom, ParentEvent )
   local fsmtable = {}
   if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
-    self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom] } )
+    self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
     return self.subs[ParentFrom][ParentEvent]
   else
     return {}
@@ -271,7 +271,7 @@ function STATEMACHINE:_isendstate( Current )
 end
 
 function STATEMACHINE:_add_to_map(map, event)
-  self:E( { map, event } )
+  self:F3( { map, event } )
   if type(event.from) == 'string' then
     map[event.from] = event.to
   else
@@ -279,7 +279,16 @@ function STATEMACHINE:_add_to_map(map, event)
       map[from] = event.to
     end
   end
-  self:E( { map, event } )
+  self:T3( { map, event } )
+end
+
+function STATEMACHINE:GetState()
+  return self.current
+end
+
+
+function STATEMACHINE:Is( State )
+  return self.current == State
 end
 
 function STATEMACHINE:is(state)
@@ -288,7 +297,7 @@ end
 
 function STATEMACHINE:can(e)
   local event = self.events[e]
-  self:E( { self.current, event } )
+  self:F3( { self.current, event } )
   local to = event and event.map[self.current] or event.map['*']
   return to ~= nil, to
 end
@@ -432,11 +441,13 @@ function STATEMACHINE_PROCESS:Assign( Task, ProcessUnit )
 end
 
 function STATEMACHINE_PROCESS:onenterAssigned( ProcessUnit )
+  self:E( "Assign" )
 
   self.Task:Assign()
 end
 
 function STATEMACHINE_PROCESS:onenterSuccess( ProcessUnit )
+  self:E( "Success" )
 
   self.Task:Success()
 end

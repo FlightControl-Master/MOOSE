@@ -98,7 +98,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategor
   self:SetName( TaskName )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
 
-  self.TaskBriefing = "You are assigned to the task: " .. self.TaskName .. "."
+  self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
 
   self.FsmTemplate = self.FsmTemplate or STATEMACHINE_PROCESS:New( {} )
   self.FsmTemplate:SetTask( self )
@@ -432,6 +432,8 @@ function TASK_BASE.MenuAssignToGroup( MenuParam )
   local self = MenuParam.self
   local TaskGroup = MenuParam.TaskGroup
   
+  self:E( "Assigned menu selected")
+  
   self:AssignToGroup( TaskGroup )
 end
 
@@ -691,7 +693,7 @@ end
 --- Is the @{Task} status **Success**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStateSuccess()
-  return self:GetStateString() == "Success"
+  return self:Is( "Success" )
 end
 
 --- Sets a @{Task} to status **Failed**.
@@ -704,7 +706,7 @@ end
 --- Is the @{Task} status **Failed**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStateFailed()
-  return self:GetStateString() == "Failed"
+  return self:Is( "Failed" )
 end
 
 --- Sets a @{Task} to status **Planned**.
@@ -717,7 +719,7 @@ end
 --- Is the @{Task} status **Planned**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStatePlanned()
-  return self:GetStateString() == "Planned"
+  return self:Is( "Planned" )
 end
 
 --- Sets a @{Task} to status **Assigned**.
@@ -730,7 +732,7 @@ end
 --- Is the @{Task} status **Assigned**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStateAssigned()
-  return self:GetStateString() == "Assigned"
+  return self:Is( "Assigned" )
 end
 
 --- Sets a @{Task} to status **Hold**.
@@ -743,7 +745,7 @@ end
 --- Is the @{Task} status **Hold**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStateHold()
-  return self:GetStateString() == "Hold"
+  return self:Is( "Hold" )
 end
 
 --- Sets a @{Task} to status **Replanned**.
@@ -756,7 +758,7 @@ end
 --- Is the @{Task} status **Replanned**.
 -- @param #TASK_BASE self
 function TASK_BASE:IsStateReplanned()
-  return self:GetStateString() == "Replanned"
+  return self:Is( "Replanned" )
 end
 
 --- Gets the @{Task} status.
@@ -812,28 +814,27 @@ end
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:onenterAssigned( Fsm, Event, From, To )
+function TASK_BASE:onenterAssigned( Event, From, To )
 
   self:E("Assigned")
+    
 end
 
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Event#EVENTDATA Event
-function TASK_BASE:onenterSuccess( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterSuccess( Event, From, To )
 
   self:E("Success")
+  
 end
 
 --- StateMachine callback function for a TASK

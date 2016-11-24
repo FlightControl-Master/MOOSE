@@ -13,7 +13,6 @@ MISSION = {
 	Name = "",
 	MissionStatus = "PENDING",
 	_Clients = {},
-	Tasks = {},
   TaskMenus = {},
   TaskCategoryMenus = {},
   TaskTypeMenus = {},
@@ -57,6 +56,9 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
 	self.MissionCoalition = MissionCoalition
+	
+	self.Tasks = {}
+	setmetatable( self.Tasks, { __mode = "v" } )
 
 	return self
 end
@@ -141,8 +143,7 @@ function MISSION:ClearMissionMenu()
 end
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
--- @param #string TaskIndex is the Index of the @{Task} within the @{Mission}.
--- @param #number TaskID is the ID of the @{Task} within the @{Mission}.
+-- @param #string TaskName The Name of the @{Task} within the @{Mission}.
 -- @return Task#TASK_BASE The Task
 -- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName  )
@@ -178,6 +179,7 @@ end
 function MISSION:RemoveTask( Task )
 
   local TaskName = Task:GetTaskName()
+
   self:F( TaskName )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
 
@@ -186,6 +188,8 @@ function MISSION:RemoveTask( Task )
   -- Ensure everything gets garbarge collected.
   self.Tasks[TaskName] = nil 
   Task = nil
+  
+  collectgarbage()
   
   return nil
 end
@@ -406,7 +410,7 @@ end
 function MISSION:GetTasks()
 	self:F()
 
-	return self._Tasks
+	return self.Tasks
 end
  
 
