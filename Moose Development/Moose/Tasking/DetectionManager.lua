@@ -485,6 +485,9 @@ do -- DETECTION_DISPATCHER
       
     end
     
+    -- TODO set menus using the HQ coordinator
+    --Mission:SetMenu()
+    
     if #AreaMsg > 0 then
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
         if not TaskGroup:GetState( TaskGroup, "Assigned" ) then

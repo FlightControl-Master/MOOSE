@@ -4,10 +4,10 @@
 
 --- The MISSION class
 -- @type MISSION
--- @extends Base#BASE
 -- @field #MISSION.Clients _Clients
 -- @field Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
+-- @extends Core.StateMachine#STATEMACHINE
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -35,7 +35,6 @@ MISSION = {
 
 function MISSION:Meta()
 
-	local self = BASE:Inherit( self, BASE:New() )
 	
 	return self
 end
@@ -47,11 +46,14 @@ end
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
 -- @param DCSCoalitionObject#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
-function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoalition )
+function MISSION:New( HQ, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
-	self = MISSION:Meta()
+  local self = BASE:Inherit( self, STATEMACHINE:New() ) -- Core.StateMachine#STATEMACHINE
+  
 	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
+  self.HQ = HQ
+  HQ:AddMission( self )
 	self.Name = MissionName
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
@@ -59,6 +61,13 @@ function MISSION:New( MissionName, MissionPriority, MissionBriefing, MissionCoal
 	
 	self.Tasks = {}
 	setmetatable( self.Tasks, { __mode = "v" } )
+
+  -- Build the Fsm for the mission.
+  
+  self:SetInitialState( "Idle" )
+  self:AddAction( "Idle", "Start", "Ongoing" )
+  self:AddAction( "Ongoing", "Stop", "Idle" )
+  self:AddAction( "Ongoing", "Finish", "Finished" )
 
 	return self
 end
@@ -83,6 +92,27 @@ end
 -- @return #SCORING Scoring
 function MISSION:GetScoring()
   return self.Scoring
+end
+
+--- Get the groups for which TASKS are given in the mission
+-- @param #MISSION self
+-- @return Core.Set#SET_GROUP
+function MISSION:GetGroups()
+  
+  local SetGroup = SET_GROUP:New()
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK_BASE
+    local GroupSet = Task:GetGroups()
+    GroupSet:ForEachGroup(
+      function( TaskGroup )
+        SetGroup:Add( TaskGroup, TaskGroup )
+      end
+    )
+  end
+  
+  return SetGroup
+  
 end
 
 
@@ -279,25 +309,42 @@ function MISSION:StatusToClients()
 	end
 end
 
---- Handles the reporting. After certain time intervals, a MISSION report MESSAGE will be shown to All Players.
-function MISSION:ReportTrigger()
-	self:F()
+function MISSION:HasGroup( TaskGroup )
+  local Has = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK_BASE
+    if Task:HasGroup( TaskGroup ) then
+      Has = true
+      break
+    end
+  end
+  
+  return Has
+end
 
-	if self.MissionReportShow == true then
-		self.MissionReportShow = false
-		return true
-	else
-		if self.MissionReportFlash == true then
-			if timer.getTime() >= self.MissionReportTrigger then
-				self.MissionReportTrigger = timer.getTime() + self.MissionTimeInterval
-				return true
-			else
-				return false
-			end
-		else
-			return false 
-		end
-	end
+--- Create a summary report of the mission (one line).
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportStatus()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  
+  -- Determine how many tasks are remaining.
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK_BASE
+    if Task:IsStateSuccess() or Task:IsStateFailed() then
+    else
+      TasksRemaining = TasksRemaining + 1
+    end
+  end
+
+  return "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining."
 end
 
 --- Report the status of all MISSIONs to all active Clients.

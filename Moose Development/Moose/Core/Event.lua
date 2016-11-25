@@ -45,13 +45,13 @@ local _EVENTCODES = {
 -- @field weapon
 -- @field IniDCSUnit
 -- @field IniDCSUnitName
--- @field Unit#UNIT           IniUnit
+-- @field Wrapper.Unit#UNIT           IniUnit
 -- @field #string             IniUnitName
 -- @field IniDCSGroup
 -- @field IniDCSGroupName
 -- @field TgtDCSUnit
 -- @field TgtDCSUnitName
--- @field Unit#UNIT           TgtUnit
+-- @field Wrapper.Unit#UNIT           TgtUnit
 -- @field #string             TgtUnitName
 -- @field TgtDCSGroup
 -- @field TgtDCSGroupName

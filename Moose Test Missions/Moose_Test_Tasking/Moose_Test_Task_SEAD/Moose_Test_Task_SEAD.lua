@@ -8,7 +8,9 @@ end
 
 collectgarbage()
 
-local Mission = MISSION:New( 'SEAD Targets', "Strategic", "SEAD the enemy", coalition.side.RED )
+local HQ = COMMANDCENTER:New( GROUP:FindByName( "HQ" ) )
+
+local Mission = MISSION:New( HQ, 'SEAD Targets', "Strategic", "SEAD the enemy", coalition.side.RED )
 local Scoring = SCORING:New( "SEAD" )
 
 Mission:AddScoring( Scoring )
@@ -42,8 +44,5 @@ function FsmSEAD:onenterUpdated( TaskUnit )
   self:Account()
   self:Smoke()
 end
-
--- Needs to be checked, should not be necessary ...
-TaskSEAD:AssignToGroup( SEADSet:Get( "Test SEAD" ) )
 
 Mission:AddTask( TaskSEAD )

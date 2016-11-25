@@ -40,29 +40,29 @@ function STATEMACHINE:New( options )
   --setmetatable( self, MT )
   --self.__index = self
 
-  self.options = options
+  self.options = options or {}
   self.options.subs = self.options.subs or {}
-  self.current = options.initial or 'none'
+  self.current = self.options.initial or 'none'
   self.events = {}
   self.subs = {}
   self.endstates = {}
 
-  for _, event in pairs(options.events or {}) do
+  for _, event in pairs( self.options.events or {}) do
     self:T3({ "events", event })
     self:_eventmap( self.events, event )
   end
 
-  for name, callback in pairs(options.callbacks or {}) do
+  for name, callback in pairs( self.options.callbacks or {}) do
     self:T3("callbacks")
     self[name] = callback
   end
 
-  for name, sub in pairs( options.subs or {} ) do
+  for name, sub in pairs(  self.options.subs or {} ) do
     self:T3("sub")
     self:_submap( self.subs, sub, name )
   end
 
-  for name, endstate in pairs( options.endstates or {} ) do
+  for name, endstate in pairs( self.options.endstates or {} ) do
     self:T3("endstate")
     self.endstates[endstate] = endstate
   end
@@ -104,7 +104,7 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
 
   self:_submap( self.subs, sub, nil )
   
-  self:AddAction( From, Event, "*" )
+  self:AddAction( From, Event, From )
 
   return Process
 end

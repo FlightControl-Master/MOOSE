@@ -720,7 +720,7 @@ end
 
 --- SET_GROUP class
 -- @type SET_GROUP
--- @extends Set#SET_BASE
+-- @extends #SET_BASE
 SET_GROUP = {
   ClassName = "SET_GROUP",
   Filter = {

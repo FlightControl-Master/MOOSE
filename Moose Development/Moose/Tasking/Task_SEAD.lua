@@ -51,8 +51,8 @@ do -- TASK_SEAD
     Fsm:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
     Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
     Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "*",          "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "*",          "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    Fsm:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     Fsm:AddAction ( "Accounted",  "Success",  "Success" )
     Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
     

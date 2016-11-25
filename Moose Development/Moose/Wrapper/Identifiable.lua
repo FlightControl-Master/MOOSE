@@ -1,8 +1,8 @@
 --- This module contains the IDENTIFIABLE class.
 -- 
--- 1) @{Identifiable#IDENTIFIABLE} class, extends @{Object#OBJECT}
+-- 1) @{#IDENTIFIABLE} class, extends @{Object#OBJECT}
 -- ===============================================================
--- The @{Identifiable#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
+-- The @{#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
 --
 --  * Support all DCS Identifiable APIs.
 --  * Enhance with Identifiable specific APIs not in the DCS Identifiable API set.
@@ -12,18 +12,18 @@
 -- ------------------------------
 -- The IDENTIFIABLE class provides the following functions to construct a IDENTIFIABLE instance:
 --
---  * @{Identifiable#IDENTIFIABLE.New}(): Create a IDENTIFIABLE instance.
+--  * @{#IDENTIFIABLE.New}(): Create a IDENTIFIABLE instance.
 --
 -- 1.2) IDENTIFIABLE methods:
 -- --------------------------
 -- The following methods can be used to identify an identifiable object:
 -- 
---    * @{Identifiable#IDENTIFIABLE.GetName}(): Returns the name of the Identifiable.
---    * @{Identifiable#IDENTIFIABLE.IsAlive}(): Returns if the Identifiable is alive.
---    * @{Identifiable#IDENTIFIABLE.GetTypeName}(): Returns the type name of the Identifiable.
---    * @{Identifiable#IDENTIFIABLE.GetCoalition}(): Returns the coalition of the Identifiable.
---    * @{Identifiable#IDENTIFIABLE.GetCountry}(): Returns the country of the Identifiable.
---    * @{Identifiable#IDENTIFIABLE.GetDesc}(): Returns the descriptor structure of the Identifiable.
+--    * @{#IDENTIFIABLE.GetName}(): Returns the name of the Identifiable.
+--    * @{#IDENTIFIABLE.IsAlive}(): Returns if the Identifiable is alive.
+--    * @{#IDENTIFIABLE.GetTypeName}(): Returns the type name of the Identifiable.
+--    * @{#IDENTIFIABLE.GetCoalition}(): Returns the coalition of the Identifiable.
+--    * @{#IDENTIFIABLE.GetCountry}(): Returns the country of the Identifiable.
+--    * @{#IDENTIFIABLE.GetDesc}(): Returns the descriptor structure of the Identifiable.
 --    
 -- 
 -- ===
@@ -60,7 +60,7 @@ function IDENTIFIABLE:New( IdentifiableName )
 end
 
 --- Returns if the Identifiable is alive.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return #boolean true if Identifiable is alive.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:IsAlive()
@@ -81,7 +81,7 @@ end
 
 --- Returns DCS Identifiable object name. 
 -- The function provides access to non-activated objects too.
--- @param Wrapper.Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return #string The name of the DCS Identifiable.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetName()
@@ -100,7 +100,7 @@ end
 
 
 --- Returns the type name of the DCS Identifiable.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return #string The type name of the DCS Identifiable.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetTypeName()
@@ -137,7 +137,7 @@ end
 
 
 --- Returns the DCS Identifiable category name as defined within the DCS Identifiable Descriptor.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return #string The DCS Identifiable Category Name
 function IDENTIFIABLE:GetCategoryName()
   local DCSIdentifiable = self:GetDCSObject()
@@ -152,7 +152,7 @@ function IDENTIFIABLE:GetCategoryName()
 end
 
 --- Returns coalition of the Identifiable.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return DCSCoalitionObject#coalition.side The side of the coalition.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalition()
@@ -171,7 +171,7 @@ function IDENTIFIABLE:GetCoalition()
 end
 
 --- Returns country of the Identifiable.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return DCScountry#country.id The country identifier.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCountry()
@@ -192,7 +192,7 @@ end
 
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
--- @param Identifiable#IDENTIFIABLE self
+-- @param #IDENTIFIABLE self
 -- @return DCSIdentifiable#Identifiable.Desc The Identifiable descriptor.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetDesc()

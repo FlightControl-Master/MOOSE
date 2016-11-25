@@ -52,6 +52,7 @@ Include.File( "Process/Account" )
 Include.File( "Process/Smoke" )
 
 --- Task Handling Classes
+Include.File( "Tasking/CommandCenter" )
 Include.File( "Tasking/Mission" )
 Include.File( "Tasking/Task" )
 Include.File( "Tasking/DetectionManager" )

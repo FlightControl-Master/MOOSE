@@ -55,7 +55,7 @@
 -- @field Mission#MISSION Mission
 -- @field StateMachine#STATEMACHINE Fsm
 -- @field Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @extends Core.Base#BASE
+-- @extends Core.StateMachine#STATEMACHINE_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
   TaskScheduler = nil,
@@ -106,6 +106,13 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategor
   return self
 end
 
+--- Gets the SET_GROUP assigned to the TASK.
+-- @param #TASK_BASE self
+-- @return Core.Set#SET_GROUP
+function TASK_BASE:GetGroups()
+  return self.SetGroup
+end
+
 --- Cleans all references of a TASK_BASE.
 -- @param #TASK_BASE self
 -- @return #nil
@@ -149,6 +156,16 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   end
   
   return self
+end
+
+---
+-- @param #TASK_BASE self
+-- @param Wrapper.Group#GROUP FindGroup
+-- @return #boolean
+function TASK_BASE:HasGroup( FindGroup )
+
+  return self:GetGroups():IsIncludeObject( FindGroup )
+
 end
 
 --- Assign the @{Task} to an alive @{Unit}.

@@ -54,7 +54,11 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 
   -- When no MessageCategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
-    self.MessageCategory = MessageCategory .. ": "
+	  if MessageCategory:sub(-1) ~= "\n" then
+      self.MessageCategory = MessageCategory .. ": "
+    else
+      self.MessageCategory = MessageCategory:sub( 1, -2 ) .. ":\n" 
+    end
   else
     self.MessageCategory = ""
   end

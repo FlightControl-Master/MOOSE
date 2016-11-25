@@ -231,6 +231,84 @@ function BASE:EventRemoveAll()
   return self
 end
 
+--- Subscribe to a S_EVENT_SHOT event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnShot( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOT )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_HIT event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnHit( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HIT )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_TAKEOFF event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnTakeOff( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TAKEOFF )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_LAND event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnLand( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_LAND )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_CRASH event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnCrash( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_CRASH )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_EJECTION event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnEjection( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_EJECTION )
+  
+  return self
+end
+
+
+--- Subscribe to a S_EVENT_REFUELING event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnRefueling( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING )
+  
+  return self
+end
+
 --- Subscribe to a S_EVENT_DEAD event.
 -- @param #BASE self
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
@@ -238,6 +316,171 @@ end
 function BASE:EventOnDead( EventFunction )
 
   _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_DEAD )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_PILOT_DEAD event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnPilotDead( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PILOT_DEAD )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_BASE_CAPTURED event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnBaseCaptured( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BASE_CAPTURED )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_MISSION_START event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnMissionStart( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_START )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_MISSION_END event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnPlayerMissionEnd( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_END )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_TOOK_CONTROL event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnTookControl( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TOOK_CONTROL )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_REFUELING_STOP event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnRefuelingStop( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING_STOP )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_BIRTH event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnBirth( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BIRTH )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_HUMAN_FAILURE event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnHumanFailure( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HUMAN_FAILURE )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_ENGINE_STARTUP event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnEngineStartup( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_STARTUP )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_ENGINE_SHUTDOWN event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnEngineShutdown( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_SHUTDOWN )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_PLAYER_ENTER_UNIT event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnPlayerEnterUnit( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_ENTER_UNIT )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_PLAYER_LEAVE_UNIT event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnPlayerLeaveUnit( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_PLAYER_COMMENT event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnPlayerComment( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_COMMENT )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_SHOOTING_START event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnShootingStart( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_START )
+  
+  return self
+end
+
+--- Subscribe to a S_EVENT_SHOOTING_END event.
+-- @param #BASE self
+-- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @return #BASE
+function BASE:EventOnShootingEnd( EventFunction )
+
+  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_END )
   
   return self
 end

@@ -342,7 +342,7 @@ function UNIT:GetNumber()
 end
 
 --- Returns the unit's group if it exist and nil otherwise.
--- @param Unit#UNIT self
+-- @param Wrapper.Unit#UNIT self
 -- @return Group#GROUP The Group of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetGroup()
