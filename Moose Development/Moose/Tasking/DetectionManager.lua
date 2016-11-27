@@ -1,4 +1,4 @@
---- This module contains the DETECTION_MANAGER class and derived classes.
+-- This module contains the DETECTION_MANAGER class and derived classes.
 -- 
 -- ===
 -- 
@@ -426,7 +426,7 @@ do -- DETECTION_DISPATCHER
       end        
       if SEADTask and SEADTask:IsStatePlanned() then
         self:E( "Planned" )
-        SEADTask:SetPlannedMenu()
+        --SEADTask:SetPlannedMenu()
         TaskMsg[#TaskMsg+1] = "  - " .. SEADTask:GetStateString() .. " SEAD " .. AreaID .. " - " .. SEADTask.TargetSetUnit:GetUnitTypesText()
       end
 
@@ -440,7 +440,7 @@ do -- DETECTION_DISPATCHER
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
-        CASTask:SetPlannedMenu()
+        --CASTask:SetPlannedMenu()
         TaskMsg[#TaskMsg+1] = "  - " .. CASTask:GetStateString() .. " CAS " .. AreaID .. " - " .. CASTask.TargetSetUnit:GetUnitTypesText()
       end
 
@@ -454,7 +454,7 @@ do -- DETECTION_DISPATCHER
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
-        BAITask:SetPlannedMenu()
+        --BAITask:SetPlannedMenu()
         TaskMsg[#TaskMsg+1] = "  - " .. BAITask:GetStateString() .. " BAI "  .. AreaID .. " - " .. BAITask.TargetSetUnit:GetUnitTypesText()
       end
 
@@ -486,7 +486,7 @@ do -- DETECTION_DISPATCHER
     end
     
     -- TODO set menus using the HQ coordinator
-    --Mission:SetMenu()
+    Mission:SetMenu()
     
     if #AreaMsg > 0 then
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do

@@ -118,15 +118,13 @@ end
 
 --- Sets the Planned Task menu.
 -- @param #MISSION self
-function MISSION:SetPlannedMenu()
+function MISSION:SetMenu()
   
-  self:E( self.Tasks )
-  for _, TaskData in pairs( self.Tasks ) do
-    local Task = TaskData -- Tasking.Task#TASK_BASE
+  for _, Task in pairs( self.Tasks ) do
+    local Task = Task -- Tasking.Task#TASK_BASE
     Task:RemoveMenu()
-    Task:SetPlannedMenu()  
+    Task:SetMenu()  
   end
-  
 end
 
 --- Sets the Assigned Task menu.

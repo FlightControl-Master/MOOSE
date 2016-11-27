@@ -142,7 +142,6 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   
   TaskGroup:SetState( TaskGroup, "Assigned", self )
   
-  self:RemoveMenuForGroup( TaskGroup )
   self:SetAssignedMenuForGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
@@ -288,23 +287,13 @@ end
 --- Set the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK_BASE self
 -- @return #TASK_BASE self
-function TASK_BASE:SetPlannedMenu()
+function TASK_BASE:SetMenu()
 
-  local MenuText = self:GetPlannedMenuText()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if not self:IsAssignedToGroup( TaskGroup ) then
+      local MenuText = self:GetPlannedMenuText()
       self:SetPlannedMenuForGroup( TaskGroup, MenuText )
-    end
-  end  
-end
-
---- Set the menu options of the @{Task} to all the groups in the SetGroup.
--- @param #TASK_BASE self
--- @return #TASK_BASE self
-function TASK_BASE:SetAssignedMenu()
-
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if self:IsAssignedToGroup( TaskGroup ) then
+    else
       self:SetAssignedMenuForGroup( TaskGroup )
     end
   end  
@@ -317,8 +306,10 @@ function TASK_BASE:RemoveMenu()
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     self:RemoveMenuForGroup( TaskGroup )
-  end  
+  end
 end
+
+
 
 --- Set the planned menu option of the @{Task}.
 -- @param #TASK_BASE self

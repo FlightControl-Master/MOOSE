@@ -111,6 +111,17 @@ function COMMANDCENTER:RemoveMission( Mission )
   return Mission
 end
 
+--- Sets the menu structure of the Missions governed by the HQ command center.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:SetMenu()
+
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission:SetMenu()
+  end
+end
+
+
 --- Checks of the COMMANDCENTER has a GROUP.
 -- @param #COMMANDCENTER self
 -- @param Wrapper.Group#GROUP
