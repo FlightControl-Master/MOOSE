@@ -853,8 +853,8 @@ do
     self.MenuText = MenuText
     self.ParentMenu = ParentMenu
   
-    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
-    local MenuPath = self.MenuGroup._Menu
+    self.MenuGroup._MenuPath = self.MenuGroup._MenuPath or {}
+    local MenuPath = self.MenuGroup._MenuPath
     
     self:E(self.MenuParentPath)
     self:E( ParentMenu )

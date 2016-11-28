@@ -163,8 +163,16 @@ end
 -- @param Group#GROUP TaskGroup
 -- @return Menu#MENU_COALITION self
 function MISSION:GetMissionMenu( TaskGroup )
+
+  local CommandCenter = self:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter.CommandCenterMenu
+
+  local MissionName = self:GetName()
+
   local TaskGroupName = TaskGroup:GetName()
-  return self.MenuMission[TaskGroupName]
+  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
+  
+  return MissionMenu
 end
 
 

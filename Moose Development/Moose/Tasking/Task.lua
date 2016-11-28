@@ -325,13 +325,9 @@ function TASK_BASE:SetPlannedMenuForGroup( TaskGroup, MenuText )
   self:E( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
-  local CommandCenter = Mission:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter.CommandCenterMenu
+  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
 
-  local MissionName = Mission:GetName()
   local TaskType = self:GetType()
-    
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu )
   local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } )
       
@@ -346,14 +342,10 @@ function TASK_BASE:SetAssignedMenuForGroup( TaskGroup )
   self:E( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
-  local CommandCenter = Mission:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter.CommandCenterMenu
+  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
 
-  local MissionName = Mission:GetName()
-
-  local TaskGroupName = TaskGroup:GetName()
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
   self:E( { MissionMenu = MissionMenu } )
+
   local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MissionMenu, self.MenuTaskStatus, { self = self, TaskGroup = TaskGroup } )
   local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MissionMenu, self.MenuTaskAbort, { self = self, TaskGroup = TaskGroup } )
 
