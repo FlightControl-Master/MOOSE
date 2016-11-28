@@ -810,7 +810,7 @@ do
   -- @param #MENU_GROUP self
   -- @return #nil
   function MENU_GROUP:Remove()
-    self:F( self.MenuGroupID, self.MenuPath )
+    self:F( { self.MenuGroupID, self.MenuPath } )
   
     self:RemoveSubMenus()
   
