@@ -759,45 +759,38 @@ do
   -- @return #MENU_GROUP self
   function MENU_GROUP:New( MenuGroup, MenuText, ParentMenu )
   
-    -- Arrange meta tables
-    local MenuParentPath = {}
-    if ParentMenu ~= nil then
-      MenuParentPath = ParentMenu.MenuPath
-    end
-  
-    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, MenuParentPath ) )
+    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
     self:F( { MenuGroup, MenuText, ParentMenu } )
   
     self.MenuGroup = MenuGroup
     self.MenuGroupID = MenuGroup:GetID()
-    self.MenuParentPath = MenuParentPath
     self.MenuText = MenuText
     self.ParentMenu = ParentMenu
     
     self.Menus = {}
-  
-    if not _MENUGROUPS[self.MenuGroupID] then
-      _MENUGROUPS[self.MenuGroupID] = {}
-    end
     
-    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+    -- This is special
+    
+    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
+    local MenuPath = self.MenuGroup._Menu
   
-    self:T( { MenuGroup:GetName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
+    self:T( { MenuGroup:GetName(), MenuPath[table.concat(self.MenuParentPath)], self.MenuParentPath, MenuText } )
   
-    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
+    local MenuPathID = table.concat(self.MenuParentPath) .. "/" .. MenuText
     if MenuPath[MenuPathID] then
-      missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
+      self.MenuPath = MenuPath[MenuPathID]
+    else
+    
+      self:T( { "Adding for MenuPath ", MenuText, self.MenuParentPath } )
+      self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, self.MenuParentPath )
+      MenuPath[MenuPathID] = self.MenuPath
+      if ParentMenu and ParentMenu.Menus then
+        ParentMenu.Menus[self.MenuPath] = self
+      end
     end
-  
-    self:T( { "Adding for MenuPath ", MenuText, MenuParentPath } )
-    self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, MenuParentPath )
-    MenuPath[MenuPathID] = self.MenuPath
   
     self:T( { self.MenuGroupID, self.MenuPath } )
   
-    if ParentMenu and ParentMenu.Menus then
-      ParentMenu.Menus[self.MenuPath] = self
-    end
     return self
   end
   
@@ -817,15 +810,12 @@ do
   -- @param #MENU_GROUP self
   -- @return #nil
   function MENU_GROUP:Remove()
-    self:F( self.MenuPath )
+    self:F( self.MenuGroupID, self.MenuPath )
   
     self:RemoveSubMenus()
   
-    if not _MENUGROUPS[self.MenuGroupID] then
-      _MENUGROUPS[self.MenuGroupID] = {}
-    end
-    
-    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
+    local MenuPath = self.MenuGroup._Menu
   
     if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
       MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
@@ -863,24 +853,26 @@ do
     self.MenuText = MenuText
     self.ParentMenu = ParentMenu
   
-    if not _MENUGROUPS[self.MenuGroupID] then
-      _MENUGROUPS[self.MenuGroupID] = {}
-    end
+    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
+    local MenuPath = self.MenuGroup._Menu
     
-    local MenuPath = _MENUGROUPS[self.MenuGroupID]
+    self:E(self.MenuParentPath)
+    self:E( ParentMenu )
+    self:E( MenuText )
   
     self:T( { MenuGroup:GetName(), MenuPath[table.concat(self.MenuParentPath)], self.MenuParentPath, MenuText, CommandMenuFunction, arg } )
   
     local MenuPathID = table.concat(self.MenuParentPath) .. "/" .. MenuText
     if MenuPath[MenuPathID] then
-      missionCommands.removeItemForGroup( self.MenuGroupID, MenuPath[MenuPathID] )
+      self.MenuPath = MenuPath[MenuPathID]
+    else
+      self:T( { "Adding for MenuPath ", MenuText, self.MenuParentPath } )
+      self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
+      MenuPath[MenuPathID] = self.MenuPath
+      if ParentMenu and ParentMenu.Menus then
+        ParentMenu.Menus[self.MenuPath] = self
+      end
     end
-    
-    self:T( { "Adding for MenuPath ", MenuText, self.MenuParentPath } )
-    self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
-    MenuPath[MenuPathID] = self.MenuPath
-   
-    ParentMenu.Menus[self.MenuPath] = self
     
     return self
   end
@@ -889,14 +881,10 @@ do
   -- @param #MENU_GROUP_COMMAND self
   -- @return #nil
   function MENU_GROUP_COMMAND:Remove()
-    self:F( self.MenuPath )
+    self:F( { self.MenuGroupID, self.MenuPath } )
   
-    if not _MENUGROUPS[self.MenuGroupID] then
-      _MENUGROUPS[self.MenuGroupID] = {}
-    end
-    
-    local MenuPath = _MENUGROUPS[self.MenuGroupID]
-
+    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
+    local MenuPath = self.MenuGroup._Menu
   
     if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
       MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
