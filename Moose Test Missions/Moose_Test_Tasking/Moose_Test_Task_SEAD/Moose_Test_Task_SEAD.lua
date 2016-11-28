@@ -46,3 +46,5 @@ function FsmSEAD:onenterUpdated( TaskUnit )
 end
 
 Mission:AddTask( TaskSEAD )
+
+HQ:SetMenu()

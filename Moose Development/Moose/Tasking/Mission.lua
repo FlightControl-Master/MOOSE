@@ -41,19 +41,21 @@ end
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
 -- @param #MISSION self
+-- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
 -- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
 -- @param DCSCoalitionObject#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
-function MISSION:New( HQ, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
+function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
   local self = BASE:Inherit( self, STATEMACHINE:New() ) -- Core.StateMachine#STATEMACHINE
   
 	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
-  self.HQ = HQ
-  HQ:AddMission( self )
+  self.CommandCenter = CommandCenter
+  CommandCenter:AddMission( self )
+  
 	self.Name = MissionName
 	self.MissionPriority = MissionPriority
 	self.MissionBriefing = MissionBriefing
@@ -118,13 +120,17 @@ end
 
 --- Sets the Planned Task menu.
 -- @param #MISSION self
+-- @param Core.Menu#MENU_COALITION CommandCenterMenu
 function MISSION:SetMenu()
   
   for _, Task in pairs( self.Tasks ) do
     local Task = Task -- Tasking.Task#TASK_BASE
-    Task:RemoveMenu()
     Task:SetMenu()  
   end
+end
+
+function MISSION:GetCommandCenter()
+  return self.CommandCenter
 end
 
 --- Sets the Assigned Task menu.

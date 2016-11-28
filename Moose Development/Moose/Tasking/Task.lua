@@ -106,6 +106,11 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategor
   return self
 end
 
+function TASK_BASE:GetMission()
+
+  return self.Mission
+end
+
 --- Gets the SET_GROUP assigned to the TASK.
 -- @param #TASK_BASE self
 -- @return Core.Set#SET_GROUP
@@ -142,6 +147,7 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   
   TaskGroup:SetState( TaskGroup, "Assigned", self )
   
+  self:RemoveMenuForGroup( TaskGroup )
   self:SetAssignedMenuForGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
@@ -291,8 +297,7 @@ function TASK_BASE:SetMenu()
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if not self:IsAssignedToGroup( TaskGroup ) then
-      local MenuText = self:GetPlannedMenuText()
-      self:SetPlannedMenuForGroup( TaskGroup, MenuText )
+      self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName() )
     else
       self:SetAssignedMenuForGroup( TaskGroup )
     end
@@ -319,38 +324,17 @@ end
 function TASK_BASE:SetPlannedMenuForGroup( TaskGroup, MenuText )
   self:E( TaskGroup:GetName() )
 
-  local TaskMission = self.Mission:GetName()
-  local TaskCategory = self:GetCategory()
+  local Mission = self:GetMission()
+  local CommandCenter = Mission:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter.CommandCenterMenu
+
+  local MissionName = Mission:GetName()
   local TaskType = self:GetType()
-  
-  local Mission = self.Mission
-  
-  Mission.MenuMission = Mission.MenuMission or {}
-  local MenuMission = Mission.MenuMission
-
-  Mission.MenuCategory = Mission.MenuCategory or {}
-  local MenuCategory = Mission.MenuCategory
-  
-  Mission.MenuType = Mission.MenuType or {} 
-  local MenuType = Mission.MenuType
-  
-  self.Menu = self.Menu or {}
-  local Menu = self.Menu
-  
-  local TaskGroupName = TaskGroup:GetName()
-  MenuMission[TaskGroupName] = MenuMission[TaskGroupName] or MENU_GROUP:New( TaskGroup, TaskMission, nil )
-  
-  MenuCategory[TaskGroupName] = MenuCategory[TaskGroupName] or {}
-  MenuCategory[TaskGroupName][TaskCategory] = MenuCategory[TaskGroupName][TaskCategory] or MENU_GROUP:New( TaskGroup, TaskCategory, MenuMission[TaskGroupName] )
-  
-  MenuType[TaskGroupName] = MenuType[TaskGroupName] or {}
-  MenuType[TaskGroupName][TaskType] = MenuType[TaskGroupName][TaskType] or MENU_GROUP:New( TaskGroup, TaskType, MenuCategory[TaskGroupName][TaskCategory] )
-  
-  if Menu[TaskGroupName] then
-    Menu[TaskGroupName]:Remove()
-  end
-  Menu[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, MenuType[TaskGroupName][TaskType], self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } )
-
+    
+  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
+  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } )
+      
   return self
 end
 
@@ -361,24 +345,17 @@ end
 function TASK_BASE:SetAssignedMenuForGroup( TaskGroup )
   self:E( TaskGroup:GetName() )
 
-  local TaskMission = self.Mission:GetName()
-  
-  local Mission = self.Mission
+  local Mission = self:GetMission()
+  local CommandCenter = Mission:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter.CommandCenterMenu
 
-  Mission.MenuMission = Mission.MenuMission or {}
-  local MenuMission = Mission.MenuMission
-
-  self.MenuStatus = self.MenuStatus or {}
-  local MenuStatus = self.MenuStatus
-
-  
-  self.MenuAbort = self.MenuAbort or {}
-  local MenuAbort = self.MenuAbort
+  local MissionName = Mission:GetName()
 
   local TaskGroupName = TaskGroup:GetName()
-  MenuMission[TaskGroupName] = MenuMission[TaskGroupName] or MENU_GROUP:New( TaskGroup, TaskMission, nil )
-  MenuStatus[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MenuMission[TaskGroupName], self.MenuTaskStatus, { self = self, TaskGroup = TaskGroup } )
-  MenuAbort[TaskGroupName] = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MenuMission[TaskGroupName], self.MenuTaskAbort, { self = self, TaskGroup = TaskGroup } )
+  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
+  self:E( { MissionMenu = MissionMenu } )
+  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MissionMenu, self.MenuTaskStatus, { self = self, TaskGroup = TaskGroup } )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MissionMenu, self.MenuTaskAbort, { self = self, TaskGroup = TaskGroup } )
 
   return self
 end
@@ -389,50 +366,11 @@ end
 -- @return #TASK_BASE self
 function TASK_BASE:RemoveMenuForGroup( TaskGroup )
 
-  local TaskGroupName = TaskGroup:GetName()
-  
-  local Mission = self.Mission
-  local MenuMission = Mission.MenuMission
-  local MenuCategory = Mission.MenuCategory
-  local MenuType = Mission.MenuType
-  local MenuStatus = self.MenuStatus
-  local MenuAbort = self.MenuAbort
-  local Menu = self.Menu
+  local Mission = self:GetMission()
+  local MissionName = Mission:GetName()
 
-  Menu = Menu or {}
-  if Menu[TaskGroupName] then
-    Menu[TaskGroupName]:Remove()
-    Menu[TaskGroupName] = nil
-  end
-
-  MenuType = MenuType or {}
-  if MenuType[TaskGroupName] then
-    for _, Menu in pairs( MenuType[TaskGroupName] ) do
-      Menu:Remove()
-    end
-    MenuType[TaskGroupName] = nil
-  end
-
-  MenuCategory = MenuCategory or {}
-  if MenuCategory[TaskGroupName] then
-    for _, Menu in pairs( MenuCategory[TaskGroupName] ) do
-      Menu:Remove()
-    end
-    MenuCategory[TaskGroupName] = nil
-  end
-  
-  MenuStatus = MenuStatus or {}
-  if MenuStatus[TaskGroupName] then
-    MenuStatus[TaskGroupName]:Remove()
-    MenuStatus[TaskGroupName] = nil
-  end
-  
-  MenuAbort = MenuAbort or {}
-  if MenuAbort[TaskGroupName] then
-    MenuAbort[TaskGroupName]:Remove()
-    MenuAbort[TaskGroupName] = nil
-  end
-
+  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName )
+  MissionMenu:Remove()
 end
 
 function TASK_BASE.MenuAssignToGroup( MenuParam )
@@ -829,6 +767,7 @@ end
 function TASK_BASE:onenterAssigned( Event, From, To )
 
   self:E("Assigned")
+  
     
 end
 

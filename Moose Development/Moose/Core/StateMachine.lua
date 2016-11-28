@@ -205,8 +205,11 @@ function STATEMACHINE._handler( self, EventName, ... )
     end
 
     if execute then
-      self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
-      self:_call_handler("onenter" .. to, params)
+      -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
+      if from ~= to then
+        self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+        self:_call_handler("onenter" .. to, params)
+      end
 
       self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
       if ( self:_call_handler("OnBefore" .. to, params ) ~= false ) then
@@ -434,6 +437,8 @@ function STATEMACHINE_PROCESS:Assign( Task, ProcessUnit )
   self:SetTask( Task )
   
   self.ProcessGroup = ProcessUnit:GetGroup()
+  --Task:RemoveMenuForGroup( self.ProcessGroup )
+  --Task:SetAssignedMenuForGroup( self.ProcessGroup )
     
   --self:Activate()
 

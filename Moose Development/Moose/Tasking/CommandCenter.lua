@@ -2,15 +2,7 @@
 -- A COMMANDCENTER governs multiple missions, the tasking and the reporting.
 -- @module CommandCenter
 
---- The COMMANDCENTER class
--- @type COMMANDCENTER
--- @field Wrapper.Group#GROUP HQ
--- @list<Tasking.Mission#MISSION> Missions
--- @extends Core.Base#BASE
-COMMANDCENTER = {
-	ClassName = "COMMANDCENTER",
-	Name = "",
-}
+
 
 --- The REPORT class
 -- @type REPORT
@@ -46,19 +38,31 @@ function REPORT:Text()
   return table.concat( self.Report, "\n" ) 
 end
 
-
+--- The COMMANDCENTER class
+-- @type COMMANDCENTER
+-- @field Wrapper.Group#GROUP HQ
+-- @field Dcs.DCSCoalitionObject#coalition CommandCenterCoalition
+-- @list<Tasking.Mission#MISSION> Missions
+-- @extends Core.Base#BASE
+COMMANDCENTER = {
+  ClassName = "COMMANDCENTER",
+  CommandCenterName = "",
+  CommandCenterCoalition = nil,
+  CommandCenterPositionable = nil,
+  Name = "",
+}
 --- The constructor takes an IDENTIFIABLE as the HQ command center.
 -- @param #COMMANDCENTER self
--- @param Wrapper.Positionable#POSITIONABLE HQ
--- @param #string HQName
+-- @param Wrapper.Positionable#POSITIONABLE CommandCenterPositionable
+-- @param #string CommandCenterName
 -- @return #COMMANDCENTER
-function COMMANDCENTER:New( HQ, HQName )
+function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   local self = BASE:Inherit( self, BASE:New() )
 
-  self.HQ = HQ  
-  self.HQName = HQName or HQ:GetName()
-  self.HQCoalition = HQ:GetCoalition()
+  self.CommandCenterPositionable = CommandCenterPositionable  
+  self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
+  self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
 	
 	self.Missions = {}
 	setmetatable( self.Missions, { __mode = "v" } )
@@ -69,8 +73,7 @@ function COMMANDCENTER:New( HQ, HQName )
       self:E( { EventData } )
       local EventGroup = GROUP:Find( EventData.IniDCSGroup )
       if EventGroup and HQ:HasGroup( EventGroup ) then
-        local MenuHQ = MENU_GROUP:New( EventGroup, "HQ" )
-        local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", MenuHQ )
+        local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
         local MenuMissions = MENU_GROUP_COMMAND:New( EventGroup, "Missions", MenuReporting, HQ.ReportMissions, HQ, EventGroup )
       end
     end
@@ -115,6 +118,8 @@ end
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
 
+  self.CommandCenterMenu = MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
+  
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:SetMenu()
