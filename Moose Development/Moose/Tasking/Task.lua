@@ -361,7 +361,7 @@ function TASK_BASE:RemoveMenuForGroup( TaskGroup )
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
 
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName )
+  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
   MissionMenu:Remove()
 end
 

@@ -759,38 +759,35 @@ do
   -- @return #MENU_GROUP self
   function MENU_GROUP:New( MenuGroup, MenuText, ParentMenu )
   
-    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-    self:F( { MenuGroup, MenuText, ParentMenu } )
-  
-    self.MenuGroup = MenuGroup
-    self.MenuGroupID = MenuGroup:GetID()
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
+    -- Determine if the menu was not already created and already visible at the group.
+    -- If it is visible, then return the cached self, otherwise, create self and cache it.
     
-    self.Menus = {}
-    
-    -- This is special
-    
-    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
-    local MenuPath = self.MenuGroup._Menu
-  
-    self:T( { MenuGroup:GetName(), MenuPath[table.concat(self.MenuParentPath)], self.MenuParentPath, MenuText } )
-  
-    local MenuPathID = table.concat(self.MenuParentPath) .. "/" .. MenuText
-    if MenuPath[MenuPathID] then
-      self.MenuPath = MenuPath[MenuPathID]
+    MenuGroup._Menus = MenuGroup._Menus or {}
+    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText 
+    if MenuGroup._Menus[Path] then
+      self = MenuGroup._Menus[Path]
     else
-    
-      self:T( { "Adding for MenuPath ", MenuText, self.MenuParentPath } )
+      self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+      MenuGroup._Menus[Path] = self
+
+      self.Menus = {}
+
+      self.MenuGroup = MenuGroup
+      self.Path = Path
+      self.MenuGroupID = MenuGroup:GetID()
+      self.MenuText = MenuText
+      self.ParentMenu = ParentMenu
+
+      self:T( { "Adding Menu ", MenuText, self.MenuParentPath } )
       self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, self.MenuParentPath )
-      MenuPath[MenuPathID] = self.MenuPath
+
       if ParentMenu and ParentMenu.Menus then
         ParentMenu.Menus[self.MenuPath] = self
       end
     end
-  
-    self:T( { self.MenuGroupID, self.MenuPath } )
-  
+    
+    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+
     return self
   end
   
@@ -814,16 +811,16 @@ do
   
     self:RemoveSubMenus()
   
-    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
-    local MenuPath = self.MenuGroup._Menu
-  
-    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-    end
+    if self.MenuGroup._Menus[self.Path] then
+      self = self.MenuGroup._Menus[self.Path]
     
-    missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-    if self.ParentMenu then
-      self.ParentMenu.Menus[self.MenuPath] = nil
+      missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+      if self.ParentMenu then
+        self.ParentMenu.Menus[self.MenuPath] = nil
+      end
+      self:E( self.MenuGroup._Menus[self.Path] )
+      self.MenuGroup._Menus[self.Path] = nil
+      self = nil
     end
     return nil
   end
@@ -846,34 +843,30 @@ do
   -- @return Menu#MENU_GROUP_COMMAND self
   function MENU_GROUP_COMMAND:New( MenuGroup, MenuText, ParentMenu, CommandMenuFunction, ... )
    
-    local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
-    
-    self.MenuGroup = MenuGroup
-    self.MenuGroupID = MenuGroup:GetID()
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-  
-    self.MenuGroup._MenuPath = self.MenuGroup._MenuPath or {}
-    local MenuPath = self.MenuGroup._MenuPath
-    
-    self:E(self.MenuParentPath)
-    self:E( ParentMenu )
-    self:E( MenuText )
-  
-    self:T( { MenuGroup:GetName(), MenuPath[table.concat(self.MenuParentPath)], self.MenuParentPath, MenuText, CommandMenuFunction, arg } )
-  
-    local MenuPathID = table.concat(self.MenuParentPath) .. "/" .. MenuText
-    if MenuPath[MenuPathID] then
-      self.MenuPath = MenuPath[MenuPathID]
+    MenuGroup._Menus = MenuGroup._Menus or {}
+    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText 
+    if MenuGroup._Menus[Path] then
+      self = MenuGroup._Menus[Path]
     else
-      self:T( { "Adding for MenuPath ", MenuText, self.MenuParentPath } )
+      self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+      MenuGroup._Menus[Path] = self
+
+      self.Path = Path
+      self.MenuGroup = MenuGroup
+      self.MenuGroupID = MenuGroup:GetID()
+      self.MenuText = MenuText
+      self.ParentMenu = ParentMenu
+
+      self:T( { "Adding Command Menu ", MenuText, self.MenuParentPath } )
       self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
-      MenuPath[MenuPathID] = self.MenuPath
+
       if ParentMenu and ParentMenu.Menus then
         ParentMenu.Menus[self.MenuPath] = self
       end
     end
-    
+
+    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+
     return self
   end
   
@@ -882,16 +875,17 @@ do
   -- @return #nil
   function MENU_GROUP_COMMAND:Remove()
     self:F( { self.MenuGroupID, self.MenuPath } )
+
+    if self.MenuGroup._Menus[self.Path] then
+      self = self.MenuGroup._Menus[self.Path]
   
-    self.MenuGroup._Menu = self.MenuGroup._Menu or {}
-    local MenuPath = self.MenuGroup._Menu
-  
-    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
+      missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+      self.ParentMenu.Menus[self.MenuPath] = nil
+      self:E( self.MenuGroup._Menus[self.Path] )
+      self.MenuGroup._Menus[self.Path] = nil
+      self = nil
     end
     
-    missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-    self.ParentMenu.Menus[self.MenuPath] = nil
     return nil
   end
 
