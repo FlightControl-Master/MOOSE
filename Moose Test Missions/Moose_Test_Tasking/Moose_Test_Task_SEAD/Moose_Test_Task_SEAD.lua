@@ -99,7 +99,7 @@ TaskSEAD:AddScoreTask( "Success", "Destroyed all target radars", 250 )
 TaskSEAD:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
 
 TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
-TaskSEAD:AddScoreProcess( "Account", "Fail", "failed to destroy a radar", -100 )
+TaskSEAD:AddScoreProcess( "Account", "Failed", "failed to destroy a radar", -10 )
 
 function FsmSEAD:onenterUpdated( TaskUnit )
   self:E( { self } )
