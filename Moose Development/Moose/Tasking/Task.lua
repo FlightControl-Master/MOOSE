@@ -53,7 +53,7 @@
 -- @type TASK_BASE
 -- @field Scheduler#SCHEDULER TaskScheduler
 -- @field Mission#MISSION Mission
--- @field StateMachine#STATEMACHINE Fsm
+-- @field Core.StateMachine#STATEMACHINE_PROCESS FsmTemplate
 -- @field Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
 -- @extends Core.StateMachine#STATEMACHINE_TASK
 TASK_BASE = {
@@ -65,6 +65,7 @@ TASK_BASE = {
   Scores = {},
   Menu = {},
   SetGroup = nil,
+  FsmTemplate = nil,
 }
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
@@ -73,12 +74,11 @@ TASK_BASE = {
 -- @param Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
 -- @param #string TaskName The name of the Task
 -- @param #string TaskType The type of the Task
--- @param #string TaskCategory The category of the Task (A2G, A2A, Transport, ... )
 -- @return #TASK_BASE self
-function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategory )
+function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
 
-  local self = BASE:Inherit( self, STATEMACHINE_TASK:New( {} ) )
+  local self = BASE:Inherit( self, STATEMACHINE_TASK:New( {} ) ) -- Core.StateMachine#STATEMACHINE_TASK
 
   self:SetInitialState( "Planned" )
   self:AddAction( "Planned", "Assign", "Assigned" )
@@ -93,7 +93,6 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType, TaskCategor
   self.Mission = Mission
   self.SetGroup = SetGroupAssign
 
-  self:SetCategory( TaskCategory )
   self:SetType( TaskType )
   self:SetName( TaskName )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
@@ -116,19 +115,6 @@ end
 -- @return Core.Set#SET_GROUP
 function TASK_BASE:GetGroups()
   return self.SetGroup
-end
-
---- Cleans all references of a TASK_BASE.
--- @param #TASK_BASE self
--- @return #nil
-function TASK_BASE:CleanUp()
-
-  _EVENTDISPATCHER:OnPlayerLeaveRemove( self )
-  _EVENTDISPATCHER:OnDeadRemove( self )
-  _EVENTDISPATCHER:OnCrashRemove( self )
-  _EVENTDISPATCHER:OnPilotDeadRemove( self )
-  
-  return nil
 end
 
 function TASK_BASE:GetFsmTemplate()
@@ -183,7 +169,7 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   -- Copy the FsmTemplate, which is not assigned to a Unit.
   -- Assign the FsmTemplate to the TaskUnit.
   local FsmTemplate = self:GetFsmTemplate()
-  local FsmUnit = UTILS.DeepCopy( FsmTemplate )
+  local FsmUnit = UTILS.DeepCopy( FsmTemplate ) -- Core.StateMachine#STATEMACHINE_PROCESS
   FsmUnit:Assign( self, TaskUnit )
   
   -- Assign each FsmSub in FsmUnit to the TaskUnit.
@@ -192,28 +178,15 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   for FsmSubID, FsmSub in pairs( FsmUnit:GetSubs() ) do
     self:E( { "Sub ID", FsmSub.fsm:GetClassNameAndID(), FsmSubID } )
     FsmSub.fsm:Assign( self, TaskUnit )
-    --FsmSub.fsm:_SetDestructor()
-    
-    
-    --FsmSub.fsm = nil
-    --collectgarbage()
   end
   
-  
---  for TransitionID, TransitionTemplate in ipairs( self.TransitionTemplates ) do
---    self:E( TransitionTemplate )
---    FSM:AddTransition( TransitionTemplate.From, TransitionTemplate.Event, TransitionTemplate.To )
---  end
-  
-  -- Copy each ProcessTemplate for the TaskUnit that is alive, as set as a template at the Parent.
-  -- Each Process will start From a state, upon a fired Event.
-  -- Upon finalization of the Process, the ReturnEvents contain for which Return state which Event of the Parent needs to be fired.
-  -- The Return state of the Process is transferred to the Parent.
---  for ProcessID, ProcessTemplate in ipairs( self.ProcessTemplates ) do
---    FSM:AddProcess( ProcessTemplate.From, ProcessTemplate.Event, Process, ProcessTemplate.ReturnEvents )
---    self:E( { "Process ID", Process:GetClassNameAndID() } )
---    Process:Assign( self, TaskUnit )
---  end
+  -- Set the events
+  FsmUnit:EventOnPilotDead( 
+    --- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      self:__Fail( 1 )
+    end
+    )
 
   FsmUnit:SetInitialState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
@@ -552,16 +525,15 @@ function TASK_BASE:GetScoring()
 end
 
 
---- Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.
+--- Gets the Task Index, which is a combination of the Task type, the Task name.
 -- @param #TASK_BASE self
 -- @return #string The Task ID
 function TASK_BASE:GetTaskIndex()
 
-  local TaskCategory = self:GetCategory()
   local TaskType = self:GetType()
   local TaskName = self:GetName()
 
-  return TaskCategory .. "." ..TaskType .. "." .. TaskName
+  return TaskType .. "." .. TaskName
 end
 
 --- Sets the Name of the Task
@@ -590,20 +562,6 @@ end
 -- @return #string TaskType
 function TASK_BASE:GetType()
   return self.TaskType
-end
-
---- Sets the Category of the Task
--- @param #TASK_BASE self
--- @param #string TaskCategory
-function TASK_BASE:SetCategory( TaskCategory )
-  self.TaskCategory = TaskCategory
-end
-
---- Gets the Category of the Task
--- @param #TASK_BASE self
--- @return #string TaskCategory
-function TASK_BASE:GetCategory()
-  return self.TaskCategory
 end
 
 --- Sets the ID of the Task
@@ -810,14 +768,11 @@ function TASK_BASE:onstatechange( Event, From, To )
   if self:IsTrace() then
     MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
   end
-  
-  self:E( { Event, From, To, self:IsTrace() } )
-  self:E( self.Scores )
 
   if self.Scores[To] then
     local Scoring = self:GetScoring()
-    self:E( Scoring )
     if Scoring then
+      self:E( { self.Scores[To].ScoreText, self.Scores[To].Score } )
       Scoring:_AddMissionScore( self.Mission, self.Scores[To].ScoreText, self.Scores[To].Score )
     end
   end

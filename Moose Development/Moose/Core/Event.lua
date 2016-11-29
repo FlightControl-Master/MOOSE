@@ -737,7 +737,7 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event.initiator, Event.IniDCSUnitName, Event.target, Event.TgtDCSUnitName, Event.weapon, Event.WeaponName } )
+    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
     -- Okay, we got the event from DCS. Now loop the self.Events[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
     for EventClass, EventData in pairs( self.Events[Event.id] ) do

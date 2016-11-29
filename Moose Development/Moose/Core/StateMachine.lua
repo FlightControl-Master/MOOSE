@@ -451,6 +451,12 @@ function STATEMACHINE_PROCESS:onenterAssigned( ProcessUnit )
   self.Task:Assign()
 end
 
+function STATEMACHINE_PROCESS:onenterFailed( ProcessUnit )
+  self:E( "Failed" )
+
+  self.Task:Fail()
+end
+
 function STATEMACHINE_PROCESS:onenterSuccess( ProcessUnit )
   self:E( "Success" )
 
