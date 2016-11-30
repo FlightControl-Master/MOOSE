@@ -53,8 +53,8 @@
 -- @type TASK_BASE
 -- @field Scheduler#SCHEDULER TaskScheduler
 -- @field Mission#MISSION Mission
--- @field Core.StateMachine#STATEMACHINE_PROCESS FsmTemplate
--- @field Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
+-- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
+-- @field Core.StateMachine#STATEMACHINE_TEMPLATE FsmTemplate
 -- @extends Core.StateMachine#STATEMACHINE_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
@@ -98,11 +98,33 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
 
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
+  
+  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_TEMPLATE:New( {} )
 
-  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_PROCESS:New( {} )
-  self.FsmTemplate:SetTask( self )
+  -- Handle the birth of new planes within the assigned set.
+  self:EventOnPlayerEnterUnit(
+    --- @param #TASK_BASE self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      self:E( "In EnterUnit" )
+      self:E( { "State", self:GetState() } )
+      if self:IsStateAssigned() then
+        local TaskUnit = EventData.IniUnit
+        local TaskGroup = EventData.IniUnit:GetGroup()
+        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
+        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+          self:AssignToUnit( TaskUnit )
+        end
+      end
+    end
+  )
   
   return self
+end
+
+function TASK_BASE:GetFsmTemplate()
+
+  return self.FsmTemplate
 end
 
 function TASK_BASE:GetMission()
@@ -117,10 +139,7 @@ function TASK_BASE:GetGroups()
   return self.SetGroup
 end
 
-function TASK_BASE:GetFsmTemplate()
 
-  return self.FsmTemplate
-end
 
 --- Assign the @{Task}to a @{Group}.
 -- @param #TASK_BASE self
@@ -166,18 +185,30 @@ end
 function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
-  -- Copy the FsmTemplate, which is not assigned to a Unit.
-  -- Assign the FsmTemplate to the TaskUnit.
-  local FsmTemplate = self:GetFsmTemplate()
-  local FsmUnit = UTILS.DeepCopy( FsmTemplate ) -- Core.StateMachine#STATEMACHINE_PROCESS
+  -- Assign a new FsmUnit to TaskUnit.
+  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New() ) -- Core.StateMachine#STATEMACHINE_PROCESS
+  self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   FsmUnit:Assign( self, TaskUnit )
   
-  -- Assign each FsmSub in FsmUnit to the TaskUnit.
-  -- (This is not done during the copy).
-  self:E(FsmUnit:GetSubs())
-  for FsmSubID, FsmSub in pairs( FsmUnit:GetSubs() ) do
-    self:E( { "Sub ID", FsmSub.fsm:GetClassNameAndID(), FsmSubID } )
-    FsmSub.fsm:Assign( self, TaskUnit )
+  for TransitionID, Transition in pairs( self.FsmTemplate:GetTransitions() ) do
+    FsmUnit:AddAction( Transition.From, Transition.Event, Transition.To )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onenter", Transition.From )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onleave", Transition.From )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onenter", Transition.To )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onleave", Transition.To )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onbefore", Transition.Event )
+    self.FsmTemplate:CopyCallHandler( FsmUnit, "onafter", Transition.Event )
+  end
+  
+  for ProcessID, Process in pairs( self.FsmTemplate:GetProcesses() ) do
+    self:E( Process )
+    local FsmProcess = FsmUnit:AddProcess(Process.From, Process.Event, Process.Process:New( unpack( Process.Arguments ) ), Process.ReturnEvents )
+    self.FsmTemplate:CopyCallHandler( FsmProcess, "onenter", Process.From )
+    self.FsmTemplate:CopyCallHandler( FsmProcess, "onleave", Process.From )
+    self.FsmTemplate:CopyCallHandler( FsmProcess, "onbefore", Process.Event )
+    self.FsmTemplate:CopyCallHandler( FsmProcess, "onafter", Process.Event )
+    
+    FsmProcess:Assign( self, TaskUnit )
   end
   
   -- Set the events
@@ -190,8 +221,6 @@ function TASK_BASE:AssignToUnit( TaskUnit )
 
   FsmUnit:SetInitialState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
-  
-  
 
   return self
 end
@@ -265,17 +294,13 @@ end
 
 --- Set the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK_BASE self
--- @return #TASK_BASE self
 function TASK_BASE:SetMenu()
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if not self:IsAssignedToGroup( TaskGroup ) then
-      self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName() )
-    else
-      self:SetAssignedMenuForGroup( TaskGroup )
-    end
+    self:SetMenuForGroup( TaskGroup )
   end  
 end
+
 
 --- Remove the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK_BASE self
@@ -287,6 +312,17 @@ function TASK_BASE:RemoveMenu()
   end
 end
 
+
+--- Set the Menu for a Group
+-- @param #TASK_BASE self
+function TASK_BASE:SetMenuForGroup( TaskGroup )
+
+  if not self:IsAssignedToGroup( TaskGroup ) then
+    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName() )
+  else
+    self:SetAssignedMenuForGroup( TaskGroup )
+  end
+end
 
 
 --- Set the planned menu option of the @{Task}.
@@ -717,6 +753,7 @@ end
 function TASK_BASE:onenterAssigned( Event, From, To )
 
   self:E("Assigned")
+  
   
     
 end

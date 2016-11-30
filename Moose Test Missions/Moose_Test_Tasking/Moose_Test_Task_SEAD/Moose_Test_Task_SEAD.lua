@@ -61,7 +61,8 @@ local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars", "SEAD" ) -- Tas
 -- There can be many copied FsmSEAD objects internally active within TaskSEAD, for each pilot that joined the Task one is instantiated.
 -- The reason why this is done, is that each unit as a role within the Task, and can have different status.
 -- Therefore, the FsmSEAD is a TEMPLATE PROCESS of the TASK, and must be designed as a UNIT with a player is executing that PROCESS. 
-local FsmSEAD = TaskSEAD:GetFsmTemplate()
+
+local FsmSEADTemplate = TaskSEAD:GetFsmTemplate()
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
@@ -74,10 +75,10 @@ local FsmSEAD = TaskSEAD:GetFsmTemplate()
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-FsmSEAD:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:Template( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.
-FsmSEAD:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( TargetZone, 3000 ), { Arrived = "Update" } )
+FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:Template( TargetZone, 3000 ), { Arrived = "Update" } )
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -86,22 +87,24 @@ FsmSEAD:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( TargetZone
 -- 1. State From "Rejected". When the FsmSEAD is in state "Rejected", the event "Eject" can be fired.
 -- 2. Event "Eject". This event can be triggered synchronously through FsmSEAD:Eject() or asynchronously through FsmSEAD:__Eject(secs).
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
-FsmSEAD:AddAction ( "Rejected",   "Eject",    "Planned" )
-FsmSEAD:AddAction ( "Arrived",    "Update",   "Updated" ) 
-FsmSEAD:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
-FsmSEAD:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
-FsmSEAD:AddAction ( "Accounted",  "Success",  "Success" )
-FsmSEAD:AddAction ( "*",          "Fail",     "Failed" )
+FsmSEADTemplate:AddTransition ( "Rejected",   "Eject",    "Planned" )
+FsmSEADTemplate:AddTransition ( "Arrived",    "Update",   "Updated" ) 
+FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:Template( TargetSet, "SEAD" ), { Accounted = "Success" } )
+FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:Template( TargetSet, TargetZone ) )
+FsmSEADTemplate:AddTransition ( "Accounted",  "Success",  "Success" )
+FsmSEADTemplate:AddTransition ( "*",          "Fail",     "Failed" )
 
 -- Now we will set the SCORING. Scoring is set using the TaskSEAD object.
 -- Scores can be set on the status of the Task, and on Process level.
-TaskSEAD:AddScoreTask( "Success", "Destroyed all target radars", 250 )
-TaskSEAD:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
+--FsmSEADTemplate:AddScoreTask( "Success", "Destroyed all target radars", 250 )
+--FsmSEADTemplate:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
 
-TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
-TaskSEAD:AddScoreProcess( "Account", "Failed", "failed to destroy a radar", -10 )
+--TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
+--TaskSEAD:AddScoreProcess( "Account", "Failed", "failed to destroy a radar", -10 )
 
-function FsmSEAD:onenterUpdated( TaskUnit )
+
+
+function FsmSEADTemplate:onenterUpdated( TaskUnit )
   self:E( { self } )
   self:Account()
   self:Smoke()

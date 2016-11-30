@@ -200,7 +200,7 @@ do -- PROCESS_ROUTE_ZONE
   -- @param #PROCESS_ROUTE_ZONE self
   -- @param Zone#ZONE_BASE TargetZone
   function PROCESS_ROUTE_ZONE:Template( TargetZone )
-    return { self, arg }
+    return { self, { TargetZone } }
   end
   
   

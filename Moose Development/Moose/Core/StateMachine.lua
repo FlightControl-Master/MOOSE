@@ -74,6 +74,8 @@ function STATEMACHINE:SetInitialState( State )
   self.current = State
 end
 
+
+
 function STATEMACHINE:AddAction( From, Event, To )
 
   local event = {}
@@ -85,6 +87,8 @@ function STATEMACHINE:AddAction( From, Event, To )
 
   self:_eventmap( self.events, event )
 end
+
+
 
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
@@ -164,7 +168,7 @@ function STATEMACHINE._handler( self, EventName, ... )
   self:E( { EventName, ... } )
 
   local can, to = self:can( EventName )
-  self:E( { EventName, can, to } )
+  self:E( { EventName, self.current, can, to } )
 
   local ReturnValues = nil
 
@@ -543,4 +547,70 @@ function STATEMACHINE_SET:_call_handler( handler, params )
   end
 end
 
+end
+
+--- STATEMACHINE_TEMPLATE class
+-- @type STATEMACHINE_TEMPLATE
+-- @extends Core.Base#BASE
+STATEMACHINE_TEMPLATE = {
+  ClassName = "STATEMACHINE_TEMPLATE",
+}
+
+--- Creates a new STATEMACHINE_TEMPLATE object.
+-- @param #STATEMACHINE_TEMPLATE self
+-- @return #STATEMACHINE_TEMPLATE
+function STATEMACHINE_TEMPLATE:New( options )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, BASE:New() ) -- #STATEMACHINE_TEMPLATE
+  
+  self._Transitions = self.Transitions or {}
+  self._Processes = self.Processes or {}
+
+  return self
+end
+
+function STATEMACHINE_TEMPLATE:AddTransition( From, Event, To )
+
+  local Transition = {}
+  Transition.From = From
+  Transition.Event = Event
+  Transition.To = To
+
+  self._Transitions[Transition] = Transition
+end
+
+function STATEMACHINE_TEMPLATE:GetTransitions()
+
+  return self._Transitions
+end
+
+--- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
+-- @return Process#PROCESS
+function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
+
+  local Process = {}
+  Process.From = From
+  Process.Event = Event
+  Process.Process = ProcessTemplate[1]
+  Process.Arguments = ProcessTemplate[2]
+  Process.ReturnEvents = ReturnEvents
+  
+  -- Make the reference table weak.
+  -- setmetatable( self.options.subs, { __mode = "v" } )
+  self._Processes[Process] = Process
+
+  return ProcessTemplate
+end
+
+function STATEMACHINE_TEMPLATE:GetProcesses()
+
+  return self._Processes
+end
+
+function STATEMACHINE_TEMPLATE:CopyCallHandler( Fsm, OnAction, Transition )
+  self:E( { Fsm.ClassName, OnAction, Transition } )
+  if OnAction and Transition and self[OnAction .. Transition] then
+    Fsm[OnAction .. Transition] = self[OnAction .. Transition]
+  end
 end

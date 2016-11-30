@@ -113,11 +113,11 @@ UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a s
             tbl_str[#tbl_str + 1] = table.concat(val_str)
           end
         elseif type(val) == 'function' then
-        --  tbl_str[#tbl_str + 1] = "function " .. tostring(ind)
-        --  tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+          tbl_str[#tbl_str + 1] = "f() " .. tostring(ind)
+          tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
         else
---          env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
---          env.info( debug.traceback() )
+          env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
+          env.info( debug.traceback() )
         end
   
       end

@@ -178,7 +178,7 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
   function PROCESS_ACCOUNT_DEADS:Template( TargetSetUnit, TaskName )
-    return { self, arg }
+    return { self, { TargetSetUnit, TaskName } }
   end
 
   

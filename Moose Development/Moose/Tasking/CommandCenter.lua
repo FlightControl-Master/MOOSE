@@ -69,12 +69,12 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:EventOnBirth(
     --- @param Core.Event#EVENTDATA EventData
-    function( HQ, EventData )
+    function( self, EventData )
       self:E( { EventData } )
       local EventGroup = GROUP:Find( EventData.IniDCSGroup )
-      if EventGroup and HQ:HasGroup( EventGroup ) then
+      if EventGroup and self:HasGroup( EventGroup ) then
         local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-        local MenuMissions = MENU_GROUP_COMMAND:New( EventGroup, "Missions", MenuReporting, HQ.ReportMissions, HQ, EventGroup )
+        local MenuMissions = MENU_GROUP_COMMAND:New( EventGroup, "Missions", MenuReporting, self.ReportMissions, self, EventGroup )
       end
     end
     )

@@ -84,7 +84,7 @@ do -- PROCESS_ASSIGN
 
   --- PROCESS_ASSIGN class
   -- @type PROCESS_ASSIGN
-  -- @field Task#TASK_BASE Task
+  -- @field Tasking.Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
   -- @extends Fsm.Process#PROCESS
@@ -128,7 +128,7 @@ do -- PROCESS_ASSIGN_ACCEPT
   -- @field Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Process#PROCESS
+  -- @extends Fsm.Process#PROCESS
   PROCESS_ASSIGN_ACCEPT = { 
     ClassName = "PROCESS_ASSIGN_ACCEPT",
   }
@@ -159,16 +159,33 @@ do -- PROCESS_ASSIGN_ACCEPT
 
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function PROCESS_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
-    MESSAGE:New( self.TaskBriefing, 30, "Task Assignment" ):ToGroup( ProcessUnit:GetGroup() )
+    local ProcessGroup = ProcessUnit:GetGroup()
+    MESSAGE:New( self.TaskBriefing, 30, ProcessUnit:GetPlayerName() .. " Task Acceptance" ):ToGroup( ProcessGroup )
 
     self:__Assign( 1 )   
+  end
+
+  --- StateMachine callback function
+  -- @param #PROCESS_ASSIGN_ACCEPT self
+  -- @param Wrapper.Unit#UNIT ProcessUnit
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function PROCESS_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Event, From, To )
+    self:E( { ProcessUnit, Event, From, To } )
+  
+    local ProcessGroup = ProcessUnit:GetGroup()
+  
+    MESSAGE:New( "You are assigned to the task " .. self.Task:GetName(), 30, ProcessUnit:GetPlayerName() .. ": Task Assignment" ):ToGroup( ProcessGroup )
+
+    self.Task:Assign()
   end
   
 end -- PROCESS_ASSIGN_ACCEPT
@@ -185,6 +202,16 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   PROCESS_ASSIGN_MENU_ACCEPT = { 
     ClassName = "PROCESS_ASSIGN_MENU_ACCEPT",
   }
+
+  --- Init.
+  -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
+  -- @param #string TaskName
+  -- @param #string TaskBriefing
+  -- @return #PROCESS_ASSIGN_MENU_ACCEPT self
+  function PROCESS_ASSIGN_MENU_ACCEPT:Template( TaskName, TaskBriefing )
+  
+    return { self, { TaskName, TaskBriefing } }
+  end
   
   
   --- Creates a new task assignment state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.

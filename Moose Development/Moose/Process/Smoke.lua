@@ -156,7 +156,7 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param Zone#ZONE_BASE TargetZone
   function PROCESS_SMOKE_TARGETS_ZONE:Template( TargetSetUnit, TargetZone )
-    return { self, arg }
+    return { self, { TargetSetUnit, TargetZone } }
   end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.

@@ -1,8 +1,8 @@
 --- This module contains the UNIT class.
 -- 
--- 1) @{Unit#UNIT} class, extends @{Controllable#CONTROLLABLE}
+-- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
 -- ===========================================================
--- The @{Unit#UNIT} class is a wrapper class to handle the DCS Unit objects:
+-- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
 --  * Enhance with Unit specific APIs not in the DCS Unit API set.
@@ -122,7 +122,7 @@ UNIT = {
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
--- @return Unit#UNIT
+-- @return #UNIT
 function UNIT:Register( UnitName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
   self.UnitName = UnitName
@@ -134,7 +134,7 @@ end
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
 -- @param #UNIT self
 -- @param DCSUnit#Unit DCSUnit An existing DCS Unit object reference.
--- @return Unit#UNIT self
+-- @return #UNIT self
 function UNIT:Find( DCSUnit )
 
   local UnitName = DCSUnit:getName()
@@ -145,7 +145,7 @@ end
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
 -- @param #UNIT self
 -- @param #string UnitName The Unit Name.
--- @return Unit#UNIT self
+-- @return #UNIT self
 function UNIT:FindByName( UnitName )
   
   local UnitFound = _DATABASE:FindUnit( UnitName )
@@ -182,7 +182,7 @@ end
 --  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
 --  * Then it will respawn the re-modelled group.
 --  
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @param DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
 -- @param #number Heading The heading of the unit respawn.
 function UNIT:ReSpawn( SpawnVec3, Heading )
@@ -200,7 +200,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
     
     self:E( #SpawnGroupTemplate.units )
     for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
-      local GroupUnit = UnitData -- Unit#UNIT
+      local GroupUnit = UnitData -- #UNIT
       self:E( GroupUnit:GetName() )
       if GroupUnit:IsAlive() then
         local GroupUnitVec3 = GroupUnit:GetVec3()
@@ -225,7 +225,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
       self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
     else
       self:E( SpawnGroupTemplate.units[UnitTemplateID].name )
-      local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- Unit#UNIT
+      local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- #UNIT
       if GroupUnit and GroupUnit:IsAlive() then
         local GroupUnitVec3 = GroupUnit:GetVec3()
         local GroupUnitHeading = GroupUnit:GetHeading()
@@ -262,7 +262,7 @@ end
 
 
 --- Returns if the unit is activated.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #boolean true if Unit is activated.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
@@ -282,7 +282,7 @@ end
 
 
 --- Returns the Unit's callsign - the localized string.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #string The Callsign of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetCallsign()
@@ -301,7 +301,7 @@ end
 
 
 --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
@@ -325,7 +325,7 @@ end
 -- The number is the same number the unit has in ME. 
 -- It may not be changed during the mission. 
 -- If any unit in the group is destroyed, the numbers of another units will not be changed.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #number The Unit number. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetNumber()
@@ -343,7 +343,7 @@ end
 
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
--- @return Group#GROUP The Group of the Unit.
+-- @return Wrapper.Group#GROUP The Group of the Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetGroup()
   self:F2( self.UnitName )
@@ -364,7 +364,7 @@ end
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
 -- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
 -- The spawn sequence number and unit number are contained within the name after the '#' sign. 
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
@@ -382,7 +382,7 @@ function UNIT:GetPrefix()
 end
 
 --- Returns the Unit's ammunition.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return DCSUnit#Unit.Ammo
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAmmo()
@@ -399,7 +399,7 @@ function UNIT:GetAmmo()
 end
 
 --- Returns the unit sensors.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return DCSUnit#Unit.Sensors
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetSensors()
@@ -419,7 +419,7 @@ end
 --  unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
 
 --- Returns if the unit has sensors of a certain type.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSensors( ... )
@@ -436,7 +436,7 @@ function UNIT:HasSensors( ... )
 end
 
 --- Returns if the unit is SEADable.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #boolean returns true if the unit is SEADable. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:HasSEAD()
@@ -462,7 +462,7 @@ end
 -- 
 --  * First value indicates if at least one of the unit's radar(s) is on.
 --  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
 -- @return DCSObject#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @return #nil The DCS Unit is not existing or alive.  
@@ -480,7 +480,7 @@ function UNIT:GetRadar()
 end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetFuel()
@@ -497,7 +497,7 @@ function UNIT:GetFuel()
 end
 
 --- Returns the unit's health. Dead units has health <= 1.0.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #number The Unit's health value.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetLife()
@@ -514,7 +514,7 @@ function UNIT:GetLife()
 end
 
 --- Returns the Unit's initial health.
--- @param Unit#UNIT self
+-- @param #UNIT self
 -- @return #number The Unit's initial health value.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetLife0()
@@ -625,8 +625,8 @@ end
 
 
 --- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.
--- @param Unit#UNIT self
--- @param Unit#UNIT AwaitUnit The other UNIT wrapper object.
+-- @param #UNIT self
+-- @param #UNIT AwaitUnit The other UNIT wrapper object.
 -- @param Radius The radius in meters with the DCS Unit in the centre.
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
