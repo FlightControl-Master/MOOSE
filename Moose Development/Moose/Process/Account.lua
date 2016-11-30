@@ -107,20 +107,6 @@ do -- PROCESS_ACCOUNT
     return self
   end
 
-  --- Creates a new DESTROY process.
-  -- @param #PROCESS_ACCOUNT self
-  -- @return #PROCESS_ACCOUNT
-  function PROCESS_ACCOUNT:Init()
-
-    self.DisplayInterval = 30
-    self.DisplayCount = 30
-    self.DisplayMessage = true
-    self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Targets is the default display category
-  
-    return self
-  end
-
   --- Process Events
   
   --- StateMachine callback function
@@ -130,7 +116,14 @@ do -- PROCESS_ACCOUNT
   -- @param #string From
   -- @param #string To
   function PROCESS_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
-  
+
+    -- TODO: need to generalize the timing.  
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    self.DisplayCategory = "HQ" -- Targets is the default display category
+
     self:EventOnDead( self.EventDead )
 
     self:__Wait( 1 )

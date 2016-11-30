@@ -115,17 +115,6 @@ do -- PROCESS_ROUTE
     return self
   end
 
-  function PROCESS_ROUTE:Init()
-
-    self.DisplayInterval = 30
-    self.DisplayCount = 30
-    self.DisplayMessage = true
-    self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Route is the default display category
-    
-    return self
-  end
-  
   --- Task Events
 
   --- StateMachine callback function
@@ -136,6 +125,12 @@ do -- PROCESS_ROUTE
   -- @param #string To
   function PROCESS_ROUTE:onafterStart( ProcessUnit, Event, From, To )
   
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    self.DisplayCategory = "HQ" -- Route is the default display category
+
     self:__Route( 1 )
   end
   
