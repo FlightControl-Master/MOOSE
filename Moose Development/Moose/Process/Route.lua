@@ -82,7 +82,7 @@ do -- PROCESS_ROUTE
   -- @field Task#TASK TASK
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Fsm.Process#PROCESS
+  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
   PROCESS_ROUTE = { 
     ClassName = "PROCESS_ROUTE",
   }
@@ -92,28 +92,31 @@ do -- PROCESS_ROUTE
   -- @param #PROCESS_ROUTE self
   -- @return #PROCESS_ROUTE self
   function PROCESS_ROUTE:New()
-  
-  
-    local FSMT = {
-      initial = 'None',
-      events = {
-        { name = 'Start',           from = 'None',                to = 'Routing' },
-        { name = 'Report',          from = '*',                   to = 'Reporting' },
-        { name = 'Route',           from = '*',                   to = 'Routing' },
-        { name = 'Pause',           from = 'Routing',             to = 'Pausing' },
-        { name = 'Abort',           from = '*',                   to = 'Aborted' },
-        { name = 'Arrive',          from = 'Routing',             to = 'Arrived' },
-        { name = 'Success',         from = 'Arrived',             to = 'Success' },
-        { name = 'Fail',            from = '*',                   to = 'Failed' },
-      },
-      endstates = {
-        'Arrived', 'Failed'
-      },
-    }
-  
+
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_ROUTE" ) ) -- #PROCESS_ROUTE
+    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ROUTE" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+ 
+    self:AddTransition( "None", "Start", "Routing" )
+    self:AddTransition( "*", "Report", "Reporting" )
+    self:AddTransition( "*", "Route", "Routing" )
+    self:AddTransition( "Routing", "Pause", "Pausing" )
+    self:AddTransition( "*", "Abort", "Aborted" )
+    self:AddTransition( "Routing", "Arrive", "Arrived" )
+    self:AddTransition( "Arrived", "Success", "Success" )
+    self:AddTransition( "*", "Fail", "Failed" )
+    self:AddTransition( "", "", "" )
+    self:AddTransition( "", "", "" )
+ 
+    self:AddEndState( "Arrived" )
+    self:AddEndState( "Failed" )
     
+    self:AddStartState( "None" )  
+  
+    return self
+  end
+
+  function PROCESS_ROUTE:Init()
+
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
@@ -190,7 +193,7 @@ do -- PROCESS_ROUTE_ZONE
   -- @field Task#TASK TASK
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Process.Route#PROCESS_ROUTE
+  -- @extends #PROCESS_ROUTE
   PROCESS_ROUTE_ZONE = { 
     ClassName = "PROCESS_ROUTE_ZONE",
   }
@@ -199,8 +202,10 @@ do -- PROCESS_ROUTE_ZONE
   --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
   -- @param #PROCESS_ROUTE_ZONE self
   -- @param Zone#ZONE_BASE TargetZone
-  function PROCESS_ROUTE_ZONE:Template( TargetZone )
-    return { self, { TargetZone } }
+  function PROCESS_ROUTE_ZONE:New( TargetZone )
+    local self = BASE:Inherit( self, PROCESS_ROUTE:New() ) -- #PROCESS_ROUTE_ZONE
+
+    return self, { TargetZone }
   end
   
   
@@ -210,8 +215,6 @@ do -- PROCESS_ROUTE_ZONE
   -- @return #PROCESS_ROUTE_ZONE self
   function PROCESS_ROUTE_ZONE:New( TargetZone )
   
-    local self = BASE:Inherit( self, PROCESS_ROUTE:New() ) -- #PROCESS_ROUTE_ZONE
-    
     self.TargetZone = TargetZone
     
     return self

@@ -70,7 +70,7 @@ do -- PROCESS_SMOKE
 
   --- PROCESS_SMOKE class
   -- @type PROCESS_SMOKE
-  -- @extends Fsm.Process#PROCESS
+  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
   PROCESS_SMOKE = { 
     ClassName = "PROCESS_SMOKE",
   }
@@ -79,26 +79,21 @@ do -- PROCESS_SMOKE
   -- @param #PROCESS_SMOKE self
   -- @return #PROCESS_SMOKE
   function PROCESS_SMOKE:New()
-  
-    local FSMT = {
-      initial = 'None',
-      events = {
-        { name = 'Start',  from = 'None',  to = 'AwaitSmoke' },
-        { name = 'Next',  from = 'AwaitSmoke',  to = 'Smoking' },
-        { name = 'Next',  from = 'Smoking',  to = 'AwaitSmoke' },
-        { name = 'Stop',  from = '*', to = 'Success' },
-        { name = 'Fail',  from = 'Smoking',  to = 'Failed' },
-        { name = 'Fail',  from = 'AwaitSmoke',  to = 'Failed' },
-        { name = 'Fail',  from = 'None',  to = 'Failed' },
-      },
-      endstates = {
-        'Failed', 'Success'
-      },
-    }
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_SMOKE" ) ) -- #PROCESS_SMOKE
+    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_SMOKE" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+
+    self:AddTransition( "None", "Start", "AwaitSmoke" )
+    self:AddTransition( "AwaitSmoke", "Next", "Smoking" )
+    self:AddTransition( "Smoking", "Next", "AwaitSmoke" )
+    self:AddTransition( "*", "Stop", "Success" )
+    self:AddTransition( "*", "Fail", "Failed" )
     
+    self:AddEndState( "Failed" )
+    self:AddEndState( "Success" )
+    
+    self:AddStartState( "None" )  
+
     return self
   end
   
@@ -155,8 +150,10 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
   -- @param #PROCESS_SMOKE_TARGETS_ZONE self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param Zone#ZONE_BASE TargetZone
-  function PROCESS_SMOKE_TARGETS_ZONE:Template( TargetSetUnit, TargetZone )
-    return { self, { TargetSetUnit, TargetZone } }
+  function PROCESS_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
+    local self = BASE:Inherit( self, PROCESS_SMOKE:New() ) -- #PROCESS_SMOKE
+
+    return self, { TargetSetUnit, TargetZone }
   end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
@@ -164,9 +161,7 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param Zone#ZONE_BASE TargetZone
   -- @return #PROCESS_SMOKE_TARGETS_ZONE self
-  function PROCESS_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
-  
-    local self = BASE:Inherit( self, PROCESS_SMOKE:New() ) -- #PROCESS_SMOKE
+  function PROCESS_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )
     
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone

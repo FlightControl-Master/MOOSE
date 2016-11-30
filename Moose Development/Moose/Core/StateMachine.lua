@@ -26,7 +26,7 @@ STATEMACHINE = {
 --- Creates a new STATEMACHINE object.
 -- @param #STATEMACHINE self
 -- @return #STATEMACHINE
-function STATEMACHINE:New( options )
+function STATEMACHINE:New( FsmT )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -40,32 +40,40 @@ function STATEMACHINE:New( options )
   --setmetatable( self, MT )
   --self.__index = self
 
+  for TransitionID, Transition in pairs( FsmT:GetTransitions() ) do
+    self:AddAction( Transition.From, Transition.Event, Transition.To )
+    self.FsmT:CopyCallHandler( self, "onenter", Transition.From )
+    self.FsmT:CopyCallHandler( self, "onleave", Transition.From )
+    self.FsmT:CopyCallHandler( self, "onenter", Transition.To )
+    self.FsmT:CopyCallHandler( self, "onleave", Transition.To )
+    self.FsmT:CopyCallHandler( self, "onbefore", Transition.Event )
+    self.FsmT:CopyCallHandler( self, "onafter", Transition.Event )
+  end
+  
+  for ProcessID, Process in pairs( self.FsmT:GetProcesses() ) do
+    self:E( Process )
+    local FsmProcess = self:AddProcess(Process.From, Process.Event, Process.Process:New( unpack( Process.Arguments ) ), Process.ReturnEvents )
+    self.FsmT:CopyCallHandler( FsmProcess, "onenter", Process.From )
+    self.FsmT:CopyCallHandler( FsmProcess, "onleave", Process.From )
+    self.FsmT:CopyCallHandler( FsmProcess, "onbefore", Process.Event )
+    self.FsmT:CopyCallHandler( FsmProcess, "onafter", Process.Event )
+    
+  end
+
+  for EndStateID, EndState in pairs( FsmT:EndStates() ) do
+    self:E( EndState )
+    self:AddEndState( EndState )
+  end
+
+  self:SetStartState( FsmT:GetStartState() )
+  
+
   self.options = options or {}
   self.options.subs = self.options.subs or {}
   self.current = self.options.initial or 'none'
   self.events = {}
   self.subs = {}
   self.endstates = {}
-
-  for _, event in pairs( self.options.events or {}) do
-    self:T3({ "events", event })
-    self:_eventmap( self.events, event )
-  end
-
-  for name, callback in pairs( self.options.callbacks or {}) do
-    self:T3("callbacks")
-    self[name] = callback
-  end
-
-  for name, sub in pairs(  self.options.subs or {} ) do
-    self:T3("sub")
-    self:_submap( self.subs, sub, name )
-  end
-
-  for name, endstate in pairs( self.options.endstates or {} ) do
-    self:T3("endstate")
-    self.endstates[endstate] = endstate
-  end
 
   return self
 end
@@ -76,7 +84,7 @@ end
 
 
 
-function STATEMACHINE:AddAction( From, Event, To )
+function STATEMACHINE:AddTransition( From, Event, To )
 
   local event = {}
   event.from = From
@@ -111,6 +119,10 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
   self:AddAction( From, Event, From )
 
   return Process
+end
+
+function STATEMACHINE:AddEndState( State )
+  self.endstates[State] = State
 end
 
 function STATEMACHINE:GetSubs()
@@ -467,6 +479,31 @@ function STATEMACHINE_PROCESS:onenterSuccess( ProcessUnit )
   self.Task:Success()
 end
 
+--- StateMachine callback function for a STATEMACHINE_PROCESS
+-- @param #STATEMACHINE_PROCESS self
+-- @param Controllable#CONTROLLABLE ProcessUnit
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function STATEMACHINE_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
+  self:E( { ProcessUnit, Event, From, To, Dummy } )
+
+  if self:IsTrace() then
+    MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+  end
+
+  self:E( self.Scores[To] )
+  -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
+  if self.Scores[To] then
+  
+    local Task = self.Task  
+    local Scoring = Task:GetScoring()
+    if Scoring then
+      Scoring:_AddMissionTaskScore( Task.Mission, ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
+    end
+  end
+end
+
 --- STATEMACHINE_TASK class
 -- @type STATEMACHINE_TASK
 -- @field Task#TASK_BASE Task
@@ -559,13 +596,17 @@ STATEMACHINE_TEMPLATE = {
 --- Creates a new STATEMACHINE_TEMPLATE object.
 -- @param #STATEMACHINE_TEMPLATE self
 -- @return #STATEMACHINE_TEMPLATE
-function STATEMACHINE_TEMPLATE:New( options )
+function STATEMACHINE_TEMPLATE:New( Name )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #STATEMACHINE_TEMPLATE
   
   self._Transitions = self.Transitions or {}
   self._Processes = self.Processes or {}
+  self._EndStates = self.EndStates or {}
+  self._StartState = "none"
+  
+  self._Name = Name
 
   return self
 end
@@ -587,13 +628,13 @@ end
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
 -- @return Process#PROCESS
-function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
+function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ProcessArguments, ReturnEvents )
 
   local Process = {}
   Process.From = From
   Process.Event = Event
-  Process.Process = ProcessTemplate[1]
-  Process.Arguments = ProcessTemplate[2]
+  Process.Process = ProcessTemplate
+  Process.Arguments = ProcessArguments
   Process.ReturnEvents = ReturnEvents
   
   -- Make the reference table weak.
@@ -606,6 +647,42 @@ end
 function STATEMACHINE_TEMPLATE:GetProcesses()
 
   return self._Processes
+end
+
+function STATEMACHINE_TEMPLATE:AddEndState( State )
+
+  self._EndStates[EndState] = EndState
+end
+
+function STATEMACHINE_TEMPLATE:GetEndStates()
+
+  return self._EndStates
+end
+
+function STATEMACHINE_TEMPLATE:AddStartState()
+
+  self._StartState = StartState
+end
+
+function STATEMACHINE_TEMPLATE:GetStartState()
+
+  return self._StartState
+end
+
+--- Adds a score for the STATEMACHINE_PROCESS to be achieved.
+-- @param #STATEMACHINE_TEMPLATE self
+-- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #STATEMACHINE_TEMPLATE self
+function STATEMACHINE_TEMPLATE:AddScore( State, ScoreText, Score )
+  self:F2( { State, ScoreText, Score } )
+
+  self.Scores[State] = self.Scores[State] or {}
+  self.Scores[State].ScoreText = ScoreText
+  self.Scores[State].Score = Score
+
+  return self
 end
 
 function STATEMACHINE_TEMPLATE:CopyCallHandler( Fsm, OnAction, Transition )

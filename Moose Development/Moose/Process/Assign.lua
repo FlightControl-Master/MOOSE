@@ -87,7 +87,7 @@ do -- PROCESS_ASSIGN
   -- @field Tasking.Task#TASK_BASE Task
   -- @field Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Fsm.Process#PROCESS
+  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
   PROCESS_ASSIGN = { 
     ClassName = "PROCESS_ASSIGN",
   }
@@ -98,21 +98,19 @@ do -- PROCESS_ASSIGN
   -- @return #PROCESS_ASSIGN The task acceptance process.
   function PROCESS_ASSIGN:New()
 
-    local FSMT = {
-      initial = 'UnAssigned',
-      events = {
-        { name = 'Start',           from = 'UnAssigned',              to = 'Waiting' },
-        { name = 'Assign',          from = 'Waiting',                 to = 'Assigned' },
-        { name = 'Reject',          from = 'Waiting',                 to = 'Rejected' },
-        { name = 'Fail',            from = '*',                       to = 'Failed' },
-      },
-      endstates = {
-        'Assigned', 'Rejected', 'Failed'
-      },
-    }
-  
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_ASSIGN" ) ) -- #PROCESS_ASSIGN
+    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ASSIGN" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+
+    self:AddTransition( "UnAssigned", "Start", "Waiting" )
+    self:AddTransition( "Waiting",  "Assign", "Assigned" )
+    self:AddTransition( "Waiting", "Reject", "Rejected" )
+    self:AddTransition( "*", "Fail", "Failed" )
+    
+    self:AddEndState( "Assigned" )
+    self:AddEndState( "Rejected" )
+    self:AddEndState( "Failed" )
+    
+    self:AddStartState( "UnAssigned" )  
     
     return self
   end
@@ -137,8 +135,11 @@ do -- PROCESS_ASSIGN_ACCEPT
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
   -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
-  function PROCESS_ASSIGN_ACCEPT:Template( TaskBriefing )
-    return { self, { TaskBriefing } }
+  function PROCESS_ASSIGN_ACCEPT:New( TaskBriefing )
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_ACCEPT
+
+    return self, { TaskBriefing }
   end
 
 
@@ -146,10 +147,8 @@ do -- PROCESS_ASSIGN_ACCEPT
   -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
   -- @return #PROCESS_ASSIGN_ACCEPT The task acceptance process.
-  function PROCESS_ASSIGN_ACCEPT:New( TaskBriefing )
+  function PROCESS_ASSIGN_ACCEPT:Init( TaskBriefing )
 
-    -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_ACCEPT
     
     self.TaskBriefing = TaskBriefing
     
@@ -208,9 +207,12 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   -- @param #string TaskName
   -- @param #string TaskBriefing
   -- @return #PROCESS_ASSIGN_MENU_ACCEPT self
-  function PROCESS_ASSIGN_MENU_ACCEPT:Template( TaskName, TaskBriefing )
+  function PROCESS_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
+
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_MENU_ACCEPT
   
-    return { self, { TaskName, TaskBriefing } }
+    return self, { TaskName, TaskBriefing }
   end
   
   
@@ -219,11 +221,8 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   -- @param #string TaskName
   -- @param #string TaskBriefing
   -- @return #PROCESS_ASSIGN_MENU_ACCEPT self
-  function PROCESS_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
+  function PROCESS_ASSIGN_MENU_ACCEPT:Init( TaskName, TaskBriefing )
   
-    -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_MENU_ACCEPT
-    
     self.TaskBriefing = TaskBriefing
     self.TaskName = TaskName
 

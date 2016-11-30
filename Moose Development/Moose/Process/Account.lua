@@ -77,7 +77,7 @@ do -- PROCESS_ACCOUNT
   --- PROCESS_ACCOUNT class
   -- @type PROCESS_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Fsm.Process#PROCESS
+  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
   PROCESS_ACCOUNT = { 
     ClassName = "PROCESS_ACCOUNT",
     TargetSetUnit = nil,
@@ -87,24 +87,31 @@ do -- PROCESS_ACCOUNT
   -- @param #PROCESS_ACCOUNT self
   -- @return #PROCESS_ACCOUNT
   function PROCESS_ACCOUNT:New()
-  
-    local FSMT = {
-      initial = 'Assigned',
-      events = {
-        { name = 'Start',         from = 'Assigned',        to = 'Waiting'  },
-        { name = 'Wait',          from = '*',               to = 'Waiting'  },
-        { name = 'Report',        from = '*',               to = 'Report'  },
-        { name = 'Event',         from = '*',               to = 'Account' },
-        { name = 'More',          from = 'Account',         to = 'Wait'  },
-        { name = 'NoMore',        from = 'Account',         to = 'Accounted' },      
-        { name = 'Fail',          from = '*',               to = 'Failed' },
-      },
-      endstates = { 'Accounted', 'Failed' }
-    }
-  
+
     -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS:New( FSMT, "PROCESS_ACCOUNT" ) ) -- #PROCESS_ACCOUNT
+    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ACCOUNT" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+  
+    self:AddTransition( "Assigned", "Start", "Waiting")
+    self:AddTransition( "*", "Wait", "Waiting")
+    self:AddTransition( "*", "Report", "Report")
+    self:AddTransition( "*", "Event", "Account")
+    self:AddTransition( "Account", "More", "Wait")
+    self:AddTransition( "Account", "NoMore", "Accounted")
+    self:AddTransition( "*", "Fail", "Failed")
     
+    self:AddEndState( "Accounted" )
+    self:AddEndState( "Failed" )
+    
+    self:AddStartState( "Assigned" ) 
+        
+    return self
+  end
+
+  --- Creates a new DESTROY process.
+  -- @param #PROCESS_ACCOUNT self
+  -- @return #PROCESS_ACCOUNT
+  function PROCESS_ACCOUNT:Init()
+
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
@@ -166,7 +173,7 @@ do -- PROCESS_ACCOUNT_DEADS
   --- PROCESS_ACCOUNT_DEADS class
   -- @type PROCESS_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Process#PROCESS
+  -- @extends #PROCESS_ACCOUNT
   PROCESS_ACCOUNT_DEADS = { 
     ClassName = "PROCESS_ACCOUNT_DEADS",
     TargetSetUnit = nil,
@@ -177,8 +184,11 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param #PROCESS_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  function PROCESS_ACCOUNT_DEADS:Template( TargetSetUnit, TaskName )
-    return { self, { TargetSetUnit, TaskName } }
+  function PROCESS_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, PROCESS_ACCOUNT:New() ) -- #PROCESS_ACCOUNT_DEADS
+    
+    return self, { TargetSetUnit, TaskName }
   end
 
   
@@ -187,11 +197,8 @@ do -- PROCESS_ACCOUNT_DEADS
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
   -- @return #PROCESS_ACCOUNT_DEADS self
-  function PROCESS_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  function PROCESS_ACCOUNT_DEADS:Init( TargetSetUnit, TaskName )
   
-    -- Inherits from BASE
-    local self = BASE:Inherit( self, PROCESS_ACCOUNT:New() ) -- #PROCESS_ACCOUNT_DEADS
-    
     self.TargetSetUnit = TargetSetUnit
     self.TaskName = TaskName
     

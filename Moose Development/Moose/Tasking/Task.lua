@@ -186,8 +186,10 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
   -- Assign a new FsmUnit to TaskUnit.
-  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New() ) -- Core.StateMachine#STATEMACHINE_PROCESS
+  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New( self:GetFsmTemplate() ) ) -- Core.StateMachine#STATEMACHINE_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
+  
+  --TODO: need to check all this with templates ...
   FsmUnit:Assign( self, TaskUnit )
   
   for TransitionID, Transition in pairs( self.FsmTemplate:GetTransitions() ) do
@@ -711,35 +713,17 @@ end
 
 
 --- Adds a score for the TASK to be achieved.
--- @param #TASK_BASE self
+-- @param #STATEMACHINE_TEMPLATE self
 -- @param #string TaskStatus is the status of the TASK when the score needs to be given.
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
--- @return #TASK_BASE self
-function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
+-- @return #STATEMACHINE_TEMPLATE self
+function STATEMACHINE_TEMPLATE:AddScoreTask( TaskStatus, ScoreText, Score )
   self:F2( { TaskStatus, ScoreText, Score } )
 
   self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
   self.Scores[TaskStatus].ScoreText = ScoreText
   self.Scores[TaskStatus].Score = Score
-  return self
-end
-
---- Adds a score for the TASK to be achieved.
--- @param #TASK_BASE self
--- @param #string TaskStatus is the status of the TASK when the score needs to be given.
--- @param #string ScoreText is a text describing the score that is given according the status.
--- @param #number Score is a number providing the score of the status.
--- @return #TASK_BASE self
-function TASK_BASE:AddScoreProcess( Event, State, ScoreText, Score )
-  self:F2( { State, ScoreText, Score } )
-
-
-  self:E( self:GetFsmTemplate():GetSubs()[Event].fsm )
-  local Process = self:GetFsmTemplate():GetSubs()[Event].fsm
-  
-  Process:AddScore( State, ScoreText, Score )
-
   return self
 end
 

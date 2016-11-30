@@ -75,10 +75,10 @@ local FsmSEADTemplate = TaskSEAD:GetFsmTemplate()
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:Template( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:Init( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.
-FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:Template( TargetZone, 3000 ), { Arrived = "Update" } )
+FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:Init( TargetZone, 3000 ), { Arrived = "Update" } )
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -89,18 +89,19 @@ FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:Tem
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
 FsmSEADTemplate:AddTransition ( "Rejected",   "Eject",    "Planned" )
 FsmSEADTemplate:AddTransition ( "Arrived",    "Update",   "Updated" ) 
-FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:Template( TargetSet, "SEAD" ), { Accounted = "Success" } )
-FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:Template( TargetSet, TargetZone ) )
+FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:Init( TargetSet, "SEAD" ), { Accounted = "Success" } )
+FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:Init( TargetSet, TargetZone ) )
 FsmSEADTemplate:AddTransition ( "Accounted",  "Success",  "Success" )
 FsmSEADTemplate:AddTransition ( "*",          "Fail",     "Failed" )
 
+TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
+TaskSEAD:AddScoreProcess( "Account", "Failed", "failed to destroy a radar", -10 )
+
 -- Now we will set the SCORING. Scoring is set using the TaskSEAD object.
 -- Scores can be set on the status of the Task, and on Process level.
---FsmSEADTemplate:AddScoreTask( "Success", "Destroyed all target radars", 250 )
---FsmSEADTemplate:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
+FsmSEADTemplate:AddScoreTask( "Success", "Destroyed all target radars", 250 )
+FsmSEADTemplate:AddScoreTask( "Failed", "Failed to destroy all target radars", -100 )
 
---TaskSEAD:AddScoreProcess( "Account", "Account", "destroyed a radar", 25 )
---TaskSEAD:AddScoreProcess( "Account", "Failed", "failed to destroy a radar", -10 )
 
 
 
