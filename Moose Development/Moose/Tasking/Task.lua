@@ -77,13 +77,12 @@ TASK_BASE = {
 -- @return #TASK_BASE self
 function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
+  local self = BASE:Inherit( self, STATEMACHINE_TASK:New() ) -- Core.StateMachine#STATEMACHINE_TASK
 
-  local self = BASE:Inherit( self, STATEMACHINE_TASK:New( {} ) ) -- Core.StateMachine#STATEMACHINE_TASK
-
-  self:SetInitialState( "Planned" )
-  self:AddAction( "Planned", "Assign", "Assigned" )
-  self:AddAction( "Assigned", "Success", "Success" )
-  self:AddAction( "*", "Fail", "Failed" )
+  self:SetStartState( "Planned" )
+  self:AddTransition( "Planned", "Assign", "Assigned" )
+  self:AddTransition( "Assigned", "Success", "Success" )
+  self:AddTransition( "*", "Fail", "Failed" )
 
   self:E( "New TASK " .. TaskName )
 
@@ -99,7 +98,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
-  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_TEMPLATE:New( {} )
+  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_TEMPLATE:New( "MAIN" )
 
   -- Handle the birth of new planes within the assigned set.
   self:EventOnPlayerEnterUnit(
@@ -186,32 +185,8 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
   -- Assign a new FsmUnit to TaskUnit.
-  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New( self:GetFsmTemplate() ) ) -- Core.StateMachine#STATEMACHINE_PROCESS
+  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Core.StateMachine#STATEMACHINE_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
-  
-  --TODO: need to check all this with templates ...
-  FsmUnit:Assign( self, TaskUnit )
-  
-  for TransitionID, Transition in pairs( self.FsmTemplate:GetTransitions() ) do
-    FsmUnit:AddAction( Transition.From, Transition.Event, Transition.To )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onenter", Transition.From )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onleave", Transition.From )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onenter", Transition.To )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onleave", Transition.To )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onbefore", Transition.Event )
-    self.FsmTemplate:CopyCallHandler( FsmUnit, "onafter", Transition.Event )
-  end
-  
-  for ProcessID, Process in pairs( self.FsmTemplate:GetProcesses() ) do
-    self:E( Process )
-    local FsmProcess = FsmUnit:AddProcess(Process.From, Process.Event, Process.Process:New( unpack( Process.Arguments ) ), Process.ReturnEvents )
-    self.FsmTemplate:CopyCallHandler( FsmProcess, "onenter", Process.From )
-    self.FsmTemplate:CopyCallHandler( FsmProcess, "onleave", Process.From )
-    self.FsmTemplate:CopyCallHandler( FsmProcess, "onbefore", Process.Event )
-    self.FsmTemplate:CopyCallHandler( FsmProcess, "onafter", Process.Event )
-    
-    FsmProcess:Assign( self, TaskUnit )
-  end
   
   -- Set the events
   FsmUnit:EventOnPilotDead( 
@@ -221,7 +196,7 @@ function TASK_BASE:AssignToUnit( TaskUnit )
     end
     )
 
-  FsmUnit:SetInitialState( "Planned" )
+  FsmUnit:SetStartState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
 
   return self

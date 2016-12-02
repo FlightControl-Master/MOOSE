@@ -110,7 +110,7 @@ do -- PROCESS_ROUTE
     self:AddEndState( "Arrived" )
     self:AddEndState( "Failed" )
     
-    self:AddStartState( "None" )  
+    self:SetStartState( "None" )  
   
     return self
   end
@@ -125,11 +125,6 @@ do -- PROCESS_ROUTE
   -- @param #string To
   function PROCESS_ROUTE:onafterStart( ProcessUnit, Event, From, To )
   
-    self.DisplayInterval = 30
-    self.DisplayCount = 30
-    self.DisplayMessage = true
-    self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Route is the default display category
 
     self:__Route( 1 )
   end
@@ -138,7 +133,7 @@ do -- PROCESS_ROUTE
   -- @param #PROCESS_ROUTE self
   -- @param Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
-  function PROCESS_ROUTE:HasArrived( ProcessUnit )
+  function PROCESS_ROUTE:onfuncHasArrived( ProcessUnit )
     return false
   end
   
@@ -151,7 +146,7 @@ do -- PROCESS_ROUTE
   function PROCESS_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
   
     if ProcessUnit:IsAlive() then
-      local HasArrived = self:HasArrived( ProcessUnit ) -- Polymorphic
+      local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
         if not HasArrived then
@@ -200,26 +195,23 @@ do -- PROCESS_ROUTE_ZONE
   function PROCESS_ROUTE_ZONE:New( TargetZone )
     local self = BASE:Inherit( self, PROCESS_ROUTE:New() ) -- #PROCESS_ROUTE_ZONE
 
-    return self, { TargetZone }
-  end
-  
-  
-  --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
-  -- @param #PROCESS_ROUTE_ZONE self
-  -- @param Zone#ZONE_BASE TargetZone
-  -- @return #PROCESS_ROUTE_ZONE self
-  function PROCESS_ROUTE_ZONE:New( TargetZone )
-  
-    self.TargetZone = TargetZone
+    self:SetParameters( { 
+      TargetZone = TargetZone,
+      DisplayInterval = 30,
+      DisplayCount = 30,
+      DisplayMessage = true,
+      DisplayTime = 10, -- 10 seconds is the default
+      DisplayCategory = "HQ", -- Route is the default display category
+     } )
     
     return self
   end
-
+  
   --- Method override to check if the controllable has arrived.
   -- @param #PROCESS_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
-  function PROCESS_ROUTE_ZONE:HasArrived( ProcessUnit )
+  function PROCESS_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.TargetZone ) then
       local RouteText = ProcessUnit:GetCallsign() .. ": You have arrived within the zone!"

@@ -30,15 +30,6 @@ MISSION = {
 	_GoalTasks = {}
 }
 
---- @type MISSION.Clients
--- @list <Client#CLIENTS>
-
-function MISSION:Meta()
-
-	
-	return self
-end
-
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
 -- @param #MISSION self
 -- @param Tasking.CommandCenter#COMMANDCENTER CommandCenter
@@ -50,6 +41,12 @@ end
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
   local self = BASE:Inherit( self, STATEMACHINE:New() ) -- Core.StateMachine#STATEMACHINE
+
+  self:SetStartState( "Idle" )
+  
+  self:AddTransition( "Idle", "Start", "Ongoing" )
+  self:AddTransition( "Ongoing", "Stop", "Idle" )
+  self:AddTransition( "Ongoing", "Finish", "Finished" )
   
 	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
@@ -66,10 +63,6 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 
   -- Build the Fsm for the mission.
   
-  self:SetInitialState( "Idle" )
-  self:AddAction( "Idle", "Start", "Ongoing" )
-  self:AddAction( "Ongoing", "Stop", "Idle" )
-  self:AddAction( "Ongoing", "Finish", "Finished" )
 
 	return self
 end

@@ -102,7 +102,7 @@ do -- PROCESS_ACCOUNT
     self:AddEndState( "Accounted" )
     self:AddEndState( "Failed" )
     
-    self:AddStartState( "Assigned" ) 
+    self:SetStartState( "Assigned" ) 
         
     return self
   end
@@ -117,14 +117,7 @@ do -- PROCESS_ACCOUNT
   -- @param #string To
   function PROCESS_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
 
-    -- TODO: need to generalize the timing.  
-    self.DisplayInterval = 30
-    self.DisplayCount = 30
-    self.DisplayMessage = true
-    self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Targets is the default display category
-
-    self:EventOnDead( self.EventDead )
+    self:EventOnDead( self.onfuncEventDead )
 
     self:__Wait( 1 )
   end
@@ -181,23 +174,20 @@ do -- PROCESS_ACCOUNT_DEADS
     -- Inherits from BASE
     local self = BASE:Inherit( self, PROCESS_ACCOUNT:New() ) -- #PROCESS_ACCOUNT_DEADS
     
-    return self, { TargetSetUnit, TaskName }
-  end
-
-  
-  --- Creates a new DESTROY process.
-  -- @param #PROCESS_ACCOUNT_DEADS self
-  -- @param Set#SET_UNIT TargetSetUnit
-  -- @param #string TaskName
-  -- @return #PROCESS_ACCOUNT_DEADS self
-  function PROCESS_ACCOUNT_DEADS:Init( TargetSetUnit, TaskName )
-  
-    self.TargetSetUnit = TargetSetUnit
-    self.TaskName = TaskName
+    self:SetParameters( { 
+      TargetSetUnit = TargetSetUnit, 
+      TaskName = TaskName,
+      DisplayInterval = 30,
+      DisplayCount = 30,
+      DisplayMessage = true,
+      DisplayTime = 10, -- 10 seconds is the default
+      DisplayCategory = "HQ", -- Targets is the default display category
+    } )
     
     return self
   end
 
+  
   function PROCESS_ACCOUNT_DEADS:_Destructor()
     self:E("_Destructor")
   
@@ -260,7 +250,7 @@ do -- PROCESS_ACCOUNT_DEADS
   
   --- @param #PROCESS_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA EventData
-  function PROCESS_ACCOUNT_DEADS:EventDead( EventData )
+  function PROCESS_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then

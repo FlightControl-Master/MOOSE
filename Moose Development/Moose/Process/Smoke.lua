@@ -92,7 +92,7 @@ do -- PROCESS_SMOKE
     self:AddEndState( "Failed" )
     self:AddEndState( "Success" )
     
-    self:AddStartState( "None" )  
+    self:SetStartState( "None" )  
 
     return self
   end
@@ -153,7 +153,9 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
   function PROCESS_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
     local self = BASE:Inherit( self, PROCESS_SMOKE:New() ) -- #PROCESS_SMOKE
 
-    return self, { TargetSetUnit, TargetZone }
+    self:SetParameters( { TargetSetUnit, TargetZone } )
+  
+    return self
   end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.

@@ -110,7 +110,7 @@ do -- PROCESS_ASSIGN
     self:AddEndState( "Rejected" )
     self:AddEndState( "Failed" )
     
-    self:AddStartState( "UnAssigned" )  
+    self:SetStartState( "UnAssigned" )  
     
     return self
   end
@@ -136,25 +136,13 @@ do -- PROCESS_ASSIGN_ACCEPT
   -- @param #PROCESS_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
   function PROCESS_ASSIGN_ACCEPT:New( TaskBriefing )
-    -- Inherits from BASE
+    
     local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_ACCEPT
 
-    return self, { TaskBriefing }
-  end
-
-
-  --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
-  -- @param #PROCESS_ASSIGN_ACCEPT self
-  -- @param #string TaskBriefing
-  -- @return #PROCESS_ASSIGN_ACCEPT The task acceptance process.
-  function PROCESS_ASSIGN_ACCEPT:Init( TaskBriefing )
-
-    
-    self.TaskBriefing = TaskBriefing
+    self:SetParameters( { TaskBriefing = TaskBriefing } )
     
     return self
   end
-
 
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_ACCEPT self
@@ -178,6 +166,7 @@ do -- PROCESS_ASSIGN_ACCEPT
   -- @param #string From
   -- @param #string To
   function PROCESS_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Event, From, To )
+    env.info( "in here" )
     self:E( { ProcessUnit, Event, From, To } )
   
     local ProcessGroup = ProcessUnit:GetGroup()
@@ -211,8 +200,10 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
 
     -- Inherits from BASE
     local self = BASE:Inherit( self, PROCESS_ASSIGN:New() ) -- #PROCESS_ASSIGN_MENU_ACCEPT
+
+    self:SetParameters( { TaskName = TaskName, TaskBriefing = TaskBriefing } )
   
-    return self, { TaskName, TaskBriefing }
+    return self
   end
   
   

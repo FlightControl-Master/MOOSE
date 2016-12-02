@@ -40,48 +40,27 @@ function STATEMACHINE:New( FsmT )
   --setmetatable( self, MT )
   --self.__index = self
 
-  for TransitionID, Transition in pairs( FsmT:GetTransitions() ) do
-    self:AddAction( Transition.From, Transition.Event, Transition.To )
-    self.FsmT:CopyCallHandler( self, "onenter", Transition.From )
-    self.FsmT:CopyCallHandler( self, "onleave", Transition.From )
-    self.FsmT:CopyCallHandler( self, "onenter", Transition.To )
-    self.FsmT:CopyCallHandler( self, "onleave", Transition.To )
-    self.FsmT:CopyCallHandler( self, "onbefore", Transition.Event )
-    self.FsmT:CopyCallHandler( self, "onafter", Transition.Event )
-  end
-  
-  for ProcessID, Process in pairs( self.FsmT:GetProcesses() ) do
-    self:E( Process )
-    local FsmProcess = self:AddProcess(Process.From, Process.Event, Process.Process:New( unpack( Process.Arguments ) ), Process.ReturnEvents )
-    self.FsmT:CopyCallHandler( FsmProcess, "onenter", Process.From )
-    self.FsmT:CopyCallHandler( FsmProcess, "onleave", Process.From )
-    self.FsmT:CopyCallHandler( FsmProcess, "onbefore", Process.Event )
-    self.FsmT:CopyCallHandler( FsmProcess, "onafter", Process.Event )
-    
-  end
-
-  for EndStateID, EndState in pairs( FsmT:EndStates() ) do
-    self:E( EndState )
-    self:AddEndState( EndState )
-  end
-
-  self:SetStartState( FsmT:GetStartState() )
-  
-
   self.options = options or {}
   self.options.subs = self.options.subs or {}
   self.current = self.options.initial or 'none'
   self.events = {}
   self.subs = {}
   self.endstates = {}
+  
+  self.Scores = {}
 
+  FsmT = FsmT or STATEMACHINE_TEMPLATE:New( "" )
+
+  self:SetStartState( FsmT:GetStartState() )
+
+  for TransitionID, Transition in pairs( FsmT:GetTransitions() ) do
+    self:AddTransition( Transition.From, Transition.Event, Transition.To )
+  end
+
+  self:CopyCallHandlers( FsmT )
+  
   return self
 end
-
-function STATEMACHINE:SetInitialState( State )
-  self.current = State
-end
-
 
 
 function STATEMACHINE:AddTransition( From, Event, To )
@@ -110,19 +89,19 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
   sub.event = "Start"
   sub.ReturnEvents = ReturnEvents
   
-  -- Make the reference table weak.
-  -- setmetatable( self.options.subs, { __mode = "v" } )
-  self.options.subs[Event] = sub
-
   self:_submap( self.subs, sub, nil )
   
-  self:AddAction( From, Event, From )
+  self:AddTransition( From, Event, From )
 
   return Process
 end
 
 function STATEMACHINE:AddEndState( State )
   self.endstates[State] = State
+end
+
+function STATEMACHINE:SetStartState( State )
+  self.current = State
 end
 
 function STATEMACHINE:GetSubs()
@@ -157,7 +136,7 @@ function STATEMACHINE:_submap( subs, sub, name )
   subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
   
   -- Make the reference table weak.
-  setmetatable( subs[sub.FromParent][sub.EventParent], { __mode = "k" } )
+  -- setmetatable( subs[sub.FromParent][sub.EventParent], { __mode = "k" } )
   
   subs[sub.FromParent][sub.EventParent][sub] = {}
   subs[sub.FromParent][sub.EventParent][sub].fsm = sub.fsm
@@ -325,6 +304,27 @@ function STATEMACHINE:cannot(e)
   return not self:can(e)
 end
 
+function STATEMACHINE:CopyCallHandlers( FsmT )
+
+  local Parent = BASE:GetParent( FsmT )
+  if Parent then
+    self:CopyCallHandlers( Parent )
+  end
+  for ElementID, Element in pairs( FsmT ) do
+    self:E( { ElementID = ElementID } )
+    if type( Element ) == "function" then
+      if ElementID.find( ElementID, "^onbefore" ) or
+         ElementID.find( ElementID, "^onafter" ) or
+         ElementID.find( ElementID, "^onenter" ) or
+         ElementID.find( ElementID, "^onleave" ) or
+         ElementID.find( ElementID, "^onfunc" ) then
+        self[ ElementID ] = Element
+      end
+    end
+  end
+end
+
+
 function STATEMACHINE:todot(filename)
   local dotfile = io.open(filename,'w')
   dotfile:write('digraph {\n')
@@ -388,9 +388,21 @@ function STATEMACHINE_CONTROLLABLE:GetControllable()
 end
 
 function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
+
+  local ErrorHandler = function( errmsg )
+
+    env.info( "Error in SCHEDULER function:" .. errmsg )
+    if debug ~= nil then
+      env.info( debug.traceback() )
+    end
+    
+    return errmsg
+  end
+
   if self[handler] then
     self:E( "Calling " .. handler )
-    return self[handler]( self, self.Controllable, unpack( params ) )
+    return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+    --return self[handler]( self, self.Controllable, unpack( params ) )
   end
 end
 
@@ -406,9 +418,26 @@ STATEMACHINE_PROCESS = {
 --- Creates a new STATEMACHINE_PROCESS object.
 -- @param #STATEMACHINE_PROCESS self
 -- @return #STATEMACHINE_PROCESS
-function STATEMACHINE_PROCESS:New( FSMT )
+function STATEMACHINE_PROCESS:New( FsmT, Controllable, Task )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- StateMachine#STATEMACHINE_PROCESS
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FsmT ) ) -- StateMachine#STATEMACHINE_PROCESS
+
+  self:Assign( Controllable, Task )
+  self.ClassName = FsmT._Name
+  
+  for ParameterID, Parameter in pairs( FsmT:GetParameters() ) do
+    self[ ParameterID ] = Parameter
+  end
+
+  for ProcessID, Process in pairs( FsmT:GetProcesses() ) do
+    self:E( Process )
+    local FsmProcess = self:AddProcess(Process.From, Process.Event, STATEMACHINE_PROCESS:New( Process.Process, Controllable, Task ), Process.ReturnEvents )
+  end
+
+  for EndStateID, EndState in pairs( FsmT:GetEndStates() ) do
+    self:E( EndState )
+    self:AddEndState( EndState )
+  end
 
   return self
 end
@@ -442,21 +471,17 @@ end
 
 
 --- Assign the process to a @{Unit} and activate the process.
--- @param #PROCESS self
+-- @param #STATEMACHINE_PROCESS self
 -- @param Task.Tasking#TASK_BASE Task
 -- @param Wrapper.Unit#UNIT ProcessUnit
--- @return #PROCESS self
-function STATEMACHINE_PROCESS:Assign( Task, ProcessUnit )
+-- @return #STATEMACHINE_PROCESS self
+function STATEMACHINE_PROCESS:Assign( ProcessUnit, Task )
   self:E( { Task, ProcessUnit } )
 
   self:SetControllable( ProcessUnit )
   self:SetTask( Task )
   
-  self.ProcessGroup = ProcessUnit:GetGroup()
-  --Task:RemoveMenuForGroup( self.ProcessGroup )
-  --Task:SetAssignedMenuForGroup( self.ProcessGroup )
-    
-  --self:Activate()
+  --self.ProcessGroup = ProcessUnit:GetGroup()
 
   return self
 end
@@ -486,7 +511,7 @@ end
 -- @param #string From
 -- @param #string To
 function STATEMACHINE_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
-  self:E( { ProcessUnit, Event, From, To, Dummy } )
+  self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
 
   if self:IsTrace() then
     MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
@@ -601,12 +626,13 @@ function STATEMACHINE_TEMPLATE:New( Name )
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #STATEMACHINE_TEMPLATE
   
-  self._Transitions = self.Transitions or {}
-  self._Processes = self.Processes or {}
-  self._EndStates = self.EndStates or {}
   self._StartState = "none"
+  self._Transitions = {}
+  self._Processes = {}
+  self._EndStates = {}
+  self._Scores = {}
   
-  self._Name = Name
+  self._Name = Name or ""
 
   return self
 end
@@ -623,19 +649,23 @@ end
 
 function STATEMACHINE_TEMPLATE:GetTransitions()
 
-  return self._Transitions
+  return self._Transitions or {}
 end
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
 -- @return Process#PROCESS
-function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ProcessArguments, ReturnEvents )
+function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
+
+  self:E( { ProcessTemplate = ProcessTemplate } )
 
   local Process = {}
   Process.From = From
   Process.Event = Event
   Process.Process = ProcessTemplate
-  Process.Arguments = ProcessArguments
+  Process.Parameters = ProcessTemplate:GetParameters()
   Process.ReturnEvents = ReturnEvents
+  
+  self:E( { From = Process.From, Event = Process.Event, Process = Process.Process._Name, Parameters = Process.Parameters, ReturnEvents = Process.ReturnEvents } )
   
   -- Make the reference table weak.
   -- setmetatable( self.options.subs, { __mode = "v" } )
@@ -646,27 +676,48 @@ end
 
 function STATEMACHINE_TEMPLATE:GetProcesses()
 
-  return self._Processes
+  return self._Processes or {}
 end
+
+function STATEMACHINE_TEMPLATE:GetProcess( From, Event )
+
+  for ProcessID, Process in pairs( self:GetProcesses() ) do
+    if Process.From == From and Process.Event == Event then
+      self:E( Process )
+      return Process.Process
+    end
+  end
+  
+  error( "Sub-Process from state " .. From .. " with event " .. Event .. " not found!" )
+end
+
+function STATEMACHINE_TEMPLATE:SetParameters( Parameters )
+  self._Parameters = Parameters
+end
+
+function STATEMACHINE_TEMPLATE:GetParameters()
+  return self._Parameters or {}
+end
+
 
 function STATEMACHINE_TEMPLATE:AddEndState( State )
 
-  self._EndStates[EndState] = EndState
+  self._EndStates[State] = State
 end
 
 function STATEMACHINE_TEMPLATE:GetEndStates()
 
-  return self._EndStates
+  return self._EndStates or {}
 end
 
-function STATEMACHINE_TEMPLATE:AddStartState()
+function STATEMACHINE_TEMPLATE:SetStartState( State )
 
-  self._StartState = StartState
+  self._StartState = State
 end
 
 function STATEMACHINE_TEMPLATE:GetStartState()
 
-  return self._StartState
+  return self._StartState or {}
 end
 
 --- Adds a score for the STATEMACHINE_PROCESS to be achieved.
@@ -678,16 +729,31 @@ end
 function STATEMACHINE_TEMPLATE:AddScore( State, ScoreText, Score )
   self:F2( { State, ScoreText, Score } )
 
-  self.Scores[State] = self.Scores[State] or {}
-  self.Scores[State].ScoreText = ScoreText
-  self.Scores[State].Score = Score
+  self._Scores[State] = self._Scores[State] or {}
+  self._Scores[State].ScoreText = ScoreText
+  self._Scores[State].Score = Score
 
   return self
 end
 
-function STATEMACHINE_TEMPLATE:CopyCallHandler( Fsm, OnAction, Transition )
-  self:E( { Fsm.ClassName, OnAction, Transition } )
-  if OnAction and Transition and self[OnAction .. Transition] then
-    Fsm[OnAction .. Transition] = self[OnAction .. Transition]
-  end
+--- Adds a score for the STATEMACHINE_PROCESS to be achieved.
+-- @param #STATEMACHINE_TEMPLATE self
+-- @param #string From is the From State of the main process.
+-- @param #string Event is the Event of the main process.
+-- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #STATEMACHINE_TEMPLATE self
+function STATEMACHINE_TEMPLATE:AddScoreProcess( From, Event, State, ScoreText, Score )
+  self:F2( { Event, State, ScoreText, Score } )
+
+  local Process = self:GetProcess( From, Event )
+  
+  self:E( { Process = Process._Name, Scores = Process._Scores, State = State, ScoreText = ScoreText, Score = Score } )
+  Process._Scores[State] = Process._Scores[State] or {}
+  Process._Scores[State].ScoreText = ScoreText
+  Process._Scores[State].Score = Score
+
+  return Process
 end
+
