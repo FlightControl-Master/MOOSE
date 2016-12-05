@@ -224,6 +224,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
+    self:E(Controller)
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -418,7 +419,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   --  AttackControllable = {
   --   id = 'AttackControllable',
   --   params = {
-  --     controllableId = Controllable.ID,
+  --     groupId = Group.ID,
   --     weaponType = number,
   --     expend = enum AI.Task.WeaponExpend,
   --     attackQty = number,
@@ -443,7 +444,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   local DCSTask
   DCSTask = { id = 'AttackControllable',
     params = {
-      controllableId = AttackGroup:GetID(),
+      groupId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -802,27 +803,28 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
 --  Follow = {
 --    id = 'Follow',
 --    params = {
---      controllableId = Controllable.ID,
+--      groupId = Group.ID,
 --      pos = Vec3,
 --      lastWptIndexFlag = boolean,
 --      lastWptIndex = number
 --    }    
 --  }
 
-  local LastWaypointIndexFlag = nil
+  local LastWaypointIndexFlag = false
   if LastWaypointIndex then
     LastWaypointIndexFlag = true
   end
   
   local DCSTask
-  DCSTask = { id = 'Follow',
+  DCSTask = { 
+    id = 'Follow',
     params = {
-      controllableId = FollowControllable:GetID(),
+      groupId = FollowControllable:GetID(),
       pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
-      lastWptIndex = LastWaypointIndex,
-    },
-  },
+      lastWptIndex = LastWaypointIndex
+    }
+  }
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -845,7 +847,7 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
 --  Escort = {
 --    id = 'Escort',
 --    params = {
---      controllableId = Controllable.ID,
+--      groupId = Group.ID,
 --      pos = Vec3,
 --      lastWptIndexFlag = boolean,
 --      lastWptIndex = number,
@@ -854,15 +856,15 @@ function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, E
 --    }    
 --  }
 
-  local LastWaypointIndexFlag = nil
+  local LastWaypointIndexFlag = false
   if LastWaypointIndex then
     LastWaypointIndexFlag = true
   end
   
   local DCSTask
-  DCSTask = { id = 'Follow',
+  DCSTask = { id = 'Escort',
     params = {
-      controllableId = FollowControllable:GetID(),
+      groupId = FollowControllable:GetID(),
       pos = Vec3,
       lastWptIndexFlag = LastWaypointIndexFlag,
       lastWptIndex = LastWaypointIndex,
@@ -946,7 +948,7 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
 --  FAC_AttackControllable = { 
 --    id = 'FAC_AttackControllable', 
 --    params = { 
---      controllableId = Controllable.ID,
+--      groupId = Group.ID,
 --      weaponType = number,
 --      designation = enum AI.Task.Designation,
 --      datalink = boolean
@@ -956,7 +958,7 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
   local DCSTask
   DCSTask = { id = 'FAC_AttackControllable',
     params = {
-      controllableId = AttackGroup:GetID(),
+      groupId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,
@@ -1054,7 +1056,7 @@ function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType,
   --  EngageControllable  = {
   --   id = 'EngageControllable ',
   --   params = {
-  --     controllableId = Controllable.ID,
+  --     groupId = Group.ID,
   --     weaponType = number,
   --     expend = enum AI.Task.WeaponExpend,
   --     attackQty = number,
@@ -1080,7 +1082,7 @@ function CONTROLLABLE:EnRouteTaskEngageGroup( AttackGroup, Priority, WeaponType,
   local DCSTask
   DCSTask = { id = 'EngageControllable',
     params = {
-      controllableId = AttackGroup:GetID(),
+      groupId = AttackGroup:GetID(),
       weaponType = WeaponType,
       expend = WeaponExpend,
       attackQty = AttackQty,
@@ -1235,7 +1237,7 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
 --  FAC_EngageControllable  = { 
 --    id = 'FAC_EngageControllable', 
 --    params = { 
---      controllableId = Controllable.ID,
+--      groupId = Group.ID,
 --      weaponType = number,
 --      designation = enum AI.Task.Designation,
 --      datalink = boolean,
@@ -1246,7 +1248,7 @@ function CONTROLLABLE:EnRouteTaskFAC_EngageGroup( AttackGroup, Priority, WeaponT
   local DCSTask
   DCSTask = { id = 'FAC_EngageControllable',
     params = {
-      controllableId = AttackGroup:GetID(),
+      groupId = AttackGroup:GetID(),
       weaponType = WeaponType,
       designation = Designation,
       datalink = Datalink,
