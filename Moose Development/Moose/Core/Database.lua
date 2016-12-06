@@ -2,7 +2,7 @@
 -- 
 -- ====
 -- 
--- 1) @{Database#DATABASE} class, extends @{Base#BASE}
+-- 1) @{Core.Database#DATABASE} class, extends @{Core.Base#BASE}
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
@@ -38,7 +38,7 @@
 
 --- DATABASE class
 -- @type DATABASE
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 DATABASE = {
   ClassName = "DATABASE",
   Templates = {
@@ -106,7 +106,7 @@ end
 --- Finds a Unit based on the Unit Name.
 -- @param #DATABASE self
 -- @param #string UnitName
--- @return Unit#UNIT The found Unit.
+-- @return Wrapper.Unit#UNIT The found Unit.
 function DATABASE:FindUnit( UnitName )
 
   local UnitFound = self.UNITS[UnitName]
@@ -154,7 +154,7 @@ end
 --- Finds a STATIC based on the StaticName.
 -- @param #DATABASE self
 -- @param #string StaticName
--- @return Static#STATIC The found STATIC.
+-- @return Wrapper.Static#STATIC The found STATIC.
 function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
@@ -181,7 +181,7 @@ end
 --- Finds a AIRBASE based on the AirbaseName.
 -- @param #DATABASE self
 -- @param #string AirbaseName
--- @return Airbase#AIRBASE The found AIRBASE.
+-- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
 function DATABASE:FindAirbase( AirbaseName )
 
   local AirbaseFound = self.AIRBASES[AirbaseName]
@@ -192,7 +192,7 @@ end
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
 -- @param #string ClientName
--- @return Client#CLIENT The found CLIENT.
+-- @return Wrapper.Client#CLIENT The found CLIENT.
 function DATABASE:FindClient( ClientName )
 
   local ClientFound = self.CLIENTS[ClientName]
@@ -215,7 +215,7 @@ end
 --- Finds a GROUP based on the GroupName.
 -- @param #DATABASE self
 -- @param #string GroupName
--- @return Group#GROUP The found GROUP.
+-- @return Wrapper.Group#GROUP The found GROUP.
 function DATABASE:FindGroup( GroupName )
 
   local GroupFound = self.GROUPS[GroupName]
@@ -535,7 +535,7 @@ end
 
 --- Handles the OnBirth event for the alive units set.
 -- @param #DATABASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
   self:F2( { Event } )
 
@@ -549,7 +549,7 @@ end
 
 --- Handles the OnDead or OnCrash event for alive units set.
 -- @param #DATABASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
@@ -564,7 +564,7 @@ end
 
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #DATABASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
@@ -579,7 +579,7 @@ end
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #DATABASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 

@@ -41,7 +41,7 @@
 --- Returns the coalition of the group.
 -- @function [parent=#Group] getCoalition
 -- @param #Group self 
--- @return DCSCoalitionObject#coalition.side
+-- @return Dcs.DCSCoalitionWrapper.Object#coalition.side
 
 --- Returns the group's name. This is the same name assigned to the group in Mission Editor.
 -- @function [parent=#Group] getName
@@ -57,7 +57,7 @@
 -- @function [parent=#Group] getUnit
 -- @param #Group self 
 -- @param #number unitNumber
--- @return DCSUnit#Unit
+-- @return Dcs.DCSWrapper.Unit#Unit
 
 --- Returns current size of the group. If some of the units will be destroyed, As units are destroyed the size of the group will be changed.
 -- @function [parent=#Group] getSize
@@ -72,7 +72,7 @@
 --- Returns array of the units present in the group now. Destroyed units will not be enlisted at all.
 -- @function [parent=#Group] getUnits
 -- @param #Group self 
--- @return #list<DCSUnit#Unit> array of Units
+-- @return #list<Dcs.DCSWrapper.Unit#Unit> array of Units
 
 --- Returns controller of the group. 
 -- @function [parent=#Group] getController

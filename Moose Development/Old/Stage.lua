@@ -68,9 +68,9 @@ end
 
 --- Execute
 -- @param #STAGEBRIEF self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 -- @return #boolean
 function STAGEBRIEF:Execute( Mission, Client, Task )
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
@@ -228,9 +228,9 @@ end
 
 --- Execute the routing.
 -- @param #STAGEROUTE self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 function STAGEROUTE:Execute( Mission, Client, Task )
 	self:F()
 	local Valid = BASE:Inherited(self):Execute( Mission, Client, Task )
@@ -300,9 +300,9 @@ end
 
 --- Execute the landing coordination.
 -- @param #STAGELANDING self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 function STAGELANDING:Execute( Mission, Client, Task )
 	self:F()
  
@@ -524,9 +524,9 @@ end
 
 --- Coordinate UnLoading
 -- @param #STAGEUNLOAD self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 function STAGEUNLOAD:Execute( Mission, Client, Task )
 	self:F()
 	
@@ -562,9 +562,9 @@ end
 
 --- Validate UnLoading
 -- @param #STAGEUNLOAD self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 function STAGEUNLOAD:Validate( Mission, Client, Task )
 	self:F()
 	env.info( 'STAGEUNLOAD:Validate()' )
@@ -835,9 +835,9 @@ end
 
 --- Execute Arrival
 -- @param #STAGEARRIVE self
--- @param Mission#MISSION Mission
--- @param Client#CLIENT Client
--- @param Task#TASK Task
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Client#CLIENT Client
+-- @param Tasking.Task#TASK Task
 function STAGEARRIVE:Execute( Mission, Client, Task )
 	self:F()
  

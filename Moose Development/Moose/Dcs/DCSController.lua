@@ -78,7 +78,7 @@
 
 --- Detected target. 
 -- @type DetectedTarget
--- @field Object#Object object The target
+-- @field Wrapper.Object#Object object The target
 -- @field #boolean visible The target is visible
 -- @field #boolean type The target type is known
 -- @field #boolean distance Distance to the target is known
@@ -87,7 +87,7 @@
 --- Checks if the target is detected or not. If one or more detection method is specified the function will return true if the target is detected by at least one of these methods. If no detection methods are specified the function will return true if the target is detected by any method. 
 -- @function [parent=#Controller] isTargetDetected
 -- @param self
--- @param Object#Object target Target to check
+-- @param Wrapper.Object#Object target Target to check
 -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN 
 -- @return #boolean detected True if the target is detected. 
 -- @return #boolean visible Has effect only if detected is true. True if the target is visible now. 
@@ -107,7 +107,7 @@
 --- Know a target.
 -- @function [parent=#Controller] knowTarget
 -- @param self
--- @param Object#Object object The target.
+-- @param Wrapper.Object#Object object The target.
 -- @param #boolean type Target type is known.
 -- @param #boolean distance Distance to target is known.
 

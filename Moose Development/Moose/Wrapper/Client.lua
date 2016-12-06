@@ -1,10 +1,10 @@
 --- This module contains the CLIENT class.
 -- 
--- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
+-- 1) @{Wrapper.Client#CLIENT} class, extends @{Wrapper.Unit#UNIT}
 -- ===============================================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The @{Wrapper.Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -39,7 +39,7 @@
 
 --- The CLIENT class
 -- @type CLIENT
--- @extends Unit#UNIT
+-- @extends Wrapper.Unit#UNIT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,
@@ -259,7 +259,7 @@ end
 --- Return the DCSGroup of a Client.
 -- This function is modified to deal with a couple of bugs in DCS 1.5.3
 -- @param #CLIENT self
--- @return DCSGroup#Group
+-- @return Dcs.DCSWrapper.Group#Group
 function CLIENT:GetDCSGroup()
   self:F3()
 
@@ -333,10 +333,10 @@ function CLIENT:GetDCSGroup()
 end 
 
 
--- TODO: Check DCSTypes#Group.ID
+-- TODO: Check Dcs.DCSTypes#Group.ID
 --- Get the group ID of the client.
 -- @param #CLIENT self
--- @return DCSTypes#Group.ID
+-- @return Dcs.DCSTypes#Group.ID
 function CLIENT:GetClientGroupID()
 
   local ClientGroup = self:GetDCSGroup()
@@ -359,7 +359,7 @@ end
 
 --- Returns the UNIT of the CLIENT.
 -- @param #CLIENT self
--- @return Unit#UNIT
+-- @return Wrapper.Unit#UNIT
 function CLIENT:GetClientGroupUnit()
 	self:F2()
 
@@ -375,7 +375,7 @@ end
 
 --- Returns the DCSUnit of the CLIENT.
 -- @param #CLIENT self
--- @return DCSTypes#Unit
+-- @return Dcs.DCSTypes#Unit
 function CLIENT:GetClientGroupDCSUnit()
 	self:F2()
 
@@ -396,8 +396,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
+--- Shows the @{Fsm.Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{Fsm.Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
@@ -430,7 +430,7 @@ end
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
 -- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )

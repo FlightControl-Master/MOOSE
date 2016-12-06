@@ -2,8 +2,8 @@
 
 --- PROCESS_JTAC class
 -- @type PROCESS_JTAC
--- @field Unit#UNIT ProcessUnit
--- @field Set#SET_UNIT TargetSetUnit
+-- @field Wrapper.Unit#UNIT ProcessUnit
+-- @field Core.Set#SET_UNIT TargetSetUnit
 -- @extends Process#PROCESS
 PROCESS_JTAC = { 
   ClassName = "PROCESS_JTAC",
@@ -14,10 +14,10 @@ PROCESS_JTAC = {
 
 --- Creates a new DESTROY process.
 -- @param #PROCESS_JTAC self
--- @param Task#TASK Task
--- @param Unit#UNIT ProcessUnit
--- @param Set#SET_UNIT TargetSetUnit
--- @param Unit#UNIT FACUnit
+-- @param Tasking.Task#TASK Task
+-- @param Wrapper.Unit#UNIT ProcessUnit
+-- @param Core.Set#SET_UNIT TargetSetUnit
+-- @param Wrapper.Unit#UNIT FACUnit
 -- @return #PROCESS_JTAC self
 function PROCESS_JTAC:New( Task, ProcessUnit, TargetSetUnit, FACUnit )
 
@@ -34,7 +34,7 @@ function PROCESS_JTAC:New( Task, ProcessUnit, TargetSetUnit, FACUnit )
   self.DisplayCategory = "HQ" -- Targets is the default display category
 
 
-  self.Fsm = STATEMACHINE_PROCESS:New( self, {
+  self.Fsm = FSM_PROCESS:New( self, {
     initial = 'Assigned',
     events = {
       { name = 'Start', from = 'Assigned', to = 'CreatedMenu'    },
@@ -66,7 +66,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -77,7 +77,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -123,7 +123,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -131,7 +131,7 @@ function PROCESS_JTAC:OnJTACMenuAwait( Fsm, Event, From, To )
 
   if self.DisplayCount >= self.DisplayInterval then
 
-    local TaskJTAC = self.Task -- Task#TASK_JTAC
+    local TaskJTAC = self.Task -- Tasking.Task#TASK_JTAC
     TaskJTAC.Spots = TaskJTAC.Spots or {}
     for TargetUnitName, SpotData in pairs( TaskJTAC.Spots) do
       local TargetUnit = UNIT:FindByName( TargetUnitName )
@@ -147,16 +147,16 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT TargetUnit
+-- @param Wrapper.Unit#UNIT TargetUnit
 function PROCESS_JTAC:OnJTACMenuSpot( Fsm, Event, From, To, TargetUnit )
 
   local TargetUnitName = TargetUnit:GetName()
   
-  local TaskJTAC = self.Task -- Task#TASK_JTAC
+  local TaskJTAC = self.Task -- Tasking.Task#TASK_JTAC
   
   TaskJTAC.Spots = TaskJTAC.Spots or {}
   TaskJTAC.Spots[TargetUnitName] = TaskJTAC.Spots[TargetUnitName] or {}
@@ -174,16 +174,16 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT TargetUnit
+-- @param Wrapper.Unit#UNIT TargetUnit
 function PROCESS_JTAC:OnJTACMenuCancel( Fsm, Event, From, To, TargetUnit )
 
   local TargetUnitName = TargetUnit:GetName()
   
-  local TaskJTAC = self.Task -- Task#TASK_JTAC
+  local TaskJTAC = self.Task -- Tasking.Task#TASK_JTAC
   
   TaskJTAC.Spots = TaskJTAC.Spots or {}
   if TaskJTAC.Spots[TargetUnitName] then

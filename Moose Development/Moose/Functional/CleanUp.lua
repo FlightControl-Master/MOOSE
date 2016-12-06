@@ -10,7 +10,7 @@
 
 --- The CLEANUP class.
 -- @type CLEANUP
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 CLEANUP = {
 	ClassName = "CLEANUP",
 	ZoneNames = {},
@@ -51,7 +51,7 @@ end
 
 --- Destroys a group from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
--- @param DCSGroup#Group GroupObject The object to be destroyed.
+-- @param Dcs.DCSWrapper.Group#Group GroupObject The object to be destroyed.
 -- @param #string CleanUpGroupName The groupname...
 function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	self:F( { GroupObject, CleanUpGroupName } )
@@ -62,9 +62,9 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	end
 end
 
---- Destroys a @{DCSUnit#Unit} from the simulator, but checks first if it is still existing!
+--- Destroys a @{Dcs.DCSWrapper.Unit#Unit} from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
--- @param DCSUnit#Unit CleanUpUnit The object to be destroyed.
+-- @param Dcs.DCSWrapper.Unit#Unit CleanUpUnit The object to be destroyed.
 -- @param #string CleanUpUnitName The Unit name ...
 function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
@@ -89,10 +89,10 @@ function CLEANUP:_DestroyUnit( CleanUpUnit, CleanUpUnitName )
 	end
 end
 
--- TODO check DCSTypes#Weapon
+-- TODO check Dcs.DCSTypes#Weapon
 --- Destroys a missile from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
--- @param DCSTypes#Weapon MissileObject
+-- @param Dcs.DCSTypes#Weapon MissileObject
 function CLEANUP:_DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
 
@@ -134,7 +134,7 @@ end
 --- Detects if a crash event occurs.
 -- Crashed units go into a CleanUpList for removal.
 -- @param #CLEANUP self
--- @param DCSTypes#Event event
+-- @param Dcs.DCSTypes#Event event
 function CLEANUP:_EventCrash( Event )
 	self:F( { Event } )
 
@@ -157,7 +157,7 @@ end
 --- Detects if a unit shoots a missile.
 -- If this occurs within one of the zones, then the weapon used must be destroyed.
 -- @param #CLEANUP self
--- @param DCSTypes#Event event
+-- @param Dcs.DCSTypes#Event event
 function CLEANUP:_EventShot( Event )
 	self:F( { Event } )
 
@@ -174,7 +174,7 @@ end
 
 --- Detects if the Unit has an S_EVENT_HIT within the given ZoneNames. If this is the case, destroy the unit.
 -- @param #CLEANUP self
--- @param DCSTypes#Event event
+-- @param Dcs.DCSTypes#Event event
 function CLEANUP:_EventHitCleanUp( Event )
 	self:F( { Event } )
 
@@ -199,7 +199,7 @@ function CLEANUP:_EventHitCleanUp( Event )
 	end
 end
 
---- Add the @{DCSUnit#Unit} to the CleanUpList for CleanUp.
+--- Add the @{Dcs.DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -217,7 +217,7 @@ end
 
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given ZoneNames. If this is the case, add the Group to the CLEANUP List.
 -- @param #CLEANUP self
--- @param DCSTypes#Event event
+-- @param Dcs.DCSTypes#Event event
 function CLEANUP:_EventAddForCleanUp( Event )
 
 	if Event.IniDCSUnit then

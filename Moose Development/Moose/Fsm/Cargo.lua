@@ -12,7 +12,7 @@
 --   
 --   * CARGO_GROUPED, represented by a Group of CARGO_UNITs.
 -- 
--- 1) @{Cargo#CARGO_BASE} class, extends @{StateMachine#STATEMACHINE_PROCESS}
+-- 1) @{Fsm.Cargo#CARGO_BASE} class, extends @{Fsm.Fsm#FSM_PROCESS}
 -- ==========================================================================
 -- The @{#CARGO_BASE} class defines the core functions that defines a cargo object within MOOSE.
 -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
@@ -74,14 +74,14 @@
 -- The cargo must be in the **UnLoaded** state.
 -- @function [parent=#CARGO_BASE] Board
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
 -- @function [parent=#CARGO_BASE] __Board
 -- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 
 -- UnBoard
@@ -90,14 +90,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO_BASE] UnBoard
 -- @param #CARGO_BASE self
--- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO_BASE] __UnBoard
 -- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 
 -- Load
@@ -106,14 +106,14 @@
 -- The cargo must be in the **UnLoaded** state.
 -- @function [parent=#CARGO_BASE] Load
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 --- Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **UnLoaded** state.
 -- @function [parent=#CARGO_BASE] __Load
 -- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 
 -- UnLoad
@@ -122,14 +122,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO_BASE] UnLoad
 -- @param #CARGO_BASE self
--- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#CARGO_BASE] __UnLoad
 -- @param #CARGO_BASE self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 -- State Transition Functions
 
@@ -137,62 +137,62 @@
 
 --- @function [parent=#CARGO_BASE] OnBeforeUnLoaded
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
 --- @function [parent=#CARGO_BASE] OnAfterUnLoaded
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Loaded
 
 --- @function [parent=#CARGO_BASE] OnBeforeLoaded
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
 --- @function [parent=#CARGO_BASE] OnAfterLoaded
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Boarding
 
 --- @function [parent=#CARGO_BASE] OnBeforeBoarding
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
 --- @function [parent=#CARGO_BASE] OnAfterBoarding
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- UnBoarding
 
 --- @function [parent=#CARGO_BASE] OnBeforeUnBoarding
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
 --- @function [parent=#CARGO_BASE] OnAfterUnBoarding
 -- @param #CARGO_BASE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 
--- TODO: Find all Carrier objects and make the type of the Carriers Unit#UNIT in the documentation.
+-- TODO: Find all Carrier objects and make the type of the Carriers Wrapper.Unit#UNIT in the documentation.
 
 CARGOS = {}
 
 do -- CARGO_BASE
 
   --- @type CARGO_BASE
-  -- @extends StateMachine#STATEMACHINE_PROCESS
+  -- @extends Fsm.Fsm#FSM_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number ReportRadius (optional) A number defining the radius in meters when the cargo is signalling or reporting to a Carrier.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
-  -- @field Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
-  -- @field Controllable#CONTROLLABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+  -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  -- @field Wrapper.Controllable#CONTROLLABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
@@ -211,7 +211,7 @@ do -- CARGO_BASE
   }
 
 --- @type CARGO_BASE.CargoObjects
--- @map < #string, Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
+-- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
 
 
 --- CARGO_BASE Constructor. This class is an abstract class and should not be instantiated.
@@ -238,7 +238,7 @@ function CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
     },
   }
 
-  local self = BASE:Inherit( self, STATEMACHINE_PROCESS:New( FSMT ) ) -- #CARGO_BASE
+  local self = BASE:Inherit( self, FSM_PROCESS:New( FSMT ) ) -- #CARGO_BASE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
 
@@ -274,7 +274,7 @@ end
 
 --- Check if CargoCarrier is near the Cargo to be Loaded.
 -- @param #CARGO_BASE self
--- @param Point#POINT_VEC2 PointVec2
+-- @param Core.Point#POINT_VEC2 PointVec2
 -- @return #boolean
 function CARGO_BASE:IsNear( PointVec2 )
   self:F( { PointVec2 } )
@@ -301,7 +301,7 @@ do -- CARGO_REPRESENTABLE
 
 --- CARGO_REPRESENTABLE Constructor.
 -- @param #CARGO_REPRESENTABLE self
--- @param Controllable#Controllable CargoObject
+-- @param Wrapper.Controllable#Controllable CargoObject
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
@@ -320,7 +320,7 @@ end
 
 --- Route a cargo unit to a PointVec2.
 -- @param #CARGO_REPRESENTABLE self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #number Speed
 -- @return #CARGO_REPRESENTABLE
 function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
@@ -350,7 +350,7 @@ do -- CARGO_UNIT
 
 --- CARGO_UNIT Constructor.
 -- @param #CARGO_UNIT self
--- @param Unit#UNIT CargoUnit
+-- @param Wrapper.Unit#UNIT CargoUnit
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
@@ -371,7 +371,7 @@ end
 
 --- Enter UnBoarding State.
 -- @param #CARGO_UNIT self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -416,7 +416,7 @@ end
 
 --- Leave UnBoarding State.
 -- @param #CARGO_UNIT self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -440,7 +440,7 @@ end
 
 --- UnBoard Event.
 -- @param #CARGO_UNIT self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -465,7 +465,7 @@ end
 
 --- Enter UnLoaded State.
 -- @param #CARGO_UNIT self
--- @param Point#POINT_VEC2
+-- @param Core.Point#POINT_VEC2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -503,7 +503,7 @@ end
 
 --- Enter Boarding State.
 -- @param #CARGO_UNIT self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -535,7 +535,7 @@ end
 
 --- Leave Boarding State.
 -- @param #CARGO_UNIT self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -553,7 +553,7 @@ end
 
 --- Loaded State.
 -- @param #CARGO_UNIT self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -602,7 +602,7 @@ do -- CARGO_PACKAGE
 
 --- CARGO_PACKAGE Constructor.
 -- @param #CARGO_PACKAGE self
--- @param Unit#UNIT CargoCarrier The UNIT carrying the package.
+-- @param Wrapper.Unit#UNIT CargoCarrier The UNIT carrying the package.
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
@@ -621,11 +621,11 @@ end
 
 --- Board Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #number Speed
 -- @param #number BoardDistance
 -- @param #number Angle
@@ -660,7 +660,7 @@ end
 
 --- Check if CargoCarrier is near the Cargo to be Loaded.
 -- @param #CARGO_PACKAGE self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @return #boolean
 function CARGO_PACKAGE:IsNear( CargoCarrier )
   self:F()
@@ -679,11 +679,11 @@ end
 
 --- Boarded Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_PACKAGE:onafterOnBoarded( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
@@ -696,7 +696,7 @@ end
 
 --- UnBoard Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -739,11 +739,11 @@ end
 
 --- UnBoarded Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_PACKAGE:onafterUnBoarded( FsmP, Event, From, To, CargoCarrier, Speed )
   self:F()
 
@@ -756,11 +756,11 @@ end
 
 --- Load Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #number Speed
 -- @param #number LoadDistance
 -- @param #number Angle
@@ -785,7 +785,7 @@ end
 
 --- UnLoad Event.
 -- @param #CARGO_PACKAGE self
--- @param StateMachine#STATEMACHINE_PROCESS FsmP
+-- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -816,7 +816,7 @@ end
 do -- CARGO_GROUP
 
   --- @type CARGO_GROUP
-  -- @extends Cargo#CARGO_BASE
+  -- @extends Fsm.Cargo#CARGO_BASE
   -- @field Set#SET_BASE CargoSet A set of cargo objects.
   -- @field #string Name A string defining the name of the cargo group. The name is the unique identifier of the cargo.
   CARGO_GROUP = {
@@ -825,7 +825,7 @@ do -- CARGO_GROUP
 
 --- CARGO_GROUP constructor.
 -- @param #CARGO_GROUP self
--- @param Set#Set_BASE CargoSet
+-- @param Core.Set#Set_BASE CargoSet
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
@@ -847,14 +847,14 @@ end -- CARGO_GROUP
 do -- CARGO_GROUPED
 
   --- @type CARGO_GROUPED
-  -- @extends Cargo#CARGO_GROUP
+  -- @extends Fsm.Cargo#CARGO_GROUP
   CARGO_GROUPED = {
     ClassName = "CARGO_GROUPED",
   }
 
 --- CARGO_GROUPED constructor.
 -- @param #CARGO_GROUPED self
--- @param Set#Set_BASE CargoSet
+-- @param Core.Set#Set_BASE CargoSet
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
@@ -870,7 +870,7 @@ end
 
 --- Enter Boarding State.
 -- @param #CARGO_GROUPED self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -893,7 +893,7 @@ end
 
 --- Enter Loaded State.
 -- @param #CARGO_GROUPED self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -910,7 +910,7 @@ end
 
 --- Leave Boarding State.
 -- @param #CARGO_GROUPED self
--- @param Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -937,7 +937,7 @@ end
 
 --- Enter UnBoarding State.
 -- @param #CARGO_GROUPED self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -963,7 +963,7 @@ end
 
 --- Leave UnBoarding State.
 -- @param #CARGO_GROUPED self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -998,7 +998,7 @@ end
 
 --- UnBoard Event.
 -- @param #CARGO_GROUPED self
--- @param Point#POINT_VEC2 ToPointVec2
+-- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -1012,7 +1012,7 @@ end
 
 --- Enter UnLoaded State.
 -- @param #CARGO_GROUPED self
--- @param Point#POINT_VEC2
+-- @param Core.Point#POINT_VEC2
 -- @param #string Event
 -- @param #string From
 -- @param #string To

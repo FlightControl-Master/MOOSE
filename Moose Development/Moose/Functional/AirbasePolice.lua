@@ -2,9 +2,9 @@
 --
 -- ===
 --
--- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
+-- 1) @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Core.Base#BASE}
 -- ==================================================================
--- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
+-- The @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
 -- CLIENTS should not be allowed to:
 --
 --   * Don't taxi faster than 40 km/h.
@@ -12,7 +12,7 @@
 --   * Avoid to hit other planes on the airbase.
 --   * Obey ground control orders.
 --
--- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
+-- 2) @{Functional.AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the caucasus map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -39,7 +39,7 @@
 --   * TbilisiLochini
 --   * Vaziani
 --
--- 3) @{AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
+-- 3) @{Functional.AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the NEVADA map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -59,8 +59,8 @@
 
 
 --- @type AIRBASEPOLICE_BASE
--- @field Set#SET_CLIENT SetClient
--- @extends Base#BASE
+-- @field Core.Set#SET_CLIENT SetClient
+-- @extends Core.Base#BASE
 
 AIRBASEPOLICE_BASE = {
   ClassName = "AIRBASEPOLICE_BASE",
@@ -99,7 +99,7 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
 --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
 
   self.SetClient:ForEachClient(
-    --- @param Client#CLIENT Client
+    --- @param Wrapper.Client#CLIENT Client
     function( Client )
       Client:SetState( self, "Speeding", false )
       Client:SetState( self, "Warnings", 0)
@@ -141,7 +141,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
 
       self.SetClient:ForEachClientInZone( Airbase.ZoneBoundary,
 
-        --- @param Client#CLIENT Client
+        --- @param Wrapper.Client#CLIENT Client
         function( Client )
 
           self:E( Client.UnitName )
@@ -219,7 +219,7 @@ end
 
 
 --- @type AIRBASEPOLICE_CAUCASUS
--- @field Set#SET_CLIENT SetClient
+-- @field Core.Set#SET_CLIENT SetClient
 -- @extends #AIRBASEPOLICE_BASE
 
 AIRBASEPOLICE_CAUCASUS = {
@@ -960,7 +960,7 @@ end
 
 
 --- @type AIRBASEPOLICE_NEVADA
--- @extends AirbasePolice#AIRBASEPOLICE_BASE
+-- @extends Functional.AirbasePolice#AIRBASEPOLICE_BASE
 AIRBASEPOLICE_NEVADA = {
   ClassName = "AIRBASEPOLICE_NEVADA",
   Airbases = {

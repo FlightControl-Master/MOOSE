@@ -1,25 +1,25 @@
 --- This module contains the SCHEDULER class.
 --
--- 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
+-- 1) @{Core.Scheduler#SCHEDULER} class, extends @{Core.Base#BASE}
 -- =====================================================
--- The @{Scheduler#SCHEDULER} class models time events calling given event handling functions.
+-- The @{Core.Scheduler#SCHEDULER} class models time events calling given event handling functions.
 --
 -- 1.1) SCHEDULER constructor
 -- --------------------------
 -- The SCHEDULER class is quite easy to use:
 --
---  * @{Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
+--  * @{Core.Scheduler#SCHEDULER.New}: Setup a new scheduler and start it with the specified parameters.
 --
 -- 1.2) SCHEDULER timer stop and start
 -- -----------------------------------
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
---  * @{Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
---  * @{Scheduler#SCHEDULER.Stop}: Stop the scheduler.
+--  * @{Core.Scheduler#SCHEDULER.Start}: (Re-)Start the scheduler.
+--  * @{Core.Scheduler#SCHEDULER.Stop}: Stop the scheduler.
 --
 -- 1.3) Reschedule new time event
 -- ------------------------------
--- With @{Scheduler#SCHEDULER.Schedule} a new time event can be scheduled.
+-- With @{Core.Scheduler#SCHEDULER.Schedule} a new time event can be scheduled.
 --
 -- ===
 --
@@ -39,7 +39,7 @@
 --- The SCHEDULER class
 -- @type SCHEDULER
 -- @field #number ScheduleID the ID of the scheduler.
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 SCHEDULER = {
   ClassName = "SCHEDULER",
 }

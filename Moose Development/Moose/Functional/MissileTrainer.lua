@@ -2,7 +2,7 @@
 -- 
 -- ===
 --
--- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
+-- 1) @{Functional.MissileTrainer#MISSILETRAINER} class, extends @{Core.Base#BASE}
 -- ===============================================================
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
@@ -83,8 +83,8 @@
 
 --- The MISSILETRAINER class
 -- @type MISSILETRAINER
--- @field Set#SET_CLIENT DBClients
--- @extends Base#BASE
+-- @field Core.Set#SET_CLIENT DBClients
+-- @extends Core.Base#BASE
 MISSILETRAINER = {
   ClassName = "MISSILETRAINER",
   TrackingMissiles = {},
@@ -191,7 +191,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 
 
 --  	self.DB:ForEachClient(
---  	 --- @param Client#CLIENT Client
+--  	 --- @param Wrapper.Client#CLIENT Client
 --  	 function( Client )
 --  
 --        ... actions ...
@@ -449,7 +449,7 @@ end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @param #MISSILETRAINER self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function MISSILETRAINER:_EventShot( Event )
   self:F( { Event } )
 

@@ -2,9 +2,9 @@
 
 --- The PROCESS class
 -- @type PROCESS
--- @field Task#TASK_BASE ProcessTask
--- @field Group#GROUP ProcessGroup
--- @field Menu#MENU_GROUP MissionMenu
+-- @field Tasking.Task#TASK_BASE ProcessTask
+-- @field Wrapper.Group#GROUP ProcessGroup
+-- @field Core.Menu#MENU_GROUP MissionMenu
 -- @field #string ProcessName
 -- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
 PROCESS = {
@@ -16,10 +16,10 @@ PROCESS = {
 --- Instantiates a new TASK Base. Should never be used. Interface Class.
 -- @param #PROCESS self
 -- @param #string ProcessName
--- @param Unit#UNIT ProcessUnit (Optional) If provided, it defines the UNIT for which the process is running.
+-- @param Wrapper.Unit#UNIT ProcessUnit (Optional) If provided, it defines the UNIT for which the process is running.
 -- @return #PROCESS
 function PROCESS:New( FSMT, ProcessName, ProcessUnit )
-  local self = BASE:Inherit( self, STATEMACHINE_PROCESS:New( FSMT, ProcessUnit ) )
+  local self = BASE:Inherit( self, FSM_PROCESS:New( FSMT, ProcessUnit ) )
   self:F()
 
   if ProcessUnit then
@@ -35,7 +35,7 @@ end
 
 --- Gets the Group of the process.
 -- @param #PROCESS self
--- @return Group#GROUP
+-- @return Wrapper.Group#GROUP
 function PROCESS:GetGroup()
 
   return self.ProcessGroup

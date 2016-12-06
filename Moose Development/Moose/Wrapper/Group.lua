@@ -1,8 +1,8 @@
 --- This module contains the GROUP class.
 -- 
--- 1) @{Group#GROUP} class, extends @{Controllable#CONTROLLABLE}
+-- 1) @{Wrapper.Group#GROUP} class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- =============================================================
--- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- The @{Wrapper.Group#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -32,7 +32,7 @@
 -- -----------------------
 -- Several group task methods are available that help you to prepare tasks. 
 -- These methods return a string consisting of the task description, which can then be given to either a  
--- @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#CONTROLLABLE.SetTask} method to assign the task to the GROUP.
+-- @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#CONTROLLABLE.SetTask} method to assign the task to the GROUP.
 -- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which group category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -44,63 +44,63 @@
 -- 
 -- Find below a list of the **assigned task** methods:
 -- 
---   * @{Controllable#CONTROLLABLE.TaskAttackGroup}: (AIR) Attack a Group.
---   * @{Controllable#CONTROLLABLE.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
---   * @{Controllable#CONTROLLABLE.TaskAttackUnit}: (AIR) Attack the Unit.
---   * @{Controllable#CONTROLLABLE.TaskBombing}: (Controllable#CONTROLLABLEDelivering weapon at the point on the ground.
---   * @{Controllable#CONTROLLABLE.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
---   * @{Controllable#CONTROLLABLE.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
---   * @{Controllable#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
---   * @{Controllable#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne group. 
---   * @{Controllable#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
---   * @{Controllable#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
---   * @{Controllable#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne group.
---   * @{Controllable#CONTROLLABLE.TaskHold}: (GROUND) Hold ground group from moving.
---   * @{Controllable#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
---   * @{Controllable#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{Controllable#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the group at a @{Zone#ZONE_RADIUS).
---   * @{Controllable#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
---   * @{Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
---   * @{Controllable#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
---   * @{Controllable#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
---   * @{Controllable#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
---   * @{Controllable#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
---   * @{Controllable#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
---   * @{Controllable#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the group to an airbase.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackGroup}: (AIR) Attack a Group.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackUnit}: (AIR) Attack the Unit.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskBombing}: (Wrapper.Controllable#CONTROLLABLEDelivering weapon at the point on the ground.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne group. 
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne group.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskHold}: (GROUND) Hold ground group from moving.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the group at a @{Core.Zone#ZONE_RADIUS).
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the group to an airbase.
 --
 -- ### 1.2.2) EnRoute task methods
 -- 
 -- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
 -- 
---   * @{Controllable#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
---   * @{Controllable#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
+--   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- 
 -- ### 1.2.3) Preparation task methods
 -- 
 -- There are certain task methods that allow to tailor the task behaviour:
 --
---   * @{Controllable#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
---   * @{Controllable#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
---   * @{Controllable#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
---   * @{Controllable#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
 -- ### 1.2.4) Obtain the mission from group templates
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- 1.3) GROUP Command methods
 -- --------------------------
--- Group **command methods** prepare the execution of commands using the @{Controllable#CONTROLLABLE.SetCommand} method:
+-- Group **command methods** prepare the execution of commands using the @{Wrapper.Controllable#CONTROLLABLE.SetCommand} method:
 -- 
---   * @{Controllable#CONTROLLABLE.CommandDoScript}: Do Script command.
---   * @{Controllable#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
+--   * @{Wrapper.Controllable#CONTROLLABLE.CommandDoScript}: Do Script command.
+--   * @{Wrapper.Controllable#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
 -- 1.4) GROUP Option methods
 -- -------------------------
@@ -108,31 +108,31 @@
 -- 
 -- ### 1.4.1) Rule of Engagement:
 -- 
---   * @{Controllable#CONTROLLABLE.OptionROEWeaponFree} 
---   * @{Controllable#CONTROLLABLE.OptionROEOpenFire}
---   * @{Controllable#CONTROLLABLE.OptionROEReturnFire}
---   * @{Controllable#CONTROLLABLE.OptionROEEvadeFire}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFree} 
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFire}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFire}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFire}
 -- 
 -- To check whether an ROE option is valid for a specific group, use:
 -- 
---   * @{Controllable#CONTROLLABLE.OptionROEWeaponFreePossible} 
---   * @{Controllable#CONTROLLABLE.OptionROEOpenFirePossible}
---   * @{Controllable#CONTROLLABLE.OptionROEReturnFirePossible}
---   * @{Controllable#CONTROLLABLE.OptionROEEvadeFirePossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFreePossible} 
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFirePossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFirePossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
 -- ### 1.4.2) Rule on thread:
 -- 
---   * @{Controllable#CONTROLLABLE.OptionROTNoReaction}
---   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefense}
---   * @{Controllable#CONTROLLABLE.OptionROTEvadeFire}
---   * @{Controllable#CONTROLLABLE.OptionROTVertical}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTNoReaction}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefense}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFire}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTVertical}
 -- 
 -- To test whether an ROT option is valid for a specific group, use:
 -- 
---   * @{Controllable#CONTROLLABLE.OptionROTNoReactionPossible}
---   * @{Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible}
---   * @{Controllable#CONTROLLABLE.OptionROTEvadeFirePossible}
---   * @{Controllable#CONTROLLABLE.OptionROTVerticalPossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTNoReactionPossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFirePossible}
+--   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTVerticalPossible}
 -- 
 -- 1.5) GROUP Zone validation methods
 -- ----------------------------------
@@ -143,14 +143,14 @@
 --   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- @module Group
 -- @author FlightControl
 
 --- The GROUP class
 -- @type GROUP
--- @extends Controllable#CONTROLLABLE
+-- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
 GROUP = {
   ClassName = "GROUP",
@@ -158,7 +158,7 @@ GROUP = {
 
 --- Create a new GROUP from a DCSGroup
 -- @param #GROUP self
--- @param DCSGroup#Group GroupName The DCS Group name
+-- @param Dcs.DCSWrapper.Group#Group GroupName The DCS Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
@@ -171,11 +171,11 @@ end
 
 --- Find the GROUP wrapper class instance using the DCS Group.
 -- @param #GROUP self
--- @param DCSGroup#Group DCSGroup The DCS Group.
+-- @param Dcs.DCSWrapper.Group#Group DCSGroup The DCS Group.
 -- @return #GROUP The GROUP.
 function GROUP:Find( DCSGroup )
 
-  local GroupName = DCSGroup:getName() -- Group#GROUP
+  local GroupName = DCSGroup:getName() -- Wrapper.Group#GROUP
   local GroupFound = _DATABASE:FindGroup( GroupName )
   return GroupFound
 end
@@ -194,7 +194,7 @@ end
 
 --- Returns the DCS Group.
 -- @param #GROUP self
--- @return DCSGroup#Group The DCS Group.
+-- @return Dcs.DCSWrapper.Group#Group The DCS Group.
 function GROUP:GetDCSObject()
   local DCSGroup = Group.getByName( self.GroupName )
 
@@ -246,7 +246,7 @@ end
 
 --- Returns category of the DCS Group.
 -- @param #GROUP self
--- @return DCSGroup#Group.Category The category ID
+-- @return Dcs.DCSWrapper.Group#Group.Category The category ID
 function GROUP:GetCategory()
   self:F2( self.GroupName )
 
@@ -286,7 +286,7 @@ end
 
 --- Returns the coalition of the DCS Group.
 -- @param #GROUP self
--- @return DCSCoalitionObject#coalition.side The coalition side of the DCS Group.
+-- @return Dcs.DCSCoalitionWrapper.Object#coalition.side The coalition side of the DCS Group.
 function GROUP:GetCoalition()
   self:F2( self.GroupName )
 
@@ -302,7 +302,7 @@ end
 
 --- Returns the country of the DCS Group.
 -- @param #GROUP self
--- @return DCScountry#country.id The country identifier.
+-- @return Dcs.DCScountry#country.id The country identifier.
 -- @return #nil The DCS Group is not existing or alive.
 function GROUP:GetCountry()
   self:F2( self.GroupName )
@@ -321,7 +321,7 @@ end
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
--- @return Unit#UNIT The UNIT wrapper class.
+-- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
   self:F2( { self.GroupName, UnitNumber } )
 
@@ -341,7 +341,7 @@ end
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
--- @return DCSUnit#Unit The DCS Unit.
+-- @return Dcs.DCSWrapper.Unit#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
   self:F2( { self.GroupName, UnitNumber } )
 
@@ -474,7 +474,7 @@ end
 
 --- Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.
 -- @param #GROUP self
--- @return DCSTypes#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
+-- @return Dcs.DCSTypes#Vec2 Current Vec2 point of the first DCS Unit of the DCS Group.
 function GROUP:GetVec2()
   self:F2( self.GroupName )
 
@@ -486,7 +486,7 @@ function GROUP:GetVec2()
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
--- @return DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
+-- @return Dcs.DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
   self:F2( self.GroupName )
 
@@ -501,13 +501,13 @@ end
 
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
--- @param Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local Unit = UnitData -- Unit#UNIT
+    local Unit = UnitData -- Wrapper.Unit#UNIT
     -- TODO: Rename IsPointVec3InZone to IsVec3InZone
     if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
     else
@@ -520,13 +520,13 @@ end
 
 --- Returns true if some units of the group are within a @{Zone}.
 -- @param #GROUP self
--- @param Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local Unit = UnitData -- Unit#UNIT
+    local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return true
     end
@@ -537,13 +537,13 @@ end
 
 --- Returns true if none of the group units of the group are within a @{Zone}.
 -- @param #GROUP self
--- @param Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local Unit = UnitData -- Unit#UNIT
+    local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
       return false
     end
@@ -712,7 +712,7 @@ end
 -- SPAWNING
 
 --- Respawn the @{GROUP} using a (tweaked) template of the Group.
--- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
+-- The template must be retrieved with the @{Wrapper.Group#GROUP.GetTemplate}() function.
 -- The template contains all the definitions as declared within the mission file.
 -- To understand templates, do the following: 
 -- 
@@ -728,7 +728,7 @@ end
 --  * When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
 --  * Then it will destroy the current alive group.
 --  * And it will respawn the group using your new template definition.
--- @param Group#GROUP self
+-- @param Wrapper.Group#GROUP self
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
@@ -740,7 +740,7 @@ function GROUP:Respawn( Template )
   
   self:E( #Template.units )
   for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local GroupUnit = UnitData -- Unit#UNIT
+    local GroupUnit = UnitData -- Wrapper.Unit#UNIT
     self:E( GroupUnit:GetName() )
     if GroupUnit:IsAlive() then
       local GroupUnitVec3 = GroupUnit:GetVec3()
@@ -777,7 +777,7 @@ end
 
 --- Sets the CountryID of the group in a Template.
 -- @param #GROUP self
--- @param DCScountry#country.id CountryID The country ID.
+-- @param Dcs.DCScountry#country.id CountryID The country ID.
 -- @return #table 
 function GROUP:SetTemplateCountry( Template, CountryID )
   Template.CountryID = CountryID
@@ -786,7 +786,7 @@ end
 
 --- Sets the CoalitionID of the group in a Template.
 -- @param #GROUP self
--- @param DCSCoalitionObject#coalition.side CoalitionID The coalition ID.
+-- @param Dcs.DCSCoalitionWrapper.Object#coalition.side CoalitionID The coalition ID.
 -- @return #table 
 function GROUP:SetTemplateCoalition( Template, CoalitionID )
   Template.CoalitionID = CoalitionID
@@ -814,7 +814,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Database#DATABASE} class.
+--- Return the route of a group by using the @{Core.Database#DATABASE} class.
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.

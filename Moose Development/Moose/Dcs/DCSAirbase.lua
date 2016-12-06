@@ -4,7 +4,7 @@
 
 --- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  
 -- @type Airbase
--- @extends DCSCoalitionObject#CoalitionObject
+-- @extends Dcs.DCSCoalitionWrapper.Object#CoalitionObject
 -- @field #Airbase.ID ID Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. 
 -- @field #Airbase.Category Category enum contains identifiers of airbase categories. 
 -- @field #Airbase.Desc Desc Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
@@ -33,7 +33,7 @@
 --- Returns Unit that is corresponded to the airbase. Works only for ships.
 -- @function [parent=#Airbase] getUnit
 -- @param self
--- @return Unit#Unit
+-- @return Wrapper.Unit#Unit
 
 --- Returns identifier of the airbase.
 -- @function [parent=#Airbase] getID

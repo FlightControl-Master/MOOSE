@@ -80,7 +80,7 @@
 -- ============================
 -- Create a new SPAWN object with the @{#ESCORT.New} method:
 --
---  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
 --
 -- ESCORT initialization methods.
 -- ==============================
@@ -117,17 +117,17 @@
 
 --- ESCORT class
 -- @type ESCORT
--- @extends Base#BASE
--- @field Client#CLIENT EscortClient
--- @field Group#GROUP EscortGroup
+-- @extends Core.Base#BASE
+-- @field Wrapper.Client#CLIENT EscortClient
+-- @field Wrapper.Group#GROUP EscortGroup
 -- @field #string EscortName
 -- @field #ESCORT.MODE EscortMode The mode the escort is in.
--- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
+-- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
--- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
--- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
--- @field Menu#MENU_CLIENT EscortMenuResumeMission
+-- @Field Dcs.DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
+-- @field Dcs.DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
+-- @field Core.Menu#MENU_CLIENT EscortMenuResumeMission
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
@@ -161,8 +161,8 @@ ESCORT = {
 
 --- ESCORT class constructor for an AI group
 -- @param #ESCORT self
--- @param Client#CLIENT EscortClient The client escorted by the EscortGroup.
--- @param Group#GROUP EscortGroup The group AI escorting the EscortClient.
+-- @param Wrapper.Client#CLIENT EscortClient The client escorted by the EscortGroup.
+-- @param Wrapper.Group#GROUP EscortGroup The group AI escorting the EscortClient.
 -- @param #string EscortName Name of the escort.
 -- @param #string EscortBriefing A text showing the ESCORT briefing to the player. Note that if no EscortBriefing is provided, the default briefing will be shown.
 -- @return #ESCORT self
@@ -179,8 +179,8 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   local self = BASE:Inherit( self, BASE:New() )
   self:F( { EscortClient, EscortGroup, EscortName } )
 
-  self.EscortClient = EscortClient -- Client#CLIENT
-  self.EscortGroup = EscortGroup -- Group#GROUP
+  self.EscortClient = EscortClient -- Wrapper.Client#CLIENT
+  self.EscortGroup = EscortGroup -- Wrapper.Group#GROUP
   self.EscortName = EscortName
   self.EscortBriefing = EscortBriefing
 
@@ -268,7 +268,7 @@ end
 --- Defines a menu slot to let the escort Join and Follow you at a certain distance.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param DCSTypes#Distance Distance The distance in meters that the escort needs to follow the client.
+-- @param Dcs.DCSTypes#Distance Distance The distance in meters that the escort needs to follow the client.
 -- @return #ESCORT
 function ESCORT:MenuFollowAt( Distance )
   self:F(Distance)
@@ -293,8 +293,8 @@ end
 --- Defines a menu slot to let the escort hold at their current position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Hold position**.
 -- @param #ESCORT self
--- @param DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -355,8 +355,8 @@ end
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
--- @param DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
@@ -416,8 +416,8 @@ end
 --- Defines a menu slot to let the escort scan for targets at a certain height for a certain time in seconds.
 -- This menu will appear under **Scan targets**.
 -- @param #ESCORT self
--- @param DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
--- @param DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
+-- @param Dcs.DCSTypes#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
+-- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
 -- @return #ESCORT
 function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
@@ -542,7 +542,7 @@ end
 -- This menu will appear under **Report targets**.
 -- Note that if a report targets menu is not specified, no targets will be detected by the escort, and the attack and assisted attack menus will not be displayed.
 -- @param #ESCORT self
--- @param DCSTypes#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
+-- @param Dcs.DCSTypes#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
 -- @return #ESCORT
 function ESCORT:MenuReportTargets( Seconds )
   self:F( { Seconds } )
@@ -664,8 +664,8 @@ function ESCORT._HoldPosition( MenuParam )
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  local OrbitGroup = MenuParam.ParamOrbitGroup -- Group#GROUP
-  local OrbitUnit = OrbitGroup:GetUnit(1) -- Unit#UNIT
+  local OrbitGroup = MenuParam.ParamOrbitGroup -- Wrapper.Group#GROUP
+  local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
   local OrbitHeight = MenuParam.ParamHeight
   local OrbitSeconds = MenuParam.ParamSeconds -- Not implemented yet
 
@@ -714,10 +714,10 @@ function ESCORT._JoinUpAndFollow( MenuParam )
 end
 
 --- JoinsUp and Follows a CLIENT.
--- @param Escort#ESCORT self
--- @param Group#GROUP EscortGroup
--- @param Client#CLIENT EscortClient
--- @param DCSTypes#Distance Distance
+-- @param Functional.Escort#ESCORT self
+-- @param Wrapper.Group#GROUP EscortGroup
+-- @param Wrapper.Client#CLIENT EscortClient
+-- @param Dcs.DCSTypes#Distance Distance
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 
@@ -832,7 +832,7 @@ function ESCORT._ScanTargets( MenuParam )
 
 end
 
---- @param Group#GROUP EscortGroup
+--- @param Wrapper.Group#GROUP EscortGroup
 function _Resume( EscortGroup )
   env.info( '_Resume' )
 
@@ -851,7 +851,7 @@ function ESCORT._AttackTarget( MenuParam )
   local EscortGroup = self.EscortGroup
   
   local EscortClient = self.EscortClient
-  local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
+  local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
   self.FollowScheduler:Stop()
 
@@ -892,7 +892,7 @@ function ESCORT._AssistTarget( MenuParam )
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
   local EscortGroupAttack = MenuParam.ParamEscortGroup
-  local AttackUnit = MenuParam.ParamUnit -- Unit#UNIT
+  local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
   self.FollowScheduler:Stop()
 
@@ -981,7 +981,7 @@ end
 function ESCORT:RegisterRoute()
   self:F()
 
-  local EscortGroup = self.EscortGroup -- Group#GROUP
+  local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
 
   local TaskPoints = EscortGroup:GetTaskRoute()
 
@@ -990,7 +990,7 @@ function ESCORT:RegisterRoute()
   return TaskPoints
 end
 
---- @param Escort#ESCORT self
+--- @param Functional.Escort#ESCORT self
 function ESCORT:_FollowScheduler()
   self:F( { self.FollowDistance } )
 

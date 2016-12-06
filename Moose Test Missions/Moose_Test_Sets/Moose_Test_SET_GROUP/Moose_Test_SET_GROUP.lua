@@ -7,10 +7,10 @@ SetVehicles = SET_GROUP:New()
 SetVehicles:AddGroupsByName( { "Vehicle A", "Vehicle B", "Vehicle C" } )
 
 SetVehicles:ForEachGroup( 
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeGreen()
     end
   end 
@@ -88,30 +88,30 @@ end
 --SCHEDULER:New( DBNorthKoreaGroup, DBNorthKoreaGroup.Flush, { }, 1 )
 
 SetBluePlanesGroup:ForEachGroup( 
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeBlue()
     end
   end 
 )
 
 SetNorthKoreaGroup:ForEachGroup( 
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeRed()
     end
   end 
 )
 
 SetSAMGroup:ForEachGroup( 
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeOrange()
     end
   end 
@@ -126,30 +126,30 @@ ZonePartly = ZONE_POLYGON:New( "Zone Partly", GroupZonePartly ):SmokeZone( POINT
 ZoneNot = ZONE_POLYGON:New( "Zone Not", GroupZoneNot ):SmokeZone( POINT_VEC3.SmokeColor.White )
 
 SetVehicleCompletely:ForEachGroupCompletelyInZone( ZoneCompletely,
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeBlue()
     end
   end 
 )
   
 SetVehiclePartly:ForEachGroupPartlyInZone( ZonePartly,
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeBlue()
     end
   end 
 )
     
 SetVehicleNot:ForEachGroupNotInZone( ZoneNot,
-  --- @param Group#GROUP MooseGroup
+  --- @param Wrapper.Group#GROUP MooseGroup
   function( MooseGroup ) 
     for UnitId, UnitData in pairs( MooseGroup:GetUnits() ) do
-      local UnitAction = UnitData -- Unit#UNIT
+      local UnitAction = UnitData -- Wrapper.Unit#UNIT
       UnitAction:SmokeBlue()
     end
   end 

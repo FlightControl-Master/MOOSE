@@ -2,15 +2,15 @@
 -- 
 -- ===
 -- 
--- 1) @{AIBalancer#AIBALANCER} class, extends @{StateMachine#STATEMACHINE_SET}
+-- 1) @{Functional.AIBalancer#AIBALANCER} class, extends @{Fsm.Fsm#FSM_SET}
 -- ===================================================================================
--- The @{AIBalancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
+-- The @{Functional.AIBalancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
 -- CLIENTS in a SET_CLIENT collection not occupied by players.
 -- The AIBALANCER class manages internally a collection of AI management objects, which govern the behaviour 
 -- of the underlying AI GROUPS.
 -- 
--- The parent class @{StateMachine#STATEMACHINE_SET} manages the functionality to control the Finite State Machine (FSM) 
--- and calls for each event the state transition methods providing the internal @{StateMachine#STATEMACHINE_SET.Set} object containing the
+-- The parent class @{Fsm.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
+-- and calls for each event the state transition methods providing the internal @{Fsm.Fsm#FSM_SET.Set} object containing the
 -- SET_GROUP and additional event parameters provided during the event.
 -- 
 -- 1.1) AIBALANCER construction method
@@ -28,8 +28,8 @@
 -- ------------------------------------------
 -- You can configure to have the AI to return to:
 -- 
---    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
---    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- --
 -- ===
 -- 
@@ -73,8 +73,8 @@
 
 --- AIBALANCER class
 -- @type AIBALANCER
--- @field Set#SET_CLIENT SetClient
--- @extends StateMachine#STATEMACHINE_SET
+-- @field Core.Set#SET_CLIENT SetClient
+-- @extends Fsm.Fsm#FSM_SET
 AIBALANCER = {
   ClassName = "AIBALANCER",
   PatrolZones = {},
@@ -83,8 +83,8 @@ AIBALANCER = {
 
 --- Creates a new AIBALANCER object
 -- @param #AIBALANCER self
--- @param Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
--- @param Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
+-- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
+-- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
 -- @return #AIBALANCER
 -- @usage
 -- -- Define a new AIBALANCER Object.
@@ -104,7 +104,7 @@ function AIBALANCER:New( SetClient, SpawnAI )
   }
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, STATEMACHINE_SET:New( FSMT, SET_GROUP:New() ) )
+  local self = BASE:Inherit( self, FSM_SET:New( FSMT, SET_GROUP:New() ) )
   
   self.SetClient = SetClient
   self.SpawnAI = SpawnAI
@@ -116,10 +116,10 @@ function AIBALANCER:New( SetClient, SpawnAI )
   return self
 end
 
---- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
--- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
 function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -127,9 +127,9 @@ function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseS
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
---- Returns the AI to the home @{Airbase#AIRBASE}.
+--- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
 -- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
@@ -137,9 +137,9 @@ function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 end
 
 --- @param #AIBALANCER self
--- @param Set#SET_GROUP SetGroup
+-- @param Core.Set#SET_GROUP SetGroup
 -- @param #string ClientName
--- @param Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AIBALANCER:onenterSpawning( SetGroup, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
@@ -151,16 +151,16 @@ function AIBALANCER:onenterSpawning( SetGroup, ClientName )
 end
 
 --- @param #AIBALANCER self
--- @param Set#SET_GROUP SetGroup
--- @param Group#GROUP AIGroup
+-- @param Core.Set#SET_GROUP SetGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AIBALANCER:onenterDestroying( SetGroup, AIGroup )
 
   AIGroup:Destroy()
 end
 
 --- @param #AIBALANCER self
--- @param Set#SET_GROUP SetGroup
--- @param Group#GROUP AIGroup
+-- @param Core.Set#SET_GROUP SetGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AIBALANCER:onenterReturning( SetGroup, AIGroup )
 
     local AIGroupTemplate = AIGroup:GetTemplate()
@@ -188,11 +188,11 @@ end
 function AIBALANCER:onenterMonitoring( SetGroup )
 
   self.SetClient:ForEachClient(
-    --- @param Client#CLIENT Client
+    --- @param Wrapper.Client#CLIENT Client
     function( Client )
       self:E(Client.ClientName)
 
-      local AIGroup = self.Set:Get( Client.UnitName ) -- Group#GROUP
+      local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
@@ -210,7 +210,7 @@ function AIBALANCER:onenterMonitoring( SetGroup )
             self:E( RangeZone )
             
             _DATABASE:ForEachPlayer(
-              --- @param Unit#UNIT RangeTestUnit
+              --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
@@ -223,7 +223,7 @@ function AIBALANCER:onenterMonitoring( SetGroup )
               end,
               
               --- @param Zone#ZONE_RADIUS RangeZone
-              -- @param Group#GROUP AIGroup
+              -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 if PlayerInRange.Value == false then
                   self:Return( AIGroup )

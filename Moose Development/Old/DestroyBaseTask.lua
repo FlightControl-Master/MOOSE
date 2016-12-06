@@ -43,7 +43,7 @@ end
 
 --- Handle the S_EVENT_DEAD events to validate the destruction of units for the task monitoring.
 -- @param #DESTROYBASETASK self
--- @param Event#EVENTDATA Event structure of MOOSE.
+-- @param Core.Event#EVENTDATA Event structure of MOOSE.
 function DESTROYBASETASK:EventDead( Event )
 	self:F( { Event } )
 	

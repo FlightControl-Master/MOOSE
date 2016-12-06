@@ -21,7 +21,7 @@ do
     MenuStatus[MenuClientName]:Remove()
   end
 
-  --- @param Client#CLIENT MenuClient
+  --- @param Wrapper.Client#CLIENT MenuClient
   local function AddStatusMenu( MenuClient )
     local MenuClientName = MenuClient:GetName()
     -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.

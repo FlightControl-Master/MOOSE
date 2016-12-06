@@ -15,7 +15,7 @@
 --- Returns altitude MSL of the point.
 -- @function [parent=#land] getHeight
 -- @param #Vec2 point point on the ground. 
--- @return DCSTypes#Distance
+-- @return Dcs.DCSTypes#Distance
 
 --- returns surface type at the given point.
 -- @function [parent=#land] getSurfaceType

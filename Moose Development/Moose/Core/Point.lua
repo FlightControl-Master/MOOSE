@@ -1,8 +1,8 @@
 --- This module contains the POINT classes.
 -- 
--- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
+-- 1) @{Core.Point#POINT_VEC3} class, extends @{Core.Base#BASE}
 -- ==================================================
--- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
+-- The @{Core.Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 -- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
@@ -12,19 +12,19 @@
 -- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{#POINT_VEC3.New}(): a 3D point.
---  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+--  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{Dcs.DCSTypes#Vec3}.
 --  
 --
--- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
+-- 2) @{Core.Point#POINT_VEC2} class, extends @{Core.Point#POINT_VEC3}
 -- =========================================================
--- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- The @{Core.Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
 -- A new POINT_VEC2 instance can be created with:
 -- 
 --  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
---  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+--  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{Dcs.DCSTypes#Vec2}.
 -- 
 -- ===
 -- 
@@ -58,12 +58,12 @@
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 -- @field #number x The x coordinate in 3D space.
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
 -- @field #POINT_VEC3.SmokeColor SmokeColor
--- @field Utils#FLARECOLOR FlareColor
+-- @field Utilities.Utils#FLARECOLOR FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
@@ -84,8 +84,8 @@ POINT_VEC3 = {
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
 -- @extends #POINT_VEC3
--- @field DCSTypes#Distance x The x coordinate in meters.
--- @field DCSTypes#Distance y the y coordinate in meters.
+-- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
+-- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }
@@ -109,10 +109,10 @@ do -- POINT_VEC3
   
 --- Create a new POINT_VEC3 object.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
--- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing Upwards.
--- @param DCSTypes#Distance z The z coordinate of the Vec3 point, pointing to the Right.
--- @return Point#POINT_VEC3 self
+-- @param Dcs.DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
+-- @param Dcs.DCSTypes#Distance y The y coordinate of the Vec3 point, pointing Upwards.
+-- @param Dcs.DCSTypes#Distance z The z coordinate of the Vec3 point, pointing to the Right.
+-- @return Core.Point#POINT_VEC3 self
 function POINT_VEC3:New( x, y, z )
 
   local self = BASE:Inherit( self, BASE:New() )
@@ -125,8 +125,8 @@ end
 
 --- Create a new POINT_VEC3 object from  Vec3 coordinates.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Vec3 Vec3 The Vec3 point.
--- @return Point#POINT_VEC3 self
+-- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Core.Point#POINT_VEC3 self
 function POINT_VEC3:NewFromVec3( Vec3 )
 
   self = self:New( Vec3.x, Vec3.y, Vec3.z )
@@ -137,14 +137,14 @@ end
 
 --- Return the coordinates of the POINT_VEC3 in Vec3 format.
 -- @param #POINT_VEC3 self
--- @return DCSTypes#Vec3 The Vec3 coodinate.
+-- @return Dcs.DCSTypes#Vec3 The Vec3 coodinate.
 function POINT_VEC3:GetVec3()
   return { x = self.x, y = self.y, z = self.z }
 end
 
 --- Return the coordinates of the POINT_VEC3 in Vec2 format.
 -- @param #POINT_VEC3 self
--- @return DCSTypes#Vec2 The Vec2 coodinate.
+-- @return Dcs.DCSTypes#Vec2 The Vec2 coodinate.
 function POINT_VEC3:GetVec2()
   return { x = self.x, y = self.z }
 end
@@ -191,9 +191,9 @@ end
 
 --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance OuterRadius
--- @param DCSTypes#Distance InnerRadius
--- @return DCSTypes#Vec2 Vec2
+-- @param Dcs.DCSTypes#Distance OuterRadius
+-- @param Dcs.DCSTypes#Distance InnerRadius
+-- @return Dcs.DCSTypes#Vec2 Vec2
 function POINT_VEC3:GetRandomVec2InRadius( OuterRadius, InnerRadius )
   self:F2( { OuterRadius, InnerRadius } )
 
@@ -222,8 +222,8 @@ end
 
 --- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance OuterRadius
--- @param DCSTypes#Distance InnerRadius
+-- @param Dcs.DCSTypes#Distance OuterRadius
+-- @param Dcs.DCSTypes#Distance InnerRadius
 -- @return #POINT_VEC2
 function POINT_VEC3:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
   self:F2( { OuterRadius, InnerRadius } )
@@ -233,9 +233,9 @@ end
 
 --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance OuterRadius
--- @param DCSTypes#Distance InnerRadius
--- @return DCSTypes#Vec3 Vec3
+-- @param Dcs.DCSTypes#Distance OuterRadius
+-- @param Dcs.DCSTypes#Distance InnerRadius
+-- @return Dcs.DCSTypes#Vec3 Vec3
 function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
 
   local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
@@ -247,8 +247,8 @@ end
 
 --- Return a random POINT_VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance OuterRadius
--- @param DCSTypes#Distance InnerRadius
+-- @param Dcs.DCSTypes#Distance OuterRadius
+-- @param Dcs.DCSTypes#Distance InnerRadius
 -- @return #POINT_VEC3
 function POINT_VEC3:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
 
@@ -259,7 +259,7 @@ end
 --- Return a direction vector Vec3 from POINT_VEC3 to the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
--- @return DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
+-- @return Dcs.DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
 function POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
   return { x = TargetPointVec3:GetX() - self:GetX(), y = TargetPointVec3:GetY() - self:GetY(), z = TargetPointVec3:GetZ() - self:GetZ() }
 end
@@ -277,7 +277,7 @@ end
 
 --- Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
+-- @param Dcs.DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
 -- @return #number DirectionRadians The direction in radians.
 function POINT_VEC3:GetDirectionRadians( DirectionVec3 )
   local DirectionRadians = math.atan2( DirectionVec3.z, DirectionVec3.x )
@@ -291,7 +291,7 @@ end
 --- Return the 2D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
--- @return DCSTypes#Distance Distance The distance in meters.
+-- @return Dcs.DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get2DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
   local SourceVec3 = self:GetVec3()
@@ -301,7 +301,7 @@ end
 --- Return the 3D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
 -- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
--- @return DCSTypes#Distance Distance The distance in meters.
+-- @return Dcs.DCSTypes#Distance Distance The distance in meters.
 function POINT_VEC3:Get3DDistance( TargetPointVec3 )
   local TargetVec3 = TargetPointVec3:GetVec3()
   local SourceVec3 = self:GetVec3()
@@ -379,8 +379,8 @@ end
 
 --- Add a Distance in meters from the POINT_VEC3 horizontal plane, with the given angle, and calculate the new POINT_VEC3.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Distance Distance The Distance to be added in meters.
--- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param Dcs.DCSTypes#Angle Angle The Angle in degrees.
 -- @return #POINT_VEC3 The new calculated POINT_VEC3.
 function POINT_VEC3:Translate( Distance, Angle )
   local SX = self:GetX()
@@ -399,7 +399,7 @@ end
 -- @param #POINT_VEC3.RoutePointAltType AltType The altitude type.
 -- @param #POINT_VEC3.RoutePointType Type The route point type.
 -- @param #POINT_VEC3.RoutePointAction Action The route point action.
--- @param DCSTypes#Speed Speed Airspeed in km/h.
+-- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
 -- @param #boolean SpeedLocked true means the speed is locked.
 -- @return #table The route point.
 function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
@@ -440,7 +440,7 @@ end
 
 --- Build an ground type route point.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Speed Speed Speed in km/h.
+-- @param Dcs.DCSTypes#Speed Speed Speed in km/h.
 -- @param #POINT_VEC3.RoutePointAction Formation The route point Formation.
 -- @return #table The route point.
 function POINT_VEC3:RoutePointGround( Speed, Formation )
@@ -480,7 +480,7 @@ end
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
--- @param Utils#SMOKECOLOR SmokeColor
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor
 function POINT_VEC3:Smoke( SmokeColor )
   self:F2( { SmokeColor } )
   trigger.action.smoke( self:GetVec3(), SmokeColor )
@@ -523,8 +523,8 @@ end
 
 --- Flares the point in a color.
 -- @param #POINT_VEC3 self
--- @param Utils#FLARECOLOR FlareColor
--- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+-- @param Utilities.Utils#FLARECOLOR FlareColor
+-- @param Dcs.DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:Flare( FlareColor, Azimuth )
   self:F2( { FlareColor } )
   trigger.action.signalFlare( self:GetVec3(), FlareColor, Azimuth and Azimuth or 0 )
@@ -532,7 +532,7 @@ end
 
 --- Flare the POINT_VEC3 White.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+-- @param Dcs.DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareWhite( Azimuth )
   self:F2( Azimuth )
   self:Flare( FLARECOLOR.White, Azimuth )
@@ -540,7 +540,7 @@ end
 
 --- Flare the POINT_VEC3 Yellow.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+-- @param Dcs.DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareYellow( Azimuth )
   self:F2( Azimuth )
   self:Flare( FLARECOLOR.Yellow, Azimuth )
@@ -548,7 +548,7 @@ end
 
 --- Flare the POINT_VEC3 Green.
 -- @param #POINT_VEC3 self
--- @param DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
+-- @param Dcs.DCSTypes#Azimuth (optional) Azimuth The azimuth of the flare direction. The default azimuth is 0.
 function POINT_VEC3:FlareGreen( Azimuth )
   self:F2( Azimuth )
   self:Flare( FLARECOLOR.Green, Azimuth )
@@ -569,10 +569,10 @@ do -- POINT_VEC2
 
 --- POINT_VEC2 constructor.
 -- @param #POINT_VEC2 self
--- @param DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
--- @param DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
--- @param DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
--- @return Point#POINT_VEC2
+-- @param Dcs.DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
+-- @param Dcs.DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
+-- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+-- @return Core.Point#POINT_VEC2
 function POINT_VEC2:New( x, y, LandHeightAdd )
 
   local LandHeight = land.getHeight( { ["x"] = x, ["y"] = y } )
@@ -588,8 +588,8 @@ end
 
 --- Create a new POINT_VEC2 object from  Vec2 coordinates.
 -- @param #POINT_VEC2 self
--- @param DCSTypes#Vec2 Vec2 The Vec2 point.
--- @return Point#POINT_VEC2 self
+-- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
+-- @return Core.Point#POINT_VEC2 self
 function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
 
   local LandHeight = land.getHeight( Vec2 )
@@ -605,8 +605,8 @@ end
 
 --- Create a new POINT_VEC2 object from  Vec3 coordinates.
 -- @param #POINT_VEC2 self
--- @param DCSTypes#Vec3 Vec3 The Vec3 point.
--- @return Point#POINT_VEC2 self
+-- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 point.
+-- @return Core.Point#POINT_VEC2 self
 function POINT_VEC2:NewFromVec3( Vec3 )
 
   local self = BASE:Inherit( self, BASE:New() )
@@ -658,7 +658,7 @@ end
 --- Calculate the distance from a reference @{#POINT_VEC2}.
 -- @param #POINT_VEC2 self
 -- @param #POINT_VEC2 PointVec2Reference The reference @{#POINT_VEC2}.
--- @return DCSTypes#Distance The distance from the reference @{#POINT_VEC2} in meters.
+-- @return Dcs.DCSTypes#Distance The distance from the reference @{#POINT_VEC2} in meters.
 function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   self:F2( PointVec2Reference )
   
@@ -668,10 +668,10 @@ function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   return Distance
 end
 
---- Calculate the distance from a reference @{DCSTypes#Vec2}.
+--- Calculate the distance from a reference @{Dcs.DCSTypes#Vec2}.
 -- @param #POINT_VEC2 self
--- @param DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
--- @return DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
+-- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{Dcs.DCSTypes#Vec2}.
+-- @return Dcs.DCSTypes#Distance The distance from the reference @{Dcs.DCSTypes#Vec2} in meters.
 function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   self:F2( Vec2Reference )
   
@@ -691,8 +691,8 @@ end
 
 --- Add a Distance in meters from the POINT_VEC2 orthonormal plane, with the given angle, and calculate the new POINT_VEC2.
 -- @param #POINT_VEC2 self
--- @param DCSTypes#Distance Distance The Distance to be added in meters.
--- @param DCSTypes#Angle Angle The Angle in degrees.
+-- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
+-- @param Dcs.DCSTypes#Angle Angle The Angle in degrees.
 -- @return #POINT_VEC2 The new calculated POINT_VEC2.
 function POINT_VEC2:Translate( Distance, Angle )
   local SX = self:GetX()

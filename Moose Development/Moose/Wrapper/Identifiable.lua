@@ -1,6 +1,6 @@
 --- This module contains the IDENTIFIABLE class.
 -- 
--- 1) @{#IDENTIFIABLE} class, extends @{Object#OBJECT}
+-- 1) @{#IDENTIFIABLE} class, extends @{Wrapper.Object#OBJECT}
 -- ===============================================================
 -- The @{#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
 --
@@ -50,7 +50,7 @@ local _CategoryName = {
 
 --- Create a new IDENTIFIABLE from a DCSIdentifiable
 -- @param #IDENTIFIABLE self
--- @param DCSIdentifiable#Identifiable IdentifiableName The DCS Identifiable name
+-- @param Dcs.DCSWrapper.Identifiable#Identifiable IdentifiableName The DCS Identifiable name
 -- @return #IDENTIFIABLE self
 function IDENTIFIABLE:New( IdentifiableName )
   local self = BASE:Inherit( self, OBJECT:New( IdentifiableName ) )
@@ -121,7 +121,7 @@ end
 
 --- Returns category of the DCS Identifiable.
 -- @param #IDENTIFIABLE self
--- @return DCSObject#Object.Category The category ID
+-- @return Dcs.DCSWrapper.Object#Object.Category The category ID
 function IDENTIFIABLE:GetCategory()
   self:F2( self.ObjectName )
 
@@ -153,7 +153,7 @@ end
 
 --- Returns coalition of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return DCSCoalitionObject#coalition.side The side of the coalition.
+-- @return Dcs.DCSCoalitionWrapper.Object#coalition.side The side of the coalition.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCoalition()
   self:F2( self.IdentifiableName )
@@ -172,7 +172,7 @@ end
 
 --- Returns country of the Identifiable.
 -- @param #IDENTIFIABLE self
--- @return DCScountry#country.id The country identifier.
+-- @return Dcs.DCScountry#country.id The country identifier.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetCountry()
   self:F2( self.IdentifiableName )
@@ -193,7 +193,7 @@ end
 
 --- Returns Identifiable descriptor. Descriptor type depends on Identifiable category.
 -- @param #IDENTIFIABLE self
--- @return DCSIdentifiable#Identifiable.Desc The Identifiable descriptor.
+-- @return Dcs.DCSWrapper.Identifiable#Identifiable.Desc The Identifiable descriptor.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:GetDesc()
   self:F2( self.IdentifiableName )

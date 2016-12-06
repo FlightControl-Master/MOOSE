@@ -1,14 +1,14 @@
 --- This module contains the TASK_PICKUP classes.
 -- 
--- 1) @{#TASK_PICKUP} class, extends @{Task#TASK_BASE}
+-- 1) @{#TASK_PICKUP} class, extends @{Tasking.Task#TASK_BASE}
 -- ===================================================
 -- The @{#TASK_PICKUP} class defines a pickup task of a @{Set} of @{CARGO} objects defined within the mission. 
--- based on the tasking capabilities defined in @{Task#TASK_BASE}.
--- The TASK_PICKUP is implemented using a @{Statemachine#STATEMACHINE_TASK}, and has the following statuses:
+-- based on the tasking capabilities defined in @{Tasking.Task#TASK_BASE}.
+-- The TASK_PICKUP is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
---   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Route#PROCESS_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
+--   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#PROCESS_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
@@ -23,14 +23,14 @@ do -- TASK_PICKUP
 
   --- The TASK_PICKUP class
   -- @type TASK_PICKUP
-  -- @extends Task#TASK_BASE
+  -- @extends Tasking.Task#TASK_BASE
   TASK_PICKUP = {
     ClassName = "TASK_PICKUP",
   }
   
   --- Instantiates a new TASK_PICKUP.
   -- @param #TASK_PICKUP self
-  -- @param Mission#MISSION Mission
+  -- @param Tasking.Mission#MISSION Mission
   -- @param Set#SET_GROUP AssignedSetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param #string TaskType BAI or CAS
@@ -62,7 +62,7 @@ do -- TASK_PICKUP
   
   --- Assign the @{Task} to a @{Unit}.
   -- @param #TASK_PICKUP self
-  -- @param Unit#UNIT TaskUnit
+  -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_PICKUP self
   function TASK_PICKUP:AssignToUnit( TaskUnit )
     self:F( TaskUnit:GetName() )
@@ -70,7 +70,7 @@ do -- TASK_PICKUP
     local ProcessAssign = self:AddProcess( TaskUnit, PROCESS_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
     local ProcessPickup = self:AddProcess( TaskUnit, PROCESS_PICKUP:New( self, self.TaskType, TaskUnit ) )
     
-    local Process = self:AddStateMachine( TaskUnit, STATEMACHINE_TASK:New( self, TaskUnit, {
+    local Process = self:AddStateMachine( TaskUnit, FSM_TASK:New( self, TaskUnit, {
         initial = 'None',
         events = {
           { name = 'Next',   from = 'None',           to = 'Planned' },
@@ -98,7 +98,7 @@ do -- TASK_PICKUP
   
   --- StateMachine callback function for a TASK
   -- @param #TASK_PICKUP self
-  -- @param StateMachine#STATEMACHINE_TASK Fsm
+  -- @param Fsm.Fsm#FSM_TASK Fsm
   -- @param #string Event
   -- @param #string From
   -- @param #string To

@@ -5,7 +5,7 @@
 
 --- The SEAD class
 -- @type SEAD
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 SEAD = {
 	ClassName = "SEAD", 
 	TargetSkill = {

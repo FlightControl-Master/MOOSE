@@ -21,7 +21,7 @@ do
     MenuStatus[MenuGroupName]:Remove()
   end
 
-  --- @param Group#GROUP MenuGroup
+  --- @param Wrapper.Group#GROUP MenuGroup
   local function AddStatusMenu( MenuGroup )
     local MenuGroupName = MenuGroup:GetName()
     -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.

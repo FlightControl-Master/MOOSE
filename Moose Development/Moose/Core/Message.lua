@@ -1,6 +1,6 @@
 --- This module contains the MESSAGE class.
 -- 
--- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
+-- 1) @{Core.Message#MESSAGE} class, extends @{Core.Base#BASE}
 -- =================================================
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
@@ -8,23 +8,23 @@
 -- 
 -- 1.1) MESSAGE construction methods
 -- ---------------------------------
--- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- Messages are created with @{Core.Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
 -- 1.2) Send messages with MESSAGE To methods
 -- ------------------------------------------
 -- Messages are sent to:
 --
---   * Clients with @{Message#MESSAGE.ToClient}.
---   * Coalitions with @{Message#MESSAGE.ToCoalition}.
---   * All Players with @{Message#MESSAGE.ToAll}.
+--   * Clients with @{Core.Message#MESSAGE.ToClient}.
+--   * Coalitions with @{Core.Message#MESSAGE.ToCoalition}.
+--   * All Players with @{Core.Message#MESSAGE.ToAll}.
 --   
 -- @module Message
 -- @author FlightControl
 
 --- The MESSAGE class
 -- @type MESSAGE
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -76,7 +76,7 @@ end
 
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
 -- @param #MESSAGE self
--- @param Client#CLIENT Client is the Group of the Client.
+-- @param Wrapper.Client#CLIENT Client is the Group of the Client.
 -- @return #MESSAGE
 -- @usage
 -- -- Send the 2 messages created with the @{New} method to the Client Group.
@@ -108,7 +108,7 @@ end
 
 --- Sends a MESSAGE to a Group. 
 -- @param #MESSAGE self
--- @param Group#GROUP Group is the Group.
+-- @param Wrapper.Group#GROUP Group is the Group.
 -- @return #MESSAGE
 function MESSAGE:ToGroup( Group )
   self:F( Group.GroupName )

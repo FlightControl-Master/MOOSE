@@ -52,7 +52,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#PROCESS_SMOKE_TARGETS_ZONE} class, extends @{Route#PROCESS_SMOKE}
+-- # 1) @{#PROCESS_SMOKE_TARGETS_ZONE} class, extends @{Fsm.Route#PROCESS_SMOKE}
 -- 
 -- The PROCESS_SMOKE_TARGETS_ZONE class implements the core functions to smoke targets in a @{Zone}.
 -- The targets are smoked within a certain range around each target, simulating a realistic smoking behaviour. 
@@ -70,7 +70,7 @@ do -- PROCESS_SMOKE
 
   --- PROCESS_SMOKE class
   -- @type PROCESS_SMOKE
-  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
+  -- @extends Core.StateMachine#FSM_TEMPLATE
   PROCESS_SMOKE = { 
     ClassName = "PROCESS_SMOKE",
   }
@@ -81,7 +81,7 @@ do -- PROCESS_SMOKE
   function PROCESS_SMOKE:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_SMOKE" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "PROCESS_SMOKE" ) ) -- Core.StateMachine#FSM_TEMPLATE
 
     self:AddTransition( "None", "Start", "AwaitSmoke" )
     self:AddTransition( "AwaitSmoke", "Next", "Smoking" )
@@ -101,13 +101,13 @@ do -- PROCESS_SMOKE
 
   --- StateMachine callback function
   -- @param #PROCESS_SMOKE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function PROCESS_SMOKE:onafterStart( ProcessUnit, Event, From, To )
   
-    local ProcessGroup = self:GetGroup()
+    local ProcessGroup = ProcessUnit:GetGroup()
     local MissionMenu = self:GetMission():GetMissionMenu( ProcessGroup )
      
     local function MenuSmoke( MenuParam )
@@ -173,14 +173,14 @@ do -- PROCESS_SMOKE_TARGETS_ZONE
   
   --- StateMachine callback function
   -- @param #PROCESS_SMOKE_TARGETS_ZONE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function PROCESS_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, Event, From, To )
     
     self.TargetSetUnit:ForEachUnit(
-      --- @param Unit#UNIT SmokeUnit
+      --- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
         if math.random( 1, ( 100 * self.TargetSetUnit:Count() ) / 4 ) <= 100 then
           SCHEDULER:New( self,

@@ -5,9 +5,9 @@
 --- The MISSION class
 -- @type MISSION
 -- @field #MISSION.Clients _Clients
--- @field Menu#MENU_COALITION MissionMenu
+-- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
--- @extends Core.StateMachine#STATEMACHINE
+-- @extends Core.StateMachine#FSM
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -36,11 +36,11 @@ MISSION = {
 -- @param #string MissionName is the name of the mission. This name will be used to reference the status of each mission by the players.
 -- @param #string MissionPriority is a string indicating the "priority" of the Mission. f.e. "Primary", "Secondary" or "First", "Second". It is free format and up to the Mission designer to choose. There are no rules behind this field.
 -- @param #string MissionBriefing is a string indicating the mission briefing to be shown when a player joins a @{CLIENT}.
--- @param DCSCoalitionObject#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
+-- @param Dcs.DCSCoalitionWrapper.Object#coalition MissionCoalition is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
-  local self = BASE:Inherit( self, STATEMACHINE:New() ) -- Core.StateMachine#STATEMACHINE
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.StateMachine#FSM
 
   self:SetStartState( "Idle" )
   
@@ -128,13 +128,13 @@ end
 
 --- Sets the Assigned Task menu.
 -- @param #MISSION self
--- @param Task#TASK_BASE Task
+-- @param Tasking.Task#TASK_BASE Task
 -- @param #string MenuText The menu text.
 -- @return #MISSION self
 function MISSION:SetAssignedMenu( Task )
   
   for _, Task in pairs( self.Tasks ) do
-    local Task = Task -- Task#TASK_BASE
+    local Task = Task -- Tasking.Task#TASK_BASE
     Task:RemoveMenu()
     Task:SetAssignedMenu()  
   end
@@ -143,7 +143,7 @@ end
 
 --- Removes a Task menu.
 -- @param #MISSION self
--- @param Task#TASK_BASE Task
+-- @param Tasking.Task#TASK_BASE Task
 -- @return #MISSION self
 function MISSION:RemoveTaskMenu( Task )
     
@@ -153,8 +153,8 @@ end
 
 --- Gets the mission menu for the coalition.
 -- @param #MISSION self
--- @param Group#GROUP TaskGroup
--- @return Menu#MENU_COALITION self
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMissionMenu( TaskGroup )
 
   local CommandCenter = self:GetCommandCenter()
@@ -179,7 +179,7 @@ end
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
--- @return Task#TASK_BASE The Task
+-- @return Tasking.Task#TASK_BASE The Task
 -- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName  )
   self:F( { TaskName } )
@@ -192,8 +192,8 @@ end
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Task#TASK_BASE Task is the @{Task} object.
--- @return Task#TASK_BASE The task added.
+-- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
+-- @return Tasking.Task#TASK_BASE The task added.
 function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
@@ -209,7 +209,7 @@ end
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Task#TASK_BASE Task is the @{Task} object.
+-- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
 -- @return #nil The cleaned Task reference.
 function MISSION:RemoveTask( Task )
 
@@ -231,8 +231,8 @@ end
 
 --- Return the next @{Task} ID to be completed within the @{Mission}. 
 -- @param #MISSION self
--- @param Task#TASK_BASE Task is the @{Task} object.
--- @return Task#TASK_BASE The task added.
+-- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
+-- @return Tasking.Task#TASK_BASE The task added.
 function MISSION:GetNextTaskID( Task )
 
   local TaskName = Task:GetTaskName()
@@ -513,7 +513,7 @@ function MISSIONSCHEDULER.Scheduler()
 			
 			for ClientID, ClientData in pairs( Mission._Clients ) do
 			  
-			  local Client = ClientData -- Client#CLIENT
+			  local Client = ClientData -- Wrapper.Client#CLIENT
 			
 				if Client:IsAlive() then
 

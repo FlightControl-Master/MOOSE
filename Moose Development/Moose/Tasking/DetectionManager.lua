@@ -2,37 +2,37 @@
 -- 
 -- ===
 -- 
--- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Base#BASE}
+-- 1) @{Tasking.DetectionManager#DETECTION_MANAGER} class, extends @{Core.Base#BASE}
 -- ====================================================================
--- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
+-- The @{Tasking.DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
 -- 
 -- 1.1) DETECTION_MANAGER constructor:
 -- -----------------------------------
---   * @{DetectionManager#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
+--   * @{Tasking.DetectionManager#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
 -- 
 -- 1.2) DETECTION_MANAGER reporting:
 -- ---------------------------------
--- Derived DETECTION_MANAGER classes will reports detected units using the method @{DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
+-- Derived DETECTION_MANAGER classes will reports detected units using the method @{Tasking.DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
 -- 
--- The time interval in seconds of the reporting can be changed using the methods @{DetectionManager#DETECTION_MANAGER.SetReportInterval}(). 
--- To control how long a reporting message is displayed, use @{DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
--- Derived classes need to implement the method @{DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
+-- The time interval in seconds of the reporting can be changed using the methods @{Tasking.DetectionManager#DETECTION_MANAGER.SetReportInterval}(). 
+-- To control how long a reporting message is displayed, use @{Tasking.DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
+-- Derived classes need to implement the method @{Tasking.DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
--- Reporting can be started and stopped using the methods @{DetectionManager#DETECTION_MANAGER.StartReporting}() and @{DetectionManager#DETECTION_MANAGER.StopReporting}() respectively.
--- If an ad-hoc report is requested, use the method @{DetectionManager#DETECTION_MANAGER#ReportNow}().
+-- Reporting can be started and stopped using the methods @{Tasking.DetectionManager#DETECTION_MANAGER.StartReporting}() and @{Tasking.DetectionManager#DETECTION_MANAGER.StopReporting}() respectively.
+-- If an ad-hoc report is requested, use the method @{Tasking.DetectionManager#DETECTION_MANAGER#ReportNow}().
 -- 
 -- The default reporting interval is every 60 seconds. The reporting messages are displayed 15 seconds.
 -- 
 -- ===
 -- 
--- 2) @{DetectionManager#DETECTION_REPORTING} class, extends @{DetectionManager#DETECTION_MANAGER}
+-- 2) @{Tasking.DetectionManager#DETECTION_REPORTING} class, extends @{Tasking.DetectionManager#DETECTION_MANAGER}
 -- =========================================================================================
--- The @{DetectionManager#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{DetectionManager#DETECTION_MANAGER} class.
+-- The @{Tasking.DetectionManager#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{Tasking.DetectionManager#DETECTION_MANAGER} class.
 -- 
 -- 2.1) DETECTION_REPORTING constructor:
 -- -------------------------------
--- The @{DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
+-- The @{Tasking.DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
 --    
 -- ===
 -- 
@@ -64,7 +64,7 @@ do -- DETECTION MANAGER
   --- DETECTION_MANAGER class.
   -- @type DETECTION_MANAGER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends Base#BASE
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
@@ -75,12 +75,12 @@ do -- DETECTION MANAGER
   --- FAC constructor.
   -- @param #DETECTION_MANAGER self
   -- @param Set#SET_GROUP SetGroup
-  -- @param Detection#DETECTION_BASE Detection
+  -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:New( SetGroup, Detection )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() ) -- Detection#DETECTION_MANAGER
+    local self = BASE:Inherit( self, BASE:New() ) -- Functional.Detection#DETECTION_MANAGER
     
     self.SetGroup = SetGroup
     self.Detection = Detection
@@ -125,7 +125,7 @@ do -- DETECTION MANAGER
   
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
-  -- @param Detection#DETECTION_BASE Detection
+  -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:ReportDetected( Detection )
   	self:F2()
@@ -148,7 +148,7 @@ do -- DETECTION MANAGER
     return self
   end
   
-  --- Report the detected @{Unit#UNIT}s detected within the @{Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
+  --- Report the detected @{Wrapper.Unit#UNIT}s detected within the @{Functional.Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
   -- @param #DETECTION_MANAGER self
   function DETECTION_MANAGER:_FacScheduler( SchedulerName )
     self:F2( { SchedulerName } )
@@ -156,7 +156,7 @@ do -- DETECTION MANAGER
     return self:ProcessDetected( self.Detection )
     
 --    self.SetGroup:ForEachGroup(
---      --- @param Group#GROUP Group
+--      --- @param Wrapper.Group#GROUP Group
 --      function( Group )
 --        if Group:IsAlive() then
 --          return self:ProcessDetected( self.Detection )
@@ -175,7 +175,7 @@ do -- DETECTION_REPORTING
   --- DETECTION_REPORTING class.
   -- @type DETECTION_REPORTING
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends #DETECTION_MANAGER
   DETECTION_REPORTING = {
     ClassName = "DETECTION_REPORTING",
@@ -185,7 +185,7 @@ do -- DETECTION_REPORTING
   --- DETECTION_REPORTING constructor.
   -- @param #DETECTION_REPORTING self
   -- @param Set#SET_GROUP SetGroup
-  -- @param Detection#DETECTION_AREAS Detection
+  -- @param Functional.Detection#DETECTION_AREAS Detection
   -- @return #DETECTION_REPORTING self
   function DETECTION_REPORTING:New( SetGroup, Detection )
   
@@ -198,7 +198,7 @@ do -- DETECTION_REPORTING
   
   --- Creates a string of the detected items in a @{Detection}.
   -- @param #DETECTION_MANAGER self
-  -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Detection#DETECTION_BASE} object.
+  -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Functional.Detection#DETECTION_BASE} object.
   -- @return #DETECTION_MANAGER self
   function DETECTION_REPORTING:GetDetectedItemsText( DetectedSet )
     self:F2()
@@ -207,7 +207,7 @@ do -- DETECTION_REPORTING
     local UnitTypes = {}
   
     for DetectedUnitID, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
-      local DetectedUnit = DetectedUnitData -- Unit#UNIT
+      local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
       if DetectedUnit:IsAlive() then
         local UnitType = DetectedUnit:GetTypeName()
     
@@ -230,8 +230,8 @@ do -- DETECTION_REPORTING
   
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_REPORTING self
-  -- @param Group#GROUP Group The @{Group} object to where the report needs to go.
-  -- @param Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_BASE} object.
+  -- @param Wrapper.Group#GROUP Group The @{Group} object to where the report needs to go.
+  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_BASE} object.
   -- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
   function DETECTION_REPORTING:ProcessDetected( Group, Detection )
     self:F2( Group )
@@ -239,7 +239,7 @@ do -- DETECTION_REPORTING
     self:E( Group )
     local DetectedMsg = {}
     for DetectedAreaID, DetectedAreaData in pairs( Detection:GetDetectedAreas() ) do
-      local DetectedArea = DetectedAreaData -- Detection#DETECTION_AREAS.DetectedArea
+      local DetectedArea = DetectedAreaData -- Functional.Detection#DETECTION_AREAS.DetectedArea
       DetectedMsg[#DetectedMsg+1] = " - Group #" .. DetectedAreaID .. ": " .. self:GetDetectedItemsText( DetectedArea.Set )
     end  
     local FACGroup = Detection:GetDetectionGroups()
@@ -255,10 +255,10 @@ do -- DETECTION_DISPATCHER
   --- DETECTION_DISPATCHER class.
   -- @type DETECTION_DISPATCHER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @field Mission#MISSION Mission
-  -- @field Group#GROUP CommandCenter
-  -- @extends DetectionManager#DETECTION_MANAGER
+  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
+  -- @field Tasking.Mission#MISSION Mission
+  -- @field Wrapper.Group#GROUP CommandCenter
+  -- @extends Tasking.DetectionManager#DETECTION_MANAGER
   DETECTION_DISPATCHER = {
     ClassName = "DETECTION_DISPATCHER",
     Mission = nil,
@@ -270,7 +270,7 @@ do -- DETECTION_DISPATCHER
   --- DETECTION_DISPATCHER constructor.
   -- @param #DETECTION_DISPATCHER self
   -- @param Set#SET_GROUP SetGroup
-  -- @param Detection#DETECTION_BASE Detection
+  -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_DISPATCHER self
   function DETECTION_DISPATCHER:New( Mission, CommandCenter, SetGroup, Detection )
   
@@ -288,7 +288,7 @@ do -- DETECTION_DISPATCHER
   
   --- Creates a SEAD task when there are targets for it.
   -- @param #DETECTION_DISPATCHER self
-  -- @param Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
   -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function DETECTION_DISPATCHER:EvaluateSEAD( DetectedArea )
@@ -316,8 +316,8 @@ do -- DETECTION_DISPATCHER
 
   --- Creates a CAS task when there are targets for it.
   -- @param #DETECTION_DISPATCHER self
-  -- @param Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Task#TASK_BASE
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @return Tasking.Task#TASK_BASE
   function DETECTION_DISPATCHER:EvaluateCAS( DetectedArea )
     self:F( { DetectedArea.AreaID } )
   
@@ -344,8 +344,8 @@ do -- DETECTION_DISPATCHER
   
   --- Creates a BAI task when there are targets for it.
   -- @param #DETECTION_DISPATCHER self
-  -- @param Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Task#TASK_BASE
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @return Tasking.Task#TASK_BASE
   function DETECTION_DISPATCHER:EvaluateBAI( DetectedArea, FriendlyCoalition )
     self:F( { DetectedArea.AreaID } )
   
@@ -373,10 +373,10 @@ do -- DETECTION_DISPATCHER
   --- Evaluates the removal of the Task from the Mission.
   -- Can only occur when the DetectedArea is Changed AND the state of the Task is "Planned".
   -- @param #DETECTION_DISPATCHER self
-  -- @param Mission#MISSION Mission
-  -- @param Task#TASK_BASE Task
-  -- @param Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Task#TASK_BASE
+  -- @param Tasking.Mission#MISSION Mission
+  -- @param Tasking.Task#TASK_BASE Task
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @return Tasking.Task#TASK_BASE
   function DETECTION_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedArea )
     
     if Task then
@@ -393,7 +393,7 @@ do -- DETECTION_DISPATCHER
 
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_DISPATCHER self
-  -- @param Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_AREAS} object.
+  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_AREAS} object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function DETECTION_DISPATCHER:ProcessDetected( Detection )
     self:F2()
@@ -407,7 +407,7 @@ do -- DETECTION_DISPATCHER
     --- First we need to  the detected targets.
     for DetectedAreaID, DetectedAreaData in ipairs( Detection:GetDetectedAreas() ) do
     
-      local DetectedArea = DetectedAreaData -- Detection#DETECTION_AREAS.DetectedArea
+      local DetectedArea = DetectedAreaData -- Functional.Detection#DETECTION_AREAS.DetectedArea
       local DetectedSet = DetectedArea.Set
       local DetectedZone = DetectedArea.Zone
       self:E( { "Targets in DetectedArea", DetectedArea.AreaID, DetectedSet:Count(), tostring( DetectedArea ) } )

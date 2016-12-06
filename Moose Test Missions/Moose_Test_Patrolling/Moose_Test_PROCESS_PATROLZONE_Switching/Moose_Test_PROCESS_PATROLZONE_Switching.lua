@@ -33,15 +33,15 @@ Patrol2:ManageFuel( 0.2, 0 )
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol1** object
 -- @param #PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
 function Patrol1:OnBeforeRTB( AIGroup )
   AIGroup:MessageToRed( "Returning to base", 20 )
 end 
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol1** object
--- @param Process_PatrolZone#PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Process_PatrolCore.Zone#PROCESS_PATROLZONE self 
+-- @param Wrapper.Group#GROUP AIGroup
 function Patrol1:OnAfterRTB( AIGroup )
   local NewGroup = PatrolSpawn:Spawn()
   Patrol2:SetControllable( NewGroup )
@@ -49,23 +49,23 @@ function Patrol1:OnAfterRTB( AIGroup )
 end 
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol1** object
--- @param Process_PatrolZone#PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Process_PatrolCore.Zone#PROCESS_PATROLZONE self 
+-- @param Wrapper.Group#GROUP AIGroup
 function Patrol1:OnAfterPatrol( AIGroup )
   AIGroup:MessageToRed( "Patrolling in zone " .. PatrolZone1:GetName() , 20 )
 end 
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol2** object
 -- @param #PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
 function Patrol2:OnBeforeRTB( AIGroup )
   AIGroup:MessageToRed( "Returning to base", 20 )
 end 
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol2** object
--- @param Process_PatrolZone#PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Process_PatrolCore.Zone#PROCESS_PATROLZONE self 
+-- @param Wrapper.Group#GROUP AIGroup
 function Patrol2:OnAfterRTB( AIGroup )
   local NewGroup = PatrolSpawn:Spawn()
   Patrol1:SetControllable( NewGroup )
@@ -73,8 +73,8 @@ function Patrol2:OnAfterRTB( AIGroup )
 end 
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol2** object
--- @param Process_PatrolZone#PROCESS_PATROLZONE self 
--- @param Group#GROUP AIGroup
+-- @param Process_PatrolCore.Zone#PROCESS_PATROLZONE self 
+-- @param Wrapper.Group#GROUP AIGroup
 function Patrol2:OnAfterPatrol( AIGroup )
   AIGroup:MessageToRed( "Patrolling in zone " .. PatrolZone2:GetName() , 20 )
 end 

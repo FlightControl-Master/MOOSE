@@ -14,7 +14,6 @@ Include.File( "Core/Database" )
 Include.File( "Core/Set" )
 Include.File( "Core/Point" )
 Include.File( "Core/Message" )
-Include.File( "Core/StateMachine" )
 
 --- Wrapper Classes
 Include.File( "Wrapper/Object" )
@@ -40,6 +39,7 @@ Include.File( "Functional/Detection" )
 Include.File( "Functional/AIBalancer" )
 
 --- Fsm Classes
+Include.File( "Fsm/Fsm" )
 Include.File( "Fsm/Process" )
 Include.File( "Fsm/Process_JTAC" )
 Include.File( "Fsm/Patrol" )

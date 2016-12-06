@@ -80,7 +80,7 @@ end
 
 --- Initializes the Events structure for the event
 -- @param #EVENT self
--- @param DCSWorld#world.event EventID
+-- @param Dcs.DCSWorld#world.event EventID
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
@@ -104,7 +104,7 @@ end
 --- Removes an Events entry
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param DCSWorld#world.event EventID
+-- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Remove( EventClass, EventID  )
   self:F3( { EventClass, _EVENTCODES[EventID] } )
@@ -146,7 +146,7 @@ end
 --- Set a new listener for an S_EVENT_X event independent from a unit or a weapon.
 -- @param #EVENT self
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @param Base#BASE EventClass The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
@@ -163,7 +163,7 @@ end
 -- @param #EVENT self
 -- @param #string EventDCSUnitName
 -- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @param Base#BASE EventClass The self instance of the class for which the event is.
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, EventID )
@@ -183,7 +183,7 @@ do -- OnBirth
 
   --- Create an OnBirth event handler for a group
   -- @param #EVENT self
-  -- @param Group#GROUP EventGroup
+  -- @param Wrapper.Group#GROUP EventGroup
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
   -- @param EventClass The self instance of the class for which the event is.
   -- @return #EVENT
@@ -241,7 +241,7 @@ do -- OnCrash
 
   --- Create an OnCrash event handler for a group
   -- @param #EVENT self
-  -- @param Group#GROUP EventGroup
+  -- @param Wrapper.Group#GROUP EventGroup
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
   -- @param EventClass The self instance of the class for which the event is.
   -- @return #EVENT
@@ -298,7 +298,7 @@ do -- OnDead
  
   --- Create an OnDead event handler for a group
   -- @param #EVENT self
-  -- @param Group#GROUP EventGroup
+  -- @param Wrapper.Group#GROUP EventGroup
   -- @param #function EventFunction The function to be called when the event occurs for the unit.
   -- @param EventClass The self instance of the class for which the event is.
   -- @return #EVENT

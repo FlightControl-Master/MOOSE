@@ -1,6 +1,6 @@
 --- This module contains the SPAWN class.
 -- 
--- 1) @{Spawn#SPAWN} class, extends @{Base#BASE}
+-- 1) @{Functional.Spawn#SPAWN} class, extends @{Core.Base#BASE}
 -- =============================================
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
@@ -195,7 +195,7 @@
 
 --- SPAWN Class
 -- @type SPAWN
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 -- @field ClassName
 -- @field #string SpawnTemplatePrefix
 -- @field #string SpawnAliasPrefix
@@ -211,7 +211,7 @@ SPAWN = {
 }
 
 --- @type SPAWN.SpawnZoneTable
--- @list <Zone#ZONE_BASE> SpawnZone
+-- @list <Core.Zone#ZONE_BASE> SpawnZone
 
 
 --- Creates the main object to spawn a @{Group} defined in the DCS ME.
@@ -350,8 +350,8 @@ end
 --- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
 -- @param #SPAWN self
 -- @param #boolean RandomizeUnits If true, SPAWN will perform the randomization of the @{UNIT}s position within the group between a given outer and inner radius. 
--- @param DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
--- @param DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @param Dcs.DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param Dcs.DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
 -- @return #SPAWN
 -- @usage
 -- -- NATO helicopters engaging in the battle field. 
@@ -572,7 +572,7 @@ end
 --- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
 -- @param #SPAWN self
--- @return Group#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:Spawn()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex, self.AliveUnits } )
 
@@ -583,7 +583,7 @@ end
 -- Note: Uses @{DATABASE} module defined in MOOSE.
 -- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
--- @return Group#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:ReSpawn( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
 	
@@ -607,7 +607,7 @@ end
 -- Uses @{DATABASE} global object defined in MOOSE.
 -- @param #SPAWN self
 -- @param #string SpawnIndex The index of the group to be spawned.
--- @return Group#GROUP The group that was spawned. You can use this group for further actions.
+-- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex )
 	self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
 	
@@ -714,7 +714,7 @@ end
 
 --- Allows to place a CallFunction hook when a new group spawns.
 -- The provided method will be called when a new group is spawned, including its given parameters.
--- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
+-- The first parameter of the SpawnFunction is the @{Wrapper.Group#GROUP} that was spawned.
 -- @param #SPAWN self
 -- @param #function SpawnCallBackFunction The function to be called when a group spawns.
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
@@ -748,9 +748,9 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
+-- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Group#GROUP that was spawned.
+-- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
 function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, Vec3, SpawnIndex } )
@@ -806,9 +806,9 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
+-- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Group#GROUP that was spawned.
+-- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
 function SPAWN:SpawnFromVec2( Vec2, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, Vec2, SpawnIndex } )
@@ -822,9 +822,9 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
+-- @param Wrapper.Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Group#GROUP that was spawned.
+-- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
 function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, SpawnIndex } )
@@ -839,9 +839,9 @@ end
 --- Will spawn a group from a hosting static. This method is mostly advisable to be used if you want to simulate spawning from buldings and structures (static buildings).
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param Static#STATIC HostStatic The static dropping or unloading the group.
+-- @param Wrapper.Static#STATIC HostStatic The static dropping or unloading the group.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Group#GROUP that was spawned.
+-- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
 function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, HostStatic, SpawnIndex } )
@@ -854,14 +854,14 @@ function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{Zone}.
--- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
+-- The @{Zone} can be of any type derived from @{Core.Zone#ZONE_BASE}.
 -- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
 -- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
--- @param Zone#ZONE Zone The zone where the group is to be spawned.
+-- @param Core.Zone#ZONE Zone The zone where the group is to be spawned.
 -- @param #boolean RandomizeGroup (optional) Randomization of the @{Group} position in the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
--- @return Group#GROUP that was spawned.
+-- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
 function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, SpawnIndex } )
@@ -920,7 +920,7 @@ end
 
 --- Will find the first alive @{Group} it has spawned, and return the alive @{Group} object and the first Index where the first alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The @{Group} object found, the new Index where the group was found.
+-- @return Wrapper.Group#GROUP, #number The @{Group} object found, the new Index where the group was found.
 -- @return #nil, #nil When no group is found, #nil is returned.
 -- @usage
 -- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
@@ -946,7 +946,7 @@ end
 --- Will find the next alive @{Group} object from a given Index, and return a reference to the alive @{Group} object and the next Index where the alive @{Group} has been found.
 -- @param #SPAWN self
 -- @param #number SpawnIndexStart A Index holding the start position to search from. This method can also be used to find the first alive @{Group} object from the given Index.
--- @return Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
+-- @return Wrapper.Group#GROUP, #number The next alive @{Group} object found, the next Index where the next alive @{Group} object was found.
 -- @return #nil, #nil When no alive @{Group} object is found from the start Index position, #nil is returned.
 -- @usage
 -- -- Find the first alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
@@ -971,7 +971,7 @@ end
 
 --- Will find the last alive @{Group} object, and will return a reference to the last live @{Group} object and the last Index where the last alive @{Group} object has been found.
 -- @param #SPAWN self
--- @return Group#GROUP, #number The last alive @{Group} object found, the last Index where the last alive @{Group} object was found.
+-- @return Wrapper.Group#GROUP, #number The last alive @{Group} object found, the last Index where the last alive @{Group} object was found.
 -- @return #nil, #nil When no alive @{Group} object is found, #nil is returned.
 -- @usage
 -- -- Find the last alive @{Group} object of the SpawnPlanes SPAWN object @{Group} collection that it has spawned during the mission.
@@ -1002,7 +1002,7 @@ end
 -- If no index is given, it will return the first group in the list.
 -- @param #SPAWN self
 -- @param #number SpawnIndex The index of the group to return.
--- @return Group#GROUP self
+-- @return Wrapper.Group#GROUP self
 function SPAWN:GetGroupFromIndex( SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 	
@@ -1022,7 +1022,7 @@ end
 -- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param DCSUnit#Unit DCSUnit The @{DCSUnit} to be searched.
+-- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
 function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
@@ -1044,7 +1044,7 @@ end
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
 -- @param #SPAWN self
--- @param DCSUnit#UNIT DCSUnit The @{DCSUnit} to be searched.
+-- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
 -- @return #string The prefix
 -- @return #nil Nothing found
 function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
@@ -1064,8 +1064,8 @@ end
 
 --- Return the group within the SpawnGroups collection with input a DCSUnit.
 -- @param #SPAWN self
--- @param DCSUnit#Unit DCSUnit The @{DCSUnit} to be searched.
--- @return Group#GROUP The Group
+-- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
+-- @return Wrapper.Group#GROUP The Group
 -- @return #nil Nothing found
 function SPAWN:_GetGroupFromDCSUnit( DCSUnit )
 	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
@@ -1404,7 +1404,7 @@ end
 -- TODO Need to delete this... _DATABASE does this now ...
 
 --- @param #SPAWN self 
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SPAWN:_OnBirth( Event )
 
 	if timer.getTime0() < timer.getAbsTime() then
@@ -1424,7 +1424,7 @@ end
 -- @todo Need to delete this... _DATABASE does this now ...
 
 --- @param #SPAWN self 
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SPAWN:_OnDeadOrCrash( Event )
   self:F( self.SpawnTemplatePrefix,  Event )
 
@@ -1526,7 +1526,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 	  
 	  for UnitID, UnitData in pairs( SpawnUnits ) do
 	    
-	    local SpawnUnit = UnitData -- Unit#UNIT
+	    local SpawnUnit = UnitData -- Wrapper.Unit#UNIT
 	    local SpawnUnitName = SpawnUnit:GetName()
 	    
 	    

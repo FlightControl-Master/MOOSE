@@ -41,7 +41,7 @@ end
 --- The COMMANDCENTER class
 -- @type COMMANDCENTER
 -- @field Wrapper.Group#GROUP HQ
--- @field Dcs.DCSCoalitionObject#coalition CommandCenterCoalition
+-- @field Dcs.DCSCoalitionWrapper.Object#coalition CommandCenterCoalition
 -- @list<Tasking.Mission#MISSION> Missions
 -- @extends Core.Base#BASE
 COMMANDCENTER = {

@@ -55,7 +55,7 @@
 --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 --
--- # 1) @{#PROCESS_ACCOUNT_DEADS} FSM class, extends @{Account#PROCESS_ACCOUNT}
+-- # 1) @{#PROCESS_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#PROCESS_ACCOUNT}
 -- 
 -- The PROCESS_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
 -- The process is given a @{Set} of units that will be tracked upon successful destruction.
@@ -77,7 +77,7 @@ do -- PROCESS_ACCOUNT
   --- PROCESS_ACCOUNT class
   -- @type PROCESS_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
+  -- @extends Core.StateMachine#FSM_TEMPLATE
   PROCESS_ACCOUNT = { 
     ClassName = "PROCESS_ACCOUNT",
     TargetSetUnit = nil,
@@ -89,7 +89,7 @@ do -- PROCESS_ACCOUNT
   function PROCESS_ACCOUNT:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ACCOUNT" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "PROCESS_ACCOUNT" ) ) -- Core.StateMachine#FSM_TEMPLATE
   
     self:AddTransition( "Assigned", "Start", "Waiting")
     self:AddTransition( "*", "Wait", "Waiting")
@@ -111,7 +111,7 @@ do -- PROCESS_ACCOUNT
   
   --- StateMachine callback function
   -- @param #PROCESS_ACCOUNT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -125,7 +125,7 @@ do -- PROCESS_ACCOUNT
   
     --- StateMachine callback function
     -- @param #PROCESS_ACCOUNT self
-    -- @param Controllable#CONTROLLABLE ProcessUnit
+    -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
     -- @param #string Event
     -- @param #string From
     -- @param #string To
@@ -143,7 +143,7 @@ do -- PROCESS_ACCOUNT
   
   --- StateMachine callback function
   -- @param #PROCESS_ACCOUNT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -199,7 +199,7 @@ do -- PROCESS_ACCOUNT_DEADS
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -213,7 +213,7 @@ do -- PROCESS_ACCOUNT_DEADS
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -233,7 +233,7 @@ do -- PROCESS_ACCOUNT_DEADS
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To

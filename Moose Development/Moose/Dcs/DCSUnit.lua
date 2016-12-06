@@ -2,7 +2,7 @@
 -- @module DCSUnit
 
 --- @type Unit
--- @extends DCSCoalitionObject#CoalitionObject
+-- @extends Dcs.DCSCoalitionWrapper.Object#CoalitionObject
 -- @field ID Identifier of an unit. It assigned to an unit by the Mission Editor automatically. 
 -- @field #Unit.Category Category
 -- @field #Unit.RefuelingSystem RefuelingSystem
@@ -57,14 +57,14 @@
 
 --- A unit descriptor. 
 -- @type Unit.Desc
--- @extends Object#Object.Desc
+-- @extends Wrapper.Object#Object.Desc
 -- @field #Unit.Category category Unit Category
 -- @field #Mass massEmpty mass of empty unit
 -- @field #number speedMax istance / Time, --maximal velocity
 
 --- An aircraft descriptor. 
 -- @type Unit.DescAircraft
--- @extends Unit#Unit.Desc
+-- @extends Wrapper.Unit#Unit.Desc
 -- @field #Mass fuelMassMax maximal inner fuel mass
 -- @field #Distance range Operational range
 -- @field #Distance Hmax Ceiling
@@ -75,18 +75,18 @@
 
 --- An airplane descriptor.
 -- @type Unit.DescAirplane 
--- @extends Unit#Unit.DescAircraft
+-- @extends Wrapper.Unit#Unit.DescAircraft
 -- @field #number speedMax0 Distance / Time maximal TAS at ground level
 -- @field #number speedMax10K Distance / Time maximal TAS at altitude of 10 km
 
 --- A helicopter descriptor.
 -- @type Unit.DescHelicopter 
--- @extends Unit#Unit.DescAircraft
+-- @extends Wrapper.Unit#Unit.DescAircraft
 -- @field #Distance HmaxStat static ceiling
 
 --- A vehicle descriptor.
 -- @type Unit.DescVehicle 
--- @extends Unit#Unit.Desc
+-- @extends Wrapper.Unit#Unit.Desc
 -- @field #Angle maxSlopeAngle maximal slope angle
 -- @field #boolean riverCrossing can the vehicle cross a rivers
 
@@ -106,12 +106,12 @@
 
 --- An optic sensor.
 -- @type Unit.Optic 
--- @extends Unit#Unit.Sensor
+-- @extends Wrapper.Unit#Unit.Sensor
 -- @field #Unit.OpticType opticType
 
 --- A radar.
 -- @type  Unit.Radar 
--- @extends Unit#Unit.Sensor
+-- @extends Wrapper.Unit#Unit.Sensor
 -- @field #Distance detectionDistanceRBM detection distance for RCS=1m^2 in real-beam mapping mode, nil if radar doesn't support surface/land search
 -- @field #Distance detectionDistanceHRM detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM
 -- @field #Unit.Radar.detectionDistanceAir detectionDistanceAir detection distance for RCS=1m^2 airborne target, nil if radar doesn't support air search
@@ -129,7 +129,7 @@
 -- @field #Distance tailOn
 
 --- An IRST.
---  @type Unit#Unit.IRST 
+--  @type Wrapper.Unit#Unit.IRST 
 --  @extends Unit.Sensor
 --  @field #Distance detectionDistanceIdle detection of tail-on target with heat signature = 1 in upper hemisphere, engines are in idle
 --  @field #Distance detectionDistanceMaximal ..., engines are in maximal mode
@@ -137,7 +137,7 @@
 
 --- An RWR.
 --  @type Unit.RWR 
---  @extends Unit#Unit.Sensor
+--  @extends Wrapper.Unit#Unit.Sensor
 
 --- table that stores all unit sensors.
 -- TODO @type Sensors
@@ -178,7 +178,7 @@
 --- Returns the unit's group if it exist and nil otherwise
 -- @function [parent=#Unit] getGroup
 -- @param #Unit self
--- @return DCSGroup#Group
+-- @return Dcs.DCSWrapper.Group#Group
 
 --- Returns the unit's callsign - the localized string.
 -- @function [parent=#Unit] getCallsign
@@ -230,7 +230,7 @@
 -- Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target. 
 -- @function [parent=#Unit] getRadar
 -- @param #Unit self
--- @return #boolean, Object#Object
+-- @return #boolean, Wrapper.Object#Object
 
 --- Returns unit descriptor. Descriptor type depends on unit category. 
 -- @function [parent=#Unit] getDesc

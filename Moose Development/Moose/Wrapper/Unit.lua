@@ -1,6 +1,6 @@
 --- This module contains the UNIT class.
 -- 
--- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
+-- 1) @{#UNIT} class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- ===========================================================
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
@@ -33,7 +33,7 @@
 -- ------------------
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSUnit#Unit.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{Dcs.DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
 -- 1.3) Smoke, Flare Units
@@ -60,7 +60,7 @@
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
 -- ### 1.6.1) Zones
--- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
 -- 
 -- ### 1.6.2) Units
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
@@ -133,7 +133,7 @@ end
 
 --- Finds a UNIT from the _DATABASE using a DCSUnit object.
 -- @param #UNIT self
--- @param DCSUnit#Unit DCSUnit An existing DCS Unit object reference.
+-- @param Dcs.DCSWrapper.Unit#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
 function UNIT:Find( DCSUnit )
 
@@ -162,7 +162,7 @@ end
 
 
 --- @param #UNIT self
--- @return DCSUnit#Unit
+-- @return Dcs.DCSWrapper.Unit#Unit
 function UNIT:GetDCSObject()
 
   local DCSUnit = Unit.getByName( self.UnitName )
@@ -183,7 +183,7 @@ end
 --  * Then it will respawn the re-modelled group.
 --  
 -- @param #UNIT self
--- @param DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param Dcs.DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
 -- @param #number Heading The heading of the unit respawn.
 function UNIT:ReSpawn( SpawnVec3, Heading )
 
@@ -383,7 +383,7 @@ end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
--- @return DCSUnit#Unit.Ammo
+-- @return Dcs.DCSWrapper.Unit#Unit.Ammo
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetAmmo()
   self:F2( self.UnitName )
@@ -400,7 +400,7 @@ end
 
 --- Returns the unit sensors.
 -- @param #UNIT self
--- @return DCSUnit#Unit.Sensors
+-- @return Dcs.DCSWrapper.Unit#Unit.Sensors
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetSensors()
   self:F2( self.UnitName )
@@ -464,7 +464,7 @@ end
 --  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @param #UNIT self
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
--- @return DCSObject#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+-- @return Dcs.DCSWrapper.Object#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetRadar()
   self:F2( self.UnitName )
@@ -591,8 +591,8 @@ end
 
 --- Returns true if the unit is within a @{Zone}.
 -- @param #UNIT self
--- @param Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -608,8 +608,8 @@ end
 
 --- Returns true if the unit is not within a @{Zone}.
 -- @param #UNIT self
--- @param Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 

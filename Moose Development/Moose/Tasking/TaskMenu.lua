@@ -2,9 +2,9 @@
 
 --- TASK2_MENU_CLIENT class
 -- @type TASK2_MENU_CLIENT
--- @field Unit#UNIT TaskUnit
--- @field Set#SET_UNIT TargetSet
--- @field Menu#MENU_CLIENT_COMMAND MenuTask
+-- @field Wrapper.Unit#UNIT TaskUnit
+-- @field Core.Set#SET_UNIT TargetSet
+-- @field Core.Menu#MENU_CLIENT_COMMAND MenuTask
 -- @extends Task2#TASK2
 TASK2_MENU_CLIENT = { 
   ClassName = "TASK2_MENU_CLIENT",
@@ -14,8 +14,8 @@ TASK2_MENU_CLIENT = {
 
 --- Creates a new MENU handling machine.
 -- @param #TASK2_MENU_CLIENT self
--- @param Mission#MISSION Mission
--- @param Unit#UNIT TaskUnit
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @param #string MenuText The text of the menu item.
 -- @return #TASK2_MENU_CLIENT self
 function TASK2_MENU_CLIENT:New( Mission, TaskUnit, MenuText )
@@ -25,7 +25,7 @@ function TASK2_MENU_CLIENT:New( Mission, TaskUnit, MenuText )
   
   self.MenuText = MenuText
 
-  self.Fsm = STATEMACHINE_TASK:New( self, {
+  self.Fsm = FSM_TASK:New( self, {
     initial = 'Unassigned',
     events = {
       { name = 'Menu',  from = 'Unassigned',  to = 'AwaitingMenu' },
@@ -47,7 +47,7 @@ end
 
 --- StateMachine callback function for a TASK2
 -- @param #TASK2_MENU_CLIENT self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -71,7 +71,7 @@ end
 
 --- StateMachine callback function for a TASK2
 -- @param #TASK2_MENU_CLIENT self
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To

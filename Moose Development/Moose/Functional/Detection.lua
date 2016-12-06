@@ -2,14 +2,14 @@
 -- 
 -- ===
 -- 
--- 1) @{Detection#DETECTION_BASE} class, extends @{Base#BASE}
+-- 1) @{Functional.Detection#DETECTION_BASE} class, extends @{Core.Base#BASE}
 -- ==========================================================
--- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
--- The @{Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
+-- The @{Functional.Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
+-- The @{Functional.Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
--- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION_BASE.New}() method.
+-- Construct a new DETECTION_BASE instance using the @{Functional.Detection#DETECTION_BASE.New}() method.
 -- 
 -- 1.2) DETECTION_BASE initialization
 -- ----------------------------------
@@ -20,46 +20,46 @@
 -- 
 -- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
 -- 
---   * @{Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
---   * @{Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
---   * @{Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
---   * @{Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
---   * @{Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
---   * @{Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
+--   * @{Functional.Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
 -- 
 -- 1.3) Obtain objects detected by DETECTION_BASE
 -- ----------------------------------------------
--- DETECTION_BASE builds @{Set}s of objects detected. These @{Set#SET_BASE}s can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSets}().
--- The method will return a list (table) of @{Set#SET_BASE} objects.
+-- DETECTION_BASE builds @{Set}s of objects detected. These @{Core.Set#SET_BASE}s can be retrieved using the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}().
+-- The method will return a list (table) of @{Core.Set#SET_BASE} objects.
 -- 
 -- ===
 -- 
--- 2) @{Detection#DETECTION_AREAS} class, extends @{Detection#DETECTION_BASE}
+-- 2) @{Functional.Detection#DETECTION_AREAS} class, extends @{Functional.Detection#DETECTION_BASE}
 -- ===============================================================================
--- The @{Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
--- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+-- The @{Functional.Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
+-- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
 -- The class is group the detected units within zones given a DetectedZoneRange parameter.
 -- A set with multiple detected zones will be created as there are groups of units detected.
 -- 
 -- 2.1) Retrieve the Detected Unit sets and Detected Zones
 -- -------------------------------------------------------
--- The DetectedUnitSets methods are implemented in @{Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Detection#DETECTION_AREAS}.
+-- The DetectedUnitSets methods are implemented in @{Functional.Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Functional.Detection#DETECTION_AREAS}.
 -- 
--- Retrieve the DetectedUnitSets with the method @{Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Set#SET_UNIT}s.
--- To understand the amount of sets created, use the method @{Detection#DETECTION_BASE.GetDetectedSetCount}(). 
--- If you want to obtain a specific set from the DetectedSets, use the method @{Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
+-- Retrieve the DetectedUnitSets with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Core.Set#SET_UNIT}s.
+-- To understand the amount of sets created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSetCount}(). 
+-- If you want to obtain a specific set from the DetectedSets, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
 -- 
--- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
--- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
--- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+-- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZones}().
+-- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
+-- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
 -- 
 -- 1.4) Flare or Smoke detected units
 -- ----------------------------------
--- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+-- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
 -- 
 -- 1.5) Flare or Smoke detected zones
 -- ----------------------------------
--- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
+-- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
 -- 
 -- ===
 -- 
@@ -77,12 +77,12 @@
 
 --- DETECTION_BASE class
 -- @type DETECTION_BASE
--- @field Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
--- @field DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @field Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+-- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @field #DETECTION_BASE.DetectedObjects DetectedObjects The list of detected objects.
 -- @field #table DetectedObjectsIdentified Map of the DetectedObjects identified.
 -- @field #number DetectionRun
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 DETECTION_BASE = {
   ClassName = "DETECTION_BASE",
   DetectionSetGroup = nil,
@@ -104,8 +104,8 @@ DETECTION_BASE = {
 
 --- DETECTION constructor.
 -- @param #DETECTION_BASE self
--- @param Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
--- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+-- @param Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
 -- @return #DETECTION_BASE self
 function DETECTION_BASE:New( DetectionSetGroup, DetectionRange )
 
@@ -245,7 +245,7 @@ function DETECTION_BASE:GetDetectedObject( ObjectName )
   return nil
 end
 
---- Get the detected @{Set#SET_BASE}s.
+--- Get the detected @{Core.Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 -- @return #DETECTION_BASE.DetectedSets DetectedSets
 function DETECTION_BASE:GetDetectedSets()
@@ -266,7 +266,7 @@ end
 --- Get a SET of detected objects using a given numeric index.
 -- @param #DETECTION_BASE self
 -- @param #number Index
--- @return Set#SET_BASE
+-- @return Core.Set#SET_BASE
 function DETECTION_BASE:GetDetectedSet( Index )
 
   local DetectionSet = self.DetectedSets[Index]
@@ -279,7 +279,7 @@ end
 
 --- Get the detection Groups.
 -- @param #DETECTION_BASE self
--- @return Group#GROUP
+-- @return Wrapper.Group#GROUP
 function DETECTION_BASE:GetDetectionSetGroup()
 
   local DetectionSetGroup = self.DetectionSetGroup
@@ -313,7 +313,7 @@ function DETECTION_BASE:Schedule( DelayTime, RepeatInterval )
 end
 
 
---- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_BASE}s.
+--- Form @{Set}s of detected @{Wrapper.Unit#UNIT}s in an array of @{Core.Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:F2( { SchedulerName } )
@@ -323,7 +323,7 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
   
   for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
-    local DetectionGroup = DetectionGroupData -- Group#GROUP
+    local DetectionGroup = DetectionGroupData -- Wrapper.Group#GROUP
 
     if DetectionGroup:IsAlive() then
 
@@ -339,7 +339,7 @@ function DETECTION_BASE:_DetectionScheduler( SchedulerName )
       )
       
       for DetectionDetectedTargetID, DetectionDetectedTarget in pairs( DetectionDetectedTargets ) do
-        local DetectionObject = DetectionDetectedTarget.object -- DCSObject#Object
+        local DetectionObject = DetectionDetectedTarget.object -- Dcs.DCSWrapper.Object#Object
         self:T2( DetectionObject )
         
         if DetectionObject and DetectionObject:isExist() and DetectionObject.id_ < 50000000 then
@@ -393,9 +393,9 @@ end
 
 --- DETECTION_AREAS class
 -- @type DETECTION_AREAS
--- @field DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+-- @field Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
 -- @field #DETECTION_AREAS.DetectedAreas DetectedAreas A list of areas containing the set of @{Unit}s, @{Zone}s, the center @{Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
--- @extends Detection#DETECTION_BASE
+-- @extends Functional.Detection#DETECTION_BASE
 DETECTION_AREAS = {
   ClassName = "DETECTION_AREAS",
   DetectedAreas = { n = 0 },
@@ -406,21 +406,21 @@ DETECTION_AREAS = {
 -- @list <#DETECTION_AREAS.DetectedArea>
 
 --- @type DETECTION_AREAS.DetectedArea
--- @field Set#SET_UNIT Set -- The Set of Units in the detected area.
--- @field Zone#ZONE_UNIT Zone -- The Zone of the detected area.
+-- @field Core.Set#SET_UNIT Set -- The Set of Units in the detected area.
+-- @field Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
 -- @field #boolean Changed Documents if the detected area has changes.
 -- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
 -- @field #number AreaID -- The identifier of the detected area.
 -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
--- @field Unit#UNIT NearestFAC The nearest FAC near the Area.
+-- @field Wrapper.Unit#UNIT NearestFAC The nearest FAC near the Area.
 
 
 --- DETECTION_AREAS constructor.
--- @param Detection#DETECTION_AREAS self
--- @param Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
--- @param DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
--- @param DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
--- @return Detection#DETECTION_AREAS self
+-- @param Functional.Detection#DETECTION_AREAS self
+-- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
+-- @param Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
+-- @param Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
+-- @return Functional.Detection#DETECTION_AREAS self
 function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRange )
 
   -- Inherits from DETECTION_BASE
@@ -439,8 +439,8 @@ function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRa
 end
 
 --- Add a detected @{#DETECTION_AREAS.DetectedArea}.
--- @param Set#SET_UNIT Set -- The Set of Units in the detected area.
--- @param Zone#ZONE_UNIT Zone -- The Zone of the detected area.
+-- @param Core.Set#SET_UNIT Set -- The Set of Units in the detected area.
+-- @param Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
 -- @return #DETECTION_AREAS.DetectedArea DetectedArea
 function DETECTION_AREAS:AddDetectedArea( Set, Zone )
   local DetectedAreas = self:GetDetectedAreas()
@@ -487,10 +487,10 @@ function DETECTION_AREAS:GetDetectedAreaCount()
   return DetectedAreaCount
 end
 
---- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
+--- Get the @{Core.Set#SET_UNIT} of a detecttion area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
--- @return Set#SET_UNIT DetectedSet
+-- @return Core.Set#SET_UNIT DetectedSet
 function DETECTION_AREAS:GetDetectedSet( Index )
 
   local DetectedSetUnit = self.DetectedAreas[Index].Set
@@ -501,10 +501,10 @@ function DETECTION_AREAS:GetDetectedSet( Index )
   return nil
 end
 
---- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
+--- Get the @{Core.Zone#ZONE_UNIT} of a detection area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
--- @return Zone#ZONE_UNIT DetectedZone
+-- @return Core.Zone#ZONE_UNIT DetectedZone
 function DETECTION_AREAS:GetDetectedZone( Index )
 
   local DetectedZone = self.DetectedAreas[Index].Zone
@@ -517,11 +517,11 @@ end
 
 --- Background worker function to determine if there are friendlies nearby ...
 -- @param #DETECTION_AREAS self
--- @param Unit#UNIT ReportUnit
+-- @param Wrapper.Unit#UNIT ReportUnit
 function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
   self:F2()
   
-  local DetectedArea = ReportGroupData.DetectedArea  -- Detection#DETECTION_AREAS.DetectedArea    
+  local DetectedArea = ReportGroupData.DetectedArea  -- Functional.Detection#DETECTION_AREAS.DetectedArea    
   local DetectedSet = ReportGroupData.DetectedArea.Set
   local DetectedZone = ReportGroupData.DetectedArea.Zone
   local DetectedZoneUnit = DetectedZone.ZoneUNIT
@@ -537,15 +537,15 @@ function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
     
    }
    
-   --- @param DCSUnit#Unit FoundDCSUnit
-   -- @param Group#GROUP ReportGroup
+   --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+   -- @param Wrapper.Group#GROUP ReportGroup
    -- @param Set#SET_GROUP ReportSetGroup
    local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
       
-      local DetectedArea = ReportGroupData.DetectedArea  -- Detection#DETECTION_AREAS.DetectedArea    
+      local DetectedArea = ReportGroupData.DetectedArea  -- Functional.Detection#DETECTION_AREAS.DetectedArea    
       local DetectedSet = ReportGroupData.DetectedArea.Set
       local DetectedZone = ReportGroupData.DetectedArea.Zone
-      local DetectedZoneUnit = DetectedZone.ZoneUNIT -- Unit#UNIT
+      local DetectedZoneUnit = DetectedZone.ZoneUNIT -- Wrapper.Unit#UNIT
       local ReportSetGroup = ReportGroupData.ReportSetGroup
 
       local EnemyCoalition = DetectedZoneUnit:GetCoalition()
@@ -588,7 +588,7 @@ function DETECTION_AREAS:CalculateThreatLevelA2G( DetectedArea )
   
   local MaxThreatLevelA2G = 0
   for UnitName, UnitData in pairs( DetectedArea.Set:GetSet() ) do
-    local ThreatUnit = UnitData -- Unit#UNIT
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
     local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
     if ThreatLevelA2G > MaxThreatLevelA2G then
       MaxThreatLevelA2G = ThreatLevelA2G
@@ -603,7 +603,7 @@ end
 --- Find the nearest FAC of the DetectedArea.
 -- @param #DETECTION_AREAS self
 -- @param #DETECTION_AREAS.DetectedArea DetectedArea
--- @return Unit#UNIT The nearest FAC unit
+-- @return Wrapper.Unit#UNIT The nearest FAC unit
 function DETECTION_AREAS:NearestFAC( DetectedArea )
   
   local NearestFAC = nil
@@ -611,7 +611,7 @@ function DETECTION_AREAS:NearestFAC( DetectedArea )
   
   for FACGroupName, FACGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
     for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
-      local FACUnit = FACUnitData -- Unit#UNIT
+      local FACUnit = FACUnitData -- Wrapper.Unit#UNIT
       if FACUnit:IsActive() then
         local Vec3 = FACUnit:GetVec3()
         local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
@@ -829,7 +829,7 @@ function DETECTION_AREAS:CreateDetectionSets()
         -- Then search for a new center area unit within the set. Note that the new area unit candidate must be within the area range.
         for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
  
-          local DetectedUnit = DetectedUnitData -- Unit#UNIT
+          local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
           local DetectedObject = self:GetDetectedObject( DetectedUnit.UnitName ) 
 
           -- The DetectedObject can be nil when the DetectedUnit is not alive anymore or it is not in the DetectedObjects map.
@@ -859,7 +859,7 @@ function DETECTION_AREAS:CreateDetectionSets()
         -- If a unit was not found in the set, remove it from the set. This may be added later to other existing or new sets.
         for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
 
-          local DetectedUnit = DetectedUnitData -- Unit#UNIT
+          local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
           local DetectedObject = nil
           if DetectedUnit:IsAlive() then
           --self:E(DetectedUnit:GetName())
@@ -909,7 +909,7 @@ function DETECTION_AREAS:CreateDetectionSets()
     if DetectedObject then
 
       -- We found an unidentified unit outside of any existing detection area.
-      local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Unit#UNIT
+      local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
       
       local AddedToDetectionArea = false
     
@@ -959,7 +959,7 @@ function DETECTION_AREAS:CreateDetectionSets()
       DetectedZone.ZoneUNIT:SmokeRed()
     end
     DetectedSet:ForEachUnit(
-      --- @param Unit#UNIT DetectedUnit
+      --- @param Wrapper.Unit#UNIT DetectedUnit
       function( DetectedUnit )
         if DetectedUnit:IsAlive() then
           self:T( "Detected Set #" .. DetectedArea.AreaID .. ":" .. DetectedUnit:GetName() )

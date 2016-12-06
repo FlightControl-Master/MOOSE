@@ -60,7 +60,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#PROCESS_ROUTE_ZONE} class, extends @{Route#PROCESS_ROUTE}
+-- # 1) @{#PROCESS_ROUTE_ZONE} class, extends @{Fsm.Route#PROCESS_ROUTE}
 -- 
 -- The PROCESS_ROUTE_ZONE class implements the core functions to route an AIR @{Controllable} player @{Unit} to a @{Zone}.
 -- The player receives on perioding times messages with the coordinates of the route to follow. 
@@ -79,10 +79,10 @@ do -- PROCESS_ROUTE
 
   --- PROCESS_ROUTE class
   -- @type PROCESS_ROUTE
-  -- @field Task#TASK TASK
-  -- @field Unit#UNIT ProcessUnit
+  -- @field Tasking.Task#TASK TASK
+  -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
+  -- @extends Core.StateMachine#FSM_TEMPLATE
   PROCESS_ROUTE = { 
     ClassName = "PROCESS_ROUTE",
   }
@@ -94,7 +94,7 @@ do -- PROCESS_ROUTE
   function PROCESS_ROUTE:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ROUTE" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "PROCESS_ROUTE" ) ) -- Core.StateMachine#FSM_TEMPLATE
  
     self:AddTransition( "None", "Start", "Routing" )
     self:AddTransition( "*", "Report", "Reporting" )
@@ -119,7 +119,7 @@ do -- PROCESS_ROUTE
 
   --- StateMachine callback function
   -- @param #PROCESS_ROUTE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -131,7 +131,7 @@ do -- PROCESS_ROUTE
   
   --- Check if the controllable has arrived.
   -- @param #PROCESS_ROUTE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
   function PROCESS_ROUTE:onfuncHasArrived( ProcessUnit )
     return false
@@ -139,7 +139,7 @@ do -- PROCESS_ROUTE
   
   --- StateMachine callback function
   -- @param #PROCESS_ROUTE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -180,8 +180,8 @@ do -- PROCESS_ROUTE_ZONE
 
   --- PROCESS_ROUTE_ZONE class
   -- @type PROCESS_ROUTE_ZONE
-  -- @field Task#TASK TASK
-  -- @field Unit#UNIT ProcessUnit
+  -- @field Tasking.Task#TASK TASK
+  -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
   -- @extends #PROCESS_ROUTE
   PROCESS_ROUTE_ZONE = { 
@@ -225,7 +225,7 @@ do -- PROCESS_ROUTE_ZONE
   
   --- StateMachine callback function
   -- @param #PROCESS_ROUTE_ZONE self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To

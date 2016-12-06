@@ -1,6 +1,6 @@
 --- This module contains the TASK_BASE class.
 -- 
--- 1) @{#TASK_BASE} class, extends @{Base#BASE}
+-- 1) @{#TASK_BASE} class, extends @{Core.Base#BASE}
 -- ============================================
 -- 1.1) The @{#TASK_BASE} class implements the methods for task orchestration within MOOSE. 
 -- ----------------------------------------------------------------------------------------
@@ -51,11 +51,11 @@
 
 --- The TASK_BASE class
 -- @type TASK_BASE
--- @field Scheduler#SCHEDULER TaskScheduler
--- @field Mission#MISSION Mission
+-- @field Core.Scheduler#SCHEDULER TaskScheduler
+-- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @field Core.StateMachine#STATEMACHINE_TEMPLATE FsmTemplate
--- @extends Core.StateMachine#STATEMACHINE_TASK
+-- @field Core.StateMachine#FSM_TEMPLATE FsmTemplate
+-- @extends Core.StateMachine#FSM_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
   TaskScheduler = nil,
@@ -70,14 +70,14 @@ TASK_BASE = {
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
 -- @param #TASK_BASE self
--- @param Mission#MISSION Mission The mission wherein the Task is registered.
--- @param Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
+-- @param Tasking.Mission#MISSION Mission The mission wherein the Task is registered.
+-- @param Core.Set#SET_GROUP SetGroupAssign The set of groups for which the Task can be assigned.
 -- @param #string TaskName The name of the Task
 -- @param #string TaskType The type of the Task
 -- @return #TASK_BASE self
 function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
-  local self = BASE:Inherit( self, STATEMACHINE_TASK:New() ) -- Core.StateMachine#STATEMACHINE_TASK
+  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Core.StateMachine#FSM_TASK
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
@@ -98,7 +98,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
-  self.FsmTemplate = self.FsmTemplate or STATEMACHINE_TEMPLATE:New( "MAIN" )
+  self.FsmTemplate = self.FsmTemplate or FSM_TEMPLATE:New( "MAIN" )
 
   -- Handle the birth of new planes within the assigned set.
   self:EventOnPlayerEnterUnit(
@@ -142,7 +142,7 @@ end
 
 --- Assign the @{Task}to a @{Group}.
 -- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #TASK_BASE
 function TASK_BASE:AssignToGroup( TaskGroup )
   self:F2( TaskGroup:GetName() )
@@ -156,7 +156,7 @@ function TASK_BASE:AssignToGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
   for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Unit#UNIT
+    local TaskUnit = UnitData -- Wrapper.Unit#UNIT
     local PlayerName = TaskUnit:GetPlayerName()
     self:E(PlayerName)
     if PlayerName ~= nil or PlayerName ~= "" then
@@ -179,13 +179,13 @@ end
 
 --- Assign the @{Task} to an alive @{Unit}.
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
 function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
   -- Assign a new FsmUnit to TaskUnit.
-  local FsmUnit = self:SetStateMachine( TaskUnit, STATEMACHINE_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Core.StateMachine#STATEMACHINE_PROCESS
+  local FsmUnit = self:SetStateMachine( TaskUnit, FSM_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Core.StateMachine#FSM_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   -- Set the events
@@ -204,7 +204,7 @@ end
 
 --- UnAssign the @{Task} from an alive @{Unit}.
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
 function TASK_BASE:UnAssignFromUnit( TaskUnitName )
   self:F( TaskUnitName )
@@ -254,7 +254,7 @@ end
 
 --- Returns if the @{Task} is assigned to the Group.
 -- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #boolean
 function TASK_BASE:IsAssignedToGroup( TaskGroup )
 
@@ -304,7 +304,7 @@ end
 
 --- Set the planned menu option of the @{Task}.
 -- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @param #string MenuText The menu text.
 -- @return #TASK_BASE self
 function TASK_BASE:SetPlannedMenuForGroup( TaskGroup, MenuText )
@@ -322,7 +322,7 @@ end
 
 --- Set the assigned menu options of the @{Task}.
 -- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #TASK_BASE self
 function TASK_BASE:SetAssignedMenuForGroup( TaskGroup )
   self:E( TaskGroup:GetName() )
@@ -340,7 +340,7 @@ end
 
 --- Remove the menu option of the @{Task} for a @{Group}.
 -- @param #TASK_BASE self
--- @param Group#GROUP TaskGroup
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #TASK_BASE self
 function TASK_BASE:RemoveMenuForGroup( TaskGroup )
 
@@ -416,7 +416,7 @@ end
 
 --- Add a FiniteStateMachine to @{Task} with key @{Unit}
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
 function TASK_BASE:SetStateMachine( TaskUnit, Fsm )
   local TaskUnitName = TaskUnit:GetName()
@@ -452,7 +452,7 @@ end
 --- Register a potential new assignment for a new spawned @{Unit}.
 -- Tasks only get assigned if there are players in it.
 -- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #TASK_BASE self
 function TASK_BASE:_EventAssignUnit( Event )
   if Event.IniUnit then
@@ -481,7 +481,7 @@ end
 --   * and he is on an airbase and on the ground, the process for him will just continue to work, he can switch airplanes, and take-off again.
 -- This is important to model the change from plane types for a player during mission assignment.
 -- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #TASK_BASE self
 function TASK_BASE:_EventPlayerLeaveUnit( Event )
   self:F( Event )
@@ -510,7 +510,7 @@ end
 --- UnAssigns a @{Unit} that is left by a player, crashed, dead, ....
 -- There are only assignments if there are players in it.
 -- @param #TASK_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #TASK_BASE self
 function TASK_BASE:_EventDead( Event )
   self:F( Event )
@@ -688,12 +688,12 @@ end
 
 
 --- Adds a score for the TASK to be achieved.
--- @param #STATEMACHINE_TEMPLATE self
+-- @param #FSM_TEMPLATE self
 -- @param #string TaskStatus is the status of the TASK when the score needs to be given.
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
--- @return #STATEMACHINE_TEMPLATE self
-function STATEMACHINE_TEMPLATE:AddScoreTask( TaskStatus, ScoreText, Score )
+-- @return #FSM_TEMPLATE self
+function FSM_TEMPLATE:AddScoreTask( TaskStatus, ScoreText, Score )
   self:F2( { TaskStatus, ScoreText, Score } )
 
   self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
@@ -708,7 +708,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onenterAssigned( Event, From, To )
 
   self:E("Assigned")
@@ -723,7 +723,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onenterSuccess( Event, From, To )
 
   self:E("Success")
@@ -732,12 +732,12 @@ end
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param Wrapper.Unit#UNIT TaskUnit
+-- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function TASK_BASE:OnFailed( TaskUnit, Fsm, Event, From, To )
 
   self:E( { "Failed for unit ", TaskUnit:GetName(), TaskUnit:GetPlayerName() } )
@@ -753,12 +753,12 @@ end
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
--- @param Unit#UNIT TaskUnit
--- @param StateMachine#STATEMACHINE_TASK Fsm
+-- @param Wrapper.Unit#UNIT TaskUnit
+-- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onstatechange( Event, From, To )
 
   if self:IsTrace() then

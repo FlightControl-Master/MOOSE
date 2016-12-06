@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- 1) @{#PATROLZONE} class, extends @{StateMachine#STATEMACHINE}
+-- 1) @{#PATROLZONE} class, extends @{Fsm.Fsm#FSM}
 -- ================================================================
 -- The @{#PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable} @{Group}.
 -- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
@@ -68,7 +68,7 @@
 --
 --      --- State transition function for the PATROLZONE **Patrol** object
 --      -- @param #PATROLZONE self 
---      -- @param Controllable#CONTROLLABLE AIGroup
+--      -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
 --      -- @return #boolean If false is returned, then the OnAfter state transition method will not be called.
 --      function Patrol:OnBeforeRTB( AIGroup )
 --        AIGroup:MessageToRed( "Returning to base", 20 )
@@ -78,8 +78,8 @@
 --
 --      --- State transition function for the PATROLZONE **Patrol** object
 --      -- @param #PATROLZONE self 
---      -- @param Controllable#CONTROLLABLE AIGroup
---      -- @return #Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
+--      -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
+--      -- @return #Wrapper.Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
 --      function Patrol:OnAfterRTB( AIGroup )
 --        return PatrolSpawn:Spawn()
 --      end 
@@ -137,25 +137,25 @@
 --- OnBefore State Transition Function
 -- @function [parent=#PATROLZONE] OnBeforeRoute
 -- @param #PATROLZONE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
 --- OnAfter State Transition Function
 -- @function [parent=#PATROLZONE] OnAfterRoute
 -- @param #PATROLZONE self
--- @param Controllable#CONTROLLABLE Controllable
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 
 
 --- PATROLZONE class
 -- @type PATROLZONE
--- @field Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @field DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @field DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @field DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @field DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @extends StateMachine#STATEMACHINE_CONTROLLABLE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @extends Fsm.Fsm#STATEMACHINE_CONTROLLABLE
 PATROLZONE = {
   ClassName = "PATROLZONE",
 }
@@ -164,11 +164,11 @@ PATROLZONE = {
 
 --- Creates a new PATROLZONE object
 -- @param #PATROLZONE self
--- @param Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
 -- @return #PATROLZONE self
 -- @usage
 -- -- Define a new PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
@@ -206,8 +206,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #PATROLZONE self
--- @param DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
 -- @return #PATROLZONE self
 function PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -220,8 +220,8 @@ end
 
 --- Sets the floor and ceiling altitude of the patrol.
 -- @param #PATROLZONE self
--- @param DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @return #PATROLZONE self
 function PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
@@ -232,7 +232,7 @@ end
 
 
 
---- @param Controllable#CONTROLLABLE AIControllable
+--- @param Wrapper.Controllable#CONTROLLABLE AIControllable
 function _NewPatrolRoute( AIControllable )
 
   AIControllable:T( "NewPatrolRoute" )

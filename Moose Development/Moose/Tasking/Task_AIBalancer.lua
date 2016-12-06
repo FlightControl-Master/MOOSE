@@ -2,11 +2,11 @@
 -- 
 -- ===
 -- 
--- 1) @{AIBalancer#AIBALANCER} class, extends @{Base#BASE}
+-- 1) @{Functional.AIBalancer#AIBALANCER} class, extends @{Core.Base#BASE}
 -- =======================================================
--- The @{AIBalancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
+-- The @{Functional.AIBalancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
 -- There will be as many AI GROUPS spawned as there at CLIENTS in SET_CLIENT not spawned.
--- The AIBalancer uses the @{PatrolZone#PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
+-- The AIBalancer uses the @{PatrolCore.Zone#PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
 -- 
 -- 1.1) AIBALANCER construction method:
 -- ------------------------------------
@@ -18,12 +18,12 @@
 -- ---------------------------------------
 -- You can configure to have the AI to return to:
 -- 
---    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Airbase#AIRBASE}.
---    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- 
 -- 1.3) AIBALANCER allows AI to patrol specific zones:
 -- ---------------------------------------------------
--- Use @{AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
+-- Use @{Functional.AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
 --
 -- ===
 -- 
@@ -67,14 +67,14 @@
 
 --- AIBALANCER class
 -- @type AIBALANCER
--- @field Set#SET_CLIENT SetClient
--- @field Spawn#SPAWN SpawnAI
+-- @field Core.Set#SET_CLIENT SetClient
+-- @field Functional.Spawn#SPAWN SpawnAI
 -- @field #boolean ToNearestAirbase
--- @field Set#SET_AIRBASE ReturnAirbaseSet
--- @field DCSTypes#Distance ReturnTresholdRange
+-- @field Core.Set#SET_AIRBASE ReturnAirbaseSet
+-- @field Dcs.DCSTypes#Distance ReturnTresholdRange
 -- @field #boolean ToHomeAirbase
--- @field PatrolZone#PATROLZONE PatrolZone
--- @extends Base#BASE
+-- @field PatrolCore.Zone#PATROLZONE PatrolZone
+-- @extends Core.Base#BASE
 AIBALANCER = {
   ClassName = "AIBALANCER",
   PatrolZones = {},
@@ -121,10 +121,10 @@ function AIBALANCER:New( SetClient, SpawnAI )
   return self
 end
 
---- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
--- @param Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
 function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -132,9 +132,9 @@ function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseS
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
---- Returns the AI to the home @{Airbase#AIRBASE}.
+--- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
 -- @param #AIBALANCER self
--- @param DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
@@ -143,8 +143,8 @@ end
 
 --- Let the AI patrol a @{Zone} with a given Speed range and Altitude range.
 -- @param #AIBALANCER self
--- @param PatrolZone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
--- @return PatrolZone#PATROLZONE self
+-- @param PatrolCore.Zone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+-- @return PatrolCore.Zone#PATROLZONE self
 function AIBALANCER:SetPatrolZone( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
   self.PatrolZone = PATROLZONE:New(
@@ -159,7 +159,7 @@ end
 
 --- Get the @{PatrolZone} object assigned by the @{AIBalancer} object.
 -- @param #AIBALANCER self
--- @return PatrolZone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+-- @return PatrolCore.Zone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
 function AIBALANCER:GetPatrolZone()
 
   return self.PatrolZone
@@ -171,7 +171,7 @@ end
 function AIBALANCER:_ClientAliveMonitorScheduler()
 
   self.SetClient:ForEachClient(
-    --- @param Client#CLIENT Client
+    --- @param Wrapper.Client#CLIENT Client
     function( Client )
       local ClientAIAliveState = Client:GetState( self, 'AIAlive' )
       self:T( ClientAIAliveState )
@@ -179,7 +179,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
         if ClientAIAliveState == true then
           Client:SetState( self, 'AIAlive', false )
           
-          local AIGroup = self.AIGroups[Client.UnitName] -- Group#GROUP
+          local AIGroup = self.AIGroups[Client.UnitName] -- Wrapper.Group#GROUP
           
 --          local PatrolZone = Client:GetState( self, "PatrolZone" )
 --          if PatrolZone then
@@ -200,7 +200,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
             self:E( RangeZone )
             
             _DATABASE:ForEachPlayer(
-              --- @param Unit#UNIT RangeTestUnit
+              --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
@@ -213,7 +213,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
               end,
               
               --- @param Zone#ZONE_RADIUS RangeZone
-              -- @param Group#GROUP AIGroup
+              -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 local AIGroupTemplate = AIGroup:GetTemplate()
                 if PlayerInRange.Value == false then

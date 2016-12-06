@@ -10,7 +10,7 @@
 --- The Scoring class
 -- @type SCORING
 -- @field Players A collection of the current players that have joined the game.
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 SCORING = {
   ClassName = "SCORING",
   ClassID = 0,
@@ -100,7 +100,7 @@ end
 
 --- Track  DEAD or CRASH events for the scoring.
 -- @param #SCORING self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SCORING:_EventOnDeadOrCrash( Event )
   self:F( { Event } )
 
@@ -265,8 +265,8 @@ end
 
 --- Registers Scores the players completing a Mission Task.
 -- @param #SCORING self
--- @param Mission#MISSION Mission
--- @param Unit#UNIT PlayerUnit
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Unit#UNIT PlayerUnit
 -- @param #string Text
 -- @param #number Score
 function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
@@ -300,8 +300,8 @@ end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 -- @param #SCORING self
--- @param Mission#MISSION Mission
--- @param Unit#UNIT PlayerUnit
+-- @param Tasking.Mission#MISSION Mission
+-- @param Wrapper.Unit#UNIT PlayerUnit
 -- @param #string Text
 -- @param #number Score
 function SCORING:_AddMissionScore( Mission, Text, Score )
@@ -330,7 +330,7 @@ end
 
 --- Handles the OnHit event for the scoring.
 -- @param #SCORING self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SCORING:_EventOnHit( Event )
   self:F( { Event } )
 

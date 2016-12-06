@@ -4,7 +4,7 @@
 
 -------------------------------------------------------------------------------
 -- @module StaticObject
--- @extends CoalitionObject#CoalitionObject
+-- @extends CoalitionWrapper.Object#CoalitionObject
 
 --- Represents static object added in the Mission Editor.
 -- @type StaticObject
@@ -13,7 +13,7 @@
 
 --- StaticObject descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
 -- @type StaticObject.Desc
--- @extends Unit#Unit.Desc
+-- @extends Wrapper.Unit#Unit.Desc
 
 --- Returns static object by its name. If no static object found nil will be returned. 
 -- @function [parent=#StaticObject] getByName

@@ -13,8 +13,8 @@
 -- 
 -- 1.1) BASE constructor
 -- ---------------------
--- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
--- See an example at the @{Base#BASE.New} method how this is done.
+-- Any class derived from BASE, must use the @{Core.Base#BASE.New) constructor within the @{Core.Base#BASE.Inherit) method. 
+-- See an example at the @{Core.Base#BASE.New} method how this is done.
 -- 
 -- 1.2) BASE Trace functionality
 -- -----------------------------
@@ -199,7 +199,7 @@ end
 
 --- Set a new listener for the class.
 -- @param self
--- @param DCSTypes#Event Event
+-- @param Dcs.DCSTypes#Event Event
 -- @param #function EventFunction
 -- @return #BASE
 function BASE:AddEvent( Event, EventFunction )
@@ -215,7 +215,7 @@ end
 
 --- Returns the event dispatcher
 -- @param #BASE self
--- @return Event#EVENT
+-- @return Core.Event#EVENT
 function BASE:Event()
 
   return _EVENTDISPATCHER
@@ -563,8 +563,8 @@ local BaseEventCodes = {
 
 --- Creation of a Birth Event.
 -- @param #BASE self
--- @param DCSTypes#Time EventTime The time stamp of the event.
--- @param DCSObject#Object Initiator The initiating object of the event.
+-- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
+-- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
 -- @param #string IniUnitName The initiating unit name.
 -- @param place
 -- @param subplace
@@ -585,8 +585,8 @@ end
 
 --- Creation of a Crash Event.
 -- @param #BASE self
--- @param DCSTypes#Time EventTime The time stamp of the event.
--- @param DCSObject#Object Initiator The initiating object of the event.
+-- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
+-- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
 function BASE:CreateEventCrash( EventTime, Initiator )
 	self:F( { EventTime, Initiator } )
 
@@ -599,10 +599,10 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 	world.onEvent( Event )
 end
 
--- TODO: Complete DCSTypes#Event structure.                       
+-- TODO: Complete Dcs.DCSTypes#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
--- @param DCSTypes#Event event
+-- @param Dcs.DCSTypes#Event event
 function BASE:onEvent(event)
   --self:F( { BaseEventCodes[event.id], event } )
 

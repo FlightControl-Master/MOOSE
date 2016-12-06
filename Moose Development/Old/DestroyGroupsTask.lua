@@ -32,8 +32,8 @@ end
 
 --- Report Goal Progress.
 -- @param #DESTROYGROUPSTASK self
--- @param DCSGroup#Group DestroyGroup Group structure describing the group to be evaluated.
--- @param DCSUnit#Unit DestroyUnit Unit structure describing the Unit to be evaluated.
+-- @param Dcs.DCSWrapper.Group#Group DestroyGroup Group structure describing the group to be evaluated.
+-- @param Dcs.DCSWrapper.Unit#Unit DestroyUnit Unit structure describing the Unit to be evaluated.
 -- @return #number The DestroyCount reflecting the amount of units destroyed within the group.
 function DESTROYGROUPSTASK:ReportGoalProgress( DestroyGroup, DestroyUnit )
 	self:F( { DestroyGroup, DestroyUnit, self.DestroyPercentage } )

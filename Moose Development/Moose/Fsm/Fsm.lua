@@ -1,4 +1,4 @@
---- This module contains the STATEMACHINE class.
+--- This module contains the FSM class.
 -- This development is based on a state machine implementation made by Conroy Kyle.
 -- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
 --
@@ -7,26 +7,26 @@
 --
 -- ===
 --
--- 1) @{Workflow#STATEMACHINE} class, extends @{Base#BASE}
+-- 1) @{Workflow#FSM} class, extends @{Core.Base#BASE}
 -- ==============================================
 --
--- 1.1) Add or remove objects from the STATEMACHINE
+-- 1.1) Add or remove objects from the FSM
 -- --------------------------------------------
 -- @module StateMachine
 -- @author FlightControl
 
 
---- STATEMACHINE class
--- @type STATEMACHINE
+--- FSM class
+-- @type FSM
 -- @extends Core.Base#BASE
-STATEMACHINE = {
-  ClassName = "STATEMACHINE",
+FSM = {
+  ClassName = "FSM",
 }
 
---- Creates a new STATEMACHINE object.
--- @param #STATEMACHINE self
--- @return #STATEMACHINE
-function STATEMACHINE:New( FsmT )
+--- Creates a new FSM object.
+-- @param #FSM self
+-- @return #FSM
+function FSM:New( FsmT )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -49,7 +49,7 @@ function STATEMACHINE:New( FsmT )
   
   self.Scores = {}
 
-  FsmT = FsmT or STATEMACHINE_TEMPLATE:New( "" )
+  FsmT = FsmT or FSM_TEMPLATE:New( "" )
 
   self:SetStartState( FsmT:GetStartState() )
 
@@ -63,7 +63,7 @@ function STATEMACHINE:New( FsmT )
 end
 
 
-function STATEMACHINE:AddTransition( From, Event, To )
+function FSM:AddTransition( From, Event, To )
 
   local event = {}
   event.from = From
@@ -80,7 +80,7 @@ end
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
 -- @return Process#PROCESS
-function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
+function FSM:AddProcess( From, Event, Process, ReturnEvents )
 
   local sub = {}
   sub.FromParent = From
@@ -96,21 +96,21 @@ function STATEMACHINE:AddProcess( From, Event, Process, ReturnEvents )
   return Process
 end
 
-function STATEMACHINE:AddEndState( State )
+function FSM:AddEndState( State )
   self.endstates[State] = State
 end
 
-function STATEMACHINE:SetStartState( State )
+function FSM:SetStartState( State )
   self.current = State
 end
 
-function STATEMACHINE:GetSubs()
+function FSM:GetSubs()
 
   return self.options.subs
 end
 
 
-function STATEMACHINE:LoadCallBacks( CallBackTable )
+function FSM:LoadCallBacks( CallBackTable )
 
   for name, callback in pairs( CallBackTable or {} ) do
     self[name] = callback
@@ -118,7 +118,7 @@ function STATEMACHINE:LoadCallBacks( CallBackTable )
 
 end
 
-function STATEMACHINE:_eventmap( events, event )
+function FSM:_eventmap( events, event )
 
     local name = event.name
     local __name = "__" .. event.name
@@ -130,7 +130,7 @@ function STATEMACHINE:_eventmap( events, event )
 
 end
 
-function STATEMACHINE:_submap( subs, sub, name )
+function FSM:_submap( subs, sub, name )
   self:F( { sub = sub, name = name } )
   subs[sub.FromParent] = subs[sub.FromParent] or {}
   subs[sub.FromParent][sub.EventParent] = subs[sub.FromParent][sub.EventParent] or {}
@@ -147,14 +147,14 @@ function STATEMACHINE:_submap( subs, sub, name )
 end
 
 
-function STATEMACHINE:_call_handler(handler, params)
+function FSM:_call_handler(handler, params)
   if self[handler] then
     self:E( "Calling " .. handler )
     return self[handler]( self, unpack(params) )
   end
 end
 
-function STATEMACHINE._handler( self, EventName, ... )
+function FSM._handler( self, EventName, ... )
 
   self:E( { EventName, ... } )
 
@@ -225,7 +225,7 @@ function STATEMACHINE._handler( self, EventName, ... )
   return nil
 end
 
-function STATEMACHINE:_delayed_transition( EventName )
+function FSM:_delayed_transition( EventName )
   self:E( { EventName = EventName } )
   return function( self, DelaySeconds, ... )
     self:T( "Delayed Event: " .. EventName )
@@ -233,12 +233,12 @@ function STATEMACHINE:_delayed_transition( EventName )
   end
 end
 
-function STATEMACHINE:_create_transition( EventName )
+function FSM:_create_transition( EventName )
   self:E( { Event =  EventName  } )
   return function( self, ... ) return self._handler( self,  EventName , ... ) end
 end
 
-function STATEMACHINE:_gosub( ParentFrom, ParentEvent )
+function FSM:_gosub( ParentFrom, ParentEvent )
   local fsmtable = {}
   if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
     self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
@@ -248,7 +248,7 @@ function STATEMACHINE:_gosub( ParentFrom, ParentEvent )
   end
 end
 
-function STATEMACHINE:_isendstate( Current )
+function FSM:_isendstate( Current )
   local FSMParent = self.fsmparent
   if FSMParent and self.endstates[Current] then
     self:E( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
@@ -268,7 +268,7 @@ function STATEMACHINE:_isendstate( Current )
   return nil
 end
 
-function STATEMACHINE:_add_to_map(map, event)
+function FSM:_add_to_map(map, event)
   self:F3( { map, event } )
   if type(event.from) == 'string' then
     map[event.from] = event.to
@@ -280,31 +280,31 @@ function STATEMACHINE:_add_to_map(map, event)
   self:T3( { map, event } )
 end
 
-function STATEMACHINE:GetState()
+function FSM:GetState()
   return self.current
 end
 
 
-function STATEMACHINE:Is( State )
+function FSM:Is( State )
   return self.current == State
 end
 
-function STATEMACHINE:is(state)
+function FSM:is(state)
   return self.current == state
 end
 
-function STATEMACHINE:can(e)
+function FSM:can(e)
   local event = self.events[e]
   self:F3( { self.current, event } )
   local to = event and event.map[self.current] or event.map['*']
   return to ~= nil, to
 end
 
-function STATEMACHINE:cannot(e)
+function FSM:cannot(e)
   return not self:can(e)
 end
 
-function STATEMACHINE:CopyCallHandlers( FsmT )
+function FSM:CopyCallHandlers( FsmT )
 
   local Parent = BASE:GetParent( FsmT )
   if Parent then
@@ -325,7 +325,7 @@ function STATEMACHINE:CopyCallHandlers( FsmT )
 end
 
 
-function STATEMACHINE:todot(filename)
+function FSM:todot(filename)
   local dotfile = io.open(filename,'w')
   dotfile:write('digraph {\n')
   local transition = function(event,from,to)
@@ -348,8 +348,8 @@ end
 
 --- STATEMACHINE_CONTROLLABLE class
 -- @type STATEMACHINE_CONTROLLABLE
--- @field Controllable#CONTROLLABLE Controllable
--- @extends Core.StateMachine#STATEMACHINE
+-- @field Wrapper.Controllable#CONTROLLABLE Controllable
+-- @extends Core.StateMachine#FSM
 STATEMACHINE_CONTROLLABLE = {
   ClassName = "STATEMACHINE_CONTROLLABLE",
 }
@@ -357,12 +357,12 @@ STATEMACHINE_CONTROLLABLE = {
 --- Creates a new STATEMACHINE_CONTROLLABLE object.
 -- @param #STATEMACHINE_CONTROLLABLE self
 -- @param #table FSMT Finite State Machine Table
--- @param Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
 -- @return #STATEMACHINE_CONTROLLABLE
 function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_CONTROLLABLE
+  local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#STATEMACHINE_CONTROLLABLE
 
   if Controllable then
     self:SetControllable( Controllable )
@@ -373,7 +373,7 @@ end
 
 --- Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
 -- @param #STATEMACHINE_CONTROLLABLE self
--- @param Controllable#CONTROLLABLE FSMControllable
+-- @param Wrapper.Controllable#CONTROLLABLE FSMControllable
 -- @return #STATEMACHINE_CONTROLLABLE
 function STATEMACHINE_CONTROLLABLE:SetControllable( FSMControllable )
   self:F( FSMControllable )
@@ -382,7 +382,7 @@ end
 
 --- Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
 -- @param #STATEMACHINE_CONTROLLABLE self
--- @return Controllable#CONTROLLABLE
+-- @return Wrapper.Controllable#CONTROLLABLE
 function STATEMACHINE_CONTROLLABLE:GetControllable()
   return self.Controllable
 end
@@ -406,21 +406,21 @@ function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
   end
 end
 
---- STATEMACHINE_PROCESS class
--- @type STATEMACHINE_PROCESS
+--- FSM_PROCESS class
+-- @type FSM_PROCESS
 -- @field Process#PROCESS Process
 -- @field Tasking.Task#TASK_BASE Task
 -- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
-STATEMACHINE_PROCESS = {
-  ClassName = "STATEMACHINE_PROCESS",
+FSM_PROCESS = {
+  ClassName = "FSM_PROCESS",
 }
 
---- Creates a new STATEMACHINE_PROCESS object.
--- @param #STATEMACHINE_PROCESS self
--- @return #STATEMACHINE_PROCESS
-function STATEMACHINE_PROCESS:New( FsmT, Controllable, Task )
+--- Creates a new FSM_PROCESS object.
+-- @param #FSM_PROCESS self
+-- @return #FSM_PROCESS
+function FSM_PROCESS:New( FsmT, Controllable, Task )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FsmT ) ) -- StateMachine#STATEMACHINE_PROCESS
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FsmT ) ) -- Fsm.Fsm#FSM_PROCESS
 
   self:Assign( Controllable, Task )
   self.ClassName = FsmT._Name
@@ -431,12 +431,18 @@ function STATEMACHINE_PROCESS:New( FsmT, Controllable, Task )
 
   for ProcessID, Process in pairs( FsmT:GetProcesses() ) do
     self:E( Process )
-    local FsmProcess = self:AddProcess(Process.From, Process.Event, STATEMACHINE_PROCESS:New( Process.Process, Controllable, Task ), Process.ReturnEvents )
+    local FsmProcess = self:AddProcess(Process.From, Process.Event, FSM_PROCESS:New( Process.Process, Controllable, Task ), Process.ReturnEvents )
   end
 
   for EndStateID, EndState in pairs( FsmT:GetEndStates() ) do
     self:E( EndState )
     self:AddEndState( EndState )
+  end
+  
+  -- Copy the score tables
+  for ScoreID, Score in pairs( FsmT:GetScores() ) do
+    self:E( Score )
+    self:AddScore( ScoreID,Score.ScoreText,Score.Score )
   end
 
   return self
@@ -446,7 +452,7 @@ end
 -- @param #PROCESS self
 -- @param Tasking.Task#TASK_BASE Task
 -- @return #PROCESS
-function STATEMACHINE_PROCESS:SetTask( Task )
+function FSM_PROCESS:SetTask( Task )
 
   self.Task = Task
 
@@ -455,27 +461,27 @@ end
 
 --- Gets the task of the process.
 -- @param #PROCESS self
--- @return Task#TASK_BASE
-function STATEMACHINE_PROCESS:GetTask()
+-- @return Tasking.Task#TASK_BASE
+function FSM_PROCESS:GetTask()
 
   return self.Task
 end
 
 --- Gets the mission of the process.
 -- @param #PROCESS self
--- @return Mission#MISSION
-function STATEMACHINE_PROCESS:GetMission()
+-- @return Tasking.Mission#MISSION
+function FSM_PROCESS:GetMission()
 
   return self.Task.Mission
 end
 
 
 --- Assign the process to a @{Unit} and activate the process.
--- @param #STATEMACHINE_PROCESS self
+-- @param #FSM_PROCESS self
 -- @param Task.Tasking#TASK_BASE Task
 -- @param Wrapper.Unit#UNIT ProcessUnit
--- @return #STATEMACHINE_PROCESS self
-function STATEMACHINE_PROCESS:Assign( ProcessUnit, Task )
+-- @return #FSM_PROCESS self
+function FSM_PROCESS:Assign( ProcessUnit, Task )
   self:E( { Task, ProcessUnit } )
 
   self:SetControllable( ProcessUnit )
@@ -486,31 +492,47 @@ function STATEMACHINE_PROCESS:Assign( ProcessUnit, Task )
   return self
 end
 
-function STATEMACHINE_PROCESS:onenterAssigned( ProcessUnit )
+--- Adds a score for the FSM_PROCESS to be achieved.
+-- @param #FSM_PROCESS self
+-- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
+-- @param #string ScoreText is a text describing the score that is given according the status.
+-- @param #number Score is a number providing the score of the status.
+-- @return #FSM_PROCESS self
+function FSM_PROCESS:AddScore( State, ScoreText, Score )
+  self:F2( { State, ScoreText, Score } )
+
+  self.Scores[State] = self.Scores[State] or {}
+  self.Scores[State].ScoreText = ScoreText
+  self.Scores[State].Score = Score
+
+  return self
+end
+
+function FSM_PROCESS:onenterAssigned( ProcessUnit )
   self:E( "Assign" )
 
   self.Task:Assign()
 end
 
-function STATEMACHINE_PROCESS:onenterFailed( ProcessUnit )
+function FSM_PROCESS:onenterFailed( ProcessUnit )
   self:E( "Failed" )
 
   self.Task:Fail()
 end
 
-function STATEMACHINE_PROCESS:onenterSuccess( ProcessUnit )
+function FSM_PROCESS:onenterSuccess( ProcessUnit )
   self:E( "Success" )
 
   self.Task:Success()
 end
 
---- StateMachine callback function for a STATEMACHINE_PROCESS
--- @param #STATEMACHINE_PROCESS self
--- @param Controllable#CONTROLLABLE ProcessUnit
+--- StateMachine callback function for a FSM_PROCESS
+-- @param #FSM_PROCESS self
+-- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function STATEMACHINE_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
+function FSM_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
   self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
 
   if self:IsTrace() then
@@ -529,55 +551,55 @@ function STATEMACHINE_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy
   end
 end
 
---- STATEMACHINE_TASK class
--- @type STATEMACHINE_TASK
--- @field Task#TASK_BASE Task
--- @extends Core.StateMachine#STATEMACHINE
-STATEMACHINE_TASK = {
-  ClassName = "STATEMACHINE_TASK",
+--- FSM_TASK class
+-- @type FSM_TASK
+-- @field Tasking.Task#TASK_BASE Task
+-- @extends Core.StateMachine#FSM
+FSM_TASK = {
+  ClassName = "FSM_TASK",
 }
 
---- Creates a new STATEMACHINE_TASK object.
--- @param #STATEMACHINE_TASK self
+--- Creates a new FSM_TASK object.
+-- @param #FSM_TASK self
 -- @param #table FSMT
--- @param Task#TASK_BASE Task
--- @param Unit#UNIT TaskUnit
--- @return #STATEMACHINE_TASK
-function STATEMACHINE_TASK:New( FSMT )
+-- @param Tasking.Task#TASK_BASE Task
+-- @param Wrapper.Unit#UNIT TaskUnit
+-- @return #FSM_TASK
+function FSM_TASK:New( FSMT )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Core.StateMachine#STATEMACHINE_TASK
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Core.StateMachine#FSM_TASK
 
   self["onstatechange"] = self.OnStateChange
 
   return self
 end
 
-function STATEMACHINE_TASK:_call_handler( handler, params )
+function FSM_TASK:_call_handler( handler, params )
   if self[handler] then
     self:E( "Calling " .. handler )
     return self[handler]( self, unpack( params ) )
   end
 end
 
-do -- STATEMACHINE_SET
+do -- FSM_SET
 
---- STATEMACHINE_SET class
--- @type STATEMACHINE_SET
--- @field Set#SET_BASE Set
--- @extends StateMachine#STATEMACHINE
-STATEMACHINE_SET = {
-  ClassName = "STATEMACHINE_SET",
+--- FSM_SET class
+-- @type FSM_SET
+-- @field Core.Set#SET_BASE Set
+-- @extends Fsm.Fsm#FSM
+FSM_SET = {
+  ClassName = "FSM_SET",
 }
 
---- Creates a new STATEMACHINE_SET object.
--- @param #STATEMACHINE_SET self
+--- Creates a new FSM_SET object.
+-- @param #FSM_SET self
 -- @param #table FSMT Finite State Machine Table
--- @param Set_SET_BASE FSMSet (optional) The Set object that the STATEMACHINE_SET governs.
--- @return #STATEMACHINE_SET
-function STATEMACHINE_SET:New( FSMT, FSMSet )
+-- @param Set_SET_BASE FSMSet (optional) The Set object that the FSM_SET governs.
+-- @return #FSM_SET
+function FSM_SET:New( FSMT, FSMSet )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, STATEMACHINE:New( FSMT ) ) -- StateMachine#STATEMACHINE_SET
+  local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#FSM_SET
 
   if FSMSet then
     self:Set( FSMSet )
@@ -586,23 +608,23 @@ function STATEMACHINE_SET:New( FSMT, FSMSet )
   return self
 end
 
---- Sets the SET_BASE object that the STATEMACHINE_SET governs.
--- @param #STATEMACHINE_SET self
--- @param Set#SET_BASE FSMSet
--- @return #STATEMACHINE_SET
-function STATEMACHINE_SET:Set( FSMSet )
+--- Sets the SET_BASE object that the FSM_SET governs.
+-- @param #FSM_SET self
+-- @param Core.Set#SET_BASE FSMSet
+-- @return #FSM_SET
+function FSM_SET:Set( FSMSet )
   self:F( FSMSet )
   self.Set = FSMSet
 end
 
---- Gets the SET_BASE object that the STATEMACHINE_SET governs.
--- @param #STATEMACHINE_SET self
--- @return Set#SET_BASE
-function STATEMACHINE_SET:Get()
+--- Gets the SET_BASE object that the FSM_SET governs.
+-- @param #FSM_SET self
+-- @return Core.Set#SET_BASE
+function FSM_SET:Get()
   return self.Controllable
 end
 
-function STATEMACHINE_SET:_call_handler( handler, params )
+function FSM_SET:_call_handler( handler, params )
   if self[handler] then
     self:E( "Calling " .. handler )
     return self[handler]( self, self.Set, unpack( params ) )
@@ -611,20 +633,20 @@ end
 
 end
 
---- STATEMACHINE_TEMPLATE class
--- @type STATEMACHINE_TEMPLATE
+--- FSM_TEMPLATE class
+-- @type FSM_TEMPLATE
 -- @extends Core.Base#BASE
-STATEMACHINE_TEMPLATE = {
-  ClassName = "STATEMACHINE_TEMPLATE",
+FSM_TEMPLATE = {
+  ClassName = "FSM_TEMPLATE",
 }
 
---- Creates a new STATEMACHINE_TEMPLATE object.
--- @param #STATEMACHINE_TEMPLATE self
--- @return #STATEMACHINE_TEMPLATE
-function STATEMACHINE_TEMPLATE:New( Name )
+--- Creates a new FSM_TEMPLATE object.
+-- @param #FSM_TEMPLATE self
+-- @return #FSM_TEMPLATE
+function FSM_TEMPLATE:New( Name )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() ) -- #STATEMACHINE_TEMPLATE
+  local self = BASE:Inherit( self, BASE:New() ) -- #FSM_TEMPLATE
   
   self._StartState = "none"
   self._Transitions = {}
@@ -637,7 +659,7 @@ function STATEMACHINE_TEMPLATE:New( Name )
   return self
 end
 
-function STATEMACHINE_TEMPLATE:AddTransition( From, Event, To )
+function FSM_TEMPLATE:AddTransition( From, Event, To )
 
   local Transition = {}
   Transition.From = From
@@ -647,14 +669,14 @@ function STATEMACHINE_TEMPLATE:AddTransition( From, Event, To )
   self._Transitions[Transition] = Transition
 end
 
-function STATEMACHINE_TEMPLATE:GetTransitions()
+function FSM_TEMPLATE:GetTransitions()
 
   return self._Transitions or {}
 end
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
 -- @return Process#PROCESS
-function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
+function FSM_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
 
   self:E( { ProcessTemplate = ProcessTemplate } )
 
@@ -674,12 +696,12 @@ function STATEMACHINE_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnE
   return ProcessTemplate
 end
 
-function STATEMACHINE_TEMPLATE:GetProcesses()
+function FSM_TEMPLATE:GetProcesses()
 
   return self._Processes or {}
 end
 
-function STATEMACHINE_TEMPLATE:GetProcess( From, Event )
+function FSM_TEMPLATE:GetProcess( From, Event )
 
   for ProcessID, Process in pairs( self:GetProcesses() ) do
     if Process.From == From and Process.Event == Event then
@@ -691,42 +713,42 @@ function STATEMACHINE_TEMPLATE:GetProcess( From, Event )
   error( "Sub-Process from state " .. From .. " with event " .. Event .. " not found!" )
 end
 
-function STATEMACHINE_TEMPLATE:SetParameters( Parameters )
+function FSM_TEMPLATE:SetParameters( Parameters )
   self._Parameters = Parameters
 end
 
-function STATEMACHINE_TEMPLATE:GetParameters()
+function FSM_TEMPLATE:GetParameters()
   return self._Parameters or {}
 end
 
 
-function STATEMACHINE_TEMPLATE:AddEndState( State )
+function FSM_TEMPLATE:AddEndState( State )
 
   self._EndStates[State] = State
 end
 
-function STATEMACHINE_TEMPLATE:GetEndStates()
+function FSM_TEMPLATE:GetEndStates()
 
   return self._EndStates or {}
 end
 
-function STATEMACHINE_TEMPLATE:SetStartState( State )
+function FSM_TEMPLATE:SetStartState( State )
 
   self._StartState = State
 end
 
-function STATEMACHINE_TEMPLATE:GetStartState()
+function FSM_TEMPLATE:GetStartState()
 
   return self._StartState or {}
 end
 
---- Adds a score for the STATEMACHINE_PROCESS to be achieved.
--- @param #STATEMACHINE_TEMPLATE self
+--- Adds a score for the FSM_PROCESS to be achieved.
+-- @param #FSM_TEMPLATE self
 -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
--- @return #STATEMACHINE_TEMPLATE self
-function STATEMACHINE_TEMPLATE:AddScore( State, ScoreText, Score )
+-- @return #FSM_TEMPLATE self
+function FSM_TEMPLATE:AddScore( State, ScoreText, Score )
   self:F2( { State, ScoreText, Score } )
 
   self._Scores[State] = self._Scores[State] or {}
@@ -736,15 +758,15 @@ function STATEMACHINE_TEMPLATE:AddScore( State, ScoreText, Score )
   return self
 end
 
---- Adds a score for the STATEMACHINE_PROCESS to be achieved.
--- @param #STATEMACHINE_TEMPLATE self
+--- Adds a score for the FSM_PROCESS to be achieved.
+-- @param #FSM_TEMPLATE self
 -- @param #string From is the From State of the main process.
 -- @param #string Event is the Event of the main process.
 -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
--- @return #STATEMACHINE_TEMPLATE self
-function STATEMACHINE_TEMPLATE:AddScoreProcess( From, Event, State, ScoreText, Score )
+-- @return #FSM_TEMPLATE self
+function FSM_TEMPLATE:AddScoreProcess( From, Event, State, ScoreText, Score )
   self:F2( { Event, State, ScoreText, Score } )
 
   local Process = self:GetProcess( From, Event )
@@ -757,3 +779,7 @@ function STATEMACHINE_TEMPLATE:AddScoreProcess( From, Event, State, ScoreText, S
   return Process
 end
 
+function FSM_TEMPLATE:GetScores()
+
+  return self._Scores or {}
+end

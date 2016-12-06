@@ -54,7 +54,7 @@
 -- 
 -- ===
 -- 
--- # 1) @{#PROCESS_ASSIGN_ACCEPT} class, extends @{Assign#PROCESS_ASSIGN}
+-- # 1) @{#PROCESS_ASSIGN_ACCEPT} class, extends @{Fsm.Assign#PROCESS_ASSIGN}
 -- 
 -- The PROCESS_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 -- 
@@ -64,7 +64,7 @@
 -- 
 -- ===
 -- 
--- # 2) @{#PROCESS_ASSIGN_MENU_ACCEPT} class, extends @{Assign#PROCESS_ASSIGN}
+-- # 2) @{#PROCESS_ASSIGN_MENU_ACCEPT} class, extends @{Fsm.Assign#PROCESS_ASSIGN}
 -- 
 -- The PROCESS_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
@@ -85,9 +85,9 @@ do -- PROCESS_ASSIGN
   --- PROCESS_ASSIGN class
   -- @type PROCESS_ASSIGN
   -- @field Tasking.Task#TASK_BASE Task
-  -- @field Unit#UNIT ProcessUnit
+  -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Core.StateMachine#STATEMACHINE_TEMPLATE
+  -- @extends Core.StateMachine#FSM_TEMPLATE
   PROCESS_ASSIGN = { 
     ClassName = "PROCESS_ASSIGN",
   }
@@ -99,7 +99,7 @@ do -- PROCESS_ASSIGN
   function PROCESS_ASSIGN:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, STATEMACHINE_TEMPLATE:New( "PROCESS_ASSIGN" ) ) -- Core.StateMachine#STATEMACHINE_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "PROCESS_ASSIGN" ) ) -- Core.StateMachine#FSM_TEMPLATE
 
     self:AddTransition( "UnAssigned", "Start", "Waiting" )
     self:AddTransition( "Waiting",  "Assign", "Assigned" )
@@ -123,8 +123,8 @@ do -- PROCESS_ASSIGN_ACCEPT
 
   --- PROCESS_ASSIGN_ACCEPT class
   -- @type PROCESS_ASSIGN_ACCEPT
-  -- @field Task#TASK_BASE Task
-  -- @field Unit#UNIT ProcessUnit
+  -- @field Tasking.Task#TASK_BASE Task
+  -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
   -- @extends Fsm.Process#PROCESS
   PROCESS_ASSIGN_ACCEPT = { 
@@ -183,8 +183,8 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
 
   --- PROCESS_ASSIGN_MENU_ACCEPT class
   -- @type PROCESS_ASSIGN_MENU_ACCEPT
-  -- @field Task#TASK_BASE Task
-  -- @field Unit#UNIT ProcessUnit
+  -- @field Tasking.Task#TASK_BASE Task
+  -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Zone#ZONE_BASE TargetZone
   -- @extends #PROCESS_ASSIGN
   PROCESS_ASSIGN_MENU_ACCEPT = { 
@@ -222,7 +222,7 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -256,7 +256,7 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -268,7 +268,7 @@ do -- PROCESS_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #PROCESS_ASSIGN_MENU_ACCEPT self
-  -- @param Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To

@@ -2,9 +2,9 @@
 -- 
 -- ===
 -- 
--- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
+-- 1) @{Core.Set#SET_BASE} class, extends @{Core.Base#BASE}
 -- ==============================================
--- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
+-- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
 -- The default **"yield interval"** is after 10 objects processed.
@@ -12,18 +12,18 @@
 -- 
 -- 1.1) Add or remove objects from the SET
 -- ---------------------------------------
--- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- Some key core functions are @{Core.Set#SET_BASE.Add} and @{Core.Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
 -- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
 -- -----------------------------------------------------------------------------
--- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
+-- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
--- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
+-- 2) @{Core.Set#SET_GROUP} class, extends @{Core.Set#SET_BASE}
 -- ==================================================
--- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -38,7 +38,7 @@
 -- 
 -- 2.2) Add or Remove GROUP(s) from SET_GROUP: 
 -- -------------------------------------------
--- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
+-- GROUPS can be added and removed using the @{Core.Set#SET_GROUP.AddGroupsByName} and @{Core.Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
 -- 2.3) SET_GROUP filter criteria: 
@@ -57,7 +57,7 @@
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
+--    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
 -- 
 -- 2.4) SET_GROUP iterators:
 -- -------------------------
@@ -72,9 +72,9 @@
 -- 
 -- ====
 -- 
--- 3) @{Set#SET_UNIT} class, extends @{Set#SET_BASE}
+-- 3) @{Core.Set#SET_UNIT} class, extends @{Core.Set#SET_BASE}
 -- ===================================================
--- Mission designers can use the @{Set#SET_UNIT} class to build sets of units belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_UNIT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -90,7 +90,7 @@
 --   
 -- 3.2) Add or Remove UNIT(s) from SET_UNIT: 
 -- -----------------------------------------
--- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+-- UNITs can be added and removed using the @{Core.Set#SET_UNIT.AddUnitsByName} and @{Core.Set#SET_UNIT.RemoveUnitsByName} respectively. 
 -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
 -- 
 -- 3.3) SET_UNIT filter criteria: 
@@ -110,7 +110,7 @@
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
+--    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
 -- 
 -- 3.4) SET_UNIT iterators:
 -- ------------------------
@@ -130,9 +130,9 @@
 -- 
 -- ===
 -- 
--- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
+-- 4) @{Core.Set#SET_CLIENT} class, extends @{Core.Set#SET_BASE}
 -- ===================================================
--- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -148,7 +148,7 @@
 --   
 -- 4.2) Add or Remove CLIENT(s) from SET_CLIENT: 
 -- -----------------------------------------
--- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- CLIENTs can be added and removed using the @{Core.Set#SET_CLIENT.AddClientsByName} and @{Core.Set#SET_CLIENT.RemoveClientsByName} respectively. 
 -- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
 -- 
 -- 4.3) SET_CLIENT filter criteria: 
@@ -168,7 +168,7 @@
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
 -- 
 -- 4.4) SET_CLIENT iterators:
 -- ------------------------
@@ -180,9 +180,9 @@
 -- 
 -- ====
 -- 
--- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
+-- 5) @{Core.Set#SET_AIRBASE} class, extends @{Core.Set#SET_BASE}
 -- ====================================================
--- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
 -- 
 --  * Coalitions
 --  
@@ -194,7 +194,7 @@
 --   
 -- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
 -- --------------------------------------------
--- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- AIRBASEs can be added and removed using the @{Core.Set#SET_AIRBASE.AddAirbasesByName} and @{Core.Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
 -- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
 -- 
 -- 5.3) SET_AIRBASE filter criteria 
@@ -233,7 +233,7 @@
 -- @field #table Filter
 -- @field #table Set
 -- @field #table List
--- @extends Base#BASE
+-- @extends Core.Base#BASE
 SET_BASE = {
   ClassName = "SET_BASE",
   Filter = {},
@@ -264,10 +264,10 @@ function SET_BASE:New( Database )
   return self
 end
 
---- Finds an @{Base#BASE} object based on the object Name.
+--- Finds an @{Core.Base#BASE} object based on the object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
--- @return Base#BASE The Object found.
+-- @return Core.Base#BASE The Object found.
 function SET_BASE:_Find( ObjectName )
 
   local ObjectFound = self.Set[ObjectName]
@@ -284,11 +284,11 @@ function SET_BASE:GetSet()
   return self.Set
 end
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
--- @param Base#BASE Object
--- @return Base#BASE The added BASE Object.
+-- @param Core.Base#BASE Object
+-- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
   self:F2( ObjectName )
 
@@ -310,10 +310,10 @@ function SET_BASE:Add( ObjectName, Object )
   
 end
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
--- @param Object#OBJECT Object
--- @return Base#BASE The added BASE Object.
+-- @param Wrapper.Object#OBJECT Object
+-- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:AddObject( Object )
   self:F2( Object.ObjectName )
   
@@ -325,7 +325,7 @@ end
 
 
 
---- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Removes a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
@@ -364,10 +364,10 @@ function SET_BASE:Remove( ObjectName )
   
 end
 
---- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
--- @return Base#BASE
+-- @return Core.Base#BASE
 function SET_BASE:Get( ObjectName )
   self:F( ObjectName )
 
@@ -379,7 +379,7 @@ function SET_BASE:Get( ObjectName )
   
 end
 
---- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
+--- Retrieves the amount of objects in the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
 function SET_BASE:Count()
@@ -472,10 +472,10 @@ function SET_BASE:FilterStop()
   return self
 end
 
---- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
+--- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_BASE self
--- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
--- @return Base#BASE The closest object.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Core.Base#BASE The closest object.
 function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
@@ -526,7 +526,7 @@ end
 
 --- Handles the OnBirth event for the Set.
 -- @param #SET_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnBirth( Event )
   self:F3( { Event } )
 
@@ -542,7 +542,7 @@ end
 
 --- Handles the OnDead or OnCrash event for alive units set.
 -- @param #SET_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
   self:F3( { Event } )
 
@@ -556,7 +556,7 @@ end
 
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #SET_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnPlayerEnterUnit( Event )
   self:F3( { Event } )
 
@@ -572,7 +572,7 @@ end
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #SET_BASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnPlayerLeaveUnit( Event )
   self:F3( { Event } )
 
@@ -761,7 +761,7 @@ function SET_GROUP:New()
 end
 
 --- Add GROUP(s) to SET_GROUP.
--- @param Set#SET_GROUP self
+-- @param Core.Set#SET_GROUP self
 -- @param #string AddGroupNames A single name or an array of GROUP names.
 -- @return self
 function SET_GROUP:AddGroupsByName( AddGroupNames )
@@ -776,8 +776,8 @@ function SET_GROUP:AddGroupsByName( AddGroupNames )
 end
 
 --- Remove GROUP(s) from SET_GROUP.
--- @param Set#SET_GROUP self
--- @param Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
+-- @param Core.Set#SET_GROUP self
+-- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
 -- @return self
 function SET_GROUP:RemoveGroupsByName( RemoveGroupNames )
 
@@ -796,7 +796,7 @@ end
 --- Finds a Group based on the Group Name.
 -- @param #SET_GROUP self
 -- @param #string GroupName
--- @return Group#GROUP The found Group.
+-- @return Wrapper.Group#GROUP The found Group.
 function SET_GROUP:FindGroup( GroupName )
 
   local GroupFound = self.Set[GroupName]
@@ -897,7 +897,7 @@ end
 --- Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_GROUP self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the GROUP
 -- @return #table The GROUP
 function SET_GROUP:AddInDatabase( Event )
@@ -914,7 +914,7 @@ end
 --- Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_GROUP self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the GROUP
 -- @return #table The GROUP
 function SET_GROUP:FindInDatabase( Event )
@@ -937,7 +937,7 @@ end
 
 --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
 -- @param #SET_GROUP self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
 -- @return #SET_GROUP self
 function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, ... )
@@ -945,7 +945,7 @@ function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, .
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Group#GROUP GroupObject
+    -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsCompletelyInZone( ZoneObject ) then
         return true
@@ -959,7 +959,7 @@ end
 
 --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
 -- @param #SET_GROUP self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
 -- @return #SET_GROUP self
 function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
@@ -967,7 +967,7 @@ function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Group#GROUP GroupObject
+    -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsPartlyInZone( ZoneObject ) then
         return true
@@ -981,7 +981,7 @@ end
 
 --- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 -- @param #SET_GROUP self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
 -- @return #SET_GROUP self
 function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
@@ -989,7 +989,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Group#GROUP GroupObject
+    -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsNotInZone( ZoneObject ) then
         return true
@@ -1030,7 +1030,7 @@ end
 
 ---
 -- @param #SET_GROUP self
--- @param Group#GROUP MooseGroup
+-- @param Wrapper.Group#GROUP MooseGroup
 -- @return #SET_GROUP self
 function SET_GROUP:IsIncludeObject( MooseGroup )
   self:F2( MooseGroup )
@@ -1086,7 +1086,7 @@ end
 
 --- SET_UNIT class
 -- @type SET_UNIT
--- @extends Set#SET_BASE
+-- @extends Core.Set#SET_BASE
 SET_UNIT = {
   ClassName = "SET_UNIT",
   Units = {},
@@ -1158,8 +1158,8 @@ function SET_UNIT:AddUnitsByName( AddUnitNames )
 end
 
 --- Remove UNIT(s) from SET_UNIT.
--- @param Set#SET_UNIT self
--- @param Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
+-- @param Core.Set#SET_UNIT self
+-- @param Wrapper.Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
 -- @return self
 function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
 
@@ -1176,7 +1176,7 @@ end
 --- Finds a Unit based on the Unit Name.
 -- @param #SET_UNIT self
 -- @param #string UnitName
--- @return Unit#UNIT The found Unit.
+-- @return Wrapper.Unit#UNIT The found Unit.
 function SET_UNIT:FindUnit( UnitName )
 
   local UnitFound = self.Set[UnitName]
@@ -1322,7 +1322,7 @@ end
 --- Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_UNIT self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:AddInDatabase( Event )
@@ -1339,7 +1339,7 @@ end
 --- Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_UNIT self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:FindInDatabase( Event )
@@ -1363,7 +1363,7 @@ end
 
 --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- @param #SET_UNIT self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
 -- @return #SET_UNIT self
 function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
@@ -1371,7 +1371,7 @@ function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ...
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Unit#UNIT UnitObject
+    -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
       if UnitObject:IsCompletelyInZone( ZoneObject ) then
         return true
@@ -1385,7 +1385,7 @@ end
 
 --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- @param #SET_UNIT self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
 -- @return #SET_UNIT self
 function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
@@ -1393,7 +1393,7 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Unit#UNIT UnitObject
+    -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
       if UnitObject:IsNotInZone( ZoneObject ) then
         return true
@@ -1415,7 +1415,7 @@ function SET_UNIT:GetUnitTypes()
   local UnitTypes = {}
   
   for UnitID, UnitData in pairs( self:GetSet() ) do
-    local TextUnit = UnitData -- Unit#UNIT
+    local TextUnit = UnitData -- Wrapper.Unit#UNIT
     if TextUnit:IsAlive() then
       local UnitType = TextUnit:GetTypeName()
   
@@ -1460,7 +1460,7 @@ function SET_UNIT:GetUnitThreatLevels()
   local UnitThreatLevels = {}
   
   for UnitID, UnitData in pairs( self:GetSet() ) do
-    local ThreatUnit = UnitData -- Unit#UNIT
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
     if ThreatUnit:IsAlive() then
       local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
       local ThreatUnitName = ThreatUnit:GetName()
@@ -1477,14 +1477,14 @@ end
 
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self
--- @param DCSUnit#Unit.RadarType RadarType
+-- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
 -- @return #number The amount of radars in the Set with the given type
 function SET_UNIT:HasRadar( RadarType )
   self:F2( RadarType )
 
   local RadarCount = 0
   for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitSensorTest = UnitData -- Unit#UNIT
+    local UnitSensorTest = UnitData -- Wrapper.Unit#UNIT
     local HasSensors
     if RadarType then
       HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR, RadarType )
@@ -1508,7 +1508,7 @@ function SET_UNIT:HasSEAD()
 
   local SEADCount = 0
   for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitSEAD = UnitData -- Unit#UNIT
+    local UnitSEAD = UnitData -- Wrapper.Unit#UNIT
     if UnitSEAD:IsAlive() then
       local UnitSEADAttributes = UnitSEAD:GetDesc().attributes
   
@@ -1532,7 +1532,7 @@ function SET_UNIT:HasGroundUnits()
 
   local GroundUnitCount = 0
   for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitTest = UnitData -- Unit#UNIT
+    local UnitTest = UnitData -- Wrapper.Unit#UNIT
     if UnitTest:IsGround() then
       GroundUnitCount = GroundUnitCount + 1
     end
@@ -1549,7 +1549,7 @@ function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
 
   local FriendlyUnitCount = 0
   for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitTest = UnitData -- Unit#UNIT
+    local UnitTest = UnitData -- Wrapper.Unit#UNIT
     if UnitTest:IsFriendly( FriendlyCoalition ) then
       FriendlyUnitCount = FriendlyUnitCount + 1
     end
@@ -1588,7 +1588,7 @@ end
 
 ---
 -- @param #SET_UNIT self
--- @param Unit#UNIT MUnit
+-- @param Wrapper.Unit#UNIT MUnit
 -- @return #SET_UNIT self
 function SET_UNIT:IsIncludeObject( MUnit )
   self:F2( MUnit )
@@ -1681,7 +1681,7 @@ end
 
 --- SET_CLIENT class
 -- @type SET_CLIENT
--- @extends Set#SET_BASE
+-- @extends Core.Set#SET_BASE
 SET_CLIENT = {
   ClassName = "SET_CLIENT",
   Clients = {},
@@ -1723,7 +1723,7 @@ function SET_CLIENT:New()
 end
 
 --- Add CLIENT(s) to SET_CLIENT.
--- @param Set#SET_CLIENT self
+-- @param Core.Set#SET_CLIENT self
 -- @param #string AddClientNames A single name or an array of CLIENT names.
 -- @return self
 function SET_CLIENT:AddClientsByName( AddClientNames )
@@ -1738,8 +1738,8 @@ function SET_CLIENT:AddClientsByName( AddClientNames )
 end
 
 --- Remove CLIENT(s) from SET_CLIENT.
--- @param Set#SET_CLIENT self
--- @param Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
+-- @param Core.Set#SET_CLIENT self
+-- @param Wrapper.Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
 -- @return self
 function SET_CLIENT:RemoveClientsByName( RemoveClientNames )
 
@@ -1756,7 +1756,7 @@ end
 --- Finds a Client based on the Client Name.
 -- @param #SET_CLIENT self
 -- @param #string ClientName
--- @return Client#CLIENT The found Client.
+-- @return Wrapper.Client#CLIENT The found Client.
 function SET_CLIENT:FindClient( ClientName )
 
   local ClientFound = self.Set[ClientName]
@@ -1877,7 +1877,7 @@ end
 --- Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_CLIENT self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the CLIENT
 -- @return #table The CLIENT
 function SET_CLIENT:AddInDatabase( Event )
@@ -1889,7 +1889,7 @@ end
 --- Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_CLIENT self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the CLIENT
 -- @return #table The CLIENT
 function SET_CLIENT:FindInDatabase( Event )
@@ -1912,7 +1912,7 @@ end
 
 --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
 -- @param #SET_CLIENT self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
 function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
@@ -1920,7 +1920,7 @@ function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Client#CLIENT ClientObject
+    -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
       if ClientObject:IsInZone( ZoneObject ) then
         return true
@@ -1934,7 +1934,7 @@ end
 
 --- Iterate the SET_CLIENT and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
 -- @param #SET_CLIENT self
--- @param Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
 -- @return #SET_CLIENT self
 function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
@@ -1942,7 +1942,7 @@ function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set,
     --- @param Zone#ZONE_BASE ZoneObject
-    -- @param Client#CLIENT ClientObject
+    -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
       if ClientObject:IsNotInZone( ZoneObject ) then
         return true
@@ -1956,7 +1956,7 @@ end
 
 ---
 -- @param #SET_CLIENT self
--- @param Client#CLIENT MClient
+-- @param Wrapper.Client#CLIENT MClient
 -- @return #SET_CLIENT self
 function SET_CLIENT:IsIncludeObject( MClient )
   self:F2( MClient )
@@ -2038,7 +2038,7 @@ end
 
 --- SET_AIRBASE class
 -- @type SET_AIRBASE
--- @extends Set#SET_BASE
+-- @extends Core.Set#SET_BASE
 SET_AIRBASE = {
   ClassName = "SET_AIRBASE",
   Airbases = {},
@@ -2074,7 +2074,7 @@ function SET_AIRBASE:New()
 end
 
 --- Add AIRBASEs to SET_AIRBASE.
--- @param Set#SET_AIRBASE self
+-- @param Core.Set#SET_AIRBASE self
 -- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
 -- @return self
 function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
@@ -2089,8 +2089,8 @@ function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
 end
 
 --- Remove AIRBASEs from SET_AIRBASE.
--- @param Set#SET_AIRBASE self
--- @param Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
+-- @param Core.Set#SET_AIRBASE self
+-- @param Wrapper.Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
 -- @return self
 function SET_AIRBASE:RemoveAirbasesByName( RemoveAirbaseNames )
 
@@ -2107,7 +2107,7 @@ end
 --- Finds a Airbase based on the Airbase Name.
 -- @param #SET_AIRBASE self
 -- @param #string AirbaseName
--- @return Airbase#AIRBASE The found Airbase.
+-- @return Wrapper.Airbase#AIRBASE The found Airbase.
 function SET_AIRBASE:FindAirbase( AirbaseName )
 
   local AirbaseFound = self.Set[AirbaseName]
@@ -2169,7 +2169,7 @@ end
 --- Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_AIRBASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the AIRBASE
 -- @return #table The AIRBASE
 function SET_AIRBASE:AddInDatabase( Event )
@@ -2181,7 +2181,7 @@ end
 --- Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_AIRBASE self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the AIRBASE
 -- @return #table The AIRBASE
 function SET_AIRBASE:FindInDatabase( Event )
@@ -2202,10 +2202,10 @@ function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+--- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
 -- @param #SET_AIRBASE self
--- @param Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
--- @return Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+-- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
 function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
@@ -2217,7 +2217,7 @@ end
 
 ---
 -- @param #SET_AIRBASE self
--- @param Airbase#AIRBASE MAirbase
+-- @param Wrapper.Airbase#AIRBASE MAirbase
 -- @return #SET_AIRBASE self
 function SET_AIRBASE:IsIncludeObject( MAirbase )
   self:F2( MAirbase )

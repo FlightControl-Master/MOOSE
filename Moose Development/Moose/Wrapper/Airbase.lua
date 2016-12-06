@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- 1) @{Airbase#AIRBASE} class, extends @{Positionable#POSITIONABLE}
+-- 1) @{Wrapper.Airbase#AIRBASE} class, extends @{Wrapper.Positionable#POSITIONABLE}
 -- =================================================================
 -- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
 -- 
@@ -33,7 +33,7 @@
 -- ---------------------
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSAirbase#Airbase.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{Dcs.DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 -- 
 -- More functions will be added
@@ -49,7 +49,7 @@
 
 --- The AIRBASE class
 -- @type AIRBASE
--- @extends Positionable#POSITIONABLE
+-- @extends Wrapper.Positionable#POSITIONABLE
 AIRBASE = {
   ClassName="AIRBASE",
   CategoryName = { 
@@ -64,7 +64,7 @@ AIRBASE = {
 --- Create a new AIRBASE from DCSAirbase.
 -- @param #AIRBASE self
 -- @param #string AirbaseName The name of the airbase.
--- @return Airbase#AIRBASE
+-- @return Wrapper.Airbase#AIRBASE
 function AIRBASE:Register( AirbaseName )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
@@ -76,8 +76,8 @@ end
 
 --- Finds a AIRBASE from the _DATABASE using a DCSAirbase object.
 -- @param #AIRBASE self
--- @param DCSAirbase#Airbase DCSAirbase An existing DCS Airbase object reference.
--- @return Airbase#AIRBASE self
+-- @param Dcs.DCSWrapper.Airbase#Airbase DCSAirbase An existing DCS Airbase object reference.
+-- @return Wrapper.Airbase#AIRBASE self
 function AIRBASE:Find( DCSAirbase )
 
   local AirbaseName = DCSAirbase:getName()
@@ -88,7 +88,7 @@ end
 --- Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.
 -- @param #AIRBASE self
 -- @param #string AirbaseName The Airbase Name.
--- @return Airbase#AIRBASE self
+-- @return Wrapper.Airbase#AIRBASE self
 function AIRBASE:FindByName( AirbaseName )
   
   local AirbaseFound = _DATABASE:FindAirbase( AirbaseName )

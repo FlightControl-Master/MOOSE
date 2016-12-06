@@ -2,8 +2,8 @@
 
 --- PROCESS_PICKUP class
 -- @type PROCESS_PICKUP
--- @field Unit#UNIT ProcessUnit
--- @field Set#SET_UNIT TargetSetUnit
+-- @field Wrapper.Unit#UNIT ProcessUnit
+-- @field Core.Set#SET_UNIT TargetSetUnit
 -- @extends Process#PROCESS
 PROCESS_PICKUP = { 
   ClassName = "PROCESS_PICKUP",
@@ -14,9 +14,9 @@ PROCESS_PICKUP = {
 
 --- Creates a new DESTROY process.
 -- @param #PROCESS_PICKUP self
--- @param Task#TASK Task
--- @param Unit#UNIT ProcessUnit
--- @param Set#SET_UNIT TargetSetUnit
+-- @param Tasking.Task#TASK Task
+-- @param Wrapper.Unit#UNIT ProcessUnit
+-- @param Core.Set#SET_UNIT TargetSetUnit
 -- @return #PROCESS_PICKUP self
 function PROCESS_PICKUP:New( Task, ProcessName, ProcessUnit )
 
@@ -29,7 +29,7 @@ function PROCESS_PICKUP:New( Task, ProcessName, ProcessUnit )
   self.DisplayTime = 10 -- 10 seconds is the default
   self.DisplayCategory = "HQ" -- Targets is the default display category
 
-  self.Fsm = STATEMACHINE_PROCESS:New( self, {
+  self.Fsm = FSM_PROCESS:New( self, {
     initial = 'Assigned',
     events = {
       { name = 'Start',     from = 'Assigned',        to = 'Navigating'    },
@@ -57,7 +57,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -68,7 +68,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -89,11 +89,11 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function PROCESS_PICKUP:OnHitTarget( Fsm, Event, From, To, Event )
 
 
@@ -115,7 +115,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -126,11 +126,11 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Event#EVENTDATA DCSEvent
+-- @param Core.Event#EVENTDATA DCSEvent
 function PROCESS_PICKUP:OnKilled( Fsm, Event, From, To )
 
   self:NextEvent( Fsm.Restart )
@@ -139,7 +139,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -151,7 +151,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param StateMachine#STATEMACHINE_PROCESS Fsm
+-- @param Fsm.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -162,7 +162,7 @@ end
 --- DCS Events
 
 --- @param #PROCESS_PICKUP self
--- @param Event#EVENTDATA Event
+-- @param Core.Event#EVENTDATA Event
 function PROCESS_PICKUP:EventDead( Event )
 
   if Event.IniDCSUnit then

@@ -1,8 +1,8 @@
 --- This module contains the OBJECT class.
 -- 
--- 1) @{Object#OBJECT} class, extends @{Base#BASE}
+-- 1) @{Wrapper.Object#OBJECT} class, extends @{Core.Base#BASE}
 -- ===========================================================
--- The @{Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
+-- The @{Wrapper.Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.
@@ -12,13 +12,13 @@
 -- ------------------------------
 -- The OBJECT class provides the following functions to construct a OBJECT instance:
 --
---  * @{Object#OBJECT.New}(): Create a OBJECT instance.
+--  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
 --
 -- 1.2) OBJECT methods:
 -- --------------------------
 -- The following methods can be used to identify an Object object:
 -- 
---    * @{Object#OBJECT.GetID}(): Returns the ID of the Object object.
+--    * @{Wrapper.Object#OBJECT.GetID}(): Returns the ID of the Object object.
 -- 
 -- ===
 -- 
@@ -41,7 +41,7 @@ OBJECT = {
 
 --- Create a new OBJECT from a DCSObject
 -- @param #OBJECT self
--- @param DCSObject#Object ObjectName The Object name
+-- @param Dcs.DCSWrapper.Object#Object ObjectName The Object name
 -- @return #OBJECT self
 function OBJECT:New( ObjectName )
   local self = BASE:Inherit( self, BASE:New() )
@@ -52,8 +52,8 @@ end
 
 
 --- Returns the unit's unique identifier.
--- @param Object#OBJECT self
--- @return DCSObject#Object.ID ObjectID
+-- @param Wrapper.Object#OBJECT self
+-- @return Dcs.DCSWrapper.Object#Object.ID ObjectID
 -- @return #nil The DCS Object is not existing or alive.  
 function OBJECT:GetID()
   self:F2( self.ObjectName )
