@@ -44,12 +44,10 @@ Include.File( "Fsm/Process" )
 Include.File( "Fsm/Process_JTAC" )
 Include.File( "Fsm/Patrol" )
 Include.File( "Fsm/Cargo" )
-
---- Process Classes
-Include.File( "Process/Assign" )
-Include.File( "Process/Route" )
-Include.File( "Process/Account" )
-Include.File( "Process/Smoke" )
+Include.File( "Fsm/FsmTAssign" )
+Include.File( "Fsm/FsmTRoute" )
+Include.File( "Fsm/FsmTAccount" )
+Include.File( "Fsm/FsmTSmoke" )
 
 --- Task Handling Classes
 Include.File( "Tasking/CommandCenter" )
