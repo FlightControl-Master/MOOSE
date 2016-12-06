@@ -18,10 +18,11 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_PatrolZone.html">AI_PatrolZone</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -38,17 +39,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,18 +51,15 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
 					<li>PatrolZone</li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -80,9 +72,11 @@
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_Route.html">Task_Route</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -98,28 +92,68 @@
 
 <hr/>
 
-<h1>1) <a href="Patrol.html##(PATROLZONE)">Patrol#PATROLZONE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="Patrol.html##(PATROLZONE)">Patrol#PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a>.</p>
+<h1>1) <a href="##(PATROLZONE)">#PATROLZONE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="##(PATROLZONE)">#PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by air units.
+The PATROLZONE class will guide the airplanes towards the patrolzone.
+The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
+a random point is selected as the route point within the 3D space, within the given boundary limits.
+The airplane will fly towards the random point using a randomly selected speed within given boundary limits.
+Upon arrival at the random point, a new random point will be selected within the patrol zone within boundary limits.
+This cycle will continue until a fuel treshold has been reached by the airplane.
+When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
 <h2>1.1) PATROLZONE constructor:</h2>
-<p><a href="PatrolZone.html##(PATROLZONE).New">PatrolZone#PATROLZONE.New</a>(): Creates a new PATROLZONE object.</p>
+<p><a href="##(PATROLZONE).New">PATROLZONE.New</a>(): Creates a new PATROLZONE object.</p>
 
 <h2>1.2) Modify the PATROLZONE parameters:</h2>
 <p>The following methods are available to modify the parameters of a PATROLZONE object:</p>
 
-<pre><code>* &lt;a href="PatrolZone.html##(PATROLZONE).SetGroup"&gt;PatrolZone#PATROLZONE.SetGroup&lt;/a&gt;(): Set the AI Patrol Group.
-* &lt;a href="PatrolZone.html##(PATROLZONE).SetSpeed"&gt;PatrolZone#PATROLZONE.SetSpeed&lt;/a&gt;(): Set the patrol speed of the AI, for the next patrol.
-* &lt;a href="PatrolZone.html##(PATROLZONE).SetAltitude"&gt;PatrolZone#PATROLZONE.SetAltitude&lt;/a&gt;(): Set altitude of the AI, for the next patrol.
-</code></pre>
+<ul>
+    <li><a href="##(PATROLZONE).SetGroup">PATROLZONE.SetGroup</a>(): Set the AI Patrol Group.</li>
+    <li><a href="##(PATROLZONE).SetSpeed">PATROLZONE.SetSpeed</a>(): Set the patrol speed of the AI, for the next patrol.</li>
+    <li><a href="##(PATROLZONE).SetAltitude">PATROLZONE.SetAltitude</a>(): Set altitude of the AI, for the next patrol.</li>
+</ul>
 
 <h2>1.3) Manage the out of fuel in the PATROLZONE:</h2>
 <p>When the PatrolGroup is out of fuel, it is required that a new PatrolGroup is started, before the old PatrolGroup can return to the home base.
 Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
 When the fuel treshold is reached, the PatrolGroup will continue for a given time its patrol task in orbit, while a new PatrolGroup is targetted to the PATROLZONE.
 Once the time is finished, the old PatrolGroup will return to the base.
-Use the method <a href="PatrolZone.html##(PATROLZONE).ManageFuel">PatrolZone#PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
+Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
 
 <hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2016-08-17: PATROLZONE:New( <strong>PatrolSpawn,</strong> PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) replaces PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )</p>
+
+<p>2016-07-01: Initial class and API.</p>
+
+<hr/>
+
+<h1>AUTHORS and CONTRIBUTIONS</h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong>DutchBaron</strong>: Testing.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+</ul>
+
 
 
 	<h2>Global(s)</h2>
@@ -152,7 +186,7 @@ Use the method <a href="PatrolZone.html##(PATROLZONE).ManageFuel">PatrolZone#PAT
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).New">PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).New">PATROLZONE:New(PatrolSpawn, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Creates a new PATROLZONE object, taking a <a href="Group.html">Group</a> object as a parameter.</p>
 </td>
@@ -245,12 +279,6 @@ Use the method <a href="PatrolZone.html##(PATROLZONE).ManageFuel">PatrolZone#PAT
 		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SetSpeed">PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SpawnPatrolGroup">PATROLZONE.SpawnPatrolGroup</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 	</table>
@@ -354,7 +382,7 @@ self</p>
 <dt>
 
 <a id="#(PATROLZONE).New" >
-<strong>PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<strong>PATROLZONE:New(PatrolSpawn, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
@@ -366,6 +394,12 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em><a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a> PatrolSpawn </em></code>: 
+The <a href="SPAWN.html">SPAWN</a> object to spawn new group objects when required due to the fuel treshold.</p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> PatrolZone </em></code>: 
@@ -405,8 +439,8 @@ self</p>
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Define a new PATROLZONE Object. This PatrolArea will patrol a group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
-PatrolGroup = GROUP:FindByName( "Patrol Group" )
-PatrolArea = PATROLZONE:New( PatrolGroup, PatrolZone, 3000, 6000, 600, 900 )</code></pre>
+PatrolSpawn = SPAWN:New( "Patrol Group" )
+PatrolArea = PATROLZONE:New( PatrolSpawn, PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 
 </dd>
 </dl>
@@ -672,20 +706,6 @@ The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 				
 <p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(PATROLZONE).SpawnPatrolGroup" >
-<strong>PATROLZONE.SpawnPatrolGroup</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
