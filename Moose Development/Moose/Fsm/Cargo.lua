@@ -224,22 +224,18 @@ do -- CARGO_BASE
 -- @return #CARGO_BASE
 function CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
 
-  FSMT = {
-    initial = 'UnLoaded',
-    events = {
-      { name = 'Board',       from = 'UnLoaded',        to = 'Boarding' },
-      { name = 'Boarding',    from = 'Boarding',        to = 'Boarding' },
-      { name = 'Load',        from = 'Boarding',        to = 'Loaded' },
-      { name = 'Load',        from = 'UnLoaded',        to = 'Loaded' },
-      { name = 'UnBoard',     from = 'Loaded',          to = 'UnBoarding' },
-      { name = 'UnBoarding',  from = 'UnBoarding',      to = 'UnBoarding' },
-      { name = 'UnLoad',      from = 'UnBoarding',      to = 'UnLoaded' },
-      { name = 'UnLoad',      from = 'Loaded',          to = 'UnLoaded' },
-    },
-  }
-
-  local self = BASE:Inherit( self, FSM_PROCESS:New( FSMT ) ) -- #CARGO_BASE
+  local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM_CONTROLLABLE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  
+  self:SetStartState( "UnLoaded" )
+  self:AddTransition( "UnLoaded", "Board", "Boarding" )
+  self:AddTransition( "Boarding", "Boarding", "Boarding" )
+  self:AddTransition( "Boarding", "Load", "Loaded" )
+  self:AddTransition( "UnLoaded", "Load", "Loaded" )
+  self:AddTransition( "Loaded", "UnBoard", "UnBoarding" )
+  self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
+  self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
+  self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
 
 
   self.Type = Type
@@ -312,9 +308,6 @@ function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius,
   local self = BASE:Inherit( self, CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_BASE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
-  
-  
-
   return self
 end
 
@@ -371,11 +364,11 @@ end
 
 --- Enter UnBoarding State.
 -- @param #CARGO_UNIT self
--- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onenterUnBoarding( ToPointVec2, Event, From, To )
+-- @param Core.Point#POINT_VEC2 ToPointVec2
+function CARGO_UNIT:onenterUnBoarding( Event, From, To, ToPointVec2 )
   self:F()
 
   local Angle = 180
@@ -416,11 +409,11 @@ end
 
 --- Leave UnBoarding State.
 -- @param #CARGO_UNIT self
--- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onleaveUnBoarding( ToPointVec2, Event, From, To )
+-- @param Core.Point#POINT_VEC2 ToPointVec2
+function CARGO_UNIT:onleaveUnBoarding( Event, From, To, ToPointVec2 )
   self:F( { ToPointVec2, Event, From, To } )
 
   local Angle = 180
@@ -440,11 +433,11 @@ end
 
 --- UnBoard Event.
 -- @param #CARGO_UNIT self
--- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onafterUnBoarding( ToPointVec2, Event, From, To )
+-- @param Core.Point#POINT_VEC2 ToPointVec2
+function CARGO_UNIT:onafterUnBoarding( Event, From, To, ToPointVec2 )
   self:F( { ToPointVec2, Event, From, To } )
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -465,11 +458,11 @@ end
 
 --- Enter UnLoaded State.
 -- @param #CARGO_UNIT self
--- @param Core.Point#POINT_VEC2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onenterUnLoaded( ToPointVec2, Event, From, To )
+-- @param Core.Point#POINT_VEC2
+function CARGO_UNIT:onenterUnLoaded( Event, From, To, ToPointVec2  )
   self:F( { ToPointVec2, Event, From, To } )
 
   local Angle = 180
@@ -503,11 +496,11 @@ end
 
 --- Enter Boarding State.
 -- @param #CARGO_UNIT self
--- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onenterBoarding( CargoCarrier, Event, From, To )
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function CARGO_UNIT:onenterBoarding( Event, From, To, CargoCarrier )
   self:F( { CargoCarrier.UnitName, Event, From, To } )
   
   local Speed = 10
@@ -535,11 +528,11 @@ end
 
 --- Leave Boarding State.
 -- @param #CARGO_UNIT self
--- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onleaveBoarding( CargoCarrier, Event, From, To )
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function CARGO_UNIT:onleaveBoarding( Event, From, To, CargoCarrier )
   self:F( { CargoCarrier.UnitName, Event, From, To } )
 
   if self:IsNear( CargoCarrier:GetPointVec2() ) then
@@ -553,11 +546,11 @@ end
 
 --- Loaded State.
 -- @param #CARGO_UNIT self
--- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onenterLoaded( CargoCarrier, Event, From, To )
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function CARGO_UNIT:onenterLoaded( Event, From, To, CargoCarrier )
   self:F()
 
   self.CargoCarrier = CargoCarrier
@@ -575,7 +568,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onafterBoard( CargoCarrier, Event, From, To)
+function CARGO_UNIT:onafterBoard( Event, From, To, CargoCarrier )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -621,7 +614,6 @@ end
 
 --- Board Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -629,7 +621,7 @@ end
 -- @param #number Speed
 -- @param #number BoardDistance
 -- @param #number Angle
-function CARGO_PACKAGE:onafterOnBoard( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterOnBoard( Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
   self.CargoInAir = self.CargoCarrier:InAir()
@@ -679,24 +671,22 @@ end
 
 --- Boarded Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_PACKAGE:onafterOnBoarded( FsmP, Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterOnBoarded( Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
   if self:IsNear( CargoCarrier ) then
-    self:_NextEvent( FsmP.Load, CargoCarrier, Speed, LoadDistance, Angle )
+    self:__Load( 1, CargoCarrier, Speed, LoadDistance, Angle )
   else
-    self:_NextEvent( FsmP.Boarded, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+    self:__Boarded( 1, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   end
 end
 
 --- UnBoard Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -705,7 +695,7 @@ end
 -- @param #number UnBoardDistance
 -- @param #number Radius
 -- @param #number Angle
-function CARGO_PACKAGE:onafterUnBoard( FsmP, Event, From, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+function CARGO_PACKAGE:onafterUnBoard( Event, From, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
   self:F()
 
   self.CargoInAir = self.CargoCarrier:InAir()
@@ -733,30 +723,28 @@ function CARGO_PACKAGE:onafterUnBoard( FsmP, Event, From, To, CargoCarrier, Spee
     CargoCarrier:SetTask( TaskRoute, 1 )
   end
 
-  self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+  self:__UnBoarded( 1 , CargoCarrier, Speed )
 
 end
 
 --- UnBoarded Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_PACKAGE:onafterUnBoarded( FsmP, Event, From, To, CargoCarrier, Speed )
+function CARGO_PACKAGE:onafterUnBoarded( Event, From, To, CargoCarrier, Speed )
   self:F()
 
   if self:IsNear( CargoCarrier ) then
-    self:_NextEvent( FsmP.UnLoad, CargoCarrier, Speed )
+    self:__UnLoad( 1, CargoCarrier, Speed )
   else
-    self:_NextEvent( FsmP.UnBoarded, CargoCarrier, Speed )
+    self:__UnBoarded( 1, CargoCarrier, Speed )
   end
 end
 
 --- Load Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -764,7 +752,7 @@ end
 -- @param #number Speed
 -- @param #number LoadDistance
 -- @param #number Angle
-function CARGO_PACKAGE:onafterLoad( FsmP, Event, From, To, CargoCarrier, Speed, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterLoad( Event, From, To, CargoCarrier, Speed, LoadDistance, Angle )
   self:F()
 
   self.CargoCarrier = CargoCarrier
@@ -785,13 +773,12 @@ end
 
 --- UnLoad Event.
 -- @param #CARGO_PACKAGE self
--- @param Fsm.Fsm#FSM_PROCESS FsmP
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param #number Distance
 -- @param #number Angle
-function CARGO_PACKAGE:onafterUnLoad( FsmP, Event, From, To, CargoCarrier, Speed, Distance, Angle )
+function CARGO_PACKAGE:onafterUnLoad( Event, From, To, CargoCarrier, Speed, Distance, Angle )
   self:F()
   
   local StartPointVec2 = self.CargoCarrier:GetPointVec2()
@@ -874,7 +861,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onenterBoarding( CargoCarrier, Event, From, To )
+function CARGO_GROUPED:onenterBoarding( Event, From, To, CargoCarrier )
   self:F( { CargoCarrier.UnitName, Event, From, To } )
   
   if From == "UnLoaded" then
@@ -897,7 +884,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onenterLoaded( CargoCarrier, Event, From, To )
+function CARGO_GROUPED:onenterLoaded( Event, From, To, CargoCarrier )
   self:F( { CargoCarrier.UnitName, Event, From, To } )
   
   if From == "UnLoaded" then
@@ -914,7 +901,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onleaveBoarding( CargoCarrier, Event, From, To )
+function CARGO_GROUPED:onleaveBoarding( Event, From, To, CargoCarrier )
   self:F( { CargoCarrier.UnitName, Event, From, To } )
 
   local Boarded = true
@@ -941,7 +928,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onenterUnBoarding( ToPointVec2, Event, From, To )
+function CARGO_GROUPED:onenterUnBoarding( Event, From, To, ToPointVec2 )
   self:F()
 
   local Timer = 1
@@ -967,7 +954,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onleaveUnBoarding( ToPointVec2, Event, From, To )
+function CARGO_GROUPED:onleaveUnBoarding( Event, From, To, ToPointVec2 )
   self:F( { ToPointVec2, Event, From, To } )
 
   local Angle = 180
@@ -1002,7 +989,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onafterUnBoarding( ToPointVec2, Event, From, To )
+function CARGO_GROUPED:onafterUnBoarding( Event, From, To, ToPointVec2 )
   self:F( { ToPointVec2, Event, From, To } )
 
   self:__UnLoad( 1, ToPointVec2 )
@@ -1016,7 +1003,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUPED:onenterUnLoaded( ToPointVec2, Event, From, To )
+function CARGO_GROUPED:onenterUnLoaded( Event, From, To, ToPointVec2 )
   self:F( { ToPointVec2, Event, From, To } )
 
   if From == "Loaded" then

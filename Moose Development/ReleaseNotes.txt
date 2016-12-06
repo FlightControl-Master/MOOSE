@@ -1,3 +1,18 @@
+2016-12-06
+
+	- Renamed the documentation references following the structure of the files.
+		-- All STATEMACHINE references became FSM
+		-- FSM_TEMPLATE references are also abbreviated by FSMT
+		-- Removed Process#PROCESS references.
+		-- All cross file documentation references updated. That was a lot of work!
+	
+	- Tasking is working now. But needs further cleanup.
+		- Templates are assigned to Tasks. When a task is assigned to a player, the FSMT
+		- Removed 2nd level in tasking. Now there is only one level.
+		- Tasking works now with FSM.
+		- Made FSMT process templates that can be used in Tasks.
+		- Scoring can now also be added to the templates.
+
 2016-09-01
 
 	- Expanded the CARGO classes and implemented the CARGO_GROUPED classes.

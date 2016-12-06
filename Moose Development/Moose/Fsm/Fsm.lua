@@ -419,10 +419,12 @@ FSM_PROCESS = {
 -- @return #FSM_PROCESS
 function FSM_PROCESS:New( FsmT, Controllable, Task )
 
+  FsmT = FsmT or FSM_TEMPLATE:New( "" )
+
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FsmT ) ) -- Fsm.Fsm#FSM_PROCESS
 
   self:Assign( Controllable, Task )
-  self.ClassName = FsmT._Name
+
   
   for ParameterID, Parameter in pairs( FsmT:GetParameters() ) do
     self[ ParameterID ] = Parameter
