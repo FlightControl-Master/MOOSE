@@ -1,0 +1,829 @@
+--- This module contains the UNIT class.
+-- 
+-- 1) @{#UNIT} class, extends @{Wrapper.Controllable#CONTROLLABLE}
+-- ===========================================================
+-- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
+-- 
+--  * Support all DCS Unit APIs.
+--  * Enhance with Unit specific APIs not in the DCS Unit API set.
+--  * Handle local Unit Controller.
+--  * Manage the "state" of the DCS Unit.
+--  
+--  
+-- 1.1) UNIT reference methods
+-- ----------------------
+-- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
+--  
+-- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference
+-- using the DCS Unit or the DCS UnitName.
+-- 
+-- Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
+-- The UNIT methods will reference the DCS Unit object by name when it is needed during API execution.
+-- If the DCS Unit object does not exist or is nil, the UNIT methods will return nil and log an exception in the DCS.log file.
+--  
+-- The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:
+-- 
+--  * @{#UNIT.Find}(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.
+--  * @{#UNIT.FindByName}(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.
+--  
+-- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
+-- 
+-- 1.2) DCS UNIT APIs
+-- ------------------
+-- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
+-- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{Dcs.DCSWrapper.Unit#Unit.getName}()
+-- is implemented in the UNIT class as @{#UNIT.GetName}().
+-- 
+-- 1.3) Smoke, Flare Units
+-- -----------------------
+-- The UNIT class provides methods to smoke or flare units easily. 
+-- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
+-- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
+-- When the DCS Unit moves for whatever reason, the smoking will still continue!
+-- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
+-- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
+-- 
+-- 1.4) Location Position, Point
+-- -----------------------------
+-- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
+-- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
+-- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
+-- 
+-- 1.5) Test if alive
+-- ------------------
+-- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
+-- 
+-- 1.6) Test for proximity
+-- -----------------------
+-- The UNIT class contains methods to test the location or proximity against zones or other objects.
+-- 
+-- ### 1.6.1) Zones
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
+-- 
+-- ### 1.6.2) Units
+-- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
+-- 
+-- @module Unit
+-- @author FlightControl
+
+
+
+
+
+--- The UNIT class
+-- @type UNIT
+-- @extends Wrapper.Controllable#CONTROLLABLE
+-- @field #UNIT.FlareColor FlareColor
+-- @field #UNIT.SmokeColor SmokeColor
+UNIT = {
+	ClassName="UNIT",
+  FlareColor = {
+    Green = trigger.flareColor.Green,
+    Red = trigger.flareColor.Red,
+    White = trigger.flareColor.White,
+    Yellow = trigger.flareColor.Yellow
+    },
+  SmokeColor = {
+    Green = trigger.smokeColor.Green,
+    Red = trigger.smokeColor.Red,
+    White = trigger.smokeColor.White,
+    Orange = trigger.smokeColor.Orange,
+    Blue = trigger.smokeColor.Blue
+    },
+	}
+
+--- FlareColor
+-- @type UNIT.FlareColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Yellow
+
+--- SmokeColor
+-- @type UNIT.SmokeColor
+-- @field Green
+-- @field Red
+-- @field White
+-- @field Orange
+-- @field Blue
+
+--- Unit.SensorType
+-- @type Unit.SensorType
+-- @field OPTIC
+-- @field RADAR
+-- @field IRST
+-- @field RWR
+
+
+-- Registration.
+	
+--- Create a new UNIT from DCSUnit.
+-- @param #UNIT self
+-- @param #string UnitName The name of the DCS unit.
+-- @return #UNIT
+function UNIT:Register( UnitName )
+  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
+  self.UnitName = UnitName
+  return self
+end
+
+-- Reference methods.
+
+--- Finds a UNIT from the _DATABASE using a DCSUnit object.
+-- @param #UNIT self
+-- @param Dcs.DCSWrapper.Unit#Unit DCSUnit An existing DCS Unit object reference.
+-- @return #UNIT self
+function UNIT:Find( DCSUnit )
+
+  local UnitName = DCSUnit:getName()
+  local UnitFound = _DATABASE:FindUnit( UnitName )
+  return UnitFound
+end
+
+--- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
+-- @param #UNIT self
+-- @param #string UnitName The Unit Name.
+-- @return #UNIT self
+function UNIT:FindByName( UnitName )
+  
+  local UnitFound = _DATABASE:FindUnit( UnitName )
+  return UnitFound
+end
+
+--- Return the name of the UNIT.
+-- @param #UNIT self
+-- @return #string The UNIT name.
+function UNIT:Name()
+  
+  return self.UnitName
+end
+
+
+--- @param #UNIT self
+-- @return Dcs.DCSWrapper.Unit#Unit
+function UNIT:GetDCSObject()
+
+  local DCSUnit = Unit.getByName( self.UnitName )
+
+  if DCSUnit then
+    return DCSUnit
+  end
+
+  return nil
+end
+
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- 
+-- This function will:
+-- 
+--  * Get the current position and heading of the group.
+--  * When the unit is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
+--  * Then it will respawn the re-modelled group.
+--  
+-- @param #UNIT self
+-- @param Dcs.DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param #number Heading The heading of the unit respawn.
+function UNIT:ReSpawn( SpawnVec3, Heading )
+
+  local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
+  self:T( SpawnGroupTemplate )
+
+  local SpawnGroup = self:GetGroup()
+  
+  if SpawnGroup then
+  
+    local Vec3 = SpawnGroup:GetVec3()
+    SpawnGroupTemplate.x = SpawnVec3.x
+    SpawnGroupTemplate.y = SpawnVec3.z
+    
+    self:E( #SpawnGroupTemplate.units )
+    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
+      local GroupUnit = UnitData -- #UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
+        SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
+        SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
+        SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+      end
+    end
+  end
+  
+  for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
+    self:T( UnitTemplateData.name )
+    if UnitTemplateData.name == self:Name() then
+      self:T("Adjusting")
+      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
+      self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+    else
+      self:E( SpawnGroupTemplate.units[UnitTemplateID].name )
+      local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- #UNIT
+      if GroupUnit and GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        UnitTemplateData.alt = GroupUnitVec3.y
+        UnitTemplateData.x = GroupUnitVec3.x
+        UnitTemplateData.y = GroupUnitVec3.z
+        UnitTemplateData.heading = GroupUnitHeading
+      else
+        if SpawnGroupTemplate.units[UnitTemplateID].name ~= self:Name() then
+          self:T("nilling")
+          SpawnGroupTemplate.units[UnitTemplateID].delete = true
+        end
+      end
+    end
+  end
+
+  -- Remove obscolete units from the group structure
+  i = 1
+  while i <= #SpawnGroupTemplate.units do
+
+    local UnitTemplateData = SpawnGroupTemplate.units[i]
+    self:T( UnitTemplateData.name )
+
+    if UnitTemplateData.delete then
+      table.remove( SpawnGroupTemplate.units, i )
+    else
+      i = i + 1
+    end
+  end
+
+  _DATABASE:Spawn( SpawnGroupTemplate )
+end
+
+
+
+--- Returns if the unit is activated.
+-- @param #UNIT self
+-- @return #boolean true if Unit is activated.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:IsActive()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    local UnitIsActive = DCSUnit:isActive()
+    return UnitIsActive 
+  end
+
+  return nil
+end
+
+
+
+--- Returns the Unit's callsign - the localized string.
+-- @param #UNIT self
+-- @return #string The Callsign of the Unit.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetCallsign()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitCallSign = DCSUnit:getCallsign()
+    return UnitCallSign
+  end
+  
+  self:E( self.ClassName .. " " .. self.UnitName .. " not found!" )
+  return nil
+end
+
+
+--- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
+-- @param #UNIT self
+-- @return #string Player Name
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetPlayerName()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  
+    local PlayerName = DCSUnit:getPlayerName()
+    if PlayerName == nil then
+      PlayerName = ""
+    end
+    return PlayerName
+  end
+
+  return nil
+end
+
+--- Returns the unit's number in the group. 
+-- The number is the same number the unit has in ME. 
+-- It may not be changed during the mission. 
+-- If any unit in the group is destroyed, the numbers of another units will not be changed.
+-- @param #UNIT self
+-- @return #number The Unit number. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetNumber()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitNumber = DCSUnit:getNumber()
+    return UnitNumber
+  end
+
+  return nil
+end
+
+--- Returns the unit's group if it exist and nil otherwise.
+-- @param Wrapper.Unit#UNIT self
+-- @return Wrapper.Group#GROUP The Group of the Unit.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetGroup()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
+    return UnitGroup
+  end
+
+  return nil
+end
+
+
+-- Need to add here functions to check if radar is on and which object etc.
+
+--- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
+-- DCS Units spawned with the @{SPAWN} class contain a '#'-sign to indicate the end of the (base) DCS Unit name. 
+-- The spawn sequence number and unit number are contained within the name after the '#' sign. 
+-- @param #UNIT self
+-- @return #string The name of the DCS Unit.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetPrefix()
+	self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+	
+  if DCSUnit then
+  	local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
+  	self:T3( UnitPrefix )
+  	return UnitPrefix
+  end
+  
+  return nil
+end
+
+--- Returns the Unit's ammunition.
+-- @param #UNIT self
+-- @return Dcs.DCSWrapper.Unit#Unit.Ammo
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetAmmo()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitAmmo = DCSUnit:getAmmo()
+    return UnitAmmo
+  end
+  
+  return nil
+end
+
+--- Returns the unit sensors.
+-- @param #UNIT self
+-- @return Dcs.DCSWrapper.Unit#Unit.Sensors
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetSensors()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitSensors = DCSUnit:getSensors()
+    return UnitSensors
+  end
+  
+  return nil
+end
+
+-- Need to add here a function per sensortype
+--  unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
+
+--- Returns if the unit has sensors of a certain type.
+-- @param #UNIT self
+-- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:HasSensors( ... )
+  self:F2( arg )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local HasSensors = DCSUnit:hasSensors( unpack( arg ) )
+    return HasSensors
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is SEADable.
+-- @param #UNIT self
+-- @return #boolean returns true if the unit is SEADable. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:HasSEAD()
+  self:F2()
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitSEADAttributes = DCSUnit:getDesc().attributes
+    
+    local HasSEAD = false
+    if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
+       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true then
+       HasSEAD = true
+    end
+    return HasSEAD
+  end
+  
+  return nil
+end
+
+--- Returns two values:
+-- 
+--  * First value indicates if at least one of the unit's radar(s) is on.
+--  * Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+-- @param #UNIT self
+-- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
+-- @return Dcs.DCSWrapper.Object#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetRadar()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitRadarOn, UnitRadarObject = DCSUnit:getRadar()
+    return UnitRadarOn, UnitRadarObject
+  end
+  
+  return nil, nil
+end
+
+--- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+-- @param #UNIT self
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetFuel()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitFuel = DCSUnit:getFuel()
+    return UnitFuel
+  end
+  
+  return nil
+end
+
+--- Returns the unit's health. Dead units has health <= 1.0.
+-- @param #UNIT self
+-- @return #number The Unit's health value.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetLife()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitLife = DCSUnit:getLife()
+    return UnitLife
+  end
+  
+  return nil
+end
+
+--- Returns the Unit's initial health.
+-- @param #UNIT self
+-- @return #number The Unit's initial health value.
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:GetLife0()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitLife0 = DCSUnit:getLife0()
+    return UnitLife0
+  end
+  
+  return nil
+end
+
+--- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
+-- The following threat levels are foreseen:
+-- 
+--   * Threat level  0: Unit is unarmed.
+--   * Threat level  1: Unit is infantry.
+--   * Threat level  2: Unit is an infantry vehicle.
+--   * Threat level  3: Unit is ground artillery.
+--   * Threat level  4: Unit is a tank.
+--   * Threat level  5: Unit is a modern tank or ifv with ATGM.
+--   * Threat level  6: Unit is a AAA.
+--   * Threat level  7: Unit is a SAM or manpad, IR guided.
+--   * Threat level  8: Unit is a Short Range SAM, radar guided.
+--   * Threat level  9: Unit is a Medium Range SAM, radar guided.
+--   * Threat level 10: Unit is a Long Range SAM, radar guided.
+function UNIT:GetThreatLevel()
+
+  local Attributes = self:GetDesc().attributes
+  local ThreatLevel = 0
+  
+  local ThreatLevels = {
+    "Unarmed", 
+    "Infantry", 
+    "Old Tanks & APCs", 
+    "Tanks & IFVs without ATGM",   
+    "Tanks & IFV with ATGM",
+    "Modern Tanks",
+    "AAA",
+    "IR Guided SAMs",
+    "SR SAMs",
+    "MR SAMs",
+    "LR SAMs"
+  }
+  
+  self:T2( Attributes )
+  
+  if     Attributes["LR SAM"]                                   then ThreatLevel = 10
+  elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
+  elseif Attributes["SR SAM"] and
+         not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
+  elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
+         Attributes["IR Guided SAM"]                            then ThreatLevel = 7
+  elseif Attributes["AAA"]                                      then ThreatLevel = 6
+  elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
+  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+         Attributes["ATGM"]                                     then ThreatLevel = 4
+  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+         not Attributes["ATGM"]                                 then ThreatLevel = 3
+  elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
+  elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+  end
+
+  self:T2( ThreatLevel )
+  return ThreatLevel, ThreatLevels[ThreatLevel+1]
+
+end
+
+
+-- Is functions
+
+--- Returns true if the unit is within a @{Zone}.
+-- @param #UNIT self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
+function UNIT:IsInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  if self:IsAlive() then
+    local IsInZone = Zone:IsPointVec3InZone( self:GetVec3() )
+  
+    self:T( { IsInZone } )
+    return IsInZone 
+  end
+  
+  return false
+end
+
+--- Returns true if the unit is not within a @{Zone}.
+-- @param #UNIT self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
+function UNIT:IsNotInZone( Zone )
+  self:F2( { self.UnitName, Zone } )
+
+  if self:IsAlive() then
+    local IsInZone = not Zone:IsPointVec3InZone( self:GetVec3() )
+    
+    self:T( { IsInZone } )
+    return IsInZone 
+  else
+    return false
+  end
+end
+
+
+--- Returns true if there is an **other** DCS Unit within a radius of the current 2D point of the DCS Unit.
+-- @param #UNIT self
+-- @param #UNIT AwaitUnit The other UNIT wrapper object.
+-- @param Radius The radius in meters with the DCS Unit in the centre.
+-- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
+	self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+  	local UnitVec3 = self:GetVec3()
+  	local AwaitUnitVec3 = AwaitUnit:GetVec3()
+  
+  	if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
+  		self:T3( "true" )
+  		return true
+  	else
+  		self:T3( "false" )
+  		return false
+  	end
+  end
+
+	return nil
+end
+
+
+
+--- Signal a flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:Flare( FlareColor )
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
+end
+
+--- Signal a white flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareWhite()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
+end
+
+--- Signal a yellow flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareYellow()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
+end
+
+--- Signal a green flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareGreen()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
+end
+
+--- Signal a red flare at the position of the UNIT.
+-- @param #UNIT self
+function UNIT:FlareRed()
+  self:F2()
+  local Vec3 = self:GetVec3()
+  if Vec3 then
+    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
+  end
+end
+
+--- Smoke the UNIT.
+-- @param #UNIT self
+function UNIT:Smoke( SmokeColor, Range )
+  self:F2()
+  if Range then
+    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
+  else
+    trigger.action.smoke( self:GetVec3(), SmokeColor )
+  end
+  
+end
+
+--- Smoke the UNIT Green.
+-- @param #UNIT self
+function UNIT:SmokeGreen()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
+end
+
+--- Smoke the UNIT Red.
+-- @param #UNIT self
+function UNIT:SmokeRed()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
+end
+
+--- Smoke the UNIT White.
+-- @param #UNIT self
+function UNIT:SmokeWhite()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
+end
+
+--- Smoke the UNIT Orange.
+-- @param #UNIT self
+function UNIT:SmokeOrange()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
+end
+
+--- Smoke the UNIT Blue.
+-- @param #UNIT self
+function UNIT:SmokeBlue()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
+end
+
+-- Is methods
+
+--- Returns if the unit is of an air category.
+-- If the unit is a helicopter or a plane, then this method will return true, otherwise false.
+-- @param #UNIT self
+-- @return #boolean Air category evaluation result.
+function UNIT:IsAir()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+    
+    local IsAirResult = ( UnitDescriptor.category == Unit.Category.AIRPLANE ) or ( UnitDescriptor.category == Unit.Category.HELICOPTER )
+  
+    self:T3( IsAirResult )
+    return IsAirResult
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is of an ground category.
+-- If the unit is a ground vehicle or infantry, this method will return true, otherwise false.
+-- @param #UNIT self
+-- @return #boolean Ground category evaluation result.
+function UNIT:IsGround()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.GROUND_UNIT } )
+    
+    local IsGroundResult = ( UnitDescriptor.category == Unit.Category.GROUND_UNIT )
+  
+    self:T3( IsGroundResult )
+    return IsGroundResult
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is a friendly unit.
+-- @param #UNIT self
+-- @return #boolean IsFriendly evaluation result.
+function UNIT:IsFriendly( FriendlyCoalition )
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitCoalition = DCSUnit:getCoalition()
+    self:T3( { UnitCoalition, FriendlyCoalition } )
+    
+    local IsFriendlyResult = ( UnitCoalition == FriendlyCoalition )
+  
+    self:E( IsFriendlyResult )
+    return IsFriendlyResult
+  end
+  
+  return nil
+end
+
+--- Returns if the unit is of a ship category.
+-- If the unit is a ship, this method will return true, otherwise false.
+-- @param #UNIT self
+-- @return #boolean Ship category evaluation result.
+function UNIT:IsShip()
+  self:F2()
+  
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitDescriptor = DCSUnit:getDesc()
+    self:T3( { UnitDescriptor.category, Unit.Category.SHIP } )
+    
+    local IsShipResult = ( UnitDescriptor.category == Unit.Category.SHIP )
+  
+    self:T3( IsShipResult )
+    return IsShipResult
+  end
+  
+  return nil
+end
+

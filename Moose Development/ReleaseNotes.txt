@@ -1,0 +1,355 @@
+2016-09-01
+
+	- Expanded the CARGO classes and implemented the CARGO_GROUPED classes.
+		-- Finished the correct state machine implementation to Board, UnBoard, Load, UnLoad cargo to and from carriers.
+		-- Created the CARGO_GROUPED class, which groups CARGO_UNITs into one group. The cargo behaves like groups, but can be transported by carriers.
+		-- Documented CARGO event functions, state transition functions + overall documentation.
+		-- Updated test missions located in the directory: Moose_Test_CARGO
+
+	- Expanded the PROCESS_PATROLZONE class.
+
+2016-08-21
+
+	- Made a new STATEMACHINE_CONTROLLABLE object, which models a base state machine class to be inherited by AI controllable classes.
+		-- Created the class as such that intherited AI classes become "finite state machines".
+		-- Each STATEMACHINE_CONTROLLABLE class contains a Controllable object, which is one Unit, Client or Group object.
+		-- Added state transition functions that are called before and after the state transition.
+		-- Event functions are automatically added to the class, based on the FSMT.
+		-- Added immediate and delayed event processing as part of the STATEMACHINE_CONTROLLABLE class.
+			--- Events that start with __Event are processed with a delay. The delay is given in seconds as a parameter.
+	
+	- Created a new PROCESS_PATROLZONE class, which inherites STATEMACHINE_CONTROLLABLE.
+		-- This class implements a complete new revamped patrol zone AI pattern.
+		-- Created a new test directory: Moose_Test_PROCESS_PATROLZONE with test missions.
+	
+2016-08-15
+
+	- Removed the old classes and moved into an "Old" folder in the Moose/Development folder.
+		-- Cleaned Moose.lua + Documented class types
+		-- Cleaned Create_Moose.bat + Documented class types
+
+	- Extend the ZONE_BASE class with a probability randomization factor, that can be used for zone randomization purposes.
+	
+	- Documented the Zone module classes.
+	
+	- Changed and removed the POINT_VEC3 SmokeColor and FlareColor structure. Replaced with SMOKECOLOR and FLARECOLOR types.
+		-- Replaced also code in test missions with SMOKECOLOR and FLARECOLOR references.
+	
+	- Added change logs of API changes in MOOSE documentation.
+	
+	- Added ZONE_BASE:GetName() method.
+	
+	- Added ZONE_BASE:GetZoneProbability() method.
+	
+	- Added ZONE_BASE:SetZoneProbability() method.
+	
+	- Added ZONE_BASE:GetZoneMaybe() method.
+	
+	- Added SPAWN:InitRandomizeZones() method.
+	
+	- Renamed SPAWN:CleanUp() method to SPAWN:InitCleanUp() method.
+	
+	- Reviewed documentation of the PatrolZone module and PATROLZONE class.
+		
+
+2016-08-14
+
+	- Changed Spawn APIs to express Group position and Unit position randomization.
+
+	- Changed the API protocol of SpawnInZone() method. 
+		-- Removed OuterRadius and InnerRadius parameters !!!
+		
+	- Changed the API protocol of SpawnFromUnit() method.
+		-- Removed OuterRadius and InnerRadius parameters !!!
+
+	- Added InitRandomizeUnits() method, taking 3 parameters:
+		-- RandomizeUnits given the value true, will randomize the units upon spawning, false (default) will not randomize the untis.
+		-- OuterRadius is the outer radius of the band where the units will be spawned, if RandomizeUnits is true.
+		-- InnerRadius is the inner radius of the band where the units will not be spawned, if RandomizeUnits is true.
+
+	- Removed SpawnFunction() method.
+
+	- Added OnSpawnGroup() method as the new official CallBack function method to catch when a new function will be called.
+		-- Documented OnSpawnGroup() method.
+		
+	- Renamed Limit() method to InitLimit() method.
+
+	- Renamed Array() method to InitArray() method.
+
+	- Renamed RandomizeRoute() method to InitRandomizeRoute() method.
+
+	- Renamed RandomizeTemplate() method to InitRandomizeTemplate() method.
+	
+	- Renamed UnControlled() method to InitUnControlled method.
+	
+	- Reviewed all test missions for the changes executed and made adaptions where necessary + re-tests.
+	
+
+2016-08-12
+
+	- Temporary release of the new cargo handling.
+		-- Released available functionality to handle one CARGO_UNIT loading, boarding, unloading.
+		-- Created CARGO_UNIT test missions.
+
+	- Added Translate() method in POINT_VEC3, translating a 3D point over the horizontal plane with a Distance and Angle coordinate.
+
+2016-08-08
+
+	- Added briefing to method ESCORT:New()
+		-- If no EscortBriefing is given, the New() method will show the default briefing.
+		
+2016-08-06
+
+    - Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
+    	-- Replaced method PointVec3() to Vec3() where the code manages a Vec3. Replaced all references to the method.
+    	-- Replaced method PointVec2() to Vec2() where the code manages a Vec2. Replaced all references to the method.
+    	-- Replaced method RandomPointVec3() to RandomVec3() where the code manages a Vec3. Replaced all references to the method.
+
+2016-08-03
+
+	- Fixed error at SPAWN:RandomizeTemplate()
+		-- Units started in wrong x, y position (at the template, instead of at the master template of the SPAWN).
+		-- Adjusted x, y and alt to the start position of the first unit of the master template.
+		-- Added a test mission Moose_Test_SPAWN_RandomizeTemplate.
+		-- Regenerated MOOSE.lua
+
+2016-07-31
+
+    - Added a SpawnHeight parameter to the SPAWN method RandomizeRoute(), based upon a bug report of David. Air units will now also have optionally the route height randomized.
+
+2016-07-29
+
+	- Documentation of methods GetFirstAliveGroup, GetNextAliveGroup, GetLastAliveGroup + code snippets.
+
+2016-07-23
+	
+	- Fixed problem in MISSILETRAINER 
+		- For some weapontypes, there is no target known when launched. 
+		- Workaround: Missiles get destroyed immediately after launch for those missile types.
+		- Known missiles that have these problem are mavericks and missiles launched by Tunguskas.
+	
+	- Added more tracing in the EVENT class, appearing in DCS.log
+	
+	- Added MENU_MISSION classes
+		-- Added class MENU_MISSION
+		-- Added class MENU_MISSION_COMMAND
+		-- Revised documentation of Menu
+		-- Fixed bug in SCORING class to set the scoring menu
+		
+	- Added functions in SPAWN class
+		-- Added SPAWN:SpawnFromVec3()
+		-- Added SPAWN:SpawnFromVec2()
+		-- Revised SPAWN:SpawnFromUnit()
+		-- Revised SPAWN:SpawnFromZone()
+		
+	- Added test missions for SPAWN class
+		- Moose_Test_SPAWN_SpawnFromVec3.miz
+		- Moose_Test_SPAWN_SpawnFromVec2.miz
+		- Moose_Test_SPAWN_SpawnFromUnit.miz
+		- Moose_Test_SPAWN_SpawnFromZone.miz
+		
+	- Added functions in POINT_VEC3 class
+		-- Added POINT_VEC3:GetVec2()
+		-- Added POINT_VEC3:GetRandomVec2InRadius()
+	
+	- Added functions in POINT_VEC2 class
+		-- Added POINT_VEC2:NewFromVec2()
+		
+	- Revised the STATIC class working with POSITIONABLE
+	- Revised ZONE_RADIUS:GetPointVec3()
+	- Revised the documentation.
+	
+	- Revised the SCHEDULER class
+		-- Added SCHEDULER:Schedule()
+		-- Reworked SCHEDULER:New()
+		
+2016-07-21
+
+	- Added methods in CONTROLLABLE class
+		- CONTROLLABLE:GetMessage( Message, Duration )
+		- CONTROLLABLE:MessageToAll( Message, Duration )
+		- CONTROLLABLE:MessageToRed( Message, Duration )
+		- CONTROLLABLE:MessageToBlue( Message, Duration )
+		- CONTROLLABLE:MessageToClient( Message, Duration, Client )
+		- CONTROLLABLE:MessageToGroup( Message, Duration, MessageGroup )
+		- CONTROLLABLE:Message( Message, Duration )
+		
+	- Added methods in DETECTION_AREAS class
+		- DETECTION_AREAS:NearestFAC( DetectedArea )
+	
+	- Removed Message methods from GROUP
+	
+	- Replaced TASK_CAS and TASK_BAI with TASK_A2G
+	
+	- Added PROCESS_JTAC (which fits into TASK_A2G)
+	
+	- Added methods in POINT_VEC3 class:
+		- POINT_VEC3:NewFromVec3( Vec3 )
+	
+	- Added methods in SET_UNIT class
+		- SET_UNIT:GetUnitTypesText()
+		- SET_UNIT:GetUnitThreatLevels()
+	
+	- Added methods in UNIT class
+		- UNIT:GetCallsign()
+		
+	- Fixed bug in ZONE_GROUP
+	- Fixed bug in SCHEDULER
+
+2016-07-19
+
+	- Updated presentation Moose Training/Presentations/DCS World - MOOSE - Detection - Part 1 - Explanation.pptx
+
+	- Fixed bug in AIBALANCER
+	
+	- Added function BASE:IsTrace()
+	
+	- Renamed functions GetPointVec2() to GetVec2() to prepare new naming convension...
+		- Still pending is the rename of GetPointVec3 to GetVec3()..
+		
+	- Added DETECTION_AREAS class to manage detection in areas.
+	- Added DETECTION_BASE class
+	
+	- Added DETECTION_MANAGER class
+	- Added DETECTION_DISPATCHER class to dispatch tasks to players.
+	- Added DETECTION_REPORTING class
+	
+	- Added in EVENT class the RemoveEvent functions
+	
+	- Removed FAC.lua file
+	
+	- Added MENU classes to manager the menus.
+		- MENU_COALITION class
+		- MENU_COALITION_COMMAND class
+		- MENU_CLIENT class
+		- MENU_CLIENT_COMMAND class
+		- MENU-GROUP class
+		- MENU_GROUP_COMMAND class
+	
+	- Added new TASK_BASE classes
+		- Added TASK_BAI
+		- Added TASK_CAS
+		- Added TASK_SEAD
+	
+	- Added new PROCESS classes
+		- Added PROCESS_ASSIGN class
+		- Added PROCESS_DESTROY class
+		- Added PROCESS_ROUTE class
+		- Added PROCESS_SMOKE class
+	
+	- Added POINT_VEC3 methods
+		- POINT_VEC3:GetVec3()
+		- POINT_VEC3:GetX()
+		- POINT_VEC3:GetY()
+		- POINT_VEC3:GetZ()
+		- POINT_VEC3:GetDirectionVec3( TargetPointVec3 )
+		- POINT_VEC3:GetNorthCorrectionRadians()
+		- POINT_VEC3:GetDirectionRadians( DirectionVec3 )
+		- POINT_VEC3:Get2DDistance( TargetPointVec3 )
+		- POINT_VEC3:Get3DDistance( TargetPointVec3 )
+		- POINT_VEC3:ToStringBR( AngleRadians, Distance )
+		- POINT_VEC3:ToStringLL( acc, DMS )
+		- POINT_VEC3:GetAltitudeText()
+		- POINT_VEC3:GetBRText( TargetPointVec3 )
+		- POINT_VEC3:SetMetric( Metric )
+		- POINT_VEC3:IsMetric()
+	
+	- Added POINT_VEC2 methods
+		- POINT_VEC2:GetAltitudeText()
+		
+	- Added POSITIONABLE method
+		- POSITIONABLE:GetRandomPointVec3( Radius )
+		- POSITIONABLE:GetVelocityKMH()
+		
+	- Cleaned up Routines.lua file
+	
+	- Fixed bug in handling CSV files in SCORING class
+	
+	- Added lists to SET_ classes in Set.lua file
+	
+	- Added STATEMACHINE classes
+	
+	- Added UNIT methods
+		- UNIT:Destroy()
+		- UNIT:HasSensors( ... )
+		- UNIT:HasSEAD()
+		- UNIT:GetThreatLevel()
+		- UNIT:IsGround()
+		- UNIT:IsFriendly( FriendlyCoalition )
+		- UNIT:IsShip()
+	
+	- Created Utils.lua file with many utility functions.
+	
+	- Added method in ZONE_BASE
+		- ZONE_BASE:GetVec2()
+	
+	- Added method in ZONE_UNIT
+		- ZONE_UNIT:GetPointVec3( Height )
+	
+	- Reworked ZONE_UNIT so that it always will provide a position.
+	
+	- Optimized the ray casting algorithm in ZONE_POLYGON_BASE:IsPointVec2InZone( PointVec2 ) 	
+  
+2016-07-12
+
+	- Fixed bug in SPAWN, related to DEAD events.
+	
+	- Added test mission Moose_Test_SPAWN_Limit_Scheduled
+
+2016-07-08
+
+	- Fixed bug with velocity in AIRBASEPOLICE class
+
+	- Release in cooperation with dutch-baron the AIRBASEPOLIC_NAVADA class.
+
+	- Removed messages menu from CLIENT class
+
+	- Removed Moose_Test_DETECTION_Laser mission
+	
+2016-07-06
+
+	- Bugfixes in CONTROLLABLE and GROUP
+	
+2016-07-05
+
+	- Added country in DCScountry.lua
+	
+	- Added DATABASE:GetGroupTemplate( GroupName )
+	
+	- Added methods in GROUP class
+		- GROUP:Respawn( Template )
+		- GROUP:SetTemplateControlled( Template, Controlled )
+		- GROUP:SetTemplateCountry( Template, CountryID )
+		- GROUP:SetTemplateCoalition( Template, CoalitionID )
+	
+	- Added ZONE_GROUP class
+	
+2016-07-04
+
+	- Fixed bug in SPAWN class restarting GROUPS after landing.
+
+2016-07-03
+
+	- Added method in ZONE_UNIT
+		- ZONE_UNIT:GetRandomVec2()
+
+2016-06-28
+	
+	- Release of rework of MOOSE wrapper object model
+		- Added IDENTIFIABLE class
+		- Added POSITIONABLE class
+		- Added OBJECT class
+		- Added CONTROLLABLE class
+
+2016-06-26
+
+	- Reworked scheduler implementations
+
+2016-06-22 
+
+	- Added AIBALANCER class
+	- Added PATROLZONE class
+	- Added POINT_VEC3 and POINT_VEC2 classes
+
+	
+		
