@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_ACCOUNT} FSM class, extends @{Process#PROCESS}
+-- # @{#FSMT_ACCOUNT} FSM class, extends @{Fsm.Fsm#FSM_TEMPLATE}
 -- 
 -- ## FSMT_ACCOUNT state machine:
 -- 
@@ -77,7 +77,7 @@ do -- FSMT_ACCOUNT
   --- FSMT_ACCOUNT class
   -- @type FSMT_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Core.StateMachine#FSM_TEMPLATE
+  -- @extends Fsm.Fsm#FSM_TEMPLATE
   FSMT_ACCOUNT = { 
     ClassName = "FSMT_ACCOUNT",
     TargetSetUnit = nil,
@@ -89,7 +89,7 @@ do -- FSMT_ACCOUNT
   function FSMT_ACCOUNT:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ACCOUNT" ) ) -- Core.StateMachine#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ACCOUNT" ) ) -- Fsm.Fsm#FSM_TEMPLATE
   
     self:AddTransition( "Assigned", "Start", "Waiting")
     self:AddTransition( "*", "Wait", "Waiting")

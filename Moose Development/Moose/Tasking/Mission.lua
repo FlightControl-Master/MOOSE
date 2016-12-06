@@ -7,7 +7,7 @@
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
--- @extends Core.StateMachine#FSM
+-- @extends Fsm.Fsm#FSM
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -40,7 +40,7 @@ MISSION = {
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- Core.StateMachine#FSM
+  local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM
 
   self:SetStartState( "Idle" )
   

@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_SMOKE} FSM class, extends @{Process#PROCESS}
+-- # @{#FSMT_SMOKE} FSM class, extends @{Fsm.Fsm#FSM_TEMPLATE}
 -- 
 -- ## FSMT_SMOKE state machine:
 -- 
@@ -70,7 +70,7 @@ do -- FSMT_SMOKE
 
   --- FSMT_SMOKE class
   -- @type FSMT_SMOKE
-  -- @extends Core.StateMachine#FSM_TEMPLATE
+  -- @extends Fsm.Fsm#FSM_TEMPLATE
   FSMT_SMOKE = { 
     ClassName = "FSMT_SMOKE",
   }
@@ -81,7 +81,7 @@ do -- FSMT_SMOKE
   function FSMT_SMOKE:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_SMOKE" ) ) -- Core.StateMachine#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_SMOKE" ) ) -- Fsm.Fsm#FSM_TEMPLATE
 
     self:AddTransition( "None", "Start", "AwaitSmoke" )
     self:AddTransition( "AwaitSmoke", "Next", "Smoking" )
@@ -133,7 +133,7 @@ do -- FSMT_SMOKE_TARGETS_ZONE
   --- FSMT_SMOKE_TARGETS_ZONE class
   -- @type FSMT_SMOKE_TARGETS_ZONE
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @field Zone#ZONE_BASE TargetZone
+  -- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #FSMT_SMOKE
   FSMT_SMOKE_TARGETS_ZONE = { 
     ClassName = "FSMT_SMOKE_TARGETS_ZONE",
@@ -149,7 +149,7 @@ do -- FSMT_SMOKE_TARGETS_ZONE
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #FSMT_SMOKE_TARGETS_ZONE self
   -- @param Set#SET_UNIT TargetSetUnit
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   function FSMT_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
     local self = BASE:Inherit( self, FSMT_SMOKE:New() ) -- #FSMT_SMOKE
 
@@ -161,7 +161,7 @@ do -- FSMT_SMOKE_TARGETS_ZONE
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #FSMT_SMOKE_TARGETS_ZONE self
   -- @param Set#SET_UNIT TargetSetUnit
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #FSMT_SMOKE_TARGETS_ZONE self
   function FSMT_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )
     

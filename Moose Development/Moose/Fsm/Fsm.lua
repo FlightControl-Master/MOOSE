@@ -79,7 +79,7 @@ end
 
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
--- @return Process#PROCESS
+-- @return Fsm.Fsm#FSM_PROCESS
 function FSM:AddProcess( From, Event, Process, ReturnEvents )
 
   local sub = {}
@@ -349,7 +349,7 @@ end
 --- STATEMACHINE_CONTROLLABLE class
 -- @type STATEMACHINE_CONTROLLABLE
 -- @field Wrapper.Controllable#CONTROLLABLE Controllable
--- @extends Core.StateMachine#FSM
+-- @extends Fsm.Fsm#FSM
 STATEMACHINE_CONTROLLABLE = {
   ClassName = "STATEMACHINE_CONTROLLABLE",
 }
@@ -408,9 +408,8 @@ end
 
 --- FSM_PROCESS class
 -- @type FSM_PROCESS
--- @field Process#PROCESS Process
 -- @field Tasking.Task#TASK_BASE Task
--- @extends Core.StateMachine#STATEMACHINE_CONTROLLABLE
+-- @extends Fsm.Fsm#STATEMACHINE_CONTROLLABLE
 FSM_PROCESS = {
   ClassName = "FSM_PROCESS",
 }
@@ -554,7 +553,7 @@ end
 --- FSM_TASK class
 -- @type FSM_TASK
 -- @field Tasking.Task#TASK_BASE Task
--- @extends Core.StateMachine#FSM
+-- @extends Fsm.Fsm#FSM
 FSM_TASK = {
   ClassName = "FSM_TASK",
 }
@@ -567,7 +566,7 @@ FSM_TASK = {
 -- @return #FSM_TASK
 function FSM_TASK:New( FSMT )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Core.StateMachine#FSM_TASK
+  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Fsm.Fsm#FSM_TASK
 
   self["onstatechange"] = self.OnStateChange
 
@@ -675,7 +674,7 @@ function FSM_TEMPLATE:GetTransitions()
 end
 
 --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
--- @return Process#PROCESS
+-- @return Fsm.Fsm#FSM_TEMPLATE The FSM Process Template.
 function FSM_TEMPLATE:AddProcess( From, Event, ProcessTemplate, ReturnEvents )
 
   self:E( { ProcessTemplate = ProcessTemplate } )

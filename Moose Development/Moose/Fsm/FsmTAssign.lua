@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_ASSIGN} FSM class, extends @{Process#PROCESS}
+-- # @{#FSMT_ASSIGN} FSM template class, extends @{Fsm.Fsm#FSM_TEMPLATE}
 -- 
 -- ## FSMT_ASSIGN state machine:
 -- 
@@ -86,8 +86,8 @@ do -- FSMT_ASSIGN
   -- @type FSMT_ASSIGN
   -- @field Tasking.Task#TASK_BASE Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Core.StateMachine#FSM_TEMPLATE
+  -- @field Core.Zone#ZONE_BASE TargetZone
+  -- @extends Fsm.Fsm#FSM_TEMPLATE
   FSMT_ASSIGN = { 
     ClassName = "FSMT_ASSIGN",
   }
@@ -99,7 +99,7 @@ do -- FSMT_ASSIGN
   function FSMT_ASSIGN:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ASSIGN" ) ) -- Core.StateMachine#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ASSIGN" ) ) -- Fsm.Fsm#FSM_TEMPLATE
 
     self:AddTransition( "UnAssigned", "Start", "Waiting" )
     self:AddTransition( "Waiting",  "Assign", "Assigned" )
@@ -125,8 +125,8 @@ do -- FSMT_ASSIGN_ACCEPT
   -- @type FSMT_ASSIGN_ACCEPT
   -- @field Tasking.Task#TASK_BASE Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Fsm.Process#PROCESS
+  -- @field Core.Zone#ZONE_BASE TargetZone
+  -- @extends #FSMT_ASSIGN
   FSMT_ASSIGN_ACCEPT = { 
     ClassName = "FSMT_ASSIGN_ACCEPT",
   }
@@ -185,7 +185,7 @@ do -- FSMT_ASSIGN_MENU_ACCEPT
   -- @type FSMT_ASSIGN_MENU_ACCEPT
   -- @field Tasking.Task#TASK_BASE Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Zone#ZONE_BASE TargetZone
+  -- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #FSMT_ASSIGN
   FSMT_ASSIGN_MENU_ACCEPT = { 
     ClassName = "FSMT_ASSIGN_MENU_ACCEPT",

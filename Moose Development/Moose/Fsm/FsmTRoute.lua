@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_ROUTE} FSM class, extends @{Process#PROCESS}
+-- # @{#FSMT_ROUTE} FSM class, extends @{Fsm.Fsm#FSM_TEMPLATE}
 -- 
 -- ## FSMT_ROUTE state machine:
 -- 
@@ -81,8 +81,8 @@ do -- FSMT_ROUTE
   -- @type FSMT_ROUTE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Zone#ZONE_BASE TargetZone
-  -- @extends Core.StateMachine#FSM_TEMPLATE
+  -- @field Core.Zone#ZONE_BASE TargetZone
+  -- @extends Fsm.Fsm#FSM_TEMPLATE
   FSMT_ROUTE = { 
     ClassName = "FSMT_ROUTE",
   }
@@ -94,7 +94,7 @@ do -- FSMT_ROUTE
   function FSMT_ROUTE:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ROUTE" ) ) -- Core.StateMachine#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ROUTE" ) ) -- Fsm.Fsm#FSM_TEMPLATE
  
     self:AddTransition( "None", "Start", "Routing" )
     self:AddTransition( "*", "Report", "Reporting" )
@@ -182,7 +182,7 @@ do -- FSMT_ROUTE_ZONE
   -- @type FSMT_ROUTE_ZONE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Zone#ZONE_BASE TargetZone
+  -- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #FSMT_ROUTE
   FSMT_ROUTE_ZONE = { 
     ClassName = "FSMT_ROUTE_ZONE",
@@ -191,7 +191,7 @@ do -- FSMT_ROUTE_ZONE
 
   --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
   -- @param #FSMT_ROUTE_ZONE self
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   function FSMT_ROUTE_ZONE:New( TargetZone )
     local self = BASE:Inherit( self, FSMT_ROUTE:New() ) -- #FSMT_ROUTE_ZONE
 

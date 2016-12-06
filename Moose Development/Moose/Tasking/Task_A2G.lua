@@ -35,7 +35,7 @@ do -- TASK_A2G
   -- @param #string TaskName The name of the Task.
   -- @param #string TaskType BAI or CAS
   -- @param Set#SET_UNIT UnitSetTargets
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #TASK_A2G self
   function TASK_A2G:New( Mission, SetGroup, TaskName, TaskType, TargetSetUnit, TargetZone, FACUnit )
     local self = BASE:Inherit( self, TASK_BASE:New( Mission, SetGroup, TaskName, TaskType ) )

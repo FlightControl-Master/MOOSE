@@ -222,7 +222,7 @@ function AIBALANCER:onenterMonitoring( SetGroup )
                 end
               end,
               
-              --- @param Zone#ZONE_RADIUS RangeZone
+              --- @param Core.Zone#ZONE_RADIUS RangeZone
               -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 if PlayerInRange.Value == false then

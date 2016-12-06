@@ -36,7 +36,7 @@ do -- TASK_SEAD
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Set#SET_UNIT UnitSetTargets
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #TASK_SEAD self
   function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TargetZone )
     local self = BASE:Inherit( self, TASK_BASE:New( Mission, SetGroup, TaskName, "SEAD" ) ) -- Tasking.Task_SEAD#TASK_SEAD

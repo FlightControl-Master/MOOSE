@@ -236,7 +236,7 @@ end
 function _NewPatrolRoute( AIControllable )
 
   AIControllable:T( "NewPatrolRoute" )
-  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolZone#PATROLZONE
+  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolCore.Zone#PATROLZONE
   PatrolZone:__Route( 1 )
 end
 

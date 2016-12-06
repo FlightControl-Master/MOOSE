@@ -944,7 +944,7 @@ function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, .
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsCompletelyInZone( ZoneObject ) then
@@ -966,7 +966,7 @@ function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsPartlyInZone( ZoneObject ) then
@@ -988,7 +988,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
       if GroupObject:IsNotInZone( ZoneObject ) then
@@ -1370,7 +1370,7 @@ function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ...
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
       if UnitObject:IsCompletelyInZone( ZoneObject ) then
@@ -1392,7 +1392,7 @@ function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
       if UnitObject:IsNotInZone( ZoneObject ) then
@@ -1919,7 +1919,7 @@ function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
       if ClientObject:IsInZone( ZoneObject ) then
@@ -1941,7 +1941,7 @@ function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Zone#ZONE_BASE ZoneObject
+    --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
       if ClientObject:IsNotInZone( ZoneObject ) then

@@ -212,7 +212,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
                 end
               end,
               
-              --- @param Zone#ZONE_RADIUS RangeZone
+              --- @param Core.Zone#ZONE_RADIUS RangeZone
               -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 local AIGroupTemplate = AIGroup:GetTemplate()

@@ -1290,7 +1290,7 @@ function SPAWN:_RandomizeZones( SpawnIndex )
   self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
 
   if self.SpawnRandomizeZones then
-    local SpawnZone = nil -- Zone#ZONE_BASE
+    local SpawnZone = nil -- Core.Zone#ZONE_BASE
     while not SpawnZone do
       self:T( { SpawnZoneTableCount = #self.SpawnZoneTable, self.SpawnZoneTable } )
       local ZoneID = math.random( #self.SpawnZoneTable )

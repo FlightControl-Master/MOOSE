@@ -35,7 +35,7 @@ do -- TASK_PICKUP
   -- @param #string TaskName The name of the Task.
   -- @param #string TaskType BAI or CAS
   -- @param Set#SET_UNIT UnitSetTargets
-  -- @param Zone#ZONE_BASE TargetZone
+  -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #TASK_PICKUP self
   function TASK_PICKUP:New( Mission, AssignedSetGroup, TaskName, TaskType )
     local self = BASE:Inherit( self, TASK_BASE:New( Mission, AssignedSetGroup, TaskName, TaskType, "PICKUP" ) )

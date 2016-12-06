@@ -54,8 +54,8 @@
 -- @field Core.Scheduler#SCHEDULER TaskScheduler
 -- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @field Core.StateMachine#FSM_TEMPLATE FsmTemplate
--- @extends Core.StateMachine#FSM_TASK
+-- @field Fsm.Fsm#FSM_TEMPLATE FsmTemplate
+-- @extends Fsm.Fsm#FSM_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
   TaskScheduler = nil,
@@ -77,7 +77,7 @@ TASK_BASE = {
 -- @return #TASK_BASE self
 function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
-  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Core.StateMachine#FSM_TASK
+  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Fsm.Fsm#FSM_TASK
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
@@ -185,7 +185,7 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
   -- Assign a new FsmUnit to TaskUnit.
-  local FsmUnit = self:SetStateMachine( TaskUnit, FSM_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Core.StateMachine#FSM_PROCESS
+  local FsmUnit = self:SetStateMachine( TaskUnit, FSM_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   -- Set the events
@@ -392,7 +392,7 @@ end
 --- Get the default or currently assigned @{Process} template with key ProcessName.
 -- @param #TASK_BASE self
 -- @param #string ProcessName
--- @return Process#PROCESS
+-- @return Fsm.Fsm#FSM_TEMPLATE
 function TASK_BASE:GetProcessTemplate( ProcessName )
 
   local ProcessTemplate = self.ProcessClasses[ProcessName]
@@ -402,6 +402,7 @@ end
 
 
 
+-- TODO: Obscolete?
 --- Fail processes from @{Task} with key @{Unit}
 -- @param #TASK_BASE self
 -- @param #string TaskUnitName
@@ -409,7 +410,7 @@ end
 function TASK_BASE:FailProcesses( TaskUnitName )
 
   for ProcessID, ProcessData in pairs( self.Processes[TaskUnitName] ) do
-    local Process = ProcessData -- Process#PROCESS
+    local Process = ProcessData 
     Process.Fsm:Fail()
   end
 end
