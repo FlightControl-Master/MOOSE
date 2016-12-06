@@ -155,7 +155,7 @@
 -- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @extends Fsm.Fsm#STATEMACHINE_CONTROLLABLE
+-- @extends Fsm.Fsm#FSM_CONTROLLABLE
 PATROLZONE = {
   ClassName = "PATROLZONE",
 }
@@ -190,7 +190,7 @@ function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude,
   }
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) )
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) )
   
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude

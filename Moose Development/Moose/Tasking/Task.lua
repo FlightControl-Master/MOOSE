@@ -9,9 +9,9 @@
 --   * @{#TASK_BASE.AssignToGroup}():Assign a task to a group (of players).
 --   * @{#TASK_BASE.AddProcess}():Add a @{Process} to a task.
 --   * @{#TASK_BASE.RemoveProcesses}():Remove a running @{Process} from a running task.
---   * @{#TASK_BASE.SetStateMachine}():Set a @{StateMachine} to a task.
---   * @{#TASK_BASE.RemoveStateMachine}():Remove @{StateMachine} from a task.
---   * @{#TASK_BASE.HasStateMachine}():Enquire if the task has a @{StateMachine}
+--   * @{#TASK_BASE.SetStateMachine}():Set a @{Fsm} to a task.
+--   * @{#TASK_BASE.RemoveStateMachine}():Remove @{Fsm} from a task.
+--   * @{#TASK_BASE.HasStateMachine}():Enquire if the task has a @{Fsm}
 --   * @{#TASK_BASE.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK_BASE}.
 --   * @{#TASK_BASE.UnAssignFromUnit}(): Unassign the task from a unit.
 --   

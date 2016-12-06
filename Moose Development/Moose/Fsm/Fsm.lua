@@ -12,7 +12,7 @@
 --
 -- 1.1) Add or remove objects from the FSM
 -- --------------------------------------------
--- @module StateMachine
+-- @module Fsm
 -- @author FlightControl
 
 
@@ -346,23 +346,23 @@ end
 
 
 
---- STATEMACHINE_CONTROLLABLE class
--- @type STATEMACHINE_CONTROLLABLE
+--- FSM_CONTROLLABLE class
+-- @type FSM_CONTROLLABLE
 -- @field Wrapper.Controllable#CONTROLLABLE Controllable
 -- @extends Fsm.Fsm#FSM
-STATEMACHINE_CONTROLLABLE = {
-  ClassName = "STATEMACHINE_CONTROLLABLE",
+FSM_CONTROLLABLE = {
+  ClassName = "FSM_CONTROLLABLE",
 }
 
---- Creates a new STATEMACHINE_CONTROLLABLE object.
--- @param #STATEMACHINE_CONTROLLABLE self
+--- Creates a new FSM_CONTROLLABLE object.
+-- @param #FSM_CONTROLLABLE self
 -- @param #table FSMT Finite State Machine Table
--- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
--- @return #STATEMACHINE_CONTROLLABLE
-function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable (optional) The CONTROLLABLE object that the FSM_CONTROLLABLE governs.
+-- @return #FSM_CONTROLLABLE
+function FSM_CONTROLLABLE:New( FSMT, Controllable )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#STATEMACHINE_CONTROLLABLE
+  local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#FSM_CONTROLLABLE
 
   if Controllable then
     self:SetControllable( Controllable )
@@ -371,23 +371,23 @@ function STATEMACHINE_CONTROLLABLE:New( FSMT, Controllable )
   return self
 end
 
---- Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
--- @param #STATEMACHINE_CONTROLLABLE self
+--- Sets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.
+-- @param #FSM_CONTROLLABLE self
 -- @param Wrapper.Controllable#CONTROLLABLE FSMControllable
--- @return #STATEMACHINE_CONTROLLABLE
-function STATEMACHINE_CONTROLLABLE:SetControllable( FSMControllable )
+-- @return #FSM_CONTROLLABLE
+function FSM_CONTROLLABLE:SetControllable( FSMControllable )
   self:F( FSMControllable )
   self.Controllable = FSMControllable
 end
 
---- Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.
--- @param #STATEMACHINE_CONTROLLABLE self
+--- Gets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.
+-- @param #FSM_CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE
-function STATEMACHINE_CONTROLLABLE:GetControllable()
+function FSM_CONTROLLABLE:GetControllable()
   return self.Controllable
 end
 
-function STATEMACHINE_CONTROLLABLE:_call_handler( handler, params )
+function FSM_CONTROLLABLE:_call_handler( handler, params )
 
   local ErrorHandler = function( errmsg )
 
@@ -409,7 +409,7 @@ end
 --- FSM_PROCESS class
 -- @type FSM_PROCESS
 -- @field Tasking.Task#TASK_BASE Task
--- @extends Fsm.Fsm#STATEMACHINE_CONTROLLABLE
+-- @extends Fsm.Fsm#FSM_CONTROLLABLE
 FSM_PROCESS = {
   ClassName = "FSM_PROCESS",
 }
@@ -419,7 +419,7 @@ FSM_PROCESS = {
 -- @return #FSM_PROCESS
 function FSM_PROCESS:New( FsmT, Controllable, Task )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FsmT ) ) -- Fsm.Fsm#FSM_PROCESS
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FsmT ) ) -- Fsm.Fsm#FSM_PROCESS
 
   self:Assign( Controllable, Task )
   self.ClassName = FsmT._Name
@@ -566,7 +566,7 @@ FSM_TASK = {
 -- @return #FSM_TASK
 function FSM_TASK:New( FSMT )
 
-  local self = BASE:Inherit( self, STATEMACHINE_CONTROLLABLE:New( FSMT ) ) -- Fsm.Fsm#FSM_TASK
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) ) -- Fsm.Fsm#FSM_TASK
 
   self["onstatechange"] = self.OnStateChange
 

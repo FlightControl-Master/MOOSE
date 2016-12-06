@@ -6,7 +6,7 @@
 -- @field Wrapper.Group#GROUP ProcessGroup
 -- @field Core.Menu#MENU_GROUP MissionMenu
 -- @field #string ProcessName
--- @extends Fsm.Fsm#STATEMACHINE_CONTROLLABLE
+-- @extends Fsm.Fsm#FSM_CONTROLLABLE
 PROCESS = {
   ClassName = "PROCESS",
   NextEvent = nil,
