@@ -2,11 +2,11 @@
 local US_PlanesClientSet = SET_CLIENT:New():FilterCountries( "USA" ):FilterCategories( "plane" ):FilterStart()
 
 local US_PlanesSpawn = SPAWN:New( "AI US" ):InitCleanUp( 20 )
-local US_AIBalancer = AISET_BALANCER:New( US_PlanesClientSet, US_PlanesSpawn )
+local US_AIBalancer = AIBALANCER:New( US_PlanesClientSet, US_PlanesSpawn )
 
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
 local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
-local RU_AIBalancer = AISET_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
+local RU_AIBalancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
 local RU_AirbasesSet = SET_AIRBASE:New():FilterCoalitions("red"):FilterStart()
 RU_AirbasesSet:Flush()

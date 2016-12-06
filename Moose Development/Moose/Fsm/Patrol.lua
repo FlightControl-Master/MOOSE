@@ -177,20 +177,16 @@ PATROLZONE = {
 -- PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )
 function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
-  local FSMT = {
-    initial = 'None',
-    events = {
-      { name = 'Start',   from = '*',                       to = 'Route' },
-      { name = 'Route',   from = '*',                       to = 'Route' },
-      { name = 'Patrol',  from = { 'Patrol', 'Route' },     to = 'Patrol' },
-      { name = 'RTB',     from = 'Patrol',                  to = 'RTB' },
-      { name = 'End',     from = '*',                       to = 'End' },
-      { name = 'Dead',    from = '*',                       to = 'End' }, 
-    },
-  }
-  
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) )
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Fsm.Fsm#FSM_CONTROLLABLE
+  
+  self:SetStartState( "None" )
+  self:AddTransition( "*", "Start", "Route" )
+  self:AddTransition( "*", "Route", "Route" )
+  self:AddTransition( { "Patrol", "Route" }, "Patrol", "Patrol" )
+  self:AddTransition( "Patrol", "RTB", "RTB" )
+  self:AddTransition( "*", "End", "End" )
+  self:AddTransition( "*", "Dead", "End" )
   
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude

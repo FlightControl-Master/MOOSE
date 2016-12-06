@@ -597,10 +597,10 @@ FSM_SET = {
 -- @param #table FSMT Finite State Machine Table
 -- @param Set_SET_BASE FSMSet (optional) The Set object that the FSM_SET governs.
 -- @return #FSM_SET
-function FSM_SET:New( FSMT, FSMSet )
+function FSM_SET:New( FSMSet )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#FSM_SET
+  local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM_SET
 
   if FSMSet then
     self:Set( FSMSet )

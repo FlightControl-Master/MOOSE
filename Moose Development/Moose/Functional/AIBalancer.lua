@@ -89,22 +89,20 @@ AIBALANCER = {
 -- @usage
 -- -- Define a new AIBALANCER Object.
 function AIBALANCER:New( SetClient, SpawnAI )
-
-  local FSMT = {
-    initial = 'None',
-    events = {
-      { name = 'Start',             from = '*',                       to = 'Monitoring' },
-      { name = 'Monitor',           from = '*',                       to = 'Monitoring' },
-      { name = 'Spawn',             from = '*',                       to = 'Spawning' },
-      { name = 'Destroy',           from = '*',                       to = 'Destroying' },
-      { name = 'Return',            from = '*',                       to = 'Returning' },
-      { name = 'End',               from = '*',                       to = 'End' },
-      { name = 'Dead',              from = '*',                       to = 'End' }, 
-    },
-  }
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_SET:New( FSMT, SET_GROUP:New() ) )
+  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Fsm.Fsm#FSM_SET
+  
+  self:SetStartState( "None" )
+  self:AddTransition( "*", "Start", "Monitoring" )
+  self:AddTransition( "*", "Monitor", "Monitoring" )
+  self:AddTransition( "*", "Spawn", "Spawning" )
+  self:AddTransition( "*", "Destroy", "Destroying" )
+  self:AddTransition( "*", "Return", "Returning" )
+  self:AddTransition( "*", "End", "End" )
+  self:AddTransition( "*", "Dead", "End" )
+  
+  
   
   self.SetClient = SetClient
   self.SpawnAI = SpawnAI
