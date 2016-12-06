@@ -7,8 +7,8 @@
 -- The TASK_A2G is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
---   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#PROCESS_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#PROCESS_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#FSMT_ASSIGN_ACCEPT} is started to accept the task.
+--   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#FSMT_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
@@ -47,12 +47,12 @@ do -- TASK_A2G
     
     local Fsm = self:GetFsmTemplate()
 
-    Fsm:AddProcess( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
-    Fsm:AddProcess( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddProcess( "Planned",    "Accept",   FSMT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+    Fsm:AddProcess( "Assigned",   "Route",    FSMT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
     Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
     Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddProcess( "Updated",    "Account",  FSMT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
+    Fsm:AddProcess( "Updated",    "Smoke",    FSMT_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     --Fsm:AddProcess( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
     Fsm:AddAction ( "Accounted",  "Success",  "Success" )
     Fsm:AddAction ( "Failed",     "Fail",     "Failed" )

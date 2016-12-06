@@ -349,7 +349,7 @@ function PATROLZONE:onenterRoute()
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
     self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
-    --- NOW PROCESS_ROUTE THE GROUP!
+    --- NOW FSMT_ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1 )
     
     self:__Patrol( 30 )

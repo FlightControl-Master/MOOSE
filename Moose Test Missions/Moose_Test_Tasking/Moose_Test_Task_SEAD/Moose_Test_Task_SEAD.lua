@@ -66,19 +66,19 @@ local FsmSEADTemplate = TaskSEAD:GetFsmTemplate()
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
--- We use for this the SUB-PROCESS PROCESS_ASSIGN_ACCEPT.
+-- We use for this the SUB-PROCESS FSMT_ASSIGN_ACCEPT.
 -- The method on the FsmSEAD AddProcess accepts the following parameters:
 -- 1. State From "Planned". When the Fsm is in state "Planned", allow the event "Accept".
 -- 2. Event "Accept". This event can be triggered through FsmSEAD:Accept() or FsmSEAD:__Accept( 1 ). See documentation on state machines.
--- 3. The PROCESS derived class. In this case, we use the PROCESS_ASSIGN_ACCEPT to accept the task and provide a briefing. So, when the event "Accept" is fired, this process is executed.
--- 4. A table with the "return" states of the PROCESS_ASSIGN_ACCEPT process. This table indicates that for a certain return state, a further event needs to be called.
+-- 3. The PROCESS derived class. In this case, we use the FSMT_ASSIGN_ACCEPT to accept the task and provide a briefing. So, when the event "Accept" is fired, this process is executed.
+-- 4. A table with the "return" states of the FSMT_ASSIGN_ACCEPT process. This table indicates that for a certain return state, a further event needs to be called.
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   PROCESS_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   FSMT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.
-FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
+FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    FSMT_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -89,8 +89,8 @@ FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    PROCESS_ROUTE_ZONE:New
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
 FsmSEADTemplate:AddTransition ( "Rejected",   "Eject",    "Planned" )
 FsmSEADTemplate:AddTransition ( "Arrived",    "Update",   "Updated" ) 
-FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  PROCESS_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
-FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    PROCESS_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
+FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  FSMT_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
+FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    FSMT_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
 FsmSEADTemplate:AddTransition ( "Accounted",  "Success",  "Success" )
 FsmSEADTemplate:AddTransition ( "*",          "Fail",     "Failed" )
 
