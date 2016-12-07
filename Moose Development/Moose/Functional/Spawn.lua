@@ -1518,7 +1518,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 	self:F( { "CleanUp Scheduler:", self.SpawnTemplatePrefix } )
 
 	local SpawnGroup, SpawnCursor = self:GetFirstAliveGroup()
-	self:T( { "CleanUp Scheduler:", SpawnGroup } )
+	self:T( { "CleanUp Scheduler:", SpawnGroup, SpawnCursor } )
 
 	while SpawnGroup do
 
@@ -1568,7 +1568,7 @@ function SPAWN:_SpawnCleanUpScheduler()
 		
 		SpawnGroup, SpawnCursor = self:GetNextAliveGroup( SpawnCursor )
 		
-		self:T( { "CleanUp Scheduler:", SpawnGroup } )
+		self:T( { "CleanUp Scheduler:", SpawnGroup, SpawnCursor } )
 		
 	end
 	
