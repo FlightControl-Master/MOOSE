@@ -39,63 +39,64 @@ COPY /b Moose.lua + "Moose Create Static\Moose_Static_Loader.lua"        	Moose.
 
 
 rem Core Routines
-COPY /b Moose.lua + %1\Routines.lua                                      	Moose.lua
-COPY /b Moose.lua + %1\Utils.lua                                         	Moose.lua
+COPY /b Moose.lua + %1\Utilities\Routines.lua                                      	Moose.lua
+COPY /b Moose.lua + %1\Utilities\Utils.lua                                         	Moose.lua
 
 rem Core Classes
-COPY /b Moose.lua + %1\Base.lua                  							Moose.lua
-COPY /b Moose.lua + %1\Object.lua                							Moose.lua
-COPY /b Moose.lua + %1\Identifiable.lua            							Moose.lua
-COPY /b Moose.lua + %1\Positionable.lua             						Moose.lua
-COPY /b Moose.lua + %1\Controllable.lua            							Moose.lua
-COPY /b Moose.lua + %1\Scheduler.lua             							Moose.lua
-COPY /b Moose.lua + %1\Event.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Menu.lua                  							Moose.lua
-COPY /b Moose.lua + %1\Group.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Unit.lua                  							Moose.lua
-COPY /b Moose.lua + %1\Zone.lua                  							Moose.lua
-COPY /b Moose.lua + %1\Client.lua                							Moose.lua
-COPY /b Moose.lua + %1\Static.lua                							Moose.lua
-COPY /b Moose.lua + %1\Airbase.lua                							Moose.lua
-COPY /b Moose.lua + %1\Database.lua              							Moose.lua
-COPY /b Moose.lua + %1\Set.lua                   							Moose.lua
-COPY /b Moose.lua + %1\Point.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Moose.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Scoring.lua               							Moose.lua
+COPY /b Moose.lua + %1\Core\Base.lua                  	Moose.lua
+COPY /b Moose.lua + %1\Core\Scheduler.lua             	Moose.lua
+COPY /b Moose.lua + %1\Core\Event.lua                 	Moose.lua
+COPY /b Moose.lua + %1\Core\Menu.lua                  	Moose.lua
+COPY /b Moose.lua + %1\Core\Zone.lua                  	Moose.lua
+COPY /b Moose.lua + %1\Core\Database.lua              	Moose.lua
+COPY /b Moose.lua + %1\Core\Set.lua                   	Moose.lua
+COPY /b Moose.lua + %1\Core\Point.lua                 	Moose.lua
+COPY /b Moose.lua + %1\Core\Message.lua               	Moose.lua
+
+rem Wrapper Classes
+COPY /b Moose.lua + %1\Wrapper\Object.lua               Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Identifiable.lua         Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Positionable.lua         Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Controllable.lua         Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Group.lua                Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Unit.lua                 Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Client.lua               Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Static.lua               Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Airbase.lua              Moose.lua
 
 rem Functional Classes
-COPY /b Moose.lua + %1\Cargo.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Message.lua               							Moose.lua
-COPY /b Moose.lua + %1\Mission.lua               							Moose.lua
-COPY /b Moose.lua + %1\CleanUp.lua               							Moose.lua
-COPY /b Moose.lua + %1\Spawn.lua                 							Moose.lua
-COPY /b Moose.lua + %1\Movement.lua              							Moose.lua
-COPY /b Moose.lua + %1\Sead.lua                  							Moose.lua
-COPY /b Moose.lua + %1\Escort.lua                							Moose.lua
-COPY /b Moose.lua + %1\MissileTrainer.lua        							Moose.lua
-COPY /b Moose.lua + %1\AirbasePolice.lua          							Moose.lua
-COPY /b Moose.lua + %1\Detection.lua            							Moose.lua
+COPY /b Moose.lua + %1\Functional\Scoring.lua           Moose.lua
+COPY /b Moose.lua + %1\Functional\CleanUp.lua           Moose.lua
+COPY /b Moose.lua + %1\Functional\Spawn.lua             Moose.lua
+COPY /b Moose.lua + %1\Functional\Movement.lua          Moose.lua
+COPY /b Moose.lua + %1\Functional\Sead.lua              Moose.lua
+COPY /b Moose.lua + %1\Functional\Escort.lua            Moose.lua
+COPY /b Moose.lua + %1\Functional\MissileTrainer.lua    Moose.lua
+COPY /b Moose.lua + %1\Functional\AirbasePolice.lua     Moose.lua
+COPY /b Moose.lua + %1\Functional\Detection.lua         Moose.lua
+COPY /b Moose.lua + %1\Functional\AIBalancer.lua       	Moose.lua
+
+
+rem Fsm Classes
+COPY /b Moose.lua + %1\Fsm\Fsm.lua       	  		    Moose.lua
+COPY /b Moose.lua + %1\Fsm\Process.lua              	Moose.lua
+COPY /b Moose.lua + %1\Fsm\Process_JTAC.lua 		  	Moose.lua
+COPY /b Moose.lua + %1\Fsm\Patrol.lua           		Moose.lua
+COPY /b Moose.lua + %1\Fsm\Cargo.lua                 	Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmTAssign.lua    	  		Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmTRoute.lua   		  		Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmTAccount.lua    		  	Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmTSmoke.lua 		  		Moose.lua
 
 rem Task Handling Classes
-COPY /b Moose.lua + %1\DetectionManager.lua       							Moose.lua
+COPY /b Moose.lua + %1\Tasking\CommandCenter.lua 		Moose.lua							Moose.lua
+COPY /b Moose.lua + %1\Mission.lua               		Moose.lua
+COPY /b Moose.lua + %1\Task.lua    	         	  		Moose.lua
+COPY /b Moose.lua + %1\DetectionManager.lua       		Moose.lua
+COPY /b Moose.lua + %1\Task_SEAD.lua         	  		Moose.lua
+COPY /b Moose.lua + %1\Task_A2G.lua         	  		Moose.lua
 
-COPY /b Moose.lua + %1\StateMachine.lua       	  							Moose.lua
-
-COPY /b Moose.lua + %1\Process.lua              							Moose.lua
-COPY /b Moose.lua + %1\Process_Assign.lua    	  							Moose.lua
-COPY /b Moose.lua + %1\Process_Route.lua   		  							Moose.lua
-COPY /b Moose.lua + %1\Process_Smoke.lua    		  						Moose.lua
-COPY /b Moose.lua + %1\Process_Destroy.lua 		  							Moose.lua
-COPY /b Moose.lua + %1\Process_JTAC.lua 		  							Moose.lua
-COPY /b Moose.lua + %1\Process_PatrolZone.lua           					Moose.lua
-
-COPY /b Moose.lua + %1\Task.lua    	         	  							Moose.lua
-COPY /b Moose.lua + %1\Task_SEAD.lua         	  							Moose.lua
-COPY /b Moose.lua + %1\Task_A2G.lua         	  							Moose.lua
-
-rem AI Set Handling Classes
-COPY /b Moose.lua + %1\AIBalancer.lua       	    						Moose.lua
-
+COPY /b Moose.lua + %1\Moose.lua                 		Moose.lua
 
 COPY /b Moose.lua + "Moose Create Static\Moose_Trace_Off.lua"        		Moose.lua
 
