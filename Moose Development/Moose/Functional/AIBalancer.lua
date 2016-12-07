@@ -97,6 +97,7 @@ function AIBALANCER:New( SetClient, SpawnAI )
   self:AddTransition( "*", "Start", "Monitoring" )
   self:AddTransition( "*", "Monitor", "Monitoring" )
   self:AddTransition( "*", "Spawn", "Spawning" )
+  self:AddTransition( "Spawning", "Spawned", "Spawned" )
   self:AddTransition( "*", "Destroy", "Destroying" )
   self:AddTransition( "*", "Return", "Returning" )
   self:AddTransition( "*", "End", "End" )
@@ -146,6 +147,10 @@ function AIBALANCER:onenterSpawning( SetGroup, Event, From, To, ClientName )
   --TODO: need to rework UnitName thing ...
   
   SetGroup:Add( ClientName, AIGroup )
+  
+  -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
+  -- Mission designers can catch this event to bind further actions to the AIGroup.
+  self:Spawned( AIGroup ) 
 end
 
 --- @param #AIBALANCER self

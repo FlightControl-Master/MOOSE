@@ -35,4 +35,15 @@ local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 -- Start the AIBALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
 local RU_AIBalancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
-function RU_AIBalancer:OnAfterSpawn()
+function RU_AIBalancer:OnAfterSpawned( SetGroup, Event, From, To, AIGroup )
+
+  local PatrolZoneGroup = GROUP:FindByName( "PatrolZone" )
+  local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
+
+
+  local Patrol = PATROLZONE:New( PatrolZone, 3000, 6000, 400, 600 )
+  Patrol:ManageFuel( 0.2, 60 )
+  Patrol:SetControllable( AIGroup )
+  Patrol:__Start( 5 )
+ 
+end
