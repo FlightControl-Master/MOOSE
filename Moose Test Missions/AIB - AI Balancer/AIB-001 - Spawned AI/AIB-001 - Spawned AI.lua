@@ -4,7 +4,7 @@
 -- 
 -- Name: Spawned AI
 -- Author: FlightControl
--- Date Created: 7 December 2016
+-- Date Created: 07 Dec 2016
 --
 -- # Situation:
 --
@@ -19,6 +19,8 @@
 -- 2. If a player joins one red slot, one red AI plane should return to the nearest home base.
 -- 3. If two players join the red slots, no AI plane should be spawned, and all airborne AI planes should return to the nearest home base.
 --
+-- # Status: TESTED 07 Dec 2016
+-- 
 -- @module TEST.AIBALANCER.T001
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
