@@ -138,7 +138,7 @@ end
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param #string ClientName
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterSpawning( SetGroup, ClientName )
+function AIBALANCER:onenterSpawning( SetGroup, Event, From, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
   local AIGroup = self.SpawnAI:Spawn()
@@ -151,7 +151,7 @@ end
 --- @param #AIBALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterDestroying( SetGroup, AIGroup )
+function AIBALANCER:onenterDestroying( SetGroup, Event, From, To, AIGroup )
 
   AIGroup:Destroy()
 end
@@ -159,7 +159,7 @@ end
 --- @param #AIBALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterReturning( SetGroup, AIGroup )
+function AIBALANCER:onenterReturning( SetGroup, Event, From, To, AIGroup )
 
     local AIGroupTemplate = AIGroup:GetTemplate()
     if self.ToHomeAirbase == true then
