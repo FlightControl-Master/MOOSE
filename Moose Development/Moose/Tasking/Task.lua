@@ -54,7 +54,7 @@
 -- @field Core.Scheduler#SCHEDULER TaskScheduler
 -- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @field Fsm.Fsm#FSM_TEMPLATE FsmTemplate
+-- @field Fsm.Fsm#FSM_PROCESS FsmTemplate
 -- @extends Fsm.Fsm#FSM_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
@@ -82,7 +82,10 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
   self:AddTransition( "Assigned", "Success", "Success" )
-  self:AddTransition( "*", "Fail", "Failed" )
+  self:AddTransition( "Assigned", "Fail", "Failed" )
+  self:AddTransition( "Assigned", "Abort", "Aborted" )
+  self:AddTransition( "Assigned", "Cancel", "Cancelled" )
+  self:AddTransition( { "Failed", "Aborted", "Cancelled" }, "Replan", "Planned" )
 
   self:E( "New TASK " .. TaskName )
 
@@ -98,7 +101,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
-  self.FsmTemplate = self.FsmTemplate or FSM_TEMPLATE:New( "MAIN" )
+  self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
 
   -- Handle the birth of new planes within the assigned set.
   self:EventOnPlayerEnterUnit(
@@ -113,6 +116,46 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
         self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
         if self.SetGroup:IsIncludeObject( TaskGroup ) then
           self:AssignToUnit( TaskUnit )
+        end
+      end
+    end
+  )
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The Task is UnAssigned from the Unit.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:EventOnPlayerLeaveUnit(
+    --- @param #TASK_BASE self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      self:E( "In LeaveUnit" )
+      self:E( { "State", self:GetState() } )
+      if self:IsStateAssigned() then
+        local TaskUnit = EventData.IniUnit
+        local TaskGroup = EventData.IniUnit:GetGroup()
+        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
+        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+          self:UnAssignFromUnit( TaskUnit )
+        end
+      end
+    end
+  )
+
+  -- Handle when a player crashes ... 
+  -- The Task is UnAssigned from the Unit.
+  -- When there is no Unit left running the Task, and all of the Players crashed, the Task goes into Failed ...
+  self:EventOnCrash(
+    --- @param #TASK_BASE self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      self:E( "In LeaveUnit" )
+      self:E( { "State", self:GetState() } )
+      if self:IsStateAssigned() then
+        local TaskUnit = EventData.IniUnit
+        local TaskGroup = EventData.IniUnit:GetGroup()
+        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
+        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+          self:UnAssignFromUnit( TaskUnit )
         end
       end
     end
@@ -184,8 +227,10 @@ end
 function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
+  local FsmTemplate = self:GetFsmTemplate()
+  
   -- Assign a new FsmUnit to TaskUnit.
-  local FsmUnit = self:SetStateMachine( TaskUnit, FSM_PROCESS:New( self:GetFsmTemplate(), TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
+  local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   -- Set the events
@@ -206,13 +251,10 @@ end
 -- @param #TASK_BASE self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
-function TASK_BASE:UnAssignFromUnit( TaskUnitName )
-  self:F( TaskUnitName )
+function TASK_BASE:UnAssignFromUnit( TaskUnit )
+  self:F( TaskUnit )
   
-  if self:HasStateMachine( TaskUnitName ) == true then
-    self:E("RemoveStateMachines")
-    self:RemoveStateMachine( TaskUnitName )
-  end
+  self:RemoveStateMachine( TaskUnit )
 
   return self
 end
@@ -246,7 +288,7 @@ function TASK_BASE:UnAssignFromGroups()
       local TaskUnit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = TaskUnit:GetPlayerName()
       if PlayerName ~= nil or PlayerName ~= "" then
-        self:UnAssignFromUnit( TaskUnit:GetName() )
+        self:UnAssignFromUnit( TaskUnit )
       end
     end
   end
@@ -392,7 +434,7 @@ end
 --- Get the default or currently assigned @{Process} template with key ProcessName.
 -- @param #TASK_BASE self
 -- @param #string ProcessName
--- @return Fsm.Fsm#FSM_TEMPLATE
+-- @return Fsm.Fsm#FSM_PROCESS
 function TASK_BASE:GetProcessTemplate( ProcessName )
 
   local ProcessTemplate = self.ProcessClasses[ProcessName]
@@ -415,35 +457,37 @@ function TASK_BASE:FailProcesses( TaskUnitName )
   end
 end
 
---- Add a FiniteStateMachine to @{Task} with key @{Unit}
+--- Add a FiniteStateMachine to @{Task} with key Task@{Unit}
 -- @param #TASK_BASE self
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
 function TASK_BASE:SetStateMachine( TaskUnit, Fsm )
-  local TaskUnitName = TaskUnit:GetName()
-  self.Fsm[TaskUnitName] = Fsm
+  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
+
+  self.Fsm[TaskUnit] = Fsm
     
   return Fsm
 end
 
---- Remove FiniteStateMachines from @{Task} with key @{Unit}
+--- Remove FiniteStateMachines from @{Task} with key Task@{Unit}
 -- @param #TASK_BASE self
--- @param #string TaskUnitName
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
-function TASK_BASE:RemoveStateMachine( TaskUnitName )
+function TASK_BASE:RemoveStateMachine( TaskUnit )
+  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
-  self.Fsm[TaskUnitName] = nil
+  self.Fsm[TaskUnit] = nil
   collectgarbage()
 end
 
---- Checks if there is a FiniteStateMachine assigned to @{Unit} for @{Task}
+--- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}
 -- @param #TASK_BASE self
--- @param #string TaskUnitName
+-- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK_BASE self
-function TASK_BASE:HasStateMachine( TaskUnitName )
+function TASK_BASE:HasStateMachine( TaskUnit )
+  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
-  self:F( { TaskUnitName, self.Fsm[TaskUnitName] ~= nil } )
-  return ( self.Fsm[TaskUnitName] ~= nil )
+  return ( self.Fsm[TaskUnit] ~= nil )
 end
 
 
@@ -694,7 +738,7 @@ end
 -- @param #string ScoreText is a text describing the score that is given according the status.
 -- @param #number Score is a number providing the score of the status.
 -- @return #FSM_TEMPLATE self
-function FSM_TEMPLATE:AddScoreTask( TaskStatus, ScoreText, Score )
+function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
   self:F2( { TaskStatus, ScoreText, Score } )
 
   self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
@@ -729,17 +773,19 @@ function TASK_BASE:onenterSuccess( Event, From, To )
 
   self:E("Success")
   
+  self:UnAssignFromGroups()
+  self:SetMenu()
+  
 end
 
 --- StateMachine callback function for a TASK
 -- @param #TASK_BASE self
 -- @param Wrapper.Unit#UNIT TaskUnit
--- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Core.Event#EVENTDATA Event
-function TASK_BASE:OnFailed( TaskUnit, Fsm, Event, From, To )
+function TASK_BASE:onenterFailed( TaskUnit, Event, From, To )
 
   self:E( { "Failed for unit ", TaskUnit:GetName(), TaskUnit:GetPlayerName() } )
   
@@ -747,8 +793,7 @@ function TASK_BASE:OnFailed( TaskUnit, Fsm, Event, From, To )
   -- When the player leaves its unit, we will need to check whether he was on the ground or not at an airbase.
   -- When the player crashes, we will need to check whether in the group there are other players still active. It not, we reset the task from Assigned to Planned, otherwise, we just leave as Assigned.
 
-  self:UnAssignFromGroups()
-  self:StatePlanned()
+  self:UnAssignFromUnit()
 
 end
 

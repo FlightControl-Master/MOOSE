@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_ACCOUNT} FSM class, extends @{Fsm.Fsm#FSM_TEMPLATE}
+-- # @{#FSM_ACCOUNT} FSM class, extends @{Fsm.Fsm#FSM_PROCESS}
 -- 
--- ## FSMT_ACCOUNT state machine:
+-- ## FSM_ACCOUNT state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### FSMT_ACCOUNT **Events**:
+-- ### FSM_ACCOUNT **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -21,7 +21,7 @@
 --   * **More**:  There are more DCS events that need to be accounted for. The process will go back into the Report state.
 --   * **NoMore**:  There are no more DCS events that need to be accounted for. The process will go into the Success state.
 -- 
--- ### FSMT_ACCOUNT **Event methods**:
+-- ### FSM_ACCOUNT **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -29,7 +29,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### FSMT_ACCOUNT **States**:
+-- ### FSM_ACCOUNT **States**:
 -- 
 --   * **Assigned**: The player is assigned to the task. This is the initialization state for the process.
 --   * **Waiting**: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.
@@ -40,7 +40,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### FSMT_ACCOUNT state transition methods:
+-- ### FSM_ACCOUNT state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -55,41 +55,41 @@
 --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 --
--- # 1) @{#FSMT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#FSMT_ACCOUNT}
+-- # 1) @{#FSM_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#FSM_ACCOUNT}
 -- 
--- The FSMT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
+-- The FSM_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
 -- The process is given a @{Set} of units that will be tracked upon successful destruction.
 -- The process will end after each target has been successfully destroyed.
 -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
 -- 
 -- 
--- ## FSMT_ACCOUNT_DEADS constructor:
+-- ## FSM_ACCOUNT_DEADS constructor:
 -- 
---   * @{#FSMT_ACCOUNT_DEADS.New}(): Creates a new FSMT_ACCOUNT_DEADS object.
+--   * @{#FSM_ACCOUNT_DEADS.New}(): Creates a new FSM_ACCOUNT_DEADS object.
 -- 
 -- === 
 -- 
 -- @module Account
 
 
-do -- FSMT_ACCOUNT
+do -- FSM_ACCOUNT
   
-  --- FSMT_ACCOUNT class
-  -- @type FSMT_ACCOUNT
+  --- FSM_ACCOUNT class
+  -- @type FSM_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Fsm.Fsm#FSM_TEMPLATE
-  FSMT_ACCOUNT = { 
-    ClassName = "FSMT_ACCOUNT",
+  -- @extends Fsm.Fsm#FSM_PROCESS
+  FSM_ACCOUNT = { 
+    ClassName = "FSM_ACCOUNT",
     TargetSetUnit = nil,
   }
   
   --- Creates a new DESTROY process.
-  -- @param #FSMT_ACCOUNT self
-  -- @return #FSMT_ACCOUNT
-  function FSMT_ACCOUNT:New()
+  -- @param #FSM_ACCOUNT self
+  -- @return #FSM_ACCOUNT
+  function FSM_ACCOUNT:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ACCOUNT" ) ) -- Fsm.Fsm#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_PROCESS:New() ) -- Fsm.Fsm#FSM_PROCESS
   
     self:AddTransition( "Assigned", "Start", "Waiting")
     self:AddTransition( "*", "Wait", "Waiting")
@@ -110,12 +110,12 @@ do -- FSMT_ACCOUNT
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #FSMT_ACCOUNT self
+  -- @param #FSM_ACCOUNT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
+  function FSM_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
 
     self:EventOnDead( self.onfuncEventDead )
 
@@ -124,12 +124,12 @@ do -- FSMT_ACCOUNT
 
   
     --- StateMachine callback function
-    -- @param #FSMT_ACCOUNT self
+    -- @param #FSM_ACCOUNT self
     -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
     -- @param #string Event
     -- @param #string From
     -- @param #string To
-  function FSMT_ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
+  function FSM_ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
   
     if self.DisplayCount >= self.DisplayInterval then
       self:Report()
@@ -142,53 +142,59 @@ do -- FSMT_ACCOUNT
   end
   
   --- StateMachine callback function
-  -- @param #FSMT_ACCOUNT self
+  -- @param #FSM_ACCOUNT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
+  function FSM_ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
   
     self:__NoMore( 1 )
   end
   
-end -- FSMT_ACCOUNT
+end -- FSM_ACCOUNT
 
-do -- FSMT_ACCOUNT_DEADS
+do -- FSM_ACCOUNT_DEADS
 
-  --- FSMT_ACCOUNT_DEADS class
-  -- @type FSMT_ACCOUNT_DEADS
+  --- FSM_ACCOUNT_DEADS class
+  -- @type FSM_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends #FSMT_ACCOUNT
-  FSMT_ACCOUNT_DEADS = { 
-    ClassName = "FSMT_ACCOUNT_DEADS",
+  -- @extends #FSM_ACCOUNT
+  FSM_ACCOUNT_DEADS = { 
+    ClassName = "FSM_ACCOUNT_DEADS",
     TargetSetUnit = nil,
   }
 
 
   --- Creates a new DESTROY process.
-  -- @param #FSMT_ACCOUNT_DEADS self
+  -- @param #FSM_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  function FSMT_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  function FSM_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSMT_ACCOUNT:New() ) -- #FSMT_ACCOUNT_DEADS
+    local self = BASE:Inherit( self, FSM_ACCOUNT:New() ) -- #FSM_ACCOUNT_DEADS
     
-    self:SetParameters( { 
-      TargetSetUnit = TargetSetUnit, 
-      TaskName = TaskName,
-      DisplayInterval = 30,
-      DisplayCount = 30,
-      DisplayMessage = true,
-      DisplayTime = 10, -- 10 seconds is the default
-      DisplayCategory = "HQ", -- Targets is the default display category
-    } )
-    
+    self.TargetSetUnit = TargetSetUnit 
+    self.TaskName = TaskName
+      
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    self.DisplayCategory = "HQ" -- Targets is the default display category
+      
     return self
   end
+  
+  function FSM_ACCOUNT_DEADS:Init( FsmAccount )
+  
+    self.TargetSetUnit = FsmAccount.TargetSetUnit 
+    self.TaskName = FsmAccount.TaskName
+  end
+
 
   
-  function FSMT_ACCOUNT_DEADS:_Destructor()
+  function FSM_ACCOUNT_DEADS:_Destructor()
     self:E("_Destructor")
   
     self:EventRemoveAll()
@@ -198,12 +204,12 @@ do -- FSMT_ACCOUNT_DEADS
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #FSMT_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
+  function FSM_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
     local TaskGroup = ProcessUnit:GetGroup()
@@ -212,12 +218,12 @@ do -- FSMT_ACCOUNT_DEADS
   
   
   --- StateMachine callback function
-  -- @param #FSMT_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, EventData  )
+  function FSM_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, EventData  )
     self:T( { ProcessUnit, EventData, Event, From, To } )
     
     self:T({self.Controllable})
@@ -232,12 +238,12 @@ do -- FSMT_ACCOUNT_DEADS
   end
   
   --- StateMachine callback function
-  -- @param #FSMT_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, EventData )
+  function FSM_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, EventData )
   
     if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
@@ -248,9 +254,9 @@ do -- FSMT_ACCOUNT_DEADS
   
   --- DCS Events
   
-  --- @param #FSMT_ACCOUNT_DEADS self
+  --- @param #FSM_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA EventData
-  function FSMT_ACCOUNT_DEADS:onfuncEventDead( EventData )
+  function FSM_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then
@@ -258,4 +264,4 @@ do -- FSMT_ACCOUNT_DEADS
     end
   end
 
-end -- FSMT_ACCOUNT DEADS
+end -- FSM_ACCOUNT DEADS

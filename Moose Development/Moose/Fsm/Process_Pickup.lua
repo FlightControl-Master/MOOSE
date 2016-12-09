@@ -4,7 +4,7 @@
 -- @type PROCESS_PICKUP
 -- @field Wrapper.Unit#UNIT ProcessUnit
 -- @field Core.Set#SET_UNIT TargetSetUnit
--- @extends Fsm.Fsm#FSM_TEMPLATE
+-- @extends Fsm.Fsm#FSM_PROCESS
 PROCESS_PICKUP = { 
   ClassName = "PROCESS_PICKUP",
   Fsm = {},

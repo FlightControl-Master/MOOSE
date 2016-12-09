@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#FSMT_ROUTE} FSM class, extends @{Fsm.Fsm#FSM_TEMPLATE}
+-- # @{#FSM_ROUTE} FSM class, extends @{Fsm.Fsm#FSM_PROCESS}
 -- 
--- ## FSMT_ROUTE state machine:
+-- ## FSM_ROUTE state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### FSMT_ROUTE **Events**:
+-- ### FSM_ROUTE **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -23,7 +23,7 @@
 --   * **More**:  There are more route points that need to be followed. The process will go back into the Report state.
 --   * **NoMore**:  There are no more route points that need to be followed. The process will go into the Success state.
 -- 
--- ### FSMT_ROUTE **Event methods**:
+-- ### FSM_ROUTE **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -31,7 +31,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### FSMT_ROUTE **States**:
+-- ### FSM_ROUTE **States**:
 -- 
 --   * **None**: The controllable did not receive route commands.
 --   * **Arrived (*)**: The controllable has arrived at a route point.
@@ -43,7 +43,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### FSMT_ROUTE state transition methods:
+-- ### FSM_ROUTE state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -60,41 +60,41 @@
 -- 
 -- ===
 -- 
--- # 1) @{#FSMT_ROUTE_ZONE} class, extends @{Fsm.Route#FSMT_ROUTE}
+-- # 1) @{#FSM_ROUTE_ZONE} class, extends @{Fsm.Route#FSM_ROUTE}
 -- 
--- The FSMT_ROUTE_ZONE class implements the core functions to route an AIR @{Controllable} player @{Unit} to a @{Zone}.
+-- The FSM_ROUTE_ZONE class implements the core functions to route an AIR @{Controllable} player @{Unit} to a @{Zone}.
 -- The player receives on perioding times messages with the coordinates of the route to follow. 
 -- Upon arrival at the zone, a confirmation of arrival is sent, and the process will be ended.
 -- 
--- # 1.1) FSMT_ROUTE_ZONE constructor:
+-- # 1.1) FSM_ROUTE_ZONE constructor:
 --   
---   * @{#FSMT_ROUTE_ZONE.New}(): Creates a new FSMT_ROUTE_ZONE object.
+--   * @{#FSM_ROUTE_ZONE.New}(): Creates a new FSM_ROUTE_ZONE object.
 -- 
 -- ===
 -- 
 -- @module Route
 
 
-do -- FSMT_ROUTE
+do -- FSM_ROUTE
 
-  --- FSMT_ROUTE class
-  -- @type FSMT_ROUTE
+  --- FSM_ROUTE class
+  -- @type FSM_ROUTE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends Fsm.Fsm#FSM_TEMPLATE
-  FSMT_ROUTE = { 
-    ClassName = "FSMT_ROUTE",
+  -- @extends Fsm.Fsm#FSM_PROCESS
+  FSM_ROUTE = { 
+    ClassName = "FSM_ROUTE",
   }
   
   
   --- Creates a new routing state machine. The process will route a CLIENT to a ZONE until the CLIENT is within that ZONE.
-  -- @param #FSMT_ROUTE self
-  -- @return #FSMT_ROUTE self
-  function FSMT_ROUTE:New()
+  -- @param #FSM_ROUTE self
+  -- @return #FSM_ROUTE self
+  function FSM_ROUTE:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_TEMPLATE:New( "FSMT_ROUTE" ) ) -- Fsm.Fsm#FSM_TEMPLATE
+    local self = BASE:Inherit( self, FSM_PROCESS:New( "FSM_ROUTE" ) ) -- Fsm.Fsm#FSM_PROCESS
  
     self:AddTransition( "None", "Start", "Routing" )
     self:AddTransition( "*", "Report", "Reporting" )
@@ -118,32 +118,32 @@ do -- FSMT_ROUTE
   --- Task Events
 
   --- StateMachine callback function
-  -- @param #FSMT_ROUTE self
+  -- @param #FSM_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ROUTE:onafterStart( ProcessUnit, Event, From, To )
+  function FSM_ROUTE:onafterStart( ProcessUnit, Event, From, To )
   
 
     self:__Route( 1 )
   end
   
   --- Check if the controllable has arrived.
-  -- @param #FSMT_ROUTE self
+  -- @param #FSM_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
-  function FSMT_ROUTE:onfuncHasArrived( ProcessUnit )
+  function FSM_ROUTE:onfuncHasArrived( ProcessUnit )
     return false
   end
   
   --- StateMachine callback function
-  -- @param #FSMT_ROUTE self
+  -- @param #FSM_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
+  function FSM_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
   
     if ProcessUnit:IsAlive() then
       local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
@@ -172,46 +172,55 @@ do -- FSMT_ROUTE
     
   end
 
-end -- FSMT_ROUTE
+end -- FSM_ROUTE
 
 
 
-do -- FSMT_ROUTE_ZONE
+do -- FSM_ROUTE_ZONE
 
-  --- FSMT_ROUTE_ZONE class
-  -- @type FSMT_ROUTE_ZONE
+  --- FSM_ROUTE_ZONE class
+  -- @type FSM_ROUTE_ZONE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends #FSMT_ROUTE
-  FSMT_ROUTE_ZONE = { 
-    ClassName = "FSMT_ROUTE_ZONE",
+  -- @extends #FSM_ROUTE
+  FSM_ROUTE_ZONE = { 
+    ClassName = "FSM_ROUTE_ZONE",
   }
 
 
   --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
-  -- @param #FSMT_ROUTE_ZONE self
+  -- @param #FSM_ROUTE_ZONE self
   -- @param Core.Zone#ZONE_BASE TargetZone
-  function FSMT_ROUTE_ZONE:New( TargetZone )
-    local self = BASE:Inherit( self, FSMT_ROUTE:New() ) -- #FSMT_ROUTE_ZONE
+  function FSM_ROUTE_ZONE:New( TargetZone )
+    local self = BASE:Inherit( self, FSM_ROUTE:New() ) -- #FSM_ROUTE_ZONE
 
-    self:SetParameters( { 
-      TargetZone = TargetZone,
-      DisplayInterval = 30,
-      DisplayCount = 30,
-      DisplayMessage = true,
-      DisplayTime = 10, -- 10 seconds is the default
-      DisplayCategory = "HQ", -- Route is the default display category
-     } )
+    self.TargetZone = TargetZone
+    
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    self.DisplayCategory = "HQ" -- Route is the default display category
     
     return self
   end
   
+  function FSM_ROUTE_ZONE:Init( FsmRoute )
+  
+    self.TargetZone = FsmRoute.TargetZone
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    self.DisplayCategory = "HQ" -- Route is the default display category
+  end  
+  
   --- Method override to check if the controllable has arrived.
-  -- @param #FSMT_ROUTE self
+  -- @param #FSM_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
-  function FSMT_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
+  function FSM_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.TargetZone ) then
       local RouteText = ProcessUnit:GetCallsign() .. ": You have arrived within the zone!"
@@ -224,12 +233,12 @@ do -- FSMT_ROUTE_ZONE
   --- Task Events
   
   --- StateMachine callback function
-  -- @param #FSMT_ROUTE_ZONE self
+  -- @param #FSM_ROUTE_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSMT_ROUTE_ZONE:onenterReporting( ProcessUnit, Event, From, To )
+  function FSM_ROUTE_ZONE:onenterReporting( ProcessUnit, Event, From, To )
   
     local ZoneVec2 = self.TargetZone:GetVec2()
     local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
@@ -239,4 +248,4 @@ do -- FSMT_ROUTE_ZONE
     MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( ProcessUnit:GetGroup() )
   end
 
-end -- FSMT_ROUTE_ZONE
+end -- FSM_ROUTE_ZONE

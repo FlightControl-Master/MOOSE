@@ -4,7 +4,7 @@
 -- @type PROCESS_JTAC
 -- @field Wrapper.Unit#UNIT ProcessUnit
 -- @field Core.Set#SET_UNIT TargetSetUnit
--- @extends Fsm.Fsm#FSM_TEMPLATE
+-- @extends Fsm.Fsm#FSM_PROCESS
 PROCESS_JTAC = { 
   ClassName = "PROCESS_JTAC",
   Fsm = {},

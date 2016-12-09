@@ -7,8 +7,8 @@
 -- The TASK_PICKUP is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
---   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#FSMT_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#FSMT_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#FSM_ASSIGN_ACCEPT} is started to accept the task.
+--   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#FSM_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
@@ -67,7 +67,7 @@ do -- TASK_PICKUP
   function TASK_PICKUP:AssignToUnit( TaskUnit )
     self:F( TaskUnit:GetName() )
   
-    local ProcessAssign = self:AddProcess( TaskUnit, FSMT_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
+    local ProcessAssign = self:AddProcess( TaskUnit, FSM_ASSIGN_ACCEPT:New( self, TaskUnit, self.TaskBriefing ) )
     local ProcessPickup = self:AddProcess( TaskUnit, PROCESS_PICKUP:New( self, self.TaskType, TaskUnit ) )
     
     local Process = self:AddStateMachine( TaskUnit, FSM_TASK:New( self, TaskUnit, {
