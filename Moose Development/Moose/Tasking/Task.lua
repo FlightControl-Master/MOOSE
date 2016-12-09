@@ -81,6 +81,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
+  self:AddTransition( "Assigned", "AssignUnit", "Assigned" )
   self:AddTransition( "Assigned", "Success", "Success" )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
@@ -109,16 +110,17 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
     --- @param #TASK_BASE self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
-      self:E( "In EnterUnit" )
+      self:E( EventData )
       self:E( { "State", self:GetState() } )
+      local TaskUnit = EventData.IniDCSUnit
+      local TaskGroup = EventData.IniUnit:GetGroup()
+      self:__AssignUnit( 1, TaskUnit )
       if self:IsStateAssigned() then
-        local TaskUnit = EventData.IniUnit
-        local TaskGroup = EventData.IniUnit:GetGroup()
         self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
         if self.SetGroup:IsIncludeObject( TaskGroup ) then
-          self:AssignToUnit( TaskUnit )
         end
       end
+      self:MessageToGroups( TaskUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
     end
   )
 
@@ -138,6 +140,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
         if self.SetGroup:IsIncludeObject( TaskGroup ) then
           self:UnAssignFromUnit( TaskUnit )
         end
+        self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
       end
     end
   )
@@ -158,6 +161,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
         if self.SetGroup:IsIncludeObject( TaskGroup ) then
           self:UnAssignFromUnit( TaskUnit )
         end
+        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
       end
     end
   )
@@ -276,7 +280,17 @@ function TASK_BASE:UnAssignFromUnit( TaskUnit )
   return self
 end
 
+--- Send a message of the @{Task} to the assigned @{Group}s.
+-- @param #TASK_BASE self
+function TASK_BASE:MessageToGroups( Message )
 
+  local Mission = self:GetMission()
+  local CC = Mission:GetCommandCenter()
+  
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    CC:MessageToGroup( Message , 60, TaskGroup )
+  end
+end
 
 --- Send the briefng message of the @{Task} to the assigned @{Group}s.
 -- @param #TASK_BASE self

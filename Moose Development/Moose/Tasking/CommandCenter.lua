@@ -155,10 +155,33 @@ function COMMANDCENTER:HasGroup( MissionGroup )
   return Has
 end
 
+--- Send a CC message to a GROUP.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
+
+    self:GetPositionable():MessageToGroup( Message , 20, TaskGroup )
+
+end
 
 --- Report the status of all MISSIONs to a GROUP.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportMissions( ReportGroup )
+  self:E( ReportGroup )
+
+  local Report = REPORT:New()
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Report:Add( " - " .. Mission:ReportStatus() )
+  end
+  
+  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
+  
+end
+
+--- Report the status of a Task to a Group.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:ReportTaskStatus( ReportGroup, Task )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
