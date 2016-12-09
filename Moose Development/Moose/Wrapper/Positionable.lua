@@ -276,6 +276,122 @@ function POSITIONABLE:GetVelocityKMH()
   return nil
 end
 
+--- Returns a message with the callsign embedded (if there is one).
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @return Core.Message#MESSAGE
+function POSITIONABLE:GetMessage( Message, Duration )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
+  end
+
+  return nil
+end
+
+--- Send a message to all coalitions.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+function POSITIONABLE:MessageToAll( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToAll()
+  end
+
+  return nil
+end
+
+--- Send a message to the red coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
+function POSITIONABLE:MessageToRed( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToRed()
+  end
+
+  return nil
+end
+
+--- Send a message to the blue coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+function POSITIONABLE:MessageToBlue( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToBlue()
+  end
+
+  return nil
+end
+
+--- Send a message to a client.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param Wrapper.Client#CLIENT Client The client object receiving the message.
+function POSITIONABLE:MessageToClient( Message, Duration, Client )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToClient( Client )
+  end
+
+  return nil
+end
+
+--- Send a message to a @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
+function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      self:GetMessage( Message, Duration ):ToGroup( MessageGroup )
+    end
+  end
+
+  return nil
+end
+
+--- Send a message to the players in the @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+function POSITIONABLE:Message( Message, Duration )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    self:GetMessage( Message, Duration ):ToGroup( self )
+  end
+
+  return nil
+end
+
+
 
 
 

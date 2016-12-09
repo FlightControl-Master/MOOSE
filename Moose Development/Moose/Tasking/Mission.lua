@@ -122,6 +122,10 @@ function MISSION:SetMenu()
   end
 end
 
+
+--- Gets the COMMANDCENTER.
+-- @param #MISSION self
+-- @return Tasking.CommandCenter#COMMANDCENTER
 function MISSION:GetCommandCenter()
   return self.CommandCenter
 end

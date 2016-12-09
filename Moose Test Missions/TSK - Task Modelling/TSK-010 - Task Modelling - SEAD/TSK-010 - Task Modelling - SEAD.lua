@@ -50,7 +50,7 @@ local TargetZone = ZONE:New( "Target Zone" )
 -- 2. The set of groups of planes that pilots can join.
 -- 3. The name of the Task... This can be any name, and will be provided when the Pilot joins the task.
 -- 4. A type of the Task. When Tasks are in state Planned, then a menu can be provided that group the task based on this given type.
-local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars", "SEAD" ) -- Tasking.Task#TASK_BASE
+local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK_BASE
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".
@@ -111,6 +111,10 @@ function FsmSEADTemplate:onenterUpdated( TaskUnit )
   self:Smoke()
 end
 
-Mission:AddTask( TaskSEAD )
+
+local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
+TaskSEAD2:SetFsmTemplate( TaskSEAD:GetFsmTemplate():Copy() )
+--Mission:AddTask( TaskSEAD2 )
+
 
 HQ:SetMenu()

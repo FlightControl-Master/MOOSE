@@ -93,6 +93,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.Fsm = {}
 
   self.Mission = Mission
+  
   self.SetGroup = SetGroupAssign
 
   self:SetType( TaskType )
@@ -161,14 +162,30 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
     end
   )
   
+  Mission:AddTask( self )
+  
   return self
 end
 
+--- Get the Task FSM Process Template
+-- @param #TASK_BASE self
+-- @return Fsm.Fsm#FSM_PROCESS
 function TASK_BASE:GetFsmTemplate()
 
   return self.FsmTemplate
 end
 
+--- Sets the Task FSM Process Template
+-- @param #TASK_BASE self
+-- @param Fsm.Fsm#FSM_PROCESS
+function TASK_BASE:SetFsmTemplate( FsmTemplate )
+
+  self.FsmTemplate = FsmTemplate
+end
+
+--- Gets the Mission to where the TASK belongs.
+-- @param #TASK_BASE self
+-- @return Tasking.Mission#MISSION
 function TASK_BASE:GetMission()
 
   return self.Mission
@@ -283,6 +300,9 @@ function TASK_BASE:UnAssignFromGroups()
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
 
     TaskGroup:SetState( TaskGroup, "Assigned", nil )
+
+    self:RemoveMenuForGroup( TaskGroup )
+
     local TaskUnits = TaskGroup:GetUnits()
     for UnitID, UnitData in pairs( TaskUnits ) do
       local TaskUnit = UnitData -- Wrapper.Unit#UNIT
@@ -316,7 +336,9 @@ end
 function TASK_BASE:SetMenu()
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:SetMenuForGroup( TaskGroup )
+    if self:IsStatePlanned() or self:IsStateReplanned() then
+      self:SetMenuForGroup( TaskGroup )
+    end
   end  
 end
 
@@ -773,8 +795,16 @@ function TASK_BASE:onenterSuccess( Event, From, To )
 
   self:E("Success")
   
+  local Mission = self:GetMission()
+  local CC = Mission:GetCommandCenter()
+  
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    CC:GetPositionable():MessageToGroup( "Task " .. self:GetName() .. " is successful! Good job!" , 60, TaskGroup )
+  end
+  
   self:UnAssignFromGroups()
-  self:SetMenu()
+  
+  CC:SetMenu()
   
 end
 

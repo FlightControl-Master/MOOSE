@@ -68,6 +68,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 	setmetatable( self.Missions, { __mode = "v" } )
 
   self:EventOnBirth(
+    --- @param #COMMANDCENTER self
     --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       self:E( { EventData } )
@@ -75,6 +76,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       if EventGroup and self:HasGroup( EventGroup ) then
         local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
         local MenuMissions = MENU_GROUP_COMMAND:New( EventGroup, "Missions", MenuReporting, self.ReportMissions, self, EventGroup )
+        self:ReportMissions( EventGroup )
       end
     end
     )
@@ -88,6 +90,13 @@ end
 function COMMANDCENTER:GetName()
 
   return self.HQName
+end
+
+--- Gets the POSITIONABLE of the HQ command center.
+-- @param #COMMANDCENTER self
+-- @return Wrapper.Positionable#POSITIONABLE
+function COMMANDCENTER:GetPositionable()
+  return self.CommandCenterPositionable
 end
 
 
@@ -118,7 +127,7 @@ end
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
 
-  self.CommandCenterMenu = MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
+  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
   
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
@@ -148,6 +157,7 @@ end
 
 
 --- Report the status of all MISSIONs to a GROUP.
+-- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportMissions( ReportGroup )
   self:E( ReportGroup )
 
@@ -158,7 +168,7 @@ function COMMANDCENTER:ReportMissions( ReportGroup )
     Report:Add( " - " .. Mission:ReportStatus() )
   end
   
-  MESSAGE:New( Report:Text(), 30, "Status Report Missions from " .. self:GetName() .. "\n" ):ToGroup( ReportGroup )
+  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
   
 end
 
