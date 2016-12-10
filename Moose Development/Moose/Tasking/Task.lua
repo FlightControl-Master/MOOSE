@@ -137,11 +137,14 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
       if self:IsStateAssigned() then
         local TaskUnit = EventData.IniUnit
         local TaskGroup = EventData.IniUnit:GetGroup()
-        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
-        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+        self:E( self:IsAssignedToGroup( TaskGroup ) )
+        if self:IsAssignedToGroup( TaskGroup ) then
           self:UnAssignFromUnit( TaskUnit )
+          self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
         end
-        self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
+        if self:AreUnitsAlive() == false then
+          self:__Abort( 1 )
+        end
       end
     end
   )
@@ -281,7 +284,7 @@ function TASK_BASE:MessageToGroups( Message )
   local CC = Mission:GetCommandCenter()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    CC:MessageToGroup( Message , 60, TaskGroup )
+    CC:MessageToGroup( Message, TaskGroup )
   end
 end
 
@@ -332,6 +335,26 @@ function TASK_BASE:IsAssignedToGroup( TaskGroup )
   if self:IsStateAssigned() then
     if TaskGroup:GetState( TaskGroup, "Assigned" ) == self then
       return true
+    end
+  end
+  
+  return false
+end
+
+--- Returns if the @{Task} has still alive and assigned Units.
+-- @param #TASK_BASE self
+-- @return #boolean
+function TASK_BASE:HasAliveUnits( TaskGroup )
+  
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    if self:IsStateAssigned() then
+      if self:IsAssignedToGroup( TaskGroup ) then
+        for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
+          if TaskUnit:IsAlive() then
+            return true
+          end
+        end
+      end
     end
   end
   
