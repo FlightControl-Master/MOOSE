@@ -714,6 +714,10 @@ function EVENT:onEvent( Event )
       Event.IniDCSUnitName = Event.IniDCSUnit:getName()
       Event.IniUnitName = Event.IniDCSUnitName
       Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
+      if not Event.IniUnit then
+        -- Unit can be a CLIENT. Most likely this will be the case ...
+        Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName )
+      end
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()

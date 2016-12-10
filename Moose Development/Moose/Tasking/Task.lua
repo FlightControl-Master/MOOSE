@@ -112,12 +112,13 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
     function( self, EventData )
       self:E( EventData )
       self:E( { "State", self:GetState() } )
-      local TaskUnit = EventData.IniDCSUnit
+      local TaskUnit = EventData.IniUnit
       local TaskGroup = EventData.IniUnit:GetGroup()
-      self:__AssignUnit( 1, TaskUnit )
+      self:SetMenuForGroup(TaskGroup)
       if self:IsStateAssigned() then
-        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
-        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+        self:E( self:IsAssignedToGroup( TaskGroup ) )
+        if self:IsAssignedToGroup( TaskGroup ) then
+          self:AssignToUnit( TaskUnit )
         end
       end
       self:MessageToGroups( TaskUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
@@ -254,14 +255,6 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
-  -- Set the events
-  FsmUnit:EventOnPilotDead( 
-    --- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      self:__Fail( 1 )
-    end
-    )
-
   FsmUnit:SetStartState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
 
