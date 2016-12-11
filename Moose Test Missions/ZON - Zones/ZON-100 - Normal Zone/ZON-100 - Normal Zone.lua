@@ -6,7 +6,7 @@
 local GroupInside = GROUP:FindByName( "Test Inside Polygon" )
 local GroupOutside = GROUP:FindByName( "Test Outside Polygon" )
 
-local ZoneA = ZONE:New( "Zone A" ):SmokeZone( POINT_VEC3.SmokeColor.White, 90 )
+local ZoneA = ZONE:New( "Zone A" ):SmokeZone( SMOKECOLOR.White, 90 )
 
 Messager = SCHEDULER:New( nil,
   function()

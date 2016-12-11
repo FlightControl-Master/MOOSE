@@ -55,6 +55,8 @@
 -- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
 -- @field Fsm.Fsm#FSM_PROCESS FsmTemplate
+-- @field Tasking.Mission#MISSION Mission
+-- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
 -- @extends Fsm.Fsm#FSM_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
@@ -66,6 +68,8 @@ TASK_BASE = {
   Menu = {},
   SetGroup = nil,
   FsmTemplate = nil,
+  Mission = nil,
+  CommandCenter = nil,
 }
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
@@ -94,6 +98,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.Fsm = {}
 
   self.Mission = Mission
+  self.CommandCenter = Mission:GetCommandCenter()
   
   self.SetGroup = SetGroupAssign
 
@@ -106,6 +111,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
 
   -- Handle the birth of new planes within the assigned set.
+  
   self:EventOnPlayerEnterUnit(
     --- @param #TASK_BASE self
     -- @param Core.Event#EVENTDATA EventData
@@ -142,7 +148,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
           self:UnAssignFromUnit( TaskUnit )
           self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
         end
-        if self:AreUnitsAlive() == false then
+        if self:HasAliveUnits() == false then
           self:__Abort( 1 )
         end
       end
@@ -169,6 +175,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
       end
     end
   )
+  
   
   Mission:AddTask( self )
   
@@ -279,6 +286,7 @@ end
 --- Send a message of the @{Task} to the assigned @{Group}s.
 -- @param #TASK_BASE self
 function TASK_BASE:MessageToGroups( Message )
+  self:F( { Message = Message } )
 
   local Mission = self:GetMission()
   local CC = Mission:GetCommandCenter()
@@ -344,13 +352,15 @@ end
 --- Returns if the @{Task} has still alive and assigned Units.
 -- @param #TASK_BASE self
 -- @return #boolean
-function TASK_BASE:HasAliveUnits( TaskGroup )
+function TASK_BASE:HasAliveUnits()
+  self:F()
   
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if self:IsStateAssigned() then
       if self:IsAssignedToGroup( TaskGroup ) then
         for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
           if TaskUnit:IsAlive() then
+            self:T( { HasAliveUnits = true } )
             return true
           end
         end
@@ -358,6 +368,7 @@ function TASK_BASE:HasAliveUnits( TaskGroup )
     end
   end
   
+  self:T( { HasAliveUnits = true } )
   return false
 end
 
@@ -782,22 +793,6 @@ function TASK_BASE:SetBriefing( TaskBriefing )
   return self
 end
 
-
-
---- Adds a score for the TASK to be achieved.
--- @param #FSM_TEMPLATE self
--- @param #string TaskStatus is the status of the TASK when the score needs to be given.
--- @param #string ScoreText is a text describing the score that is given according the status.
--- @param #number Score is a number providing the score of the status.
--- @return #FSM_TEMPLATE self
-function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
-  self:F2( { TaskStatus, ScoreText, Score } )
-
-  self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
-  self.Scores[TaskStatus].ScoreText = ScoreText
-  self.Scores[TaskStatus].Score = Score
-  return self
-end
 
 
 --- StateMachine callback function for a TASK

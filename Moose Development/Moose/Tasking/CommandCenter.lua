@@ -64,8 +64,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
 	
-	self.Missions = {}
-	setmetatable( self.Missions, { __mode = "v" } )
+	self.Missions = setmetatable( {}, { __mode = "v" } )
 
   self:EventOnBirth(
     --- @param #COMMANDCENTER self

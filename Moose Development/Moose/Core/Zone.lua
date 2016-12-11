@@ -230,7 +230,7 @@ end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
--- @param SmokeColor The smoke color.
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 function ZONE_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
 
@@ -298,7 +298,7 @@ end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
--- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 -- @param #number Points (optional) The amount of points in the circle.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
@@ -689,7 +689,7 @@ end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
--- @param #POINT_VEC3.SmokeColor SmokeColor The smoke color.
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
   self:F2( SmokeColor )
