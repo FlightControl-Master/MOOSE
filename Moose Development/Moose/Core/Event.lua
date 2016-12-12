@@ -1,6 +1,19 @@
---- The EVENT class models an efficient event handling process between other classes and its units, weapons.
+--- This module contains the EVENT class.
+-- 
+-- ===
+-- 
+-- Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.
+-- 
+-- ===
+-- 
+-- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
+-- 
+-- ===
+-- 
+-- ### Contributions: -
+-- ### Authors: FlightControl : Design & Programming
+-- 
 -- @module Event
--- @author FlightControl
 
 --- The EVENT structure
 -- @type EVENT
@@ -93,7 +106,7 @@ function EVENT:Init( EventID, EventClass )
   end
 
   if not self.Events[EventID][EventClass] then
-     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "v" } )
+     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
   end
   return self.Events[EventID][EventClass]
 end

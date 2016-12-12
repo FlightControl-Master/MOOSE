@@ -7,6 +7,7 @@ Include.File( "Utilities/Utils" )
 --- Core Classes
 Include.File( "Core/Base" )
 Include.File( "Core/Scheduler" )
+Include.File( "Core/Timer")
 Include.File( "Core/Event" )
 Include.File( "Core/Menu" )
 Include.File( "Core/Zone" )
@@ -65,4 +66,7 @@ _EVENTDISPATCHER = EVENT:New() -- Core.Event#EVENT
 
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New() -- Database#DATABASE
+
+--- Declare the timer dispatcher based on the TIMER class
+_TIMERDISPATCHER = TIMER:New() -- Core.Timer#TIMER
 

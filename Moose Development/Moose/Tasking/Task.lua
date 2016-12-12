@@ -148,9 +148,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
           self:UnAssignFromUnit( TaskUnit )
           self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
         end
-        if self:HasAliveUnits() == false then
-          self:__Abort( 1 )
-        end
+        self:__Abort( 1 )
       end
     end
   )
@@ -791,6 +789,27 @@ end
 function TASK_BASE:SetBriefing( TaskBriefing )
   self.TaskBriefing = TaskBriefing
   return self
+end
+
+--- StateMachine callback function for a TASK
+-- @param #TASK_BASE self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Core.Event#EVENTDATA Event
+function TASK_BASE:onbeforeAbort( Event, From, To )
+
+  self:E("Abort")
+
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    if self:HasAliveUnits() then
+      return false
+    end
+  end
+
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
+  
+  return true
 end
 
 

@@ -31,6 +31,7 @@ Mission:AddScoring( Scoring )
 
 -- Define the set of group of planes that can be assigned to the Mission object.
 local SEADSet = SET_GROUP:New():FilterPrefixes( "Test SEAD"):FilterStart()
+SEADSet:Flush()
 
 -- Define the set of units that are the targets.
 -- Note that I use FilterOnce, which means that the set will be defined only once,
@@ -132,9 +133,11 @@ function FsmSEADTemplate:onenterUpdated( TaskUnit )
 end
 
 
---local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
---TaskSEAD2:SetFsmTemplate( TaskSEAD:GetFsmTemplate():Copy() )
---Mission:AddTask( TaskSEAD2 )
+local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
+TaskSEAD2:SetFsmTemplate( TaskSEAD:GetFsmTemplate():Copy() )
+Mission:AddTask( TaskSEAD2 )
+
+Mission:RemoveTask(TaskSEAD)
 
 TaskSEAD = nil
 FsmSEADTemplate = nil
