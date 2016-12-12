@@ -33,30 +33,26 @@ end
 -- @param #TIMER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
 function TIMER:AddSchedule( Scheduler )
-  self:F3( { Scheduler = Scheduler } )
+  self:F3( { Scheduler } )
 
   -- Initialize the Functions array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.Schedulers = self.Schedulers or setmetatable( {}, { __mode = "k" } )
+  self.Schedulers = self.Schedulers or setmetatable( {}, { __mode = "v" } )
 
   self.CallID = self.CallID + 1
-  self.Schedulers[Scheduler] = self.CallID
+  self.Schedulers[self.CallID] = Scheduler
   
-  self:E(self.Schedulers)
+  Scheduler:E( { self.CallID, self.Schedulers[self.CallID] } )
 
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "v" } )
-  
-
   self.Schedule[self.CallID] = {}
-  
-  self.Schedule[self.CallID].ScheduleFunction = Scheduler.TimeEventFunction
-  self.Schedule[self.CallID].ScheduleArguments = Scheduler.TimeEventFunctionArguments
-  self.Schedule[self.CallID].ScheduleObject = Scheduler.TimeEventObject
+  self.Schedule[self.CallID].ScheduleStart = Scheduler.StartSeconds + .001
   self.Schedule[self.CallID].ScheduleStart = Scheduler.StartSeconds + .001
 
   self:E( self.Schedule[self.CallID] )
 
-  local function ScheduleCallHandler( CallID )
+  self.Schedule[self.CallID].ScheduleCallHandler = function( CallID )
+    self:E( CallID )
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -66,11 +62,9 @@ function TIMER:AddSchedule( Scheduler )
       return errmsg
     end
 
-    BASE:E( { self } )
-
-    local ScheduleFunction = self.Schedule[CallID].ScheduleFunction
-    local ScheduleArguments = self.Schedule[CallID].ScheduleArguments
-    local ScheduleObject = self.Schedule[CallID].ScheduleObject
+    local ScheduleFunction = self.Schedulers[CallID].TimeEventFunction
+    local ScheduleArguments = self.Schedulers[CallID].TimeEventFunctionArguments
+    local ScheduleObject = self.Schedulers[CallID].TimeEventObject
     
     local Status, Result
     if ScheduleObject then
@@ -87,7 +81,7 @@ function TIMER:AddSchedule( Scheduler )
   end
   
   timer.scheduleFunction( 
-    ScheduleCallHandler, 
+    self.Schedule[self.CallID].ScheduleCallHandler, 
     self.CallID, 
     timer.getTime() + 1
   )
@@ -99,6 +93,13 @@ function TIMER:AddSchedule( Scheduler )
 
   return self.CallID
 end
+
+function TIMER:RemoveSchedule( CallID )
+
+  self:F( CallID )
+  self.Schedulers[CallID] = nil
+end
+
 
 
 

@@ -69,11 +69,16 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
 
   self.StartTime = timer.getTime()
 
-  _TIMERDISPATCHER:AddSchedule( self )
+  self.CallID = _TIMERDISPATCHER:AddSchedule( self )
 
   return self
 end
 
+function SCHEDULER:_Destructor()
+  --self:E("_Destructor")
+
+  _TIMERDISPATCHER:RemoveSchedule( self.CallID )
+end
 
 
 
