@@ -69,7 +69,7 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
   self:T3( self.Schedule[Scheduler][self.CallID] )
 
   self.Schedule[Scheduler][self.CallID].CallHandler = function( CallID )
-    self:F3( CallID )
+    self:F( CallID )
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -84,15 +84,16 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
       Scheduler = self.PersistentSchedulers[CallID]
     end
 
-    self:T3( { Scheduler = Scheduler } )
+    self:T( { Scheduler = Scheduler } )
     
     if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T3( { Schedule = Schedule } )
+      self:T( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.TimeEventObject
+      --local ScheduleObjectName = Scheduler.TimeEventObject:GetNameAndClassID()
       local ScheduleFunction = Schedule.Function
       local ScheduleArguments = Schedule.Arguments
       local Start = Schedule.Start
@@ -127,7 +128,7 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T( { ScheduleArguments, "Repeat:", CurrentTime, ScheduleTime } )
+          self:T3( { ScheduleArguments, "Repeat:", CurrentTime, ScheduleTime } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           timer.removeFunction( ScheduleID )
@@ -138,7 +139,7 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
         ScheduleID = nil
       end
     else
-      self:E( "Scheduled obscolete call ..." )
+      --self:E( "Scheduled obscolete call for CallID: " .. CallID )
     end
     
     return nil
