@@ -32,26 +32,30 @@ end
 -- Nothing of this code should be modified without testing it thoroughly.
 -- @param #TIMER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
-function TIMER:AddSchedule( Scheduler )
-  self:F3( { Scheduler } )
+function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
+  self:F( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
+
+  self.CallID = self.CallID + 1
 
   -- Initialize the Functions array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.Schedulers = self.Schedulers or setmetatable( {}, { __mode = "v" } )
-
-  self.CallID = self.CallID + 1
-  self.Schedulers[self.CallID] = Scheduler
+  self.Calls = self.Calls or setmetatable( {}, { __mode = "v" } )
+  self.Calls[self.CallID] = Scheduler
+  Scheduler:E( { self.CallID, self.Calls[self.CallID] } )
   
-  Scheduler:E( { self.CallID, self.Schedulers[self.CallID] } )
+  self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
+  self.Schedule[Scheduler] = {}
+  self.Schedule[Scheduler][self.CallID] = {}
+  self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
+  self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
+  self.Schedule[Scheduler][self.CallID].Start = Start + .001
+  self.Schedule[Scheduler][self.CallID].Repeat = Repeat
+  self.Schedule[Scheduler][self.CallID].Randomize = Randomize
+  self.Schedule[Scheduler][self.CallID].Stop = Stop
 
-  self.Schedule = self.Schedule or setmetatable( {}, { __mode = "v" } )
-  self.Schedule[self.CallID] = {}
-  self.Schedule[self.CallID].ScheduleStart = Scheduler.StartSeconds + .001
-  self.Schedule[self.CallID].ScheduleStart = Scheduler.StartSeconds + .001
+  self:E( self.Schedule[Scheduler][self.CallID] )
 
-  self:E( self.Schedule[self.CallID] )
-
-  self.Schedule[self.CallID].ScheduleCallHandler = function( CallID )
+  self.Schedule[Scheduler][self.CallID].CallHandler = function( CallID )
     self:E( CallID )
 
     local ErrorHandler = function( errmsg )
@@ -61,43 +65,90 @@ function TIMER:AddSchedule( Scheduler )
       end
       return errmsg
     end
-
-    local ScheduleFunction = self.Schedulers[CallID].TimeEventFunction
-    local ScheduleArguments = self.Schedulers[CallID].TimeEventFunctionArguments
-    local ScheduleObject = self.Schedulers[CallID].TimeEventObject
     
-    local Status, Result
-    if ScheduleObject then
-      local function Timer()
-        return ScheduleFunction( ScheduleObject, unpack( ScheduleArguments ) ) 
+    local Scheduler = self.Calls[CallID]
+
+    self:E( { Scheduler = Scheduler } )
+    
+    if self.Calls[CallID] then
+
+      local Schedule = self.Schedule[Scheduler][CallID]
+      
+      self:E( { Schedule = Schedule } )
+
+      local ScheduleObject = Scheduler.TimeEventObject
+      local ScheduleFunction = Schedule.Function
+      local ScheduleArguments = Schedule.Arguments
+      local Start = Schedule.Start
+      local Repeat = Schedule.Repeat
+      local Randomize = Schedule.Randomize
+      local Stop = Schedule.Stop
+      local ScheduleID = Schedule.ScheduleID
+      
+      local Status, Result
+      if ScheduleObject then
+        local function Timer()
+          return ScheduleFunction( ScheduleObject, unpack( ScheduleArguments ) ) 
+        end
+        Status, Result = xpcall( Timer, ErrorHandler )
+      else
+        local function Timer()
+          return ScheduleFunction( unpack( ScheduleArguments ) ) 
+        end
+        Status, Result = xpcall( Timer, ErrorHandler )
       end
-      Status, Result = xpcall( Timer, ErrorHandler )
+      
+      local CurrentTime = timer.getTime()
+      local StartTime = CurrentTime + Start
+      
+      if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
+        if Repeat and Repeat ~= 0 and ( not Stop ) or ( Stop and CurrentTime <= StartTime + Stop ) then
+          local ScheduleTime =
+            CurrentTime +
+            Repeat +
+            math.random(
+              - ( Randomize * Repeat / 2 ),
+              ( Randomize * Repeat  / 2 )
+            ) +
+            0.01
+          self:T( { ScheduleArguments, "Repeat:", CurrentTime, ScheduleTime } )
+          return ScheduleTime -- returns the next time the function needs to be called.
+        else
+          timer.removeFunction( ScheduleID )
+          ScheduleID = nil
+        end
+      else
+        timer.removeFunction( ScheduleID )
+        ScheduleID = nil
+      end
     else
-      local function Timer()
-        return ScheduleFunction( unpack( ScheduleArguments ) ) 
-      end
-      Status, Result = xpcall( Timer, ErrorHandler )
+      self:E( "Scheduled obscolete call ..." )
     end
+    
+    return nil
   end
   
-  timer.scheduleFunction( 
-    self.Schedule[self.CallID].ScheduleCallHandler, 
+  
+  self.Schedule[Scheduler][self.CallID].ScheduleID = timer.scheduleFunction( 
+    self.Schedule[Scheduler][self.CallID].CallHandler, 
     self.CallID, 
-    timer.getTime() + 1
+    timer.getTime() + self.Schedule[Scheduler][self.CallID].Start
   )
-  --[[
   
-  
-  self:T( Schedule.FunctionID )
-  --]]
-
   return self.CallID
 end
 
 function TIMER:RemoveSchedule( CallID )
-
   self:F( CallID )
-  self.Schedulers[CallID] = nil
+
+  local Schedule = self.Calls[CallID]
+    
+  if Schedule then
+    local ScheduleID = Schedule.ScheduleID
+    timer.removeFunction( ScheduleID )
+    ScheduleID = nil
+    Schedule = nil
+  end
 end
 
 
