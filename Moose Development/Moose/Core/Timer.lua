@@ -103,7 +103,7 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
       local StartTime = CurrentTime + Start
       
       if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
-        if Repeat ~= 0 and ( not Stop ) or ( Stop and CurrentTime <= StartTime + Stop ) then
+        if Repeat ~= 0 and ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) then
           local ScheduleTime =
             CurrentTime +
             Repeat +

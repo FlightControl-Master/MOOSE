@@ -58,18 +58,7 @@ function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArg
   local self = BASE:Inherit( self, BASE:New() )
   self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
 
-  self.TimeEventObject = TimeEventObject
-  self.TimeEventFunction = TimeEventFunction
-  self.TimeEventFunctionArguments = TimeEventFunctionArguments
-  self.StartSeconds = StartSeconds
-  self.Repeat = false
-  self.RepeatSecondsInterval = RepeatSecondsInterval or 0
-  self.RandomizationFactor = RandomizationFactor or 0
-  self.StopSeconds = StopSeconds
-
-  self.StartTime = timer.getTime()
-
-  _TIMERDISPATCHER:AddSchedule( self )
+  self:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
 
   return self
 end
@@ -119,6 +108,8 @@ function SCHEDULER:Start()
       timer.removeFunction( self.ScheduleID )
     end
     self:T( { self.StartSeconds } )
+    _TIMERDISPATCHER:AddSchedule( self )
+
     self.ScheduleID = timer.scheduleFunction( self._Scheduler, self, timer.getTime() + self.StartSeconds + .001 )
   end
   

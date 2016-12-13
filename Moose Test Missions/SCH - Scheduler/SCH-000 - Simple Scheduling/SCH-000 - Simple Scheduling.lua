@@ -19,6 +19,15 @@
 
 local TestScheduler = SCHEDULER:New( nil, 
   function()
-    BASE:E( "Hello World")
+    BASE:E( "Hello World 1")
   end, {}, 1 
   )
+
+SCHEDULER:New( nil, 
+  function()
+    BASE:E( "Hello World 2")
+  end, {}, 2
+  )
+    
+collectgarbage()
+
