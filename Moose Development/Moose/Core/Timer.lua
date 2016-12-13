@@ -4,6 +4,8 @@
 -- 
 -- Takes care of scheduled function dispatching for defined in MOOSE classes.
 -- 
+-- This function is complicated.
+-- 
 -- ===
 -- 
 -- ===
@@ -37,11 +39,21 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
 
   self.CallID = self.CallID + 1
 
-  -- Initialize the Functions array, which is a weakly coupled table.
+  -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.Calls = self.Calls or setmetatable( {}, { __mode = "v" } )
-  self.Calls[self.CallID] = Scheduler
-  Scheduler:E( { self.CallID, self.Calls[self.CallID] } )
+  self.PersistentSchedulers = self.PersistentSchedulers or {}
+
+  -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
+  -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
+  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
+  
+  if Scheduler.TimeEventObject then
+    self.ObjectSchedulers[self.CallID] = Scheduler
+    self:T3( { self.CallID, self.ObjectSchedulers[self.CallID] } )
+  else
+    self.PersistentSchedulers[self.CallID] = Scheduler
+    self:T3( { self.CallID, self.PersistentSchedulers[self.CallID] } )
+  end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
   self.Schedule[Scheduler] = {}
@@ -54,10 +66,10 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
   self.Schedule[Scheduler][self.CallID].Randomize = Randomize
   self.Schedule[Scheduler][self.CallID].Stop = Stop
 
-  self:E( self.Schedule[Scheduler][self.CallID] )
+  self:T3( self.Schedule[Scheduler][self.CallID] )
 
   self.Schedule[Scheduler][self.CallID].CallHandler = function( CallID )
-    self:E( CallID )
+    self:F3( CallID )
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -67,15 +79,18 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
       return errmsg
     end
     
-    local Scheduler = self.Calls[CallID]
+    local Scheduler = self.ObjectSchedulers[CallID]
+    if not Scheduler then
+      Scheduler = self.PersistentSchedulers[CallID]
+    end
 
-    self:E( { Scheduler = Scheduler } )
+    self:T3( { Scheduler = Scheduler } )
     
-    if self.Calls[CallID] then
+    if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:E( { Schedule = Schedule } )
+      self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.TimeEventObject
       local ScheduleFunction = Schedule.Function
@@ -142,7 +157,7 @@ end
 function TIMER:RemoveSchedule( CallID )
   self:F( CallID )
 
-  local Schedule = self.Calls[CallID]
+  local Schedule = self.ObjectSchedulers[CallID]
     
   if Schedule then
     local ScheduleID = Schedule.ScheduleID
