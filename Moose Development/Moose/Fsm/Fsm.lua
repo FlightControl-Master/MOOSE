@@ -58,6 +58,8 @@ do -- FSM
     self._EndStates = {}
     self._Scores = {}
     
+    self.CallScheduler = SCHEDULER:New( self )
+    
   
     return self
   end
@@ -313,7 +315,8 @@ do -- FSM
     self:E( { EventName = EventName } )
     return function( self, DelaySeconds, ... )
       self:T( "Delayed Event: " .. EventName )
-      SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds )
+      local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      self:T( { CallID = CallID } )
     end
   end
   

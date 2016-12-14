@@ -1,10 +1,29 @@
---- This module contains the TIMER class.
+--- This module defines the SCHEDULEDISPATCHER class, which is used by a central object called _SCHEDULEDISPATCHER.
 -- 
 -- ===
 -- 
--- Takes care of scheduled function dispatching for defined in MOOSE classes.
+-- Takes care of the creation and dispatching of scheduled functions for SCHEDULER objects.
 -- 
--- This function is complicated.
+-- This class is tricky and needs some thorought explanation.
+-- SCHEDULE classes are used to schedule functions for objects, or as persistent objects.
+-- The SCHEDULEDISPATCHER class ensures that:
+-- 
+--   - Scheduled functions are planned according the SCHEDULER object parameters.
+--   - Scheduled functions are repeated when requested, according the SCHEDULER object parameters.
+--   - Scheduled functions are automatically removed when the schedule is finished, according the SCHEDULER object parameters.
+-- 
+-- The SCHEDULEDISPATCHER class will manage SCHEDULER object in memory during garbage collection:
+--   - When a SCHEDULER object is not attached to another object (that is, it's first :Schedule() parameter is nil), then the SCHEDULER  
+--     object is _persistent_ within memory.
+--   - When a SCHEDULER object *is* attached to another object, then the SCHEDULER object is _not persistent_ within memory after a garbage collection!
+-- The none persistency of SCHEDULERS attached to objects is required to allow SCHEDULER objects to be garbage collectged, when the parent object is also desroyed or nillified and garbage collected.
+-- Even when there are pending timer scheduled functions to be executed for the SCHEDULER object,  
+-- these will not be executed anymore when the SCHEDULER object has been destroyed.
+-- 
+-- The SCHEDULEDISPATCHER allows multiple scheduled functions to be planned and executed for one SCHEDULER object.
+-- The SCHEDULER object therefore keeps a table of "CallID's", which are returned after each planning of a new scheduled function by the SCHEDULEDISPATCHER.
+-- The SCHEDULER object plans new scheduled functions through the @{Core.Scheduler#SCHEDULER.Schedule}() method. 
+-- The Schedule() method returns the CallID that is the reference ID for each planned schedule.
 -- 
 -- ===
 -- 
@@ -13,16 +32,16 @@
 -- ### Contributions: -
 -- ### Authors: FlightControl : Design & Programming
 -- 
--- @module Timer
+-- @module ScheduleDispatcher
 
---- The TIMER structure
--- @type TIMER
-TIMER = {
-  ClassName = "TIMER",
+--- The SCHEDULEDISPATCHER structure
+-- @type SCHEDULEDISPATCHER
+SCHEDULEDISPATCHER = {
+  ClassName = "SCHEDULEDISPATCHER",
   CallID = 0,
 }
 
-function TIMER:New()
+function SCHEDULEDISPATCHER:New()
   local self = BASE:Inherit( self, BASE:New() )
   self:F3()
   return self
@@ -32,9 +51,9 @@ end
 -- The development of this method was really tidy.
 -- It is constructed as such that a garbage collection is executed on the weak tables, when the Scheduler is nillified.
 -- Nothing of this code should be modified without testing it thoroughly.
--- @param #TIMER self
+-- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
-function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
+function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
   self:F( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
 
   self.CallID = self.CallID + 1
@@ -128,15 +147,13 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T3( { ScheduleArguments, "Repeat:", CurrentTime, ScheduleTime } )
+          self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
-          timer.removeFunction( ScheduleID )
-          ScheduleID = nil
+          self:Stop( Scheduler, CallID )
         end
       else
-        timer.removeFunction( ScheduleID )
-        ScheduleID = nil
+        self:Stop( Scheduler, CallID )
       end
     else
       --self:E( "Scheduled obscolete call for CallID: " .. CallID )
@@ -145,29 +162,49 @@ function TIMER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Star
     return nil
   end
   
-  
-  self.Schedule[Scheduler][self.CallID].ScheduleID = timer.scheduleFunction( 
-    self.Schedule[Scheduler][self.CallID].CallHandler, 
-    self.CallID, 
-    timer.getTime() + self.Schedule[Scheduler][self.CallID].Start
-  )
+  self:Start( Scheduler, self.CallID )
   
   return self.CallID
 end
 
-function TIMER:RemoveSchedule( CallID )
-  self:F( CallID )
+function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
+  self:F( { Remove = CallID, Scheduler = Scheduler } )
 
-  local Schedule = self.ObjectSchedulers[CallID]
-    
-  if Schedule then
-    local ScheduleID = Schedule.ScheduleID
-    timer.removeFunction( ScheduleID )
-    ScheduleID = nil
-    Schedule = nil
+  if CallID then
+    self:Stop( Scheduler, CallID )
+    self.Schedule[Scheduler][CallID] = nil
   end
 end
 
+function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
+  self:F( { Start = CallID, Scheduler = Scheduler } )
+
+  if CallID then
+    local Schedule = self.Schedule[Scheduler]
+    Schedule[CallID].ScheduleID = timer.scheduleFunction( 
+      Schedule[CallID].CallHandler, 
+      CallID, 
+      timer.getTime() + Schedule[CallID].Start
+    )
+  else
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+      self:Start( Scheduler, CallID ) -- Recursive
+    end
+  end
+end
+
+function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
+  self:F( { Stop = CallID, Scheduler = Scheduler } )
+
+  if CallID then
+    local Schedule = self.Schedule[Scheduler]
+    timer.removeFunction( Schedule[CallID].ScheduleID )
+  else
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+      self:Stop( Scheduler, CallID ) -- Recursive
+    end
+  end
+end
 
 
 

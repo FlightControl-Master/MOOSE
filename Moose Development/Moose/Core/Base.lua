@@ -132,7 +132,7 @@ function BASE:_SetDestructor()
   -- TODO: Okay, this is really technical...
   -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
   -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-  --
+  --[[
   local proxy = newproxy(true)
   local proxyMeta = getmetatable(proxy)
 
@@ -147,7 +147,7 @@ function BASE:_SetDestructor()
   -- table is about to be garbage-collected - then the __gc hook
   -- will be invoked and the destructor called
   rawset( self, '__proxy', proxy )
-  --
+  --]]
 end
 
 --- This is the worker method to inherit from a parent class.

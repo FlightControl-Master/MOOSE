@@ -539,6 +539,7 @@ function TASK_BASE:RemoveStateMachine( TaskUnit )
 
   self.Fsm[TaskUnit] = nil
   collectgarbage()
+  self:T( "Garbage Collected, Processes should be finalized now ...")
 end
 
 --- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}

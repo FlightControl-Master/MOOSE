@@ -42,23 +42,18 @@ end
 
 do
 local Test1 = TEST_BASE:New( "Hello World Test 1" ) 
-collectgarbage()
 Test1 = nil
-collectgarbage()
 BASE:E( Test1 )
 end
-collectgarbage()
 
 local Test2 = TEST_BASE:New( "Hello World Test 2" ) 
-collectgarbage()
 BASE:E( Test2 )
 
 local Test3 = TEST_BASE:New( "Hello World Test 3" ) 
 Test3 = nil
+BASE:E( Test3 )
 
 collectgarbage()
-
-BASE:E( Test3 )
 
 BASE:E( "Collect Garbage executed." )
 BASE:E( "You should only see a Hello Worlld message for Test 2!" )
