@@ -973,10 +973,10 @@ function DETECTION_AREAS:CreateDetectionSets()
       end
     )
     if DETECTION_AREAS._FlareDetectedZones or self._FlareDetectedZones then
-      DetectedZone:FlareZone( POINT_VEC3.SmokeColor.White, 30, math.random( 0,90 ) )
+      DetectedZone:FlareZone( SMOKECOLOR.White, 30, math.random( 0,90 ) )
     end
     if DETECTION_AREAS._SmokeDetectedZones or self._SmokeDetectedZones then
-      DetectedZone:SmokeZone( POINT_VEC3.SmokeColor.White, 30 )
+      DetectedZone:SmokeZone( SMOKECOLOR.White, 30 )
     end
   end
 

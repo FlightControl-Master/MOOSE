@@ -59,7 +59,6 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 	self.MissionCoalition = MissionCoalition
 	
 	self.Tasks = {}
-	setmetatable( self.Tasks, { __mode = "v" } )
 
   -- Build the Fsm for the mission.
   
@@ -202,8 +201,9 @@ function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
   self:F( TaskName )
+
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
-  
+
   self.Tasks[TaskName] = Task
 
   return Task
@@ -221,8 +221,6 @@ function MISSION:RemoveTask( Task )
 
   self:F( TaskName )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
-
-  Task:CleanUp() -- Cleans all events and sets task to nil to get Garbage Collected
 
   -- Ensure everything gets garbarge collected.
   self.Tasks[TaskName] = nil 

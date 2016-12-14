@@ -85,18 +85,18 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases )
   self.Airbases = Airbases
 
   for AirbaseID, Airbase in pairs( self.Airbases ) do
-    Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary", Airbase.PointsBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+    Airbase.ZoneBoundary = ZONE_POLYGON_BASE:New( "Boundary", Airbase.PointsBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
     for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
-      Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+      Airbase.ZoneRunways[PointsRunwayID] = ZONE_POLYGON_BASE:New( "Runway " .. PointsRunwayID, PointsRunway ):SmokeZone(SMOKECOLOR.Red):Flush()
       end
   end
 
 --    -- Template
 --    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
---    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
 --  
 --    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
---    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
@@ -749,197 +749,197 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
 
   --    -- AnapaVityazevo
   --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
-  --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.AnapaVityazevo.ZoneBoundary = ZONE_POLYGON:New( "AnapaVityazevo Boundary", AnapaVityazevoBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --  
   --    local AnapaVityazevoRunway1 = GROUP:FindByName( "AnapaVityazevo Runway 1" )
-  --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.AnapaVityazevo.ZoneRunways[1] = ZONE_POLYGON:New( "AnapaVityazevo Runway 1", AnapaVityazevoRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --  
   --
   --
   --    -- Batumi
   --    local BatumiBoundary = GROUP:FindByName( "Batumi Boundary" )
-  --    self.Airbases.Batumi.ZoneBoundary = ZONE_POLYGON:New( "Batumi Boundary", BatumiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Batumi.ZoneBoundary = ZONE_POLYGON:New( "Batumi Boundary", BatumiBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local BatumiRunway1 = GROUP:FindByName( "Batumi Runway 1" )
-  --    self.Airbases.Batumi.ZoneRunways[1] = ZONE_POLYGON:New( "Batumi Runway 1", BatumiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Batumi.ZoneRunways[1] = ZONE_POLYGON:New( "Batumi Runway 1", BatumiRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Beslan
   --    local BeslanBoundary = GROUP:FindByName( "Beslan Boundary" )
-  --    self.Airbases.Beslan.ZoneBoundary = ZONE_POLYGON:New( "Beslan Boundary", BeslanBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Beslan.ZoneBoundary = ZONE_POLYGON:New( "Beslan Boundary", BeslanBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local BeslanRunway1 = GROUP:FindByName( "Beslan Runway 1" )
-  --    self.Airbases.Beslan.ZoneRunways[1] = ZONE_POLYGON:New( "Beslan Runway 1", BeslanRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Beslan.ZoneRunways[1] = ZONE_POLYGON:New( "Beslan Runway 1", BeslanRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Gelendzhik
   --    local GelendzhikBoundary = GROUP:FindByName( "Gelendzhik Boundary" )
-  --    self.Airbases.Gelendzhik.ZoneBoundary = ZONE_POLYGON:New( "Gelendzhik Boundary", GelendzhikBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Gelendzhik.ZoneBoundary = ZONE_POLYGON:New( "Gelendzhik Boundary", GelendzhikBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local GelendzhikRunway1 = GROUP:FindByName( "Gelendzhik Runway 1" )
-  --    self.Airbases.Gelendzhik.ZoneRunways[1] = ZONE_POLYGON:New( "Gelendzhik Runway 1", GelendzhikRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Gelendzhik.ZoneRunways[1] = ZONE_POLYGON:New( "Gelendzhik Runway 1", GelendzhikRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Gudauta
   --    local GudautaBoundary = GROUP:FindByName( "Gudauta Boundary" )
-  --    self.Airbases.Gudauta.ZoneBoundary = ZONE_POLYGON:New( "Gudauta Boundary", GudautaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Gudauta.ZoneBoundary = ZONE_POLYGON:New( "Gudauta Boundary", GudautaBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local GudautaRunway1 = GROUP:FindByName( "Gudauta Runway 1" )
-  --    self.Airbases.Gudauta.ZoneRunways[1] = ZONE_POLYGON:New( "Gudauta Runway 1", GudautaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Gudauta.ZoneRunways[1] = ZONE_POLYGON:New( "Gudauta Runway 1", GudautaRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Kobuleti
   --    local KobuletiBoundary = GROUP:FindByName( "Kobuleti Boundary" )
-  --    self.Airbases.Kobuleti.ZoneBoundary = ZONE_POLYGON:New( "Kobuleti Boundary", KobuletiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Kobuleti.ZoneBoundary = ZONE_POLYGON:New( "Kobuleti Boundary", KobuletiBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local KobuletiRunway1 = GROUP:FindByName( "Kobuleti Runway 1" )
-  --    self.Airbases.Kobuleti.ZoneRunways[1] = ZONE_POLYGON:New( "Kobuleti Runway 1", KobuletiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Kobuleti.ZoneRunways[1] = ZONE_POLYGON:New( "Kobuleti Runway 1", KobuletiRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- KrasnodarCenter
   --    local KrasnodarCenterBoundary = GROUP:FindByName( "KrasnodarCenter Boundary" )
-  --    self.Airbases.KrasnodarCenter.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarCenter Boundary", KrasnodarCenterBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.KrasnodarCenter.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarCenter Boundary", KrasnodarCenterBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local KrasnodarCenterRunway1 = GROUP:FindByName( "KrasnodarCenter Runway 1" )
-  --    self.Airbases.KrasnodarCenter.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarCenter Runway 1", KrasnodarCenterRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.KrasnodarCenter.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarCenter Runway 1", KrasnodarCenterRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- KrasnodarPashkovsky
   --    local KrasnodarPashkovskyBoundary = GROUP:FindByName( "KrasnodarPashkovsky Boundary" )
-  --    self.Airbases.KrasnodarPashkovsky.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarPashkovsky Boundary", KrasnodarPashkovskyBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.KrasnodarPashkovsky.ZoneBoundary = ZONE_POLYGON:New( "KrasnodarPashkovsky Boundary", KrasnodarPashkovskyBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local KrasnodarPashkovskyRunway1 = GROUP:FindByName( "KrasnodarPashkovsky Runway 1" )
-  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 1", KrasnodarPashkovskyRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[1] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 1", KrasnodarPashkovskyRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --    local KrasnodarPashkovskyRunway2 = GROUP:FindByName( "KrasnodarPashkovsky Runway 2" )
-  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[2] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 2", KrasnodarPashkovskyRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.KrasnodarPashkovsky.ZoneRunways[2] = ZONE_POLYGON:New( "KrasnodarPashkovsky Runway 2", KrasnodarPashkovskyRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Krymsk
   --    local KrymskBoundary = GROUP:FindByName( "Krymsk Boundary" )
-  --    self.Airbases.Krymsk.ZoneBoundary = ZONE_POLYGON:New( "Krymsk Boundary", KrymskBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Krymsk.ZoneBoundary = ZONE_POLYGON:New( "Krymsk Boundary", KrymskBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local KrymskRunway1 = GROUP:FindByName( "Krymsk Runway 1" )
-  --    self.Airbases.Krymsk.ZoneRunways[1] = ZONE_POLYGON:New( "Krymsk Runway 1", KrymskRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Krymsk.ZoneRunways[1] = ZONE_POLYGON:New( "Krymsk Runway 1", KrymskRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Kutaisi
   --    local KutaisiBoundary = GROUP:FindByName( "Kutaisi Boundary" )
-  --    self.Airbases.Kutaisi.ZoneBoundary = ZONE_POLYGON:New( "Kutaisi Boundary", KutaisiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Kutaisi.ZoneBoundary = ZONE_POLYGON:New( "Kutaisi Boundary", KutaisiBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local KutaisiRunway1 = GROUP:FindByName( "Kutaisi Runway 1" )
-  --    self.Airbases.Kutaisi.ZoneRunways[1] = ZONE_POLYGON:New( "Kutaisi Runway 1", KutaisiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Kutaisi.ZoneRunways[1] = ZONE_POLYGON:New( "Kutaisi Runway 1", KutaisiRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- MaykopKhanskaya
   --    local MaykopKhanskayaBoundary = GROUP:FindByName( "MaykopKhanskaya Boundary" )
-  --    self.Airbases.MaykopKhanskaya.ZoneBoundary = ZONE_POLYGON:New( "MaykopKhanskaya Boundary", MaykopKhanskayaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.MaykopKhanskaya.ZoneBoundary = ZONE_POLYGON:New( "MaykopKhanskaya Boundary", MaykopKhanskayaBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local MaykopKhanskayaRunway1 = GROUP:FindByName( "MaykopKhanskaya Runway 1" )
-  --    self.Airbases.MaykopKhanskaya.ZoneRunways[1] = ZONE_POLYGON:New( "MaykopKhanskaya Runway 1", MaykopKhanskayaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.MaykopKhanskaya.ZoneRunways[1] = ZONE_POLYGON:New( "MaykopKhanskaya Runway 1", MaykopKhanskayaRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- MineralnyeVody
   --    local MineralnyeVodyBoundary = GROUP:FindByName( "MineralnyeVody Boundary" )
-  --    self.Airbases.MineralnyeVody.ZoneBoundary = ZONE_POLYGON:New( "MineralnyeVody Boundary", MineralnyeVodyBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.MineralnyeVody.ZoneBoundary = ZONE_POLYGON:New( "MineralnyeVody Boundary", MineralnyeVodyBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local MineralnyeVodyRunway1 = GROUP:FindByName( "MineralnyeVody Runway 1" )
-  --    self.Airbases.MineralnyeVody.ZoneRunways[1] = ZONE_POLYGON:New( "MineralnyeVody Runway 1", MineralnyeVodyRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.MineralnyeVody.ZoneRunways[1] = ZONE_POLYGON:New( "MineralnyeVody Runway 1", MineralnyeVodyRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Mozdok
   --    local MozdokBoundary = GROUP:FindByName( "Mozdok Boundary" )
-  --    self.Airbases.Mozdok.ZoneBoundary = ZONE_POLYGON:New( "Mozdok Boundary", MozdokBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Mozdok.ZoneBoundary = ZONE_POLYGON:New( "Mozdok Boundary", MozdokBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local MozdokRunway1 = GROUP:FindByName( "Mozdok Runway 1" )
-  --    self.Airbases.Mozdok.ZoneRunways[1] = ZONE_POLYGON:New( "Mozdok Runway 1", MozdokRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Mozdok.ZoneRunways[1] = ZONE_POLYGON:New( "Mozdok Runway 1", MozdokRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Nalchik
   --    local NalchikBoundary = GROUP:FindByName( "Nalchik Boundary" )
-  --    self.Airbases.Nalchik.ZoneBoundary = ZONE_POLYGON:New( "Nalchik Boundary", NalchikBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Nalchik.ZoneBoundary = ZONE_POLYGON:New( "Nalchik Boundary", NalchikBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local NalchikRunway1 = GROUP:FindByName( "Nalchik Runway 1" )
-  --    self.Airbases.Nalchik.ZoneRunways[1] = ZONE_POLYGON:New( "Nalchik Runway 1", NalchikRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Nalchik.ZoneRunways[1] = ZONE_POLYGON:New( "Nalchik Runway 1", NalchikRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Novorossiysk
   --    local NovorossiyskBoundary = GROUP:FindByName( "Novorossiysk Boundary" )
-  --    self.Airbases.Novorossiysk.ZoneBoundary = ZONE_POLYGON:New( "Novorossiysk Boundary", NovorossiyskBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Novorossiysk.ZoneBoundary = ZONE_POLYGON:New( "Novorossiysk Boundary", NovorossiyskBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local NovorossiyskRunway1 = GROUP:FindByName( "Novorossiysk Runway 1" )
-  --    self.Airbases.Novorossiysk.ZoneRunways[1] = ZONE_POLYGON:New( "Novorossiysk Runway 1", NovorossiyskRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Novorossiysk.ZoneRunways[1] = ZONE_POLYGON:New( "Novorossiysk Runway 1", NovorossiyskRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- SenakiKolkhi
   --    local SenakiKolkhiBoundary = GROUP:FindByName( "SenakiKolkhi Boundary" )
-  --    self.Airbases.SenakiKolkhi.ZoneBoundary = ZONE_POLYGON:New( "SenakiKolkhi Boundary", SenakiKolkhiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.SenakiKolkhi.ZoneBoundary = ZONE_POLYGON:New( "SenakiKolkhi Boundary", SenakiKolkhiBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local SenakiKolkhiRunway1 = GROUP:FindByName( "SenakiKolkhi Runway 1" )
-  --    self.Airbases.SenakiKolkhi.ZoneRunways[1] = ZONE_POLYGON:New( "SenakiKolkhi Runway 1", SenakiKolkhiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.SenakiKolkhi.ZoneRunways[1] = ZONE_POLYGON:New( "SenakiKolkhi Runway 1", SenakiKolkhiRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- SochiAdler
   --    local SochiAdlerBoundary = GROUP:FindByName( "SochiAdler Boundary" )
-  --    self.Airbases.SochiAdler.ZoneBoundary = ZONE_POLYGON:New( "SochiAdler Boundary", SochiAdlerBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.SochiAdler.ZoneBoundary = ZONE_POLYGON:New( "SochiAdler Boundary", SochiAdlerBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local SochiAdlerRunway1 = GROUP:FindByName( "SochiAdler Runway 1" )
-  --    self.Airbases.SochiAdler.ZoneRunways[1] = ZONE_POLYGON:New( "SochiAdler Runway 1", SochiAdlerRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.SochiAdler.ZoneRunways[1] = ZONE_POLYGON:New( "SochiAdler Runway 1", SochiAdlerRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --    local SochiAdlerRunway2 = GROUP:FindByName( "SochiAdler Runway 2" )
-  --    self.Airbases.SochiAdler.ZoneRunways[2] = ZONE_POLYGON:New( "SochiAdler Runway 2", SochiAdlerRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.SochiAdler.ZoneRunways[2] = ZONE_POLYGON:New( "SochiAdler Runway 2", SochiAdlerRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Soganlug
   --    local SoganlugBoundary = GROUP:FindByName( "Soganlug Boundary" )
-  --    self.Airbases.Soganlug.ZoneBoundary = ZONE_POLYGON:New( "Soganlug Boundary", SoganlugBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Soganlug.ZoneBoundary = ZONE_POLYGON:New( "Soganlug Boundary", SoganlugBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local SoganlugRunway1 = GROUP:FindByName( "Soganlug Runway 1" )
-  --    self.Airbases.Soganlug.ZoneRunways[1] = ZONE_POLYGON:New( "Soganlug Runway 1", SoganlugRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Soganlug.ZoneRunways[1] = ZONE_POLYGON:New( "Soganlug Runway 1", SoganlugRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- SukhumiBabushara
   --    local SukhumiBabusharaBoundary = GROUP:FindByName( "SukhumiBabushara Boundary" )
-  --    self.Airbases.SukhumiBabushara.ZoneBoundary = ZONE_POLYGON:New( "SukhumiBabushara Boundary", SukhumiBabusharaBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.SukhumiBabushara.ZoneBoundary = ZONE_POLYGON:New( "SukhumiBabushara Boundary", SukhumiBabusharaBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local SukhumiBabusharaRunway1 = GROUP:FindByName( "SukhumiBabushara Runway 1" )
-  --    self.Airbases.SukhumiBabushara.ZoneRunways[1] = ZONE_POLYGON:New( "SukhumiBabushara Runway 1", SukhumiBabusharaRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.SukhumiBabushara.ZoneRunways[1] = ZONE_POLYGON:New( "SukhumiBabushara Runway 1", SukhumiBabusharaRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- TbilisiLochini
   --    local TbilisiLochiniBoundary = GROUP:FindByName( "TbilisiLochini Boundary" )
-  --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.TbilisiLochini.ZoneBoundary = ZONE_POLYGON:New( "TbilisiLochini Boundary", TbilisiLochiniBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --  
   --    local TbilisiLochiniRunway1 = GROUP:FindByName( "TbilisiLochini Runway 1" )
-  --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.TbilisiLochini.ZoneRunways[1] = ZONE_POLYGON:New( "TbilisiLochini Runway 1", TbilisiLochiniRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --      
   --    local TbilisiLochiniRunway2 = GROUP:FindByName( "TbilisiLochini Runway 2" )
-  --    self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.TbilisiLochini.ZoneRunways[2] = ZONE_POLYGON:New( "TbilisiLochini Runway 2", TbilisiLochiniRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
   --    -- Vaziani
   --    local VazianiBoundary = GROUP:FindByName( "Vaziani Boundary" )
-  --    self.Airbases.Vaziani.ZoneBoundary = ZONE_POLYGON:New( "Vaziani Boundary", VazianiBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Vaziani.ZoneBoundary = ZONE_POLYGON:New( "Vaziani Boundary", VazianiBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --
   --    local VazianiRunway1 = GROUP:FindByName( "Vaziani Runway 1" )
-  --    self.Airbases.Vaziani.ZoneRunways[1] = ZONE_POLYGON:New( "Vaziani Runway 1", VazianiRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Vaziani.ZoneRunways[1] = ZONE_POLYGON:New( "Vaziani Runway 1", VazianiRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   --
   --
   --
@@ -947,10 +947,10 @@ function AIRBASEPOLICE_CAUCASUS:New( SetClient )
 
         -- Template
   --    local TemplateBoundary = GROUP:FindByName( "Template Boundary" )
-  --    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+  --    self.Airbases.Template.ZoneBoundary = ZONE_POLYGON:New( "Template Boundary", TemplateBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
   --  
   --    local TemplateRunway1 = GROUP:FindByName( "Template Runway 1" )
-  --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+  --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 
   return self
 
@@ -1143,49 +1143,49 @@ function AIRBASEPOLICE_NEVADA:New( SetClient )
 
 --  -- Nellis
 --  local NellisBoundary = GROUP:FindByName( "Nellis Boundary" )
---  self.Airbases.Nellis.ZoneBoundary = ZONE_POLYGON:New( "Nellis Boundary", NellisBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  self.Airbases.Nellis.ZoneBoundary = ZONE_POLYGON:New( "Nellis Boundary", NellisBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
 --
 --  local NellisRunway1 = GROUP:FindByName( "Nellis Runway 1" )
---  self.Airbases.Nellis.ZoneRunways[1] = ZONE_POLYGON:New( "Nellis Runway 1", NellisRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.Nellis.ZoneRunways[1] = ZONE_POLYGON:New( "Nellis Runway 1", NellisRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local NellisRunway2 = GROUP:FindByName( "Nellis Runway 2" )
---  self.Airbases.Nellis.ZoneRunways[2] = ZONE_POLYGON:New( "Nellis Runway 2", NellisRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.Nellis.ZoneRunways[2] = ZONE_POLYGON:New( "Nellis Runway 2", NellisRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  -- McCarran
 --  local McCarranBoundary = GROUP:FindByName( "McCarran Boundary" )
---  self.Airbases.McCarran.ZoneBoundary = ZONE_POLYGON:New( "McCarran Boundary", McCarranBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  self.Airbases.McCarran.ZoneBoundary = ZONE_POLYGON:New( "McCarran Boundary", McCarranBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
 --
 --  local McCarranRunway1 = GROUP:FindByName( "McCarran Runway 1" )
---  self.Airbases.McCarran.ZoneRunways[1] = ZONE_POLYGON:New( "McCarran Runway 1", McCarranRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.McCarran.ZoneRunways[1] = ZONE_POLYGON:New( "McCarran Runway 1", McCarranRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local McCarranRunway2 = GROUP:FindByName( "McCarran Runway 2" )
---  self.Airbases.McCarran.ZoneRunways[2] = ZONE_POLYGON:New( "McCarran Runway 2", McCarranRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.McCarran.ZoneRunways[2] = ZONE_POLYGON:New( "McCarran Runway 2", McCarranRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local McCarranRunway3 = GROUP:FindByName( "McCarran Runway 3" )
---  self.Airbases.McCarran.ZoneRunways[3] = ZONE_POLYGON:New( "McCarran Runway 3", McCarranRunway3 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.McCarran.ZoneRunways[3] = ZONE_POLYGON:New( "McCarran Runway 3", McCarranRunway3 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local McCarranRunway4 = GROUP:FindByName( "McCarran Runway 4" )
---  self.Airbases.McCarran.ZoneRunways[4] = ZONE_POLYGON:New( "McCarran Runway 4", McCarranRunway4 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.McCarran.ZoneRunways[4] = ZONE_POLYGON:New( "McCarran Runway 4", McCarranRunway4 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  -- Creech
 --  local CreechBoundary = GROUP:FindByName( "Creech Boundary" )
---  self.Airbases.Creech.ZoneBoundary = ZONE_POLYGON:New( "Creech Boundary", CreechBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  self.Airbases.Creech.ZoneBoundary = ZONE_POLYGON:New( "Creech Boundary", CreechBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
 --
 --  local CreechRunway1 = GROUP:FindByName( "Creech Runway 1" )
---  self.Airbases.Creech.ZoneRunways[1] = ZONE_POLYGON:New( "Creech Runway 1", CreechRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.Creech.ZoneRunways[1] = ZONE_POLYGON:New( "Creech Runway 1", CreechRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local CreechRunway2 = GROUP:FindByName( "Creech Runway 2" )
---  self.Airbases.Creech.ZoneRunways[2] = ZONE_POLYGON:New( "Creech Runway 2", CreechRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.Creech.ZoneRunways[2] = ZONE_POLYGON:New( "Creech Runway 2", CreechRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  -- Groom Lake
 --  local GroomLakeBoundary = GROUP:FindByName( "GroomLake Boundary" )
---  self.Airbases.GroomLake.ZoneBoundary = ZONE_POLYGON:New( "GroomLake Boundary", GroomLakeBoundary ):SmokeZone(POINT_VEC3.SmokeColor.White):Flush()
+--  self.Airbases.GroomLake.ZoneBoundary = ZONE_POLYGON:New( "GroomLake Boundary", GroomLakeBoundary ):SmokeZone(SMOKECOLOR.White):Flush()
 --
 --  local GroomLakeRunway1 = GROUP:FindByName( "GroomLake Runway 1" )
---  self.Airbases.GroomLake.ZoneRunways[1] = ZONE_POLYGON:New( "GroomLake Runway 1", GroomLakeRunway1 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.GroomLake.ZoneRunways[1] = ZONE_POLYGON:New( "GroomLake Runway 1", GroomLakeRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 --
 --  local GroomLakeRunway2 = GROUP:FindByName( "GroomLake Runway 2" )
---  self.Airbases.GroomLake.ZoneRunways[2] = ZONE_POLYGON:New( "GroomLake Runway 2", GroomLakeRunway2 ):SmokeZone(POINT_VEC3.SmokeColor.Red):Flush()
+--  self.Airbases.GroomLake.ZoneRunways[2] = ZONE_POLYGON:New( "GroomLake Runway 2", GroomLakeRunway2 ):SmokeZone(SMOKECOLOR.Red):Flush()
 
 end
 

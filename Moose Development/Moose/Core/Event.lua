@@ -1,6 +1,19 @@
---- The EVENT class models an efficient event handling process between other classes and its units, weapons.
+--- This module contains the EVENT class.
+-- 
+-- ===
+-- 
+-- Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.
+-- 
+-- ===
+-- 
+-- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
+-- 
+-- ===
+-- 
+-- ### Contributions: -
+-- ### Authors: FlightControl : Design & Programming
+-- 
 -- @module Event
--- @author FlightControl
 
 --- The EVENT structure
 -- @type EVENT
@@ -87,16 +100,13 @@ function EVENT:Init( EventID, EventClass )
   self:F3( { _EVENTCODES[EventID], EventClass } )
 
   if not self.Events[EventID] then 
-    self.Events[EventID] = {}
-
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
-    local Meta = {}
-    setmetatable( self.Events[EventID], Meta )
-    Meta.__mode = "k"
+    self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
+
   end
 
   if not self.Events[EventID][EventClass] then
-     self.Events[EventID][EventClass] = {}
+     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
   end
   return self.Events[EventID][EventClass]
 end
@@ -716,7 +726,7 @@ function EVENT:onEvent( Event )
       Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
       if not Event.IniUnit then
         -- Unit can be a CLIENT. Most likely this will be the case ...
-        Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName )
+        Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
       end
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
