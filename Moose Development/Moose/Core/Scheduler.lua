@@ -54,23 +54,23 @@ SCHEDULER = {
 
 --- SCHEDULER constructor.
 -- @param #SCHEDULER self
--- @param #table TimeEventObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
--- @param #function TimeEventFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.
--- @param #table TimeEventFunctionArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
--- @param #number StartSeconds Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number RepeatSecondsInterval Specifies the interval in seconds when the scheduler will call the event function.
--- @param #number RandomizationFactor Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.
--- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
+-- @param #table SchedulerObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+-- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+-- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+-- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+-- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
+-- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
+-- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #SCHEDULER self
 -- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:New( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   local self = BASE:Inherit( self, BASE:New() )
-  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
+  self:F2( { Start, Repeat, RandomizeFactor, Stop } )
 
   local ScheduleID = nil
   
-  if TimeEventFunction then
-    ScheduleID = self:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
+  if SchedulerFunction then
+    ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   end
 
   return self, ScheduleID
@@ -84,29 +84,29 @@ end
 
 --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
 -- @param #SCHEDULER self
--- @param #table TimeEventObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
--- @param #function TimeEventFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.
--- @param #table TimeEventFunctionArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
--- @param #number StartSeconds Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number RepeatSecondsInterval Specifies the interval in seconds when the scheduler will call the event function.
--- @param #number RandomizationFactor Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.
--- @param #number StopSeconds Specifies the amount of seconds when the scheduler will be stopped.
+-- @param #table SchedulerObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
+-- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+-- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+-- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+-- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
+-- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
+-- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
 -- @return #number The ScheduleID of the planned schedule.
-function SCHEDULER:Schedule( TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds )
-  self:F2( { StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds } )
-  self:T3( { TimeEventFunctionArguments } )
+function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
+  self:F2( { Start, Repeat, RandomizeFactor, Stop } )
+  self:T3( { SchedulerArguments } )
 
 
-  self.TimeEventObject = TimeEventObject
+  self.SchedulerObject = SchedulerObject
   
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
     self, 
-    TimeEventFunction,
-    TimeEventFunctionArguments,
-    StartSeconds,
-    RepeatSecondsInterval,
-    RandomizationFactor,
-    StopSeconds
+    SchedulerFunction,
+    SchedulerArguments,
+    Start,
+    Repeat,
+    RandomizeFactor,
+    Stop
   )
   
   self.Schedules[#self.Schedules+1] = ScheduleID

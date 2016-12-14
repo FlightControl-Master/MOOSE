@@ -66,7 +66,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
   
-  if Scheduler.TimeEventObject then
+  if Scheduler.SchedulerObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
     self:T3( { self.CallID, self.ObjectSchedulers[self.CallID] } )
   else
@@ -111,8 +111,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       
       self:T( { Schedule = Schedule } )
 
-      local ScheduleObject = Scheduler.TimeEventObject
-      --local ScheduleObjectName = Scheduler.TimeEventObject:GetNameAndClassID()
+      local ScheduleObject = Scheduler.SchedulerObject
+      --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
       local ScheduleFunction = Schedule.Function
       local ScheduleArguments = Schedule.Arguments
       local Start = Schedule.Start
