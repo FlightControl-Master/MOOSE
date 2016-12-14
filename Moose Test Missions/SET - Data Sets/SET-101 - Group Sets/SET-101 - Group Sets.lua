@@ -121,9 +121,9 @@ GroupZoneCompletely = GROUP:FindByName( "Zone Completely" )
 GroupZonePartly = GROUP:FindByName( "Zone Partly" )
 GroupZoneNot = GROUP:FindByName( "Zone Not" )
 
-ZoneCompletely = ZONE_POLYGON:New( "Zone Completely", GroupZoneCompletely ):SmokeZone( POINT_VEC3.SmokeColor.White )
-ZonePartly = ZONE_POLYGON:New( "Zone Partly", GroupZonePartly ):SmokeZone( POINT_VEC3.SmokeColor.White )
-ZoneNot = ZONE_POLYGON:New( "Zone Not", GroupZoneNot ):SmokeZone( POINT_VEC3.SmokeColor.White )
+ZoneCompletely = ZONE_POLYGON:New( "Zone Completely", GroupZoneCompletely ):SmokeZone( SMOKECOLOR.White )
+ZonePartly = ZONE_POLYGON:New( "Zone Partly", GroupZonePartly ):SmokeZone( SMOKECOLOR.White )
+ZoneNot = ZONE_POLYGON:New( "Zone Not", GroupZoneNot ):SmokeZone( SMOKECOLOR.White )
 
 SetVehicleCompletely:ForEachGroupCompletelyInZone( ZoneCompletely,
   --- @param Wrapper.Group#GROUP MooseGroup

@@ -55,6 +55,8 @@
 -- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
 -- @field Fsm.Fsm#FSM_PROCESS FsmTemplate
+-- @field Tasking.Mission#MISSION Mission
+-- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
 -- @extends Fsm.Fsm#FSM_TASK
 TASK_BASE = {
   ClassName = "TASK_BASE",
@@ -66,6 +68,8 @@ TASK_BASE = {
   Menu = {},
   SetGroup = nil,
   FsmTemplate = nil,
+  Mission = nil,
+  CommandCenter = nil,
 }
 
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
@@ -81,6 +85,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
+  self:AddTransition( "Assigned", "AssignUnit", "Assigned" )
   self:AddTransition( "Assigned", "Success", "Success" )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
@@ -93,6 +98,7 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.Fsm = {}
 
   self.Mission = Mission
+  self.CommandCenter = Mission:GetCommandCenter()
   
   self.SetGroup = SetGroupAssign
 
@@ -105,20 +111,23 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
 
   -- Handle the birth of new planes within the assigned set.
+  
   self:EventOnPlayerEnterUnit(
     --- @param #TASK_BASE self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
-      self:E( "In EnterUnit" )
+      self:E( EventData )
       self:E( { "State", self:GetState() } )
+      local TaskUnit = EventData.IniUnit
+      local TaskGroup = EventData.IniUnit:GetGroup()
+      self:SetMenuForGroup(TaskGroup)
       if self:IsStateAssigned() then
-        local TaskUnit = EventData.IniUnit
-        local TaskGroup = EventData.IniUnit:GetGroup()
-        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
-        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+        self:E( self:IsAssignedToGroup( TaskGroup ) )
+        if self:IsAssignedToGroup( TaskGroup ) then
           self:AssignToUnit( TaskUnit )
         end
       end
+      self:MessageToGroups( TaskUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
     end
   )
 
@@ -134,10 +143,12 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
       if self:IsStateAssigned() then
         local TaskUnit = EventData.IniUnit
         local TaskGroup = EventData.IniUnit:GetGroup()
-        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
-        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+        self:E( self:IsAssignedToGroup( TaskGroup ) )
+        if self:IsAssignedToGroup( TaskGroup ) then
           self:UnAssignFromUnit( TaskUnit )
+          self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
         end
+        self:__Abort( 1 )
       end
     end
   )
@@ -158,9 +169,11 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
         if self.SetGroup:IsIncludeObject( TaskGroup ) then
           self:UnAssignFromUnit( TaskUnit )
         end
+        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
       end
     end
   )
+  
   
   Mission:AddTask( self )
   
@@ -250,14 +263,6 @@ function TASK_BASE:AssignToUnit( TaskUnit )
   local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
-  -- Set the events
-  FsmUnit:EventOnPilotDead( 
-    --- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      self:__Fail( 1 )
-    end
-    )
-
   FsmUnit:SetStartState( "Planned" )
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
 
@@ -276,7 +281,18 @@ function TASK_BASE:UnAssignFromUnit( TaskUnit )
   return self
 end
 
+--- Send a message of the @{Task} to the assigned @{Group}s.
+-- @param #TASK_BASE self
+function TASK_BASE:MessageToGroups( Message )
+  self:F( { Message = Message } )
 
+  local Mission = self:GetMission()
+  local CC = Mission:GetCommandCenter()
+  
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    CC:MessageToGroup( Message, TaskGroup )
+  end
+end
 
 --- Send the briefng message of the @{Task} to the assigned @{Group}s.
 -- @param #TASK_BASE self
@@ -328,6 +344,29 @@ function TASK_BASE:IsAssignedToGroup( TaskGroup )
     end
   end
   
+  return false
+end
+
+--- Returns if the @{Task} has still alive and assigned Units.
+-- @param #TASK_BASE self
+-- @return #boolean
+function TASK_BASE:HasAliveUnits()
+  self:F()
+  
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    if self:IsStateAssigned() then
+      if self:IsAssignedToGroup( TaskGroup ) then
+        for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
+          if TaskUnit:IsAlive() then
+            self:T( { HasAliveUnits = true } )
+            return true
+          end
+        end
+      end
+    end
+  end
+  
+  self:T( { HasAliveUnits = true } )
   return false
 end
 
@@ -500,6 +539,7 @@ function TASK_BASE:RemoveStateMachine( TaskUnit )
 
   self.Fsm[TaskUnit] = nil
   collectgarbage()
+  self:T( "Garbage Collected, Processes should be finalized now ...")
 end
 
 --- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}
@@ -752,22 +792,27 @@ function TASK_BASE:SetBriefing( TaskBriefing )
   return self
 end
 
+--- StateMachine callback function for a TASK
+-- @param #TASK_BASE self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Core.Event#EVENTDATA Event
+function TASK_BASE:onbeforeAbort( Event, From, To )
 
+  self:E("Abort")
 
---- Adds a score for the TASK to be achieved.
--- @param #FSM_TEMPLATE self
--- @param #string TaskStatus is the status of the TASK when the score needs to be given.
--- @param #string ScoreText is a text describing the score that is given according the status.
--- @param #number Score is a number providing the score of the status.
--- @return #FSM_TEMPLATE self
-function TASK_BASE:AddScoreTask( TaskStatus, ScoreText, Score )
-  self:F2( { TaskStatus, ScoreText, Score } )
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    if self:HasAliveUnits() then
+      return false
+    end
+  end
 
-  self.Scores[TaskStatus] = self.Scores[TaskStatus] or {}
-  self.Scores[TaskStatus].ScoreText = ScoreText
-  self.Scores[TaskStatus].Score = Score
-  return self
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
+  
+  return true
 end
+
 
 
 --- StateMachine callback function for a TASK

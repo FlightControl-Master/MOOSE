@@ -62,7 +62,7 @@
 -- @field #number x The x coordinate in 3D space.
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
--- @field #POINT_VEC3.SmokeColor SmokeColor
+-- @field Utilities.Utils#SMOKECOLOR SmokeColor
 -- @field Utilities.Utils#FLARECOLOR FlareColor
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType

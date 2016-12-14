@@ -75,39 +75,10 @@
 --- The UNIT class
 -- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE
--- @field #UNIT.FlareColor FlareColor
--- @field #UNIT.SmokeColor SmokeColor
 UNIT = {
 	ClassName="UNIT",
-  FlareColor = {
-    Green = trigger.flareColor.Green,
-    Red = trigger.flareColor.Red,
-    White = trigger.flareColor.White,
-    Yellow = trigger.flareColor.Yellow
-    },
-  SmokeColor = {
-    Green = trigger.smokeColor.Green,
-    Red = trigger.smokeColor.Red,
-    White = trigger.smokeColor.White,
-    Orange = trigger.smokeColor.Orange,
-    Blue = trigger.smokeColor.Blue
-    },
-	}
+}
 
---- FlareColor
--- @type UNIT.FlareColor
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
-
---- SmokeColor
--- @type UNIT.SmokeColor
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
 
 --- Unit.SensorType
 -- @type Unit.SensorType
@@ -655,6 +626,7 @@ end
 
 --- Signal a flare at the position of the UNIT.
 -- @param #UNIT self
+-- @param Utilities.Utils#FLARECOLOR FlareColor
 function UNIT:Flare( FlareColor )
   self:F2()
   trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )

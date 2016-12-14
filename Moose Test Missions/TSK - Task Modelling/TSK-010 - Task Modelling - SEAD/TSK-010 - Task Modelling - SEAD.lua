@@ -1,3 +1,4 @@
+
 -- This test mission is a test bed for the TASKING framework.
 -- It creates an head quarters (HQ), which contains one mission with one task to be accomplished.
 -- When the pilot joins the plane, it will need to accept the task using the HQ menu.
@@ -30,6 +31,7 @@ Mission:AddScoring( Scoring )
 
 -- Define the set of group of planes that can be assigned to the Mission object.
 local SEADSet = SET_GROUP:New():FilterPrefixes( "Test SEAD"):FilterStart()
+SEADSet:Flush()
 
 -- Define the set of units that are the targets.
 -- Note that I use FilterOnce, which means that the set will be defined only once,
@@ -102,8 +104,27 @@ FsmSEADTemplate:AddScoreProcess( "Updated", "Account", "Failed", "failed to dest
 FsmSEADTemplate:AddScore( "Success", "Destroyed all target radars", 250 )
 FsmSEADTemplate:AddScore( "Failed", "Failed to destroy all target radars", -100 )
 
-
-
+--local TestTask = TASK_BASE:New( Mission, SEADSet, "TEST TASK", "TEST" )
+--TestTask:E("Clean TestTask")
+--TestTask = nil
+--collectgarbage()
+--
+--local TestUnit = GROUP:FindByName( "HQ" ):GetUnit(1)
+--
+--local fsm = FSM_PROCESS:New( TestUnit, TaskSEAD )
+--
+--fsm:AddProcess("test","test",FSM_ACCOUNT_DEADS:New( TargetSet, "SEAD" ))
+--
+----Mission:AddTask(fsm)
+--
+--fsm:E("CLEAN fsm")
+--fsm = nil
+--collectgarbage()
+--
+--
+--TaskSEAD:E("CLEAN TASK")
+--TaskSEAD = nil
+--collectgarbage()
 
 function FsmSEADTemplate:onenterUpdated( TaskUnit )
   self:E( { self } )
@@ -114,7 +135,13 @@ end
 
 local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
 TaskSEAD2:SetFsmTemplate( TaskSEAD:GetFsmTemplate():Copy() )
---Mission:AddTask( TaskSEAD2 )
+Mission:AddTask( TaskSEAD2 )
 
+Mission:RemoveTask(TaskSEAD)
+
+TaskSEAD = nil
+FsmSEADTemplate = nil
 
 HQ:SetMenu()
+
+collectgarbage()

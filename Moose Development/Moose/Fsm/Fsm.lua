@@ -58,6 +58,8 @@ do -- FSM
     self._EndStates = {}
     self._Scores = {}
     
+    self.CallScheduler = SCHEDULER:New( self )
+    
   
     return self
   end
@@ -313,7 +315,8 @@ do -- FSM
     self:E( { EventName = EventName } )
     return function( self, DelaySeconds, ... )
       self:T( "Delayed Event: " .. EventName )
-      SCHEDULER:New( self, self._handler, { EventName, ... }, DelaySeconds )
+      local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      self:T( { CallID = CallID } )
     end
   end
   
@@ -491,6 +494,8 @@ do -- FSM_PROCESS
   function FSM_PROCESS:New( Controllable, Task )
   
     local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Fsm.Fsm#FSM_PROCESS
+
+    self:F( Controllable, Task )
   
     self:Assign( Controllable, Task )
   
@@ -631,7 +636,7 @@ do -- FSM_PROCESS
     self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
-      MESSAGE:New( "Process " .. self.ProcessName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+      MESSAGE:New( "Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
     end
   
     self:E( self.Scores[To] )

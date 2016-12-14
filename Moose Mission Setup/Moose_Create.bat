@@ -83,18 +83,18 @@ COPY /b Moose.lua + %1\Fsm\Process.lua              	Moose.lua
 COPY /b Moose.lua + %1\Fsm\Process_JTAC.lua 		  	Moose.lua
 COPY /b Moose.lua + %1\Fsm\Patrol.lua           		Moose.lua
 COPY /b Moose.lua + %1\Fsm\Cargo.lua                 	Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmTAssign.lua    	  		Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmTRoute.lua   		  		Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmTAccount.lua    		  	Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmTSmoke.lua 		  		Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmAssign.lua    	  		Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmRoute.lua   		  		Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmAccount.lua    		  	Moose.lua
+COPY /b Moose.lua + %1\Fsm\FsmSmoke.lua 		  		Moose.lua
 
 rem Task Handling Classes
-COPY /b Moose.lua + %1\Tasking\CommandCenter.lua 		Moose.lua							Moose.lua
-COPY /b Moose.lua + %1\Mission.lua               		Moose.lua
-COPY /b Moose.lua + %1\Task.lua    	         	  		Moose.lua
-COPY /b Moose.lua + %1\DetectionManager.lua       		Moose.lua
-COPY /b Moose.lua + %1\Task_SEAD.lua         	  		Moose.lua
-COPY /b Moose.lua + %1\Task_A2G.lua         	  		Moose.lua
+COPY /b Moose.lua + %1\Tasking\CommandCenter.lua 		Moose.lua
+COPY /b Moose.lua + %1\Tasking\Mission.lua              Moose.lua
+COPY /b Moose.lua + %1\Tasking\Task.lua    	         	Moose.lua
+COPY /b Moose.lua + %1\Tasking\DetectionManager.lua     Moose.lua
+COPY /b Moose.lua + %1\Tasking\Task_SEAD.lua         	Moose.lua
+COPY /b Moose.lua + %1\Tasking\Task_A2G.lua         	Moose.lua
 
 COPY /b Moose.lua + %1\Moose.lua                 		Moose.lua
 
