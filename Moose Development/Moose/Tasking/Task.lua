@@ -112,68 +112,28 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
 
   -- Handle the birth of new planes within the assigned set.
   
-  self:EventOnPlayerEnterUnit(
-    --- @param #TASK_BASE self
-    -- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      self:E( EventData )
-      self:E( { "State", self:GetState() } )
-      local TaskUnit = EventData.IniUnit
-      local TaskGroup = EventData.IniUnit:GetGroup()
-      self:SetMenuForGroup(TaskGroup)
-      if self:IsStateAssigned() then
-        self:E( self:IsAssignedToGroup( TaskGroup ) )
-        if self:IsAssignedToGroup( TaskGroup ) then
-          self:AssignToUnit( TaskUnit )
-        end
-      end
-      self:MessageToGroups( TaskUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
-    end
-  )
-
-  -- Handle when a player leaves a slot and goes back to spectators ... 
-  -- The Task is UnAssigned from the Unit.
-  -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:EventOnPlayerLeaveUnit(
-    --- @param #TASK_BASE self
-    -- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      self:E( "In LeaveUnit" )
-      self:E( { "State", self:GetState() } )
-      if self:IsStateAssigned() then
-        local TaskUnit = EventData.IniUnit
-        local TaskGroup = EventData.IniUnit:GetGroup()
-        self:E( self:IsAssignedToGroup( TaskGroup ) )
-        if self:IsAssignedToGroup( TaskGroup ) then
-          self:UnAssignFromUnit( TaskUnit )
-          self:MessageToGroups( TaskUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
-        end
-        self:__Abort( 1 )
-      end
-    end
-  )
 
   -- Handle when a player crashes ... 
   -- The Task is UnAssigned from the Unit.
   -- When there is no Unit left running the Task, and all of the Players crashed, the Task goes into Failed ...
-  self:EventOnCrash(
-    --- @param #TASK_BASE self
-    -- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      self:E( "In LeaveUnit" )
-      self:E( { "State", self:GetState() } )
-      if self:IsStateAssigned() then
-        local TaskUnit = EventData.IniUnit
-        local TaskGroup = EventData.IniUnit:GetGroup()
-        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
-        if self.SetGroup:IsIncludeObject( TaskGroup ) then
-          self:UnAssignFromUnit( TaskUnit )
-        end
-        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
-      end
-    end
-  )
-  
+--  self:EventOnCrash(
+--    --- @param #TASK_BASE self
+--    -- @param Core.Event#EVENTDATA EventData
+--    function( self, EventData )
+--      self:E( "In LeaveUnit" )
+--      self:E( { "State", self:GetState() } )
+--      if self:IsStateAssigned() then
+--        local TaskUnit = EventData.IniUnit
+--        local TaskGroup = EventData.IniUnit:GetGroup()
+--        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
+--        if self.SetGroup:IsIncludeObject( TaskGroup ) then
+--          self:UnAssignFromUnit( TaskUnit )
+--        end
+--        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
+--      end
+--    end
+--  )
+--  
   
   Mission:AddTask( self )
   
@@ -196,6 +156,80 @@ function TASK_BASE:SetFsmTemplate( FsmTemplate )
   self.FsmTemplate = FsmTemplate
 end
 
+--- Add a PlayerUnit to join the Task.
+-- For each Group within the Task, the Unit is check if it can join the Task.
+-- If the Unit was not part of the Task, false is returned.
+-- If the Unit is part of the Task, true is returned.
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @return #boolean true if Unit is part of the Task.
+function TASK_BASE:AddUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitAdded = false
+  
+  local PlayerGroups = self:GetGroups()
+  local PlayerGroup = PlayerUnit:GetGroup()
+
+  -- Is the PlayerGroup part of the PlayerGroups?  
+  if PlayerGroups:IsIncludeObject( PlayerGroup ) then
+  
+    -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is added to the Task.
+    -- If the PlayerGroup is not assigned to the Task, the menu needs to be set. In that case, the PlayerUnit will become the GroupPlayer leader.
+    if self:IsStatePlanned() or self:IsStateReplanned() then
+      self:SetMenuForGroup( PlayerGroup )
+      self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
+    end
+    if self:IsStateAssigned() then
+      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
+      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
+      if IsAssignedToGroup then
+        self:AssignToUnit( PlayerUnit )
+        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
+      end
+    end
+  end
+  
+  return PlayerUnitAdded
+end
+
+--- Abort a PlayerUnit from a Task.
+-- If the Unit was not part of the Task, false is returned.
+-- If the Unit is part of the Task, true is returned.
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
+-- @return #boolean true if Unit is part of the Task.
+function TASK_BASE:AbortUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitAdded = false
+  
+  local PlayerGroups = self:GetGroups()
+  local PlayerGroup = PlayerUnit:GetGroup()
+
+  -- Is the PlayerGroup part of the PlayerGroups?  
+  if PlayerGroups:IsIncludeObject( PlayerGroup ) then
+  
+    -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
+    -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
+    if self:IsStateAssigned() then
+      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
+      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
+      if IsAssignedToGroup then
+        self:UnAssignFromUnit( PlayerUnit )
+        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
+        self:E( { TaskGroup = PlayerGroup:GetName(), HasAliveUnits = self:HasAliveUnits() } )
+        if self:HasAliveUnits() == false then
+          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
+          self:RemoveMenuForGroup( PlayerGroup )
+          self:__Abort( 1 )
+        end
+      end
+    end
+  end
+  
+  return PlayerUnitAdded
+end
 --- Gets the Mission to where the TASK belongs.
 -- @param #TASK_BASE self
 -- @return Tasking.Mission#MISSION
@@ -203,6 +237,7 @@ function TASK_BASE:GetMission()
 
   return self.Mission
 end
+
 
 --- Gets the SET_GROUP assigned to the TASK.
 -- @param #TASK_BASE self
@@ -366,7 +401,7 @@ function TASK_BASE:HasAliveUnits()
     end
   end
   
-  self:T( { HasAliveUnits = true } )
+  self:T( { HasAliveUnits = false } )
   return false
 end
 
@@ -798,19 +833,11 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Core.Event#EVENTDATA Event
-function TASK_BASE:onbeforeAbort( Event, From, To )
+function TASK_BASE:onenterAborted( Event, From, To )
 
-  self:E("Abort")
-
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if self:HasAliveUnits() then
-      return false
-    end
-  end
+  self:E("Aborted")
 
   self:MessageToGroups( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
-  
-  return true
 end
 
 

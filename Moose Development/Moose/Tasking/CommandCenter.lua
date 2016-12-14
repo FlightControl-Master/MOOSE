@@ -79,6 +79,37 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       end
     end
     )
+  
+  -- When a player enters a client or a unit, the CommandCenter will check for each Mission and each Task in the Mission if the player has things to do.
+  -- For these elements, it will=
+  -- - Set the correct menu.
+  -- - Assign the PlayerUnit to the Task if required.
+  -- - Send a message to the other players in the group that this player has joined.
+  self:EventOnPlayerEnterUnit(
+    --- @param #COMMANDCENTER self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        Mission:AddUnit( PlayerUnit )
+      end
+    end
+  )
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:EventOnPlayerLeaveUnit(
+    --- @param #TASK_BASE self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        Mission:AbortUnit( PlayerUnit )
+      end
+    end
+  )
+  
 	
 	return self
 end
@@ -98,6 +129,13 @@ function COMMANDCENTER:GetPositionable()
   return self.CommandCenterPositionable
 end
 
+--- Get the Missions governed by the HQ command center.
+-- @param #COMMANDCENTER self
+-- @return #list<Tasking.Mission#MISSION>
+function COMMANDCENTER:GetMissions()
+
+  return self.Missions
+end
 
 --- Add a MISSION to be governed by the HQ command center.
 -- @param #COMMANDCENTER self

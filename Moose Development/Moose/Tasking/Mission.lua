@@ -73,6 +73,47 @@ function MISSION:GetName()
   return self.Name
 end
 
+--- Add a Unit to join the Mission.
+-- For each Task within the Mission, the Unit is joined with the Task.
+-- If the Unit was not part of a Task in the Mission, false is returned.
+-- If the Unit is part of a Task in the Mission, true is returned.
+-- @param #MISSION self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @return #boolean true if Unit is part of a Task in the Mission.
+function MISSION:AddUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitAdded = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    if Task:AddUnit( PlayerUnit ) then
+      PlayerUnitAdded = true
+    end
+  end
+  
+  return PlayerUnitAdded
+end
+
+--- Aborts a PlayerUnit from the Mission.
+-- For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
+-- If the Unit was not part of a Task in the Mission, false is returned.
+-- If the Unit is part of a Task in the Mission, true is returned.
+-- @param #MISSION self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @return #boolean true if Unit is part of a Task in the Mission.
+function MISSION:AbortUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitRemoved = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    if Task:AbortUnit( PlayerUnit ) then
+      PlayerUnitRemoved = true
+    end
+  end
+  
+  return PlayerUnitRemoved
+end
 --- Add a scoring to the mission.
 -- @param #MISSION self
 -- @return #MISSION self
