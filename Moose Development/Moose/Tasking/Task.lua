@@ -218,8 +218,8 @@ function TASK_BASE:AbortUnit( PlayerUnit )
       if IsAssignedToGroup then
         self:UnAssignFromUnit( PlayerUnit )
         self:MessageToGroups( PlayerUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
-        self:E( { TaskGroup = PlayerGroup:GetName(), HasAliveUnits = self:HasAliveUnits() } )
-        if self:HasAliveUnits() == false then
+        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
+        if #PlayerGroup:GetUnits() == 1 then
           PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
           self:RemoveMenuForGroup( PlayerGroup )
           self:__Abort( 1 )
@@ -837,7 +837,10 @@ function TASK_BASE:onenterAborted( Event, From, To )
 
   self:E("Aborted")
 
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
+  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
+  
+  self:__Replan( 10 )
+  
 end
 
 

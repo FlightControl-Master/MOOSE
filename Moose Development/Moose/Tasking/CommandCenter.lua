@@ -200,6 +200,14 @@ function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
 
 end
 
+--- Send a CC message to the coalition of the CC.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:MessageToCoalition( Message )
+
+  local CCCoalition = self:GetPositionable():GetCoalition()
+    self:GetPositionable():MessageToBlue( Message , 20, CCCoalition )
+
+end
 --- Report the status of all MISSIONs to a GROUP.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportMissions( ReportGroup )
