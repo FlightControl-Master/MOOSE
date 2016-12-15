@@ -88,7 +88,7 @@ local Scoring = SCORING:New( "SEAD" )
 Mission:AddScoring( Scoring )
 
 -- Define the set of group of planes that can be assigned to the Mission object.
-local SEADSet = SET_GROUP:New():FilterPrefixes( "Test SEAD"):FilterOnce()
+local SEADSet = SET_GROUP:New():FilterPrefixes( "Test SEAD"):FilterStart()
 SEADSet:Flush()
 
 -- Define the set of units that are the targets.
