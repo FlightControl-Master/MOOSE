@@ -215,7 +215,7 @@ end
 --- Get the Task FSM Process Template
 -- @param #TASK_BASE self
 -- @return Fsm.Fsm#FSM_PROCESS
-function TASK_BASE:GetFsmTemplate()
+function TASK_BASE:GetUnitProcess()
 
   return self.FsmTemplate
 end
@@ -223,7 +223,7 @@ end
 --- Sets the Task FSM Process Template
 -- @param #TASK_BASE self
 -- @param Fsm.Fsm#FSM_PROCESS
-function TASK_BASE:SetFsmTemplate( FsmTemplate )
+function TASK_BASE:SetUnitProcess( FsmTemplate )
 
   self.FsmTemplate = FsmTemplate
 end
@@ -405,7 +405,7 @@ end
 function TASK_BASE:AssignToUnit( TaskUnit )
   self:F( TaskUnit:GetName() )
   
-  local FsmTemplate = self:GetFsmTemplate()
+  local FsmTemplate = self:GetUnitProcess()
   
   -- Assign a new FsmUnit to TaskUnit.
   local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Fsm.Fsm#FSM_PROCESS
@@ -869,6 +869,7 @@ function TASK_BASE:onenterAssigned( Event, From, To )
   self:E("Task Assigned")
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned!" )
+  self:GetMission():__Start()
 end
 
 
@@ -883,6 +884,9 @@ function TASK_BASE:onenterSuccess( Event, From, To )
   
   self:MessageToGroups( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
+  
+  self:GetMission():__Complete()
+  
 end
 
 
@@ -934,3 +938,61 @@ function TASK_BASE:onstatechange( Event, From, To )
   end
 
 end
+
+do -- Reporting
+
+--- Create a summary report of the Task.
+-- List the Task Name and Status
+-- @param #TASK_BASE self
+-- @return #string
+function TASK_BASE:ReportSummary()
+
+  local Report = REPORT:New()
+  
+  -- List the name of the Task.
+  local Name = self:GetName()
+  
+  -- Determine the status of the Task.
+  local State = self:GetState()
+  
+  Report:Add( "Task " .. Name .. " - State '" .. State )
+
+  return Report:Text()
+end
+
+
+--- Create a detailed report of the Task.
+-- List the Task Status, and the Players assigned to the Task.
+-- @param #TASK_BASE self
+-- @return #string
+function TASK_BASE:ReportDetails()
+
+  local Report = REPORT:New()
+  
+  -- List the name of the Task.
+  local Name = self:GetName()
+  
+  -- Determine the status of the Task.
+  local State = self:GetState()
+  
+  
+  -- Loop each Unit active in the Task, and find Player Names.
+  local PlayerNames = {}
+  for PlayerGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+    local Player = PlayerGroup -- Wrapper.Group#GROUP
+    for PlayerUnitID, PlayerUnit in pairs( PlayerGroup:GetUnits() ) do
+      local PlayerUnit = PlayerUnit -- Wrapper.Unit#UNIT
+      if PlayerUnit and PlayerUnit:IsAlive() then
+        local PlayerName = PlayerUnit:GetPlayerName()
+        PlayerNames[#PlayerNames+1] = PlayerName
+      end
+    end
+    PlayerNameText = table.concat( PlayerNames, ", " )
+    Report:Add( "Task " .. Name .. " - State '" .. State .. "' - Players " .. PlayerNameText )
+  end
+
+  return Report:Text()
+end
+
+
+end -- Reporting

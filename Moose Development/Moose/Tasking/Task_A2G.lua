@@ -45,7 +45,7 @@ do -- TASK_A2G
     self.TargetZone = TargetZone
     self.FACUnit = FACUnit
     
-    local Fsm = self:GetFsmTemplate()
+    local Fsm = self:GetUnitProcess()
 
     Fsm:AddProcess( "Planned",    "Accept",   FSM_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
     Fsm:AddProcess( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )

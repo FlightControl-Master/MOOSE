@@ -45,7 +45,7 @@ do -- TASK_SEAD
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
     
-    local Fsm = self:GetFsmTemplate()
+    local Fsm = self:GetUnitProcess()
 
     Fsm:AddProcess( "Planned",    "Accept",   FSM_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
     Fsm:AddProcess( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )

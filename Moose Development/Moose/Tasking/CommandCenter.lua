@@ -74,8 +74,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local EventGroup = GROUP:Find( EventData.IniDCSGroup )
       if EventGroup and self:HasGroup( EventGroup ) then
         local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-        local MenuMissions = MENU_GROUP_COMMAND:New( EventGroup, "Missions", MenuReporting, self.ReportMissions, self, EventGroup )
-        self:ReportMissions( EventGroup )
+        local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
+        local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
+        self:ReportSummary( EventGroup )
       end
     end
     )
@@ -91,7 +92,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
         Mission:AddUnit( PlayerUnit )
+        Mission:ReportDetails()
       end
     end
   )
@@ -109,7 +112,20 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       end
     end
   )
-  
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:EventOnCrash(
+    --- @param #TASK_BASE self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        Mission:CrashUnit( PlayerUnit )
+      end
+    end
+  )
 	
 	return self
 end
@@ -208,16 +224,18 @@ function COMMANDCENTER:MessageToCoalition( Message )
     self:GetPositionable():MessageToBlue( Message , 20, CCCoalition )
 
 end
+
 --- Report the status of all MISSIONs to a GROUP.
+-- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:ReportMissions( ReportGroup )
+function COMMANDCENTER:ReportSummary( ReportGroup )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
   
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportStatus() )
+    Report:Add( " - " .. Mission:ReportOverview() )
   end
   
   self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
@@ -225,18 +243,18 @@ function COMMANDCENTER:ReportMissions( ReportGroup )
 end
 
 --- Report the status of a Task to a Group.
+-- Report the details of a Mission, listing the Mission, and all the Task details.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:ReportTaskStatus( ReportGroup, Task )
+function COMMANDCENTER:ReportDetails( ReportGroup, Task )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
   
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportStatus() )
+    Report:Add( " - " .. Mission:ReportDetails() )
   end
   
   self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
-  
 end
 
