@@ -45,6 +45,7 @@ COPY /b Moose.lua + %1\Utilities\Utils.lua                                      
 rem Core Classes
 COPY /b Moose.lua + %1\Core\Base.lua                  	Moose.lua
 COPY /b Moose.lua + %1\Core\Scheduler.lua             	Moose.lua
+COPY /b Moose.lua + %1\Core\ScheduleDispatcher.lua    	Moose.lua
 COPY /b Moose.lua + %1\Core\Event.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Menu.lua                  	Moose.lua
 COPY /b Moose.lua + %1\Core\Zone.lua                  	Moose.lua
