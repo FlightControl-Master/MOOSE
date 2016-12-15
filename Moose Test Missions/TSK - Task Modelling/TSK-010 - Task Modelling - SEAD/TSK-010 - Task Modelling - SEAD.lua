@@ -190,6 +190,6 @@ Mission:RemoveTask(SEADTask)
 SEADTask = nil
 SEADProcess = nil
 
-HQ:SetMenu()
+
 
 collectgarbage()

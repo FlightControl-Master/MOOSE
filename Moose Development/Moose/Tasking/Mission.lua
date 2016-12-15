@@ -292,6 +292,8 @@ function MISSION:AddTask( Task )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
 
   self.Tasks[TaskName] = Task
+  
+  self:GetCommandCenter():SetMenu()
 
   return Task
 end
@@ -314,6 +316,8 @@ function MISSION:RemoveTask( Task )
   Task = nil
   
   collectgarbage()
+
+  self:GetCommandCenter():SetMenu()
   
   return nil
 end
