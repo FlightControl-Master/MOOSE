@@ -52,7 +52,7 @@ local TargetZone = ZONE:New( "Target Zone" )
 -- 2. The set of groups of planes that pilots can join.
 -- 3. The name of the Task... This can be any name, and will be provided when the Pilot joins the task.
 -- 4. A type of the Task. When Tasks are in state Planned, then a menu can be provided that group the task based on this given type.
-local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK_BASE
+local SEADTask = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK_BASE
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".
@@ -64,7 +64,7 @@ local TaskSEAD = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD"
 -- The reason why this is done, is that each unit as a role within the Task, and can have different status.
 -- Therefore, the FsmSEAD is a TEMPLATE PROCESS of the TASK, and must be designed as a UNIT with a player is executing that PROCESS. 
 
-local FsmSEADTemplate = TaskSEAD:GetFsmTemplate()
+local SEADProcess = SEADTask:GetFsmTemplate()
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
@@ -77,10 +77,10 @@ local FsmSEADTemplate = TaskSEAD:GetFsmTemplate()
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-FsmSEADTemplate:AddProcess    ( "Planned",    "Accept",   FSM_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+SEADProcess:AddProcess    ( "Planned",    "Accept",   FSM_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.
-FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
+SEADProcess:AddProcess    ( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -89,58 +89,47 @@ FsmSEADTemplate:AddProcess    ( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( Ta
 -- 1. State From "Rejected". When the FsmSEAD is in state "Rejected", the event "Eject" can be fired.
 -- 2. Event "Eject". This event can be triggered synchronously through FsmSEAD:Eject() or asynchronously through FsmSEAD:__Eject(secs).
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
-FsmSEADTemplate:AddTransition ( "Rejected",   "Eject",    "Planned" )
-FsmSEADTemplate:AddTransition ( "Arrived",    "Update",   "Updated" ) 
-FsmSEADTemplate:AddProcess    ( "Updated",    "Account",  FSM_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
-FsmSEADTemplate:AddProcess    ( "Updated",    "Smoke",    FSM_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
-FsmSEADTemplate:AddTransition ( "Accounted",  "Success",  "Success" )
-FsmSEADTemplate:AddTransition ( "*",          "Fail",     "Failed" )
+SEADProcess:AddTransition ( "Rejected",   "Eject",    "Planned" )
+SEADProcess:AddTransition ( "Arrived",    "Update",   "Updated" ) 
+SEADProcess:AddProcess    ( "Updated",    "Account",  FSM_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
+SEADProcess:AddProcess    ( "Updated",    "Smoke",    FSM_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
+SEADProcess:AddTransition ( "Accounted",  "Success",  "Success" )
+SEADProcess:AddTransition ( "*",          "Fail",     "Failed" )
 
-FsmSEADTemplate:AddScoreProcess( "Updated", "Account", "Account", "destroyed a radar", 25 )
-FsmSEADTemplate:AddScoreProcess( "Updated", "Account", "Failed", "failed to destroy a radar", -10 )
+SEADProcess:AddScoreProcess( "Updated", "Account", "Account", "destroyed a radar", 25 )
+SEADProcess:AddScoreProcess( "Updated", "Account", "Failed", "failed to destroy a radar", -10 )
 
 -- Now we will set the SCORING. Scoring is set using the TaskSEAD object.
 -- Scores can be set on the status of the Task, and on Process level.
-FsmSEADTemplate:AddScore( "Success", "Destroyed all target radars", 250 )
-FsmSEADTemplate:AddScore( "Failed", "Failed to destroy all target radars", -100 )
+SEADProcess:AddScore( "Success", "Destroyed all target radars", 250 )
+SEADProcess:AddScore( "Failed", "Failed to destroy all target radars", -100 )
 
---local TestTask = TASK_BASE:New( Mission, SEADSet, "TEST TASK", "TEST" )
---TestTask:E("Clean TestTask")
---TestTask = nil
---collectgarbage()
---
---local TestUnit = GROUP:FindByName( "HQ" ):GetUnit(1)
---
---local fsm = FSM_PROCESS:New( TestUnit, TaskSEAD )
---
---fsm:AddProcess("test","test",FSM_ACCOUNT_DEADS:New( TargetSet, "SEAD" ))
---
-----Mission:AddTask(fsm)
---
---fsm:E("CLEAN fsm")
---fsm = nil
---collectgarbage()
---
---
---TaskSEAD:E("CLEAN TASK")
---TaskSEAD = nil
---collectgarbage()
-
-function FsmSEADTemplate:onenterUpdated( TaskUnit )
+function SEADProcess:onenterUpdated( TaskUnit )
   self:E( { self } )
   self:Account()
   self:Smoke()
 end
 
+-- Here we handle the PlayerAborted event, which is fired when a Player leaves the unit while being assigned to the Task.
+-- Within the event handler, which is passed the PlayerUnit and PlayerName parameter,
+-- we check if the SEADTask has still AlivePlayers assigned to the Task.
+-- If not, the Task will Abort.
+-- And it will be Replanned within 30 seconds.
+function SEADTask:OnAfterPlayerAborted( PlayerUnit, PlayerName )
+  if not SEADTask:HasAliveUnits() then
+    SEADTask:__Abort()
+  end 
+end
+
 
 local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
-TaskSEAD2:SetFsmTemplate( TaskSEAD:GetFsmTemplate():Copy() )
+TaskSEAD2:SetFsmTemplate( SEADTask:GetFsmTemplate():Copy() )
 Mission:AddTask( TaskSEAD2 )
 
-Mission:RemoveTask(TaskSEAD)
+Mission:RemoveTask(SEADTask)
 
-TaskSEAD = nil
-FsmSEADTemplate = nil
+SEADTask = nil
+SEADProcess = nil
 
 HQ:SetMenu()
 

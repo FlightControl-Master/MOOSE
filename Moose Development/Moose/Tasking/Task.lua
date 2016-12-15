@@ -72,6 +72,75 @@ TASK_BASE = {
   CommandCenter = nil,
 }
 
+--- FSM PlayerAborted event handler prototype for TASK_BASE.
+-- @function [parent=#TASK_BASE] OnAfterPlayerAborted
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he went back to spectators or left the mission.
+-- @param #string PlayerName The name of the Player.
+
+--- FSM PlayerCrashed event handler prototype for TASK_BASE.
+-- @function [parent=#TASK_BASE] OnAfterPlayerCrashed
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he crashed in the mission.
+-- @param #string PlayerName The name of the Player.
+
+--- FSM PlayerDead event handler prototype for TASK_BASE.
+-- @function [parent=#TASK_BASE] OnAfterPlayerDead
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The Unit of the Player when he died in the mission.
+-- @param #string PlayerName The name of the Player.
+
+--- FSM Fail synchronous event function for TASK_BASE.
+-- Use this event to Fail the Task.
+-- @function [parent=#TASK_BASE] Fail
+-- @param #TASK_BASE self
+
+--- FSM Fail asynchronous event function for TASK_BASE.
+-- Use this event to Fail the Task.
+-- @function [parent=#TASK_BASE] __Fail
+-- @param #TASK_BASE self
+
+--- FSM Abort synchronous event function for TASK_BASE.
+-- Use this event to Abort the Task.
+-- @function [parent=#TASK_BASE] Abort
+-- @param #TASK_BASE self
+
+--- FSM Abort asynchronous event function for TASK_BASE.
+-- Use this event to Abort the Task.
+-- @function [parent=#TASK_BASE] __Abort
+-- @param #TASK_BASE self
+
+--- FSM Success synchronous event function for TASK_BASE.
+-- Use this event to make the Task a Success.
+-- @function [parent=#TASK_BASE] Success
+-- @param #TASK_BASE self
+
+--- FSM Success asynchronous event function for TASK_BASE.
+-- Use this event to make the Task a Success.
+-- @function [parent=#TASK_BASE] __Success
+-- @param #TASK_BASE self
+
+--- FSM Cancel synchronous event function for TASK_BASE.
+-- Use this event to Cancel the Task.
+-- @function [parent=#TASK_BASE] Cancel
+-- @param #TASK_BASE self
+
+--- FSM Cancel asynchronous event function for TASK_BASE.
+-- Use this event to Cancel the Task.
+-- @function [parent=#TASK_BASE] __Cancel
+-- @param #TASK_BASE self
+
+--- FSM Replan synchronous event function for TASK_BASE.
+-- Use this event to Replan the Task.
+-- @function [parent=#TASK_BASE] Replan
+-- @param #TASK_BASE self
+
+--- FSM Replan asynchronous event function for TASK_BASE.
+-- Use this event to Replan the Task.
+-- @function [parent=#TASK_BASE] __Replan
+-- @param #TASK_BASE self
+
+
 --- Instantiates a new TASK_BASE. Should never be used. Interface Class.
 -- @param #TASK_BASE self
 -- @param Tasking.Mission#MISSION Mission The mission wherein the Task is registered.
@@ -90,6 +159,9 @@ function TASK_BASE:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
+  self:AddTransition( "*", "PlayerCrashed", "*" )
+  self:AddTransition( "*", "PlayerAborted", "*" )
+  self:AddTransition( "*", "PlayerDead", "*" )
   self:AddTransition( { "Failed", "Aborted", "Cancelled" }, "Replan", "Planned" )
 
   self:E( "New TASK " .. TaskName )
@@ -202,7 +274,7 @@ end
 function TASK_BASE:AbortUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitAdded = false
+  local PlayerUnitAborted = false
   
   local PlayerGroups = self:GetGroups()
   local PlayerGroup = PlayerUnit:GetGroup()
@@ -222,14 +294,55 @@ function TASK_BASE:AbortUnit( PlayerUnit )
         if #PlayerGroup:GetUnits() == 1 then
           PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
           self:RemoveMenuForGroup( PlayerGroup )
-          self:__Abort( 1 )
         end
+        self:PlayerAborted( PlayerUnit )
       end
     end
   end
   
-  return PlayerUnitAdded
+  return PlayerUnitAborted
 end
+
+--- A PlayerUnit crashed in a Task. Abort the Player.
+-- If the Unit was not part of the Task, false is returned.
+-- If the Unit is part of the Task, true is returned.
+-- @param #TASK_BASE self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
+-- @return #boolean true if Unit is part of the Task.
+function TASK_BASE:CrashUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitCrashed = false
+  
+  local PlayerGroups = self:GetGroups()
+  local PlayerGroup = PlayerUnit:GetGroup()
+
+  -- Is the PlayerGroup part of the PlayerGroups?  
+  if PlayerGroups:IsIncludeObject( PlayerGroup ) then
+  
+    -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
+    -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
+    if self:IsStateAssigned() then
+      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
+      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
+      if IsAssignedToGroup then
+        self:UnAssignFromUnit( PlayerUnit )
+        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " crashed in Task " .. self:GetName() )
+        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
+        if #PlayerGroup:GetUnits() == 1 then
+          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
+          self:RemoveMenuForGroup( PlayerGroup )
+        end
+        self:PlayerCrashed( PlayerUnit )
+      end
+    end
+  end
+  
+  return PlayerUnitCrashed
+end
+
+
+
 --- Gets the Mission to where the TASK belongs.
 -- @param #TASK_BASE self
 -- @return Tasking.Mission#MISSION
@@ -588,90 +701,6 @@ function TASK_BASE:HasStateMachine( TaskUnit )
 end
 
 
-
-
-
---- Register a potential new assignment for a new spawned @{Unit}.
--- Tasks only get assigned if there are players in it.
--- @param #TASK_BASE self
--- @param Core.Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventAssignUnit( Event )
-  if Event.IniUnit then
-    self:F( Event )
-    local TaskUnit = Event.IniUnit
-    if TaskUnit:IsAlive() then
-      local TaskPlayerName = TaskUnit:GetPlayerName()
-      if TaskPlayerName ~= nil then
-        if not self:HasStateMachine( TaskUnit ) then
-          -- Check if the task was assigned to the group, if it was assigned to the group, assign to the unit just spawned and initiate the processes.
-          local TaskGroup = TaskUnit:GetGroup()
-          if self:IsAssignedToGroup( TaskGroup ) then
-            self:AssignToUnit( TaskUnit )
-          end
-        end
-      end
-    end
-  end
-  return nil
-end
-
---- Catches the "player leave unit" event for a @{Unit}  ....
--- When a player is an air unit, and leaves the unit:
--- 
---   * and he is not at an airbase runway on the ground, he will fail its task.
---   * and he is on an airbase and on the ground, the process for him will just continue to work, he can switch airplanes, and take-off again.
--- This is important to model the change from plane types for a player during mission assignment.
--- @param #TASK_BASE self
--- @param Core.Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventPlayerLeaveUnit( Event )
-  self:F( Event )
-  if Event.IniUnit then
-    local TaskUnit = Event.IniUnit
-    local TaskUnitName = Event.IniUnitName
-    
-    -- Check if for this unit in the task there is a process ongoing.
-    if self:HasStateMachine( TaskUnitName ) then
-      if TaskUnit:IsAir() then
-        if TaskUnit:IsAboveRunway() then
-          -- do nothing
-        else
-          self:E( "IsNotAboveRunway" )
-            -- Player left airplane during an assigned task and was not at an airbase.
-            self:FailProcesses( TaskUnitName )
-            self:UnAssignFromUnit( TaskUnitName )
-          end
-        end
-      end
-    
-  end
-  return nil
-end
-
---- UnAssigns a @{Unit} that is left by a player, crashed, dead, ....
--- There are only assignments if there are players in it.
--- @param #TASK_BASE self
--- @param Core.Event#EVENTDATA Event
--- @return #TASK_BASE self
-function TASK_BASE:_EventDead( Event )
-  self:F( Event )
-  if Event.IniUnit then
-    local TaskUnit = Event.IniUnit
-    local TaskUnitName = Event.IniUnitName
-
-    -- Check if for this unit in the task there is a process ongoing.
-    if self:HasStateMachine( TaskUnitName ) then
-      self:FailProcesses( TaskUnitName )
-      self:UnAssignFromUnit( TaskUnitName )
-    end
-    
-    local TaskGroup = Event.IniUnit:GetGroup()
-    TaskGroup:SetState( TaskGroup, "Assigned", nil )
-  end
-  return nil
-end
-
 --- Gets the Scoring of the task
 -- @param #TASK_BASE self
 -- @return Functional.Scoring#SCORING Scoring
@@ -827,89 +856,69 @@ function TASK_BASE:SetBriefing( TaskBriefing )
   return self
 end
 
---- StateMachine callback function for a TASK
+
+
+
+--- FSM function for a TASK
 -- @param #TASK_BASE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Core.Event#EVENTDATA Event
-function TASK_BASE:onenterAborted( Event, From, To )
-
-  self:E("Aborted")
-
-  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task will be replanned." )
-  
-  self:__Replan( 10 )
-  
-end
-
-
-
---- StateMachine callback function for a TASK
--- @param #TASK_BASE self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onenterAssigned( Event, From, To )
 
-  self:E("Assigned")
+  self:E("Task Assigned")
   
-  
-    
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned!" )
 end
 
 
---- StateMachine callback function for a TASK
+--- FSM function for a TASK
 -- @param #TASK_BASE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onenterSuccess( Event, From, To )
 
-  self:E("Success")
+  self:E( "Task Success" )
   
-  local Mission = self:GetMission()
-  local CC = Mission:GetCommandCenter()
-  
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    CC:GetPositionable():MessageToGroup( "Task " .. self:GetName() .. " is successful! Good job!" , 60, TaskGroup )
-  end
+  self:MessageToGroups( "Task " .. self:GetName() .. " is successful! Good job!" )
+  self:UnAssignFromGroups()
+end
+
+
+--- FSM function for a TASK
+-- @param #TASK_BASE self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function TASK_BASE:onenterAborted( Event, From, To )
+
+  self:E( "Task Aborted" )
+
+  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
   
   self:UnAssignFromGroups()
-  
-  CC:SetMenu()
-  
 end
 
---- StateMachine callback function for a TASK
+--- FSM function for a TASK
 -- @param #TASK_BASE self
--- @param Wrapper.Unit#UNIT TaskUnit
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Core.Event#EVENTDATA Event
-function TASK_BASE:onenterFailed( TaskUnit, Event, From, To )
+function TASK_BASE:onenterFailed( Event, From, To )
 
-  self:E( { "Failed for unit ", TaskUnit:GetName(), TaskUnit:GetPlayerName() } )
+  self:E( "Task Failed" )
+
+  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has failed!" )
   
-  -- A task cannot be "failed", so a task will always be there waiting for players to join.
-  -- When the player leaves its unit, we will need to check whether he was on the ground or not at an airbase.
-  -- When the player crashes, we will need to check whether in the group there are other players still active. It not, we reset the task from Assigned to Planned, otherwise, we just leave as Assigned.
-
-  self:UnAssignFromUnit()
-
+  self:UnAssignFromGroups()
 end
 
---- StateMachine callback function for a TASK
+--- FSM function for a TASK
 -- @param #TASK_BASE self
--- @param Wrapper.Unit#UNIT TaskUnit
--- @param Fsm.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
--- @param Core.Event#EVENTDATA Event
 function TASK_BASE:onstatechange( Event, From, To )
 
   if self:IsTrace() then
@@ -925,24 +934,3 @@ function TASK_BASE:onstatechange( Event, From, To )
   end
 
 end
-
-
---- @param #TASK_BASE self
-function TASK_BASE:_Schedule()
-  self:F2()
-
-  self.TaskScheduler = SCHEDULER:New( self, _Scheduler, {}, 15, 15 )
-  return self
-end
-
-
---- @param #TASK_BASE self
-function TASK_BASE._Scheduler()
-  self:F2()
-
-  return true
-end
-
-
-
-
