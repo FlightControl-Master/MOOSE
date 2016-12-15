@@ -204,7 +204,7 @@ do -- FSM_ACCOUNT_DEADS
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
@@ -212,13 +212,12 @@ do -- FSM_ACCOUNT_DEADS
   function FSM_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
-    local TaskGroup = ProcessUnit:GetGroup()
-    MESSAGE:New( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed.", 5, "HQ" ):ToGroup( TaskGroup )
+    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
   end
   
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
@@ -233,12 +232,12 @@ do -- FSM_ACCOUNT_DEADS
     if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
       local TaskGroup = ProcessUnit:GetGroup()
       self.TargetSetUnit:RemoveUnitsByName( EventData.IniUnitName )
-      MESSAGE:New( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed.", 15, "HQ" ):ToGroup( TaskGroup )
+      self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
     end
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #FSM_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From

@@ -185,11 +185,10 @@ local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD
 TaskSEAD2:SetUnitProcess( SEADTask:GetUnitProcess():Copy() )
 Mission:AddTask( TaskSEAD2 )
 
-Mission:RemoveTask(SEADTask)
+Mission:RemoveTask( SEADTask )
 
 SEADTask = nil
 SEADProcess = nil
-
 
 
 collectgarbage()

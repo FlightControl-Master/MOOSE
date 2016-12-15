@@ -239,7 +239,7 @@ end
 
 --- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
-  self:F( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
+  self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
   if self:IsAlive() then 
     if self.ClientAlive2 == false then

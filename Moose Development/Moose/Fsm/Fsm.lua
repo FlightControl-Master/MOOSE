@@ -549,7 +549,7 @@ do -- FSM_PROCESS
   end
   
   --- Sets the task of the process.
-  -- @param #PROCESS self
+  -- @param #FSM_PROCESS self
   -- @param Tasking.Task#TASK_BASE Task
   -- @return #PROCESS
   function FSM_PROCESS:SetTask( Task )
@@ -560,7 +560,7 @@ do -- FSM_PROCESS
   end
   
   --- Gets the task of the process.
-  -- @param #PROCESS self
+  -- @param #FSM_PROCESS self
   -- @return Tasking.Task#TASK_BASE
   function FSM_PROCESS:GetTask()
   
@@ -568,12 +568,33 @@ do -- FSM_PROCESS
   end
   
   --- Gets the mission of the process.
-  -- @param #PROCESS self
+  -- @param #FSM_PROCESS self
   -- @return Tasking.Mission#MISSION
   function FSM_PROCESS:GetMission()
   
     return self.Task.Mission
   end
+  
+  --- Gets the mission of the process.
+  -- @param #FSM_PROCESS self
+  -- @return Tasking.CommandCenter#COMMANDCENTER
+  function FSM_PROCESS:GetCommandCenter()
+  
+    return self:GetTask():GetMission():GetCommandCenter()
+  end
+  
+  --- Send a message of the @{Task} to the Group of the Unit.
+-- @param #FSM_PROCESS self
+function FSM_PROCESS:Message( Message )
+  self:F( { Message = Message } )
+
+  local CC = self:GetCommandCenter()
+  local TaskGroup = self.Controllable:GetGroup()
+  
+  CC:MessageToGroup( Message, TaskGroup )
+end
+
+  
   
   
   --- Assign the process to a @{Unit} and activate the process.
@@ -636,7 +657,7 @@ do -- FSM_PROCESS
     self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
-      MESSAGE:New( "Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+      MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
     self:E( self.Scores[To] )

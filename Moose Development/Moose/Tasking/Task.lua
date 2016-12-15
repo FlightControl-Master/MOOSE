@@ -235,7 +235,7 @@ end
 -- @param #TASK_BASE self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
 -- @return #boolean true if Unit is part of the Task.
-function TASK_BASE:AddUnit( PlayerUnit )
+function TASK_BASE:JoinUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
   local PlayerUnitAdded = false
@@ -394,6 +394,7 @@ end
 -- @return #boolean
 function TASK_BASE:HasGroup( FindGroup )
 
+  self:GetGroups():FilterOnce() -- Ensure that the filter is updated.
   return self:GetGroups():IsIncludeObject( FindGroup )
 
 end
@@ -441,6 +442,7 @@ function TASK_BASE:MessageToGroups( Message )
     CC:MessageToGroup( Message, TaskGroup )
   end
 end
+
 
 --- Send the briefng message of the @{Task} to the assigned @{Group}s.
 -- @param #TASK_BASE self
@@ -525,6 +527,7 @@ function TASK_BASE:SetMenu()
 
   self.SetGroup:Flush()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    self:RemoveMenuForGroup( TaskGroup )
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( TaskGroup )
     end
@@ -928,7 +931,7 @@ end
 function TASK_BASE:onstatechange( Event, From, To )
 
   if self:IsTrace() then
-    MESSAGE:New( "Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+    MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
   end
 
   if self.Scores[To] then

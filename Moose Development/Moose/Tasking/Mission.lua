@@ -104,13 +104,14 @@ end
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
-function MISSION:AddUnit( PlayerUnit )
+function MISSION:JoinUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
   local PlayerUnitAdded = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
-    if Task:AddUnit( PlayerUnit ) then
+    local Task = Task -- Tasking.Task#TASK_BASE
+    if Task:JoinUnit( PlayerUnit ) then
       PlayerUnitAdded = true
     end
   end

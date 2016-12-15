@@ -81,7 +81,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:AddUnit( PlayerUnit )
+        Mission:JoinUnit( PlayerUnit )
         Mission:ReportDetails()
       end
       
@@ -100,7 +100,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:AddUnit( PlayerUnit )
+        Mission:JoinUnit( PlayerUnit )
         Mission:ReportDetails()
       end
     end
