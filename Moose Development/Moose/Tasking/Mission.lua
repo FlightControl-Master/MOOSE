@@ -201,8 +201,9 @@ end
 -- @param #MISSION self
 -- @param Core.Menu#MENU_COALITION CommandCenterMenu
 function MISSION:SetMenu()
+  self:F()
   
-  for _, Task in pairs( self.Tasks ) do
+  for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK_BASE
     Task:SetMenu()  
   end

@@ -521,7 +521,9 @@ end
 --- Set the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK_BASE self
 function TASK_BASE:SetMenu()
+  self:F()
 
+  self.SetGroup:Flush()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( TaskGroup )

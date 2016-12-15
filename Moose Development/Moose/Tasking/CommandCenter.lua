@@ -179,10 +179,11 @@ end
 --- Sets the menu structure of the Missions governed by the HQ command center.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
+  self:F()
 
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
   
-  for MissionID, Mission in pairs( self.Missions ) do
+  for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:SetMenu()
   end
