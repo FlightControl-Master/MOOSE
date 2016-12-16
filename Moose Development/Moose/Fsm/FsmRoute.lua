@@ -201,7 +201,6 @@ do -- FSM_ROUTE_ZONE
     self.DisplayCount = 30
     self.DisplayMessage = true
     self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Route is the default display category
     
     return self
   end
@@ -213,7 +212,6 @@ do -- FSM_ROUTE_ZONE
     self.DisplayCount = 30
     self.DisplayMessage = true
     self.DisplayTime = 10 -- 10 seconds is the default
-    self.DisplayCategory = "HQ" -- Route is the default display category
   end  
   
   --- Method override to check if the controllable has arrived.
@@ -223,8 +221,8 @@ do -- FSM_ROUTE_ZONE
   function FSM_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.TargetZone ) then
-      local RouteText = ProcessUnit:GetCallsign() .. ": You have arrived within the zone!"
-      MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( ProcessUnit:GetGroup() )
+      local RouteText = "You have arrived within the zone."
+      self:Message( RouteText )
     end
 
     return ProcessUnit:IsInZone( self.TargetZone )
@@ -244,8 +242,8 @@ do -- FSM_ROUTE_ZONE
     local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
     local TaskUnitVec2 = ProcessUnit:GetVec2()
     local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-    local RouteText = ProcessUnit:GetCallsign() .. ": Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
-    MESSAGE:New( RouteText, self.DisplayTime, self.DisplayCategory  ):ToGroup( ProcessUnit:GetGroup() )
+    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
+    self:Message( RouteText )
   end
 
 end -- FSM_ROUTE_ZONE

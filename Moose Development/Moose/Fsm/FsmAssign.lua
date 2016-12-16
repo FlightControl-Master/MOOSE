@@ -158,9 +158,6 @@ do -- FSM_ASSIGN_ACCEPT
   function FSM_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
-    local ProcessGroup = ProcessUnit:GetGroup()
-    MESSAGE:New( self.TaskBriefing, 30, ProcessUnit:GetPlayerName() .. " Task Acceptance" ):ToGroup( ProcessGroup )
-
     self:__Assign( 1 )   
   end
 
@@ -175,8 +172,8 @@ do -- FSM_ASSIGN_ACCEPT
     self:E( { ProcessUnit, Event, From, To } )
   
     local ProcessGroup = ProcessUnit:GetGroup()
-  
-    MESSAGE:New( "You are assigned to the task " .. self.Task:GetName(), 30, ProcessUnit:GetPlayerName() .. ": Task Assignment" ):ToGroup( ProcessGroup )
+
+    self:Message( "You are assigned to the task " .. self.Task:GetName() )  
 
     self.Task:Assign()
   end
@@ -240,8 +237,8 @@ do -- FSM_ASSIGN_MENU_ACCEPT
   -- @param #string To
   function FSM_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
-  
-    MESSAGE:New( self.TaskBriefing .. "\nAccess the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", 30, "Task Assignment" ):ToGroup( ProcessUnit:GetGroup() )
+
+    self:Message( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled." )  
    
     local ProcessGroup = ProcessUnit:GetGroup() 
     

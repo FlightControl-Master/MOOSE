@@ -32,17 +32,6 @@ do -- FSM
     -- Inherits from BASE
     local self = BASE:Inherit( self, BASE:New() )
   
-  
-    --local self = routines.utils.deepCopy( self ) -- Create a new self instance
-  
-    --assert(options.events)
-  
-    --local MT = {}
-    --setmetatable( self, MT )
-    --self.__index = self
-  
-  
-  
     self.options = options or {}
     self.options.subs = self.options.subs or {}
     self.current = self.options.initial or 'none'
@@ -94,8 +83,6 @@ do -- FSM
   
     return self._Transitions or {}
   end
-  
-  
   
   --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
   -- @return Fsm.Fsm#FSM_PROCESS
@@ -391,27 +378,7 @@ do -- FSM
   function FSM:cannot(e)
     return not self:can(e)
   end
-  
-  function FSM:CopyCallHandlers( FsmT )
-  
-    local Parent = BASE:GetParent( FsmT )
-    if Parent then
-      self:CopyCallHandlers( Parent )
-    end
-    for ElementID, Element in pairs( FsmT ) do
-      self:E( { ElementID = ElementID } )
-      if type( Element ) == "function" then
-        if ElementID.find( ElementID, "^onbefore" ) or
-           ElementID.find( ElementID, "^onafter" ) or
-           ElementID.find( ElementID, "^onenter" ) or
-           ElementID.find( ElementID, "^onleave" ) or
-           ElementID.find( ElementID, "^onfunc" ) then
-          self[ ElementID ] = Element
-        end
-      end
-    end
-  end
-  
+
 end
 
 do -- FSM_CONTROLLABLE
@@ -551,7 +518,7 @@ do -- FSM_PROCESS
   --- Sets the task of the process.
   -- @param #FSM_PROCESS self
   -- @param Tasking.Task#TASK_BASE Task
-  -- @return #PROCESS
+  -- @return #FSM_PROCESS
   function FSM_PROCESS:SetTask( Task )
   
     self.Task = Task
