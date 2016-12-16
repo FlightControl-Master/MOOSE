@@ -1,6 +1,6 @@
 
 local CargoEngineer = UNIT:FindByName( "Engineer" )
-local InfantryCargo = CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
+local InfantryCargo = AI_CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
 
 local CargoCarrierFrom = UNIT:FindByName( "CarrierFrom" )
 

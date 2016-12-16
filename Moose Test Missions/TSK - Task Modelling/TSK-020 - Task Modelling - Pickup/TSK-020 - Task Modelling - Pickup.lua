@@ -25,11 +25,11 @@ do
     Cargo_Pickup_Zone_2 = CARGO_ZONE:New( 'Pickup Zone 2', 'DE Communication Center 2' ):RedSmoke()
 	
 	for CargoItem = 1, 2 do
-		CargoTable[CargoItem] = CARGO_GROUP:New( 'Engineers', 'Team ' .. EngineerNames[CargoItem], math.random( 70, 100 ) * 3, 'DE Infantry',  Cargo_Pickup_Zone_1 )
+		CargoTable[CargoItem] = AI_CARGO_GROUP:New( 'Engineers', 'Team ' .. EngineerNames[CargoItem], math.random( 70, 100 ) * 3, 'DE Infantry',  Cargo_Pickup_Zone_1 )
 	end
 
 	for CargoItem = 3, 5 do
-		CargoTable[CargoItem] = CARGO_GROUP:New( 'Engineers', 'Team ' .. EngineerNames[CargoItem], math.random( 70, 100 ) * 3, 'DE Infantry',  Cargo_Pickup_Zone_2 )
+		CargoTable[CargoItem] = AI_CARGO_GROUP:New( 'Engineers', 'Team ' .. EngineerNames[CargoItem], math.random( 70, 100 ) * 3, 'DE Infantry',  Cargo_Pickup_Zone_2 )
 	end
 	
 	--Cargo_Package = CARGO_INVISIBLE:New( 'Letter', 0.1, 'DE Secret Agent', 'Pickup Zone Package' )
@@ -68,7 +68,7 @@ do
 
 	Package_Pickup_Zone = CARGO_ZONE:New( 'Package Pickup Zone', 'DE Guard' ):GreenSmoke()
 
-	Cargo_Package = CARGO_PACKAGE:New( 'Letter', 'Letter to Command', 0.1, Client_Package_1 )
+	Cargo_Package = AI_CARGO_PACKAGE:New( 'Letter', 'Letter to Command', 0.1, Client_Package_1 )
 	--Cargo_Goods = CARGO_STATIC:New( 'Goods', 20, 'Goods', 'Pickup Zone Goods', 'DE Collection Point' )
 	--Cargo_SlingLoad = CARGO_SLING:New( 'Basket', 40, 'Basket', 'Pickup Zone Sling Load', 'DE Cargo Guard' )
 

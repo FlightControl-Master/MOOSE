@@ -21,7 +21,7 @@
 --
 -- # Status: TESTED 07 Dec 2016
 -- 
--- @module TEST.AIBALANCER.T001
+-- @module TEST.AI_BALANCER.T001
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
@@ -31,5 +31,5 @@ local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCa
 -- If a blocked plane exists, this red plane will be ReSpawned.
 local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 
--- Start the AIBALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
-local RU_AI_Balancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
+-- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
+local RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )

@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li>Spawn</li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -87,7 +89,7 @@
 
    
 
-<h1>1) <a href="Spawn.html##(SPAWN)">Spawn#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>1) <a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
 <p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
 A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
@@ -946,7 +948,7 @@ A coding example is provided at the description of the <a href="##(SPAWN).OnSpaw
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>, #number:</em>
 The <a href="Group.html">Group</a> object found, the new Index where the group was found.</p>
 
 				</li>
@@ -993,7 +995,7 @@ The index of the group to return.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 self</p>
 
 </dd>
@@ -1013,7 +1015,7 @@ self</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>, #number:</em>
 The last alive <a href="Group.html">Group</a> object found, the last Index where the last alive <a href="Group.html">Group</a> object was found.</p>
 
 				</li>
@@ -1057,7 +1059,7 @@ A Index holding the start position to search from. This method can also be used 
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>, #number:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>, #number:</em>
 The next alive <a href="Group.html">Group</a> object found, the next Index where the next alive <a href="Group.html">Group</a> object was found.</p>
 
 				</li>
@@ -1361,13 +1363,13 @@ If true, SPAWN will perform the randomization of the <a href="UNIT.html">UNIT</a
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> OuterRadius </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> OuterRadius </em></code>: 
 (optional) The outer radius in meters where the new group will be spawned.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> InnerRadius </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> InnerRadius </em></code>: 
 (optional) The inner radius in meters where the new group will NOT be spawned.</p>
 
 				</li>
@@ -1618,7 +1620,7 @@ Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter 
 
 	
 <p>The provided method will be called when a new group is spawned, including its given parameters.
-The first parameter of the SpawnFunction is the <a href="Group.html##(GROUP)">Group#GROUP</a> that was spawned.</p>
+The first parameter of the SpawnFunction is the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> that was spawned.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1684,7 +1686,7 @@ The index of the group to be spawned.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 The group that was spawned. You can use this group for further actions.</p>
 
 </dd>
@@ -1747,7 +1749,7 @@ The group that was spawned. You can use this group for further actions.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 The group that was spawned. You can use this group for further actions.</p>
 
 </dd>
@@ -1830,7 +1832,7 @@ You can use the returned group to further define the route to be followed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Static.html##(STATIC)">Static#STATIC</a> HostStatic </em></code>: 
+<p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> HostStatic </em></code>: 
 The static dropping or unloading the group.</p>
 
 				</li>
@@ -1845,7 +1847,7 @@ The static dropping or unloading the group.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 that was spawned.</p>
 
 				</li>
@@ -1878,7 +1880,7 @@ You can use the returned group to further define the route to be followed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> HostUnit </em></code>: 
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> HostUnit </em></code>: 
 The air or ground unit dropping or unloading the group.</p>
 
 				</li>
@@ -1893,7 +1895,7 @@ The air or ground unit dropping or unloading the group.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 that was spawned.</p>
 
 				</li>
@@ -1926,7 +1928,7 @@ You can use the returned group to further define the route to be followed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
 The Vec2 coordinates where to spawn the group.</p>
 
 				</li>
@@ -1941,7 +1943,7 @@ The Vec2 coordinates where to spawn the group.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 that was spawned.</p>
 
 				</li>
@@ -1974,7 +1976,7 @@ You can use the returned group to further define the route to be followed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
 The Vec3 coordinates where to spawn the group.</p>
 
 				</li>
@@ -1989,7 +1991,7 @@ The Vec3 coordinates where to spawn the group.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 that was spawned.</p>
 
 				</li>
@@ -2086,7 +2088,7 @@ SpawnGroupName</p>
 <p>Will spawn a Group within a given <a href="Zone.html">Zone</a>.</p>
 
 	
-<p>The <a href="Zone.html">Zone</a> can be of any type derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.
+<p>The <a href="Zone.html">Zone</a> can be of any type derived from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>.
 Once the <a href="Group.html">Group</a> is spawned within the zone, the <a href="Group.html">Group</a> will continue on its route.
 The <strong>first waypoint</strong> (where the group is spawned) is replaced with the zone location coordinates.</p>
 
@@ -2094,7 +2096,7 @@ The <strong>first waypoint</strong> (where the group is spawned) is replaced wit
 		<ul>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> Zone </em></code>: 
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> Zone </em></code>: 
 The zone where the group is to be spawned.</p>
 
 				</li>
@@ -2115,7 +2117,7 @@ The zone where the group is to be spawned.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 that was spawned.</p>
 
 				</li>
@@ -2175,7 +2177,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2192,7 +2194,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -2524,7 +2526,7 @@ The index of the group to be spawned.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 The group that was spawned. You can use this group for further actions.</p>
 
 </dd>
@@ -2638,7 +2640,7 @@ The group that was spawned. You can use this group for further actions.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a> DCSUnit </em></code>: 
 The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
@@ -2647,7 +2649,7 @@ The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 			<ol>
 				<li>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
 The Group</p>
 
 				</li>
@@ -2679,7 +2681,7 @@ It will return nil of no prefix was found.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSUnit.html##(Unit)">DCSUnit#Unit</a> DCSUnit </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a> DCSUnit </em></code>: 
 The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
@@ -2733,7 +2735,7 @@ It will return nil of no prefix was found.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSUnit.html##(UNIT)">DCSUnit#UNIT</a> DCSUnit </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(UNIT)">Dcs.DCSWrapper.Unit#UNIT</a> DCSUnit </em></code>: 
 The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
 
 				</li>
@@ -2844,7 +2846,7 @@ Nothing found</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2865,7 +2867,7 @@ Nothing found</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
 
 				</li>
 		</ul>

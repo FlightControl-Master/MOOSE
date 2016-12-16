@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li>Patrol</li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -89,8 +91,8 @@
 
 <hr/>
 
-<h1>1) <a href="##(PATROLZONE)">#PATROLZONE</a> class, extends <a href="StateMachine.html##(STATEMACHINE)">StateMachine#STATEMACHINE</a></h1>
-<p>The <a href="##(PATROLZONE)">#PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> <a href="Group.html">Group</a>.
+<h1>1) <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
+<p>The <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> <a href="Group.html">Group</a>.
 The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
 a random point is selected as the route point within the 3D space, within the given boundary limits.
 The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
@@ -98,52 +100,52 @@ Upon arrival at the random 3D point, a new 3D random point will be selected with
 This cycle will continue until a fuel treshold has been reached by the airplane.
 When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
-<h2>1.1) PATROLZONE constructor:</h2>
+<h2>1.1) AI_PATROLZONE constructor:</h2>
 
 <ul>
-    <li><a href="##(PATROLZONE).New">PATROLZONE.New</a>(): Creates a new PATROLZONE object.</li>
+    <li><a href="##(AI_PATROLZONE).New">AI_PATROLZONE.New</a>(): Creates a new AI_PATROLZONE object.</li>
 </ul>
 
-<h2>1.2) PATROLZONE state machine:</h2>
-<p>The PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.</p>
+<h2>1.2) AI_PATROLZONE state machine:</h2>
+<p>The AI_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.</p>
 
-<h3>1.2.1) PATROLZONE Events:</h3>
+<h3>1.2.1) AI_PATROLZONE Events:</h3>
 
 <ul>
-    <li><a href="##(PATROLZONE).Route">PATROLZONE.Route</a>( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.</li>
-    <li><a href="##(PATROLZONE).Patrol">PATROLZONE.Patrol</a>( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.</li>
-    <li><a href="##(PATROLZONE).RTB">PATROLZONE.RTB</a>( AIControllable ): The AIControllable will report return to base.</li>
-    <li><a href="##(PATROLZONE).End">PATROLZONE.End</a>( AIControllable ): The end of the PATROLZONE process.</li>
-    <li><a href="##(PATROLZONE).Dead">PATROLZONE.Dead</a>( AIControllable ): The AIControllable is dead. The PATROLZONE process will be ended.</li>
+    <li><a href="##(AI_PATROLZONE).Route">AI_PATROLZONE.Route</a>( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.</li>
+    <li><a href="##(AI_PATROLZONE).Patrol">AI_PATROLZONE.Patrol</a>( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.</li>
+    <li><a href="##(AI_PATROLZONE).RTB">AI_PATROLZONE.RTB</a>( AIControllable ): The AIControllable will report return to base.</li>
+    <li><a href="##(AI_PATROLZONE).End">AI_PATROLZONE.End</a>( AIControllable ): The end of the AI_PATROLZONE process.</li>
+    <li><a href="##(AI_PATROLZONE).Dead">AI_PATROLZONE.Dead</a>( AIControllable ): The AIControllable is dead. The AI_PATROLZONE process will be ended.</li>
 </ul>
 
-<h3>1.2.2) PATROLZONE States:</h3>
+<h3>1.2.2) AI_PATROLZONE States:</h3>
 
 <ul>
     <li><strong>Route</strong>: A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.</li>
-    <li><strong>Patrol</strong>: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition function can be used.</li>
+    <li><strong>Patrol</strong>: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition method can be used.</li>
     <li><strong>RTB</strong>: The AIControllable reports it wants to return to the base.</li>
     <li><strong>Dead</strong>: The AIControllable is dead ...</li>
     <li><strong>End</strong>: The process has come to an end.</li>
 </ul>
 
-<h3>1.2.3) PATROLZONE state transition functions:</h3>
+<h3>1.2.3) AI_PATROLZONE state transition methods:</h3>
 
 <p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
-There are 2 moments when state transition functions will be called by the state machine:</p>
+There are 2 moments when state transition methods will be called by the state machine:</p>
 
 <ul>
     <li><p><strong>Before</strong> the state transition. 
-    The state transition function needs to start with the name <strong>OnBefore + the name of the state</strong>. 
-    If the state transition function returns false, then the processing of the state transition will not be done!
+    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
     If you want to change the behaviour of the AIControllable at this event, return false, 
     but then you'll need to specify your own logic using the AIControllable!</p></li>
     <li><p><strong>After</strong> the state transition. 
-    The state transition function needs to start with the name <strong>OnAfter + the name of the state</strong>. 
-    These state transition functions need to provide a return value, which is specified at the function description.</p></li>
+    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
 </ul>
 
-<p>An example how to manage a state transition for an PATROLZONE object <strong>Patrol</strong> for the state <strong>RTB</strong>:</p>
+<p>An example how to manage a state transition for an AI_PATROLZONE object <strong>Patrol</strong> for the state <strong>RTB</strong>:</p>
 
 <pre><code> local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone" )
  local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
@@ -151,49 +153,49 @@ There are 2 moments when state transition functions will be called by the state 
  local PatrolSpawn = SPAWN:New( "Patrol Group" )
  local PatrolGroup = PatrolSpawn:Spawn()
 
- local Patrol = PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
+ local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
  Patrol:SetControllable( PatrolGroup )
  Patrol:ManageFuel( 0.2, 60 )
 </code></pre>
 
-<p><strong>OnBefore</strong>RTB( AIGroup ) will be called by the PATROLZONE object when the AIGroup reports RTB, but <strong>before</strong> the RTB default action is processed by the PATROLZONE object.</p>
+<p><strong>OnBefore</strong>RTB( AIGroup ) will be called by the AI<em>PATROLZONE object when the AIGroup reports RTB, but <strong>before</strong> the RTB default action is processed by the AI</em>PATROLZONE object.</p>
 
-<pre><code> --- State transition function for the PATROLZONE **Patrol** object
- -- @param #PATROLZONE self 
- -- @param Controllable#CONTROLLABLE AIGroup
- -- @return #boolean If false is returned, then the OnAfter state transition function will not be called.
+<pre><code> --- State transition function for the AI_PATROLZONE **Patrol** object
+ -- @param #AI_PATROLZONE self 
+ -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
+ -- @return #boolean If false is returned, then the OnAfter state transition method will not be called.
  function Patrol:OnBeforeRTB( AIGroup )
    AIGroup:MessageToRed( "Returning to base", 20 )
  end
 </code></pre>
 
-<p><strong>OnAfter</strong>RTB( AIGroup ) will be called by the PATROLZONE object when the AIGroup reports RTB, but <strong>after</strong> the RTB default action was processed by the PATROLZONE object.</p>
+<p><strong>OnAfter</strong>RTB( AIGroup ) will be called by the AI<em>PATROLZONE object when the AIGroup reports RTB, but <strong>after</strong> the RTB default action was processed by the AI</em>PATROLZONE object.</p>
 
-<pre><code> --- State transition function for the PATROLZONE **Patrol** object
- -- @param #PATROLZONE self 
- -- @param Controllable#CONTROLLABLE AIGroup
- -- @return #Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
+<pre><code> --- State transition function for the AI_PATROLZONE **Patrol** object
+ -- @param #AI_PATROLZONE self 
+ -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
+ -- @return #Wrapper.Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
  function Patrol:OnAfterRTB( AIGroup )
    return PatrolSpawn:Spawn()
  end 
 </code></pre>
 
-<h2>1.3) Manage the PATROLZONE parameters:</h2>
-<p>The following methods are available to modify the parameters of a PATROLZONE object:</p>
+<h2>1.3) Manage the AI_PATROLZONE parameters:</h2>
+<p>The following methods are available to modify the parameters of a AI_PATROLZONE object:</p>
 
 <ul>
-    <li><a href="##(PATROLZONE).SetControllable">PATROLZONE.SetControllable</a>(): Set the AIControllable.</li>
-    <li><a href="##(PATROLZONE).GetControllable">PATROLZONE.GetControllable</a>(): Get the AIControllable.</li>
-    <li><a href="##(PATROLZONE).SetSpeed">PATROLZONE.SetSpeed</a>(): Set the patrol speed of the AI, for the next patrol.</li>
-    <li><a href="##(PATROLZONE).SetAltitude">PATROLZONE.SetAltitude</a>(): Set altitude of the AI, for the next patrol.</li>
+    <li><a href="##(AI_PATROLZONE).SetControllable">AI_PATROLZONE.SetControllable</a>(): Set the AIControllable.</li>
+    <li><a href="##(AI_PATROLZONE).GetControllable">AI_PATROLZONE.GetControllable</a>(): Get the AIControllable.</li>
+    <li><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE.SetSpeed</a>(): Set the patrol speed of the AI, for the next patrol.</li>
+    <li><a href="##(AI_PATROLZONE).SetAltitude">AI_PATROLZONE.SetAltitude</a>(): Set altitude of the AI, for the next patrol.</li>
 </ul>
 
-<h2>1.3) Manage the out of fuel in the PATROLZONE:</h2>
+<h2>1.3) Manage the out of fuel in the AI_PATROLZONE:</h2>
 <p>When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
 Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the PATROLZONE.
+When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
 Once the time is finished, the old AIControllable will return to the base.
-Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
+Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
 
 <hr/>
 
@@ -232,7 +234,7 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#PATROLZONE">PATROLZONE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#AI_PATROLZONE">AI_PATROLZONE</a></td>
 		<td class="summary">
 
 </td>
@@ -244,112 +246,112 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(PATROLZONE)">Type <code>PATROLZONE</code></a></h2>
+			<h2><a id="#(AI_PATROLZONE)">Type <code>AI_PATROLZONE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).AIControllable">PATROLZONE.AIControllable</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).AIControllable">AI_PATROLZONE.AIControllable</a></td>
 		<td class="summary">
 <p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).ClassName">PATROLZONE.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ClassName">AI_PATROLZONE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).ManageFuel">PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
 		<td class="summary">
 <p>When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).New">PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).New">AI_PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
-<p>Creates a new PATROLZONE object</p>
+<p>Creates a new AI_PATROLZONE object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).OnAfterRoute">PATROLZONE:OnAfterRoute(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterRoute">AI_PATROLZONE:OnAfterRoute(Controllable)</a></td>
 		<td class="summary">
 <p>OnAfter State Transition Function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).OnBeforeRoute">PATROLZONE:OnBeforeRoute(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeRoute">AI_PATROLZONE:OnBeforeRoute(Controllable)</a></td>
 		<td class="summary">
 <p>OnBefore State Transition Function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolCeilingAltitude">PATROLZONE.PatrolCeilingAltitude</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolCeilingAltitude">AI_PATROLZONE.PatrolCeilingAltitude</a></td>
 		<td class="summary">
 <p>The highest altitude in meters where to execute the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolFloorAltitude">PATROLZONE.PatrolFloorAltitude</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolFloorAltitude">AI_PATROLZONE.PatrolFloorAltitude</a></td>
 		<td class="summary">
 <p>The lowest altitude in meters where to execute the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolFuelTresholdPercentage">PATROLZONE.PatrolFuelTresholdPercentage</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolFuelTresholdPercentage">AI_PATROLZONE.PatrolFuelTresholdPercentage</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolManageFuel">PATROLZONE.PatrolManageFuel</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolManageFuel">AI_PATROLZONE.PatrolManageFuel</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolMaxSpeed">PATROLZONE.PatrolMaxSpeed</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMaxSpeed">AI_PATROLZONE.PatrolMaxSpeed</a></td>
 		<td class="summary">
 <p>The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolMinSpeed">PATROLZONE.PatrolMinSpeed</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMinSpeed">AI_PATROLZONE.PatrolMinSpeed</a></td>
 		<td class="summary">
 <p>The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolOutOfFuelOrbitTime">PATROLZONE.PatrolOutOfFuelOrbitTime</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolOutOfFuelOrbitTime">AI_PATROLZONE.PatrolOutOfFuelOrbitTime</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).PatrolZone">PATROLZONE.PatrolZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolZone">AI_PATROLZONE.PatrolZone</a></td>
 		<td class="summary">
 <p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SetAltitude">PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetAltitude">AI_PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</a></td>
 		<td class="summary">
 <p>Sets the floor and ceiling altitude of the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).SetSpeed">PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).onenterPatrol">PATROLZONE:onenterPatrol()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onenterPatrol">AI_PATROLZONE:onenterPatrol()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(PATROLZONE).onenterRoute">PATROLZONE:onenterRoute()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onenterRoute">AI_PATROLZONE:onenterRoute()</a></td>
 		<td class="summary">
 <p>Defines a new patrol route using the <a href="Process_PatrolZone.html">Process_PatrolZone</a> parameters and settings.</p>
 </td>
@@ -360,9 +362,9 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 		<dl class="function">
 <dt>
 
-		<em><a href="##(PATROLZONE)">#PATROLZONE</a></em>
-<a id="PATROLZONE" >
-<strong>PATROLZONE</strong>
+		<em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a></em>
+<a id="AI_PATROLZONE" >
+<strong>AI_PATROLZONE</strong>
 </a>
 </dt>
 <dd>
@@ -386,7 +388,7 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
 
 				</li>
 		</ul>
@@ -394,17 +396,17 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 </dl>
 	<h2><a id="#(Patrol)" >Type <code>Patrol</code></a></h2>
 	
-			<h2><a id="#(PATROLZONE)" >Type <code>PATROLZONE</code></a></h2>
+			<h2><a id="#(AI_PATROLZONE)" >Type <code>AI_PATROLZONE</code></a></h2>
 				
-<p>PATROLZONE class</p>
+<p>AI_PATROLZONE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></em>
-<a id="#(PATROLZONE).AIControllable" >
-<strong>PATROLZONE.AIControllable</strong>
+		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
+<a id="#(AI_PATROLZONE).AIControllable" >
+<strong>AI_PATROLZONE.AIControllable</strong>
 </a>
 </dt>
 <dd>
@@ -417,8 +419,8 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 <dt>
 
 		<em>#string</em>
-<a id="#(PATROLZONE).ClassName" >
-<strong>PATROLZONE.ClassName</strong>
+<a id="#(AI_PATROLZONE).ClassName" >
+<strong>AI_PATROLZONE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -430,8 +432,8 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).ManageFuel" >
-<strong>PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
+<a id="#(AI_PATROLZONE).ManageFuel" >
+<strong>AI_PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
 </a>
 </dt>
 <dd>
@@ -440,7 +442,7 @@ Use the method <a href="##(PATROLZONE).ManageFuel">PATROLZONE.ManageFuel</a>() t
 
 	
 <p>Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the PATROLZONE.
+When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
 Once the time is finished, the old AIControllable will return to the base.</p>
 
 		<h3>Parameters</h3>
@@ -460,7 +462,7 @@ The amount of seconds the out of fuel AIControllable will orbit before returning
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
 self</p>
 
 </dd>
@@ -468,65 +470,65 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).New" >
-<strong>PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<a id="#(AI_PATROLZONE).New" >
+<strong>AI_PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new PATROLZONE object</p>
+<p>Creates a new AI_PATROLZONE object</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> PatrolZone </em></code>: 
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> PatrolZone </em></code>: 
 The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a> PatrolFloorAltitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolFloorAltitude </em></code>: 
 The lowest altitude in meters where to execute the patrol.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a> PatrolCeilingAltitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolCeilingAltitude </em></code>: 
 The highest altitude in meters where to execute the patrol.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
 The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
 The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
 self</p>
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+		<pre class="example"><code>-- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
 PatrolSpawn = SPAWN:New( 'Patrol Group' )
-PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
+PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).OnAfterRoute" >
-<strong>PATROLZONE:OnAfterRoute(Controllable)</strong>
+<a id="#(AI_PATROLZONE).OnAfterRoute" >
+<strong>AI_PATROLZONE:OnAfterRoute(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -537,7 +539,7 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
 
 				</li>
 		</ul>
@@ -546,8 +548,8 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).OnBeforeRoute" >
-<strong>PATROLZONE:OnBeforeRoute(Controllable)</strong>
+<a id="#(AI_PATROLZONE).OnBeforeRoute" >
+<strong>AI_PATROLZONE:OnBeforeRoute(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -558,7 +560,7 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
 
 				</li>
 		</ul>
@@ -572,9 +574,9 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a></em>
-<a id="#(PATROLZONE).PatrolCeilingAltitude" >
-<strong>PATROLZONE.PatrolCeilingAltitude</strong>
+		<em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a></em>
+<a id="#(AI_PATROLZONE).PatrolCeilingAltitude" >
+<strong>AI_PATROLZONE.PatrolCeilingAltitude</strong>
 </a>
 </dt>
 <dd>
@@ -586,9 +588,9 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a></em>
-<a id="#(PATROLZONE).PatrolFloorAltitude" >
-<strong>PATROLZONE.PatrolFloorAltitude</strong>
+		<em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a></em>
+<a id="#(AI_PATROLZONE).PatrolFloorAltitude" >
+<strong>AI_PATROLZONE.PatrolFloorAltitude</strong>
 </a>
 </dt>
 <dd>
@@ -601,8 +603,8 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(PATROLZONE).PatrolFuelTresholdPercentage" >
-<strong>PATROLZONE.PatrolFuelTresholdPercentage</strong>
+<a id="#(AI_PATROLZONE).PatrolFuelTresholdPercentage" >
+<strong>AI_PATROLZONE.PatrolFuelTresholdPercentage</strong>
 </a>
 </dt>
 <dd>
@@ -615,8 +617,8 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 <dt>
 
 		<em>#boolean</em>
-<a id="#(PATROLZONE).PatrolManageFuel" >
-<strong>PATROLZONE.PatrolManageFuel</strong>
+<a id="#(AI_PATROLZONE).PatrolManageFuel" >
+<strong>AI_PATROLZONE.PatrolManageFuel</strong>
 </a>
 </dt>
 <dd>
@@ -628,9 +630,9 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a></em>
-<a id="#(PATROLZONE).PatrolMaxSpeed" >
-<strong>PATROLZONE.PatrolMaxSpeed</strong>
+		<em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a></em>
+<a id="#(AI_PATROLZONE).PatrolMaxSpeed" >
+<strong>AI_PATROLZONE.PatrolMaxSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -642,9 +644,9 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a></em>
-<a id="#(PATROLZONE).PatrolMinSpeed" >
-<strong>PATROLZONE.PatrolMinSpeed</strong>
+		<em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a></em>
+<a id="#(AI_PATROLZONE).PatrolMinSpeed" >
+<strong>AI_PATROLZONE.PatrolMinSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -657,8 +659,8 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(PATROLZONE).PatrolOutOfFuelOrbitTime" >
-<strong>PATROLZONE.PatrolOutOfFuelOrbitTime</strong>
+<a id="#(AI_PATROLZONE).PatrolOutOfFuelOrbitTime" >
+<strong>AI_PATROLZONE.PatrolOutOfFuelOrbitTime</strong>
 </a>
 </dt>
 <dd>
@@ -670,9 +672,9 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></em>
-<a id="#(PATROLZONE).PatrolZone" >
-<strong>PATROLZONE.PatrolZone</strong>
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(AI_PATROLZONE).PatrolZone" >
+<strong>AI_PATROLZONE.PatrolZone</strong>
 </a>
 </dt>
 <dd>
@@ -684,8 +686,8 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).SetAltitude" >
-<strong>PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</strong>
+<a id="#(AI_PATROLZONE).SetAltitude" >
+<strong>AI_PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</strong>
 </a>
 </dt>
 <dd>
@@ -696,20 +698,20 @@ PatrolArea = PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a> PatrolFloorAltitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolFloorAltitude </em></code>: 
 The lowest altitude in meters where to execute the patrol.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Altitude)">DCSTypes#Altitude</a> PatrolCeilingAltitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolCeilingAltitude </em></code>: 
 The highest altitude in meters where to execute the patrol.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
 self</p>
 
 </dd>
@@ -717,8 +719,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).SetSpeed" >
-<strong>PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<a id="#(AI_PATROLZONE).SetSpeed" >
+<strong>AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
@@ -729,20 +731,20 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
 The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Speed)">DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
 The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
 self</p>
 
 </dd>
@@ -750,8 +752,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).onenterPatrol" >
-<strong>PATROLZONE:onenterPatrol()</strong>
+<a id="#(AI_PATROLZONE).onenterPatrol" >
+<strong>AI_PATROLZONE:onenterPatrol()</strong>
 </a>
 </dt>
 <dd>
@@ -763,8 +765,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(PATROLZONE).onenterRoute" >
-<strong>PATROLZONE:onenterRoute()</strong>
+<a id="#(AI_PATROLZONE).onenterRoute" >
+<strong>AI_PATROLZONE:onenterRoute()</strong>
 </a>
 </dt>
 <dd>
@@ -773,7 +775,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(PATROLZONE)">#PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
 self</p>
 
 </dd>

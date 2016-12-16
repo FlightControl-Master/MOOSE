@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li>Detection</li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -88,12 +90,12 @@
    
 <h1> </h1>
 
-<h1> 1) <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p> The <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class defines the core functions to administer detected objects.
- The <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
+<h1> 1) <a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<p> The <a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> class defines the core functions to administer detected objects.
+ The <a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
 
 <h2> 1.1) DETECTION_BASE constructor</h2>
-<p> Construct a new DETECTION_BASE instance using the <a href="Detection.html##(DETECTION_BASE).New">Detection#DETECTION_BASE.New</a>() method.</p>
+<p> Construct a new DETECTION_BASE instance using the <a href="Functional.Detection.html##(DETECTION_BASE).New">Functional.Detection#DETECTION_BASE.New</a>() method.</p>
 
 <h2> 1.2) DETECTION_BASE initialization</h2>
 <p> By default, detection will return detected objects with all the detection sensors available.
@@ -104,42 +106,42 @@
 <p> Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
 
 <ul>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectVisual">Detection#DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectOptical">Detection#DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectRadar">Detection#DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectIRST">Detection#DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectRWR">Detection#DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectDLINK">Detection#DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectVisual">Functional.Detection#DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectOptical">Functional.Detection#DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectRadar">Functional.Detection#DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectIRST">Functional.Detection#DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectRWR">Functional.Detection#DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
+    <li><a href="Functional.Detection.html##(DETECTION_BASE).InitDetectDLINK">Functional.Detection#DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
 </ul>
 
 <h2> 1.3) Obtain objects detected by DETECTION_BASE</h2>
-<p> DETECTION_BASE builds <a href="Set.html">Set</a>s of objects detected. These <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSets">Detection#DETECTION_BASE.GetDetectedSets</a>().
- The method will return a list (table) of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> objects.</p>
+<p> DETECTION_BASE builds <a href="Set.html">Set</a>s of objects detected. These <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>s can be retrieved using the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectedSets">Functional.Detection#DETECTION_BASE.GetDetectedSets</a>().
+ The method will return a list (table) of <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> objects.</p>
 
 <hr/>
 
-<h1> 2) <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
-<p> The <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
- and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.
+<h1> 2) <a href="Functional.Detection.html##(DETECTION_AREAS)">Functional.Detection#DETECTION_AREAS</a> class, extends <a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a></h1>
+<p> The <a href="Functional.Detection.html##(DETECTION_AREAS)">Functional.Detection#DETECTION_AREAS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
+ and will build a list (table) of <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a>s containing the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s detected.
  The class is group the detected units within zones given a DetectedZoneRange parameter.
  A set with multiple detected zones will be created as there are groups of units detected.</p>
 
 <h2> 2.1) Retrieve the Detected Unit sets and Detected Zones</h2>
-<p> The DetectedUnitSets methods are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and the DetectedZones methods is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
+<p> The DetectedUnitSets methods are implemented in <a href="Functional.Detection.html##(DECTECTION_BASE)">Functional.Detection#DECTECTION_BASE</a> and the DetectedZones methods is implemented in <a href="Functional.Detection.html##(DETECTION_AREAS)">Functional.Detection#DETECTION_AREAS</a>.</p>
 
-<p> Retrieve the DetectedUnitSets with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSets">Detection#DETECTION_BASE.GetDetectedSets</a>(). A table will be return of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s.
- To understand the amount of sets created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSetCount">Detection#DETECTION_BASE.GetDetectedSetCount</a>(). 
- If you want to obtain a specific set from the DetectedSets, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>() with a given index.</p>
+<p> Retrieve the DetectedUnitSets with the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectedSets">Functional.Detection#DETECTION_BASE.GetDetectedSets</a>(). A table will be return of <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a>s.
+ To understand the amount of sets created, use the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectedSetCount">Functional.Detection#DETECTION_BASE.GetDetectedSetCount</a>(). 
+ If you want to obtain a specific set from the DetectedSets, use the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectedSet">Functional.Detection#DETECTION_BASE.GetDetectedSet</a>() with a given index.</p>
 
-<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZones">Detection#DETECTION_BASE.GetDetectionZones</a>().
- To understand the amount of zones created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
- If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
+<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectionZones">Functional.Detection#DETECTION_BASE.GetDetectionZones</a>().
+ To understand the amount of zones created, use the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Functional.Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
+ If you want to obtain a specific zone from the DetectedZones, use the method <a href="Functional.Detection.html##(DETECTION_BASE).GetDetectionZone">Functional.Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
 
 <h2> 1.4) Flare or Smoke detected units</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
+<p> Use the methods <a href="Functional.Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Functional.Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Functional.Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Functional.Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
 
 <h2> 1.5) Flare or Smoke detected zones</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to flare or smoke the detected zones when a new detection has taken place.</p>
+<p> Use the methods <a href="Functional.Detection.html##(DETECTION_AREAS).FlareDetectedZones">Functional.Detection#DETECTION_AREAS.FlareDetectedZones</a>() or <a href="Functional.Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Functional.Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to flare or smoke the detected zones when a new detection has taken place.</p>
 
 <hr/>
 
@@ -260,13 +262,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedSet">DETECTION_AREAS:GetDetectedSet(Index)</a></td>
 		<td class="summary">
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
+<p>Get the <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedZone">DETECTION_AREAS:GetDetectedZone(Index)</a></td>
 		<td class="summary">
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
+<p>Get the <a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -502,7 +504,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedSets">DETECTION_BASE:GetDetectedSets()</a></td>
 		<td class="summary">
-<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Get the detected <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>s.</p>
 </td>
 		</tr>
 		<tr>
@@ -598,7 +600,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE)._DetectionScheduler">DETECTION_BASE:_DetectionScheduler(SchedulerName)</a></td>
 		<td class="summary">
-<p>Form <a href="Set.html">Set</a>s of detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s in an array of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Form <a href="Set.html">Set</a>s of detected <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s in an array of <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>s.</p>
 </td>
 		</tr>
 	</table>
@@ -786,13 +788,13 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> Set </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> Set </em></code>: 
 -- The Set of Units in the detected area.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> Zone </em></code>: 
+<p><code><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> Zone </em></code>: 
 -- The Zone of the detected area.</p>
 
 				</li>
@@ -882,7 +884,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
 <a id="#(DETECTION_AREAS).DetectionZoneRange" >
 <strong>DETECTION_AREAS.DetectionZoneRange</strong>
 </a>
@@ -1000,7 +1002,7 @@ DetectedAreas</p>
 </dt>
 <dd>
 	
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
+<p>Get the <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1012,7 +1014,7 @@ DetectedAreas</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>:</em>
+<p><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a>:</em>
 DetectedSet</p>
 
 </dd>
@@ -1026,7 +1028,7 @@ DetectedSet</p>
 </dt>
 <dd>
 	
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
+<p>Get the <a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1038,7 +1040,7 @@ DetectedSet</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>:</em>
+<p><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>:</em>
 DetectedZone</p>
 
 </dd>
@@ -1116,7 +1118,7 @@ trhe if there are friendlies nearby </p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Unit.html##(UNIT)">Unit#UNIT</a>:</em>
+<p><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>:</em>
 The nearest FAC unit</p>
 
 </dd>
@@ -1136,26 +1138,26 @@ The nearest FAC unit</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
 The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionRange </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionRange </em></code>: 
 The range till which targets are accepted to be detected.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionZoneRange </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionZoneRange </em></code>: 
 The range till which targets are grouped upon the first detected target.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>:</em>
+<p><em><a href="Functional.Detection.html##(DETECTION_AREAS)">Functional.Detection#DETECTION_AREAS</a>:</em>
 self</p>
 
 </dd>
@@ -1202,7 +1204,7 @@ The Index of the detection are to be removed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> ReportUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ReportUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -1381,7 +1383,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
 <a id="#(DETECTION_AREAS.DetectedArea).NearestFAC" >
 <strong>DETECTION_AREAS.DetectedArea.NearestFAC</strong>
 </a>
@@ -1395,7 +1397,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+		<em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a></em>
 <a id="#(DETECTION_AREAS.DetectedArea).Set" >
 <strong>DETECTION_AREAS.DetectedArea.Set</strong>
 </a>
@@ -1409,7 +1411,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a></em>
+		<em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a></em>
 <a id="#(DETECTION_AREAS.DetectedArea).Zone" >
 <strong>DETECTION_AREAS.DetectedArea.Zone</strong>
 </a>
@@ -1578,7 +1580,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a></em>
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
 <a id="#(DETECTION_BASE).DetectionRange" >
 <strong>DETECTION_BASE.DetectionRange</strong>
 </a>
@@ -1620,7 +1622,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+		<em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a></em>
 <a id="#(DETECTION_BASE).DetectionSetGroup" >
 <strong>DETECTION_BASE.DetectionSetGroup</strong>
 </a>
@@ -1678,7 +1680,7 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Set.html##(SET_BASE)">Set#SET_BASE</a>:</em></p>
+<p><em><a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>:</em></p>
 
 
 </dd>
@@ -1710,7 +1712,7 @@ Count</p>
 </dt>
 <dd>
 	
-<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Get the detected <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>s.</p>
 
 		<h3>Return value</h3>
 				
@@ -1732,7 +1734,7 @@ DetectedSets</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Group.html##(GROUP)">Group#GROUP</a>:</em></p>
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em></p>
 
 
 </dd>
@@ -1955,13 +1957,13 @@ true if already identified.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
 The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> DetectionRange </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionRange </em></code>: 
 The range till which targets are accepted to be detected.</p>
 
 				</li>
@@ -2077,7 +2079,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Form <a href="Set.html">Set</a>s of detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s in an array of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Form <a href="Set.html">Set</a>s of detected <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s in an array of <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>s.</p>
 
 		<h3>Parameter</h3>
 		<ul>

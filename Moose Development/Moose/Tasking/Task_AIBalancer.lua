@@ -1,29 +1,29 @@
---- This module contains the AIBALANCER class.
+--- This module contains the AI_BALANCER class.
 -- 
 -- ===
 -- 
--- 1) @{AI.AI_Balancer#AIBALANCER} class, extends @{Core.Base#BASE}
+-- 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Base#BASE}
 -- =======================================================
--- The @{AI.AI_Balancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
+-- The @{AI.AI_Balancer#AI_BALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
 -- There will be as many AI GROUPS spawned as there at CLIENTS in SET_CLIENT not spawned.
--- The AI_Balancer uses the @{PatrolCore.Zone#PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
+-- The AI_Balancer uses the @{PatrolCore.Zone#AI_PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
 -- 
--- 1.1) AIBALANCER construction method:
+-- 1.1) AI_BALANCER construction method:
 -- ------------------------------------
--- Create a new AIBALANCER object with the @{#AIBALANCER.New} method:
+-- Create a new AI_BALANCER object with the @{#AI_BALANCER.New} method:
 -- 
---    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
+--    * @{#AI_BALANCER.New}: Creates a new AI_BALANCER object.
 -- 
--- 1.2) AIBALANCER returns AI to Airbases:
+-- 1.2) AI_BALANCER returns AI to Airbases:
 -- ---------------------------------------
 -- You can configure to have the AI to return to:
 -- 
---    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
---    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- 
--- 1.3) AIBALANCER allows AI to patrol specific zones:
+-- 1.3) AI_BALANCER allows AI to patrol specific zones:
 -- ---------------------------------------------------
--- Use @{AI.AI_Balancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
+-- Use @{AI.AI_Balancer#AI_BALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
 --
 -- ===
 -- 
@@ -50,12 +50,12 @@
 -- ### Contributions: 
 -- 
 --   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AIBALANCER class.  
+--   Working together with James has resulted in the creation of the AI_BALANCER class.  
 --   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
 --   * **SNAFU**:
 --   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AIBALANCER moose class.
+--   None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
 -- 
@@ -65,28 +65,28 @@
 
 
 
---- AIBALANCER class
--- @type AIBALANCER
+--- AI_BALANCER class
+-- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
 -- @field Functional.Spawn#SPAWN SpawnAI
 -- @field #boolean ToNearestAirbase
 -- @field Core.Set#SET_AIRBASE ReturnAirbaseSet
 -- @field Dcs.DCSTypes#Distance ReturnTresholdRange
 -- @field #boolean ToHomeAirbase
--- @field PatrolCore.Zone#PATROLZONE PatrolZone
+-- @field PatrolCore.Zone#AI_PATROLZONE PatrolZone
 -- @extends Core.Base#BASE
-AIBALANCER = {
-  ClassName = "AIBALANCER",
+AI_BALANCER = {
+  ClassName = "AI_BALANCER",
   PatrolZones = {},
   AIGroups = {},
 }
 
---- Creates a new AIBALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
--- @param #AIBALANCER self
+--- Creates a new AI_BALANCER object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+-- @param #AI_BALANCER self
 -- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
 -- @param SpawnAI A SPAWN object that will spawn the AI units required, balancing the SetClient.
--- @return #AIBALANCER self
-function AIBALANCER:New( SetClient, SpawnAI )
+-- @return #AI_BALANCER self
+function AI_BALANCER:New( SetClient, SpawnAI )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
@@ -122,10 +122,10 @@ function AIBALANCER:New( SetClient, SpawnAI )
 end
 
 --- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
--- @param #AIBALANCER self
+-- @param #AI_BALANCER self
 -- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 -- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
-function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
@@ -133,21 +133,21 @@ function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseS
 end
 
 --- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
--- @param #AIBALANCER self
+-- @param #AI_BALANCER self
 -- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
-function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
 --- Let the AI patrol a @{Zone} with a given Speed range and Altitude range.
--- @param #AIBALANCER self
--- @param PatrolCore.Zone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
--- @return PatrolCore.Zone#PATROLZONE self
-function AIBALANCER:SetPatrolZone( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- @param #AI_BALANCER self
+-- @param PatrolCore.Zone#AI_PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+-- @return PatrolCore.Zone#AI_PATROLZONE self
+function AI_BALANCER:SetPatrolZone( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
-  self.PatrolZone = PATROLZONE:New(
+  self.PatrolZone = AI_PATROLZONE:New(
     self.SpawnAI,
     PatrolZone,
     PatrolFloorAltitude,
@@ -158,17 +158,17 @@ function AIBALANCER:SetPatrolZone( PatrolZone, PatrolFloorAltitude, PatrolCeilin
 end
 
 --- Get the @{PatrolZone} object assigned by the @{AI_Balancer} object.
--- @param #AIBALANCER self
--- @return PatrolCore.Zone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
-function AIBALANCER:GetPatrolZone()
+-- @param #AI_BALANCER self
+-- @return PatrolCore.Zone#AI_PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
+function AI_BALANCER:GetPatrolZone()
 
   return self.PatrolZone
 end
 
 
 
---- @param #AIBALANCER self
-function AIBALANCER:_ClientAliveMonitorScheduler()
+--- @param #AI_BALANCER self
+function AI_BALANCER:_ClientAliveMonitorScheduler()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
@@ -255,7 +255,7 @@ function AIBALANCER:_ClientAliveMonitorScheduler()
           
           --- Now test if the AIGroup needs to patrol a zone, otherwise let it follow its route...
           if self.PatrolZone then
-            self.PatrolZones[#self.PatrolZones+1] = PATROLZONE:New(
+            self.PatrolZones[#self.PatrolZones+1] = AI_PATROLZONE:New(
               self.PatrolZone.PatrolZone,
               self.PatrolZone.PatrolFloorAltitude,
               self.PatrolZone.PatrolCeilingAltitude,
