@@ -44,11 +44,11 @@ Include.File( "AI/AI_Balancer" )
 Include.File( "AI/AI_Patrol" )
 Include.File( "AI/AI_Cargo" )
 
---- Fsm Classes
+--- Actions
 Include.File( "Actions/Act_Assign" )
 Include.File( "Actions/Act_Route" )
 Include.File( "Actions/Act_Account" )
-Include.File( "Actions/Act_Smoke" )
+Include.File( "Actions/Act_Assist" )
 
 --- Task Handling Classes
 Include.File( "Tasking/CommandCenter" )
