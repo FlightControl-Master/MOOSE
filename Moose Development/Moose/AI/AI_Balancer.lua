@@ -2,15 +2,15 @@
 -- 
 -- ===
 -- 
--- 1) @{Functional.AIBalancer#AIBALANCER} class, extends @{Fsm.Fsm#FSM_SET}
+-- 1) @{AI.AI_Balancer#AIBALANCER} class, extends @{Core.Fsm#FSM_SET}
 -- ===================================================================================
--- The @{Functional.AIBalancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
+-- The @{AI.AI_Balancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
 -- CLIENTS in a SET_CLIENT collection not occupied by players.
 -- The AIBALANCER class manages internally a collection of AI management objects, which govern the behaviour 
 -- of the underlying AI GROUPS.
 -- 
--- The parent class @{Fsm.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
--- and calls for each event the state transition methods providing the internal @{Fsm.Fsm#FSM_SET.Set} object containing the
+-- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
+-- and calls for each event the state transition methods providing the internal @{Core.Fsm#FSM_SET.Set} object containing the
 -- SET_GROUP and additional event parameters provided during the event.
 -- 
 -- 1.1) AIBALANCER construction method
@@ -67,14 +67,14 @@
 -- 
 --   * FlightControl: Framework Design &  Programming
 -- 
--- @module AIBalancer
+-- @module AI_Balancer
 
 
 
 --- AIBALANCER class
 -- @type AIBALANCER
 -- @field Core.Set#SET_CLIENT SetClient
--- @extends Fsm.Fsm#FSM_SET
+-- @extends Core.Fsm#FSM_SET
 AIBALANCER = {
   ClassName = "AIBALANCER",
   PatrolZones = {},
@@ -91,7 +91,7 @@ AIBALANCER = {
 function AIBALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Fsm.Fsm#FSM_SET
+  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
   
   self:SetStartState( "None" )
   self:AddTransition( "*", "Start", "Monitoring" )

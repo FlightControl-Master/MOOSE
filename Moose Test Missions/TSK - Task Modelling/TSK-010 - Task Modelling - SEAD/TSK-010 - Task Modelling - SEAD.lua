@@ -99,18 +99,18 @@ local TargetSet = SET_UNIT:New():FilterPrefixes( "US Hawk SR" ):FilterOnce()
 -- Define the zone to where the pilot needs to navigate.
 local TargetZone = ZONE:New( "Target Zone" )
 
--- MOOSE contains a TASK_BASE class. Use the TASK class to define a new Task object and attach it to a Mission object.
+-- MOOSE contains a TASK class. Use the TASK class to define a new Task object and attach it to a Mission object.
 -- Here we define a new TaskSEAD object, and attach it to the Mission object.
--- ( The TASK_BASE class is the base class for ALL derived Task templates.
+-- ( The TASK class is the base class for ALL derived Task templates.
 --   Task templates are TASK classes that quickly setup a Task scenario with given parameters. )
 -- 
--- The TASK_BASE class is thus the primary task, and a task scenario will need to be provided to the TaskSEAD of the states and events that form the task.
--- TASK_BASE gets a couple of parameters:
+-- The TASK class is thus the primary task, and a task scenario will need to be provided to the TaskSEAD of the states and events that form the task.
+-- TASK gets a couple of parameters:
 -- 1. The Mission for which the Task needs to be achieved.
 -- 2. The set of groups of planes that pilots can join.
 -- 3. The name of the Task... This can be any name, and will be provided when the Pilot joins the task.
 -- 4. A type of the Task. When Tasks are in state Planned, then a menu can be provided that group the task based on this given type.
-local SEADTask = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK_BASE
+local SEADTask = TASK:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".
@@ -126,19 +126,19 @@ local SEADProcess = SEADTask:GetUnitProcess()
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
--- We use for this the SUB-PROCESS FSM_ASSIGN_ACCEPT.
+-- We use for this the SUB-PROCESS ACT_ASSIGN_ACCEPT.
 -- The method on the FsmSEAD AddProcess accepts the following parameters:
 -- 1. State From "Planned". When the Fsm is in state "Planned", allow the event "Accept".
 -- 2. Event "Accept". This event can be triggered through FsmSEAD:Accept() or FsmSEAD:__Accept( 1 ). See documentation on state machines.
--- 3. The PROCESS derived class. In this case, we use the FSM_ASSIGN_ACCEPT to accept the task and provide a briefing. So, when the event "Accept" is fired, this process is executed.
--- 4. A table with the "return" states of the FSM_ASSIGN_ACCEPT process. This table indicates that for a certain return state, a further event needs to be called.
+-- 3. The PROCESS derived class. In this case, we use the ACT_ASSIGN_ACCEPT to accept the task and provide a briefing. So, when the event "Accept" is fired, this process is executed.
+-- 4. A table with the "return" states of the ACT_ASSIGN_ACCEPT process. This table indicates that for a certain return state, a further event needs to be called.
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-SEADProcess:AddProcess    ( "Planned",    "Accept",   FSM_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+SEADProcess:AddProcess    ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.
-SEADProcess:AddProcess    ( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
+SEADProcess:AddProcess    ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -149,8 +149,8 @@ SEADProcess:AddProcess    ( "Assigned",   "Route",    FSM_ROUTE_ZONE:New( Target
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
 SEADProcess:AddTransition ( "Rejected",   "Eject",    "Planned" )
 SEADProcess:AddTransition ( "Arrived",    "Update",   "Updated" ) 
-SEADProcess:AddProcess    ( "Updated",    "Account",  FSM_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
-SEADProcess:AddProcess    ( "Updated",    "Smoke",    FSM_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
+SEADProcess:AddProcess    ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
+SEADProcess:AddProcess    ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
 SEADProcess:AddTransition ( "Accounted",  "Success",  "Success" )
 SEADProcess:AddTransition ( "*",          "Fail",     "Failed" )
 
@@ -181,7 +181,7 @@ function SEADTask:OnAfterPlayerCrashed( PlayerUnit, PlayerName )
 end
 
 
-local TaskSEAD2 = TASK_BASE:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK_BASE
+local TaskSEAD2 = TASK:New( Mission, SEADSet, "SEAD Radars Vector 2", "SEAD" ) -- Tasking.Task#TASK
 TaskSEAD2:SetUnitProcess( SEADTask:GetUnitProcess():Copy() )
 Mission:AddTask( TaskSEAD2 )
 

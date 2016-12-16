@@ -15,6 +15,7 @@ Include.File( "Core/Database" )
 Include.File( "Core/Set" )
 Include.File( "Core/Point" )
 Include.File( "Core/Message" )
+Include.File( "Core/Fsm" )
 
 --- Wrapper Classes
 Include.File( "Wrapper/Object" )
@@ -37,18 +38,17 @@ Include.File( "Functional/Escort" )
 Include.File( "Functional/MissileTrainer" )
 Include.File( "Functional/AirbasePolice" )
 Include.File( "Functional/Detection" )
-Include.File( "Functional/AIBalancer" )
+
+--- AI Classes
+Include.File( "AI/AI_Balancer" )
+Include.File( "AI/AI_Patrol" )
+Include.File( "AI/AI_Cargo" )
 
 --- Fsm Classes
-Include.File( "Fsm/Fsm" )
-Include.File( "Fsm/Process" )
-Include.File( "Fsm/Process_JTAC" )
-Include.File( "Fsm/Patrol" )
-Include.File( "Fsm/Cargo" )
-Include.File( "Fsm/FsmAssign" )
-Include.File( "Fsm/FsmRoute" )
-Include.File( "Fsm/FsmAccount" )
-Include.File( "Fsm/FsmSmoke" )
+Include.File( "Actions/Act_Assign" )
+Include.File( "Actions/Act_Route" )
+Include.File( "Actions/Act_Account" )
+Include.File( "Actions/Act_Smoke" )
 
 --- Task Handling Classes
 Include.File( "Tasking/CommandCenter" )

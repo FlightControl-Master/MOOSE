@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- 1) @{#PATROLZONE} class, extends @{Fsm.Fsm#FSM}
+-- 1) @{#PATROLZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
 -- ================================================================
 -- The @{#PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable} @{Group}.
 -- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
@@ -155,7 +155,7 @@
 -- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @extends Fsm.Fsm#FSM_CONTROLLABLE
+-- @extends Core.Fsm#FSM_CONTROLLABLE
 PATROLZONE = {
   ClassName = "PATROLZONE",
 }
@@ -178,7 +178,7 @@ PATROLZONE = {
 function PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Fsm.Fsm#FSM_CONTROLLABLE
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_CONTROLLABLE
   
   self:SetStartState( "None" )
   self:AddTransition( "*", "Start", "Route" )
@@ -345,7 +345,7 @@ function PATROLZONE:onenterRoute()
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
     self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
-    --- NOW FSM_ROUTE THE GROUP!
+    --- NOW ACT_ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1 )
     
     self:__Patrol( 30 )

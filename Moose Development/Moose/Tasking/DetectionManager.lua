@@ -317,7 +317,7 @@ do -- DETECTION_DISPATCHER
   --- Creates a CAS task when there are targets for it.
   -- @param #DETECTION_DISPATCHER self
   -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK_BASE
+  -- @return Tasking.Task#TASK
   function DETECTION_DISPATCHER:EvaluateCAS( DetectedArea )
     self:F( { DetectedArea.AreaID } )
   
@@ -345,7 +345,7 @@ do -- DETECTION_DISPATCHER
   --- Creates a BAI task when there are targets for it.
   -- @param #DETECTION_DISPATCHER self
   -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK_BASE
+  -- @return Tasking.Task#TASK
   function DETECTION_DISPATCHER:EvaluateBAI( DetectedArea, FriendlyCoalition )
     self:F( { DetectedArea.AreaID } )
   
@@ -374,9 +374,9 @@ do -- DETECTION_DISPATCHER
   -- Can only occur when the DetectedArea is Changed AND the state of the Task is "Planned".
   -- @param #DETECTION_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK_BASE Task
+  -- @param Tasking.Task#TASK Task
   -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK_BASE
+  -- @return Tasking.Task#TASK
   function DETECTION_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedArea )
     
     if Task then

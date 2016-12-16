@@ -33,9 +33,9 @@ local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCa
 local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 
 -- Start the AIBALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
-local RU_AIBalancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
+local RU_AI_Balancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
-function RU_AIBalancer:OnAfterSpawned( SetGroup, Event, From, To, AIGroup )
+function RU_AI_Balancer:OnAfterSpawned( SetGroup, Event, From, To, AIGroup )
 
   local PatrolZoneGroup = GROUP:FindByName( "PatrolZone" )
   local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )

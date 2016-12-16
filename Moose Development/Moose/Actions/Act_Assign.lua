@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#FSM_ASSIGN} FSM template class, extends @{Fsm.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
--- ## FSM_ASSIGN state machine:
+-- ## ACT_ASSIGN state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### FSM_ASSIGN **Events**:
+-- ### ACT_ASSIGN **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -19,7 +19,7 @@
 --   * **Assign**:  Assign the task.
 --   * **Reject**:  Reject the task..
 -- 
--- ### FSM_ASSIGN **Event methods**:
+-- ### ACT_ASSIGN **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -27,7 +27,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### FSM_ASSIGN **States**:
+-- ### ACT_ASSIGN **States**:
 -- 
 --   * **UnAssigned**: The player has not accepted the task.
 --   * **Assigned (*)**: The player has accepted the task.
@@ -37,7 +37,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### FSM_ASSIGN state transition methods:
+-- ### ACT_ASSIGN state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -54,52 +54,52 @@
 -- 
 -- ===
 -- 
--- # 1) @{#FSM_ASSIGN_ACCEPT} class, extends @{Fsm.Assign#FSM_ASSIGN}
+-- # 1) @{#ACT_ASSIGN_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
 -- 
--- The FSM_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
+-- The ACT_ASSIGN_ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.
 -- 
--- ## 1.1) FSM_ASSIGN_ACCEPT constructor:
+-- ## 1.1) ACT_ASSIGN_ACCEPT constructor:
 --   
---   * @{#FSM_ASSIGN_ACCEPT.New}(): Creates a new FSM_ASSIGN_ACCEPT object.
+--   * @{#ACT_ASSIGN_ACCEPT.New}(): Creates a new ACT_ASSIGN_ACCEPT object.
 -- 
 -- ===
 -- 
--- # 2) @{#FSM_ASSIGN_MENU_ACCEPT} class, extends @{Fsm.Assign#FSM_ASSIGN}
+-- # 2) @{#ACT_ASSIGN_MENU_ACCEPT} class, extends @{Fsm.Assign#ACT_ASSIGN}
 -- 
--- The FSM_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
+-- The ACT_ASSIGN_MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
 -- This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
 -- The assignment type also allows to reject the task.
 -- 
--- ## 2.1) FSM_ASSIGN_MENU_ACCEPT constructor:
+-- ## 2.1) ACT_ASSIGN_MENU_ACCEPT constructor:
 -- -----------------------------------------
 --   
---   * @{#FSM_ASSIGN_MENU_ACCEPT.New}(): Creates a new FSM_ASSIGN_MENU_ACCEPT object.
+--   * @{#ACT_ASSIGN_MENU_ACCEPT.New}(): Creates a new ACT_ASSIGN_MENU_ACCEPT object.
 -- 
 -- ===
 -- 
 -- @module Assign
 
 
-do -- FSM_ASSIGN
+do -- ACT_ASSIGN
 
-  --- FSM_ASSIGN class
-  -- @type FSM_ASSIGN
-  -- @field Tasking.Task#TASK_BASE Task
+  --- ACT_ASSIGN class
+  -- @type ACT_ASSIGN
+  -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends Fsm.Fsm#FSM_PROCESS
-  FSM_ASSIGN = { 
-    ClassName = "FSM_ASSIGN",
+  -- @extends Core.Fsm#FSM_PROCESS
+  ACT_ASSIGN = { 
+    ClassName = "ACT_ASSIGN",
   }
   
   
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
-  -- @param #FSM_ASSIGN self
-  -- @return #FSM_ASSIGN The task acceptance process.
-  function FSM_ASSIGN:New()
+  -- @param #ACT_ASSIGN self
+  -- @return #ACT_ASSIGN The task acceptance process.
+  function ACT_ASSIGN:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_PROCESS:New( "FSM_ASSIGN" ) ) -- Fsm.Fsm#FSM_PROCESS
+    local self = BASE:Inherit( self, FSM_PROCESS:New( "ACT_ASSIGN" ) ) -- Core.Fsm#FSM_PROCESS
 
     self:AddTransition( "UnAssigned", "Start", "Waiting" )
     self:AddTransition( "Waiting",  "Assign", "Assigned" )
@@ -115,59 +115,59 @@ do -- FSM_ASSIGN
     return self
   end
   
-end -- FSM_ASSIGN
+end -- ACT_ASSIGN
 
 
 
-do -- FSM_ASSIGN_ACCEPT
+do -- ACT_ASSIGN_ACCEPT
 
-  --- FSM_ASSIGN_ACCEPT class
-  -- @type FSM_ASSIGN_ACCEPT
-  -- @field Tasking.Task#TASK_BASE Task
+  --- ACT_ASSIGN_ACCEPT class
+  -- @type ACT_ASSIGN_ACCEPT
+  -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends #FSM_ASSIGN
-  FSM_ASSIGN_ACCEPT = { 
-    ClassName = "FSM_ASSIGN_ACCEPT",
+  -- @extends #ACT_ASSIGN
+  ACT_ASSIGN_ACCEPT = { 
+    ClassName = "ACT_ASSIGN_ACCEPT",
   }
   
   
   --- Creates a new task assignment state machine. The process will accept the task by default, no player intervention accepted.
-  -- @param #FSM_ASSIGN_ACCEPT self
+  -- @param #ACT_ASSIGN_ACCEPT self
   -- @param #string TaskBriefing
-  function FSM_ASSIGN_ACCEPT:New( TaskBriefing )
+  function ACT_ASSIGN_ACCEPT:New( TaskBriefing )
     
-    local self = BASE:Inherit( self, FSM_ASSIGN:New() ) -- #FSM_ASSIGN_ACCEPT
+    local self = BASE:Inherit( self, ACT_ASSIGN:New() ) -- #ACT_ASSIGN_ACCEPT
 
     self.TaskBriefing = TaskBriefing
     
     return self
   end
 
-  function FSM_ASSIGN_ACCEPT:Init( FsmAssign )
+  function ACT_ASSIGN_ACCEPT:Init( FsmAssign )
   
     self.TaskBriefing = FsmAssign.TaskBriefing  
   end
 
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_ACCEPT self
+  -- @param #ACT_ASSIGN_ACCEPT self
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
+  function ACT_ASSIGN_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
     self:__Assign( 1 )   
   end
 
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_ACCEPT self
+  -- @param #ACT_ASSIGN_ACCEPT self
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Event, From, To )
+  function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, Event, From, To )
     env.info( "in here" )
     self:E( { ProcessUnit, Event, From, To } )
   
@@ -178,30 +178,30 @@ do -- FSM_ASSIGN_ACCEPT
     self.Task:Assign()
   end
   
-end -- FSM_ASSIGN_ACCEPT
+end -- ACT_ASSIGN_ACCEPT
 
 
-do -- FSM_ASSIGN_MENU_ACCEPT
+do -- ACT_ASSIGN_MENU_ACCEPT
 
-  --- FSM_ASSIGN_MENU_ACCEPT class
-  -- @type FSM_ASSIGN_MENU_ACCEPT
-  -- @field Tasking.Task#TASK_BASE Task
+  --- ACT_ASSIGN_MENU_ACCEPT class
+  -- @type ACT_ASSIGN_MENU_ACCEPT
+  -- @field Tasking.Task#TASK Task
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends #FSM_ASSIGN
-  FSM_ASSIGN_MENU_ACCEPT = { 
-    ClassName = "FSM_ASSIGN_MENU_ACCEPT",
+  -- @extends #ACT_ASSIGN
+  ACT_ASSIGN_MENU_ACCEPT = { 
+    ClassName = "ACT_ASSIGN_MENU_ACCEPT",
   }
 
   --- Init.
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param #string TaskName
   -- @param #string TaskBriefing
-  -- @return #FSM_ASSIGN_MENU_ACCEPT self
-  function FSM_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
+  -- @return #ACT_ASSIGN_MENU_ACCEPT self
+  function ACT_ASSIGN_MENU_ACCEPT:New( TaskName, TaskBriefing )
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_ASSIGN:New() ) -- #FSM_ASSIGN_MENU_ACCEPT
+    local self = BASE:Inherit( self, ACT_ASSIGN:New() ) -- #ACT_ASSIGN_MENU_ACCEPT
 
     self.TaskName = TaskName 
     self.TaskBriefing = TaskBriefing
@@ -209,7 +209,7 @@ do -- FSM_ASSIGN_MENU_ACCEPT
     return self
   end
 
-  function FSM_ASSIGN_MENU_ACCEPT:Init( FsmAssign )
+  function ACT_ASSIGN_MENU_ACCEPT:Init( FsmAssign )
   
     self.TaskName = FsmAssign.TaskName 
     self.TaskBriefing = FsmAssign.TaskBriefing  
@@ -217,11 +217,11 @@ do -- FSM_ASSIGN_MENU_ACCEPT
   
   
   --- Creates a new task assignment state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param #string TaskName
   -- @param #string TaskBriefing
-  -- @return #FSM_ASSIGN_MENU_ACCEPT self
-  function FSM_ASSIGN_MENU_ACCEPT:Init( TaskName, TaskBriefing )
+  -- @return #ACT_ASSIGN_MENU_ACCEPT self
+  function ACT_ASSIGN_MENU_ACCEPT:Init( TaskName, TaskBriefing )
   
     self.TaskBriefing = TaskBriefing
     self.TaskName = TaskName
@@ -230,12 +230,12 @@ do -- FSM_ASSIGN_MENU_ACCEPT
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
 
     self:Message( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled." )  
@@ -248,40 +248,40 @@ do -- FSM_ASSIGN_MENU_ACCEPT
   end
   
   --- Menu function.
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
-  function FSM_ASSIGN_MENU_ACCEPT:MenuAssign()
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
+  function ACT_ASSIGN_MENU_ACCEPT:MenuAssign()
     self:E( )
   
     self:__Assign( 1 )
   end
   
   --- Menu function.
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
-  function FSM_ASSIGN_MENU_ACCEPT:MenuReject()
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
+  function ACT_ASSIGN_MENU_ACCEPT:MenuReject()
     self:E( )
   
     self:__Reject( 1 )
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, Event, From, To )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit.UnitNameEvent, From, To } )
   
     self.Menu:Remove()
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ASSIGN_MENU_ACCEPT self
+  -- @param #ACT_ASSIGN_MENU_ACCEPT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, Event, From, To )
+  function ACT_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit.UnitName, Event, From, To } )
   
     self.Menu:Remove()
@@ -290,4 +290,4 @@ do -- FSM_ASSIGN_MENU_ACCEPT
     ProcessUnit:Destroy()
   end
 
-end -- FSM_ASSIGN_MENU_ACCEPT
+end -- ACT_ASSIGN_MENU_ACCEPT

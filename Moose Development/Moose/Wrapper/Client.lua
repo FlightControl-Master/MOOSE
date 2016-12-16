@@ -399,8 +399,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{Fsm.Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{Fsm.Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
+--- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()

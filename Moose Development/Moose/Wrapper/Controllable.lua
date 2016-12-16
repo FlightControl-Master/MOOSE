@@ -970,7 +970,7 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
   return DCSTask
 end
 
--- EN-FSM_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
+-- EN-ACT_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
 
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self

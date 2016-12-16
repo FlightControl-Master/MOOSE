@@ -2,23 +2,23 @@
 -- 
 -- ===
 -- 
--- # @{#FSM_SMOKE} FSM class, extends @{Fsm.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIST} FSM class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
--- ## FSM_SMOKE state machine:
+-- ## ACT_ASSIST state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### FSM_SMOKE **Events**:
+-- ### ACT_ASSIST **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
 --   * **Start**:  The process is started.
 --   * **Next**: The process is smoking the targets in the given zone.
 -- 
--- ### FSM_SMOKE **Event methods**:
+-- ### ACT_ASSIST **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -26,7 +26,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### FSM_SMOKE **States**:
+-- ### ACT_ASSIST **States**:
 -- 
 --   * **None**: The controllable did not receive route commands.
 --   * **AwaitSmoke (*)**: The process is awaiting to smoke the targets in the zone.
@@ -35,7 +35,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### FSM_SMOKE state transition methods:
+-- ### ACT_ASSIST state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -52,36 +52,36 @@
 -- 
 -- ===
 -- 
--- # 1) @{#FSM_SMOKE_TARGETS_ZONE} class, extends @{Fsm.Route#FSM_SMOKE}
+-- # 1) @{#ACT_ASSIST_SMOKE_TARGETS_ZONE} class, extends @{Fsm.Route#ACT_ASSIST}
 -- 
--- The FSM_SMOKE_TARGETS_ZONE class implements the core functions to smoke targets in a @{Zone}.
+-- The ACT_ASSIST_SMOKE_TARGETS_ZONE class implements the core functions to smoke targets in a @{Zone}.
 -- The targets are smoked within a certain range around each target, simulating a realistic smoking behaviour. 
 -- At random intervals, a new target is smoked.
 -- 
--- # 1.1) FSM_SMOKE_TARGETS_ZONE constructor:
+-- # 1.1) ACT_ASSIST_SMOKE_TARGETS_ZONE constructor:
 --   
---   * @{#FSM_SMOKE_TARGETS_ZONE.New}(): Creates a new FSM_SMOKE_TARGETS_ZONE object.
+--   * @{#ACT_ASSIST_SMOKE_TARGETS_ZONE.New}(): Creates a new ACT_ASSIST_SMOKE_TARGETS_ZONE object.
 -- 
 -- ===
 -- 
 -- @module Smoke
 
-do -- FSM_SMOKE
+do -- ACT_ASSIST
 
-  --- FSM_SMOKE class
-  -- @type FSM_SMOKE
-  -- @extends Fsm.Fsm#FSM_PROCESS
-  FSM_SMOKE = { 
-    ClassName = "FSM_SMOKE",
+  --- ACT_ASSIST class
+  -- @type ACT_ASSIST
+  -- @extends Core.Fsm#FSM_PROCESS
+  ACT_ASSIST = { 
+    ClassName = "ACT_ASSIST",
   }
 
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
-  -- @param #FSM_SMOKE self
-  -- @return #FSM_SMOKE
-  function FSM_SMOKE:New()
+  -- @param #ACT_ASSIST self
+  -- @return #ACT_ASSIST
+  function ACT_ASSIST:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_PROCESS:New( "FSM_SMOKE" ) ) -- Fsm.Fsm#FSM_PROCESS
+    local self = BASE:Inherit( self, FSM_PROCESS:New( "ACT_ASSIST" ) ) -- Core.Fsm#FSM_PROCESS
 
     self:AddTransition( "None", "Start", "AwaitSmoke" )
     self:AddTransition( "AwaitSmoke", "Next", "Smoking" )
@@ -100,12 +100,12 @@ do -- FSM_SMOKE
   --- Task Events
 
   --- StateMachine callback function
-  -- @param #FSM_SMOKE self
+  -- @param #ACT_ASSIST self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_SMOKE:onafterStart( ProcessUnit, Event, From, To )
+  function ACT_ASSIST:onafterStart( ProcessUnit, Event, From, To )
   
     local ProcessGroup = ProcessUnit:GetGroup()
     local MissionMenu = self:GetMission():GetMissionMenu( ProcessGroup )
@@ -128,18 +128,18 @@ do -- FSM_SMOKE
   
 end
 
-do -- FSM_SMOKE_TARGETS_ZONE
+do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
 
-  --- FSM_SMOKE_TARGETS_ZONE class
-  -- @type FSM_SMOKE_TARGETS_ZONE
+  --- ACT_ASSIST_SMOKE_TARGETS_ZONE class
+  -- @type ACT_ASSIST_SMOKE_TARGETS_ZONE
   -- @field Set#SET_UNIT TargetSetUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
-  -- @extends #FSM_SMOKE
-  FSM_SMOKE_TARGETS_ZONE = { 
-    ClassName = "FSM_SMOKE_TARGETS_ZONE",
+  -- @extends #ACT_ASSIST
+  ACT_ASSIST_SMOKE_TARGETS_ZONE = { 
+    ClassName = "ACT_ASSIST_SMOKE_TARGETS_ZONE",
   }
   
---  function FSM_SMOKE_TARGETS_ZONE:_Destructor()
+--  function ACT_ASSIST_SMOKE_TARGETS_ZONE:_Destructor()
 --    self:E("_Destructor")
 --  
 --    self.Menu:Remove()
@@ -147,11 +147,11 @@ do -- FSM_SMOKE_TARGETS_ZONE
 --  end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
-  -- @param #FSM_SMOKE_TARGETS_ZONE self
+  -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param Core.Zone#ZONE_BASE TargetZone
-  function FSM_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
-    local self = BASE:Inherit( self, FSM_SMOKE:New() ) -- #FSM_SMOKE
+  function ACT_ASSIST_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
+    local self = BASE:Inherit( self, ACT_ASSIST:New() ) -- #ACT_ASSIST
 
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
@@ -159,18 +159,18 @@ do -- FSM_SMOKE_TARGETS_ZONE
     return self
   end
 
-  function FSM_SMOKE_TARGETS_ZONE:Init( FsmSmoke )
+  function ACT_ASSIST_SMOKE_TARGETS_ZONE:Init( FsmSmoke )
     
     self.TargetSetUnit = FsmSmoke.TargetSetUnit
     self.TargetZone = FsmSmoke.TargetZone
   end
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
-  -- @param #FSM_SMOKE_TARGETS_ZONE self
+  -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param Core.Zone#ZONE_BASE TargetZone
-  -- @return #FSM_SMOKE_TARGETS_ZONE self
-  function FSM_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )
+  -- @return #ACT_ASSIST_SMOKE_TARGETS_ZONE self
+  function ACT_ASSIST_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )
     
     self.TargetSetUnit = TargetSetUnit
     self.TargetZone = TargetZone
@@ -179,12 +179,12 @@ do -- FSM_SMOKE_TARGETS_ZONE
   end
   
   --- StateMachine callback function
-  -- @param #FSM_SMOKE_TARGETS_ZONE self
+  -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, Event, From, To )
+  function ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, Event, From, To )
     
     self.TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit

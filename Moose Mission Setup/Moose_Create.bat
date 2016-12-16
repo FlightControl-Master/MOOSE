@@ -53,6 +53,7 @@ COPY /b Moose.lua + %1\Core\Database.lua              	Moose.lua
 COPY /b Moose.lua + %1\Core\Set.lua                   	Moose.lua
 COPY /b Moose.lua + %1\Core\Point.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Message.lua               	Moose.lua
+COPY /b Moose.lua + %1\Core\Fsm.lua       	  		    Moose.lua
 
 rem Wrapper Classes
 COPY /b Moose.lua + %1\Wrapper\Object.lua               Moose.lua
@@ -79,7 +80,6 @@ COPY /b Moose.lua + %1\Functional\AIBalancer.lua       	Moose.lua
 
 
 rem Fsm Classes
-COPY /b Moose.lua + %1\Fsm\Fsm.lua       	  		    Moose.lua
 COPY /b Moose.lua + %1\Fsm\Process.lua              	Moose.lua
 COPY /b Moose.lua + %1\Fsm\Process_JTAC.lua 		  	Moose.lua
 COPY /b Moose.lua + %1\Fsm\Patrol.lua           		Moose.lua

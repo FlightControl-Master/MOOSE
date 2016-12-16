@@ -2,16 +2,16 @@
 -- 
 -- ===
 -- 
--- # @{#FSM_ACCOUNT} FSM class, extends @{Fsm.Fsm#FSM_PROCESS}
+-- # @{#ACT_ACCOUNT} FSM class, extends @{Core.Fsm#FSM_PROCESS}
 -- 
--- ## FSM_ACCOUNT state machine:
+-- ## ACT_ACCOUNT state machine:
 -- 
 -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
 -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
 -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
 -- but will have **different implementation behaviour** upon each event or state transition.
 -- 
--- ### FSM_ACCOUNT **Events**:
+-- ### ACT_ACCOUNT **Events**:
 -- 
 -- These are the events defined in this class:
 -- 
@@ -21,7 +21,7 @@
 --   * **More**:  There are more DCS events that need to be accounted for. The process will go back into the Report state.
 --   * **NoMore**:  There are no more DCS events that need to be accounted for. The process will go into the Success state.
 -- 
--- ### FSM_ACCOUNT **Event methods**:
+-- ### ACT_ACCOUNT **Event methods**:
 -- 
 -- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
 -- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
@@ -29,7 +29,7 @@
 --   * **Immediate**: The event method has exactly the name of the event.
 --   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
 -- 
--- ### FSM_ACCOUNT **States**:
+-- ### ACT_ACCOUNT **States**:
 -- 
 --   * **Assigned**: The player is assigned to the task. This is the initialization state for the process.
 --   * **Waiting**: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.
@@ -40,7 +40,7 @@
 --   
 -- (*) End states of the process.
 --   
--- ### FSM_ACCOUNT state transition methods:
+-- ### ACT_ACCOUNT state transition methods:
 -- 
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
@@ -55,41 +55,41 @@
 --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 --
--- # 1) @{#FSM_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#FSM_ACCOUNT}
+-- # 1) @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#ACT_ACCOUNT}
 -- 
--- The FSM_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
+-- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
 -- The process is given a @{Set} of units that will be tracked upon successful destruction.
 -- The process will end after each target has been successfully destroyed.
 -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
 -- 
 -- 
--- ## FSM_ACCOUNT_DEADS constructor:
+-- ## ACT_ACCOUNT_DEADS constructor:
 -- 
---   * @{#FSM_ACCOUNT_DEADS.New}(): Creates a new FSM_ACCOUNT_DEADS object.
+--   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
 -- 
 -- === 
 -- 
 -- @module Account
 
 
-do -- FSM_ACCOUNT
+do -- ACT_ACCOUNT
   
-  --- FSM_ACCOUNT class
-  -- @type FSM_ACCOUNT
+  --- ACT_ACCOUNT class
+  -- @type ACT_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Fsm.Fsm#FSM_PROCESS
-  FSM_ACCOUNT = { 
-    ClassName = "FSM_ACCOUNT",
+  -- @extends Core.Fsm#FSM_PROCESS
+  ACT_ACCOUNT = { 
+    ClassName = "ACT_ACCOUNT",
     TargetSetUnit = nil,
   }
   
   --- Creates a new DESTROY process.
-  -- @param #FSM_ACCOUNT self
-  -- @return #FSM_ACCOUNT
-  function FSM_ACCOUNT:New()
+  -- @param #ACT_ACCOUNT self
+  -- @return #ACT_ACCOUNT
+  function ACT_ACCOUNT:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_PROCESS:New() ) -- Fsm.Fsm#FSM_PROCESS
+    local self = BASE:Inherit( self, FSM_PROCESS:New() ) -- Core.Fsm#FSM_PROCESS
   
     self:AddTransition( "Assigned", "Start", "Waiting")
     self:AddTransition( "*", "Wait", "Waiting")
@@ -110,12 +110,12 @@ do -- FSM_ACCOUNT
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #FSM_ACCOUNT self
+  -- @param #ACT_ACCOUNT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
+  function ACT_ACCOUNT:onafterStart( ProcessUnit, Event, From, To )
 
     self:EventOnDead( self.onfuncEventDead )
 
@@ -124,12 +124,12 @@ do -- FSM_ACCOUNT
 
   
     --- StateMachine callback function
-    -- @param #FSM_ACCOUNT self
+    -- @param #ACT_ACCOUNT self
     -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
     -- @param #string Event
     -- @param #string From
     -- @param #string To
-  function FSM_ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
+  function ACT_ACCOUNT:onenterWaiting( ProcessUnit, Event, From, To )
   
     if self.DisplayCount >= self.DisplayInterval then
       self:Report()
@@ -142,37 +142,37 @@ do -- FSM_ACCOUNT
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ACCOUNT self
+  -- @param #ACT_ACCOUNT self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
+  function ACT_ACCOUNT:onafterEvent( ProcessUnit, Event, From, To, Event )
   
     self:__NoMore( 1 )
   end
   
-end -- FSM_ACCOUNT
+end -- ACT_ACCOUNT
 
-do -- FSM_ACCOUNT_DEADS
+do -- ACT_ACCOUNT_DEADS
 
-  --- FSM_ACCOUNT_DEADS class
-  -- @type FSM_ACCOUNT_DEADS
+  --- ACT_ACCOUNT_DEADS class
+  -- @type ACT_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends #FSM_ACCOUNT
-  FSM_ACCOUNT_DEADS = { 
-    ClassName = "FSM_ACCOUNT_DEADS",
+  -- @extends #ACT_ACCOUNT
+  ACT_ACCOUNT_DEADS = { 
+    ClassName = "ACT_ACCOUNT_DEADS",
     TargetSetUnit = nil,
   }
 
 
   --- Creates a new DESTROY process.
-  -- @param #FSM_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  function FSM_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  function ACT_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM_ACCOUNT:New() ) -- #FSM_ACCOUNT_DEADS
+    local self = BASE:Inherit( self, ACT_ACCOUNT:New() ) -- #ACT_ACCOUNT_DEADS
     
     self.TargetSetUnit = TargetSetUnit 
     self.TaskName = TaskName
@@ -186,7 +186,7 @@ do -- FSM_ACCOUNT_DEADS
     return self
   end
   
-  function FSM_ACCOUNT_DEADS:Init( FsmAccount )
+  function ACT_ACCOUNT_DEADS:Init( FsmAccount )
   
     self.TargetSetUnit = FsmAccount.TargetSetUnit 
     self.TaskName = FsmAccount.TaskName
@@ -194,7 +194,7 @@ do -- FSM_ACCOUNT_DEADS
 
 
   
-  function FSM_ACCOUNT_DEADS:_Destructor()
+  function ACT_ACCOUNT_DEADS:_Destructor()
     self:E("_Destructor")
   
     self:EventRemoveAll()
@@ -204,12 +204,12 @@ do -- FSM_ACCOUNT_DEADS
   --- Process Events
   
   --- StateMachine callback function
-  -- @param #FSM_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
+  function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Event, From, To )
     self:E( { ProcessUnit, Event, From, To } )
   
     self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
@@ -217,12 +217,12 @@ do -- FSM_ACCOUNT_DEADS
   
   
   --- StateMachine callback function
-  -- @param #FSM_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, EventData  )
+  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Event, From, To, EventData  )
     self:T( { ProcessUnit, EventData, Event, From, To } )
     
     self:T({self.Controllable})
@@ -237,12 +237,12 @@ do -- FSM_ACCOUNT_DEADS
   end
   
   --- StateMachine callback function
-  -- @param #FSM_ACCOUNT_DEADS self
+  -- @param #ACT_ACCOUNT_DEADS self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, EventData )
+  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Event, From, To, EventData )
   
     if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
@@ -253,9 +253,9 @@ do -- FSM_ACCOUNT_DEADS
   
   --- DCS Events
   
-  --- @param #FSM_ACCOUNT_DEADS self
+  --- @param #ACT_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA EventData
-  function FSM_ACCOUNT_DEADS:onfuncEventDead( EventData )
+  function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then
@@ -263,4 +263,4 @@ do -- FSM_ACCOUNT_DEADS
     end
   end
 
-end -- FSM_ACCOUNT DEADS
+end -- ACT_ACCOUNT DEADS

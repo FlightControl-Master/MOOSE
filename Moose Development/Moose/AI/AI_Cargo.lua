@@ -12,7 +12,7 @@
 --   
 --   * CARGO_GROUPED, represented by a Group of CARGO_UNITs.
 -- 
--- 1) @{Fsm.Cargo#CARGO_BASE} class, extends @{Fsm.Fsm#FSM_PROCESS}
+-- 1) @{AI.AI_Cargo#CARGO_BASE} class, extends @{Core.Fsm#FSM_PROCESS}
 -- ==========================================================================
 -- The @{#CARGO_BASE} class defines the core functions that defines a cargo object within MOOSE.
 -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
@@ -185,7 +185,7 @@ CARGOS = {}
 do -- CARGO_BASE
 
   --- @type CARGO_BASE
-  -- @extends Fsm.Fsm#FSM_PROCESS
+  -- @extends Core.Fsm#FSM_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
@@ -224,7 +224,7 @@ do -- CARGO_BASE
 -- @return #CARGO_BASE
 function CARGO_BASE:New( Type, Name, Weight, ReportRadius, NearRadius )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM_CONTROLLABLE
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_CONTROLLABLE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
   
   self:SetStartState( "UnLoaded" )
@@ -803,7 +803,7 @@ end
 do -- CARGO_GROUP
 
   --- @type CARGO_GROUP
-  -- @extends Fsm.Cargo#CARGO_BASE
+  -- @extends AI.AI_Cargo#CARGO_BASE
   -- @field Set#SET_BASE CargoSet A set of cargo objects.
   -- @field #string Name A string defining the name of the cargo group. The name is the unique identifier of the cargo.
   CARGO_GROUP = {
@@ -834,7 +834,7 @@ end -- CARGO_GROUP
 do -- CARGO_GROUPED
 
   --- @type CARGO_GROUPED
-  -- @extends Fsm.Cargo#CARGO_GROUP
+  -- @extends AI.AI_Cargo#CARGO_GROUP
   CARGO_GROUPED = {
     ClassName = "CARGO_GROUPED",
   }

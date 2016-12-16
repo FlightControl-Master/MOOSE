@@ -2,11 +2,11 @@
 -- 
 -- ===
 -- 
--- 1) @{Functional.AIBalancer#AIBALANCER} class, extends @{Core.Base#BASE}
+-- 1) @{AI.AI_Balancer#AIBALANCER} class, extends @{Core.Base#BASE}
 -- =======================================================
--- The @{Functional.AIBalancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
+-- The @{AI.AI_Balancer#AIBALANCER} class controls the dynamic spawning of AI GROUPS depending on a SET_CLIENT.
 -- There will be as many AI GROUPS spawned as there at CLIENTS in SET_CLIENT not spawned.
--- The AIBalancer uses the @{PatrolCore.Zone#PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
+-- The AI_Balancer uses the @{PatrolCore.Zone#PATROLZONE} class to make AI patrol an zone until the fuel treshold is reached.
 -- 
 -- 1.1) AIBALANCER construction method:
 -- ------------------------------------
@@ -23,7 +23,7 @@
 -- 
 -- 1.3) AIBALANCER allows AI to patrol specific zones:
 -- ---------------------------------------------------
--- Use @{Functional.AIBalancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
+-- Use @{AI.AI_Balancer#AIBALANCER.SetPatrolZone}() to specify a zone where the AI needs to patrol.
 --
 -- ===
 -- 
@@ -61,7 +61,7 @@
 -- 
 --   * FlightControl: Framework Design &  Programming
 -- 
--- @module AIBalancer
+-- @module AI_Balancer
 
 
 
@@ -157,7 +157,7 @@ function AIBALANCER:SetPatrolZone( PatrolZone, PatrolFloorAltitude, PatrolCeilin
   )
 end
 
---- Get the @{PatrolZone} object assigned by the @{AIBalancer} object.
+--- Get the @{PatrolZone} object assigned by the @{AI_Balancer} object.
 -- @param #AIBALANCER self
 -- @return PatrolCore.Zone#PATROLZONE PatrolZone The @{PatrolZone} where the AI needs to patrol.
 function AIBALANCER:GetPatrolZone()

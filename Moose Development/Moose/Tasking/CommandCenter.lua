@@ -110,7 +110,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:EventOnPlayerLeaveUnit(
-    --- @param #TASK_BASE self
+    --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
@@ -124,7 +124,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:EventOnCrash(
-    --- @param #TASK_BASE self
+    --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
