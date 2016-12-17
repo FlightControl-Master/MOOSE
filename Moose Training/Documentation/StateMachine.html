@@ -18,10 +18,12 @@
 			</li></ul>
 		<ul>
 					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
@@ -38,17 +40,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,18 +52,15 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
@@ -78,15 +71,13 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
-					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -95,10 +86,10 @@
 <p>This module contains the STATEMACHINE class.</p>
 
    
-<p>This development is based on a state machine implementation made by Conroy Kyle. <br/>
-The state machine can be found here: https://github.com/kyleconroy/lua-state-machine  </p>
+<p>This development is based on a state machine implementation made by Conroy Kyle.
+The state machine can be found here: https://github.com/kyleconroy/lua-state-machine</p>
 
-<p>I've taken the development and enhanced it to make the state machine hierarchical... 
+<p>I've taken the development and enhanced it to make the state machine hierarchical...
 It is a fantastic development, this module.</p>
 
 <hr/>
@@ -116,7 +107,19 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_CONTROLLABLE">STATEMACHINE_CONTROLLABLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_PROCESS">STATEMACHINE_PROCESS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#STATEMACHINE_SET">STATEMACHINE_SET</a></td>
 		<td class="summary">
 
 </td>
@@ -132,6 +135,12 @@ It is a fantastic development, this module.</p>
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).ClassName">STATEMACHINE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE).LoadCallBacks">STATEMACHINE:LoadCallBacks(CallBackTable)</a></td>
 		<td class="summary">
 
 </td>
@@ -155,13 +164,25 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._create_transition">STATEMACHINE:_create_transition(name)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._create_transition">STATEMACHINE:_create_transition(EventName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._delayed_transition">STATEMACHINE:_delayed_transition(EventName)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._gosub">STATEMACHINE:_gosub(parentstate, parentevent)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE)._handler">STATEMACHINE:_handler(EventName, ...)</a></td>
 		<td class="summary">
 
 </td>
@@ -204,6 +225,46 @@ It is a fantastic development, this module.</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(STATEMACHINE_CONTROLLABLE)">Type <code>STATEMACHINE_CONTROLLABLE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).ClassName">STATEMACHINE_CONTROLLABLE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).Controllable">STATEMACHINE_CONTROLLABLE.Controllable</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).GetControllable">STATEMACHINE_CONTROLLABLE:GetControllable()</a></td>
+		<td class="summary">
+<p>Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).New">STATEMACHINE_CONTROLLABLE:New(FSMT, Controllable)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_CONTROLLABLE object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE).SetControllable">STATEMACHINE_CONTROLLABLE:SetControllable(Controllable, FSMControllable)</a></td>
+		<td class="summary">
+<p>Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_CONTROLLABLE)._call_handler">STATEMACHINE_CONTROLLABLE:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(STATEMACHINE_PROCESS)">Type <code>STATEMACHINE_PROCESS</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -213,7 +274,7 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).New">STATEMACHINE_PROCESS:New(Process, options)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_PROCESS).New">STATEMACHINE_PROCESS:New(FSMT)</a></td>
 		<td class="summary">
 <p>Creates a new STATEMACHINE_PROCESS object.</p>
 </td>
@@ -232,6 +293,40 @@ It is a fantastic development, this module.</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(STATEMACHINE_SET)">Type <code>STATEMACHINE_SET</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).ClassName">STATEMACHINE_SET.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).Get">STATEMACHINE_SET:Get()</a></td>
+		<td class="summary">
+<p>Gets the SET<em>BASE object that the STATEMACHINE</em>SET governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).New">STATEMACHINE_SET:New(FSMT, Set_SET_BASE, FSMSet)</a></td>
+		<td class="summary">
+<p>Creates a new STATEMACHINE_SET object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET).Set">STATEMACHINE_SET.Set</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_SET)._call_handler">STATEMACHINE_SET:_call_handler(handler, params)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(STATEMACHINE_TASK)">Type <code>STATEMACHINE_TASK</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -241,7 +336,7 @@ It is a fantastic development, this module.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK).New">STATEMACHINE_TASK:New(Task, TaskUnit, options)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATEMACHINE_TASK).New">STATEMACHINE_TASK:New(FSMT, Task, TaskUnit)</a></td>
 		<td class="summary">
 <p>Creates a new STATEMACHINE_TASK object.</p>
 </td>
@@ -278,9 +373,37 @@ It is a fantastic development, this module.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a></em>
+<a id="STATEMACHINE_CONTROLLABLE" >
+<strong>STATEMACHINE_CONTROLLABLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(STATEMACHINE_PROCESS)">#STATEMACHINE_PROCESS</a></em>
 <a id="STATEMACHINE_PROCESS" >
 <strong>STATEMACHINE_PROCESS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(STATEMACHINE_SET)">#STATEMACHINE_SET</a></em>
+<a id="STATEMACHINE_SET" >
+<strong>STATEMACHINE_SET</strong>
 </a>
 </dt>
 <dd>
@@ -322,6 +445,27 @@ It is a fantastic development, this module.</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE).LoadCallBacks" >
+<strong>STATEMACHINE:LoadCallBacks(CallBackTable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> CallBackTable </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -406,7 +550,7 @@ It is a fantastic development, this module.</p>
 <dt>
 
 <a id="#(STATEMACHINE)._create_transition" >
-<strong>STATEMACHINE:_create_transition(name)</strong>
+<strong>STATEMACHINE:_create_transition(EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -417,7 +561,28 @@ It is a fantastic development, this module.</p>
 		<ul>
 				<li>
 				
-<p><code><em> name </em></code>: </p>
+<p><code><em> EventName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._delayed_transition" >
+<strong>STATEMACHINE:_delayed_transition(EventName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -444,6 +609,32 @@ It is a fantastic development, this module.</p>
 				<li>
 				
 <p><code><em> parentevent </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE)._handler" >
+<strong>STATEMACHINE:_handler(EventName, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -586,6 +777,148 @@ It is a fantastic development, this module.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(STATEMACHINE_CONTROLLABLE)" >Type <code>STATEMACHINE_CONTROLLABLE</code></a></h2>
+				
+<p>STATEMACHINE_CONTROLLABLE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_CONTROLLABLE).ClassName" >
+<strong>STATEMACHINE_CONTROLLABLE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></em>
+<a id="#(STATEMACHINE_CONTROLLABLE).Controllable" >
+<strong>STATEMACHINE_CONTROLLABLE.Controllable</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).GetControllable" >
+<strong>STATEMACHINE_CONTROLLABLE:GetControllable()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).New" >
+<strong>STATEMACHINE_CONTROLLABLE:New(FSMT, Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_CONTROLLABLE object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table FSMT </em></code>: 
+Finite State Machine Table</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+(optional) The CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE).SetControllable" >
+<strong>STATEMACHINE_CONTROLLABLE:SetControllable(Controllable, FSMControllable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CONTROLLABLE object that the STATEMACHINE_CONTROLLABLE governs.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FSMControllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_CONTROLLABLE)">#STATEMACHINE_CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_CONTROLLABLE)._call_handler" >
+<strong>STATEMACHINE_CONTROLLABLE:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
 			<h2><a id="#(STATEMACHINE_PROCESS)" >Type <code>STATEMACHINE_PROCESS</code></a></h2>
 				
 <p>STATEMACHINE_PROCESS class</p>
@@ -609,23 +942,18 @@ It is a fantastic development, this module.</p>
 <dt>
 
 <a id="#(STATEMACHINE_PROCESS).New" >
-<strong>STATEMACHINE_PROCESS:New(Process, options)</strong>
+<strong>STATEMACHINE_PROCESS:New(FSMT)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Creates a new STATEMACHINE_PROCESS object.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Process </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> options </em></code>: </p>
+<p><code><em> FSMT </em></code>: </p>
 
 				</li>
 		</ul>
@@ -677,6 +1005,122 @@ It is a fantastic development, this module.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(STATEMACHINE_SET)" >Type <code>STATEMACHINE_SET</code></a></h2>
+				
+<p>STATEMACHINE_SET class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(STATEMACHINE_SET).ClassName" >
+<strong>STATEMACHINE_SET.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET).Get" >
+<strong>STATEMACHINE_SET:Get()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the SET<em>BASE object that the STATEMACHINE</em>SET governs.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Set.html##(SET_BASE)">Set#SET_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET).New" >
+<strong>STATEMACHINE_SET:New(FSMT, Set_SET_BASE, FSMSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new STATEMACHINE_SET object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table FSMT </em></code>: 
+Finite State Machine Table</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Set<em>SET</em>BASE </em></code>: 
+FSMSet (optional) The Set object that the STATEMACHINE_SET governs.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FSMSet </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(STATEMACHINE_SET)">#STATEMACHINE_SET</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_BASE)">Set#SET_BASE</a></em>
+<a id="#(STATEMACHINE_SET).Set" >
+<strong>STATEMACHINE_SET.Set</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(STATEMACHINE_SET)._call_handler" >
+<strong>STATEMACHINE_SET:_call_handler(handler, params)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> handler </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> params </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
 			<h2><a id="#(STATEMACHINE_TASK)" >Type <code>STATEMACHINE_TASK</code></a></h2>
 				
 <p>STATEMACHINE_TASK class</p>
@@ -700,7 +1144,7 @@ It is a fantastic development, this module.</p>
 <dt>
 
 <a id="#(STATEMACHINE_TASK).New" >
-<strong>STATEMACHINE_TASK:New(Task, TaskUnit, options)</strong>
+<strong>STATEMACHINE_TASK:New(FSMT, Task, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -711,17 +1155,17 @@ It is a fantastic development, this module.</p>
 		<ul>
 				<li>
 				
-<p><code><em> Task </em></code>: </p>
+<p><code><em>#table FSMT </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> TaskUnit </em></code>: </p>
+<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> options </em></code>: </p>
+<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
 
 				</li>
 		</ul>

@@ -17,13 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li>Airbase</li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -38,17 +41,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,33 +53,29 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -98,7 +91,7 @@
 
 <hr/>
 
-<h1>1) <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+<h1>1) <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> class, extends <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></h1>
 <p>The <a href="AIRBASE.html">AIRBASE</a> class is a wrapper class to handle the DCS Airbase objects:</p>
 
 <ul>
@@ -130,7 +123,7 @@ If the DCS Airbase object does not exist or is nil, the AIRBASE methods will ret
 <h2>1.2) DCS AIRBASE APIs</h2>
 <p>The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
-the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="DCSAirbase.html##(Airbase).getName">DCSAirbase#Airbase.getName</a>()
+the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="Dcs.DCSWrapper.Airbase.html##(Airbase).getName">Dcs.DCSWrapper.Airbase#Airbase.getName</a>()
 is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.GetName</a>().</p>
 
 <h2>More functions will be added</h2>
@@ -251,14 +244,14 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSAirbase.html##(Airbase)">DCSAirbase#Airbase</a> DCSAirbase </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Airbase.html##(Airbase)">Dcs.DCSWrapper.Airbase#Airbase</a> DCSAirbase </em></code>: 
 An existing DCS Airbase object reference.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em>
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
 self</p>
 
 </dd>
@@ -285,7 +278,7 @@ The Airbase Name.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em>
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
 self</p>
 
 </dd>
@@ -325,7 +318,7 @@ The name of the airbase.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>:</em></p>
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em></p>
 
 
 </dd>

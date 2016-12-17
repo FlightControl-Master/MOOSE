@@ -17,13 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -38,17 +41,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li>Event</li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,33 +53,29 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -92,7 +85,23 @@
 	<div id="content">
    <h1>Module <code>Event</code></h1>
    
-<p>The EVENT class models an efficient event handling process between other classes and its units, weapons.</p>
+<p>This module contains the EVENT class.</p>
+
+   
+
+<hr/>
+
+<p>Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.</p>
+
+<hr/>
+
+<p>The above menus classes <strong>are derived</strong> from 2 main <strong>abstract</strong> classes defined within the MOOSE framework (so don't use these):</p>
+
+<hr/>
+
+<h3>Contributions: -</h3>
+<h3>Authors: FlightControl : Design &amp; Programming</h3>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -142,243 +151,249 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirth">EVENT:OnBirth(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirth">EVENT:OnBirth(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>BIRTH event, and registers the unit born.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthForTemplate">EVENT:OnBirthForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthForTemplate">EVENT:OnBirthForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</a></td>
 		<td class="summary">
 <p>Create an OnBirth event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthForUnit">EVENT:OnBirthForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthForUnit">EVENT:OnBirthForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>BIRTH event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthRemove">EVENT:OnBirthRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnBirthRemove">EVENT:OnBirthRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>BIRTH event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrash">EVENT:OnCrash(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrash">EVENT:OnCrash(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>CRASH event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashForTemplate">EVENT:OnCrashForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashForTemplate">EVENT:OnCrashForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</a></td>
 		<td class="summary">
 <p>Create an OnCrash event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashForUnit">EVENT:OnCrashForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashForUnit">EVENT:OnCrashForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>CRASH event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashRemove">EVENT:OnCrashRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnCrashRemove">EVENT:OnCrashRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>CRASH event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDead">EVENT:OnDead(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDead">EVENT:OnDead(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadForTemplate">EVENT:OnDeadForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadForTemplate">EVENT:OnDeadForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</a></td>
 		<td class="summary">
 <p>Create an OnDead event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadForUnit">EVENT:OnDeadForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadForUnit">EVENT:OnDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadRemove">EVENT:OnDeadRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnDeadRemove">EVENT:OnDeadRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownForTemplate">EVENT:OnEngineShutDownForTemplate(EventTemplate, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownForTemplate">EVENT:OnEngineShutDownForTemplate(EventTemplate, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Create an OnDead event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownForUnit">EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownForUnit">EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownRemove">EVENT:OnEngineShutDownRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownRemove">EVENT:OnEngineShutDownRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpForUnit">EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpForUnit">EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>ENGINE_STARTUP event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpRemove">EVENT:OnEngineStartUpRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpRemove">EVENT:OnEngineStartUpRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>ENGINE_STARTUP event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForTemplate">EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventSelf, OnEventFunction)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForTemplate">EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventClass, OnEventFunction)</a></td>
 		<td class="summary">
 <p>Create an OnDead event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForUnit">EVENT:OnEventForUnit(EventDCSUnitName, EventFunction, EventSelf, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForUnit">EVENT:OnEventForUnit(EventDCSUnitName, EventFunction, EventClass, EventID)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>X event</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventGeneric">EVENT:OnEventGeneric(EventFunction, EventSelf, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventGeneric">EVENT:OnEventGeneric(EventFunction, EventClass, EventID)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>X event independent from a unit or a weapon.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHit">EVENT:OnHit(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHit">EVENT:OnHit(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>HIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHitForUnit">EVENT:OnHitForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHitForUnit">EVENT:OnHitForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>HIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHitRemove">EVENT:OnHitRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnHitRemove">EVENT:OnHitRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>HIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandForTemplate">EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandForTemplate">EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventClass)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandForUnit">EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandForUnit">EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>LAND event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandRemove">EVENT:OnLandRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnLandRemove">EVENT:OnLandRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>LAND event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDead">EVENT:OnPilotDead(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDead">EVENT:OnPilotDead(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDeadForUnit">EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDeadForUnit">EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDeadRemove">EVENT:OnPilotDeadRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPilotDeadRemove">EVENT:OnPilotDeadRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>PILOT_DEAD event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerEnterRemove">EVENT:OnPlayerEnterRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerEnterRemove">EVENT:OnPlayerEnterRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerEnterUnit">EVENT:OnPlayerEnterUnit(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerEnterUnit">EVENT:OnPlayerEnterUnit(EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerLeaveRemove">EVENT:OnPlayerLeaveRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerLeaveRemove">EVENT:OnPlayerLeaveRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>PLAYER<em>LEAVE</em>UNIT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerLeaveUnit">EVENT:OnPlayerLeaveUnit(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnPlayerLeaveUnit">EVENT:OnPlayerLeaveUnit(EventFunction, EventClass)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShot">EVENT:OnShot(EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShot">EVENT:OnShot(EventFunction, EventClass)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShotForUnit">EVENT:OnShotForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShotForUnit">EVENT:OnShotForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>SHOT event for a unit.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShotRemove">EVENT:OnShotRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnShotRemove">EVENT:OnShotRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>SHOT event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffForTemplate">EVENT:OnTakeOffForTemplate(EventTemplate, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffForTemplate">EVENT:OnTakeOffForTemplate(EventTemplate, EventFunction, EventClass)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffForUnit">EVENT:OnTakeOffForUnit(EventDCSUnitName, EventFunction, EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffForUnit">EVENT:OnTakeOffForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>TAKEOFF event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffRemove">EVENT:OnTakeOffRemove(EventSelf)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnTakeOffRemove">EVENT:OnTakeOffRemove(EventClass)</a></td>
 		<td class="summary">
 <p>Stop listening to S<em>EVENT</em>TAKEOFF event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventSelf, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventClass, EventID)</a></td>
 		<td class="summary">
 <p>Removes an Events entry</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveAll">EVENT:RemoveAll(EventObject)</a></td>
+		<td class="summary">
+<p>Clears all event subscriptions for a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> derived object.</p>
 </td>
 		</tr>
 		<tr>
@@ -617,12 +632,12 @@
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSWorld.html##(world.event)">DCSWorld#world.event</a> EventID </em></code>: </p>
+<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string EventClass </em></code>: </p>
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -650,7 +665,7 @@
 <dt>
 
 <a id="#(EVENT).OnBirth" >
-<strong>EVENT:OnBirth(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnBirth(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -667,7 +682,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -682,7 +697,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnBirthForTemplate" >
-<strong>EVENT:OnBirthForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</strong>
+<strong>EVENT:OnBirthForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</strong>
 </a>
 </dt>
 <dd>
@@ -693,7 +708,7 @@ The function to be called when the event occurs for the unit.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> EventGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EventGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -704,7 +719,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: 
+<p><code><em> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -725,7 +740,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnBirthForUnit" >
-<strong>EVENT:OnBirthForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnBirthForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -748,7 +763,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -763,7 +778,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnBirthRemove" >
-<strong>EVENT:OnBirthRemove(EventSelf)</strong>
+<strong>EVENT:OnBirthRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -774,7 +789,7 @@ The function to be called when the event occurs for the unit.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -789,7 +804,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnCrash" >
-<strong>EVENT:OnCrash(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnCrash(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -806,7 +821,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -821,7 +836,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnCrashForTemplate" >
-<strong>EVENT:OnCrashForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</strong>
+<strong>EVENT:OnCrashForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</strong>
 </a>
 </dt>
 <dd>
@@ -832,7 +847,7 @@ The function to be called when the event occurs for the unit.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> EventGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EventGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -843,7 +858,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: 
+<p><code><em> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -864,7 +879,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnCrashForUnit" >
-<strong>EVENT:OnCrashForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnCrashForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -886,7 +901,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -902,7 +917,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnCrashRemove" >
-<strong>EVENT:OnCrashRemove(EventSelf)</strong>
+<strong>EVENT:OnCrashRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -913,7 +928,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -928,7 +943,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnDead" >
-<strong>EVENT:OnDead(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnDead(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -945,7 +960,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -960,7 +975,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnDeadForTemplate" >
-<strong>EVENT:OnDeadForTemplate(EventGroup, EventFunction, EventSelf, EventTemplate)</strong>
+<strong>EVENT:OnDeadForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</strong>
 </a>
 </dt>
 <dd>
@@ -971,7 +986,7 @@ The function to be called when the event occurs for the unit.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> EventGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EventGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -982,7 +997,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: 
+<p><code><em> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1003,7 +1018,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnDeadForUnit" >
-<strong>EVENT:OnDeadForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1025,7 +1040,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1041,7 +1056,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnDeadRemove" >
-<strong>EVENT:OnDeadRemove(EventSelf)</strong>
+<strong>EVENT:OnDeadRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1052,7 +1067,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1067,7 +1082,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEngineShutDownForTemplate" >
-<strong>EVENT:OnEngineShutDownForTemplate(EventTemplate, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnEngineShutDownForTemplate(EventTemplate, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1089,7 +1104,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: 
+<p><code><em> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1105,7 +1120,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEngineShutDownForUnit" >
-<strong>EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1127,7 +1142,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1143,7 +1158,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEngineShutDownRemove" >
-<strong>EVENT:OnEngineShutDownRemove(EventSelf)</strong>
+<strong>EVENT:OnEngineShutDownRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1154,7 +1169,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1169,7 +1184,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEngineStartUpForUnit" >
-<strong>EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1191,7 +1206,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1207,7 +1222,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEngineStartUpRemove" >
-<strong>EVENT:OnEngineStartUpRemove(EventSelf)</strong>
+<strong>EVENT:OnEngineStartUpRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1218,7 +1233,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1233,7 +1248,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEventForTemplate" >
-<strong>EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventSelf, OnEventFunction)</strong>
+<strong>EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventClass, OnEventFunction)</strong>
 </a>
 </dt>
 <dd>
@@ -1255,8 +1270,8 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: 
-The self instance of the class for which the event is.</p>
+<p><code><em> EventClass </em></code>: 
+The instance of the class for which the event is.</p>
 
 				</li>
 				<li>
@@ -1276,7 +1291,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEventForUnit" >
-<strong>EVENT:OnEventForUnit(EventDCSUnitName, EventFunction, EventSelf, EventID)</strong>
+<strong>EVENT:OnEventForUnit(EventDCSUnitName, EventFunction, EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
@@ -1298,7 +1313,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1319,7 +1334,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEventGeneric" >
-<strong>EVENT:OnEventGeneric(EventFunction, EventSelf, EventID)</strong>
+<strong>EVENT:OnEventGeneric(EventFunction, EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
@@ -1336,8 +1351,8 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
-The self instance of the class for which the event is.</p>
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.</p>
 
 				</li>
 				<li>
@@ -1357,7 +1372,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnHit" >
-<strong>EVENT:OnHit(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnHit(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1374,7 +1389,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1390,7 +1405,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnHitForUnit" >
-<strong>EVENT:OnHitForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnHitForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1412,7 +1427,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1428,7 +1443,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnHitRemove" >
-<strong>EVENT:OnHitRemove(EventSelf)</strong>
+<strong>EVENT:OnHitRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1439,7 +1454,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1454,7 +1469,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnLandForTemplate" >
-<strong>EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1475,7 +1490,7 @@ The self instance of the class for which the event is.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: </p>
+<p><code><em> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1485,7 +1500,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnLandForUnit" >
-<strong>EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1507,7 +1522,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1523,7 +1538,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnLandRemove" >
-<strong>EVENT:OnLandRemove(EventSelf)</strong>
+<strong>EVENT:OnLandRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1534,7 +1549,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1549,7 +1564,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPilotDead" >
-<strong>EVENT:OnPilotDead(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnPilotDead(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1566,7 +1581,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1581,7 +1596,7 @@ The function to be called when the event occurs for the unit.</p>
 <dt>
 
 <a id="#(EVENT).OnPilotDeadForUnit" >
-<strong>EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1603,7 +1618,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1619,7 +1634,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPilotDeadRemove" >
-<strong>EVENT:OnPilotDeadRemove(EventSelf)</strong>
+<strong>EVENT:OnPilotDeadRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1630,7 +1645,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1645,7 +1660,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPlayerEnterRemove" >
-<strong>EVENT:OnPlayerEnterRemove(EventSelf)</strong>
+<strong>EVENT:OnPlayerEnterRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1656,7 +1671,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1671,7 +1686,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPlayerEnterUnit" >
-<strong>EVENT:OnPlayerEnterUnit(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnPlayerEnterUnit(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1688,7 +1703,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1704,7 +1719,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPlayerLeaveRemove" >
-<strong>EVENT:OnPlayerLeaveRemove(EventSelf)</strong>
+<strong>EVENT:OnPlayerLeaveRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1715,7 +1730,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1730,7 +1745,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnPlayerLeaveUnit" >
-<strong>EVENT:OnPlayerLeaveUnit(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnPlayerLeaveUnit(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1746,7 +1761,7 @@ The self instance of the class for which the event is.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: </p>
+<p><code><em> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1756,7 +1771,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnShot" >
-<strong>EVENT:OnShot(EventFunction, EventSelf)</strong>
+<strong>EVENT:OnShot(EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1772,7 +1787,7 @@ The self instance of the class for which the event is.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: </p>
+<p><code><em> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1782,7 +1797,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnShotForUnit" >
-<strong>EVENT:OnShotForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnShotForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1804,7 +1819,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1820,7 +1835,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnShotRemove" >
-<strong>EVENT:OnShotRemove(EventSelf)</strong>
+<strong>EVENT:OnShotRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1831,7 +1846,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1846,7 +1861,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnTakeOffForTemplate" >
-<strong>EVENT:OnTakeOffForTemplate(EventTemplate, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnTakeOffForTemplate(EventTemplate, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1867,7 +1882,7 @@ The self instance of the class for which the event is.</p>
 				</li>
 				<li>
 				
-<p><code><em> EventSelf </em></code>: </p>
+<p><code><em> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1877,7 +1892,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnTakeOffForUnit" >
-<strong>EVENT:OnTakeOffForUnit(EventDCSUnitName, EventFunction, EventSelf)</strong>
+<strong>EVENT:OnTakeOffForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1899,7 +1914,7 @@ The function to be called when the event occurs for the unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
@@ -1915,7 +1930,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnTakeOffRemove" >
-<strong>EVENT:OnTakeOffRemove(EventSelf)</strong>
+<strong>EVENT:OnTakeOffRemove(EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1926,7 +1941,7 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: </p>
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1941,7 +1956,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).Remove" >
-<strong>EVENT:Remove(EventSelf, EventID)</strong>
+<strong>EVENT:Remove(EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
@@ -1952,13 +1967,13 @@ The self instance of the class for which the event is.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventSelf </em></code>: 
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
 The self instance of the class for which the event is.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSWorld.html##(world.event)">DCSWorld#world.event</a> EventID </em></code>: </p>
+<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1967,6 +1982,27 @@ The self instance of the class for which the event is.</p>
 <p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).RemoveAll" >
+<strong>EVENT:RemoveAll(EventObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clears all event subscriptions for a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> derived object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventObject </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2071,7 +2107,7 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
 <a id="#(EVENTDATA).IniUnit" >
 <strong>EVENTDATA.IniUnit</strong>
 </a>
@@ -2151,7 +2187,7 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Unit.html##(UNIT)">Unit#UNIT</a></em>
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
 <a id="#(EVENTDATA).TgtUnit" >
 <strong>EVENTDATA.TgtUnit</strong>
 </a>
