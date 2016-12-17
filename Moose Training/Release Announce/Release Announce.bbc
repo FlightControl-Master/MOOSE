@@ -213,7 +213,12 @@ There is still some work to be done on the [b]TASK_DISPATCHER[/b], but that will
 
 Also, this release builds the foundation of many many other classes to come. Now that we have state machines and the object model is now more or less stable, other functions can be built upon this framework. It would be great that a community would see the benefits of this development and endorse it, like many have already done.
 
+The documentation is not completely up-to-date, but that will come and flatten out the next weeks.
+Also, demonstration videos will be published on my youtube channel next year to demo some of the new functions, and I'll rework a few of the older versions.
+
 If you have problems using this release and somehow feel blocked, you can use the previous commit on the master branch. Just click in GITHUB on the previous commit, sync and you'll be fine.
+
+I hope you will have the same pleasure using this framework as the creators had making it.
 
 Thanks all;
 FC
