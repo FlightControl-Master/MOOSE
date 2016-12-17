@@ -54,7 +54,7 @@ end
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler
 function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop )
-  self:F( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
+  self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
 
   self.CallID = self.CallID + 1
 
@@ -88,7 +88,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self:T3( self.Schedule[Scheduler][self.CallID] )
 
   self.Schedule[Scheduler][self.CallID].CallHandler = function( CallID )
-    self:F( CallID )
+    self:F2( CallID )
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
@@ -103,13 +103,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       Scheduler = self.PersistentSchedulers[CallID]
     end
 
-    self:T( { Scheduler = Scheduler } )
+    self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T( { Schedule = Schedule } )
+      self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.SchedulerObject
       --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
@@ -168,7 +168,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 end
 
 function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
-  self:F( { Remove = CallID, Scheduler = Scheduler } )
+  self:F2( { Remove = CallID, Scheduler = Scheduler } )
 
   if CallID then
     self:Stop( Scheduler, CallID )
@@ -177,7 +177,7 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
 end
 
 function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
-  self:F( { Start = CallID, Scheduler = Scheduler } )
+  self:F2( { Start = CallID, Scheduler = Scheduler } )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]
@@ -194,7 +194,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
 end
 
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
-  self:F( { Stop = CallID, Scheduler = Scheduler } )
+  self:F2( { Stop = CallID, Scheduler = Scheduler } )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]

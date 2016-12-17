@@ -1,0 +1,649 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li>Smoke</li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Smoke</code></h1>
+   
+<p>(SP) (MP) (FSM) Route AI or players through waypoints or to zones.</p>
+
+   
+
+<hr/>
+
+<h1><a href="##(ACT_ASSIST)">#ACT_ASSIST</a> FSM class, extends <a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a></h1>
+
+<h2>ACT_ASSIST state machine:</h2>
+
+<p>This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
+All derived classes from this class will start with the class name, followed by a _. See the relevant derived class descriptions below.
+Each derived class follows exactly the same process, using the same events and following the same state transitions, 
+but will have <strong>different implementation behaviour</strong> upon each event or state transition.</p>
+
+<h3>ACT_ASSIST <strong>Events</strong>:</h3>
+
+<p>These are the events defined in this class:</p>
+
+<ul>
+    <li><strong>Start</strong>:  The process is started.</li>
+    <li><strong>Next</strong>: The process is smoking the targets in the given zone.</li>
+</ul>
+
+<h3>ACT_ASSIST <strong>Event methods</strong>:</h3>
+
+<p>Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
+There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:</p>
+
+<ul>
+    <li><strong>Immediate</strong>: The event method has exactly the name of the event.</li>
+    <li><strong>Delayed</strong>: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. </li>
+</ul>
+
+<h3>ACT_ASSIST <strong>States</strong>:</h3>
+
+<ul>
+    <li><strong>None</strong>: The controllable did not receive route commands.</li>
+    <li><strong>AwaitSmoke (*)</strong>: The process is awaiting to smoke the targets in the zone.</li>
+    <li><strong>Smoking (*)</strong>: The process is smoking the targets in the zone.</li>
+    <li><strong>Failed (*)</strong>: The process has failed.</li>
+</ul>
+
+<p>(*) End states of the process.</p>
+
+<h3>ACT_ASSIST state transition methods:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition methods will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
+</ul>
+
+<hr/>
+
+<h1>1) <a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE)">#ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE</a> class, extends <a href="Fsm.Route.html##(ACT_ASSIST)">Fsm.Route#ACT_ASSIST</a></h1>
+
+<p>The ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE class implements the core functions to smoke targets in a <a href="Zone.html">Zone</a>.
+The targets are smoked within a certain range around each target, simulating a realistic smoking behaviour. 
+At random intervals, a new target is smoked.</p>
+
+<h1>1.1) ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE constructor:</h1>
+
+<ul>
+    <li><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).New">ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE.New</a>(): Creates a new ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE object.</li>
+</ul>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ASSIST">ACT_ASSIST</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ASSIST_SMOKE_TARGETS_ZONE">ACT_ASSIST_SMOKE_TARGETS_ZONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(ACT_ASSIST)">Type <code>ACT_ASSIST</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).ClassName">ACT_ASSIST.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).Menu">ACT_ASSIST.Menu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).MenuSmokeBlue">ACT_ASSIST.MenuSmokeBlue</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).MenuSmokeGreen">ACT_ASSIST.MenuSmokeGreen</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).MenuSmokeOrange">ACT_ASSIST.MenuSmokeOrange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).MenuSmokeRed">ACT_ASSIST.MenuSmokeRed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).MenuSmokeWhite">ACT_ASSIST.MenuSmokeWhite</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).New">ACT_ASSIST:New()</a></td>
+		<td class="summary">
+<p>Creates a new target smoking state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).TargetSetUnit">ACT_ASSIST.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).TargetZone">ACT_ASSIST.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).onafterStart">ACT_ASSIST:onafterStart(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE)">Type <code>ACT_ASSIST_SMOKE_TARGETS_ZONE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).ClassName">ACT_ASSIST_SMOKE_TARGETS_ZONE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).Init">ACT_ASSIST_SMOKE_TARGETS_ZONE:Init(FsmSmoke)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).New">ACT_ASSIST_SMOKE_TARGETS_ZONE:New(TargetSetUnit, TargetZone)</a></td>
+		<td class="summary">
+<p>Creates a new target smoking state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).TargetSetUnit">ACT_ASSIST_SMOKE_TARGETS_ZONE.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).TargetZone">ACT_ASSIST_SMOKE_TARGETS_ZONE.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE).onenterSmoking">ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ASSIST)">#ACT_ASSIST</a></em>
+<a id="ACT_ASSIST" >
+<strong>ACT_ASSIST</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ASSIST_SMOKE_TARGETS_ZONE)">#ACT_ASSIST_SMOKE_TARGETS_ZONE</a></em>
+<a id="ACT_ASSIST_SMOKE_TARGETS_ZONE" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Smoke)" >Type <code>Smoke</code></a></h2>
+	
+			<h2><a id="#(ACT_ASSIST)" >Type <code>ACT_ASSIST</code></a></h2>
+				
+<p>ACT_ASSIST class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ASSIST).ClassName" >
+<strong>ACT_ASSIST.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).Menu" >
+<strong>ACT_ASSIST.Menu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).MenuSmokeBlue" >
+<strong>ACT_ASSIST.MenuSmokeBlue</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).MenuSmokeGreen" >
+<strong>ACT_ASSIST.MenuSmokeGreen</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).MenuSmokeOrange" >
+<strong>ACT_ASSIST.MenuSmokeOrange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).MenuSmokeRed" >
+<strong>ACT_ASSIST.MenuSmokeRed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).MenuSmokeWhite" >
+<strong>ACT_ASSIST.MenuSmokeWhite</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST).New" >
+<strong>ACT_ASSIST:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new target smoking state machine.</p>
+
+	
+<p>The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ACT_ASSIST)">#ACT_ASSIST</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).TargetSetUnit" >
+<strong>ACT_ASSIST.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIST).TargetZone" >
+<strong>ACT_ASSIST.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST).onafterStart" >
+<strong>ACT_ASSIST:onafterStart(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE)" >Type <code>ACT_ASSIST_SMOKE_TARGETS_ZONE</code></a></h2>
+				
+<p>ACT<em>ASSIST</em>SMOKE<em>TARGETS</em>ZONE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).ClassName" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).Init" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE:Init(FsmSmoke)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FsmSmoke </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).New" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE:New(TargetSetUnit, TargetZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new target smoking state machine.</p>
+
+	
+<p>The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).TargetSetUnit" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).TargetZone" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST_SMOKE_TARGETS_ZONE).onenterSmoking" >
+<strong>ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

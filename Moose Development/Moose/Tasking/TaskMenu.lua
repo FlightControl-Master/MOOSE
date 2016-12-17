@@ -47,7 +47,7 @@ end
 
 --- StateMachine callback function for a TASK2
 -- @param #TASK2_MENU_CLIENT self
--- @param Fsm.Fsm#FSM_TASK Fsm
+-- @param Core.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -71,7 +71,7 @@ end
 
 --- StateMachine callback function for a TASK2
 -- @param #TASK2_MENU_CLIENT self
--- @param Fsm.Fsm#FSM_TASK Fsm
+-- @param Core.Fsm#FSM_TASK Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To

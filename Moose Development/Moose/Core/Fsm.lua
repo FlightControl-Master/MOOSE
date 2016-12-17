@@ -32,17 +32,6 @@ do -- FSM
     -- Inherits from BASE
     local self = BASE:Inherit( self, BASE:New() )
   
-  
-    --local self = routines.utils.deepCopy( self ) -- Create a new self instance
-  
-    --assert(options.events)
-  
-    --local MT = {}
-    --setmetatable( self, MT )
-    --self.__index = self
-  
-  
-  
     self.options = options or {}
     self.options.subs = self.options.subs or {}
     self.current = self.options.initial or 'none'
@@ -95,10 +84,8 @@ do -- FSM
     return self._Transitions or {}
   end
   
-  
-  
   --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
-  -- @return Fsm.Fsm#FSM_PROCESS
+  -- @return Core.Fsm#FSM_PROCESS
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
     self:E( { From, Event, Process, ReturnEvents } )
   
@@ -391,27 +378,7 @@ do -- FSM
   function FSM:cannot(e)
     return not self:can(e)
   end
-  
-  function FSM:CopyCallHandlers( FsmT )
-  
-    local Parent = BASE:GetParent( FsmT )
-    if Parent then
-      self:CopyCallHandlers( Parent )
-    end
-    for ElementID, Element in pairs( FsmT ) do
-      self:E( { ElementID = ElementID } )
-      if type( Element ) == "function" then
-        if ElementID.find( ElementID, "^onbefore" ) or
-           ElementID.find( ElementID, "^onafter" ) or
-           ElementID.find( ElementID, "^onenter" ) or
-           ElementID.find( ElementID, "^onleave" ) or
-           ElementID.find( ElementID, "^onfunc" ) then
-          self[ ElementID ] = Element
-        end
-      end
-    end
-  end
-  
+
 end
 
 do -- FSM_CONTROLLABLE
@@ -419,7 +386,7 @@ do -- FSM_CONTROLLABLE
   --- FSM_CONTROLLABLE class
   -- @type FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @extends Fsm.Fsm#FSM
+  -- @extends Core.Fsm#FSM
   FSM_CONTROLLABLE = {
     ClassName = "FSM_CONTROLLABLE",
   }
@@ -432,7 +399,7 @@ do -- FSM_CONTROLLABLE
   function FSM_CONTROLLABLE:New( FSMT, Controllable )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Fsm.Fsm#FSM_CONTROLLABLE
+    local self = BASE:Inherit( self, FSM:New( FSMT ) ) -- Core.Fsm#FSM_CONTROLLABLE
   
     if Controllable then
       self:SetControllable( Controllable )
@@ -482,8 +449,8 @@ do -- FSM_PROCESS
 
   --- FSM_PROCESS class
   -- @type FSM_PROCESS
-  -- @field Tasking.Task#TASK_BASE Task
-  -- @extends Fsm.Fsm#FSM_CONTROLLABLE
+  -- @field Tasking.Task#TASK Task
+  -- @extends Core.Fsm#FSM_CONTROLLABLE
   FSM_PROCESS = {
     ClassName = "FSM_PROCESS",
   }
@@ -493,7 +460,7 @@ do -- FSM_PROCESS
   -- @return #FSM_PROCESS
   function FSM_PROCESS:New( Controllable, Task )
   
-    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Fsm.Fsm#FSM_PROCESS
+    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_PROCESS
 
     self:F( Controllable, Task )
   
@@ -512,7 +479,7 @@ do -- FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
     self:E( { self:GetClassNameAndID() } )
   
-    local NewFsm = self:New( Controllable, Task ) -- Fsm.Fsm#FSM_PROCESS
+    local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
   
     NewFsm:Assign( Controllable, Task )
   
@@ -549,9 +516,9 @@ do -- FSM_PROCESS
   end
   
   --- Sets the task of the process.
-  -- @param #PROCESS self
-  -- @param Tasking.Task#TASK_BASE Task
-  -- @return #PROCESS
+  -- @param #FSM_PROCESS self
+  -- @param Tasking.Task#TASK Task
+  -- @return #FSM_PROCESS
   function FSM_PROCESS:SetTask( Task )
   
     self.Task = Task
@@ -560,25 +527,46 @@ do -- FSM_PROCESS
   end
   
   --- Gets the task of the process.
-  -- @param #PROCESS self
-  -- @return Tasking.Task#TASK_BASE
+  -- @param #FSM_PROCESS self
+  -- @return Tasking.Task#TASK
   function FSM_PROCESS:GetTask()
   
     return self.Task
   end
   
   --- Gets the mission of the process.
-  -- @param #PROCESS self
+  -- @param #FSM_PROCESS self
   -- @return Tasking.Mission#MISSION
   function FSM_PROCESS:GetMission()
   
     return self.Task.Mission
   end
   
+  --- Gets the mission of the process.
+  -- @param #FSM_PROCESS self
+  -- @return Tasking.CommandCenter#COMMANDCENTER
+  function FSM_PROCESS:GetCommandCenter()
+  
+    return self:GetTask():GetMission():GetCommandCenter()
+  end
+  
+  --- Send a message of the @{Task} to the Group of the Unit.
+-- @param #FSM_PROCESS self
+function FSM_PROCESS:Message( Message )
+  self:F( { Message = Message } )
+
+  local CC = self:GetCommandCenter()
+  local TaskGroup = self.Controllable:GetGroup()
+  
+  CC:MessageToGroup( Message, TaskGroup )
+end
+
+  
+  
   
   --- Assign the process to a @{Unit} and activate the process.
   -- @param #FSM_PROCESS self
-  -- @param Task.Tasking#TASK_BASE Task
+  -- @param Task.Tasking#TASK Task
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #FSM_PROCESS self
   function FSM_PROCESS:Assign( ProcessUnit, Task )
@@ -636,7 +624,7 @@ do -- FSM_PROCESS
     self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
-      MESSAGE:New( "Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 15 ):ToAll()
+      MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
     self:E( self.Scores[To] )
@@ -657,8 +645,8 @@ do -- FSM_TASK
 
   --- FSM_TASK class
   -- @type FSM_TASK
-  -- @field Tasking.Task#TASK_BASE Task
-  -- @extends Fsm.Fsm#FSM
+  -- @field Tasking.Task#TASK Task
+  -- @extends Core.Fsm#FSM
   FSM_TASK = {
     ClassName = "FSM_TASK",
   }
@@ -666,12 +654,12 @@ do -- FSM_TASK
   --- Creates a new FSM_TASK object.
   -- @param #FSM_TASK self
   -- @param #table FSMT
-  -- @param Tasking.Task#TASK_BASE Task
+  -- @param Tasking.Task#TASK Task
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #FSM_TASK
   function FSM_TASK:New( FSMT )
   
-    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) ) -- Fsm.Fsm#FSM_TASK
+    local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( FSMT ) ) -- Core.Fsm#FSM_TASK
   
     self["onstatechange"] = self.OnStateChange
   
@@ -692,7 +680,7 @@ do -- FSM_SET
   --- FSM_SET class
   -- @type FSM_SET
   -- @field Core.Set#SET_BASE Set
-  -- @extends Fsm.Fsm#FSM
+  -- @extends Core.Fsm#FSM
   FSM_SET = {
     ClassName = "FSM_SET",
   }
@@ -705,7 +693,7 @@ do -- FSM_SET
   function FSM_SET:New( FSMSet )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM_SET
+    local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
   
     if FSMSet then
       self:Set( FSMSet )

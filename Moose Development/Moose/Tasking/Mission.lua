@@ -7,7 +7,7 @@
 -- @field #MISSION.Clients _Clients
 -- @field Core.Menu#MENU_COALITION MissionMenu
 -- @field #string MissionBriefing
--- @extends Fsm.Fsm#FSM
+-- @extends Core.Fsm#FSM
 MISSION = {
 	ClassName = "MISSION",
 	Name = "",
@@ -40,13 +40,14 @@ MISSION = {
 -- @return #MISSION self
 function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- Fsm.Fsm#FSM
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
 
   self:SetStartState( "Idle" )
   
   self:AddTransition( "Idle", "Start", "Ongoing" )
   self:AddTransition( "Ongoing", "Stop", "Idle" )
-  self:AddTransition( "Ongoing", "Finish", "Finished" )
+  self:AddTransition( "Ongoing", "Complete", "Completed" )
+  self:AddTransition( "*", "Fail", "Failed" )
   
 	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
@@ -60,10 +61,33 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 	
 	self.Tasks = {}
 
-  -- Build the Fsm for the mission.
-  
-
 	return self
+end
+
+--- FSM function for a MISSION
+-- @param #MISSION self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function MISSION:onbeforeComplete( Event, From, To )
+
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if not Task:IsStateSuccess() and not Task:IsStateFailed() and not Task:IsStateAborted() and not Task:IsStateCancelled() then
+      return false -- Mission cannot be completed. Other Tasks are still active.
+    end
+  end
+  return true -- Allow Mission completion.
+end
+
+--- FSM function for a MISSION
+-- @param #MISSION self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function MISSION:onenterCompleted( Event, From, To )
+
+  self:GetCommandCenter():MessageToCoalition( "Mission " .. self:GetName() .. " has been completed! Good job guys!" )
 end
 
 --- Gets the mission name.
@@ -71,6 +95,70 @@ end
 -- @return #MISSION self
 function MISSION:GetName()
   return self.Name
+end
+
+--- Add a Unit to join the Mission.
+-- For each Task within the Mission, the Unit is joined with the Task.
+-- If the Unit was not part of a Task in the Mission, false is returned.
+-- If the Unit is part of a Task in the Mission, true is returned.
+-- @param #MISSION self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @return #boolean true if Unit is part of a Task in the Mission.
+function MISSION:JoinUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitAdded = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:JoinUnit( PlayerUnit ) then
+      PlayerUnitAdded = true
+    end
+  end
+  
+  return PlayerUnitAdded
+end
+
+--- Aborts a PlayerUnit from the Mission.
+-- For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
+-- If the Unit was not part of a Task in the Mission, false is returned.
+-- If the Unit is part of a Task in the Mission, true is returned.
+-- @param #MISSION self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @return #boolean true if Unit is part of a Task in the Mission.
+function MISSION:AbortUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitRemoved = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    if Task:AbortUnit( PlayerUnit ) then
+      PlayerUnitRemoved = true
+    end
+  end
+  
+  return PlayerUnitRemoved
+end
+
+--- Handles a crash of a PlayerUnit from the Mission.
+-- For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
+-- If the Unit was not part of a Task in the Mission, false is returned.
+-- If the Unit is part of a Task in the Mission, true is returned.
+-- @param #MISSION self
+-- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
+-- @return #boolean true if Unit is part of a Task in the Mission.
+function MISSION:CrashUnit( PlayerUnit )
+  self:F( { PlayerUnit = PlayerUnit } )
+  
+  local PlayerUnitRemoved = false
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    if Task:CrashUnit( PlayerUnit ) then
+      PlayerUnitRemoved = true
+    end
+  end
+  
+  return PlayerUnitRemoved
 end
 
 --- Add a scoring to the mission.
@@ -96,7 +184,7 @@ function MISSION:GetGroups()
   local SetGroup = SET_GROUP:New()
   
   for TaskID, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK_BASE
+    local Task = Task -- Tasking.Task#TASK
     local GroupSet = Task:GetGroups()
     GroupSet:ForEachGroup(
       function( TaskGroup )
@@ -114,9 +202,10 @@ end
 -- @param #MISSION self
 -- @param Core.Menu#MENU_COALITION CommandCenterMenu
 function MISSION:SetMenu()
+  self:F()
   
-  for _, Task in pairs( self.Tasks ) do
-    local Task = Task -- Tasking.Task#TASK_BASE
+  for _, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
     Task:SetMenu()  
   end
 end
@@ -131,13 +220,13 @@ end
 
 --- Sets the Assigned Task menu.
 -- @param #MISSION self
--- @param Tasking.Task#TASK_BASE Task
+-- @param Tasking.Task#TASK Task
 -- @param #string MenuText The menu text.
 -- @return #MISSION self
 function MISSION:SetAssignedMenu( Task )
   
   for _, Task in pairs( self.Tasks ) do
-    local Task = Task -- Tasking.Task#TASK_BASE
+    local Task = Task -- Tasking.Task#TASK
     Task:RemoveMenu()
     Task:SetAssignedMenu()  
   end
@@ -146,7 +235,7 @@ end
 
 --- Removes a Task menu.
 -- @param #MISSION self
--- @param Tasking.Task#TASK_BASE Task
+-- @param Tasking.Task#TASK Task
 -- @return #MISSION self
 function MISSION:RemoveTaskMenu( Task )
     
@@ -182,7 +271,7 @@ end
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
--- @return Tasking.Task#TASK_BASE The Task
+-- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
 function MISSION:GetTask( TaskName  )
   self:F( { TaskName } )
@@ -195,8 +284,8 @@ end
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
--- @return Tasking.Task#TASK_BASE The task added.
+-- @param Tasking.Task#TASK Task is the @{Task} object.
+-- @return Tasking.Task#TASK The task added.
 function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
@@ -205,6 +294,8 @@ function MISSION:AddTask( Task )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
 
   self.Tasks[TaskName] = Task
+  
+  self:GetCommandCenter():SetMenu()
 
   return Task
 end
@@ -213,7 +304,7 @@ end
 -- Note that there can be multiple @{Task}s registered to be completed. 
 -- Each Task can be set a certain Goals. The Mission will not be completed until all Goals are reached.
 -- @param #MISSION self
--- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
+-- @param Tasking.Task#TASK Task is the @{Task} object.
 -- @return #nil The cleaned Task reference.
 function MISSION:RemoveTask( Task )
 
@@ -227,14 +318,16 @@ function MISSION:RemoveTask( Task )
   Task = nil
   
   collectgarbage()
+
+  self:GetCommandCenter():SetMenu()
   
   return nil
 end
 
 --- Return the next @{Task} ID to be completed within the @{Mission}. 
 -- @param #MISSION self
--- @param Tasking.Task#TASK_BASE Task is the @{Task} object.
--- @return Tasking.Task#TASK_BASE The task added.
+-- @param Tasking.Task#TASK Task is the @{Task} object.
+-- @return Tasking.Task#TASK The task added.
 function MISSION:GetNextTaskID( Task )
 
   local TaskName = Task:GetTaskName()
@@ -320,7 +413,7 @@ function MISSION:HasGroup( TaskGroup )
   local Has = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK_BASE
+    local Task = Task -- Tasking.Task#TASK
     if Task:HasGroup( TaskGroup ) then
       Has = true
       break
@@ -330,10 +423,12 @@ function MISSION:HasGroup( TaskGroup )
   return Has
 end
 
---- Create a summary report of the mission (one line).
+--- Create a summary report of the Mission (one line).
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportStatus()
+function MISSION:ReportSummary()
+
+  local Report = REPORT:New()
 
   -- List the name of the mission.
   local Name = self:GetName()
@@ -344,14 +439,66 @@ function MISSION:ReportStatus()
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK_BASE
+    local Task = Task -- Tasking.Task#TASK
     if Task:IsStateSuccess() or Task:IsStateFailed() then
     else
       TasksRemaining = TasksRemaining + 1
     end
   end
 
-  return "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining."
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining." )
+  
+  return Report:Text()
+end
+
+--- Create a overview report of the Mission (multiple lines).
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportOverview()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+
+  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  
+  -- Determine how many tasks are remaining.
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    Report:Add( "- " .. Task:ReportSummary() )
+  end
+
+  return Report:Text()
+end
+
+--- Create a detailed report of the Mission, listing all the details of the Task.
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportDetails()
+
+  local Report = REPORT:New()
+  
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  
+  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  
+  -- Determine how many tasks are remaining.
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    Report:Add( Task:ReportDetails() )
+  end
+
+  return Report:Text()
 end
 
 --- Report the status of all MISSIONs to all active Clients.

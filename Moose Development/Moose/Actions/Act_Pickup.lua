@@ -4,7 +4,7 @@
 -- @type PROCESS_PICKUP
 -- @field Wrapper.Unit#UNIT ProcessUnit
 -- @field Core.Set#SET_UNIT TargetSetUnit
--- @extends Fsm.Fsm#FSM_PROCESS
+-- @extends Core.Fsm#FSM_PROCESS
 PROCESS_PICKUP = { 
   ClassName = "PROCESS_PICKUP",
   Fsm = {},
@@ -57,7 +57,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -68,7 +68,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -89,7 +89,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -115,7 +115,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -126,7 +126,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -139,7 +139,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -151,7 +151,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_PICKUP self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To

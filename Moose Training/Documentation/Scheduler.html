@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li>Scheduler</li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -87,39 +89,52 @@
 
    
 
-<h1>1) <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class models time events calling given event handling functions.</p>
+<h1>1) <a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+
+<p>The <a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a> class creates schedule.</p>
 
 <h2>1.1) SCHEDULER constructor</h2>
-<p>The SCHEDULER class is quite easy to use:</p>
+
+<p>The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:</p>
 
 <ul>
-    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>: Setup a new scheduler and start it with the specified parameters.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
 </ul>
 
-<h2>1.2) SCHEDULER timer stop and start</h2>
+<h2>1.2) SCHEDULER timer stopping and (re-)starting.</h2>
+
 <p>The SCHEDULER can be stopped and restarted with the following methods:</p>
 
 <ul>
-    <li><a href="Scheduler.html##(SCHEDULER).Start">Scheduler#SCHEDULER.Start</a>: (Re-)Start the scheduler.</li>
-    <li><a href="Scheduler.html##(SCHEDULER).Stop">Scheduler#SCHEDULER.Stop</a>: Stop the scheduler.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).Start">Core.Scheduler#SCHEDULER.Start</a>(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.</li>
+    <li><a href="Core.Scheduler.html##(SCHEDULER).Stop">Core.Scheduler#SCHEDULER.Stop</a>(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.</li>
 </ul>
 
-<h2>1.3) Reschedule new time event</h2>
-<p>With <a href="Scheduler.html##(SCHEDULER).Schedule">Scheduler#SCHEDULER.Schedule</a> a new time event can be scheduled.</p>
+<h2>1.3) Create a new schedule</h2>
+
+<p>With <a href="Core.Scheduler.html##(SCHEDULER).Schedule">Core.Scheduler#SCHEDULER.Schedule</a>() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.</p>
 
 <hr/>
 
 <h3>Contributions:</h3>
 
 <ul>
-    <li>Mechanist : Concept &amp; Testing</li>
+    <li>FlightControl : Concept &amp; Testing</li>
 </ul>
 
 <h3>Authors:</h3>
 
 <ul>
     <li>FlightControl : Design &amp; Programming</li>
+</ul>
+
+<h3>Test Missions:</h3>
+
+<ul>
+    <li>SCH - Scheduler</li>
 </ul>
 
 <hr/>
@@ -143,31 +158,19 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).New">SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).New">SCHEDULER:New(SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop)</a></td>
 		<td class="summary">
 <p>SCHEDULER constructor.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).RandomizationFactor">SCHEDULER.RandomizationFactor</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Remove">SCHEDULER:Remove(ScheduleID)</a></td>
 		<td class="summary">
-
+<p>Removes a specific schedule if a valid ScheduleID is provided.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Repeat">SCHEDULER.Repeat</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).RepeatSecondsInterval">SCHEDULER.RepeatSecondsInterval</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedule">SCHEDULER:Schedule(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedule">SCHEDULER:Schedule(SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop)</a></td>
 		<td class="summary">
 <p>Schedule a new time event.</p>
 </td>
@@ -179,57 +182,27 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Start">SCHEDULER:Start()</a></td>
-		<td class="summary">
-<p>(Re-)Starts the scheduler.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StartSeconds">SCHEDULER.StartSeconds</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).SchedulerObject">SCHEDULER.SchedulerObject</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StartTime">SCHEDULER.StartTime</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedules">SCHEDULER.Schedules</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Stop">SCHEDULER:Stop()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Start">SCHEDULER:Start(ScheduleID)</a></td>
 		<td class="summary">
-<p>Stops the scheduler.</p>
+<p>(Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).StopSeconds">SCHEDULER.StopSeconds</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Stop">SCHEDULER:Stop(ScheduleID)</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventFunction">SCHEDULER.TimeEventFunction</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventFunctionArguments">SCHEDULER.TimeEventFunctionArguments</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).TimeEventObject">SCHEDULER.TimeEventObject</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER)._Scheduler">SCHEDULER:_Scheduler()</a></td>
-		<td class="summary">
-
+<p>Stops the schedules or a specific schedule if a valid ScheduleID is provided.</p>
 </td>
 		</tr>
 	</table>
@@ -274,7 +247,7 @@
 <dt>
 
 <a id="#(SCHEDULER).New" >
-<strong>SCHEDULER:New(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
+<strong>SCHEDULER:New(SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop)</strong>
 </a>
 </dt>
 <dd>
@@ -285,99 +258,91 @@
 		<ul>
 				<li>
 				
-<p><code><em>#table TimeEventObject </em></code>: 
+<p><code><em>#table SchedulerObject </em></code>: 
 Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#function TimeEventFunction </em></code>: 
-The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.</p>
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#table TimeEventFunctionArguments </em></code>: 
+<p><code><em>#table SchedulerArguments </em></code>: 
 Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StartSeconds </em></code>: 
+<p><code><em>#number Start </em></code>: 
 Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RepeatSecondsInterval </em></code>: 
+<p><code><em>#number Repeat </em></code>: 
 Specifies the interval in seconds when the scheduler will call the event function.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RandomizationFactor </em></code>: 
-Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.</p>
+<p><code><em>#number RandomizeFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the Repeat.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StopSeconds </em></code>: 
+<p><code><em>#number Stop </em></code>: 
 Specifies the amount of seconds when the scheduler will be stopped.</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
 self</p>
 
+				</li>
+				<li>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(SCHEDULER).RandomizationFactor" >
-<strong>SCHEDULER.RandomizationFactor</strong>
+<a id="#(SCHEDULER).Remove" >
+<strong>SCHEDULER:Remove(ScheduleID)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Removes a specific schedule if a valid ScheduleID is provided.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number ScheduleID </em></code>: 
+(optional) The ScheduleID of the planned (repeating) schedule.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(SCHEDULER).Repeat" >
-<strong>SCHEDULER.Repeat</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SCHEDULER).RepeatSecondsInterval" >
-<strong>SCHEDULER.RepeatSecondsInterval</strong>
-</a>
-</dt>
-<dd>
-	
-
-
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SCHEDULER).Schedule" >
-<strong>SCHEDULER:Schedule(TimeEventObject, TimeEventFunction, TimeEventFunctionArguments, StartSeconds, RepeatSecondsInterval, RandomizationFactor, StopSeconds)</strong>
+<strong>SCHEDULER:Schedule(SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop)</strong>
 </a>
 </dt>
 <dd>
@@ -391,51 +356,51 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em>#table TimeEventObject </em></code>: 
+<p><code><em>#table SchedulerObject </em></code>: 
 Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#function TimeEventFunction </em></code>: 
-The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in TimeEventFunctionArguments.</p>
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#table TimeEventFunctionArguments </em></code>: 
+<p><code><em>#table SchedulerArguments </em></code>: 
 Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StartSeconds </em></code>: 
+<p><code><em>#number Start </em></code>: 
 Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RepeatSecondsInterval </em></code>: 
+<p><code><em>#number Repeat </em></code>: 
 Specifies the interval in seconds when the scheduler will call the event function.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number RandomizationFactor </em></code>: 
-Specifies a randomization factor between 0 and 1 to randomize the RepeatSecondsInterval.</p>
+<p><code><em>#number RandomizeFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the Repeat.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number StopSeconds </em></code>: 
+<p><code><em>#number Stop </em></code>: 
 Specifies the amount of seconds when the scheduler will be stopped.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
-self</p>
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
 
 </dd>
 </dl>
@@ -456,134 +421,73 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SCHEDULER).SchedulerObject" >
+<strong>SCHEDULER.SchedulerObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCHEDULER).Schedules" >
+<strong>SCHEDULER.Schedules</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SCHEDULER).Start" >
-<strong>SCHEDULER:Start()</strong>
+<strong>SCHEDULER:Start(ScheduleID)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>(Re-)Starts the scheduler.</p>
+<p>(Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.</p>
 
-		<h3>Return value</h3>
+		<h3>Parameter</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
-self</p>
+<p><code><em>#number ScheduleID </em></code>: 
+(optional) The ScheduleID of the planned (repeating) schedule.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).StartSeconds" >
-<strong>SCHEDULER.StartSeconds</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).StartTime" >
-<strong>SCHEDULER.StartTime</strong>
-</a>
-</dt>
-<dd>
-	
-
-
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SCHEDULER).Stop" >
-<strong>SCHEDULER:Stop()</strong>
+<strong>SCHEDULER:Stop(ScheduleID)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Stops the scheduler.</p>
+<p>Stops the schedules or a specific schedule if a valid ScheduleID is provided.</p>
 
-		<h3>Return value</h3>
+		<h3>Parameter</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(SCHEDULER)">#SCHEDULER</a>:</em>
-self</p>
+<p><code><em>#number ScheduleID </em></code>: 
+(optional) The ScheduleID of the planned (repeating) schedule.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).StopSeconds" >
-<strong>SCHEDULER.StopSeconds</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).TimeEventFunction" >
-<strong>SCHEDULER.TimeEventFunction</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).TimeEventFunctionArguments" >
-<strong>SCHEDULER.TimeEventFunctionArguments</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).TimeEventObject" >
-<strong>SCHEDULER.TimeEventObject</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SCHEDULER)._Scheduler" >
-<strong>SCHEDULER:_Scheduler()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
+				</li>
+		</ul>
 </dd>
 </dl>
 

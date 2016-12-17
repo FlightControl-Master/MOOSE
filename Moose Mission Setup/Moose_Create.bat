@@ -45,6 +45,7 @@ COPY /b Moose.lua + %1\Utilities\Utils.lua                                      
 rem Core Classes
 COPY /b Moose.lua + %1\Core\Base.lua                  	Moose.lua
 COPY /b Moose.lua + %1\Core\Scheduler.lua             	Moose.lua
+COPY /b Moose.lua + %1\Core\ScheduleDispatcher.lua    	Moose.lua
 COPY /b Moose.lua + %1\Core\Event.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Menu.lua                  	Moose.lua
 COPY /b Moose.lua + %1\Core\Zone.lua                  	Moose.lua
@@ -52,6 +53,7 @@ COPY /b Moose.lua + %1\Core\Database.lua              	Moose.lua
 COPY /b Moose.lua + %1\Core\Set.lua                   	Moose.lua
 COPY /b Moose.lua + %1\Core\Point.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Message.lua               	Moose.lua
+COPY /b Moose.lua + %1\Core\Fsm.lua       	  		    Moose.lua
 
 rem Wrapper Classes
 COPY /b Moose.lua + %1\Wrapper\Object.lua               Moose.lua
@@ -74,19 +76,18 @@ COPY /b Moose.lua + %1\Functional\Escort.lua            Moose.lua
 COPY /b Moose.lua + %1\Functional\MissileTrainer.lua    Moose.lua
 COPY /b Moose.lua + %1\Functional\AirbasePolice.lua     Moose.lua
 COPY /b Moose.lua + %1\Functional\Detection.lua         Moose.lua
-COPY /b Moose.lua + %1\Functional\AIBalancer.lua       	Moose.lua
+
+rem AI Classes
+COPY /b Moose.lua + %1\AI\AI_Balancer.lua  		       	Moose.lua
+COPY /b Moose.lua + %1\AI\AI_Patrol.lua           		Moose.lua
+COPY /b Moose.lua + %1\AI\AI_Cargo.lua                 	Moose.lua
 
 
-rem Fsm Classes
-COPY /b Moose.lua + %1\Fsm\Fsm.lua       	  		    Moose.lua
-COPY /b Moose.lua + %1\Fsm\Process.lua              	Moose.lua
-COPY /b Moose.lua + %1\Fsm\Process_JTAC.lua 		  	Moose.lua
-COPY /b Moose.lua + %1\Fsm\Patrol.lua           		Moose.lua
-COPY /b Moose.lua + %1\Fsm\Cargo.lua                 	Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmAssign.lua    	  		Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmRoute.lua   		  		Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmAccount.lua    		  	Moose.lua
-COPY /b Moose.lua + %1\Fsm\FsmSmoke.lua 		  		Moose.lua
+rem Actions
+COPY /b Moose.lua + %1\Actions\Act_Assign.lua    	  	Moose.lua
+COPY /b Moose.lua + %1\Actions\Act_Route.lua   		  	Moose.lua
+COPY /b Moose.lua + %1\Actions\Act_Account.lua    		Moose.lua
+COPY /b Moose.lua + %1\Actions\Act_Assist.lua 		  	Moose.lua
 
 rem Task Handling Classes
 COPY /b Moose.lua + %1\Tasking\CommandCenter.lua 		Moose.lua

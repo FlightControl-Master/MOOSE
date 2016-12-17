@@ -1,35 +1,35 @@
---- This module contains the AIBALANCER class.
+--- This module contains the AI_BALANCER class.
 -- 
 -- ===
 -- 
--- 1) @{Functional.AIBalancer#AIBALANCER} class, extends @{Fsm.Fsm#FSM_SET}
+-- 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
 -- ===================================================================================
--- The @{Functional.AIBalancer#AIBALANCER} class monitors and manages as many AI GROUPS as there are
+-- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many AI GROUPS as there are
 -- CLIENTS in a SET_CLIENT collection not occupied by players.
--- The AIBALANCER class manages internally a collection of AI management objects, which govern the behaviour 
+-- The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
 -- of the underlying AI GROUPS.
 -- 
--- The parent class @{Fsm.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
--- and calls for each event the state transition methods providing the internal @{Fsm.Fsm#FSM_SET.Set} object containing the
+-- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
+-- and calls for each event the state transition methods providing the internal @{Core.Fsm#FSM_SET.Set} object containing the
 -- SET_GROUP and additional event parameters provided during the event.
 -- 
--- 1.1) AIBALANCER construction method
+-- 1.1) AI_BALANCER construction method
 -- ---------------------------------------
--- Create a new AIBALANCER object with the @{#AIBALANCER.New} method:
+-- Create a new AI_BALANCER object with the @{#AI_BALANCER.New} method:
 -- 
---    * @{#AIBALANCER.New}: Creates a new AIBALANCER object.
+--    * @{#AI_BALANCER.New}: Creates a new AI_BALANCER object.
 --    
 -- 1.2) 
 -- ----
 --    * Add
 --    * Remove
 -- 
--- 1.2) AIBALANCER returns AI to Airbases
+-- 1.2) AI_BALANCER returns AI to Airbases
 -- ------------------------------------------
 -- You can configure to have the AI to return to:
 -- 
---    * @{#AIBALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
---    * @{#AIBALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- --
 -- ===
 -- 
@@ -56,42 +56,42 @@
 -- ### Contributions: 
 -- 
 --   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AIBALANCER class.  
+--   Working together with James has resulted in the creation of the AI_BALANCER class.  
 --   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
 --   * **SNAFU**:
 --   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AIBALANCER moose class.
+--   None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
 -- 
 --   * FlightControl: Framework Design &  Programming
 -- 
--- @module AIBalancer
+-- @module AI_Balancer
 
 
 
---- AIBALANCER class
--- @type AIBALANCER
+--- AI_BALANCER class
+-- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
--- @extends Fsm.Fsm#FSM_SET
-AIBALANCER = {
-  ClassName = "AIBALANCER",
+-- @extends Core.Fsm#FSM_SET
+AI_BALANCER = {
+  ClassName = "AI_BALANCER",
   PatrolZones = {},
   AIGroups = {},
 }
 
---- Creates a new AIBALANCER object
--- @param #AIBALANCER self
+--- Creates a new AI_BALANCER object
+-- @param #AI_BALANCER self
 -- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
 -- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
--- @return #AIBALANCER
+-- @return #AI_BALANCER
 -- @usage
--- -- Define a new AIBALANCER Object.
-function AIBALANCER:New( SetClient, SpawnAI )
+-- -- Define a new AI_BALANCER Object.
+function AI_BALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Fsm.Fsm#FSM_SET
+  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
   
   self:SetStartState( "None" )
   self:AddTransition( "*", "Start", "Monitoring" )
@@ -116,10 +116,10 @@ function AIBALANCER:New( SetClient, SpawnAI )
 end
 
 --- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
--- @param #AIBALANCER self
+-- @param #AI_BALANCER self
 -- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 -- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
-function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
@@ -127,19 +127,19 @@ function AIBALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseS
 end
 
 --- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
--- @param #AIBALANCER self
+-- @param #AI_BALANCER self
 -- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
-function AIBALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
   self.ReturnTresholdRange = ReturnTresholdRange
 end
 
---- @param #AIBALANCER self
+--- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param #string ClientName
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterSpawning( SetGroup, Event, From, To, ClientName )
+function AI_BALANCER:onenterSpawning( SetGroup, Event, From, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
   local AIGroup = self.SpawnAI:Spawn()
@@ -153,18 +153,18 @@ function AIBALANCER:onenterSpawning( SetGroup, Event, From, To, ClientName )
   self:Spawned( AIGroup ) 
 end
 
---- @param #AIBALANCER self
+--- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterDestroying( SetGroup, Event, From, To, AIGroup )
+function AI_BALANCER:onenterDestroying( SetGroup, Event, From, To, AIGroup )
 
   AIGroup:Destroy()
 end
 
---- @param #AIBALANCER self
+--- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AIBALANCER:onenterReturning( SetGroup, Event, From, To, AIGroup )
+function AI_BALANCER:onenterReturning( SetGroup, Event, From, To, AIGroup )
 
     local AIGroupTemplate = AIGroup:GetTemplate()
     if self.ToHomeAirbase == true then
@@ -187,8 +187,8 @@ function AIBALANCER:onenterReturning( SetGroup, Event, From, To, AIGroup )
 end
 
 
---- @param #AIBALANCER self
-function AIBALANCER:onenterMonitoring( SetGroup )
+--- @param #AI_BALANCER self
+function AI_BALANCER:onenterMonitoring( SetGroup )
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client

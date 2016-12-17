@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -112,6 +114,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 	</table>
 			<h2><a id="#(MISSION)">Type <code>MISSION</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).AbortUnit">MISSION:AbortUnit(PlayerUnit)</a></td>
+		<td class="summary">
+<p>Aborts a PlayerUnit from the Mission.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).AddClient">MISSION.AddClient(CLIENT, self, Client)</a></td>
 		<td class="summary">
@@ -155,6 +163,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).CrashUnit">MISSION:CrashUnit(PlayerUnit)</a></td>
+		<td class="summary">
+<p>Handles a crash of a PlayerUnit from the Mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).FAILED">MISSION.FAILED</a></td>
 		<td class="summary">
 
@@ -170,6 +184,18 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).FindClient">MISSION.FindClient(CLIENT, self, ClientName)</a></td>
 		<td class="summary">
 <p>Find a <a href="CLIENT.html">CLIENT</a> object within the <a href="MISSION.html">MISSION</a> by its ClientName.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetCommandCenter">MISSION:GetCommandCenter()</a></td>
+		<td class="summary">
+<p>Gets the COMMANDCENTER.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetGroups">MISSION:GetGroups()</a></td>
+		<td class="summary">
+<p>Get the groups for which TASKS are given in the mission</p>
 </td>
 		</tr>
 		<tr>
@@ -197,7 +223,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTask">MISSION.GetTask(TaskIndex, TaskID, self, TaskName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTask">MISSION.GetTask(TaskName, self)</a></td>
 		<td class="summary">
 <p>Get the TASK identified by the TaskNumber from the Mission.</p>
 </td>
@@ -210,6 +236,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GoalFunction">MISSION.GoalFunction</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).HasGroup">MISSION:HasGroup(TaskGroup)</a></td>
 		<td class="summary">
 
 </td>
@@ -239,9 +271,9 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).Meta">MISSION:Meta()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).JoinUnit">MISSION:JoinUnit(PlayerUnit)</a></td>
 		<td class="summary">
-
+<p>Add a Unit to join the Mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -258,12 +290,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionMenu">MISSION.MissionMenu</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionPriority">MISSION.MissionPriority</a></td>
 		<td class="summary">
 
 </td>
@@ -311,7 +337,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).New">MISSION:New(MissionName, MissionPriority, MissionBriefing, MissionCoalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).New">MISSION:New(CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition)</a></td>
 		<td class="summary">
 <p>This is the main MISSION declaration method.</p>
 </td>
@@ -347,15 +373,27 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportToAll">MISSION:ReportToAll()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportDetails">MISSION:ReportDetails()</a></td>
 		<td class="summary">
-<p>Report the status of all MISSIONs to all active Clients.</p>
+<p>Create a detailed report of the Mission, listing all the details of the Task.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportTrigger">MISSION:ReportTrigger()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportOverview">MISSION:ReportOverview()</a></td>
 		<td class="summary">
-<p>Handles the reporting.</p>
+<p>Create a overview report of the Mission (multiple lines).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportSummary">MISSION:ReportSummary()</a></td>
+		<td class="summary">
+<p>Create a summary report of the Mission (one line).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportToAll">MISSION:ReportToAll()</a></td>
+		<td class="summary">
+<p>Report the status of all MISSIONs to all active Clients.</p>
 </td>
 		</tr>
 		<tr>
@@ -377,7 +415,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetPlannedMenu">MISSION:SetPlannedMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMenu">MISSION:SetMenu(CommandCenterMenu)</a></td>
 		<td class="summary">
 <p>Sets the Planned Task menu.</p>
 </td>
@@ -407,12 +445,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).Tasks">MISSION.Tasks</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION)._ActiveTasks">MISSION._ActiveTasks</a></td>
 		<td class="summary">
 
@@ -428,6 +460,18 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION)._GoalTasks">MISSION._GoalTasks</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).onbeforeComplete">MISSION:onbeforeComplete(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a MISSION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).onenterCompleted">MISSION:onenterCompleted(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a MISSION</p>
 </td>
 		</tr>
 	</table>
@@ -614,6 +658,38 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).AbortUnit" >
+<strong>MISSION:AbortUnit(PlayerUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aborts a PlayerUnit from the Mission.</p>
+
+	
+<p>For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
+If the Unit was not part of a Task in the Mission, false is returned.
+If the Unit is part of a Task in the Mission, true is returned.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player joining the Mission.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is part of a Task in the Mission.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).AddClient" >
 <strong>MISSION.AddClient(CLIENT, self, Client)</strong>
 </a>
@@ -770,14 +846,14 @@ Each Task can be set a certain Goals. The Mission will not be completed until al
 		<ul>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: 
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: 
 is the <a href="Task.html">Task</a> object.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>:</em>
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em>
 The task added.</p>
 
 </dd>
@@ -824,6 +900,38 @@ self</p>
 <dd>
 	
 <p>Set a Mission to completed.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).CrashUnit" >
+<strong>MISSION:CrashUnit(PlayerUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles a crash of a PlayerUnit from the Mission.</p>
+
+	
+<p>For each Task within the Mission, the PlayerUnit is removed from Task where it is assigned.
+If the Unit was not part of a Task in the Mission, false is returned.
+If the Unit is part of a Task in the Mission, true is returned.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player crashing.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is part of a Task in the Mission.</p>
 
 </dd>
 </dl>
@@ -898,6 +1006,42 @@ local BomberClient = Mission:FindClient( "Bomber" )</code></pre>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).GetCommandCenter" >
+<strong>MISSION:GetCommandCenter()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the COMMANDCENTER.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Tasking.CommandCenter.html##(COMMANDCENTER)">Tasking.CommandCenter#COMMANDCENTER</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).GetGroups" >
+<strong>MISSION:GetGroups()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the groups for which TASKS are given in the mission</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).GetMissionMenu" >
 <strong>MISSION:GetMissionMenu(TaskGroup)</strong>
 </a>
@@ -910,13 +1054,13 @@ local BomberClient = Mission:FindClient( "Bomber" )</code></pre>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a>:</em>
+<p><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a>:</em>
 self</p>
 
 </dd>
@@ -954,14 +1098,14 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: 
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: 
 is the <a href="Task.html">Task</a> object.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>:</em>
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em>
 The task added.</p>
 
 </dd>
@@ -988,7 +1132,7 @@ Scoring</p>
 <dt>
 
 <a id="#(MISSION).GetTask" >
-<strong>MISSION.GetTask(TaskIndex, TaskID, self, TaskName)</strong>
+<strong>MISSION.GetTask(TaskName, self)</strong>
 </a>
 </dt>
 <dd>
@@ -1002,14 +1146,8 @@ Scoring</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string TaskIndex </em></code>: 
-is the Index of the <a href="Task.html">Task</a> within the <a href="Mission.html">Mission</a>.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number TaskID </em></code>: 
-is the ID of the <a href="Task.html">Task</a> within the <a href="Mission.html">Mission</a>.</p>
+<p><code><em>#string TaskName </em></code>: 
+The Name of the <a href="Task.html">Task</a> within the <a href="Mission.html">Mission</a>.</p>
 
 				</li>
 				<li>
@@ -1017,17 +1155,12 @@ is the ID of the <a href="Task.html">Task</a> within the <a href="Mission.html">
 <p><code><em> self </em></code>: </p>
 
 				</li>
-				<li>
-				
-<p><code><em> TaskName </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
-<p><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>:</em>
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em>
 The Task</p>
 
 				</li>
@@ -1077,6 +1210,27 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).HasGroup" >
+<strong>MISSION:HasGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1148,13 +1302,32 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).Meta" >
-<strong>MISSION:Meta()</strong>
+<a id="#(MISSION).JoinUnit" >
+<strong>MISSION:JoinUnit(PlayerUnit)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Add a Unit to join the Mission.</p>
 
+	
+<p>For each Task within the Mission, the Unit is joined with the Task.
+If the Unit was not part of a Task in the Mission, false is returned.
+If the Unit is part of a Task in the Mission, true is returned.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player joining the Mission.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is part of a Task in the Mission.</p>
 
 </dd>
 </dl>
@@ -1175,7 +1348,7 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#string</em>
 <a id="#(MISSION).MissionCoalition" >
 <strong>MISSION.MissionCoalition</strong>
 </a>
@@ -1189,23 +1362,9 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 		<dl class="function">
 <dt>
 
-		<em><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a></em>
+		<em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a></em>
 <a id="#(MISSION).MissionMenu" >
 <strong>MISSION.MissionMenu</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(MISSION).MissionPriority" >
-<strong>MISSION.MissionPriority</strong>
 </a>
 </dt>
 <dd>
@@ -1301,7 +1460,7 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#string</em>
 <a id="#(MISSION).Name" >
 <strong>MISSION.Name</strong>
 </a>
@@ -1316,7 +1475,7 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 <dt>
 
 <a id="#(MISSION).New" >
-<strong>MISSION:New(MissionName, MissionPriority, MissionBriefing, MissionCoalition)</strong>
+<strong>MISSION:New(CommandCenter, MissionName, MissionPriority, MissionBriefing, MissionCoalition)</strong>
 </a>
 </dt>
 <dd>
@@ -1328,6 +1487,11 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.CommandCenter.html##(COMMANDCENTER)">Tasking.CommandCenter#COMMANDCENTER</a> CommandCenter </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em>#string MissionName </em></code>: 
@@ -1348,7 +1512,7 @@ is a string indicating the mission briefing to be shown when a player joins a <a
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSCoalitionObject.html##(coalition)">DCSCoalitionObject#coalition</a> MissionCoalition </em></code>: 
+<p><code><em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition)">Dcs.DCSCoalitionWrapper.Object#coalition</a> MissionCoalition </em></code>: 
 is a string indicating the coalition or party to which this mission belongs to. It is free format and can be chosen freely by the mission designer. Note that this field is not to be confused with the coalition concept of the ME. Examples of a Mission Coalition could be "NATO", "CCCP", "Intruders", "Terrorists"...</p>
 
 				</li>
@@ -1419,7 +1583,7 @@ Each Task can be set a certain Goals. The Mission will not be completed until al
 		<ul>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: 
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: 
 is the <a href="Task.html">Task</a> object.</p>
 
 				</li>
@@ -1446,7 +1610,7 @@ The cleaned Task reference.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1460,6 +1624,60 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).ReportDetails" >
+<strong>MISSION:ReportDetails()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a detailed report of the Mission, listing all the details of the Task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).ReportOverview" >
+<strong>MISSION:ReportOverview()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a overview report of the Mission (multiple lines).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).ReportSummary" >
+<strong>MISSION:ReportSummary()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a summary report of the Mission (one line).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).ReportToAll" >
 <strong>MISSION:ReportToAll()</strong>
 </a>
@@ -1467,22 +1685,6 @@ self</p>
 <dd>
 	
 <p>Report the status of all MISSIONs to all active Clients.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MISSION).ReportTrigger" >
-<strong>MISSION:ReportTrigger()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Handles the reporting.</p>
-
-	
-<p>After certain time intervals, a MISSION report MESSAGE will be shown to All Players.</p>
 
 </dd>
 </dl>
@@ -1529,7 +1731,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a> Task </em></code>: </p>
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
 
 				</li>
 				<li>
@@ -1549,14 +1751,22 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).SetPlannedMenu" >
-<strong>MISSION:SetPlannedMenu()</strong>
+<a id="#(MISSION).SetMenu" >
+<strong>MISSION:SetMenu(CommandCenterMenu)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sets the Planned Task menu.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a> CommandCenterMenu </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1618,20 +1828,6 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(MISSION).Tasks" >
-<strong>MISSION.Tasks</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(MISSION)._ActiveTasks" >
 <strong>MISSION._ActiveTasks</strong>
 </a>
@@ -1668,6 +1864,68 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).onbeforeComplete" >
+<strong>MISSION:onbeforeComplete(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a MISSION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).onenterCompleted" >
+<strong>MISSION:onenterCompleted(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a MISSION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li>Controllable</li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -87,8 +89,8 @@
 
    
 
-<h1>1) <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
-<p>The <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class is a wrapper class to handle the DCS Controllable objects:</p>
+<h1>1) <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> class, extends <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></h1>
+<p>The <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> class is a wrapper class to handle the DCS Controllable objects:</p>
 
 <ul>
     <li>Support all DCS Controllable APIs.</li>
@@ -106,7 +108,7 @@
 
 <h2>1.2) CONTROLLABLE task methods</h2>
 <p>Several controllable task methods are available that help you to prepare tasks. 
-These methods return a string consisting of the task description, which can then be given to either a <a href="Controllable.html##(CONTROLLABLE).PushTask">Controllable#CONTROLLABLE.PushTask</a> or <a href="Controllable.html##(SetTask)">Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
+These methods return a string consisting of the task description, which can then be given to either a <a href="Wrapper.Controllable.html##(CONTROLLABLE).PushTask">Wrapper.Controllable#CONTROLLABLE.PushTask</a> or <a href="Wrapper.Controllable.html##(SetTask)">Wrapper.Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
 Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 Each task description where applicable indicates for which controllable category the task is valid.
 There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
@@ -270,7 +272,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CopyRoute">CONTROLLABLE:CopyRoute(Begin, End, Randomize, Radius)</a></td>
 		<td class="summary">
-<p>Return the route of a controllable by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
+<p>Return the route of a controllable by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
 </td>
 		</tr>
 		<tr>
@@ -334,12 +336,6 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetMessage">CONTROLLABLE:GetMessage(Message, Duration)</a></td>
-		<td class="summary">
-<p>Returns a message with the callsign embedded (if there is one).</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetTaskMission">CONTROLLABLE:GetTaskMission()</a></td>
 		<td class="summary">
 <p>Return the mission template of the controllable.</p>
@@ -355,42 +351,6 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).IsTargetDetected">CONTROLLABLE:IsTargetDetected(DCSObject)</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Message">CONTROLLABLE:Message(Message, Duration)</a></td>
-		<td class="summary">
-<p>Send a message to the players in the <a href="Group.html">Group</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).MessageToAll">CONTROLLABLE:MessageToAll(Message, Duration)</a></td>
-		<td class="summary">
-<p>Send a message to all coalitions.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).MessageToBlue">CONTROLLABLE:MessageToBlue(Message, Duration)</a></td>
-		<td class="summary">
-<p>Send a message to the blue coalition.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).MessageToClient">CONTROLLABLE:MessageToClient(Message, Duration, Client)</a></td>
-		<td class="summary">
-<p>Send a message to a client.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).MessageToGroup">CONTROLLABLE:MessageToGroup(Message, Duration, MessageGroup)</a></td>
-		<td class="summary">
-<p>Send a message to a <a href="Group.html">Group</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).MessageToRed">CONTROLLABLE:MessageToRed(Message, Duration)</a></td>
-		<td class="summary">
-<p>Send a message to the red coalition.</p>
 </td>
 		</tr>
 		<tr>
@@ -516,7 +476,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteReturnToAirbase">CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</a></td>
 		<td class="summary">
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
+<p>(AIR) Return the Controllable to an <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>
 A speed can be given in km/h.</p>
 </td>
 		</tr>
@@ -643,7 +603,7 @@ A speed can be given in km/h.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskLandAtZone">CONTROLLABLE:TaskLandAtZone(Zone, Duration, RandomPoint)</a></td>
 		<td class="summary">
-<p>(AIR) Land the controllable at a @{Zone#ZONE_RADIUS).</p>
+<p>(AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).</p>
 </td>
 		</tr>
 		<tr>
@@ -826,7 +786,7 @@ A speed can be given in km/h.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -857,7 +817,7 @@ A speed can be given in km/h.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 			<h3>Usage:</h3>
@@ -898,7 +858,7 @@ SCHEDULER:New( nil,
 </dt>
 <dd>
 	
-<p>Return the route of a controllable by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
+<p>Return the route of a controllable by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -932,7 +892,7 @@ When randomization is on, the randomization is within the radius.</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="DCSControllable.html##(Controllable)">DCSControllable#Controllable</a></em>
+		<em><a href="Dcs.DCSWrapper.Controllable.html##(Controllable)">Dcs.DCSWrapper.Controllable#Controllable</a></em>
 <a id="#(CONTROLLABLE).DCSControllable" >
 <strong>CONTROLLABLE.DCSControllable</strong>
 </a>
@@ -959,7 +919,7 @@ When randomization is on, the randomization is within the radius.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -980,7 +940,7 @@ The DCS task structure.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1003,7 +963,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 The Controllable to be attacked.</p>
 
 				</li>
@@ -1021,7 +981,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -1033,13 +993,13 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Altitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
 (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.</p>
 
 				</li>
@@ -1052,7 +1012,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1072,13 +1032,13 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Distance </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Distance </em></code>: 
 Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored. </p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AttributeNameArray)">Dcs.DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
 Array of target categories allowed to engage. </p>
 
 				</li>
@@ -1091,7 +1051,7 @@ All enroute tasks have the priority parameter. This is a number (less value - hi
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1111,7 +1071,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> AttackUnit </em></code>: 
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
 The UNIT.</p>
 
 				</li>
@@ -1129,7 +1089,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -1141,7 +1101,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
@@ -1160,7 +1120,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1184,7 +1144,7 @@ If the task is assigned to the controllable lead unit will be a FAC. </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
  The maximal distance from the FAC to a target.</p>
 
 				</li>
@@ -1197,7 +1157,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1221,7 +1181,7 @@ If the task is assigned to the controllable lead unit will be a FAC. </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 Target CONTROLLABLE.</p>
 
 				</li>
@@ -1239,7 +1199,7 @@ Bitmask of weapon types those allowed to use. If parameter is not defined that m
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.Designation)">DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.Designation)">Dcs.DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
 (optional) Designation type.</p>
 
 				</li>
@@ -1252,7 +1212,7 @@ Bitmask of weapon types those allowed to use. If parameter is not defined that m
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1273,7 +1233,7 @@ The DCS task structure.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -1342,39 +1302,6 @@ DetectedTargets</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).GetMessage" >
-<strong>CONTROLLABLE:GetMessage(Message, Duration)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns a message with the callsign embedded (if there is one).</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Message.html##(MESSAGE)">Message#MESSAGE</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CONTROLLABLE).GetTaskMission" >
 <strong>CONTROLLABLE:GetTaskMission()</strong>
 </a>
@@ -1433,204 +1360,6 @@ The mission route defined by points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).Message" >
-<strong>CONTROLLABLE:Message(Message, Duration)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to the players in the <a href="Group.html">Group</a>.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).MessageToAll" >
-<strong>CONTROLLABLE:MessageToAll(Message, Duration)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to all coalitions.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).MessageToBlue" >
-<strong>CONTROLLABLE:MessageToBlue(Message, Duration)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to the blue coalition.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).MessageToClient" >
-<strong>CONTROLLABLE:MessageToClient(Message, Duration, Client)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to a client.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Client.html##(CLIENT)">Client#CLIENT</a> Client </em></code>: 
-The client object receiving the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).MessageToGroup" >
-<strong>CONTROLLABLE:MessageToGroup(Message, Duration, MessageGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to a <a href="Group.html">Group</a>.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTypes.html##(Duration)">DCSTypes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> MessageGroup </em></code>: 
-The GROUP object receiving the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).MessageToRed" >
-<strong>CONTROLLABLE:MessageToRed(Message, Duration)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Send a message to the red coalition.</p>
-
-	
-<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Message </em></code>: 
-The message text</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="DCSTYpes.html##(Duration)">DCSTYpes#Duration</a> Duration </em></code>: 
-The duration of the message.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CONTROLLABLE).New" >
 <strong>CONTROLLABLE:New(ControllableName)</strong>
 </a>
@@ -1643,7 +1372,7 @@ The duration of the message.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSControllable.html##(Controllable)">DCSControllable#Controllable</a> ControllableName </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Controllable.html##(Controllable)">Dcs.DCSWrapper.Controllable#Controllable</a> ControllableName </em></code>: 
 The DCS Controllable name</p>
 
 				</li>
@@ -1668,7 +1397,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em>
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
 
 </dd>
@@ -1956,7 +1685,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em>
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
 
 </dd>
@@ -1987,7 +1716,7 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em>
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
 
 </dd>
@@ -2028,7 +1757,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
+<p>(AIR) Return the Controllable to an <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>
 A speed can be given in km/h.</p>
 
 	
@@ -2038,8 +1767,8 @@ A speed can be given in km/h.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> ReturnAirbase </em></code>: 
-The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> to return to.</p>
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> ReturnAirbase </em></code>: 
+The <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> to return to.</p>
 
 				</li>
 				<li>
@@ -2071,7 +1800,7 @@ The route</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSCommand.html##(Command)">DCSCommand#Command</a> DCSCommand </em></code>: </p>
+<p><code><em><a href="Dcs.DCSCommand.html##(Command)">Dcs.DCSCommand#Command</a> DCSCommand </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2108,7 +1837,7 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a>:</em>
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
 
 </dd>
@@ -2128,7 +1857,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 The Controllable to be attacked.</p>
 
 				</li>
@@ -2140,7 +1869,7 @@ The Controllable to be attacked.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -2152,13 +1881,13 @@ The Controllable to be attacked.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Altitude </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
 (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.</p>
 
 				</li>
@@ -2171,7 +1900,7 @@ The Controllable to be attacked.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2191,7 +1920,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.</p>
 
 				</li>
@@ -2203,7 +1932,7 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -2215,7 +1944,7 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
@@ -2228,7 +1957,7 @@ The DCS task structure.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2248,7 +1977,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> AttackUnit </em></code>: 
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
 The unit.</p>
 
 				</li>
@@ -2260,7 +1989,7 @@ The unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -2272,7 +2001,7 @@ The unit.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
@@ -2291,7 +2020,7 @@ The unit.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2311,7 +2040,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
 2D-coordinates of the point to deliver weapon at.</p>
 
 				</li>
@@ -2323,7 +2052,7 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -2335,7 +2064,7 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
@@ -2348,7 +2077,7 @@ The DCS task structure.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2368,7 +2097,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> Airbase </em></code>: 
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
 Airbase to attack.</p>
 
 				</li>
@@ -2380,7 +2109,7 @@ Airbase to attack.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.WeaponExpend)">DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> WeaponExpend </em></code>: 
 (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
@@ -2392,7 +2121,7 @@ Airbase to attack.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Azimuth)">DCSTypes#Azimuth</a> Direction </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Direction </em></code>: 
 (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
@@ -2405,7 +2134,7 @@ Airbase to attack.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2425,14 +2154,14 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTask.html##(TaskArray)">DCSTask#TaskArray</a> DCSTasks </em></code>: 
-Array of <a href="DCSTask.html##(Task)">DCSTask#Task</a></p>
+<p><code><em><a href="Dcs.DCSTasking.Task.html##(TaskArray)">Dcs.DCSTasking.Task#TaskArray</a> DCSTasks </em></code>: 
+Array of <a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a></p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -2452,7 +2181,7 @@ Array of <a href="DCSTask.html##(Task)">DCSTask#Task</a></p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTime.html##(Time)">DCSTime#Time</a> time </em></code>: </p>
+<p><code><em><a href="Dcs.DCSTime.html##(Time)">Dcs.DCSTime#Time</a> time </em></code>: </p>
 
 				</li>
 				<li>
@@ -2472,13 +2201,13 @@ Array of <a href="DCSTask.html##(Task)">DCSTask#Task</a></p>
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTime.html##(Time)">DCSTime#Time</a> duration </em></code>: </p>
+<p><code><em><a href="Dcs.DCSTime.html##(Time)">Dcs.DCSTime#Time</a> duration </em></code>: </p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number lastWayPoint </em></code>: 
-return DCSTask#Task</p>
+return Dcs.DCSTasking.Task#Task</p>
 
 				</li>
 		</ul>
@@ -2499,7 +2228,7 @@ return DCSTask#Task</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTask.html##(Task)">DCSTask#Task</a> DCSTask </em></code>: </p>
+<p><code><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a> DCSTask </em></code>: </p>
 
 				</li>
 				<li>
@@ -2510,7 +2239,7 @@ return DCSTask#Task</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -2530,7 +2259,7 @@ return DCSTask#Task</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Point </em></code>: 
 The point where to wait.</p>
 
 				</li>
@@ -2543,7 +2272,7 @@ The radius of the embarking zone around the Point.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2563,7 +2292,7 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Point </em></code>: 
 The point where to wait.</p>
 
 				</li>
@@ -2582,7 +2311,7 @@ The controllable to be embarked.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure</p>
 
 </dd>
@@ -2606,13 +2335,13 @@ The unit / controllable will also protect that controllable from threats of spec
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> EscortControllable </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> EscortControllable </em></code>: 
 The controllable to be escorted.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.</p>
 
 				</li>
@@ -2630,7 +2359,7 @@ Maximal distance from escorted controllable to threat. If the threat is already 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AttributeNameArray)">DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AttributeNameArray)">Dcs.DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
 Array of AttributeName that is contains threat categories allowed to engage. </p>
 
 				</li>
@@ -2647,7 +2376,7 @@ Array of AttributeName that is contains threat categories allowed to engage. </p
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2671,7 +2400,7 @@ If the task is assigned to the controllable lead unit will be a FAC. </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AttackGroup </em></code>: 
 Target CONTROLLABLE.</p>
 
 				</li>
@@ -2683,7 +2412,7 @@ Bitmask of weapon types those allowed to use. If parameter is not defined that m
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(AI.Task.Designation)">DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.Designation)">Dcs.DCSTypes#AI.Task.Designation</a> Designation </em></code>: 
 (optional) Designation type.</p>
 
 				</li>
@@ -2696,7 +2425,7 @@ Bitmask of weapon types those allowed to use. If parameter is not defined that m
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2716,20 +2445,20 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Vec2 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
 The point to fire at.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Distance)">DCSTypes#Distance</a> Radius </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
 The radius of the zone to deploy the fire at.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2753,13 +2482,13 @@ If another controllable is on land the unit / controllable will orbit around. </
 		<ul>
 				<li>
 				
-<p><code><em><a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> FollowControllable </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> FollowControllable </em></code>: 
 The controllable to be followed.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Vec3 </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.</p>
 
 				</li>
@@ -2772,7 +2501,7 @@ Detach waypoint of another controllable. Once reached the unit / controllable Fo
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2826,7 +2555,7 @@ The DCS task structure.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -2876,7 +2605,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Point </em></code>: 
 The point where to land.</p>
 
 				</li>
@@ -2903,13 +2632,13 @@ self</p>
 </dt>
 <dd>
 	
-<p>(AIR) Land the controllable at a @{Zone#ZONE_RADIUS).</p>
+<p>(AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> Zone </em></code>: 
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> Zone </em></code>: 
 The zone where to land.</p>
 
 				</li>
@@ -2954,7 +2683,7 @@ A table containing the mission task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -3007,7 +2736,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Point </em></code>: 
 The point to hold the position.</p>
 
 				</li>
@@ -3047,7 +2776,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
 The DCS task structure.</p>
 
 </dd>
@@ -3074,7 +2803,7 @@ A table of route points.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -3094,7 +2823,7 @@ A table of route points.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
 The destination point in Vec3 format.</p>
 
 				</li>
@@ -3127,7 +2856,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> Point </em></code>: 
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
 The destination point in Vec3 format.</p>
 
 				</li>
@@ -3165,7 +2894,7 @@ A given formation can be given.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE)">Zone#ZONE</a> Zone </em></code>: 
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> Zone </em></code>: 
 The zone where to route to.</p>
 
 				</li>
@@ -3205,7 +2934,7 @@ The formation string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSCommand.html##(Command)">DCSCommand#Command</a> DCSCommand </em></code>: </p>
+<p><code><em><a href="Dcs.DCSCommand.html##(Command)">Dcs.DCSCommand#Command</a> DCSCommand </em></code>: </p>
 
 				</li>
 				<li>
@@ -3216,7 +2945,7 @@ The formation string.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSTask.html##(Task)">DCSTask#Task</a>:</em></p>
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
 
 </dd>
@@ -3328,7 +3057,7 @@ The waypoint function to be called when the controllable moves over the waypoint
 <p> Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.</p>
 
 	
-<p> Use the method <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> to define the hook functions for specific waypoints.
+<p> Use the method <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> to define the hook functions for specific waypoints.
  Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
  Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!</p>
 
@@ -3375,7 +3104,7 @@ If WayPoints is given, then use the route.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSController.html##(Controller)">DCSController#Controller</a>:</em></p>
+<p><em><a href="Dcs.DCSController.html##(Controller)">Dcs.DCSController#Controller</a>:</em></p>
 
 
 </dd>

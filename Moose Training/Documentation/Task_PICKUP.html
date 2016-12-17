@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li>Task_PICKUP</li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -87,15 +89,15 @@
 
    
 
-<h1>1) <a href="##(TASK_PICKUP)">#TASK_PICKUP</a> class, extends <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a></h1>
+<h1>1) <a href="##(TASK_PICKUP)">#TASK_PICKUP</a> class, extends <a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></h1>
 <p>The <a href="##(TASK_PICKUP)">#TASK_PICKUP</a> class defines a pickup task of a <a href="Set.html">Set</a> of <a href="CARGO.html">CARGO</a> objects defined within the mission. 
-based on the tasking capabilities defined in <a href="Task.html##(TASK_BASE)">Task#TASK_BASE</a>.
-The TASK_PICKUP is implemented using a <a href="Statemachine.html##(STATEMACHINE_TASK)">Statemachine#STATEMACHINE_TASK</a>, and has the following statuses:</p>
+based on the tasking capabilities defined in <a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>.
+The TASK_PICKUP is implemented using a <a href="Statemachine.html##(FSM_TASK)">Statemachine#FSM_TASK</a>, and has the following statuses:</p>
 
 <ul>
     <li><strong>None</strong>: Start of the process</li>
-    <li><strong>Planned</strong>: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Assign.html##(PROCESS_ASSIGN_ACCEPT)">Process<em>Assign#PROCESS</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
-    <li><strong>Assigned</strong>: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Route.html##(PROCESS_ROUTE)">Process<em>Route#PROCESS</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
+    <li><strong>Planned</strong>: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Fsm.Assign.html##(ACT_ASSIGN_ACCEPT)">Process<em>Fsm.Assign#ACT</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
+    <li><strong>Assigned</strong>: The SEAD task is assigned to a <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Fsm.Route.html##(ACT_ROUTE)">Process<em>Fsm.Route#ACT</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
     <li><strong>Success</strong>: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
     <li><strong>Failed</strong>: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
 </ul>
@@ -209,7 +211,7 @@ The TASK_PICKUP is implemented using a <a href="Statemachine.html##(STATEMACHINE
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
 
 				</li>
 		</ul>
@@ -280,7 +282,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> Mission </em></code>: </p>
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
 
 				</li>
 				<li>
@@ -308,7 +310,7 @@ BAI or CAS</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
 
 				</li>
 		</ul>
@@ -334,7 +336,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
+<p><code><em><a href="Core.Fsm.html##(FSM_TASK)">Core.Fsm#FSM_TASK</a> Fsm </em></code>: </p>
 
 				</li>
 				<li>

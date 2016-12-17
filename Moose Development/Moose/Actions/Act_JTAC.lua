@@ -4,7 +4,7 @@
 -- @type PROCESS_JTAC
 -- @field Wrapper.Unit#UNIT ProcessUnit
 -- @field Core.Set#SET_UNIT TargetSetUnit
--- @extends Fsm.Fsm#FSM_PROCESS
+-- @extends Core.Fsm#FSM_PROCESS
 PROCESS_JTAC = { 
   ClassName = "PROCESS_JTAC",
   Fsm = {},
@@ -66,7 +66,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -77,7 +77,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -123,7 +123,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -147,7 +147,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -174,7 +174,7 @@ end
 
 --- StateMachine callback function for a PROCESS
 -- @param #PROCESS_JTAC self
--- @param Fsm.Fsm#FSM_PROCESS Fsm
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @param #string Event
 -- @param #string From
 -- @param #string To

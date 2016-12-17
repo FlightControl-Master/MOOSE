@@ -90,24 +90,6 @@ FORMATION = {
 
 
 
---- The base constructor. This is the top top class of all classed defined within the MOOSE.
--- Any new class needs to be derived from this class for proper inheritance.
--- @param #BASE self
--- @return #BASE The new instance of the BASE class.
--- @usage
--- -- This declares the constructor of the class TASK, inheriting from BASE.
--- --- TASK constructor
--- -- @param #TASK self
--- -- @param Parameter The parameter of the New constructor.
--- -- @return #TASK self
--- function TASK:New( Parameter )
---
---     local self = BASE:Inherit( self, BASE:New() )
---     
---     self.Variable = Parameter 
--- 
---     return self
--- end
 -- @todo need to investigate if the deepCopy is really needed... Don't think so.
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance

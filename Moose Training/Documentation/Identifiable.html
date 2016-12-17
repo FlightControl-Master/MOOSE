@@ -17,7 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -26,6 +26,7 @@
 					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -42,9 +43,9 @@
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li>Identifiable</li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,17 +57,16 @@
 					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -75,9 +75,11 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
@@ -87,8 +89,8 @@
 
    
 
-<h1>1) <a href="Identifiable.html##(IDENTIFIABLE)">Identifiable#IDENTIFIABLE</a> class, extends <a href="Object.html##(OBJECT)">Object#OBJECT</a></h1>
-<p>The <a href="Identifiable.html##(IDENTIFIABLE)">Identifiable#IDENTIFIABLE</a> class is a wrapper class to handle the DCS Identifiable objects:</p>
+<h1>1) <a href="##(IDENTIFIABLE)">#IDENTIFIABLE</a> class, extends <a href="Wrapper.Object.html##(OBJECT)">Wrapper.Object#OBJECT</a></h1>
+<p>The <a href="##(IDENTIFIABLE)">#IDENTIFIABLE</a> class is a wrapper class to handle the DCS Identifiable objects:</p>
 
 <ul>
     <li>Support all DCS Identifiable APIs.</li>
@@ -100,19 +102,19 @@
 <p>The IDENTIFIABLE class provides the following functions to construct a IDENTIFIABLE instance:</p>
 
 <ul>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).New">Identifiable#IDENTIFIABLE.New</a>(): Create a IDENTIFIABLE instance.</li>
+    <li><a href="##(IDENTIFIABLE).New">IDENTIFIABLE.New</a>(): Create a IDENTIFIABLE instance.</li>
 </ul>
 
 <h2>1.2) IDENTIFIABLE methods:</h2>
 <p>The following methods can be used to identify an identifiable object:</p>
 
 <ul>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).GetName">Identifiable#IDENTIFIABLE.GetName</a>(): Returns the name of the Identifiable.</li>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).IsAlive">Identifiable#IDENTIFIABLE.IsAlive</a>(): Returns if the Identifiable is alive.</li>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).GetTypeName">Identifiable#IDENTIFIABLE.GetTypeName</a>(): Returns the type name of the Identifiable.</li>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).GetCoalition">Identifiable#IDENTIFIABLE.GetCoalition</a>(): Returns the coalition of the Identifiable.</li>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).GetCountry">Identifiable#IDENTIFIABLE.GetCountry</a>(): Returns the country of the Identifiable.</li>
-    <li><a href="Identifiable.html##(IDENTIFIABLE).GetDesc">Identifiable#IDENTIFIABLE.GetDesc</a>(): Returns the descriptor structure of the Identifiable.</li>
+    <li><a href="##(IDENTIFIABLE).GetName">IDENTIFIABLE.GetName</a>(): Returns the name of the Identifiable.</li>
+    <li><a href="##(IDENTIFIABLE).IsAlive">IDENTIFIABLE.IsAlive</a>(): Returns if the Identifiable is alive.</li>
+    <li><a href="##(IDENTIFIABLE).GetTypeName">IDENTIFIABLE.GetTypeName</a>(): Returns the type name of the Identifiable.</li>
+    <li><a href="##(IDENTIFIABLE).GetCoalition">IDENTIFIABLE.GetCoalition</a>(): Returns the coalition of the Identifiable.</li>
+    <li><a href="##(IDENTIFIABLE).GetCountry">IDENTIFIABLE.GetCountry</a>(): Returns the country of the Identifiable.</li>
+    <li><a href="##(IDENTIFIABLE).GetDesc">IDENTIFIABLE.GetDesc</a>(): Returns the descriptor structure of the Identifiable.</li>
 </ul>
 
 
@@ -247,7 +249,7 @@
 
 		<h3>Return value</h3>
 				
-<p><em><a href="DCSObject.html##(Object.Category)">DCSObject#Object.Category</a>:</em>
+<p><em><a href="Dcs.DCSWrapper.Object.html##(Object.Category)">Dcs.DCSWrapper.Object#Object.Category</a>:</em>
 The category ID</p>
 
 </dd>
@@ -285,7 +287,7 @@ The DCS Identifiable Category Name</p>
 			<ol>
 				<li>
 				
-<p><em><a href="DCSCoalitionObject.html##(coalition.side)">DCSCoalitionObject#coalition.side</a>:</em>
+<p><em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition.side)">Dcs.DCSCoalitionWrapper.Object#coalition.side</a>:</em>
 The side of the coalition.</p>
 
 				</li>
@@ -313,7 +315,7 @@ The DCS Identifiable is not existing or alive.  </p>
 			<ol>
 				<li>
 				
-<p><em><a href="DCScountry.html##(country.id)">DCScountry#country.id</a>:</em>
+<p><em><a href="Dcs.DCScountry.html##(country.id)">Dcs.DCScountry#country.id</a>:</em>
 The country identifier.</p>
 
 				</li>
@@ -344,7 +346,7 @@ The DCS Identifiable is not existing or alive.  </p>
 			<ol>
 				<li>
 				
-<p><em><a href="DCSIdentifiable.html##(Identifiable.Desc)">DCSIdentifiable#Identifiable.Desc</a>:</em>
+<p><em><a href="Dcs.DCSWrapper.Identifiable.html##(Identifiable.Desc)">Dcs.DCSWrapper.Identifiable#Identifiable.Desc</a>:</em>
 The Identifiable descriptor.</p>
 
 				</li>
@@ -473,7 +475,7 @@ The DCS Identifiable is not existing or alive.  </p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="DCSIdentifiable.html##(Identifiable)">DCSIdentifiable#Identifiable</a> IdentifiableName </em></code>: 
+<p><code><em><a href="Dcs.DCSWrapper.Identifiable.html##(Identifiable)">Dcs.DCSWrapper.Identifiable#Identifiable</a> IdentifiableName </em></code>: 
 The DCS Identifiable name</p>
 
 				</li>

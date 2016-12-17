@@ -1,6 +1,6 @@
 
 local DeliveryUnit = UNIT:FindByName( "Delivery" )
-local Letter = CARGO_PACKAGE:New( DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
+local Letter = AI_CARGO_PACKAGE:New( DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
 
 local CargoCarrier = UNIT:FindByName( "Carrier" )
 

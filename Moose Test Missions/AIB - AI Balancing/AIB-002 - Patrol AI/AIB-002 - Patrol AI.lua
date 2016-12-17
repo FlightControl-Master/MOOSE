@@ -22,7 +22,7 @@
 -- 
 -- # Status: DEVELOP 07 Dec 2016
 --
--- @module TEST.AIBALANCER.T002
+-- @module TEST.AI_BALANCER.T002
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
@@ -32,16 +32,16 @@ local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCa
 -- If a blocked plane exists, this red plane will be ReSpawned.
 local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 
--- Start the AIBALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
-local RU_AIBalancer = AIBALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
+-- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
+local RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
-function RU_AIBalancer:OnAfterSpawned( SetGroup, Event, From, To, AIGroup )
+function RU_AI_Balancer:OnAfterSpawned( SetGroup, Event, From, To, AIGroup )
 
   local PatrolZoneGroup = GROUP:FindByName( "PatrolZone" )
   local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
 
 
-  local Patrol = PATROLZONE:New( PatrolZone, 3000, 6000, 400, 600 )
+  local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 400, 600 )
   Patrol:ManageFuel( 0.2, 60 )
   Patrol:SetControllable( AIGroup )
   Patrol:__Start( 5 )

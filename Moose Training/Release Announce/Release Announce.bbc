@@ -1,0 +1,212 @@
+
+Hi everyone,
+
+FlightControl here ... It is been quite a ride ... But here it is, the release of the MOOSE framework for DCS World is a fact. This release is adding the following functionality to MOOSE, on top of the pre-release version:
+
+[list]
+[*] Task orchestration: CommandCenters, Missions, Tasks, Task Actions ...
+[*] AI balancing and AI bahaviour. AIBalancer, Patrol Zones, ...
+[*] Cargo handling: Board, Unboard, Transfer cargo of different types.
+[*] Dynamic detection and task assignment through FACs.
+[*] Additional functions in existing classes.
+[/list]
+
+Note that the tasking orchestration was a large work ... I hope you like it.
+
+There are various test missions created to demonstrate the framework. I really, really suggest you have a close look to the lua files for each test mission. You can find in each directory to lua file that is embedded in the test mission.
+The documentation is not yet up-to-date, but that will improve next year. On top, I plan to create training videos for you to demonstrate the capabilities of the introduced new concepts. These things take time and a good preparation, so pls be patient.
+
+The [color=blue]good[/color] and [color=red]bad [/color]news is also that there are a couple of API changes that I had to push through:
+[list]
+
+[*]BASE: DCS Event handling functions have been added to the base class. These functions start with the [color=blue]OnEvent...[/color] prefix. These functions now allow you to DCS events in a class like when a birth of a unit happens, or when a crash happens etc.
+
+[*]SPAWN: [color=blue]InitCleanUp[/color]( SpawnCleanUpInterval ) replaces [color=red]CleanUp[/color]( SpawnCleanUpInterval )
+
+
+[*]SPAWN: [color=blue]OnSpawnGroup[/color]( SpawnCallBackFunction, ... ) replaces [color=red]SpawnFunction[/color]( SpawnCallBackFunction, ... )
+
+
+[*]SPAWN: [color=blue]InitRandomizeZones( SpawnZones )[/color] added
+
+
+[*]SPAWN: SpawnInZone( Zone, [color=blue]RandomizeGroup[/color], SpawnIndex ) replaces SpawnInZone( Zone, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+
+[size=12][- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
+- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
+[/size]
+[*]SPAWN: SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+
+[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
+- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
+[/size]
+[*]SPAWN: SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+
+[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomiprefixzeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
+- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
+[/size]
+[*]SPAWN: SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+
+[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
+- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
+[/size]
+[*]SPAWN: SpawnFromStatic( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+
+[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
+- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
+[/size]
+[*]SPAWN: [color=blue]InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )[/color] added.
+
+
+[*]SPAWN: [color=blue]InitLimit[/color]( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces [color=red]Limit[/color]( SpawnMaxUnitsAlive, SpawnMaxGroups )
+
+
+[*]SPAWN: [color=blue]InitArray[/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces [color=red]Array[/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+
+
+[*]SPAWN: [color=blue]InitRandomizeRoute[/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces [color=red]RandomizeRoute[/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+
+
+[*]SPAWN: [color=blue]InitRandomizeTemplate[/color]( SpawnTemplatePrefixTable ) replaces [color=red]RandomizeTemplate[/color]( SpawnTemplatePrefixTable )
+
+
+[*]SPAWN: [color=blue]InitUnControlled[/color]() replaces [color=red]UnControlled[/color]()
+
+
+[*]AIBALANCER: Has been completely reworked. I don't think anybody has been using this class beside hijack.
+
+
+[*]PATROLZONE: Has been completely reworked. I don't think anybody has been using this class beside hijack.
+
+
+[*]POINT_VEC3: [color=blue]Translate( Distance, Angle )[/color]added.
+
+[*]Replaced methods ending with [color=red]Point_Vec3[/color]() to [color=blue]Vec3[/color]() where the code manages a Vec3. Replaced all references to the method.
+
+
+[*]Replaced method [color=red]Point_Vec2()[/color] to [color=blue]Vec2[/color]() where the code manages a Vec2. Replaced all references to the method.
+
+
+[*]Replaced method [color=red]Random_Point_Vec3()[/color] to [color=blue]RandomVec3[/color]() where the code manages a Vec3. Replaced all references to the method.
+
+[/list]
+
+So, that was the bad news... I made some bad design decisions in the past, and would like you to update your missions for these changes. These changes can be quickly done however, I believe...
+
+Find below a comprehensive summary of the new release:
+
+[size=24][b][u]1. Task Orchestration[/u][/b][/size]
+
+[size=20][b][u]1.1. Comand Centers[/u][/b][/size]
+
+[b]COMMANDCENTER[/b]: Governs the communication and existence of Missions, Tasks and Actions for a Coalition.
+[list=1]
+[*]Create a new CommandCenter. Multiple CommandCenters can be defined within one Mission.
+[*]Maintain Missions. Add, Remove and CleanUp Missions, and undelying Tasks and Actions.
+[*]Provide a navigation menu to orchestrate for different groups the Tasking.[*]Send Reports to players of the Tasks within all Missions of a CommandCenter.
+[*]Send Messages to all players alive within all Missions of a CommandCenter.
+[/list]
+
+[size=20][b][u]1.2. Missions[/u][/b][/size]
+
+[b]MISSION[/b]: Governs the process flow of the Mission, Tasks and Actions for a CommandCenter for a Coalition.[list=1]
+[*]Create a new Mission for a CommandCenter.
+[*]Provide Mission status flow, implemented through a Finite State Machine.
+[*]Expose Mission event- and state functions to influence the Mission orchestration.
+[*]Maintain Tasks: Add, Remove and CleanUp Tasks and underlying Actions.
+[*]Send Reports to players of the Tasks within the Mission.
+[*]Send Messages to all players within the Mission.
+[*]Attach a Scoring and event log implemented through the SCORING class.
+[/list]
+
+[size=20][b][u]1.3. Tasks[/u][/b][/size]
+
+[b]TASK[/b]: Governs the process flow of the Task state and the execution of the Taskprocess and hierarchical processes by players.
+[list=1]
+[*]Create a new Task for a Mission governed by a CommandCenter.
+[*]Provide Task status flow, implemented through a Finite State Machine.
+[*]Expose Task event- and state functions to influence the Task orchestration.
+[*]Create a Task Actions, implemented through a Finite State Machine Process, that the players will need to follow when the Task is Assigned to a Player (Unit).
+[*]Maintain Tasks: Add, Remove and CleanUp Task Actions and hierarchical Actions.
+[*]Expose Mission event- and state functions to influence the Task state.
+
+- Flag a Task as Planned.
+- Flag a Task as Assigned.
+- Flag a Task as Successful.
+- Flag a Task as Failed.
+- Flag a Task as Aborted.
+- Flag a Task as Cancelled.
+[*]Send Reports of the Task to the players.
+[*]Send Messages to the player executing and assigned to the Task.
+[*]Create a Task Action workbook.
+[*]Provide a mechanism to assign players to the Task.
+[*]Provide a mechanism to abort players from the Task.
+[*]Each assigned player to the Task, will have a Task Action flow executing, governed by the TASK object.
+[*]Provide a mechanism to attach a Scoring scheme when certain states are reached in the Task and in the Task Action flow.
+[/list]
+
+[size=20][b][u]1.4. Task Actions[/u][/b][/size]
+
+[b]ACT_ASSIGN[/b], [b]ACT_ROUTE[/b], [b]ACT_ACCOUNT[/b], [b]ACT_SMOKE[/b]: Governs Task Action Subroutines that can be embedded within a Task Action flow. These ACT_ classes will be further enhanced and expanded now the baseline of MOOSE is there. This will result in mission designed being able to quickly combine these actions to implement different Task flows.
+[list=1]
+[*]Create a new Task Action Subroutine for a Task Action flow, governed by a Task.
+[*]ACT_ASSIGN: Base class to assign a player to a Task. If the player is in a Group that is already assigned to the Task, the Player will be assigned automatically.
+[*]ACT_ASSIGN_ACCEPT: Assign a player to a Task, and automatically Accept the Task.
+[*]ACT_ASSIGN_MENU_ACCEPT: Assign a player to a Task, and let the Player Accept or Reject the Task within 30 seconds.
+[*]ACT_ROUTE: Base class to route a player.
+[*]ACT_ROUTE_ZONE: Route a player to a zone.
+[*]ACT_ACCOUNT: Base class to "account" events or things within a running mission.
+[*]ACT_ACCOUNT_DEADS: Account if certain DCS Units are dead.
+[*]ACT_ASSIST: Base class to assist players with certain actions through the menu.
+[*]ACT_ASSIST_SMOKE: Assist players with smoking target areas while in flight through the menu.
+[*]ACT_...: Expect in the future more ACT classes to be created and added to the MOOSE framework. It is upon our creativity to identify good functions to be added.
+[/list]
+
+[size=24][b][u]2. Finite State Machines[/u][/b][/size]
+
+[b]FSM[/b], [b]FSM_CONTROLLABLE[/b], [b]FSM_ACTION[/b], [b]FSM_TASK[/b], [b]FSM_SET[/b]: Finite State Machine base classes that implement the necessary functionality to realise a workflow following various state transitions triggered through events being fired externally or internally within the FSM implementation.
+[list=1]
+[*]FSM: The Finitite State Machine base class. It provides functions to create a fsm workflow, adding state transitions schemes and adding sub processes.
+[*]FSM_CONTROLLABLE: An fsm governing the workflow for a Controllable object within DCS, which can be a UNIT or a GROUP.
+[*]FSM_PROCESS: An fsm governing a workflow for a Controllable object within DCS for a Task. Note that all ACT_... classes are derived classes from FSM_PROCESS, implementing an fsm to govern the Player unit for the Task given.
+[*]FSM_TASK: An fsm governing a workflow for a Task. Note that the TASK class is derived from FSM_TASK.
+[*]FSM_SET: An fsm governing a workflow for a Set.
+[/list]
+
+[size=24][b][u]3. Balance and Control AI[/u][/b][/size]
+
+[b]AIBALANCER[/b]: Balances AI within a Mission. It is up to the mission designer to capture the different AIBalancer events, and attach different AI processes to accomodate AI behaviour.
+[list=1]
+[*]Spawn new AI as there aren't players in the Mission. In other words, spawn as many AI required to simulate player behaviour.
+[*]Attach various AI processes to let the AI execute certain tasks.
+[*]Implements an fsm to accomodate a workflow to let the mission designer attach various AI workflows for AI implementation behaviour.
+[*]PATROLZONE:
+[/list]
+
+[b]PATROLZONE[/b]: Is an AI behaviour class, governing AI to patrol a zone, used by the AI balancer.
+[list=1]
+[*]Provide an fsm process, implementing AI patrol behaviour so that AI is patrolling a zone for a defined time.
+[*]Expose various event functions to influence the AI patrol behaviour.
+[*]The PATROLZONE class can be used in AIBALANCER to simulate players.
+[/list]
+
+[size=24][b][u]4. Cargo Handling[/u][/b][/size]
+
+[b]CARGO[/b]: Cargo Handling of CONTROLLABLE object, thus UNITs and GROUPs. CARGO provides a dynamic way to Load, Unload, Board, UnBoard and Transfer Cargo between Carriers.
+[list=1]
+[*]Board Cargo to a Carrier.
+[*]Unboard Cargo from a Carrier to a point.
+[*]Transfer Cargo from a Carrier to another Carrier.
+[*]CARGO is the base class implementing the cargo workflow.
+[*]CARGO_GROUP: Implements the Cargo handling for a GROUP.
+[*]CARGO_UNIT: Implements the Cargo handling for one UNIT.
+[*]CARGO_GROUPED: Implements the Cargo handling for multiple GROUPs.
+[*]CARGO_PACKAGE: Under construction. This would simulate a package being carried by a carrier.
+[/list]
+Note: There are various Task Actions (ACT_) classes planned that would allow to deploy and pickup cargo in a battle field.
+Note: There are various AI_ classes planned that would allow to deploy and pickup cargo in a battlefield.[/td]
+
+
+There are many more changes done within the framework, but these are very technical and hidden from the API set that the users will use. Some of the work that was done includes: rework scheduling, adding a scheduler dispatcher.
+
+There is still some work to be done on the [b]TASK_DISPATCHER[/b], but that will be done the coming weeks.

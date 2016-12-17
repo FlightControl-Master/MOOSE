@@ -64,7 +64,7 @@ end
 -- @return #boolean true if Identifiable is alive.
 -- @return #nil The DCS Identifiable is not existing or alive.  
 function IDENTIFIABLE:IsAlive()
-  self:F2( self.IdentifiableName )
+  self:F3( self.IdentifiableName )
 
   local DCSIdentifiable = self:GetDCSObject()
   
