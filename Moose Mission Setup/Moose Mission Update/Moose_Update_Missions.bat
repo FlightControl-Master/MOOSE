@@ -1,7 +1,7 @@
 echo off
 
 rem Update Missions with a new version of Moose.lua
-rem Run this batch file with the following command arguments in Eclipse: "${resource_loc:/Moose/Moose Development/Moose}" "${current_date}"
+rem Provide as the only parameter the path to the .miz files, which can be embedded in directories.
 
 echo Path to Mission Files: %1
 

@@ -17,13 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
-					<li><a href="AIBalancer.html">AIBalancer</a></li>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
-					<li><a href="CARGO.html">CARGO</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
 					<li><a href="CleanUp.html">CleanUp</a></li>
 					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
 					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
@@ -38,17 +41,11 @@
 					<li><a href="DCScountry.html">DCScountry</a></li>
 					<li><a href="DCStimer.html">DCStimer</a></li>
 					<li><a href="DCStrigger.html">DCStrigger</a></li>
-					<li><a href="DEPLOYTASK.html">DEPLOYTASK</a></li>
-					<li><a href="DESTROYBASETASK.html">DESTROYBASETASK</a></li>
-					<li><a href="DESTROYGROUPSTASK.html">DESTROYGROUPSTASK</a></li>
-					<li><a href="DESTROYRADARSTASK.html">DESTROYRADARSTASK</a></li>
-					<li><a href="DESTROYUNITTYPESTASK.html">DESTROYUNITTYPESTASK</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
-					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
-					<li><a href="GOHOMETASK.html">GOHOMETASK</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
@@ -56,33 +53,29 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li><a href="NOTASK.html">NOTASK</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="PICKUPTASK.html">PICKUPTASK</a></li>
-					<li><a href="PatrolZone.html">PatrolZone</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
-					<li><a href="Process.html">Process</a></li>
-					<li><a href="Process_Destroy.html">Process_Destroy</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
-					<li><a href="Process_Smoke.html">Process_Smoke</a></li>
-					<li><a href="ROUTETASK.html">ROUTETASK</a></li>
-					<li><a href="STAGE.html">STAGE</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
-					<li><a href="StateMachine.html">StateMachine</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Assign.html">Task_Assign</a></li>
 					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
-					<li><a href="Task_Route.html">Task_Route</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -92,23 +85,23 @@
 	<div id="content">
    <h1>Module <code>Task</code></h1>
    
-<p>This module contains the TASK_BASE class.</p>
+<p>This module contains the TASK class.</p>
 
    
 
-<h1>1) <a href="##(TASK_BASE)">#TASK_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<h2>1.1) The <a href="##(TASK_BASE)">#TASK_BASE</a> class implements the methods for task orchestration within MOOSE. </h2>
+<h1>1) <a href="##(TASK)">#TASK</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h2>1.1) The <a href="##(TASK)">#TASK</a> class implements the methods for task orchestration within MOOSE. </h2>
 <p>The class provides a couple of methods to:</p>
 
 <ul>
-    <li><a href="##(TASK_BASE).AssignToGroup">TASK_BASE.AssignToGroup</a>():Assign a task to a group (of players).</li>
-    <li><a href="##(TASK_BASE).AddProcess">TASK_BASE.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
-    <li><a href="##(TASK_BASE).RemoveProcesses">TASK_BASE.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
-    <li><a href="##(TASK_BASE).AddStateMachine">TASK_BASE.AddStateMachine</a>():Add a <a href="StateMachine.html">StateMachine</a> to a task.</li>
-    <li><a href="##(TASK_BASE).RemoveStateMachines">TASK_BASE.RemoveStateMachines</a>():Remove <a href="StateMachine.html">StateMachine</a>s from a task.</li>
-    <li><a href="##(TASK_BASE).HasStateMachine">TASK_BASE.HasStateMachine</a>():Enquire if the task has a <a href="StateMachine.html">StateMachine</a></li>
-    <li><a href="##(TASK_BASE).AssignToUnit">TASK_BASE.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK_BASE)">#TASK_BASE</a>.</li>
-    <li><a href="##(TASK_BASE).UnAssignFromUnit">TASK_BASE.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
+    <li><a href="##(TASK).AssignToGroup">TASK.AssignToGroup</a>():Assign a task to a group (of players).</li>
+    <li><a href="##(TASK).AddProcess">TASK.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
+    <li><a href="##(TASK).RemoveProcesses">TASK.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
+    <li><a href="##(TASK).SetStateMachine">TASK.SetStateMachine</a>():Set a <a href="Fsm.html">Fsm</a> to a task.</li>
+    <li><a href="##(TASK).RemoveStateMachine">TASK.RemoveStateMachine</a>():Remove <a href="Fsm.html">Fsm</a> from a task.</li>
+    <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
+    <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
+    <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
 </ul>
 
 <h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
@@ -135,7 +128,7 @@ The status of tasks can be enquired by the methods <strong>IsState</strong> foll
 
 <h2>1.3) Add scoring when reaching a certain task status:</h2>
 <p>Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
-Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add scores when a status is reached.</p>
+Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores when a status is reached.</p>
 
 <h2>1.4) Task briefing:</h2>
 <p>A task briefing can be given that is shown to the player when he is assigned to the task.</p>
@@ -148,456 +141,552 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_BASE">TASK_BASE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#PlayerNameText">PlayerNameText</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK">TASK</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(TASK_BASE)">Type <code>TASK_BASE</code></a></h2>
+			<h2><a id="#(TASK)">Type <code>TASK</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AddProcess">TASK_BASE:AddProcess(TaskUnit, Process)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Abort">TASK:Abort()</a></td>
 		<td class="summary">
-<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a>.</p>
+<p>FSM Abort synchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AddScore">TASK_BASE:AddScore(TaskStatus, ScoreText, Score)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AbortUnit">TASK:AbortUnit(PlayerUnit)</a></td>
 		<td class="summary">
-<p>Adds a score for the TASK to be achieved.</p>
+<p>Abort a PlayerUnit from a Task.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AddStateMachine">TASK_BASE:AddStateMachine(TaskUnit, Fsm)</a></td>
-		<td class="summary">
-<p>Add a FiniteStateMachine to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AssignToGroup">TASK_BASE:AssignToGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AssignToGroup">TASK:AssignToGroup(TaskGroup)</a></td>
 		<td class="summary">
 <p>Assign the <a href="Task.html">Task</a>to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).AssignToUnit">TASK_BASE:AssignToUnit(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AssignToUnit">TASK:AssignToUnit(TaskUnit)</a></td>
 		<td class="summary">
-<p>Assign the <a href="Task.html">Task</a>to an alive <a href="Unit.html">Unit</a>.</p>
+<p>Assign the <a href="Task.html">Task</a> to an alive <a href="Unit.html">Unit</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).ClassName">TASK_BASE.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Cancel">TASK:Cancel()</a></td>
 		<td class="summary">
-
+<p>FSM Cancel synchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).CleanUp">TASK_BASE:CleanUp()</a></td>
-		<td class="summary">
-<p>Cleans all references of a TASK_BASE.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).FailProcesses">TASK_BASE:FailProcesses(TaskUnitName)</a></td>
-		<td class="summary">
-<p>Fail processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Fsm">TASK_BASE.Fsm</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ClassName">TASK.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetCategory">TASK_BASE:GetCategory()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).CommandCenter">TASK.CommandCenter</a></td>
 		<td class="summary">
-<p>Gets the Category of the Task</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetID">TASK_BASE:GetID()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).CrashUnit">TASK:CrashUnit(PlayerUnit)</a></td>
+		<td class="summary">
+<p>A PlayerUnit crashed in a Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Fail">TASK:Fail()</a></td>
+		<td class="summary">
+<p>FSM Fail synchronous event function for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).FailProcesses">TASK:FailProcesses(TaskUnitName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).FsmTemplate">TASK.FsmTemplate</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGroups">TASK:GetGroups()</a></td>
+		<td class="summary">
+<p>Gets the SET_GROUP assigned to the TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetID">TASK:GetID()</a></td>
 		<td class="summary">
 <p>Gets the ID of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetName">TASK_BASE:GetName()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetMission">TASK:GetMission()</a></td>
+		<td class="summary">
+<p>Gets the Mission to where the TASK belongs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetName">TASK:GetName()</a></td>
 		<td class="summary">
 <p>Gets the Name of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetScoring">TASK_BASE:GetScoring()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetProcessTemplate">TASK:GetProcessTemplate(ProcessName)</a></td>
+		<td class="summary">
+<p>Get the default or currently assigned <a href="Process.html">Process</a> template with key ProcessName.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetScoring">TASK:GetScoring()</a></td>
 		<td class="summary">
 <p>Gets the Scoring of the task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetStateString">TASK_BASE:GetStateString()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetStateString">TASK:GetStateString()</a></td>
 		<td class="summary">
 <p>Gets the <a href="Task.html">Task</a> status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetTaskIndex">TASK_BASE:GetTaskIndex()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetTaskIndex">TASK:GetTaskIndex()</a></td>
 		<td class="summary">
-<p>Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.</p>
+<p>Gets the Task Index, which is a combination of the Task type, the Task name.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetTaskName">TASK_BASE:GetTaskName()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetTaskName">TASK:GetTaskName()</a></td>
 		<td class="summary">
 <p>Returns the <a href="Task.html">Task</a> name.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).GetType">TASK_BASE:GetType()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetType">TASK:GetType()</a></td>
 		<td class="summary">
 <p>Gets the Type of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).HasStateMachine">TASK_BASE:HasStateMachine(TaskUnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetUnitProcess">TASK:GetUnitProcess()</a></td>
 		<td class="summary">
-<p>Checks if there is a FiniteStateMachine assigned to <a href="Unit.html">Unit</a> for <a href="Task.html">Task</a></p>
+<p>Get the Task FSM Process Template</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsAssignedToGroup">TASK_BASE:IsAssignedToGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).HasAliveUnits">TASK:HasAliveUnits()</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Task.html">Task</a> has still alive and assigned Units.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).HasGroup">TASK:HasGroup(FindGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).HasStateMachine">TASK:HasStateMachine(TaskUnit)</a></td>
+		<td class="summary">
+<p>Checks if there is a FiniteStateMachine assigned to Task<a href="Unit.html">Unit</a> for <a href="Task.html">Task</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsAssignedToGroup">TASK:IsAssignedToGroup(TaskGroup)</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStateAssigned">TASK_BASE:IsStateAssigned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateAssigned">TASK:IsStateAssigned()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Assigned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStateFailed">TASK_BASE:IsStateFailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateFailed">TASK:IsStateFailed()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Failed</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStateHold">TASK_BASE:IsStateHold()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateHold">TASK:IsStateHold()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Hold</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStatePlanned">TASK_BASE:IsStatePlanned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStatePlanned">TASK:IsStatePlanned()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Planned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStateReplanned">TASK_BASE:IsStateReplanned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateReplanned">TASK:IsStateReplanned()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Replanned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).IsStateSuccess">TASK_BASE:IsStateSuccess()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateSuccess">TASK:IsStateSuccess()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Success</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Menu">TASK_BASE.Menu</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).JoinUnit">TASK:JoinUnit(PlayerUnit)</a></td>
+		<td class="summary">
+<p>Add a PlayerUnit to join the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Menu">TASK.Menu</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuAbort">TASK_BASE.MenuAbort</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssignToGroup">TASK.MenuAssignToGroup(MenuParam)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuAssignToGroup">TASK_BASE.MenuAssignToGroup(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskAbort">TASK.MenuTaskAbort(MenuParam)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuStatus">TASK_BASE.MenuStatus</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskStatus">TASK.MenuTaskStatus(MenuParam)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuTaskAbort">TASK_BASE.MenuTaskAbort(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MessageToGroups">TASK:MessageToGroups(Message)</a></td>
+		<td class="summary">
+<p>Send a message of the <a href="Task.html">Task</a> to the assigned <a href="Group.html">Group</a>s.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Mission">TASK.Mission</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).MenuTaskStatus">TASK_BASE.MenuTaskStatus(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterPlayerAborted">TASK:OnAfterPlayerAborted(PlayerUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>FSM PlayerAborted event handler prototype for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterPlayerCrashed">TASK:OnAfterPlayerCrashed(PlayerUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>FSM PlayerCrashed event handler prototype for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterPlayerDead">TASK:OnAfterPlayerDead(PlayerUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>FSM PlayerDead event handler prototype for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Players">TASK.Players</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Mission">TASK_BASE.Mission</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ProcessClasses">TASK.ProcessClasses</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).New">TASK_BASE:New(The, SetGroup, TaskName, TaskType, TaskCategory, Mission)</a></td>
-		<td class="summary">
-<p>Instantiates a new TASK_BASE.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnAssigned">TASK_BASE:OnAssigned(TaskUnit, Fsm, Event, From, To, Event)</a></td>
-		<td class="summary">
-<p>StateMachine callback function for a TASK</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnFailed">TASK_BASE:OnFailed(TaskUnit, Fsm, Event, From, To, Event)</a></td>
-		<td class="summary">
-<p>StateMachine callback function for a TASK</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnStateChange">TASK_BASE:OnStateChange(TaskUnit, Fsm, Event, From, To, Event)</a></td>
-		<td class="summary">
-<p>StateMachine callback function for a TASK</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).OnSuccess">TASK_BASE:OnSuccess(TaskUnit, Fsm, Event, From, To, Event)</a></td>
-		<td class="summary">
-<p>StateMachine callback function for a TASK</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Players">TASK_BASE.Players</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Processes">TASK.Processes</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Processes">TASK_BASE.Processes</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveMenu">TASK_BASE:RemoveMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu()</a></td>
 		<td class="summary">
 <p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveMenuForGroup">TASK_BASE:RemoveMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenuForGroup">TASK:RemoveMenuForGroup(TaskGroup)</a></td>
 		<td class="summary">
 <p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveProcesses">TASK_BASE:RemoveProcesses(TaskUnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveStateMachine">TASK:RemoveStateMachine(TaskUnit)</a></td>
 		<td class="summary">
-<p>Remove Processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).RemoveStateMachines">TASK_BASE:RemoveStateMachines(TaskUnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Replan">TASK:Replan()</a></td>
 		<td class="summary">
-<p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>FSM Replan synchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).Scores">TASK_BASE.Scores</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportDetails">TASK:ReportDetails()</a></td>
+		<td class="summary">
+<p>Create a detailed report of the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportSummary">TASK:ReportSummary()</a></td>
+		<td class="summary">
+<p>Create a summary report of the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Scores">TASK.Scores</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SendBriefingToAssignedGroups">TASK_BASE:SendBriefingToAssignedGroups()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SendBriefingToAssignedGroups">TASK:SendBriefingToAssignedGroups()</a></td>
 		<td class="summary">
 <p>Send the briefng message of the <a href="Task.html">Task</a> to the assigned <a href="Group.html">Group</a>s.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetAssignedMenu">TASK_BASE:SetAssignedMenu()</a></td>
-		<td class="summary">
-<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetAssignedMenuForGroup">TASK_BASE:SetAssignedMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetAssignedMenuForGroup">TASK:SetAssignedMenuForGroup(TaskGroup)</a></td>
 		<td class="summary">
 <p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetBriefing">TASK_BASE:SetBriefing(TaskBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetBriefing">TASK:SetBriefing(TaskBriefing)</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> briefing.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetCategory">TASK_BASE:SetCategory(TaskCategory)</a></td>
-		<td class="summary">
-<p>Sets the Category of the Task</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetGroup">TASK_BASE.SetGroup</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGroup">TASK.SetGroup</a></td>
 		<td class="summary">
 <p>The Set of Groups assigned to the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetID">TASK_BASE:SetID(TaskID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetID">TASK:SetID(TaskID)</a></td>
 		<td class="summary">
 <p>Sets the ID of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetName">TASK_BASE:SetName(TaskName)</a></td>
-		<td class="summary">
-<p>Sets the Name of the Task</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetPlannedMenu">TASK_BASE:SetPlannedMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenu">TASK:SetMenu()</a></td>
 		<td class="summary">
 <p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetPlannedMenuForGroup">TASK_BASE:SetPlannedMenuForGroup(TaskGroup, MenuText)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenuForGroup">TASK:SetMenuForGroup(TaskGroup)</a></td>
+		<td class="summary">
+<p>Set the Menu for a Group</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetName">TASK:SetName(TaskName)</a></td>
+		<td class="summary">
+<p>Sets the Name of the Task</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</a></td>
 		<td class="summary">
 <p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).SetType">TASK_BASE:SetType(TaskType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetStateMachine">TASK:SetStateMachine(TaskUnit, Fsm)</a></td>
+		<td class="summary">
+<p>Add a FiniteStateMachine to <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetType">TASK:SetType(TaskType)</a></td>
 		<td class="summary">
 <p>Sets the Type of the Task</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StateAssigned">TASK_BASE:StateAssigned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetUnitProcess">TASK:SetUnitProcess(Core, FsmTemplate)</a></td>
+		<td class="summary">
+<p>Sets the Task FSM Process Template</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateAssigned">TASK:StateAssigned()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Assigned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StateFailed">TASK_BASE:StateFailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateFailed">TASK:StateFailed()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Failed</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StateHold">TASK_BASE:StateHold()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateHold">TASK:StateHold()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Hold</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StatePlanned">TASK_BASE:StatePlanned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StatePlanned">TASK:StatePlanned()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Planned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StateReplanned">TASK_BASE:StateReplanned()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateReplanned">TASK:StateReplanned()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Replanned</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).StateSuccess">TASK_BASE:StateSuccess()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateSuccess">TASK:StateSuccess()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Success</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskBriefing">TASK_BASE.TaskBriefing</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Success">TASK:Success()</a></td>
+		<td class="summary">
+<p>FSM Success synchronous event function for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskBriefing">TASK.TaskBriefing</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskCategory">TASK_BASE.TaskCategory</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskID">TASK.TaskID</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskID">TASK_BASE.TaskID</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskName">TASK.TaskName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskName">TASK_BASE.TaskName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskScheduler">TASK.TaskScheduler</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskScheduler">TASK_BASE.TaskScheduler</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskType">TASK.TaskType</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).TaskType">TASK_BASE.TaskType</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).UnAssignFromGroups">TASK_BASE:UnAssignFromGroups()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).UnAssignFromGroups">TASK:UnAssignFromGroups()</a></td>
 		<td class="summary">
 <p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE).UnAssignFromUnit">TASK_BASE:UnAssignFromUnit(TaskUnit, TaskUnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).UnAssignFromUnit">TASK:UnAssignFromUnit(TaskUnit)</a></td>
 		<td class="summary">
 <p>UnAssign the <a href="Task.html">Task</a> from an alive <a href="Unit.html">Unit</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventAssignUnit">TASK_BASE:_EventAssignUnit(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Abort">TASK:__Abort()</a></td>
 		<td class="summary">
-<p>Register a potential new assignment for a new spawned <a href="Unit.html">Unit</a>.</p>
+<p>FSM Abort asynchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventDead">TASK_BASE:_EventDead(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Cancel">TASK:__Cancel()</a></td>
 		<td class="summary">
-<p>UnAssigns a <a href="Unit.html">Unit</a> that is left by a player, crashed, dead, ....</p>
+<p>FSM Cancel asynchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._EventPlayerLeaveUnit">TASK_BASE:_EventPlayerLeaveUnit(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Fail">TASK:__Fail()</a></td>
 		<td class="summary">
-<p>Catches the "player leave unit" event for a <a href="Unit.html">Unit</a>  ....</p>
+<p>FSM Fail asynchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._Schedule">TASK_BASE:_Schedule()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Replan">TASK:__Replan()</a></td>
 		<td class="summary">
-
+<p>FSM Replan asynchronous event function for TASK.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BASE)._Scheduler">TASK_BASE:_Scheduler()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Success">TASK:__Success()</a></td>
 		<td class="summary">
-
+<p>FSM Success asynchronous event function for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAborted">TASK:onenterAborted(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAssigned">TASK:onenterAssigned(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterFailed">TASK:onenterFailed(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterSuccess">TASK:onenterSuccess(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onstatechange">TASK:onstatechange(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
 </td>
 		</tr>
 	</table>
@@ -606,9 +695,23 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_BASE)">#TASK_BASE</a></em>
-<a id="TASK_BASE" >
-<strong>TASK_BASE</strong>
+		<em></em>
+<a id="PlayerNameText" >
+<strong>PlayerNameText</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK)">#TASK</a></em>
+<a id="TASK" >
+<strong>TASK</strong>
 </a>
 </dt>
 <dd>
@@ -619,117 +722,63 @@ Use the method <a href="##(TASK_BASE).AddScore">TASK_BASE.AddScore</a>() to add 
 </dl>
 	<h2><a id="#(Task)" >Type <code>Task</code></a></h2>
 	
-			<h2><a id="#(TASK_BASE)" >Type <code>TASK_BASE</code></a></h2>
+			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
 				
-<p>The TASK_BASE class</p>
+<p>The TASK class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).AddProcess" >
-<strong>TASK_BASE:AddProcess(TaskUnit, Process)</strong>
+<a id="#(TASK).Abort" >
+<strong>TASK:Abort()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Add Process to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a>.</p>
+<p>FSM Abort synchronous event function for TASK.</p>
 
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Process </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+	
+<p>Use this event to Abort the Task.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).AddScore" >
-<strong>TASK_BASE:AddScore(TaskStatus, ScoreText, Score)</strong>
+<a id="#(TASK).AbortUnit" >
+<strong>TASK:AbortUnit(PlayerUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Adds a score for the TASK to be achieved.</p>
+<p>Abort a PlayerUnit from a Task.</p>
 
-		<h3>Parameters</h3>
+	
+<p>If the Unit was not part of the Task, false is returned.
+If the Unit is part of the Task, true is returned.</p>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string TaskStatus </em></code>: 
-is the status of the TASK when the score needs to be given.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ScoreText </em></code>: 
-is a text describing the score that is given according the status.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-is a number providing the score of the status.</p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+<p><em>#boolean:</em>
+true if Unit is part of the Task.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).AddStateMachine" >
-<strong>TASK_BASE:AddStateMachine(TaskUnit, Fsm)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a FiniteStateMachine to <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Fsm </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).AssignToGroup" >
-<strong>TASK_BASE:AssignToGroup(TaskGroup)</strong>
+<a id="#(TASK).AssignToGroup" >
+<strong>TASK:AssignToGroup(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -740,35 +789,56 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).AssignToUnit" >
-<strong>TASK_BASE:AssignToUnit(TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Assign the <a href="Task.html">Task</a>to an alive <a href="Unit.html">Unit</a>.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AssignToUnit" >
+<strong>TASK:AssignToUnit(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Assign the <a href="Task.html">Task</a> to an alive <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).Cancel" >
+<strong>TASK:Cancel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Cancel synchronous event function for TASK.</p>
+
+	
+<p>Use this event to Cancel the Task.</p>
 
 </dd>
 </dl>
@@ -776,8 +846,8 @@ self</p>
 <dt>
 
 		<em>#string</em>
-<a id="#(TASK_BASE).ClassName" >
-<strong>TASK_BASE.ClassName</strong>
+<a id="#(TASK).ClassName" >
+<strong>TASK.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -789,17 +859,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).CleanUp" >
-<strong>TASK_BASE:CleanUp()</strong>
+		<em><a href="Tasking.CommandCenter.html##(COMMANDCENTER)">Tasking.CommandCenter#COMMANDCENTER</a></em>
+<a id="#(TASK).CommandCenter" >
+<strong>TASK.CommandCenter</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Cleans all references of a TASK_BASE.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#nil:</em></p>
 
 
 </dd>
@@ -807,35 +873,85 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).FailProcesses" >
-<strong>TASK_BASE:FailProcesses(TaskUnitName)</strong>
+<a id="#(TASK).CrashUnit" >
+<strong>TASK:CrashUnit(PlayerUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Fail processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>A PlayerUnit crashed in a Task.</p>
+
+	
+<p>Abort the Player.
+If the Unit was not part of the Task, false is returned.
+If the Unit is part of the Task, true is returned.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string TaskUnitName </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+<p><em>#boolean:</em>
+true if Unit is part of the Task.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em><a href="StateMachine.html##(STATEMACHINE)">StateMachine#STATEMACHINE</a></em>
-<a id="#(TASK_BASE).Fsm" >
-<strong>TASK_BASE.Fsm</strong>
+<a id="#(TASK).Fail" >
+<strong>TASK:Fail()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Fail synchronous event function for TASK.</p>
+
+	
+<p>Use this event to Fail the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).FailProcesses" >
+<strong>TASK:FailProcesses(TaskUnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> TODO: Obscolete?
+- Fail processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a>
+ @param #TASK self
+ @param #string TaskUnitName
+ @return #TASK self</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnitName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a></em>
+<a id="#(TASK).FsmTemplate" >
+<strong>TASK.FsmTemplate</strong>
 </a>
 </dt>
 <dd>
@@ -847,26 +963,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetCategory" >
-<strong>TASK_BASE:GetCategory()</strong>
+<a id="#(TASK).GetGroups" >
+<strong>TASK:GetGroups()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Gets the Category of the Task</p>
+<p>Gets the SET_GROUP assigned to the TASK.</p>
 
 		<h3>Return value</h3>
 				
-<p><em>#string:</em>
-TaskCategory</p>
+<p><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a>:</em></p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetID" >
-<strong>TASK_BASE:GetID()</strong>
+<a id="#(TASK).GetID" >
+<strong>TASK:GetID()</strong>
 </a>
 </dt>
 <dd>
@@ -883,8 +999,26 @@ TaskID</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetName" >
-<strong>TASK_BASE:GetName()</strong>
+<a id="#(TASK).GetMission" >
+<strong>TASK:GetMission()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the Mission to where the TASK belongs.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetName" >
+<strong>TASK:GetName()</strong>
 </a>
 </dt>
 <dd>
@@ -901,8 +1035,34 @@ The Task Name</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetScoring" >
-<strong>TASK_BASE:GetScoring()</strong>
+<a id="#(TASK).GetProcessTemplate" >
+<strong>TASK:GetProcessTemplate(ProcessName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the default or currently assigned <a href="Process.html">Process</a> template with key ProcessName.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ProcessName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetScoring" >
+<strong>TASK:GetScoring()</strong>
 </a>
 </dt>
 <dd>
@@ -911,7 +1071,7 @@ The Task Name</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Scoring.html##(SCORING)">Scoring#SCORING</a>:</em>
+<p><em><a href="Functional.Scoring.html##(SCORING)">Functional.Scoring#SCORING</a>:</em>
 Scoring</p>
 
 </dd>
@@ -919,8 +1079,8 @@ Scoring</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetStateString" >
-<strong>TASK_BASE:GetStateString()</strong>
+<a id="#(TASK).GetStateString" >
+<strong>TASK:GetStateString()</strong>
 </a>
 </dt>
 <dd>
@@ -932,13 +1092,13 @@ Scoring</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetTaskIndex" >
-<strong>TASK_BASE:GetTaskIndex()</strong>
+<a id="#(TASK).GetTaskIndex" >
+<strong>TASK:GetTaskIndex()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Gets the Task Index, which is a combination of the Task category, the Task type, the Task name.</p>
+<p>Gets the Task Index, which is a combination of the Task type, the Task name.</p>
 
 		<h3>Return value</h3>
 				
@@ -950,8 +1110,8 @@ The Task ID</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetTaskName" >
-<strong>TASK_BASE:GetTaskName()</strong>
+<a id="#(TASK).GetTaskName" >
+<strong>TASK:GetTaskName()</strong>
 </a>
 </dt>
 <dd>
@@ -968,8 +1128,8 @@ TaskName</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).GetType" >
-<strong>TASK_BASE:GetType()</strong>
+<a id="#(TASK).GetType" >
+<strong>TASK:GetType()</strong>
 </a>
 </dt>
 <dd>
@@ -986,45 +1146,55 @@ TaskType</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).HasStateMachine" >
-<strong>TASK_BASE:HasStateMachine(TaskUnitName)</strong>
+<a id="#(TASK).GetUnitProcess" >
+<strong>TASK:GetUnitProcess()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Checks if there is a FiniteStateMachine assigned to <a href="Unit.html">Unit</a> for <a href="Task.html">Task</a></p>
+<p>Get the Task FSM Process Template</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string TaskUnitName </em></code>: </p>
-
-				</li>
-		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+<p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em></p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsAssignedToGroup" >
-<strong>TASK_BASE:IsAssignedToGroup(TaskGroup)</strong>
+<a id="#(TASK).HasAliveUnits" >
+<strong>TASK:HasAliveUnits()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
+<p>Returns if the <a href="Task.html">Task</a> has still alive and assigned Units.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).HasGroup" >
+<strong>TASK:HasGroup(FindGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> FindGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1038,8 +1208,60 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStateAssigned" >
-<strong>TASK_BASE:IsStateAssigned()</strong>
+<a id="#(TASK).HasStateMachine" >
+<strong>TASK:HasStateMachine(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checks if there is a FiniteStateMachine assigned to Task<a href="Unit.html">Unit</a> for <a href="Task.html">Task</a></p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsAssignedToGroup" >
+<strong>TASK:IsAssignedToGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsStateAssigned" >
+<strong>TASK:IsStateAssigned()</strong>
 </a>
 </dt>
 <dd>
@@ -1051,8 +1273,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStateFailed" >
-<strong>TASK_BASE:IsStateFailed()</strong>
+<a id="#(TASK).IsStateFailed" >
+<strong>TASK:IsStateFailed()</strong>
 </a>
 </dt>
 <dd>
@@ -1064,8 +1286,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStateHold" >
-<strong>TASK_BASE:IsStateHold()</strong>
+<a id="#(TASK).IsStateHold" >
+<strong>TASK:IsStateHold()</strong>
 </a>
 </dt>
 <dd>
@@ -1077,8 +1299,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStatePlanned" >
-<strong>TASK_BASE:IsStatePlanned()</strong>
+<a id="#(TASK).IsStatePlanned" >
+<strong>TASK:IsStatePlanned()</strong>
 </a>
 </dt>
 <dd>
@@ -1090,8 +1312,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStateReplanned" >
-<strong>TASK_BASE:IsStateReplanned()</strong>
+<a id="#(TASK).IsStateReplanned" >
+<strong>TASK:IsStateReplanned()</strong>
 </a>
 </dt>
 <dd>
@@ -1103,8 +1325,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).IsStateSuccess" >
-<strong>TASK_BASE:IsStateSuccess()</strong>
+<a id="#(TASK).IsStateSuccess" >
+<strong>TASK:IsStateSuccess()</strong>
 </a>
 </dt>
 <dd>
@@ -1116,8 +1338,41 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).Menu" >
-<strong>TASK_BASE.Menu</strong>
+<a id="#(TASK).JoinUnit" >
+<strong>TASK:JoinUnit(PlayerUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a PlayerUnit to join the Task.</p>
+
+	
+<p>For each Group within the Task, the Unit is check if it can join the Task.
+If the Unit was not part of the Task, false is returned.
+If the Unit is part of the Task, true is returned.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The CLIENT or UNIT of the Player joining the Mission.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Unit is part of the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Menu" >
+<strong>TASK.Menu</strong>
 </a>
 </dt>
 <dd>
@@ -1129,21 +1384,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).MenuAbort" >
-<strong>TASK_BASE.MenuAbort</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).MenuAssignToGroup" >
-<strong>TASK_BASE.MenuAssignToGroup(MenuParam)</strong>
+<a id="#(TASK).MenuAssignToGroup" >
+<strong>TASK.MenuAssignToGroup(MenuParam)</strong>
 </a>
 </dt>
 <dd>
@@ -1163,21 +1405,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).MenuStatus" >
-<strong>TASK_BASE.MenuStatus</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).MenuTaskAbort" >
-<strong>TASK_BASE.MenuTaskAbort(MenuParam)</strong>
+<a id="#(TASK).MenuTaskAbort" >
+<strong>TASK.MenuTaskAbort(MenuParam)</strong>
 </a>
 </dt>
 <dd>
@@ -1197,8 +1426,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).MenuTaskStatus" >
-<strong>TASK_BASE.MenuTaskStatus(MenuParam)</strong>
+<a id="#(TASK).MenuTaskStatus" >
+<strong>TASK.MenuTaskStatus(MenuParam)</strong>
 </a>
 </dt>
 <dd>
@@ -1218,9 +1447,30 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Mission.html##(MISSION)">Mission#MISSION</a></em>
-<a id="#(TASK_BASE).Mission" >
-<strong>TASK_BASE.Mission</strong>
+<a id="#(TASK).MessageToGroups" >
+<strong>TASK:MessageToGroups(Message)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a message of the <a href="Task.html">Task</a> to the assigned <a href="Group.html">Group</a>s.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Message </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a></em>
+<a id="#(TASK).Mission" >
+<strong>TASK.Mission</strong>
 </a>
 </dt>
 <dd>
@@ -1232,13 +1482,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).New" >
-<strong>TASK_BASE:New(The, SetGroup, TaskName, TaskType, TaskCategory, Mission)</strong>
+<a id="#(TASK).New" >
+<strong>TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK_BASE.</p>
+<p>Instantiates a new TASK.</p>
 
 	
 <p>Should never be used. Interface Class.</p>
@@ -1247,13 +1497,13 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Mission.html##(MISSION)">Mission#MISSION</a> The </em></code>: 
-mission wherein the Task is registered.</p>
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: 
+The mission wherein the Task is registered.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroupAssign </em></code>: 
 The set of groups for which the Task can be assigned.</p>
 
 				</li>
@@ -1269,21 +1519,10 @@ The name of the Task</p>
 The type of the Task</p>
 
 				</li>
-				<li>
-				
-<p><code><em>#string TaskCategory </em></code>: 
-The category of the Task (A2G, A2A, Transport, ... )</p>
-
-				</li>
-				<li>
-				
-<p><code><em> Mission </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1291,44 +1530,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).OnAssigned" >
-<strong>TASK_BASE:OnAssigned(TaskUnit, Fsm, Event, From, To, Event)</strong>
+<a id="#(TASK).OnAfterPlayerAborted" >
+<strong>TASK:OnAfterPlayerAborted(PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>StateMachine callback function for a TASK</p>
+<p>FSM PlayerAborted event handler prototype for TASK.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The Unit of the Player when he went back to spectators or left the mission.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string PlayerName </em></code>: 
+The name of the Player.</p>
 
 				</li>
 		</ul>
@@ -1337,44 +1558,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).OnFailed" >
-<strong>TASK_BASE:OnFailed(TaskUnit, Fsm, Event, From, To, Event)</strong>
+<a id="#(TASK).OnAfterPlayerCrashed" >
+<strong>TASK:OnAfterPlayerCrashed(PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>StateMachine callback function for a TASK</p>
+<p>FSM PlayerCrashed event handler prototype for TASK.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The Unit of the Player when he crashed in the mission.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string PlayerName </em></code>: 
+The name of the Player.</p>
 
 				</li>
 		</ul>
@@ -1383,44 +1586,26 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).OnStateChange" >
-<strong>TASK_BASE:OnStateChange(TaskUnit, Fsm, Event, From, To, Event)</strong>
+<a id="#(TASK).OnAfterPlayerDead" >
+<strong>TASK:OnAfterPlayerDead(PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>StateMachine callback function for a TASK</p>
+<p>FSM PlayerDead event handler prototype for TASK.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The Unit of the Player when he died in the mission.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string PlayerName </em></code>: 
+The name of the Player.</p>
 
 				</li>
 		</ul>
@@ -1429,54 +1614,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).OnSuccess" >
-<strong>TASK_BASE:OnSuccess(TaskUnit, Fsm, Event, From, To, Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>StateMachine callback function for a TASK</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="StateMachine.html##(STATEMACHINE_TASK)">StateMachine#STATEMACHINE_TASK</a> Fsm </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).Players" >
-<strong>TASK_BASE.Players</strong>
+<a id="#(TASK).Players" >
+<strong>TASK.Players</strong>
 </a>
 </dt>
 <dd>
@@ -1488,8 +1627,9 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).Processes" >
-<strong>TASK_BASE.Processes</strong>
+		<em></em>
+<a id="#(TASK).ProcessClasses" >
+<strong>TASK.ProcessClasses</strong>
 </a>
 </dt>
 <dd>
@@ -1501,8 +1641,22 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).RemoveMenu" >
-<strong>TASK_BASE:RemoveMenu()</strong>
+		<em></em>
+<a id="#(TASK).Processes" >
+<strong>TASK.Processes</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).RemoveMenu" >
+<strong>TASK:RemoveMenu()</strong>
 </a>
 </dt>
 <dd>
@@ -1511,7 +1665,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1519,8 +1673,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).RemoveMenuForGroup" >
-<strong>TASK_BASE:RemoveMenuForGroup(TaskGroup)</strong>
+<a id="#(TASK).RemoveMenuForGroup" >
+<strong>TASK:RemoveMenuForGroup(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1531,13 +1685,13 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1545,25 +1699,25 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).RemoveProcesses" >
-<strong>TASK_BASE:RemoveProcesses(TaskUnitName)</strong>
+<a id="#(TASK).RemoveStateMachine" >
+<strong>TASK:RemoveStateMachine(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Remove Processes from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string TaskUnitName </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1571,26 +1725,58 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).RemoveStateMachines" >
-<strong>TASK_BASE:RemoveStateMachines(TaskUnitName)</strong>
+<a id="#(TASK).Replan" >
+<strong>TASK:Replan()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key <a href="Unit.html">Unit</a></p>
+<p>FSM Replan synchronous event function for TASK.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string TaskUnitName </em></code>: </p>
+	
+<p>Use this event to Replan the Task.</p>
 
-				</li>
-		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).ReportDetails" >
+<strong>TASK:ReportDetails()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a detailed report of the Task.</p>
+
+	
+<p>List the Task Status, and the Players assigned to the Task.</p>
+
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).ReportSummary" >
+<strong>TASK:ReportSummary()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a summary report of the Task.</p>
+
+	
+<p>List the Task Name and Status</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -1598,8 +1784,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_BASE).Scores" >
-<strong>TASK_BASE.Scores</strong>
+<a id="#(TASK).Scores" >
+<strong>TASK.Scores</strong>
 </a>
 </dt>
 <dd>
@@ -1611,8 +1797,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SendBriefingToAssignedGroups" >
-<strong>TASK_BASE:SendBriefingToAssignedGroups()</strong>
+<a id="#(TASK).SendBriefingToAssignedGroups" >
+<strong>TASK:SendBriefingToAssignedGroups()</strong>
 </a>
 </dt>
 <dd>
@@ -1624,26 +1810,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetAssignedMenu" >
-<strong>TASK_BASE:SetAssignedMenu()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).SetAssignedMenuForGroup" >
-<strong>TASK_BASE:SetAssignedMenuForGroup(TaskGroup)</strong>
+<a id="#(TASK).SetAssignedMenuForGroup" >
+<strong>TASK:SetAssignedMenuForGroup(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1654,13 +1822,13 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1668,8 +1836,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetBriefing" >
-<strong>TASK_BASE:SetBriefing(TaskBriefing)</strong>
+<a id="#(TASK).SetBriefing" >
+<strong>TASK:SetBriefing(TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1686,7 +1854,7 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1694,30 +1862,9 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetCategory" >
-<strong>TASK_BASE:SetCategory(TaskCategory)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Sets the Category of the Task</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string TaskCategory </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
-<a id="#(TASK_BASE).SetGroup" >
-<strong>TASK_BASE.SetGroup</strong>
+		<em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a></em>
+<a id="#(TASK).SetGroup" >
+<strong>TASK.SetGroup</strong>
 </a>
 </dt>
 <dd>
@@ -1729,8 +1876,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetID" >
-<strong>TASK_BASE:SetID(TaskID)</strong>
+<a id="#(TASK).SetID" >
+<strong>TASK:SetID(TaskID)</strong>
 </a>
 </dt>
 <dd>
@@ -1750,8 +1897,42 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetName" >
-<strong>TASK_BASE:SetName(TaskName)</strong>
+<a id="#(TASK).SetMenu" >
+<strong>TASK:SetMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetMenuForGroup" >
+<strong>TASK:SetMenuForGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Menu for a Group</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetName" >
+<strong>TASK:SetName(TaskName)</strong>
 </a>
 </dt>
 <dd>
@@ -1771,26 +1952,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetPlannedMenu" >
-<strong>TASK_BASE:SetPlannedMenu()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE).SetPlannedMenuForGroup" >
-<strong>TASK_BASE:SetPlannedMenuForGroup(TaskGroup, MenuText)</strong>
+<a id="#(TASK).SetPlannedMenuForGroup" >
+<strong>TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</strong>
 </a>
 </dt>
 <dd>
@@ -1801,7 +1964,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Group.html##(GROUP)">Group#GROUP</a> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -1813,7 +1976,7 @@ The menu text.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
+<p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
 </dd>
@@ -1821,8 +1984,39 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).SetType" >
-<strong>TASK_BASE:SetType(TaskType)</strong>
+<a id="#(TASK).SetStateMachine" >
+<strong>TASK:SetStateMachine(TaskUnit, Fsm)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a FiniteStateMachine to <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Fsm </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetType" >
+<strong>TASK:SetType(TaskType)</strong>
 </a>
 </dt>
 <dd>
@@ -1842,8 +2036,35 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StateAssigned" >
-<strong>TASK_BASE:StateAssigned()</strong>
+<a id="#(TASK).SetUnitProcess" >
+<strong>TASK:SetUnitProcess(Core, FsmTemplate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the Task FSM Process Template</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Core </em></code>: 
+Fsm#FSM_PROCESS</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FsmTemplate </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).StateAssigned" >
+<strong>TASK:StateAssigned()</strong>
 </a>
 </dt>
 <dd>
@@ -1855,8 +2076,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StateFailed" >
-<strong>TASK_BASE:StateFailed()</strong>
+<a id="#(TASK).StateFailed" >
+<strong>TASK:StateFailed()</strong>
 </a>
 </dt>
 <dd>
@@ -1868,8 +2089,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StateHold" >
-<strong>TASK_BASE:StateHold()</strong>
+<a id="#(TASK).StateHold" >
+<strong>TASK:StateHold()</strong>
 </a>
 </dt>
 <dd>
@@ -1881,8 +2102,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StatePlanned" >
-<strong>TASK_BASE:StatePlanned()</strong>
+<a id="#(TASK).StatePlanned" >
+<strong>TASK:StatePlanned()</strong>
 </a>
 </dt>
 <dd>
@@ -1894,8 +2115,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StateReplanned" >
-<strong>TASK_BASE:StateReplanned()</strong>
+<a id="#(TASK).StateReplanned" >
+<strong>TASK:StateReplanned()</strong>
 </a>
 </dt>
 <dd>
@@ -1907,8 +2128,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).StateSuccess" >
-<strong>TASK_BASE:StateSuccess()</strong>
+<a id="#(TASK).StateSuccess" >
+<strong>TASK:StateSuccess()</strong>
 </a>
 </dt>
 <dd>
@@ -1920,14 +2141,16 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(TASK_BASE).TaskBriefing" >
-<strong>TASK_BASE.TaskBriefing</strong>
+<a id="#(TASK).Success" >
+<strong>TASK:Success()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>FSM Success synchronous event function for TASK.</p>
 
+	
+<p>Use this event to make the Task a Success.</p>
 
 </dd>
 </dl>
@@ -1935,22 +2158,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_BASE).TaskCategory" >
-<strong>TASK_BASE.TaskCategory</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK_BASE).TaskID" >
-<strong>TASK_BASE.TaskID</strong>
+<a id="#(TASK).TaskBriefing" >
+<strong>TASK.TaskBriefing</strong>
 </a>
 </dt>
 <dd>
@@ -1963,22 +2172,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_BASE).TaskName" >
-<strong>TASK_BASE.TaskName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a></em>
-<a id="#(TASK_BASE).TaskScheduler" >
-<strong>TASK_BASE.TaskScheduler</strong>
+<a id="#(TASK).TaskID" >
+<strong>TASK.TaskID</strong>
 </a>
 </dt>
 <dd>
@@ -1991,8 +2186,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_BASE).TaskType" >
-<strong>TASK_BASE.TaskType</strong>
+<a id="#(TASK).TaskName" >
+<strong>TASK.TaskName</strong>
 </a>
 </dt>
 <dd>
@@ -2004,8 +2199,36 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).UnAssignFromGroups" >
-<strong>TASK_BASE:UnAssignFromGroups()</strong>
+		<em><a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a></em>
+<a id="#(TASK).TaskScheduler" >
+<strong>TASK.TaskScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).TaskType" >
+<strong>TASK.TaskType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).UnAssignFromGroups" >
+<strong>TASK:UnAssignFromGroups()</strong>
 </a>
 </dt>
 <dd>
@@ -2017,151 +2240,262 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE).UnAssignFromUnit" >
-<strong>TASK_BASE:UnAssignFromUnit(TaskUnit, TaskUnitName)</strong>
+<a id="#(TASK).UnAssignFromUnit" >
+<strong>TASK:UnAssignFromUnit(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>UnAssign the <a href="Task.html">Task</a> from an alive <a href="Unit.html">Unit</a>.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Abort" >
+<strong>TASK:__Abort()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Abort asynchronous event function for TASK.</p>
+
+	
+<p>Use this event to Abort the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Cancel" >
+<strong>TASK:__Cancel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Cancel asynchronous event function for TASK.</p>
+
+	
+<p>Use this event to Cancel the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Fail" >
+<strong>TASK:__Fail()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Fail asynchronous event function for TASK.</p>
+
+	
+<p>Use this event to Fail the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Replan" >
+<strong>TASK:__Replan()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Replan asynchronous event function for TASK.</p>
+
+	
+<p>Use this event to Replan the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Success" >
+<strong>TASK:__Success()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM Success asynchronous event function for TASK.</p>
+
+	
+<p>Use this event to make the Task a Success.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).onenterAborted" >
+<strong>TASK:onenterAborted(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Unit.html##(UNIT)">Unit#UNIT</a> TaskUnit </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> TaskUnitName </em></code>: </p>
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE)._EventAssignUnit" >
-<strong>TASK_BASE:_EventAssignUnit(Event)</strong>
+<a id="#(TASK).onenterAssigned" >
+<strong>TASK:onenterAssigned(Event, From, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Register a potential new assignment for a new spawned <a href="Unit.html">Unit</a>.</p>
+<p>FSM function for a TASK</p>
 
-	
-<p>Tasks only get assigned if there are players in it.</p>
-
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE)._EventDead" >
-<strong>TASK_BASE:_EventDead(Event)</strong>
+<a id="#(TASK).onenterFailed" >
+<strong>TASK:onenterFailed(Event, From, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>UnAssigns a <a href="Unit.html">Unit</a> that is left by a player, crashed, dead, ....</p>
+<p>FSM function for a TASK</p>
 
-	
-<p>There are only assignments if there are players in it.</p>
-
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
-
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BASE)._EventPlayerLeaveUnit" >
-<strong>TASK_BASE:_EventPlayerLeaveUnit(Event)</strong>
+<a id="#(TASK).onenterSuccess" >
+<strong>TASK:onenterSuccess(Event, From, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Catches the "player leave unit" event for a <a href="Unit.html">Unit</a>  ....</p>
+<p>FSM function for a TASK</p>
 
-	
-<p>When a player is an air unit, and leaves the unit:</p>
-
-<ul>
-    <li>and he is not at an airbase runway on the ground, he will fail its task.</li>
-    <li>and he is on an airbase and on the ground, the process for him will just continue to work, he can switch airplanes, and take-off again.
-    This is important to model the change from plane types for a player during mission assignment.</li>
-</ul>
-
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).onstatechange" >
+<strong>TASK:onstatechange(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(TASK_BASE)">#TASK_BASE</a>:</em>
-self</p>
+<p><code><em>#string Event </em></code>: </p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
 
-<a id="#(TASK_BASE)._Schedule" >
-<strong>TASK_BASE:_Schedule()</strong>
-</a>
-</dt>
-<dd>
-	
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_BASE)._Scheduler" >
-<strong>TASK_BASE:_Scheduler()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
+				</li>
+		</ul>
 </dd>
 </dl>
 
