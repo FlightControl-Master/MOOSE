@@ -1,7 +1,7 @@
 
 Hi everyone,
 
-FlightControl here ... It is been quite a ride ... But here it is, the release of the MOOSE framework for DCS World is a fact. This release is adding the following functionality to MOOSE, on top of the pre-release version:
+It's FlightControl here ... It is been quite a ride ... But here it is, the release of the MOOSE framework for DCS World is a fact. This release is adding the following functionality to MOOSE, on top of the pre-release version:
 
 [list]
 [*] Task orchestration: CommandCenters, Missions, Tasks, Task Actions ...
@@ -11,93 +11,87 @@ FlightControl here ... It is been quite a ride ... But here it is, the release o
 [*] Additional functions in existing classes.
 [/list]
 
-Note that the tasking orchestration was a large work ... I hope you like it.
+Preparing this release was a large work ... I hope you like using it.
 
-There are various test missions created to demonstrate the framework. I really, really suggest you have a close look to the lua files for each test mission. You can find in each directory to lua file that is embedded in the test mission.
+There are various test missions created to demonstrate the framework. It is worth to have a close look to the lua files for each test mission. You can find in each directory to lua file that is embedded in the test mission.
 The documentation is not yet up-to-date, but that will improve next year. On top, I plan to create training videos for you to demonstrate the capabilities of the introduced new concepts. These things take time and a good preparation, so pls be patient.
 
-The [color=blue]good[/color] and [color=red]bad [/color]news is also that there are a couple of API changes that I had to push through:
+[size=24][b][u]API Changes![/u][/b][/size]
+
+The [color=blue]good[/color] and [color=red]bad [/color]news is that there are a couple of API changes that I had to push through. The reason why these API changes appear in the release is, I made some bad design decisions in the past, and I've made the interface more consistent. I would like you to review and update your missions to adapt and incorporate these API changes. Implementing these API changes can be quickly done I believe ... The changes are minor.
+
+In a nuttshell:
+- I changed the name of the SPAWN initialization functions, adding [color=blue]Init[/color] to the name. I wanted to make sure that the difference between Initialization and Spawning in the SPAWN methods were clear, because many people had questions and were confused! Please refer to the SPA-1xx for a demonstration on these new Init functions (they are the same, only the name changed).
+- Spawning of new units can be done now from a Unit location, a Static location, a PointVec2 location, a PointVec3 location and a Zone location. In order to make the interface consistent over all these functions, I added a new function called [color=blue]InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )[/color] and added, revised the APIs of the Spawning functions. Please refer to the test missions SPA-3xx for demo scripts to use these functions.
+- Zones can now also be randomized during Spawning using the method [color=blue]InitRandomizeZones( SpawnZones )[/color]. Please refer to the test mission SPA-220 for a demonstration to use this function.
+
+Here are the changes:
+
 [list]
+[*][b]BASE[/b]
 
-[*]BASE: DCS Event handling functions have been added to the base class. These functions start with the [color=blue]OnEvent...[/color] prefix. These functions now allow you to DCS events in a class like when a birth of a unit happens, or when a crash happens etc.
-
-[*]SPAWN: [color=blue]InitCleanUp[/color]( SpawnCleanUpInterval ) replaces [color=red]CleanUp[/color]( SpawnCleanUpInterval )
-
-
-[*]SPAWN: [color=blue]OnSpawnGroup[/color]( SpawnCallBackFunction, ... ) replaces [color=red]SpawnFunction[/color]( SpawnCallBackFunction, ... )
-
-
-[*]SPAWN: [color=blue]InitRandomizeZones( SpawnZones )[/color] added
-
-
-[*]SPAWN: SpawnInZone( Zone, [color=blue]RandomizeGroup[/color], SpawnIndex ) replaces SpawnInZone( Zone, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
-
-[size=12][- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
-- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
-[/size]
-[*]SPAWN: SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
-
-[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
-- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
-[/size]
-[*]SPAWN: SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
-
-[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomiprefixzeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
-- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
-[/size]
-[*]SPAWN: SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
-
-[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
-- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
-[/size]
-[*]SPAWN: SpawnFromStatic( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
-
-[size=12]- The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius ).
-- A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned Group.
-[/size]
-[*]SPAWN: [color=blue]InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )[/color] added.
-
-
-[*]SPAWN: [color=blue]InitLimit[/color]( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces [color=red]Limit[/color]( SpawnMaxUnitsAlive, SpawnMaxGroups )
-
-
-[*]SPAWN: [color=blue]InitArray[/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces [color=red]Array[/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
-
-
-[*]SPAWN: [color=blue]InitRandomizeRoute[/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces [color=red]RandomizeRoute[/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
-
-
-[*]SPAWN: [color=blue]InitRandomizeTemplate[/color]( SpawnTemplatePrefixTable ) replaces [color=red]RandomizeTemplate[/color]( SpawnTemplatePrefixTable )
-
-
-[*]SPAWN: [color=blue]InitUnControlled[/color]() replaces [color=red]UnControlled[/color]()
-
-
-[*]AIBALANCER: Has been completely reworked. I don't think anybody has been using this class beside hijack.
-
-
-[*]PATROLZONE: Has been completely reworked. I don't think anybody has been using this class beside hijack.
-
-
-[*]POINT_VEC3: [color=blue]Translate( Distance, Angle )[/color]added.
-
-[*]Replaced methods ending with [color=red]Point_Vec3[/color]() to [color=blue]Vec3[/color]() where the code manages a Vec3. Replaced all references to the method.
-
-
-[*]Replaced method [color=red]Point_Vec2()[/color] to [color=blue]Vec2[/color]() where the code manages a Vec2. Replaced all references to the method.
-
-
-[*]Replaced method [color=red]Random_Point_Vec3()[/color] to [color=blue]RandomVec3[/color]() where the code manages a Vec3. Replaced all references to the method.
-
+[list]
+[*]DCS Event handling functions have been added to the base class. These functions start with the [color=blue]OnEvent...[/color] prefix. These functions now allow you to DCS events in a class like when a birth of a unit happens, or when a crash happens etc.
 [/list]
 
-So, that was the bad news... I made some bad design decisions in the past, and would like you to update your missions for these changes. These changes can be quickly done however, I believe...
+[*][b]SPAWN[/b]
 
-Find below a comprehensive summary of the new release:
+[list]
+[*][color=blue]OnSpawnGroup[/color]( SpawnCallBackFunction, ... ) replaces [color=red]SpawnFunction[/color]( SpawnCallBackFunction, ... )
+[/list]
 
-[size=24][b][u]1. Task Orchestration[/u][/b][/size]
+[list]
+[*][b]SpawnInZone[/b]( Zone, [color=blue]RandomizeGroup[/color], SpawnIndex ) replaces SpawnInZone( Zone, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+[*][b]SpawnFromVec3[/b]( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+[*][b]SpawnFromVec2[/b]( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+[*][b]SpawnFromUnit[/b]( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+[*][b]SpawnFromStatic[/b]( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, [color=red]RandomizeUnits, OuterRadius, InnerRadius,[/color] SpawnIndex )
+[/list]
 
-[size=20][b][u]1.1. Comand Centers[/u][/b][/size]
+
+[list]
+[*][color=blue][b]InitRandomizeUnits[/b]( RandomizeUnits, OuterRadius, InnerRadius )[/color] added.
+[*][color=blue][b]InitLimit[/b][/color]( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces [color=red]Limit[/color]( SpawnMaxUnitsAlive, SpawnMaxGroups )
+[*][color=blue][b]InitArray[/b][/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces [color=red]Array[/color]( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
+[*][color=blue][b]InitRandomizeRoute[/b][/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces [color=red]RandomizeRoute[/color]( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight )
+[*][color=blue][b]InitRandomizeTemplate[/b][/color]( SpawnTemplatePrefixTable ) replaces [color=red]RandomizeTemplate[/color]( SpawnTemplatePrefixTable )
+[*][color=blue][b]InitUnControlled[/b][/color]() replaces [color=red]UnControlled[/color]()
+[*][color=blue][b]InitCleanUp[/b][/color]( SpawnCleanUpInterval ) replaces [color=red]CleanUp[/color]( SpawnCleanUpInterval )
+[*][color=blue][b]InitRandomizeZones[/b]( SpawnZones )[/color] added
+[/list]
+
+
+[*][b]AIBALANCER[/b]
+[list]
+[*]Has been completely reworked. I don't think anybody has been using this class beside hijack.
+[/list]
+
+
+[*][b]PATROLZONE[/b]: 
+[list]
+[*]Has been completely reworked. I don't think anybody has been using this class beside hijack.
+[/list]
+
+
+[*][b]POINT_VEC3[/b] and references in other classes methods to POINT_VEC3 objects:
+[list]
+[*][color=blue]Translate( Distance, Angle )[/color]added.
+[*]Replaced methods ending with [color=red]Point_Vec3[/color]() to [color=blue]Vec3[/color]() where the code manages a Vec3. Replaced all references to the method.
+[*]Replaced method [color=red]Point_Vec2()[/color] to [color=blue]Vec2[/color]() where the code manages a Vec2. Replaced all references to the method.
+[*]Replaced method [color=red]Random_Point_Vec3()[/color] to [color=blue]RandomVec3[/color]() where the code manages a Vec3. Replaced all references to the method.
+[/list]
+
+
+[*][b]SCHEDULER[/b] has been reworked, see below.
+[/list]
+
+[size=24][b][u]What's new![/u][/b][/size]
+
+Find below a comprehensive summary of the MOOSE new features in this release:
+
+[size=22][b][u]1. Task Orchestration[/u][/b][/size]
+
+[size=18][b][u]1.1. Comand Centers[/u][/b][/size]
 
 [b]COMMANDCENTER[/b]: Governs the communication and existence of Missions, Tasks and Actions for a Coalition.
 [list=1]
@@ -107,7 +101,7 @@ Find below a comprehensive summary of the new release:
 [*]Send Messages to all players alive within all Missions of a CommandCenter.
 [/list]
 
-[size=20][b][u]1.2. Missions[/u][/b][/size]
+[size=18][b][u]1.2. Missions[/u][/b][/size]
 
 [b]MISSION[/b]: Governs the process flow of the Mission, Tasks and Actions for a CommandCenter for a Coalition.[list=1]
 [*]Create a new Mission for a CommandCenter.
@@ -119,7 +113,7 @@ Find below a comprehensive summary of the new release:
 [*]Attach a Scoring and event log implemented through the SCORING class.
 [/list]
 
-[size=20][b][u]1.3. Tasks[/u][/b][/size]
+[size=18][b][u]1.3. Tasks[/u][/b][/size]
 
 [b]TASK[/b]: Governs the process flow of the Task state and the execution of the Taskprocess and hierarchical processes by players.
 [list=1]
@@ -145,7 +139,7 @@ Find below a comprehensive summary of the new release:
 [*]Provide a mechanism to attach a Scoring scheme when certain states are reached in the Task and in the Task Action flow.
 [/list]
 
-[size=20][b][u]1.4. Task Actions[/u][/b][/size]
+[size=18][b][u]1.4. Task Actions[/u][/b][/size]
 
 [b]ACT_ASSIGN[/b], [b]ACT_ROUTE[/b], [b]ACT_ACCOUNT[/b], [b]ACT_SMOKE[/b]: Governs Task Action Subroutines that can be embedded within a Task Action flow. These ACT_ classes will be further enhanced and expanded now the baseline of MOOSE is there. This will result in mission designed being able to quickly combine these actions to implement different Task flows.
 [list=1]
@@ -162,7 +156,7 @@ Find below a comprehensive summary of the new release:
 [*]ACT_...: Expect in the future more ACT classes to be created and added to the MOOSE framework. It is upon our creativity to identify good functions to be added.
 [/list]
 
-[size=24][b][u]2. Finite State Machines[/u][/b][/size]
+[size=22][b][u]2. Finite State Machines[/u][/b][/size]
 
 [b]FSM[/b], [b]FSM_CONTROLLABLE[/b], [b]FSM_ACTION[/b], [b]FSM_TASK[/b], [b]FSM_SET[/b]: Finite State Machine base classes that implement the necessary functionality to realise a workflow following various state transitions triggered through events being fired externally or internally within the FSM implementation.
 [list=1]
@@ -173,7 +167,7 @@ Find below a comprehensive summary of the new release:
 [*]FSM_SET: An fsm governing a workflow for a Set.
 [/list]
 
-[size=24][b][u]3. Balance and Control AI[/u][/b][/size]
+[size=22][b][u]3. Balance and Control AI[/u][/b][/size]
 
 [b]AIBALANCER[/b]: Balances AI within a Mission. It is up to the mission designer to capture the different AIBalancer events, and attach different AI processes to accomodate AI behaviour.
 [list=1]
@@ -190,10 +184,10 @@ Find below a comprehensive summary of the new release:
 [*]The PATROLZONE class can be used in AIBALANCER to simulate players.
 [/list]
 
-[size=24][b][u]4. Cargo Handling[/u][/b][/size]
+[size=22][b][u]4. Cargo Handling[/u][/b][/size]
 
-[b]CARGO[/b]: Cargo Handling of CONTROLLABLE object, thus UNITs and GROUPs. CARGO provides a dynamic way to Load, Unload, Board, UnBoard and Transfer Cargo between Carriers.
-[list=1]
+[b]CARGO[/b]: Cargo Handling of CONTROLLABLE object, thus UNITs and GROUPs. CARGO provides a dynamic way to Load, Unload, Board, UnBoard and Transfer Cargo between Carriers. [u]The cargo handling of units is animated, that means, you'll see the units moving towards or from the carriers ... 
+[/u][list=1]
 [*]Board Cargo to a Carrier.
 [*]Unboard Cargo from a Carrier to a point.
 [*]Transfer Cargo from a Carrier to another Carrier.
@@ -206,7 +200,20 @@ Find below a comprehensive summary of the new release:
 Note: There are various Task Actions (ACT_) classes planned that would allow to deploy and pickup cargo in a battle field.
 Note: There are various AI_ classes planned that would allow to deploy and pickup cargo in a battlefield.[/td]
 
+[size=22][b][u]5. Scheduling[/u][/b][/size]
+
+[b]SCHEDULER[/b]: The scheduling of methods has been intensively reworked. In the previous version of MOOSE, each SCHEDULER object controlled the scheduling of the method provided. However, with the new SCHEDULER implementation, the actually scheduling is now done by a SCHEDULEDISPATCHER class, which has one instance within the MOOSE framework, under _SCHEDULEDISPATCHER... SCHEDULER has some minor changes to the API. One of them is that SCHEDULER now allows to schedule more than one repeated schedule. When the method SCHEDULE.Schedule() is called, a ScheduleID is returned. This ScheduleID can then be used to Stop or (Re-)Start the schedule using the SCHEDULER object and the ScheduleID. The actual object controlling all the schedules is _SCHEDULEDISPATCHER.
+
+
+[size=24][b][u]Other comments ...[/u][/b][/size]
 
 There are many more changes done within the framework, but these are very technical and hidden from the API set that the users will use. Some of the work that was done includes: rework scheduling, adding a scheduler dispatcher.
 
-There is still some work to be done on the [b]TASK_DISPATCHER[/b], but that will be done the coming weeks.
+There is still some work to be done on the [b]TASK_DISPATCHER[/b], but that will be done the coming weeks, so don't spend too much time on that for the moment ...
+
+Also, this release builds the foundation of many many other classes to come. Now that we have state machines and the object model is now more or less stable, other functions can be built upon this framework. It would be great that a community would see the benefits of this development and endorse it, like many have already done.
+
+If you have problems using this release and somehow feel blocked, you can use the previous commit on the master branch. Just click in GITHUB on the previous commit, sync and you'll be fine.
+
+Thanks all;
+FC
