@@ -47,14 +47,14 @@ do -- TASK_SEAD
     
     local Fsm = self:GetUnitProcess()
 
-    Fsm:AddProcess( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
-    Fsm:AddProcess( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
-    Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
-    Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
-    Fsm:AddAction ( "Accounted",  "Success",  "Success" )
-    Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
+    Fsm:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
+    Fsm:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddTransition( "Rejected",   "Eject",    "Planned" )
+    Fsm:AddTransition( "Arrived",    "Update",   "Updated" ) 
+    Fsm:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddTransition( "Accounted",  "Success",  "Success" )
+    Fsm:AddTransition( "Failed",     "Fail",     "Failed" )
     
     function Fsm:onenterUpdated( TaskUnit )
       self:E( { self } )

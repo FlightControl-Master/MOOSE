@@ -527,7 +527,6 @@ function TASK:SetMenu()
 
   self.SetGroup:Flush()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:RemoveMenuForGroup( TaskGroup )
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( TaskGroup )
     end
@@ -992,9 +991,11 @@ function TASK:ReportDetails()
         PlayerNames[#PlayerNames+1] = PlayerName
       end
     end
-    PlayerNameText = table.concat( PlayerNames, ", " )
+    local PlayerNameText = table.concat( PlayerNames, ", " )
     Report:Add( "Task " .. Name .. " - State '" .. State .. "' - Players " .. PlayerNameText )
   end
+  
+  -- Loop each Process in the Task, and find Reporting Details.
 
   return Report:Text()
 end

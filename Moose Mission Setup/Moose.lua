@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20161217_2210' ) 
+env.info( 'Moose Generation Timestamp: 20161218_0608' ) 
 local base = _G
 
 Include = {}
@@ -8818,6 +8818,25 @@ function SET_UNIT:GetUnitThreatLevels()
   return UnitThreatLevels
 end
 
+--- Calculate the maxium A2G threat level of the SET_UNIT.
+-- @param #SET_UNIT self
+function SET_UNIT:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+    end
+  end
+
+  self:T3( MaxThreatLevelA2G )
+  return MaxThreatLevelA2G
+  
+end
+
+
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self
 -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
@@ -15113,6 +15132,24 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 
   return nil
 end
+
+--- Calculate the maxium A2G threat level of the Group.
+-- @param #GROUP self
+function GROUP:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  for UnitName, UnitData in pairs( self:GetUnits() ) do
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+    end
+  end
+
+  self:T3( MaxThreatLevelA2G )
+  return MaxThreatLevelA2G
+end
+
 
 
 --- This module contains the UNIT class.
@@ -26586,6 +26623,11 @@ function COMMANDCENTER:SetMenu()
   self:F()
 
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission:RemoveMenu()
+  end
   
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
@@ -26865,13 +26907,23 @@ end
 
 --- Sets the Planned Task menu.
 -- @param #MISSION self
--- @param Core.Menu#MENU_COALITION CommandCenterMenu
 function MISSION:SetMenu()
   self:F()
   
   for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     Task:SetMenu()  
+  end
+end
+
+--- Removes the Planned Task menu.
+-- @param #MISSION self
+function MISSION:RemoveMenu()
+  self:F()
+  
+  for _, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    Task:RemoveMenu()  
   end
 end
 
@@ -28136,7 +28188,6 @@ function TASK:SetMenu()
 
   self.SetGroup:Flush()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:RemoveMenuForGroup( TaskGroup )
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( TaskGroup )
     end
@@ -28601,9 +28652,11 @@ function TASK:ReportDetails()
         PlayerNames[#PlayerNames+1] = PlayerName
       end
     end
-    PlayerNameText = table.concat( PlayerNames, ", " )
+    local PlayerNameText = table.concat( PlayerNames, ", " )
     Report:Add( "Task " .. Name .. " - State '" .. State .. "' - Players " .. PlayerNameText )
   end
+  
+  -- Loop each Process in the Task, and find Reporting Details.
 
   return Report:Text()
 end
@@ -29167,14 +29220,14 @@ do -- TASK_SEAD
     
     local Fsm = self:GetUnitProcess()
 
-    Fsm:AddProcess( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
-    Fsm:AddProcess( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
-    Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
-    Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
-    Fsm:AddAction ( "Accounted",  "Success",  "Success" )
-    Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
+    Fsm:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Eject" }  )
+    Fsm:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddTransition( "Rejected",   "Eject",    "Planned" )
+    Fsm:AddTransition( "Arrived",    "Update",   "Updated" ) 
+    Fsm:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddTransition( "Accounted",  "Success",  "Success" )
+    Fsm:AddTransition( "Failed",     "Fail",     "Failed" )
     
     function Fsm:onenterUpdated( TaskUnit )
       self:E( { self } )
@@ -29245,15 +29298,15 @@ do -- TASK_A2G
     
     local Fsm = self:GetUnitProcess()
 
-    Fsm:AddProcess( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
-    Fsm:AddProcess( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
-    Fsm:AddAction ( "Rejected",   "Eject",    "Planned" )
-    Fsm:AddAction ( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
-    Fsm:AddProcess( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
-    --Fsm:AddProcess( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
-    Fsm:AddAction ( "Accounted",  "Success",  "Success" )
-    Fsm:AddAction ( "Failed",     "Fail",     "Failed" )
+    Fsm:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+    Fsm:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    Fsm:AddTransition( "Rejected",   "Eject",    "Planned" )
+    Fsm:AddTransition( "Arrived",    "Update",   "Updated" ) 
+    Fsm:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    --Fsm:AddProcess ( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
+    Fsm:AddTransition( "Accounted",  "Success",  "Success" )
+    Fsm:AddTransition( "Failed",     "Fail",     "Failed" )
     
     function Fsm:onenterUpdated( TaskUnit )
       self:E( { self } )
