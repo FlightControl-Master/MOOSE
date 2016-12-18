@@ -142,6 +142,20 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 
 * [TASK_A2G](Documentation/Task_A2G.html): Models a A2G Task, where a Player is routed towards an attack zone, and various A2G targets need to be eliminated.
 
+## MOOSE Action Classes
+
+MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
+For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.
+
+* [ACT_ASSIGN](Documentation/Assign.html): Mechanism to accept a TASK by a player. For example, assign the task only after the player accepts the task using the menu.
+
+* [ACT_ROUTE](Documentation/Route.html): Mechanisms to route players to zones or any other positionable coordinate. For example, route a player towards a zone.
+
+* [ACT_ACCOUNT](Documentation/Account.html): Mechanisms to account various events within the simulator. For example, account the dead events, accounting dead units within a Target SET within a ZONE.
+
+* [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
+
+
 # MOOSE Tutorials and Examples
 
 You can download [test missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Test%20Missions) to have examples and learn the syntax and usage of the MOOSE classes.
