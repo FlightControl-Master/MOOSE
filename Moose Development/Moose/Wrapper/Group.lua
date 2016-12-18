@@ -865,4 +865,22 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
   return nil
 end
 
+--- Calculate the maxium A2G threat level of the Group.
+-- @param #GROUP self
+function GROUP:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  for UnitName, UnitData in pairs( self:GetUnits() ) do
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+    end
+  end
+
+  self:T3( MaxThreatLevelA2G )
+  return MaxThreatLevelA2G
+end
+
+
 

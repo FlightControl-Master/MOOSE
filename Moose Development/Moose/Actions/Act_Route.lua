@@ -144,13 +144,15 @@ do -- ACT_ROUTE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
+    self:F( { "BeforeRoute 1", self.DisplayCount, self.DisplayInterval } )
   
     if ProcessUnit:IsAlive() then
+      self:F( "BeforeRoute 2" )
       local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
         if not HasArrived then
-          self:__Report( 1 )
+          self:Report()
         end
         self.DisplayCount = 1
       else
@@ -208,6 +210,7 @@ do -- ACT_ROUTE_ZONE
   function ACT_ROUTE_ZONE:Init( FsmRoute )
   
     self.TargetZone = FsmRoute.TargetZone
+    
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true

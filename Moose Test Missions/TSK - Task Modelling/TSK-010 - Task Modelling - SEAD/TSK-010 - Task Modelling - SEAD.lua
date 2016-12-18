@@ -110,7 +110,11 @@ local TargetZone = ZONE:New( "Target Zone" )
 -- 2. The set of groups of planes that pilots can join.
 -- 3. The name of the Task... This can be any name, and will be provided when the Pilot joins the task.
 -- 4. A type of the Task. When Tasks are in state Planned, then a menu can be provided that group the task based on this given type.
-local SEADTask = TASK:New( Mission, SEADSet, "SEAD Radars Vector 1", "SEAD" ) -- Tasking.Task#TASK
+local SEADTask = TASK:New( 
+  Mission, 
+  SEADSet, 
+  "SEAD Radars Vector 1", 
+  "SEAD" ) -- Tasking.Task#TASK
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".

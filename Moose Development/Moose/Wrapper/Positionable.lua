@@ -280,12 +280,14 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return Core.Message#MESSAGE
-function POSITIONABLE:GetMessage( Message, Duration )
+function POSITIONABLE:GetMessage( Message, Duration, Name )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
+    Name = Name or self:GetTypeName()
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. Name .. ")" )
   end
 
   return nil
@@ -296,12 +298,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToAll( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToAll( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToAll()
+    self:GetMessage( Message, Duration, Name ):ToAll()
   end
 
   return nil
@@ -312,12 +315,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToCoalition( MessageCoalition )
+    self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
   end
 
   return nil
@@ -329,12 +333,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToRed( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToRed( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToRed()
+    self:GetMessage( Message, Duration, Name ):ToRed()
   end
 
   return nil
@@ -345,12 +350,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToBlue( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToBlue( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToBlue()
+    self:GetMessage( Message, Duration, Name ):ToBlue()
   end
 
   return nil
@@ -362,12 +368,13 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param Wrapper.Client#CLIENT Client The client object receiving the message.
-function POSITIONABLE:MessageToClient( Message, Duration, Client )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToClient( Client )
+    self:GetMessage( Message, Duration, Name ):ToClient( Client )
   end
 
   return nil
@@ -379,13 +386,14 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
-function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      self:GetMessage( Message, Duration ):ToGroup( MessageGroup )
+      self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
     end
   end
 
@@ -397,12 +405,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:Message( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:Message( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToGroup( self )
+    self:GetMessage( Message, Duration, Name ):ToGroup( self )
   end
 
   return nil

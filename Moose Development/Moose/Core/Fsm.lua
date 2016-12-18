@@ -550,6 +550,8 @@ do -- FSM_PROCESS
     return self:GetTask():GetMission():GetCommandCenter()
   end
   
+-- TODO: Need to check and fix that an FSM_PROCESS is only for a UNIT. Not for a GROUP.  
+  
   --- Send a message of the @{Task} to the Group of the Unit.
 -- @param #FSM_PROCESS self
 function FSM_PROCESS:Message( Message )
@@ -558,6 +560,12 @@ function FSM_PROCESS:Message( Message )
   local CC = self:GetCommandCenter()
   local TaskGroup = self.Controllable:GetGroup()
   
+  local PlayerName = self.Controllable:GetPlayerName() -- Only for a unit
+  PlayerName = PlayerName and " (" .. PlayerName .. ")" or "" -- If PlayerName is nil, then keep it nil, otherwise add brackets.
+  local Callsign = self.Controllable:GetCallsign()
+  local Prefix = Callsign and " @ " .. Callsign .. PlayerName or ""
+  
+  Message = Prefix .. ": " .. Message
   CC:MessageToGroup( Message, TaskGroup )
 end
 

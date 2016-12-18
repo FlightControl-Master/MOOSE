@@ -1,7 +1,7 @@
 
 local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
-local CommandCenter = COMMANDCENTER:New( HQ )
+local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
 
 local Scoring = SCORING:New( "Detect Demo" )
 

@@ -200,13 +200,23 @@ end
 
 --- Sets the Planned Task menu.
 -- @param #MISSION self
--- @param Core.Menu#MENU_COALITION CommandCenterMenu
 function MISSION:SetMenu()
   self:F()
   
   for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     Task:SetMenu()  
+  end
+end
+
+--- Removes the Planned Task menu.
+-- @param #MISSION self
+function MISSION:RemoveMenu()
+  self:F()
+  
+  for _, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    Task:RemoveMenu()  
   end
 end
 

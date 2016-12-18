@@ -1475,6 +1475,25 @@ function SET_UNIT:GetUnitThreatLevels()
   return UnitThreatLevels
 end
 
+--- Calculate the maxium A2G threat level of the SET_UNIT.
+-- @param #SET_UNIT self
+function SET_UNIT:CalculateThreatLevelA2G()
+  
+  local MaxThreatLevelA2G = 0
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    if ThreatLevelA2G > MaxThreatLevelA2G then
+      MaxThreatLevelA2G = ThreatLevelA2G
+    end
+  end
+
+  self:T3( MaxThreatLevelA2G )
+  return MaxThreatLevelA2G
+  
+end
+
+
 --- Returns if the @{Set} has targets having a radar (of a given type).
 -- @param #SET_UNIT self
 -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType

@@ -64,7 +64,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
 	
-	self.Missions = setmetatable( {}, { __mode = "v" } )
+	self.Missions = {}
 
   self:EventOnBirth(
     --- @param #COMMANDCENTER self
@@ -142,7 +142,7 @@ end
 -- @return #string
 function COMMANDCENTER:GetName()
 
-  return self.HQName
+  return self.CommandCenterName
 end
 
 --- Gets the POSITIONABLE of the HQ command center.
@@ -188,7 +188,12 @@ end
 function COMMANDCENTER:SetMenu()
   self:F()
 
-  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
+  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission:RemoveMenu()
+  end
   
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
@@ -218,9 +223,14 @@ end
 
 --- Send a CC message to a GROUP.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
+-- @param #string Message
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-    self:GetPositionable():MessageToGroup( Message , 20, TaskGroup )
+  local Prefix = Name and "@ Group (" .. Name .. "): " or ''
+  Message = Prefix .. Message 
+  self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 
 end
 

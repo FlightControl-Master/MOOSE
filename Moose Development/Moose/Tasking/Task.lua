@@ -439,7 +439,8 @@ function TASK:MessageToGroups( Message )
   local CC = Mission:GetCommandCenter()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    CC:MessageToGroup( Message, TaskGroup )
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    CC:MessageToGroup( Message, TaskGroup, TaskGroup:GetName() )
   end
 end
 
@@ -527,7 +528,6 @@ function TASK:SetMenu()
 
   self.SetGroup:Flush()
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:RemoveMenuForGroup( TaskGroup )
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( TaskGroup )
     end
@@ -873,7 +873,7 @@ function TASK:onenterAssigned( Event, From, To )
 
   self:E("Task Assigned")
   
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned!" )
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
   self:GetMission():__Start()
 end
 
@@ -992,9 +992,11 @@ function TASK:ReportDetails()
         PlayerNames[#PlayerNames+1] = PlayerName
       end
     end
-    PlayerNameText = table.concat( PlayerNames, ", " )
+    local PlayerNameText = table.concat( PlayerNames, ", " )
     Report:Add( "Task " .. Name .. " - State '" .. State .. "' - Players " .. PlayerNameText )
   end
+  
+  -- Loop each Process in the Task, and find Reporting Details.
 
   return Report:Text()
 end

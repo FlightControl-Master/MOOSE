@@ -382,7 +382,6 @@ do -- DETECTION_DISPATCHER
     if Task then
       if Task:IsStatePlanned() and DetectedArea.Changed == true then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Mission:RemoveTaskMenu( Task )
         Task = Mission:RemoveTask( Task )
       end
     end
@@ -486,7 +485,7 @@ do -- DETECTION_DISPATCHER
     end
     
     -- TODO set menus using the HQ coordinator
-    Mission:SetMenu()
+    Mission:GetCommandCenter():SetMenu()
     
     if #AreaMsg > 0 then
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
