@@ -104,6 +104,8 @@ The STATIC class derives from the POSITIONABLE class, thus contains also the pos
 
 ## MOOSE Functional Classes
 
+MOOSE Functional Classes provide various functions that are useful in mission design.
+
 * [SPAWN](Documentation/Spawn.html): Spawn new groups (and units) during mission execution.
 
 * [ESCORT](Moose Training/Documentation/Escort.html): Makes groups consisting of helicopters, airplanes, ground troops or ships within a mission joining your flight. You can control these groups through the ratio menu during your flight. Available commands are around: Navigation, Position Hold, Reporting (Target Detection), Attacking, Assisted Attacks, ROE, Evasion, Mission Execution and more ...
@@ -114,13 +116,31 @@ The STATIC class derives from the POSITIONABLE class, thus contains also the pos
 
 ## MOOSE AI Controlling Classes
 
+MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
+These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
+
 * [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
 * [AI_PATROLZONE](Documentation/AI_PatrolZone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
 
-* [FAC](Moose Training/Documentation/Fac.html): Using the DETECTION_BASE derived classes, detected objects can be reported in different ways to a set of clients (SET_CLIENT). FAC_BASE derived classes will provide target detection reporting and control using the radio menu. 
+* [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
-* [FOLLOW](Moose Training/Documentation/Follow.html): Build large air formations using the FOLLOW class.
+## MOOSE Tasking Classes
+
+MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
+Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
+Within each MISSION, various TASKs can be defined.
+Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a UNIT) within the simulator needs to follow and accomplish.
+
+* [COMMANDCENTER](Documentation/CommandCenter.html): Orchestrates various logical MISSIONs for a coalition.
+
+* [MISSION](Documentation/Mission.html): Each MISSION has various TASKs to be executed and accomplished by players.
+
+* [TASK](Documentation/Task.html): Each TASK has a status, and has a TASK ACTION flow for each Player acting and executing the TASK.
+
+* [TASK_SEAD](Documentation/Task_SEAD.html): Models a SEAD Task, where a Player is routed towards an attack zone, and various SEADing targets need to be eliminated.
+
+* [TASK_A2G](Documentation/Task_A2G.html): Models a A2G Task, where a Player is routed towards an attack zone, and various A2G targets need to be eliminated.
 
 # MOOSE Tutorials and Examples
 
