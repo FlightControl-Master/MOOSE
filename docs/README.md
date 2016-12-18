@@ -75,30 +75,30 @@ The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class
 MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
 Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
 
-* [OBJECT](Documentation/Object.html): This class provides the base for MOOSE objects.
+* **[OBJECT](Documentation/Object.html)**: This class provides the base for MOOSE objects.
 
-* [IDENTIFIABLE](Documentation/Identifiable.html): This class provides the base for MOOSE identifiable objects, which is every object within the simulator :-).
+* **[IDENTIFIABLE](Documentation/Identifiable.html)**: This class provides the base for MOOSE identifiable objects, which is every object within the simulator :-).
 
-* [POSITIONABLE](Documentation/Positionable.html): This class provides the base for MOOSE positionable objects. These are AIRBASEs, STATICs, GROUPs, UNITs ...
+* **[POSITIONABLE](Documentation/Positionable.html)**: This class provides the base for MOOSE positionable objects. These are AIRBASEs, STATICs, GROUPs, UNITs ...
 
-* [CONTROLLABLE](Documentation/Controllable.html): This class provides the base for MOOSE controllable objects. These are GROUPs, UNITs, CLIENTs.
+* **[CONTROLLABLE](Documentation/Controllable.html)**: This class provides the base for MOOSE controllable objects. These are GROUPs, UNITs, CLIENTs.
 
-* [AIRBASE](Documentation/Airbase.html): This class wraps a DCS Airbase object within the simulator.
+* **[AIRBASE](Documentation/Airbase.html)**: This class wraps a DCS Airbase object within the simulator.
 
-* [GROUP](Documentation/Group.html): This class wraps a DCS Group objects within the simulator, which are currently alive.  
+* **[GROUP](Documentation/Group.html)**: This class wraps a DCS Group objects within the simulator, which are currently alive.  
 It provides a more extensive API set.  
 It takes an abstraction of the complexity to give tasks, commands and set various options to DCS Groups.  
 Additionally, the GROUP class provides a much richer API to identify various properties of the DCS Group.  
 For each DCS Group created object within a running mission, a GROUP object will be created automatically, beging managed within the DATABASE.
 
-* [UNIT](Documentation/Unit.html): This class wraps a DCS Unit object within the simulator, which are currently alive. It provides a more extensive API set, as well takes an abstraction of the complexity to give commands and set various options to DCS Units. Additionally, the UNIT class provides a much richer API to identify various properties of the DCS Unit. For each DCS Unit object created within a running mission, a UNIT object will be created automatically, that is stored within the DATABASE, under the _DATABASE object.
+* **[UNIT](Documentation/Unit.html)**: This class wraps a DCS Unit object within the simulator, which are currently alive. It provides a more extensive API set, as well takes an abstraction of the complexity to give commands and set various options to DCS Units. Additionally, the UNIT class provides a much richer API to identify various properties of the DCS Unit. For each DCS Unit object created within a running mission, a UNIT object will be created automatically, that is stored within the DATABASE, under the _DATABASE object.
 the UNIT class provides a more extensive API set, taking an abstraction of the complexity to give tasks, commands and set various options to DCS Units.  
 For each DCS Unit created object within a running mission, a UNIT object will be created automatically, beging managed within the DATABASE.
 
-* [CLIENT](Documentation/Client.html): This class wraps a DCS Unit object within the simulator, which has a skill Client or Player.  
+* **[CLIENT](Documentation/Client.html)**: This class wraps a DCS Unit object within the simulator, which has a skill Client or Player.  
 The CLIENT class derives from the UNIT class, thus contains the complete UNIT API set, and additionally, the CLIENT class provides an API set to manage players joining or leaving clients, sending messages to players, and manage the state of units joined by players. For each DCS Unit object created within a running mission that can be joined by a player, a CLIENT object will be created automatically, that is stored within the DATABASE, under the _DATABASE object.
 
-* [STATIC](Documentation/Static.html): This class wraps a DCS StaticObject object within the simulator. 
+* **[STATIC](Documentation/Static.html)**: This class wraps a DCS StaticObject object within the simulator. 
 The STATIC class derives from the POSITIONABLE class, thus contains also the position API set.
 
 
