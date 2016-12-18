@@ -439,7 +439,8 @@ function TASK:MessageToGroups( Message )
   local CC = Mission:GetCommandCenter()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    CC:MessageToGroup( Message, TaskGroup )
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    CC:MessageToGroup( Message, TaskGroup, TaskGroup:GetName() )
   end
 end
 
@@ -872,7 +873,7 @@ function TASK:onenterAssigned( Event, From, To )
 
   self:E("Task Assigned")
   
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned!" )
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
   self:GetMission():__Start()
 end
 

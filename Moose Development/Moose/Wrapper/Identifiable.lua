@@ -210,6 +210,13 @@ function IDENTIFIABLE:GetDesc()
   return nil
 end
 
+--- Gets the CallSign of the IDENTIFIABLE, which is a blank by default.
+-- @param #IDENTIFIABLE self
+-- @return #string The CallSign of the IDENTIFIABLE.
+function IDENTIFIABLE:GetCallsign()
+  return ''
+end
+
 
 
 

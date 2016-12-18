@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20161218_0608' ) 
+env.info( 'Moose Generation Timestamp: 20161218_1138' ) 
 local base = _G
 
 Include = {}
@@ -11160,6 +11160,8 @@ do -- FSM_PROCESS
     return self:GetTask():GetMission():GetCommandCenter()
   end
   
+-- TODO: Need to check and fix that an FSM_PROCESS is only for a UNIT. Not for a GROUP.  
+  
   --- Send a message of the @{Task} to the Group of the Unit.
 -- @param #FSM_PROCESS self
 function FSM_PROCESS:Message( Message )
@@ -11168,6 +11170,12 @@ function FSM_PROCESS:Message( Message )
   local CC = self:GetCommandCenter()
   local TaskGroup = self.Controllable:GetGroup()
   
+  local PlayerName = self.Controllable:GetPlayerName() -- Only for a unit
+  PlayerName = PlayerName and " (" .. PlayerName .. ")" or "" -- If PlayerName is nil, then keep it nil, otherwise add brackets.
+  local Callsign = self.Controllable:GetCallsign()
+  local Prefix = Callsign and " @ " .. Callsign .. PlayerName or ""
+  
+  Message = Prefix .. ": " .. Message
   CC:MessageToGroup( Message, TaskGroup )
 end
 
@@ -11638,6 +11646,13 @@ function IDENTIFIABLE:GetDesc()
   return nil
 end
 
+--- Gets the CallSign of the IDENTIFIABLE, which is a blank by default.
+-- @param #IDENTIFIABLE self
+-- @return #string The CallSign of the IDENTIFIABLE.
+function IDENTIFIABLE:GetCallsign()
+  return ''
+end
+
 
 
 
@@ -11928,12 +11943,14 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return Core.Message#MESSAGE
-function POSITIONABLE:GetMessage( Message, Duration )
+function POSITIONABLE:GetMessage( Message, Duration, Name )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. self:GetTypeName() .. ")" )
+    Name = Name or self:GetTypeName()
+    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. Name .. ")" )
   end
 
   return nil
@@ -11944,12 +11961,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToAll( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToAll( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToAll()
+    self:GetMessage( Message, Duration, Name ):ToAll()
   end
 
   return nil
@@ -11960,12 +11978,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToCoalition( MessageCoalition )
+    self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
   end
 
   return nil
@@ -11977,12 +11996,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToRed( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToRed( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToRed()
+    self:GetMessage( Message, Duration, Name ):ToRed()
   end
 
   return nil
@@ -11993,12 +12013,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:MessageToBlue( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToBlue( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToBlue()
+    self:GetMessage( Message, Duration, Name ):ToBlue()
   end
 
   return nil
@@ -12010,12 +12031,13 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param Wrapper.Client#CLIENT Client The client object receiving the message.
-function POSITIONABLE:MessageToClient( Message, Duration, Client )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToClient( Client )
+    self:GetMessage( Message, Duration, Name ):ToClient( Client )
   end
 
   return nil
@@ -12027,13 +12049,14 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
-function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      self:GetMessage( Message, Duration ):ToGroup( MessageGroup )
+      self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
     end
   end
 
@@ -12045,12 +12068,13 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
-function POSITIONABLE:Message( Message, Duration )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:Message( Message, Duration, Name )
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    self:GetMessage( Message, Duration ):ToGroup( self )
+    self:GetMessage( Message, Duration, Name ):ToGroup( self )
   end
 
   return nil
@@ -25858,13 +25882,15 @@ do -- ACT_ROUTE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE:onbeforeRoute( ProcessUnit, Event, From, To )
+    self:F( { "BeforeRoute 1", self.DisplayCount, self.DisplayInterval } )
   
     if ProcessUnit:IsAlive() then
+      self:F( "BeforeRoute 2" )
       local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
         if not HasArrived then
-          self:__Report( 1 )
+          self:Report()
         end
         self.DisplayCount = 1
       else
@@ -25922,6 +25948,7 @@ do -- ACT_ROUTE_ZONE
   function ACT_ROUTE_ZONE:Init( FsmRoute )
   
     self.TargetZone = FsmRoute.TargetZone
+    
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
@@ -26498,7 +26525,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
 	
-	self.Missions = setmetatable( {}, { __mode = "v" } )
+	self.Missions = {}
 
   self:EventOnBirth(
     --- @param #COMMANDCENTER self
@@ -26576,7 +26603,7 @@ end
 -- @return #string
 function COMMANDCENTER:GetName()
 
-  return self.HQName
+  return self.CommandCenterName
 end
 
 --- Gets the POSITIONABLE of the HQ command center.
@@ -26622,7 +26649,7 @@ end
 function COMMANDCENTER:SetMenu()
   self:F()
 
-  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "HQ" )
+  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
@@ -26657,9 +26684,14 @@ end
 
 --- Send a CC message to a GROUP.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
+-- @param #string Message
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-    self:GetPositionable():MessageToGroup( Message , 20, TaskGroup )
+  local Prefix = Name and "@ Group (" .. Name .. "): " or ''
+  Message = Prefix .. Message 
+  self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 
 end
 
@@ -28100,7 +28132,8 @@ function TASK:MessageToGroups( Message )
   local CC = Mission:GetCommandCenter()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    CC:MessageToGroup( Message, TaskGroup )
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    CC:MessageToGroup( Message, TaskGroup, TaskGroup:GetName() )
   end
 end
 
@@ -28533,7 +28566,7 @@ function TASK:onenterAssigned( Event, From, To )
 
   self:E("Task Assigned")
   
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned!" )
+  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
   self:GetMission():__Start()
 end
 
@@ -29047,7 +29080,6 @@ do -- DETECTION_DISPATCHER
     if Task then
       if Task:IsStatePlanned() and DetectedArea.Changed == true then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Mission:RemoveTaskMenu( Task )
         Task = Mission:RemoveTask( Task )
       end
     end
@@ -29151,7 +29183,7 @@ do -- DETECTION_DISPATCHER
     end
     
     -- TODO set menus using the HQ coordinator
-    Mission:SetMenu()
+    Mission:GetCommandCenter():SetMenu()
     
     if #AreaMsg > 0 then
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
@@ -29296,19 +29328,19 @@ do -- TASK_A2G
     self.TargetZone = TargetZone
     self.FACUnit = FACUnit
     
-    local Fsm = self:GetUnitProcess()
+    local A2GUnitProcess = self:GetUnitProcess()
 
-    Fsm:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
-    Fsm:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
-    Fsm:AddTransition( "Rejected",   "Eject",    "Planned" )
-    Fsm:AddTransition( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
-    Fsm:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    A2GUnitProcess:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+    A2GUnitProcess:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    A2GUnitProcess:AddTransition( "Rejected",   "Eject",    "Planned" )
+    A2GUnitProcess:AddTransition( "Arrived",    "Update",   "Updated" ) 
+    A2GUnitProcess:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
+    A2GUnitProcess:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     --Fsm:AddProcess ( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
-    Fsm:AddTransition( "Accounted",  "Success",  "Success" )
-    Fsm:AddTransition( "Failed",     "Fail",     "Failed" )
+    A2GUnitProcess:AddTransition( "Accounted",  "Success",  "Success" )
+    A2GUnitProcess:AddTransition( "Failed",     "Fail",     "Failed" )
     
-    function Fsm:onenterUpdated( TaskUnit )
+    function A2GUnitProcess:onenterUpdated( TaskUnit )
       self:E( { self } )
       self:Account()
       self:Smoke()

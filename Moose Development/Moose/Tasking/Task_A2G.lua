@@ -45,19 +45,19 @@ do -- TASK_A2G
     self.TargetZone = TargetZone
     self.FACUnit = FACUnit
     
-    local Fsm = self:GetUnitProcess()
+    local A2GUnitProcess = self:GetUnitProcess()
 
-    Fsm:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
-    Fsm:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
-    Fsm:AddTransition( "Rejected",   "Eject",    "Planned" )
-    Fsm:AddTransition( "Arrived",    "Update",   "Updated" ) 
-    Fsm:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
-    Fsm:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    A2GUnitProcess:AddProcess   ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "Attack the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+    A2GUnitProcess:AddProcess   ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Update" } )
+    A2GUnitProcess:AddTransition( "Rejected",   "Eject",    "Planned" )
+    A2GUnitProcess:AddTransition( "Arrived",    "Update",   "Updated" ) 
+    A2GUnitProcess:AddProcess   ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "Attack" ), { Accounted = "Success" } )
+    A2GUnitProcess:AddProcess   ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
     --Fsm:AddProcess ( "Updated",    "JTAC",     PROCESS_JTAC:New( self, TaskUnit, self.TargetSetUnit, self.FACUnit  ) )
-    Fsm:AddTransition( "Accounted",  "Success",  "Success" )
-    Fsm:AddTransition( "Failed",     "Fail",     "Failed" )
+    A2GUnitProcess:AddTransition( "Accounted",  "Success",  "Success" )
+    A2GUnitProcess:AddTransition( "Failed",     "Fail",     "Failed" )
     
-    function Fsm:onenterUpdated( TaskUnit )
+    function A2GUnitProcess:onenterUpdated( TaskUnit )
       self:E( { self } )
       self:Account()
       self:Smoke()
