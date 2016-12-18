@@ -1,0 +1,1537 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li>Group</li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Group</code></h1>
+   
+<p>This module contains the GROUP class.</p>
+
+   
+
+<h1>1) <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> class, extends <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></h1>
+<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
+
+<ul>
+    <li>Support all DCS Group APIs.</li>
+    <li>Enhance with Group specific APIs not in the DCS Group API set.</li>
+    <li>Handle local Group Controller.</li>
+    <li>Manage the "state" of the DCS Group.</li>
+</ul>
+
+<p><strong>IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).</strong></p>
+
+<h2>1.1) GROUP reference methods</h2>
+<p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
+
+<p>The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the DCS Group or the DCS GroupName.</p>
+
+<p>Another thing to know is that GROUP objects do not "contain" the DCS Group object.
+The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
+If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:</p>
+
+<ul>
+    <li><a href="##(GROUP).Find">GROUP.Find</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group object.</li>
+    <li><a href="##(GROUP).FindByName">GROUP.FindByName</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group name.</li>
+</ul>
+
+<h2>1.2) GROUP task methods</h2>
+<p>Several group task methods are available that help you to prepare tasks. 
+These methods return a string consisting of the task description, which can then be given to either a <br/>
+<a href="Wrapper.Controllable.html##(CONTROLLABLE).PushTask">Wrapper.Controllable#CONTROLLABLE.PushTask</a> or <a href="Wrapper.Controllable.html##(CONTROLLABLE).SetTask">Wrapper.Controllable#CONTROLLABLE.SetTask</a> method to assign the task to the GROUP.
+Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
+Each task description where applicable indicates for which group category the task is valid.
+There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
+
+<h3>1.2.1) Assigned task methods</h3>
+
+<p>Assigned task methods make the group execute the task where the location of the (possible) targets of the task are known before being detected.
+This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.</p>
+
+<p>Find below a list of the <strong>assigned task</strong> methods:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskAttackGroup">Wrapper.Controllable#CONTROLLABLE.TaskAttackGroup</a>: (AIR) Attack a Group.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskAttackMapObject">Wrapper.Controllable#CONTROLLABLE.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskAttackUnit">Wrapper.Controllable#CONTROLLABLE.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskBombing">Wrapper.Controllable#CONTROLLABLE.TaskBombing</a>: (Wrapper.Controllable#CONTROLLABLEDelivering weapon at the point on the ground.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskBombingRunway">Wrapper.Controllable#CONTROLLABLE.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskEmbarking">Wrapper.Controllable#CONTROLLABLE.TaskEmbarking</a>: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskEmbarkToTransport">Wrapper.Controllable#CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskEscort">Wrapper.Controllable#CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne group. </li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskFAC_AttackGroup">Wrapper.Controllable#CONTROLLABLE.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskFireAtPoint">Wrapper.Controllable#CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskFollow">Wrapper.Controllable#CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne group.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskHold">Wrapper.Controllable#CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground group from moving.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskHoldPosition">Wrapper.Controllable#CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the group.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskLand">Wrapper.Controllable#CONTROLLABLE.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskLandAtZone">Wrapper.Controllable#CONTROLLABLE.TaskLandAtZone</a>: (AIR) Land the group at a <a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskOrbitCircle">Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskOrbitCircleAtVec2">Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskRefueling">Wrapper.Controllable#CONTROLLABLE.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskRoute">Wrapper.Controllable#CONTROLLABLE.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskRouteToVec2">Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec2</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskRouteToVec3">Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec3</a>: (AIR + GROUND) Make the Group move to a given point.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskRouteToZone">Wrapper.Controllable#CONTROLLABLE.TaskRouteToZone</a>: (AIR + GROUND) Route the group to a given zone.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskReturnToBase">Wrapper.Controllable#CONTROLLABLE.TaskReturnToBase</a>: (AIR) Route the group to an airbase.</li>
+</ul>
+
+<h3>1.2.2) EnRoute task methods</h3>
+
+<p>EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskAWACS">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskEngageGroup">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageGroup</a>: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskEngageTargets">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskEWR">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskFAC">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskFAC_EngageGroup">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup</a>: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).EnRouteTaskTanker">Wrapper.Controllable#CONTROLLABLE.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
+</ul>
+
+<h3>1.2.3) Preparation task methods</h3>
+
+<p>There are certain task methods that allow to tailor the task behaviour:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskWrappedAction">Wrapper.Controllable#CONTROLLABLE.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskCombo">Wrapper.Controllable#CONTROLLABLE.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskCondition">Wrapper.Controllable#CONTROLLABLE.TaskCondition</a>: Return a condition section for a controlled task.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskControlled">Wrapper.Controllable#CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
+</ul>
+
+<h3>1.2.4) Obtain the mission from group templates</h3>
+
+<p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskMission">Wrapper.Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+</ul>
+
+<h2>1.3) GROUP Command methods</h2>
+<p>Group <strong>command methods</strong> prepare the execution of commands using the <a href="Wrapper.Controllable.html##(CONTROLLABLE).SetCommand">Wrapper.Controllable#CONTROLLABLE.SetCommand</a> method:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).CommandDoScript">Wrapper.Controllable#CONTROLLABLE.CommandDoScript</a>: Do Script command.</li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).CommandSwitchWayPoint">Wrapper.Controllable#CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
+</ul>
+
+<h2>1.4) GROUP Option methods</h2>
+<p>Group <strong>Option methods</strong> change the behaviour of the Group while being alive.</p>
+
+<h3>1.4.1) Rule of Engagement:</h3>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEWeaponFree">Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFree</a> </li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEOpenFire">Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFire</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEReturnFire">Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFire</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEEvadeFire">Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFire</a></li>
+</ul>
+
+<p>To check whether an ROE option is valid for a specific group, use:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEWeaponFreePossible">Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFreePossible</a> </li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEOpenFirePossible">Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFirePossible</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEReturnFirePossible">Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFirePossible</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROEEvadeFirePossible">Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFirePossible</a></li>
+</ul>
+
+<h3>1.4.2) Rule on thread:</h3>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTNoReaction">Wrapper.Controllable#CONTROLLABLE.OptionROTNoReaction</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTPassiveDefense">Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefense</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTEvadeFire">Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFire</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTVertical">Wrapper.Controllable#CONTROLLABLE.OptionROTVertical</a></li>
+</ul>
+
+<p>To test whether an ROT option is valid for a specific group, use:</p>
+
+<ul>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTNoReactionPossible">Wrapper.Controllable#CONTROLLABLE.OptionROTNoReactionPossible</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTPassiveDefensePossible">Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTEvadeFirePossible">Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFirePossible</a></li>
+    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).OptionROTVerticalPossible">Wrapper.Controllable#CONTROLLABLE.OptionROTVerticalPossible</a></li>
+</ul>
+
+<h2>1.5) GROUP Zone validation methods</h2>
+<p>The group can be validated whether it is completely, partly or not within a <a href="Zone.html">Zone</a>.
+Use the following Zone validation methods on the group:</p>
+
+<ul>
+    <li><a href="##(GROUP).IsCompletelyInZone">GROUP.IsCompletelyInZone</a>: Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsPartlyInZone">GROUP.IsPartlyInZone</a>: Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsNotInZone">GROUP.IsNotInZone</a>: Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</li>
+</ul>
+
+<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#GROUP">GROUP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(GROUP)">Type <code>GROUP</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).Activate">GROUP:Activate()</a></td>
+		<td class="summary">
+<p>Activates a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).AllOnGround">GROUP:AllOnGround()</a></td>
+		<td class="summary">
+<p>Returns if all units of the group are on the ground or landed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).CalculateThreatLevelA2G">GROUP:CalculateThreatLevelA2G()</a></td>
+		<td class="summary">
+<p>Calculate the maxium A2G threat level of the Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).ClassName">GROUP.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).CopyRoute">GROUP:CopyRoute(Begin, End, Randomize, Radius)</a></td>
+		<td class="summary">
+<p>Return the route of a group by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).Destroy">GROUP:Destroy()</a></td>
+		<td class="summary">
+<p>Destroys the DCS Group and all of its DCS Units.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).Find">GROUP:Find(DCSGroup)</a></td>
+		<td class="summary">
+<p>Find the GROUP wrapper class instance using the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).FindByName">GROUP:FindByName(GroupName)</a></td>
+		<td class="summary">
+<p>Find the created GROUP using the DCS Group Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCallsign">GROUP:GetCallsign()</a></td>
+		<td class="summary">
+<p>Gets the CallSign of the first DCS Unit of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCategory">GROUP:GetCategory()</a></td>
+		<td class="summary">
+<p>Returns category of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCategoryName">GROUP:GetCategoryName()</a></td>
+		<td class="summary">
+<p>Returns the category name of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCoalition">GROUP:GetCoalition()</a></td>
+		<td class="summary">
+<p>Returns the coalition of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCountry">GROUP:GetCountry()</a></td>
+		<td class="summary">
+<p>Returns the country of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSObject">GROUP:GetDCSObject()</a></td>
+		<td class="summary">
+<p>Returns the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSUnit">GROUP:GetDCSUnit(UnitNumber)</a></td>
+		<td class="summary">
+<p>Returns the DCS Unit with number UnitNumber.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetDCSUnits">GROUP:GetDCSUnits()</a></td>
+		<td class="summary">
+<p>Returns the DCS Units of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetInitialSize">GROUP:GetInitialSize()</a></td>
+		<td class="summary">
+<ul>
+    <li>Returns the initial size of the DCS Group.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMaxHeight">GROUP:GetMaxHeight()</a></td>
+		<td class="summary">
+<p>Returns the current maximum height of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMaxVelocity">GROUP:GetMaxVelocity()</a></td>
+		<td class="summary">
+<p>Returns the current maximum velocity of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMinHeight">GROUP:GetMinHeight()</a></td>
+		<td class="summary">
+<p>Returns the current minimum height of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetSize">GROUP:GetSize()</a></td>
+		<td class="summary">
+<p>Returns current size of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTaskMission">GROUP:GetTaskMission()</a></td>
+		<td class="summary">
+<p>Return the mission template of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTaskRoute">GROUP:GetTaskRoute()</a></td>
+		<td class="summary">
+<p>Return the mission route of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTemplate">GROUP:GetTemplate()</a></td>
+		<td class="summary">
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTypeName">GROUP:GetTypeName()</a></td>
+		<td class="summary">
+<p>Gets the type name of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetUnit">GROUP:GetUnit(UnitNumber)</a></td>
+		<td class="summary">
+<p>Returns the UNIT wrapper class with number UnitNumber.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetUnits">GROUP:GetUnits()</a></td>
+		<td class="summary">
+<p>Returns the UNITs wrappers of the DCS Units of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec2">GROUP:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec3">GROUP:GetVec3()</a></td>
+		<td class="summary">
+<p>Returns the current Vec3 vector of the first DCS Unit in the GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GroupName">GROUP.GroupName</a></td>
+		<td class="summary">
+<p>The name of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAir">GROUP:IsAir()</a></td>
+		<td class="summary">
+<p>Returns if the group is of an air category.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAirPlane">GROUP:IsAirPlane()</a></td>
+		<td class="summary">
+<p>Returns if the DCS Group contains AirPlanes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAlive">GROUP:IsAlive()</a></td>
+		<td class="summary">
+<p>Returns if the DCS Group is alive.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsCompletelyInZone">GROUP:IsCompletelyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsGround">GROUP:IsGround()</a></td>
+		<td class="summary">
+<p>Returns if the DCS Group contains Ground troops.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsHelicopter">GROUP:IsHelicopter()</a></td>
+		<td class="summary">
+<p>Returns if the DCS Group contains Helicopters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsNotInZone">GROUP:IsNotInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsPartlyInZone">GROUP:IsPartlyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsShip">GROUP:IsShip()</a></td>
+		<td class="summary">
+<p>Returns if the DCS Group contains Ships.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).Register">GROUP:Register(GroupName)</a></td>
+		<td class="summary">
+<p>Create a new GROUP from a DCSGroup</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).Respawn">GROUP:Respawn(Template)</a></td>
+		<td class="summary">
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCoalition">GROUP:SetTemplateCoalition(CoalitionID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CoalitionID of the group in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateControlled">GROUP:SetTemplateControlled(Controlled, Template)</a></td>
+		<td class="summary">
+<p>Sets the controlled status in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCountry">GROUP:SetTemplateCountry(CountryID, Template)</a></td>
+		<td class="summary">
+<p>Sets the CountryID of the group in a Template.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(GROUP)">#GROUP</a></em>
+<a id="GROUP" >
+<strong>GROUP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Group)" >Type <code>Group</code></a></h2>
+	
+			<h2><a id="#(GROUP)" >Type <code>GROUP</code></a></h2>
+				
+<p>The GROUP class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).Activate" >
+<strong>GROUP:Activate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Activates a GROUP.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).AllOnGround" >
+<strong>GROUP:AllOnGround()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if all units of the group are on the ground or landed.</p>
+
+	
+<p>If all units of this group are on the ground, this function will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+All units on the ground result.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).CalculateThreatLevelA2G" >
+<strong>GROUP:CalculateThreatLevelA2G()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate the maxium A2G threat level of the Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(GROUP).ClassName" >
+<strong>GROUP.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).CopyRoute" >
+<strong>GROUP:CopyRoute(Begin, End, Randomize, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the route of a group by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Begin </em></code>: 
+The route point from where the copy will start. The base route point is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number End </em></code>: 
+The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Randomize </em></code>: 
+Randomization of the route, when true.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Radius </em></code>: 
+When randomization is on, the randomization is within the radius.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).Destroy" >
+<strong>GROUP:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destroys the DCS Group and all of its DCS Units.</p>
+
+	
+<p>Note that this destroy method also raises a destroy event at run-time.
+So all event listeners will catch the destroy event of this DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).Find" >
+<strong>GROUP:Find(DCSGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the GROUP wrapper class instance using the DCS Group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a> DCSGroup </em></code>: 
+The DCS Group.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+The GROUP.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).FindByName" >
+<strong>GROUP:FindByName(GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find the created GROUP using the DCS Group Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The DCS Group Name.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+The GROUP.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCallsign" >
+<strong>GROUP:GetCallsign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the CallSign of the first DCS Unit of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The CallSign of the first DCS Unit of the DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCategory" >
+<strong>GROUP:GetCategory()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns category of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSWrapper.Group.html##(Group.Category)">Dcs.DCSWrapper.Group#Group.Category</a>:</em>
+The category ID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCategoryName" >
+<strong>GROUP:GetCategoryName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the category name of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Category name = Helicopter, Airplane, Ground Unit, Ship</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCoalition" >
+<strong>GROUP:GetCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the coalition of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition.side)">Dcs.DCSCoalitionWrapper.Object#coalition.side</a>:</em>
+The coalition side of the DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCountry" >
+<strong>GROUP:GetCountry()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the country of the DCS Group.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Dcs.DCScountry.html##(country.id)">Dcs.DCScountry#country.id</a>:</em>
+The country identifier.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The DCS Group is not existing or alive.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetDCSObject" >
+<strong>GROUP:GetDCSObject()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a>:</em>
+The DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetDCSUnit" >
+<strong>GROUP:GetDCSUnit(UnitNumber)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Unit with number UnitNumber.</p>
+
+	
+<p>If the underlying DCS Unit does not exist, the method will return nil. .</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number UnitNumber </em></code>: 
+The number of the DCS Unit to be returned.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a>:</em>
+The DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetDCSUnits" >
+<strong>GROUP:GetDCSUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the DCS Units of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The DCS Units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetInitialSize" >
+<strong>GROUP:GetInitialSize()</strong>
+</a>
+</dt>
+<dd>
+	
+<ul>
+    <li>Returns the initial size of the DCS Group.</li>
+</ul>
+
+	
+<p>If some of the DCS Units of the DCS Group are destroyed, the initial size of the DCS Group is unchanged.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The DCS Group initial size.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetMaxHeight" >
+<strong>GROUP:GetMaxHeight()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current maximum height of the group.</p>
+
+	
+<p>Each unit within the group gets evaluated, and the maximum height (= the unit which is the highest elevated) is returned.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Maximum height found.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetMaxVelocity" >
+<strong>GROUP:GetMaxVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current maximum velocity of the group.</p>
+
+	
+<p>Each unit within the group gets evaluated, and the maximum velocity (= the unit which is going the fastest) is returned.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Maximum velocity found.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetMinHeight" >
+<strong>GROUP:GetMinHeight()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current minimum height of the group.</p>
+
+	
+<p>Each unit within the group gets evaluated, and the minimum height (= the unit which is the lowest elevated) is returned.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Minimum height found.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetSize" >
+<strong>GROUP:GetSize()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns current size of the DCS Group.</p>
+
+	
+<p>If some of the DCS Units of the DCS Group are destroyed the size of the DCS Group is changed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The DCS Group size.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetTaskMission" >
+<strong>GROUP:GetTaskMission()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the mission template of the group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The MissionTemplate</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetTaskRoute" >
+<strong>GROUP:GetTaskRoute()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the mission route of the group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The mission route defined by points.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetTemplate" >
+<strong>GROUP:GetTemplate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the group template from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetTypeName" >
+<strong>GROUP:GetTypeName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the type name of the group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The type name of the group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetUnit" >
+<strong>GROUP:GetUnit(UnitNumber)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the UNIT wrapper class with number UnitNumber.</p>
+
+	
+<p>If the underlying DCS Unit does not exist, the method will return nil. .</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number UnitNumber </em></code>: 
+The number of the UNIT wrapper class to be returned.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>:</em>
+The UNIT wrapper class.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetUnits" >
+<strong>GROUP:GetUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the UNITs wrappers of the DCS Units of the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The UNITs wrappers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetVec2" >
+<strong>GROUP:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+Current Vec2 point of the first DCS Unit of the DCS Group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetVec3" >
+<strong>GROUP:GetVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current Vec3 vector of the first DCS Unit in the GROUP.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+Current Vec3 of the first DCS Unit of the GROUP.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(GROUP).GroupName" >
+<strong>GROUP.GroupName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The name of the group.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsAir" >
+<strong>GROUP:IsAir()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the group is of an air category.</p>
+
+	
+<p>If the group is a helicopter or a plane, then this method will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Air category evaluation result.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsAirPlane" >
+<strong>GROUP:IsAirPlane()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the DCS Group contains AirPlanes.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if DCS Group contains AirPlanes.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsAlive" >
+<strong>GROUP:IsAlive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the DCS Group is alive.</p>
+
+	
+<p>When the group exists at run-time, this method will return true, otherwise false.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the DCS Group is alive.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsCompletelyInZone" >
+<strong>GROUP:IsCompletelyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsGround" >
+<strong>GROUP:IsGround()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the DCS Group contains Ground troops.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if DCS Group contains Ground troops.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsHelicopter" >
+<strong>GROUP:IsHelicopter()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the DCS Group contains Helicopters.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if DCS Group contains Helicopters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsNotInZone" >
+<strong>GROUP:IsNotInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsPartlyInZone" >
+<strong>GROUP:IsPartlyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
+The zone to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).IsShip" >
+<strong>GROUP:IsShip()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the DCS Group contains Ships.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if DCS Group contains Ships.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).Register" >
+<strong>GROUP:Register(GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new GROUP from a DCSGroup</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a> GroupName </em></code>: 
+The DCS Group name</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).Respawn" >
+<strong>GROUP:Respawn(Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
+
+	
+<p>The template must be retrieved with the <a href="Wrapper.Group.html##(GROUP).GetTemplate">Wrapper.Group#GROUP.GetTemplate</a>() function.
+The template contains all the definitions as declared within the mission file.
+To understand templates, do the following: </p>
+
+<ul>
+    <li>unpack your .miz file into a directory using 7-zip.</li>
+    <li>browse in the directory created to the file <strong>mission</strong>.</li>
+    <li>open the file and search for the country group definitions.</li>
+</ul>
+
+<p>Your group template will contain the fields as described within the mission file.</p>
+
+<p>This function will:</p>
+
+<ul>
+    <li>Get the current position and heading of the group.</li>
+    <li>When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.</li>
+    <li>Then it will destroy the current alive group.</li>
+    <li>And it will respawn the group using your new template definition.</li>
+</ul>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table Template </em></code>: 
+The template of the Group retrieved with GROUP:GetTemplate()</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCoalition" >
+<strong>GROUP:SetTemplateCoalition(CoalitionID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CoalitionID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition.side)">Dcs.DCSCoalitionWrapper.Object#coalition.side</a> CoalitionID </em></code>: 
+The coalition ID.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateControlled" >
+<strong>GROUP:SetTemplateControlled(Controlled, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the controlled status in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Controlled </em></code>: 
+true is controlled, false is uncontrolled.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).SetTemplateCountry" >
+<strong>GROUP:SetTemplateCountry(CountryID, Template)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the CountryID of the group in a Template.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScountry.html##(country.id)">Dcs.DCScountry#country.id</a> CountryID </em></code>: 
+The country ID.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Template </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

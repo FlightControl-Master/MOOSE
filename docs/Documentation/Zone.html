@@ -1,0 +1,2019 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li>Zone</li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Zone</code></h1>
+   
+<p>This module contains the ZONE classes, inherited from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>.</p>
+
+   
+<p>There are essentially two core functions that zones accomodate:</p>
+
+<ul>
+    <li>Test if an object is within the zone boundaries.</li>
+    <li>Provide the zone behaviour. Some zones are static, while others are moveable.</li>
+</ul>
+
+<p>The object classes are using the zone classes to test the zone boundaries, which can take various forms:</p>
+
+<ul>
+    <li>Test if completely within the zone.</li>
+    <li>Test if partly within the zone (for <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> objects).</li>
+    <li>Test if not in the zone.</li>
+    <li>Distance to the nearest intersecting point of the zone.</li>
+    <li>Distance to the center of the zone.</li>
+    <li>...</li>
+</ul>
+
+<p>Each of these ZONE classes have a zone name, and specific parameters defining the zone type:</p>
+
+<ul>
+    <li><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>: The ZONE_BASE class defining the base for all other zone classes.</li>
+    <li><a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a>: The ZONE_RADIUS class defined by a zone name, a location and a radius.</li>
+    <li><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>: The ZONE class, defined by the zone name as defined within the Mission Editor.</li>
+    <li><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>: The ZONE_UNIT class defines by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.</li>
+    <li><a href="Core.Zone.html##(ZONE_GROUP)">Core.Zone#ZONE_GROUP</a>: The ZONE_GROUP class defines by a zone around a <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> with a radius.</li>
+    <li><a href="Core.Zone.html##(ZONE_POLYGON)">Core.Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defines by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
+</ul>
+
+<hr/>
+
+<h1>1) <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<p>This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
+
+<h3>1.1) Each zone has a name:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
+</ul>
+
+<h3>1.2) Each zone implements two polymorphic functions defined in <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> is within the zone.</li>
+</ul>
+
+<h3>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).SetRandomizeProbability">ZONE_BASE.SetRandomizeProbability</a>(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
+    <li><a href="##(ZONE_BASE).GetRandomizeProbability">ZONE_BASE.GetRandomizeProbability</a>(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
+    <li><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE.GetZoneMaybe</a>(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.</li>
+</ul>
+
+<h3>1.4) A zone manages Vectors:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</li>
+</ul>
+
+<h3>1.5) A zone has a bounding square:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).GetBoundingSquare">ZONE_BASE.GetBoundingSquare</a>(): Get the outer most bounding square of the zone.</li>
+</ul>
+
+<h3>1.6) A zone can be marked:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).SmokeZone">ZONE_BASE.SmokeZone</a>(): Smokes the zone boundaries in a color.</li>
+    <li><a href="##(ZONE_BASE).FlareZone">ZONE_BASE.FlareZone</a>(): Flares the zone boundaries in a color.</li>
+</ul>
+
+<hr/>
+
+<h1>2) <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> class, extends <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></h1>
+<p>The ZONE<em>RADIUS class defined by a zone name, a location and a radius.
+This class implements the inherited functions from Core.Zone#ZONE</em>BASE taking into account the own zone format and properties.</p>
+
+<h3>2.1) <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> constructor:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).New">ZONE_BASE.New</a>(): Constructor.</li>
+</ul>
+
+<h3>2.2) Manage the radius of the zone:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).SetRadius">ZONE_BASE.SetRadius</a>(): Sets the radius of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRadius">ZONE_BASE.GetRadius</a>(): Returns the radius of the zone.</li>
+</ul>
+
+<h3>2.3) Manage the location of the zone:</h3>
+
+<ul>
+    <li><a href="##(ZONE_BASE).SetVec2">ZONE_BASE.SetVec2</a>(): Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec3">ZONE_BASE.GetVec3</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the zone, taking an additional height parameter.</li>
+</ul>
+
+<hr/>
+
+<h1>3) <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE class, defined by the zone name as defined within the Mission Editor.
+This class implements the inherited functions from {Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.</p>
+
+<hr/>
+
+<h1>4) <a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_UNIT class defined by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.
+This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+
+<hr/>
+
+<h1>5) <a href="Core.Zone.html##(ZONE_GROUP)">Core.Zone#ZONE_GROUP</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_GROUP class defines by a zone around a <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> with a radius. The current leader of the group defines the center of the zone.
+This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+
+<hr/>
+
+<h1>6) <a href="Core.Zone.html##(ZONE_POLYGON_BASE)">Core.Zone#ZONE<em>POLYGON</em>BASE</a> class, extends <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></h1>
+<p>The ZONE<em>POLYGON</em>BASE class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
+This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.
+This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
+
+<hr/>
+
+<h1>7) <a href="Core.Zone.html##(ZONE_POLYGON)">Core.Zone#ZONE_POLYGON</a> class, extends <a href="Core.Zone.html##(ZONE_POLYGON_BASE)">Core.Zone#ZONE<em>POLYGON</em>BASE</a></h1>
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
+This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2016-08-15: ZONE_BASE:<strong>GetName()</strong> added.</p>
+
+<p>2016-08-15: ZONE_BASE:<strong>SetZoneProbability( ZoneProbability )</strong> added.</p>
+
+<p>2016-08-15: ZONE_BASE:<strong>GetZoneProbability()</strong> added.</p>
+
+<p>2016-08-15: ZONE_BASE:<strong>GetZoneMaybe()</strong> added.</p>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE">ZONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_BASE">ZONE_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_GROUP">ZONE_GROUP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_POLYGON">ZONE_POLYGON</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_POLYGON_BASE">ZONE_POLYGON_BASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_RADIUS">ZONE_RADIUS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ZONE_UNIT">ZONE_UNIT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(ZONE)">Type <code>ZONE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE).ClassName">ZONE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE).New">ZONE:New(ZoneName)</a></td>
+		<td class="summary">
+<p>Constructor of ZONE, taking the zone name.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_BASE)">Type <code>ZONE_BASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ClassName">ZONE_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetBoundingSquare">ZONE_BASE:GetBoundingSquare()</a></td>
+		<td class="summary">
+<p>Get the bounding square the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetName">ZONE_BASE:GetName()</a></td>
+		<td class="summary">
+<p>Returns the name of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetVec2">ZONE_BASE:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE:GetZoneMaybe()</a></td>
+		<td class="summary">
+<p>Get the zone taking into account the randomization probability of a zone to be selected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetZoneProbability">ZONE_BASE:GetZoneProbability()</a></td>
+		<td class="summary">
+<p>Get the randomization probability of a zone to be selected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(Vec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE:IsPointVec3InZone(Vec3)</a></td>
+		<td class="summary">
+<p>Returns if a point is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).New">ZONE_BASE:New(ZoneName)</a></td>
+		<td class="summary">
+<p>ZONE_BASE constructor</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetZoneProbability">ZONE_BASE:SetZoneProbability(ZoneProbability)</a></td>
+		<td class="summary">
+<p>Set the randomization probability of a zone to be selected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SmokeZone">ZONE_BASE:SmokeZone(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneName">ZONE_BASE.ZoneName</a></td>
+		<td class="summary">
+<p>Name of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ZoneProbability">ZONE_BASE.ZoneProbability</a></td>
+		<td class="summary">
+<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_BASE.BoundingSquare)">Type <code>ZONE_BASE.BoundingSquare</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).x1">ZONE_BASE.BoundingSquare.x1</a></td>
+		<td class="summary">
+<p>The lower x coordinate (left down)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).x2">ZONE_BASE.BoundingSquare.x2</a></td>
+		<td class="summary">
+<p>The higher x coordinate (right up)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).y1">ZONE_BASE.BoundingSquare.y1</a></td>
+		<td class="summary">
+<p>The lower y coordinate (left down)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE.BoundingSquare).y2">ZONE_BASE.BoundingSquare.y2</a></td>
+		<td class="summary">
+<p>The higher y coordinate (right up)</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_GROUP)">Type <code>ZONE_GROUP</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).ClassName">ZONE_GROUP.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomVec2">ZONE_GROUP:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetVec2">ZONE_GROUP:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the current location of the <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).New">ZONE_GROUP:New(ZoneName, ZoneGROUP, Radius)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).ZoneGROUP">ZONE_GROUP.ZoneGROUP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_POLYGON)">Type <code>ZONE_POLYGON</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).ClassName">ZONE_POLYGON.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> defined within the Mission Editor.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_POLYGON_BASE)">Type <code>ZONE_POLYGON_BASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).ClassName">ZONE_POLYGON_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Flush">ZONE_POLYGON_BASE:Flush()</a></td>
+		<td class="summary">
+<p>Flush polygon coordinates as a table in DCS.log.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetBoundingSquare">ZONE_POLYGON_BASE:GetBoundingSquare()</a></td>
+		<td class="summary">
+<p>Get the bounding square the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomVec2">ZONE_POLYGON_BASE:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsPointVec2InZone">ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).New">ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Polygon">ZONE_POLYGON_BASE.Polygon</a></td>
+		<td class="summary">
+<p>The polygon defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).SmokeZone">ZONE_POLYGON_BASE:SmokeZone(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_RADIUS)">Type <code>ZONE_RADIUS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ClassName">ZONE_RADIUS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
+		<td class="summary">
+<p>Flares the zone boundaries in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRadius">ZONE_RADIUS:GetRadius()</a></td>
+		<td class="summary">
+<p>Returns the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec2">ZONE_RADIUS:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec3">ZONE_RADIUS:GetVec3(Height)</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec2InZone">ZONE_RADIUS:IsPointVec2InZone(Vec2)</a></td>
+		<td class="summary">
+<p>Returns if a location is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec3InZone">ZONE_RADIUS:IsPointVec3InZone(Vec3)</a></td>
+		<td class="summary">
+<p>Returns if a point is within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).New">ZONE_RADIUS:New(ZoneName, Vec2, Radius)</a></td>
+		<td class="summary">
+<p>Constructor of <a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>, taking the zone name, the zone location and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Radius">ZONE_RADIUS.Radius</a></td>
+		<td class="summary">
+<p>The radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetRadius">ZONE_RADIUS:SetRadius(Radius)</a></td>
+		<td class="summary">
+<p>Sets the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetVec2">ZONE_RADIUS:SetVec2(Vec2)</a></td>
+		<td class="summary">
+<p>Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points)</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Vec2">ZONE_RADIUS.Vec2</a></td>
+		<td class="summary">
+<p>The current location of the zone.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ZONE_UNIT)">Type <code>ZONE_UNIT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).ClassName">ZONE_UNIT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetRandomVec2">ZONE_UNIT:GetRandomVec2()</a></td>
+		<td class="summary">
+<p>Returns a random location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetVec2">ZONE_UNIT:GetVec2()</a></td>
+		<td class="summary">
+<p>Returns the current location of the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetVec3">ZONE_UNIT:GetVec3(Height)</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).LastVec2">ZONE_UNIT.LastVec2</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).New">ZONE_UNIT:New(ZoneName, ZoneUNIT, Radius)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).ZoneUNIT">ZONE_UNIT.ZoneUNIT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE)">#ZONE</a></em>
+<a id="ZONE" >
+<strong>ZONE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_BASE)">#ZONE_BASE</a></em>
+<a id="ZONE_BASE" >
+<strong>ZONE_BASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_GROUP)">#ZONE_GROUP</a></em>
+<a id="ZONE_GROUP" >
+<strong>ZONE_GROUP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a></em>
+<a id="ZONE_POLYGON" >
+<strong>ZONE_POLYGON</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON_BASE)">#ZONE_POLYGON_BASE</a></em>
+<a id="ZONE_POLYGON_BASE" >
+<strong>ZONE_POLYGON_BASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a></em>
+<a id="ZONE_RADIUS" >
+<strong>ZONE_RADIUS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_UNIT)">#ZONE_UNIT</a></em>
+<a id="ZONE_UNIT" >
+<strong>ZONE_UNIT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Zone)" >Type <code>Zone</code></a></h2>
+	
+			<h2><a id="#(ZONE)" >Type <code>ZONE</code></a></h2>
+				
+<p>The ZONE class, defined by the zone name as defined within the Mission Editor.</p>
+
+	
+<p>The location and the radius are automatically collected from the mission settings.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE).ClassName" >
+<strong>ZONE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE).New" >
+<strong>ZONE:New(ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor of ZONE, taking the zone name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+The name of the zone as defined within the mission editor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE)">#ZONE</a>:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_BASE)" >Type <code>ZONE_BASE</code></a></h2>
+				
+<p>The ZONE_BASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_BASE).ClassName" >
+<strong>ZONE_BASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetBoundingSquare" >
+<strong>ZONE_BASE:GetBoundingSquare()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the bounding square the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The bounding square.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetName" >
+<strong>ZONE_BASE:GetName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the name of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The name of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetRandomVec2" >
+<strong>ZONE_BASE:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The Vec2 coordinates.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetVec2" >
+<strong>ZONE_BASE:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetZoneMaybe" >
+<strong>ZONE_BASE:GetZoneMaybe()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the zone taking into account the randomization probability of a zone to be selected.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="##(ZONE_BASE)">#ZONE_BASE</a>:</em>
+The zone is selected taking into account the randomization probability factor.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The zone is not selected taking into account the randomization probability factor.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetZoneProbability" >
+<strong>ZONE_BASE:GetZoneProbability()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the randomization probability of a zone to be selected.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).IsPointVec2InZone" >
+<strong>ZONE_BASE:IsPointVec2InZone(Vec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).IsPointVec3InZone" >
+<strong>ZONE_BASE:IsPointVec3InZone(Vec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a point is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
+The point to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the point is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).New" >
+<strong>ZONE_BASE:New(ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>ZONE_BASE constructor</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_BASE)">#ZONE_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).SetZoneProbability" >
+<strong>ZONE_BASE:SetZoneProbability(ZoneProbability)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the randomization probability of a zone to be selected.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ZoneProbability </em></code>: 
+A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).SmokeZone" >
+<strong>ZONE_BASE:SmokeZone(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(SMOKECOLOR)">Utilities.Utils#SMOKECOLOR</a> SmokeColor </em></code>: 
+The smoke color.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_BASE).ZoneName" >
+<strong>ZONE_BASE.ZoneName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Name of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ZONE_BASE).ZoneProbability" >
+<strong>ZONE_BASE.ZoneProbability</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_BASE.BoundingSquare)" >Type <code>ZONE_BASE.BoundingSquare</code></a></h2>
+				
+<p>The ZONE_BASE.BoundingSquare</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).x1" >
+<strong>ZONE_BASE.BoundingSquare.x1</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The lower x coordinate (left down)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).x2" >
+<strong>ZONE_BASE.BoundingSquare.x2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The higher x coordinate (right up)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).y1" >
+<strong>ZONE_BASE.BoundingSquare.y1</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The lower y coordinate (left down)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(ZONE_BASE.BoundingSquare).y2" >
+<strong>ZONE_BASE.BoundingSquare.y2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The higher y coordinate (right up)</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_GROUP)" >Type <code>ZONE_GROUP</code></a></h2>
+				
+<p>The ZONE_GROUP class defined by a zone around a <a href="Group.html">Group</a>, taking the average center point of all the units within the Group, with a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_GROUP).ClassName" >
+<strong>ZONE_GROUP.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).GetRandomVec2" >
+<strong>ZONE_GROUP:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The random location of the zone based on the <a href="Group.html">Group</a> location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).GetVec2" >
+<strong>ZONE_GROUP:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current location of the <a href="Group.html">Group</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The location of the zone based on the <a href="Group.html">Group</a> location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).New" >
+<strong>ZONE_GROUP:New(ZoneName, ZoneGROUP, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ZoneGROUP </em></code>: 
+The <a href="Group.html">Group</a> as the center of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_GROUP)">#ZONE_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
+<a id="#(ZONE_GROUP).ZoneGROUP" >
+<strong>ZONE_GROUP.ZoneGROUP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
+				
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_POLYGON).ClassName" >
+<strong>ZONE_POLYGON.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).New" >
+<strong>ZONE_POLYGON:New(ZoneName, ZoneGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> defined within the Mission Editor.</p>
+
+	
+<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ZoneGroup </em></code>: 
+The GROUP waypoints as defined within the Mission Editor define the polygon shape.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_POLYGON_BASE)" >Type <code>ZONE_POLYGON_BASE</code></a></h2>
+				
+<p>The ZONE<em>POLYGON</em>BASE class defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_POLYGON_BASE).ClassName" >
+<strong>ZONE_POLYGON_BASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).Flush" >
+<strong>ZONE_POLYGON_BASE:Flush()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flush polygon coordinates as a table in DCS.log.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetBoundingSquare" >
+<strong>ZONE_POLYGON_BASE:GetBoundingSquare()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the bounding square the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE.BoundingSquare)">#ZONE<em>POLYGON</em>BASE.BoundingSquare</a>:</em>
+The bounding square.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetRandomVec2" >
+<strong>ZONE_POLYGON_BASE:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The Vec2 coordinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).IsPointVec2InZone" >
+<strong>ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+	
+<p>Source learned and taken from: https://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).New" >
+<strong>ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+
+	
+<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE<em>POLYGON</em>BASE.ListVec2</a> PointsArray </em></code>: 
+An array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon..</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE_POLYGON_BASE.ListVec2</a></em>
+<a id="#(ZONE_POLYGON_BASE).Polygon" >
+<strong>ZONE_POLYGON_BASE.Polygon</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The polygon defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).SmokeZone" >
+<strong>ZONE_POLYGON_BASE:SmokeZone(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(SMOKECOLOR)">Utilities.Utils#SMOKECOLOR</a> SmokeColor </em></code>: 
+The smoke color.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_POLYGON_BASE.BoundingSquare)" >Type <code>ZONE_POLYGON_BASE.BoundingSquare</code></a></h2>
+			
+			<h2><a id="#(ZONE_POLYGON_BASE.ListVec2)" >Type <code>ZONE_POLYGON_BASE.ListVec2</code></a></h2>
+				
+<p>A points array.</p>
+
+
+			<h2><a id="#(ZONE_RADIUS)" >Type <code>ZONE_RADIUS</code></a></h2>
+				
+<p>The ZONE_RADIUS class, defined by a zone name, a location and a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_RADIUS).ClassName" >
+<strong>ZONE_RADIUS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).FlareZone" >
+<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Flares the zone boundaries in a color.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(FLARECOLOR)">Utilities.Utils#FLARECOLOR</a> FlareColor </em></code>: 
+The flare color.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Points </em></code>: 
+(optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Azimuth </em></code>: 
+(optional) Azimuth The azimuth of the flare.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRadius" >
+<strong>ZONE_RADIUS:GetRadius()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the radius of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
+The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomVec2" >
+<strong>ZONE_RADIUS:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The random location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetVec2" >
+<strong>ZONE_RADIUS:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetVec3" >
+<strong>ZONE_RADIUS:GetVec3(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+The point of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsPointVec2InZone" >
+<strong>ZONE_RADIUS:IsPointVec2InZone(Vec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a location is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The location to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the location is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsPointVec3InZone" >
+<strong>ZONE_RADIUS:IsPointVec3InZone(Vec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a point is within the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
+The point to test.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the point is within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).New" >
+<strong>ZONE_RADIUS:New(ZoneName, Vec2, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor of <a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>, taking the zone name, the zone location and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The location of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(ZONE_RADIUS).Radius" >
+<strong>ZONE_RADIUS.Radius</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SetRadius" >
+<strong>ZONE_RADIUS:SetRadius(Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the radius of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
+The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SetVec2" >
+<strong>ZONE_RADIUS:SetVec2(Vec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The new location of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The new location of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SmokeZone" >
+<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(SMOKECOLOR)">Utilities.Utils#SMOKECOLOR</a> SmokeColor </em></code>: 
+The smoke color.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Points </em></code>: 
+(optional) The amount of points in the circle.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a></em>
+<a id="#(ZONE_RADIUS).Vec2" >
+<strong>ZONE_RADIUS.Vec2</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The current location of the zone.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ZONE_UNIT)" >Type <code>ZONE_UNIT</code></a></h2>
+				
+<p>The ZONE_UNIT class defined by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ZONE_UNIT).ClassName" >
+<strong>ZONE_UNIT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetRandomVec2" >
+<strong>ZONE_UNIT:GetRandomVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random location within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The random location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetVec2" >
+<strong>ZONE_UNIT:GetVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the current location of the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+The location of the zone based on the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>location.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).GetVec3" >
+<strong>ZONE_UNIT:GetVec3(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+The point of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_UNIT).LastVec2" >
+<strong>ZONE_UNIT.LastVec2</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_UNIT).New" >
+<strong>ZONE_UNIT:New(ZoneName, ZoneUNIT, Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_UNIT instance, taking the zone name, a zone unit and a radius.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ZoneUNIT </em></code>: 
+The unit as the center of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+The radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_UNIT)">#ZONE_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
+<a id="#(ZONE_UNIT).ZoneUNIT" >
+<strong>ZONE_UNIT.ZoneUNIT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li>Airbase</li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Patrol.html">Patrol</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Airbase</code></h1>
+   
+<p>This module contains the AIRBASE classes.</p>
+
+   
+
+<hr/>
+
+<h1>1) <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> class, extends <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></h1>
+<p>The <a href="AIRBASE.html">AIRBASE</a> class is a wrapper class to handle the DCS Airbase objects:</p>
+
+<ul>
+    <li>Support all DCS Airbase APIs.</li>
+    <li>Enhance with Airbase specific APIs not in the DCS Airbase API set.</li>
+</ul>
+
+
+<h2>1.1) AIRBASE reference methods</h2>
+<p>For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The AIRBASE class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
+using the DCS Airbase or the DCS AirbaseName.</p>
+
+<p>Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
+If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:</p>
+
+<ul>
+    <li><a href="##(AIRBASE).Find">AIRBASE.Find</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.</li>
+    <li><a href="##(AIRBASE).FindByName">AIRBASE.FindByName</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).</p>
+
+<h2>1.2) DCS AIRBASE APIs</h2>
+<p>The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
+To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
+the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="Dcs.DCSWrapper.Airbase.html##(Airbase).getName">Dcs.DCSWrapper.Airbase#Airbase.getName</a>()
+is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.GetName</a>().</p>
+
+<h2>More functions will be added</h2>
+<p>During the MOOSE development, more functions will be added. </p>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AIRBASE">AIRBASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(AIRBASE)">Type <code>AIRBASE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).CategoryName">AIRBASE.CategoryName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).ClassName">AIRBASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).Find">AIRBASE:Find(DCSAirbase)</a></td>
+		<td class="summary">
+<p>Finds a AIRBASE from the _DATABASE using a DCSAirbase object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).FindByName">AIRBASE:FindByName(AirbaseName)</a></td>
+		<td class="summary">
+<p>Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).GetDCSObject">AIRBASE:GetDCSObject()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).Register">AIRBASE:Register(AirbaseName)</a></td>
+		<td class="summary">
+<p>Create a new AIRBASE from DCSAirbase.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AIRBASE)">#AIRBASE</a></em>
+<a id="AIRBASE" >
+<strong>AIRBASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Airbase)" >Type <code>Airbase</code></a></h2>
+	
+			<h2><a id="#(AIRBASE)" >Type <code>AIRBASE</code></a></h2>
+				
+<p>The AIRBASE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AIRBASE).CategoryName" >
+<strong>AIRBASE.CategoryName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(AIRBASE).ClassName" >
+<strong>AIRBASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASE).Find" >
+<strong>AIRBASE:Find(DCSAirbase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a AIRBASE from the _DATABASE using a DCSAirbase object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWrapper.Airbase.html##(Airbase)">Dcs.DCSWrapper.Airbase#Airbase</a> DCSAirbase </em></code>: 
+An existing DCS Airbase object reference.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASE).FindByName" >
+<strong>AIRBASE:FindByName(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find a AIRBASE in the _DATABASE using the name of an existing DCS Airbase.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AirbaseName </em></code>: 
+The Airbase Name.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASE).GetDCSObject" >
+<strong>AIRBASE:GetDCSObject()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASE).Register" >
+<strong>AIRBASE:Register(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new AIRBASE from DCSAirbase.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AirbaseName </em></code>: 
+The name of the airbase.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em></p>
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>
