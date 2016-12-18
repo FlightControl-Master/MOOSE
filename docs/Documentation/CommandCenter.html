@@ -71,7 +71,6 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -180,7 +179,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</a></td>
 		<td class="summary">
 <p>Send a CC message to a GROUP.</p>
 </td>
@@ -506,7 +505,7 @@ Group#GROUP</p>
 <dt>
 
 <a id="#(COMMANDCENTER).MessageToGroup" >
-<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup)</strong>
+<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -517,12 +516,18 @@ Group#GROUP</p>
 		<ul>
 				<li>
 				
-<p><code><em> Message </em></code>: </p>
+<p><code><em>#string Message </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(sring)">#sring</a> Name </em></code>: 
+(optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.</p>
 
 				</li>
 		</ul>
@@ -757,6 +762,8 @@ Group#GROUP</p>
 			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
 			
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
 			
 </div>
 

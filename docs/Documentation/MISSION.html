@@ -71,7 +71,6 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -361,6 +360,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveMenu">MISSION:RemoveMenu()</a></td>
+		<td class="summary">
+<p>Removes the Planned Task menu.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveTask">MISSION:RemoveTask(Task)</a></td>
 		<td class="summary">
 <p>Removes a <a href="Task.html">Task</a> to be completed within the <a href="Mission.html">Mission</a>.</p>
@@ -415,7 +420,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMenu">MISSION:SetMenu(CommandCenterMenu)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMenu">MISSION:SetMenu()</a></td>
 		<td class="summary">
 <p>Sets the Planned Task menu.</p>
 </td>
@@ -1567,6 +1572,19 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).RemoveMenu" >
+<strong>MISSION:RemoveMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes the Planned Task menu.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).RemoveTask" >
 <strong>MISSION:RemoveTask(Task)</strong>
 </a>
@@ -1752,21 +1770,13 @@ self</p>
 <dt>
 
 <a id="#(MISSION).SetMenu" >
-<strong>MISSION:SetMenu(CommandCenterMenu)</strong>
+<strong>MISSION:SetMenu()</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sets the Planned Task menu.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a> CommandCenterMenu </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">

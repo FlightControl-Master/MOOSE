@@ -71,7 +71,6 @@
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
-					<li><a href="Task_Client_Menu.html">Task_Client_Menu</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
@@ -156,7 +155,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetMessage">POSITIONABLE:GetMessage(Message, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetMessage">POSITIONABLE:GetMessage(Message, Duration, Name)</a></td>
 		<td class="summary">
 <p>Returns a message with the callsign embedded (if there is one).</p>
 </td>
@@ -216,43 +215,43 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).Message">POSITIONABLE:Message(Message, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).Message">POSITIONABLE:Message(Message, Duration, Name)</a></td>
 		<td class="summary">
 <p>Send a message to the players in the <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToAll">POSITIONABLE:MessageToAll(Message, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToAll">POSITIONABLE:MessageToAll(Message, Duration, Name)</a></td>
 		<td class="summary">
 <p>Send a message to all coalitions.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToBlue">POSITIONABLE:MessageToBlue(Message, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToBlue">POSITIONABLE:MessageToBlue(Message, Duration, Name)</a></td>
 		<td class="summary">
 <p>Send a message to the blue coalition.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToClient">POSITIONABLE:MessageToClient(Message, Duration, Client)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToClient">POSITIONABLE:MessageToClient(Message, Duration, Client, Name)</a></td>
 		<td class="summary">
 <p>Send a message to a client.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</a></td>
 		<td class="summary">
 <p>Send a message to a coalition.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToGroup">POSITIONABLE:MessageToGroup(Message, Duration, MessageGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToGroup">POSITIONABLE:MessageToGroup(Message, Duration, MessageGroup, Name)</a></td>
 		<td class="summary">
 <p>Send a message to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToRed">POSITIONABLE:MessageToRed(Message, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToRed">POSITIONABLE:MessageToRed(Message, Duration, Name)</a></td>
 		<td class="summary">
 <p>Send a message to the red coalition.</p>
 </td>
@@ -376,7 +375,7 @@ The POSTIONABLE heading</p>
 <dt>
 
 <a id="#(POSITIONABLE).GetMessage" >
-<strong>POSITIONABLE:GetMessage(Message, Duration)</strong>
+<strong>POSITIONABLE:GetMessage(Message, Duration, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -395,6 +394,12 @@ The message text</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Duration)">Dcs.DCSTypes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
 
 				</li>
 		</ul>
@@ -669,7 +674,7 @@ The POSITIONABLE is not existing or alive.  </p>
 <dt>
 
 <a id="#(POSITIONABLE).Message" >
-<strong>POSITIONABLE:Message(Message, Duration)</strong>
+<strong>POSITIONABLE:Message(Message, Duration, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -693,6 +698,12 @@ The message text</p>
 The duration of the message.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -700,7 +711,7 @@ The duration of the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToAll" >
-<strong>POSITIONABLE:MessageToAll(Message, Duration)</strong>
+<strong>POSITIONABLE:MessageToAll(Message, Duration, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -724,6 +735,12 @@ The message text</p>
 The duration of the message.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -731,7 +748,7 @@ The duration of the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToBlue" >
-<strong>POSITIONABLE:MessageToBlue(Message, Duration)</strong>
+<strong>POSITIONABLE:MessageToBlue(Message, Duration, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -755,6 +772,12 @@ The message text</p>
 The duration of the message.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -762,7 +785,7 @@ The duration of the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToClient" >
-<strong>POSITIONABLE:MessageToClient(Message, Duration, Client)</strong>
+<strong>POSITIONABLE:MessageToClient(Message, Duration, Client, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -792,6 +815,12 @@ The duration of the message.</p>
 The client object receiving the message.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -799,7 +828,7 @@ The client object receiving the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToCoalition" >
-<strong>POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition)</strong>
+<strong>POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</strong>
 </a>
 </dt>
 <dd>
@@ -825,6 +854,12 @@ The duration of the message.</p>
 				</li>
 				<li>
 				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
+				<li>
+				
 <p><code><em> MessageCoalition </em></code>: </p>
 
 				</li>
@@ -835,7 +870,7 @@ The duration of the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToGroup" >
-<strong>POSITIONABLE:MessageToGroup(Message, Duration, MessageGroup)</strong>
+<strong>POSITIONABLE:MessageToGroup(Message, Duration, MessageGroup, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -865,6 +900,12 @@ The duration of the message.</p>
 The GROUP object receiving the message.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -872,7 +913,7 @@ The GROUP object receiving the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToRed" >
-<strong>POSITIONABLE:MessageToRed(Message, Duration)</strong>
+<strong>POSITIONABLE:MessageToRed(Message, Duration, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -894,6 +935,12 @@ The message text</p>
 				
 <p><code><em><a href="Dcs.DCSTYpes.html##(Duration)">Dcs.DCSTYpes#Duration</a> Duration </em></code>: 
 The duration of the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
 
 				</li>
 		</ul>
