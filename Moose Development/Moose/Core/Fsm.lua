@@ -1,4 +1,5 @@
---- This module contains the FSM class.
+--- This module contains the FSM class and derived FSM_ classes.
+-- 
 -- This development is based on a state machine implementation made by Conroy Kyle.
 -- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
 --
@@ -7,13 +8,45 @@
 --
 -- ===
 --
--- 1) @{Workflow#FSM} class, extends @{Core.Base#BASE}
--- ==============================================
+-- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
+-- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
+--   * A **State** defines a moment in the process.
+--   * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
+-- 
+-- 
 -- 1.1) Add or remove objects from the FSM
 -- --------------------------------------------
+--
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+--   * 2016-12-18: Released.
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * None.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+--
 -- @module Fsm
--- @author FlightControl
 
 do -- FSM
 
