@@ -126,7 +126,7 @@ local SEADTask = TASK:New(
 -- The reason why this is done, is that each unit as a role within the Task, and can have different status.
 -- Therefore, the FsmSEAD is a TEMPLATE PROCESS of the TASK, and must be designed as a UNIT with a player is executing that PROCESS. 
 
-local SEADProcess = SEADTask:GetUnitProcess()
+local SEADProcess = SEADTask:GetUnitProcess() -- #SEADProcess
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
@@ -139,6 +139,7 @@ local SEADProcess = SEADTask:GetUnitProcess()
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
+
 SEADProcess:AddProcess    ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
 
 -- Same, adding a process.

@@ -69,7 +69,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function MISSION:onbeforeComplete( Event, From, To )
+function MISSION:onbeforeComplete( From, Event, To )
 
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
@@ -85,7 +85,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function MISSION:onenterCompleted( Event, From, To )
+function MISSION:onenterCompleted( From, Event, To )
 
   self:GetCommandCenter():MessageToCoalition( "Mission " .. self:GetName() .. " has been completed! Good job guys!" )
 end

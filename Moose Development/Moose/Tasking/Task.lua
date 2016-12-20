@@ -869,7 +869,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterAssigned( Event, From, To )
+function TASK:onenterAssigned( From, Event, To )
 
   self:E("Task Assigned")
   
@@ -883,7 +883,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterSuccess( Event, From, To )
+function TASK:onenterSuccess( From, Event, To )
 
   self:E( "Task Success" )
   
@@ -900,7 +900,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterAborted( Event, From, To )
+function TASK:onenterAborted( From, Event, To )
 
   self:E( "Task Aborted" )
 
@@ -914,7 +914,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterFailed( Event, From, To )
+function TASK:onenterFailed( From, Event, To )
 
   self:E( "Task Failed" )
 
@@ -928,7 +928,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onstatechange( Event, From, To )
+function TASK:onstatechange( From, Event, To )
 
   if self:IsTrace() then
     MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()

@@ -3,7 +3,7 @@
 -- This development is based on a state machine implementation made by Conroy Kyle.
 -- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
 --
--- I've taken the development and enhanced it to make the state machine hierarchical...
+-- I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
 -- It is a fantastic development, this module.
 --
 -- ===
@@ -271,7 +271,7 @@ do -- FSM
   
     if can then
       local from = self.current
-      local params = { EventName, from, to, ...  }
+      local params = { from, EventName, to, ...  }
   
       if self:_call_handler("onbefore" .. EventName, params) == false
         or self:_call_handler("onleave" .. from, params) == false then
@@ -661,8 +661,8 @@ end
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
-    self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
+  function FSM_PROCESS:onstatechange( ProcessUnit, From, Event, To, Dummy )
+    self:E( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
