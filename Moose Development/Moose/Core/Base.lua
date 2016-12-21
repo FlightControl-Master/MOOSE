@@ -122,13 +122,31 @@
 --   * @{#BASE.Inherit}: Inherits from a class.
 --   * @{#BASE.GetParent}: Returns the parent object from the object it is handling, or nil if there is no parent object.
 --   
--- Future
--- ======
--- Further methods may be added to BASE whenever there is a need to make "overall" functions available within MOOSE.
--- 
 -- ====
 -- 
--- ### Author: FlightControl
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * None.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
 -- 
 -- @module Base
 

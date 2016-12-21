@@ -70,7 +70,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_JTAC:OnStart( Fsm, Event, From, To )
+function PROCESS_JTAC:OnStart( Fsm, From, Event, To )
 
   self:NextEvent( Fsm.JTACMenuUpdate )
 end
@@ -81,7 +81,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, Event, From, To )
+function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, From, Event, To )
 
   local function JTACMenuSpot( MenuParam )
     self:E( MenuParam.TargetUnit.UnitName )
@@ -127,7 +127,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_JTAC:OnJTACMenuAwait( Fsm, Event, From, To )
+function PROCESS_JTAC:OnJTACMenuAwait( Fsm, From, Event, To )
 
   if self.DisplayCount >= self.DisplayInterval then
 
@@ -152,7 +152,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT TargetUnit
-function PROCESS_JTAC:OnJTACMenuSpot( Fsm, Event, From, To, TargetUnit )
+function PROCESS_JTAC:OnJTACMenuSpot( Fsm, From, Event, To, TargetUnit )
 
   local TargetUnitName = TargetUnit:GetName()
   
@@ -179,7 +179,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT TargetUnit
-function PROCESS_JTAC:OnJTACMenuCancel( Fsm, Event, From, To, TargetUnit )
+function PROCESS_JTAC:OnJTACMenuCancel( Fsm, From, Event, To, TargetUnit )
 
   local TargetUnitName = TargetUnit:GetName()
   

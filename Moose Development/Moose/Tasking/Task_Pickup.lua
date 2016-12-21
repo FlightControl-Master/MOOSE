@@ -103,7 +103,7 @@ do -- TASK_PICKUP
   -- @param #string From
   -- @param #string To
   -- @param Event#EVENTDATA Event
-  function TASK_PICKUP:OnNext( Fsm, Event, From, To, Event )
+  function TASK_PICKUP:OnNext( Fsm, From, Event, To, Event )
   
     self:SetState( self, "State", To )
   

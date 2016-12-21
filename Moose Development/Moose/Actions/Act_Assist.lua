@@ -105,7 +105,7 @@ do -- ACT_ASSIST
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIST:onafterStart( ProcessUnit, Event, From, To )
+  function ACT_ASSIST:onafterStart( ProcessUnit, From, Event, To )
   
     local ProcessGroup = ProcessUnit:GetGroup()
     local MissionMenu = self:GetMission():GetMissionMenu( ProcessGroup )
@@ -184,7 +184,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, Event, From, To )
+  function ACT_ASSIST_SMOKE_TARGETS_ZONE:onenterSmoking( ProcessUnit, From, Event, To )
     
     self.TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit

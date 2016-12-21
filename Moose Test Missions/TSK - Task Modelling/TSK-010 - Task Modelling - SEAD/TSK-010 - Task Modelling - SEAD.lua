@@ -126,7 +126,7 @@ local SEADTask = TASK:New(
 -- The reason why this is done, is that each unit as a role within the Task, and can have different status.
 -- Therefore, the FsmSEAD is a TEMPLATE PROCESS of the TASK, and must be designed as a UNIT with a player is executing that PROCESS. 
 
-local SEADProcess = SEADTask:GetUnitProcess()
+local SEADProcess = SEADTask:GetUnitProcess() -- #SEADProcess
 
 -- Adding a new sub-process to the Task Template.
 -- At first, the task needs to be accepted by a pilot.
@@ -139,10 +139,90 @@ local SEADProcess = SEADTask:GetUnitProcess()
 --   4.1 When the return state is Assigned, fire the event in the Task FsmSEAD:Route()
 --   4.2 When the return state is Rejected, fire the event in the Task FsmSEAD:Eject()
 -- All other AddProcess calls are working in a similar manner.
-SEADProcess:AddProcess    ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+
+
+--SEADProcess:AddProcess    ( "Planned",    "Accept",   ACT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } )
+
+do SEADProcess:AddProcess( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( "SEAD the Area" ), { Assigned = "Route", Rejected = "Eject" } ) -- FSM SUB for type SEADProcess.
+	
+	--- OnLeave State Transition for Planned.
+  -- @function [parent=#SEADProcess] OnLeavePlanned
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+	
+	--- OnBefore State Transition for Accept.
+  -- @function [parent=#SEADProcess] OnBeforeAccept
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Accept.
+  -- @function [parent=#SEADProcess] OnAfterAccept
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Accept.
+  -- @function [parent=#SEADProcess] Accept
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Accept
+  -- @function [parent=#SEADProcess] __Accept
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
 
 -- Same, adding a process.
-SEADProcess:AddProcess    ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
+--SEADProcess:AddProcess    ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } )
+
+do SEADProcess:AddProcess( "Assigned", "Route", ACT_ROUTE_ZONE:New( TargetZone ), { Arrived = "Update" } ) -- FSM SUB for type SEADProcess.
+
+	--- OnLeave State Transition for Assigned.
+  -- @function [parent=#SEADProcess] OnLeaveAssigned
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+	
+	--- OnBefore State Transition for Route.
+  -- @function [parent=#SEADProcess] OnBeforeRoute
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Route.
+  -- @function [parent=#SEADProcess] OnAfterRoute
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Route.
+  -- @function [parent=#SEADProcess] Route
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Route
+  -- @function [parent=#SEADProcess] __Route
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
 
 -- Adding a new Action... 
 -- Actions define also the flow of the Task, but the actions will need to be programmed within your script.
@@ -151,12 +231,272 @@ SEADProcess:AddProcess    ( "Assigned",   "Route",    ACT_ROUTE_ZONE:New( Target
 -- 1. State From "Rejected". When the FsmSEAD is in state "Rejected", the event "Eject" can be fired.
 -- 2. Event "Eject". This event can be triggered synchronously through FsmSEAD:Eject() or asynchronously through FsmSEAD:__Eject(secs).
 -- 3. State To "Planned". After the event has been fired, the FsmSEAD will transition to Planned.
-SEADProcess:AddTransition ( "Rejected",   "Eject",    "Planned" )
-SEADProcess:AddTransition ( "Arrived",    "Update",   "Updated" ) 
-SEADProcess:AddProcess    ( "Updated",    "Account",  ACT_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } )
-SEADProcess:AddProcess    ( "Updated",    "Smoke",    ACT_ASSIST_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) )
-SEADProcess:AddTransition ( "Accounted",  "Success",  "Success" )
-SEADProcess:AddTransition ( "*",          "Fail",     "Failed" )
+do SEADProcess:AddTransition( "Rejected", "Eject", "Planned" ) -- FSM_CONTROLLABLE TRANSITION for type SEADProcess.
+	
+	--- OnLeave State Transition for Rejected.
+  -- @function [parent=#SEADProcess] OnLeaveRejected
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Planned.
+  -- @function [parent=#SEADProcess] OnEnterPlanned
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Eject.
+  -- @function [parent=#SEADProcess] OnBeforeEject
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Eject.
+  -- @function [parent=#SEADProcess] OnAfterEject
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #SEADProcess self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Eject.
+  -- @function [parent=#SEADProcess] Eject
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Eject
+  -- @function [parent=#SEADProcess] __Eject
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
+do SEADProcess:AddTransition( "Arrived", "Update", "Updated" ) -- FSM_CONTROLLABLE TRANSITION for type SEADProcess.
+
+	SEADProcess:AddTransition( "Arrived", "Update", "Updated" )
+	
+	--- OnLeave State Transition for Arrived.
+  -- @function [parent=#SEADProcess] OnLeaveArrived
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Updated.
+  -- @function [parent=#SEADProcess] OnEnterUpdated
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Update.
+  -- @function [parent=#SEADProcess] OnBeforeUpdate
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Update.
+  -- @function [parent=#SEADProcess] OnAfterUpdate
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #SEADProcess self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Update.
+  -- @function [parent=#SEADProcess] Update
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Update
+  -- @function [parent=#SEADProcess] __Update
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
+
+do SEADProcess:AddProcess( "Updated", "Account", ACT_ACCOUNT_DEADS:New( TargetSet, "SEAD" ), { Accounted = "Success" } ) -- FSM_CONTROLLABLE Process for #SEADProcess.
+	
+	--- OnLeave State Transition for Updated.
+  -- @function [parent=#SEADProcess] OnLeaveUpdated
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+	
+	--- OnBefore State Transition for Account.
+  -- @function [parent=#SEADProcess] OnBeforeAccount
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Account.
+  -- @function [parent=#SEADProcess] OnAfterAccount
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Account.
+  -- @function [parent=#SEADProcess] Account
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Account
+  -- @function [parent=#SEADProcess] __Account
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
+
+do SEADProcess:AddProcess( "Updated", "Smoke", ACT_ASSIST_SMOKE_TARGETS_ZONE:New( TargetSet, TargetZone ) ) -- FSM_CONTROLLABLE Process for #SEADProcess.
+	
+	--- OnLeave State Transition for Updated.
+  -- @function [parent=#SEADProcess] OnLeaveUpdated
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+	
+	--- OnBefore State Transition for Smoke.
+  -- @function [parent=#SEADProcess] OnBeforeSmoke
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Smoke.
+  -- @function [parent=#SEADProcess] OnAfterSmoke
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Smoke.
+  -- @function [parent=#SEADProcess] Smoke
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Smoke
+  -- @function [parent=#SEADProcess] __Smoke
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
+
+do SEADProcess:AddTransition( "Accounted", "Success", "Success" ) -- FSM_CONTROLLABLE Transition for type #SEADProcess.
+
+	--- OnLeave State Transition for Accounted.
+  -- @function [parent=#SEADProcess] OnLeaveAccounted
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Success.
+  -- @function [parent=#SEADProcess] OnEnterSuccess
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Success.
+  -- @function [parent=#SEADProcess] OnBeforeSuccess
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Success.
+  -- @function [parent=#SEADProcess] OnAfterSuccess
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #SEADProcess self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Success.
+  -- @function [parent=#SEADProcess] Success
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Success
+  -- @function [parent=#SEADProcess] __Success
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
+
+do SEADProcess:AddTransition( "*", "Fail", "Failed" ) -- FSM_CONTROLLABLE Transition for type #SEADProcess.
+
+	--- OnLeave State Transition for *.
+  -- @function [parent=#SEADProcess] OnLeave*
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Failed.
+  -- @function [parent=#SEADProcess] OnEnterFailed
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Fail.
+  -- @function [parent=#SEADProcess] OnBeforeFail
+  -- @param #SEADProcess self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Fail.
+  -- @function [parent=#SEADProcess] OnAfterFail
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #SEADProcess self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Fail.
+  -- @function [parent=#SEADProcess] Fail
+  -- @param #SEADProcess self
+
+	--- Delayed Event Trigger for Fail
+  -- @function [parent=#SEADProcess] __Fail
+  -- @param #SEADProcess self
+  -- @param #number Delay The delay in seconds.
+
+end -- SEADProcess
 
 SEADProcess:AddScoreProcess( "Updated", "Account", "Account", "destroyed a radar", 25 )
 SEADProcess:AddScoreProcess( "Updated", "Account", "Failed", "failed to destroy a radar", -10 )
@@ -166,7 +506,7 @@ SEADProcess:AddScoreProcess( "Updated", "Account", "Failed", "failed to destroy 
 SEADProcess:AddScore( "Success", "Destroyed all target radars", 250 )
 SEADProcess:AddScore( "Failed", "Failed to destroy all target radars", -100 )
 
-function SEADProcess:onenterUpdated( TaskUnit )
+function SEADProcess:OnEnterUpdated(Controllable,From,Event,To)
   self:E( { self } )
   self:Account()
   self:Smoke()

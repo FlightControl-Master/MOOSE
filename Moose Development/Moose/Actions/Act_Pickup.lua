@@ -61,7 +61,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_PICKUP:OnStart( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnStart( Fsm, From, Event, To )
 
   self:NextEvent( Fsm.Start )
 end
@@ -72,7 +72,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_PICKUP:OnNavigating( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnNavigating( Fsm, From, Event, To )
 
   local TaskGroup = self.ProcessUnit:GetGroup()
   if self.DisplayCount >= self.DisplayInterval then
@@ -94,7 +94,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Core.Event#EVENTDATA Event
-function PROCESS_PICKUP:OnHitTarget( Fsm, Event, From, To, Event )
+function PROCESS_PICKUP:OnHitTarget( Fsm, From, Event, To, Event )
 
 
   self.TargetSetUnit:Flush()
@@ -119,7 +119,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_PICKUP:OnMoreTargets( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnMoreTargets( Fsm, From, Event, To )
 
 
 end
@@ -131,7 +131,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Core.Event#EVENTDATA DCSEvent
-function PROCESS_PICKUP:OnKilled( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnKilled( Fsm, From, Event, To )
 
   self:NextEvent( Fsm.Restart )
 
@@ -143,7 +143,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_PICKUP:OnRestart( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnRestart( Fsm, From, Event, To )
 
   self:NextEvent( Fsm.Menu )
 
@@ -155,7 +155,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function PROCESS_PICKUP:OnDestroyed( Fsm, Event, From, To )
+function PROCESS_PICKUP:OnDestroyed( Fsm, From, Event, To )
 
 end
 

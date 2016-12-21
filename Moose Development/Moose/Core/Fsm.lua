@@ -1,19 +1,80 @@
---- This module contains the FSM class.
+--- This module contains the FSM class and derived FSM_ classes.
+-- 
 -- This development is based on a state machine implementation made by Conroy Kyle.
 -- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
 --
--- I've taken the development and enhanced it to make the state machine hierarchical...
+-- I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
 -- It is a fantastic development, this module.
 --
 -- ===
 --
--- 1) @{Workflow#FSM} class, extends @{Core.Base#BASE}
--- ==============================================
+-- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
--- 1.1) Add or remove objects from the FSM
--- --------------------------------------------
+-- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
+-- 
+--    * A **State** defines a moment in the process.
+--    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
+-- 
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia3.jpg)
+-- 
+-- An FSM transitions in **4 moments** when an Event is being handled.  
+-- Each moment can be catched by handling methods defined by the mission designer,  
+-- that will be called by the FSM while executing the transition.  
+-- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.
+--
+--    * To catch State moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+--    * To catch Event moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- 
+-- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
+-- 
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia4.jpg)
+-- 
+-- The FSM creates for each Event **two Event trigger methods**.  
+-- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
+-- 
+--    * The **FSM:Event()** creates an Event that will be processed **embedded** or immediately.
+--    * The **FSM:__Event( seconds )** creates an Event that will be processed **delayed** over time, waiting x seconds.
+-- 
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia5.jpg)
+-- 
+-- 1.1) Define the FSM Rules
+-- -------------------------
+-- 
+-- The FSM can be defined by using 3 methods:
+-- 
+--    * @{#FSM.SetStartState}(): Define the **Start State** of the FSM. This is the State the FSM will have when nothing is processed yet.
+--    * @{#FSM.AddTransition}(): Adds a new possible Transition Rule to the FSM. A Transition will change the State of the FSM upon the defined triggered Event.
+--    * @{#FSM.AddProcess}(): Adds a new Sub-Process FSM to the FSM. A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, with multiple possible States as a result.
+--
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+--   * 2016-12-18: Released.
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * None.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+--
 -- @module Fsm
--- @author FlightControl
 
 do -- FSM
 
@@ -238,7 +299,7 @@ do -- FSM
   
     if can then
       local from = self.current
-      local params = { EventName, from, to, ...  }
+      local params = { from, EventName, to, ...  }
   
       if self:_call_handler("onbefore" .. EventName, params) == false
         or self:_call_handler("onleave" .. from, params) == false then
@@ -628,8 +689,8 @@ end
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_PROCESS:onstatechange( ProcessUnit, Event, From, To, Dummy )
-    self:E( { ProcessUnit, Event, From, To, Dummy, self:IsTrace() } )
+  function FSM_PROCESS:onstatechange( ProcessUnit, From, Event, To, Dummy )
+    self:E( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()

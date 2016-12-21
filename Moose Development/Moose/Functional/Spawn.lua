@@ -1,7 +1,7 @@
 --- This module contains the SPAWN class.
 -- 
--- 1) @{Functional.Spawn#SPAWN} class, extends @{Core.Base#BASE}
--- =============================================
+-- # 1) @{Functional.Spawn#SPAWN} class, extends @{Core.Base#BASE}
+-- 
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
 -- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
@@ -24,8 +24,8 @@
 --   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
 --   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
 --   
--- 1.1) SPAWN construction methods
--- -------------------------------
+-- ## 1.1) SPAWN construction methods
+-- 
 -- Create a new SPAWN object with the @{#SPAWN.New}() or the @{#SPAWN.NewWithAlias}() methods:
 -- 
 --   * @{#SPAWN.New}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
@@ -35,8 +35,8 @@
 -- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
 -- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
 --
--- 1.2) SPAWN initialization methods
--- ---------------------------------
+-- ## 1.2) SPAWN initialization methods
+-- 
 -- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
 -- 
 --   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
@@ -48,8 +48,8 @@
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 -- 
--- 1.3) SPAWN spawning methods
--- ---------------------------
+-- ## 1.3) SPAWN spawning methods
+-- 
 -- Groups can be spawned at different times and methods:
 -- 
 --   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
@@ -64,8 +64,8 @@
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
 --  
--- 1.4) Retrieve alive GROUPs spawned by the SPAWN object
--- ------------------------------------------------------
+-- ## 1.4) Retrieve alive GROUPs spawned by the SPAWN object
+-- 
 -- The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
 -- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
 -- SPAWN provides methods to iterate through that internal GROUP object reference table:
@@ -77,8 +77,8 @@
 -- You can use the methods @{#SPAWN.GetFirstAliveGroup}() and sequently @{#SPAWN.GetNextAliveGroup}() to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
 -- The method @{#SPAWN.GetGroupFromIndex}() will return the GROUP object reference from the given Index, dead or alive...
 -- 
--- 1.5) SPAWN object cleaning
--- --------------------------
+-- ## 1.5) SPAWN object cleaning
+-- 
 -- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
 -- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
 -- and it may occur that no new groups are or can be spawned as limits are reached.
@@ -89,8 +89,8 @@
 -- This models AI that has succesfully returned to their airbase, to restart their combat activities.
 -- Check the @{#SPAWN.InitCleanUp}() for further info.
 -- 
--- 1.6) Catch the @{Group} spawn event in a callback function!
--- -----------------------------------------------------------
+-- ## 1.6) Catch the @{Group} spawn event in a callback function!
+-- 
 -- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
 -- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
 -- To SPAWN class supports this functionality through the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally. 
@@ -100,8 +100,7 @@
 -- 
 -- ====
 -- 
--- **API CHANGE HISTORY**
--- ======================
+-- # **API CHANGE HISTORY**
 -- 
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
 -- 
@@ -177,8 +176,7 @@
 -- 
 -- ===
 -- 
--- AUTHORS and CONTRIBUTIONS
--- =========================
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
 -- ### Contributions: 
 -- 
@@ -187,7 +185,6 @@
 -- ### Authors: 
 -- 
 --   * **FlightControl**: Design & Programming
--- 
 -- 
 -- @module Spawn
 
