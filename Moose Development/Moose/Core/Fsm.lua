@@ -11,12 +11,40 @@
 -- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
 -- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
---   * A **State** defines a moment in the process.
---   * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
 -- 
+--    * A **State** defines a moment in the process.
+--    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
 -- 
--- 1.1) Add or remove objects from the FSM
--- --------------------------------------------
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia3.jpg)
+-- 
+-- An FSM transitions in **4 moments** when an Event is being handled.  
+-- Each moment can be catched by handling methods defined by the mission designer,  
+-- that will be called by the FSM while executing the transition.  
+-- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.
+--
+--    * To catch State moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+--    * To catch Event moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- 
+-- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
+-- 
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia4.jpg)
+-- 
+-- The FSM creates for each Event **two Event trigger methods**.  
+-- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
+-- 
+--    * The **FSM:Event()** creates an Event that will be processed **embedded** or immediately.
+--    * The **FSM:__Event( seconds )** creates an Event that will be processed **delayed** over time, waiting x seconds.
+-- 
+--    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia5.jpg)
+-- 
+-- 1.1) Define the FSM Rules
+-- -------------------------
+-- 
+-- The FSM can be defined by using 3 methods:
+-- 
+--    * @{#FSM.SetStartState}(): Define the **Start State** of the FSM. This is the State the FSM will have when nothing is processed yet.
+--    * @{#FSM.AddTransition}(): Adds a new possible Transition Rule to the FSM. A Transition will change the State of the FSM upon the defined triggered Event.
+--    * @{#FSM.AddProcess}(): Adds a new Sub-Process FSM to the FSM. A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, with multiple possible States as a result.
 --
 -- ====
 -- 

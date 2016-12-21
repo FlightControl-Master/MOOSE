@@ -84,20 +84,99 @@
 	<div id="content">
    <h1>Module <code>Fsm</code></h1>
    
-<p>This module contains the FSM class.</p>
+<p>This module contains the FSM class and derived FSM_ classes.</p>
 
    
+
 <p>This development is based on a state machine implementation made by Conroy Kyle.
 The state machine can be found here: https://github.com/kyleconroy/lua-state-machine</p>
 
-<p>I've taken the development and enhanced it to make the state machine hierarchical...
+<p>I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
 It is a fantastic development, this module.</p>
 
 <hr/>
 
-<h1>1) <a href="Workflow.html##(FSM)">Workflow#FSM</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="Core.Fsm.html##(FSM)">Core.Fsm#FSM</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
 
-<h2>1.1) Add or remove objects from the FSM</h2>
+<p>A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.</p>
+
+<ul>
+    <li>A <strong>State</strong> defines a moment in the process.</li>
+    <li>An <strong>Event</strong> describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.</li>
+</ul>
+
+<p>   <img src="../Presentations/MOOSE - FSM - 1. Concepts/Dia3.jpg" alt="Test Image"/></p>
+
+<p>An FSM transitions in <strong>4 moments</strong> when an Event is being handled. <br/>
+Each moment can be catched by handling methods defined by the mission designer, <br/>
+that will be called by the FSM while executing the transition. <br/>
+These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.</p>
+
+<ul>
+    <li>To catch State moments, create methods starting with OnLeave or OnEnter concatenated with the State name.</li>
+    <li>To catch Event moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.</li>
+</ul>
+
+<p><em>* The OnLeave and OnBefore transition methods may return false to cancel the transition.</em>*</p>
+
+<p>   <img src="../Presentations/MOOSE - FSM - 1. Concepts/Dia4.jpg" alt="Test Image"/></p>
+
+<p>The FSM creates for each Event <strong>two Event trigger methods</strong>. <br/>
+There are two modes how Events can be triggered, which is <strong>embedded</strong> and <strong>delayed</strong>:</p>
+
+<ul>
+    <li>The <strong>FSM:Event()</strong> creates an Event that will be processed <strong>embedded</strong> or immediately.</li>
+    <li>The <strong>FSM:__Event( seconds )</strong> creates an Event that will be processed <strong>delayed</strong> over time, waiting x seconds.</li>
+</ul>
+
+<p>   <img src="../Presentations/MOOSE - FSM - 1. Concepts/Dia5.jpg" alt="Test Image"/></p>
+
+<h2>1.1) Define the FSM Rules</h2>
+
+<p>The FSM can be defined by using 3 methods:</p>
+
+<ul>
+    <li><a href="##(FSM).SetStartState">FSM.SetStartState</a>(): Define the <strong>Start State</strong> of the FSM. This is the State the FSM will have when nothing is processed yet.</li>
+    <li><a href="##(FSM).AddTransition">FSM.AddTransition</a>(): Adds a new possible Transition Rule to the FSM. A Transition will change the State of the FSM upon the defined triggered Event.</li>
+    <li><a href="##(FSM).AddProcess">FSM.AddProcess</a>(): Adds a new Sub-Process FSM to the FSM. A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, with multiple possible States as a result.</li>
+</ul>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>YYYY-MM-DD: CLASS:<strong>NewFunction</strong>( Params ) replaces CLASS:<em>OldFunction</em>( Params )
+YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
+
+<p>Hereby the change log:</p>
+
+<ul>
+    <li>2016-12-18: Released.</li>
+</ul>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li>None.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+</ul>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
