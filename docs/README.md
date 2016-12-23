@@ -1,5 +1,6 @@
 # Context
 
+
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
 MOOSE is currently still in alpha version, but will evolve over time. Right now, it has been updated to work with DCS world 1.5. and 2.0.
