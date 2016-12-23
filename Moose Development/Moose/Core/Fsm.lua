@@ -15,27 +15,27 @@
 --    * A **State** defines a moment in the process.
 --    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
 -- 
---    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia3.jpg)
+-- ![Test Image](.\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia1.jpg)
 -- 
 -- An FSM transitions in **4 moments** when an Event is being handled.  
 -- Each moment can be catched by handling methods defined by the mission designer,  
 -- that will be called by the FSM while executing the transition.  
 -- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.
 --
---    * To catch State moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
---    * To catch Event moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+--    * To handle **State** moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+--    * To handle **Event** moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
 -- 
 -- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
 -- 
---    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia4.jpg)
+--    ![Test Image](.\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia3.jpg)
 -- 
 -- The FSM creates for each Event **two Event trigger methods**.  
 -- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
 -- 
---    * The **FSM:Event()** creates an Event that will be processed **embedded** or immediately.
---    * The **FSM:__Event( seconds )** creates an Event that will be processed **delayed** over time, waiting x seconds.
+--    * The method **FSM:Event()** triggers an Event that will be processed **embedded** or **immediately**.
+--    * The method **FSM:__Event( seconds )** triggers an Event that will be processed **delayed** over time, waiting x seconds.
 -- 
---    ![Test Image](../Presentations/MOOSE - FSM - 1. Concepts/Dia5.jpg)
+--    ![Test Image](.\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia4.jpg)
 -- 
 -- 1.1) Define the FSM Rules
 -- -------------------------
