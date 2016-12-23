@@ -15,7 +15,7 @@
 --    * A **State** defines a moment in the process.
 --    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
 -- 
--- ![Test Image](docs\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia1.jpg)
+-- ![Test Image](.\Presentations\FSM\Dia1.jpg)
 -- 
 -- An FSM transitions in **4 moments** when an Event is being handled.  
 -- Each moment can be catched by handling methods defined by the mission designer,  
@@ -27,7 +27,7 @@
 -- 
 -- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
 -- 
---    ![Test Image](docs\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia3.jpg)
+--    ![Test Image](.\Presentations\FSM\Dia3.jpg)
 -- 
 -- The FSM creates for each Event **two Event trigger methods**.  
 -- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
@@ -35,7 +35,7 @@
 --    * The method **FSM:Event()** triggers an Event that will be processed **embedded** or **immediately**.
 --    * The method **FSM:__Event( seconds )** triggers an Event that will be processed **delayed** over time, waiting x seconds.
 -- 
---    ![Test Image](docs\Presentations\DOC.MOOSE - FSM - 1. Concepts\Dia4.jpg)
+--    ![Test Image](.\Presentations\FSM\Dia4.jpg)
 -- 
 -- 1.1) Define the FSM Rules
 -- -------------------------
