@@ -15,7 +15,7 @@
 --    * A **State** defines a moment in the process.
 --    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
 -- 
--- ![Test Image](.\Presentations\FSM\Dia1.jpg)
+-- ![Test Image](Presentations\FSM\Dia1.jpg)
 -- 
 -- An FSM transitions in **4 moments** when an Event is being handled.  
 -- Each moment can be catched by handling methods defined by the mission designer,  
