@@ -80,16 +80,20 @@ It is a fantastic development, this module.</p>
 
 <hr/>
 
+<p><img src="..\Presentations\FSM\Dia1.jpg" alt="Banner Image"/></p>
+
 <h1>1) <a href="Core.Fsm.html##(FSM)">Core.Fsm#FSM</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
 
 <p>A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.</p>
 
 <ul>
     <li>A <strong>State</strong> defines a moment in the process.</li>
-    <li>An <strong>Event</strong> describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.</li>
+    <li>An <strong>Event</strong> describes an action, that can be triggered both internally as externally in the FSM. </li>
 </ul>
 
-<p><img src="..\Presentations\FSM\Dia1.jpg" alt="Test Image"/></p>
+<h2>1.1) Event Handling</h2>
+
+<p><img src="..\Presentations\FSM\Dia3.jpg" alt="Event Handlers"/></p>
 
 <p>An FSM transitions in <strong>4 moments</strong> when an Event is being handled. <br/>
 Each moment can be catched by handling methods defined by the mission designer, <br/>
@@ -103,9 +107,11 @@ These methods define the flow of the FSM process; because in those methods the F
 
 <p><em>* The OnLeave and OnBefore transition methods may return false to cancel the transition.</em>*</p>
 
-<p>   <img src="..\Presentations\FSM\Dia3.jpg" alt="Test Image"/></p>
+<h2>1.2) Event Triggers</h2>
 
-<p>The FSM creates for each Event <strong>two Event trigger methods</strong>. <br/>
+<p><img src="..\Presentations\FSM\Dia4.jpg" alt="Event Triggers"/></p>
+
+<p>The FSM creates for each Event <strong>two Event Trigger methods</strong>. <br/>
 There are two modes how Events can be triggered, which is <strong>embedded</strong> and <strong>delayed</strong>:</p>
 
 <ul>
@@ -113,17 +119,23 @@ There are two modes how Events can be triggered, which is <strong>embedded</stro
     <li>The method <strong>FSM:__Event( seconds )</strong> triggers an Event that will be processed <strong>delayed</strong> over time, waiting x seconds.</li>
 </ul>
 
-<p>   <img src="..\Presentations\FSM\Dia4.jpg" alt="Test Image"/></p>
+<h2>1.3) FSM Transition Rules</h2>
 
-<h2>1.1) Define the FSM Rules</h2>
+<p>The FSM has transition rules that it follows and validates, as it walks the process. 
+These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.</p>
 
-<p>The FSM can be defined by using 3 methods:</p>
+<p>The method <a href="##(FSM).AddTransition">FSM.AddTransition</a>() specifies a new possible Transition Rule for the FSM. </p>
 
-<ul>
-    <li><a href="##(FSM).SetStartState">FSM.SetStartState</a>(): Define the <strong>Start State</strong> of the FSM. This is the State the FSM will have when nothing is processed yet.</li>
-    <li><a href="##(FSM).AddTransition">FSM.AddTransition</a>(): Adds a new possible Transition Rule to the FSM. A Transition will change the State of the FSM upon the defined triggered Event.</li>
-    <li><a href="##(FSM).AddProcess">FSM.AddProcess</a>(): Adds a new Sub-Process FSM to the FSM. A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, with multiple possible States as a result.</li>
-</ul>
+<p>The initial state can be defined using the method <a href="##(FSM).SetStartState">FSM.SetStartState</a>(). The default start state of an FSM is "None".</p>
+
+<h2>1.4) FSM Process Rules</h2>
+
+<p>The FSM can implement sub-processes that will execute and return multiple possible states. <br/>
+Depending upon which state is returned, the main FSM can continue tiggering different events.</p>
+
+<p>The method <a href="##(FSM).AddProcess">FSM.AddProcess</a>() adds a new Sub-Process FSM to the FSM. <br/>
+A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, 
+with multiple possible States as a result.</p>
 
 <hr/>
 
@@ -200,7 +212,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).AddEndState">FSM:AddEndState(State)</a></td>
 		<td class="summary">
-
+<p>Adds an End state.</p>
 </td>
 		</tr>
 		<tr>
@@ -224,7 +236,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).AddTransition">FSM:AddTransition(From, Event, To)</a></td>
 		<td class="summary">
-
+<p>Add a new transition rule to the FSM.</p>
 </td>
 		</tr>
 		<tr>
@@ -236,7 +248,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetEndStates">FSM:GetEndStates()</a></td>
 		<td class="summary">
-
+<p>Returns the End states.</p>
 </td>
 		</tr>
 		<tr>
@@ -248,19 +260,19 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetProcesses">FSM:GetProcesses()</a></td>
 		<td class="summary">
-
+<p>Returns a table of the SubFSM rules defined within the FSM.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetScores">FSM:GetScores()</a></td>
 		<td class="summary">
-
+<p>Returns a table with the scores defined.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetStartState">FSM:GetStartState()</a></td>
 		<td class="summary">
-
+<p>Returns the start state of the FSM.</p>
 </td>
 		</tr>
 		<tr>
@@ -272,13 +284,13 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetSubs">FSM:GetSubs()</a></td>
 		<td class="summary">
-
+<p>Returns a table with the Subs defined.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).GetTransitions">FSM:GetTransitions()</a></td>
 		<td class="summary">
-
+<p>Returns a table of the transition rules defined within the FSM.</p>
 </td>
 		</tr>
 		<tr>
@@ -301,6 +313,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).SetStartState">FSM:SetStartState(State)</a></td>
+		<td class="summary">
+<p>Sets the start state of the FSM.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._StartState">FSM._StartState</a></td>
 		<td class="summary">
 
 </td>
@@ -367,6 +385,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).cannot">FSM:cannot(e)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).current">FSM.current</a></td>
 		<td class="summary">
 
 </td>
@@ -668,7 +692,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </dt>
 <dd>
 	
-
+<p>Adds an End state.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -695,29 +719,33 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<ul>
 				<li>
 				
-<p><code><em> From </em></code>: </p>
+<p><code><em>#table From </em></code>: 
+Can contain a string indicating the From state or a table of strings containing multiple From states.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: 
+The Event name.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Process </em></code>: </p>
+<p><code><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a> Process </em></code>: 
+An sub-process FSM.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> ReturnEvents </em></code>: </p>
+<p><code><em>#table ReturnEvents </em></code>: 
+A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em></p>
-
+<p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em>
+The SubFSM.</p>
 
 </dd>
 </dl>
@@ -820,23 +848,29 @@ self</p>
 </dt>
 <dd>
 	
+<p>Add a new transition rule to the FSM.</p>
 
+	
+<p>A transition rule defines when and if the FSM can transition from a state towards another state upon a triggered event.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> From </em></code>: </p>
+<p><code><em>#table From </em></code>: 
+Can contain a string indicating the From state or a table of strings containing multiple From states.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: 
+The Event name.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> To </em></code>: </p>
+<p><code><em>#string To </em></code>: 
+The To state.</p>
 
 				</li>
 		</ul>
@@ -865,7 +899,7 @@ self</p>
 </dt>
 <dd>
 	
-
+<p>Returns the End states.</p>
 
 </dd>
 </dl>
@@ -904,6 +938,11 @@ self</p>
 </dt>
 <dd>
 	
+<p>Returns a table of the SubFSM rules defined within the FSM.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
 
 
 </dd>
@@ -917,7 +956,7 @@ self</p>
 </dt>
 <dd>
 	
-
+<p>Returns a table with the scores defined.</p>
 
 </dd>
 </dl>
@@ -930,7 +969,12 @@ self</p>
 </dt>
 <dd>
 	
+<p>Returns the start state of the FSM.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+A string containing the start state.</p>
 
 </dd>
 </dl>
@@ -956,7 +1000,7 @@ self</p>
 </dt>
 <dd>
 	
-
+<p>Returns a table with the Subs defined.</p>
 
 </dd>
 </dl>
@@ -969,6 +1013,11 @@ self</p>
 </dt>
 <dd>
 	
+<p>Returns a table of the transition rules defined within the FSM.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
 
 
 </dd>
@@ -1050,16 +1099,31 @@ self</p>
 </dt>
 <dd>
 	
-
+<p>Sets the start state of the FSM.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> State </em></code>: </p>
+<p><code><em>#string State </em></code>: 
+A string defining the start state.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM)._StartState" >
+<strong>FSM._StartState</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1326,6 +1390,20 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM).current" >
+<strong>FSM.current</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">

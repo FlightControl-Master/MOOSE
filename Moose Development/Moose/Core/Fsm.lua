@@ -8,14 +8,18 @@
 --
 -- ===
 --
+-- ![Banner Image](..\Presentations\FSM\Dia1.jpg)
+--
 -- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
 -- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
 -- 
 --    * A **State** defines a moment in the process.
---    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. An Event can be triggered Embedded or Delayed over time.
+--    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. 
 -- 
--- ![Test Image](..\Presentations\FSM\Dia1.jpg)
+-- ## 1.1) Event Handling
+-- 
+-- ![Event Handlers](..\Presentations\FSM\Dia3.jpg)
 -- 
 -- An FSM transitions in **4 moments** when an Event is being handled.  
 -- Each moment can be catched by handling methods defined by the mission designer,  
@@ -27,24 +31,33 @@
 -- 
 -- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
 -- 
---    ![Test Image](..\Presentations\FSM\Dia3.jpg)
+-- ## 1.2) Event Triggers
 -- 
--- The FSM creates for each Event **two Event trigger methods**.  
+-- ![Event Triggers](..\Presentations\FSM\Dia4.jpg)
+-- 
+-- The FSM creates for each Event **two Event Trigger methods**.  
 -- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
 -- 
 --    * The method **FSM:Event()** triggers an Event that will be processed **embedded** or **immediately**.
 --    * The method **FSM:__Event( seconds )** triggers an Event that will be processed **delayed** over time, waiting x seconds.
 -- 
---    ![Test Image](..\Presentations\FSM\Dia4.jpg)
+-- ## 1.3) FSM Transition Rules
 -- 
--- 1.1) Define the FSM Rules
--- -------------------------
+-- The FSM has transition rules that it follows and validates, as it walks the process. 
+-- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
 -- 
--- The FSM can be defined by using 3 methods:
+-- The method @{#FSM.AddTransition}() specifies a new possible Transition Rule for the FSM. 
 -- 
---    * @{#FSM.SetStartState}(): Define the **Start State** of the FSM. This is the State the FSM will have when nothing is processed yet.
---    * @{#FSM.AddTransition}(): Adds a new possible Transition Rule to the FSM. A Transition will change the State of the FSM upon the defined triggered Event.
---    * @{#FSM.AddProcess}(): Adds a new Sub-Process FSM to the FSM. A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, with multiple possible States as a result.
+-- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
+-- 
+-- ## 1.4) FSM Process Rules
+-- 
+-- The FSM can implement sub-processes that will execute and return multiple possible states.  
+-- Depending upon which state is returned, the main FSM can continue tiggering different events.
+-- 
+-- The method @{#FSM.AddProcess}() adds a new Sub-Process FSM to the FSM.  
+-- A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, 
+-- with multiple possible States as a result.
 --
 -- ====
 -- 
@@ -115,6 +128,9 @@ do -- FSM
   end
   
   
+  --- Sets the start state of the FSM.
+  -- @param #FSM self
+  -- @param #string State A string defining the start state.
   function FSM:SetStartState( State )
   
     self._StartState = State
@@ -122,11 +138,20 @@ do -- FSM
   end
   
   
+  --- Returns the start state of the FSM.
+  -- @param #FSM self
+  -- @return #string A string containing the start state.
   function FSM:GetStartState()
   
     return self._StartState or {}
   end
   
+  --- Add a new transition rule to the FSM.
+  -- A transition rule defines when and if the FSM can transition from a state towards another state upon a triggered event.
+  -- @param #FSM self
+  -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
+  -- @param #string Event The Event name.
+  -- @param #string To The To state.
   function FSM:AddTransition( From, Event, To )
   
     local Transition = {}
@@ -139,14 +164,22 @@ do -- FSM
     self._Transitions[Transition] = Transition
     self:_eventmap( self.Events, Transition )
   end
+
   
+  --- Returns a table of the transition rules defined within the FSM.
+  -- @return #table
   function FSM:GetTransitions()
   
     return self._Transitions or {}
   end
   
   --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
-  -- @return Core.Fsm#FSM_PROCESS
+  -- @param #FSM self
+  -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
+  -- @param #string Event The Event name.
+  -- @param Core.Fsm#FSM_PROCESS Process An sub-process FSM.
+  -- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
+  -- @return Core.Fsm#FSM_PROCESS The SubFSM.
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
     self:E( { From, Event, Process, ReturnEvents } )
   
@@ -166,6 +199,9 @@ do -- FSM
     return Process
   end
   
+  
+  --- Returns a table of the SubFSM rules defined within the FSM.
+  -- @return #table
   function FSM:GetProcesses()
   
     return self._Processes or {}
@@ -183,12 +219,14 @@ do -- FSM
     error( "Sub-Process from state " .. From .. " with event " .. Event .. " not found!" )
   end
   
+  --- Adds an End state.
   function FSM:AddEndState( State )
   
     self._EndStates[State] = State
     self.endstates[State] = State
   end
   
+  --- Returns the End states.
   function FSM:GetEndStates()
   
     return self._EndStates or {}
@@ -232,12 +270,13 @@ do -- FSM
     return Process
   end
   
+  --- Returns a table with the scores defined.
   function FSM:GetScores()
   
     return self._Scores or {}
   end
   
-  
+  --- Returns a table with the Subs defined.
   function FSM:GetSubs()
   
     return self.options.subs
