@@ -105,8 +105,9 @@
 -- 
 --        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
 -- 
--- This example is fully implemented in the following MOOSE test mission:
+-- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
 -- 
+-- ### Some additional comments:
 -- 
 -- Note that transition rules can be declared with a few variations:
 -- 
