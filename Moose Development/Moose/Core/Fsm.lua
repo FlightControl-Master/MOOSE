@@ -1,17 +1,23 @@
 --- This module contains the **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes.
 -- ## Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
+-- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
+-- 
 -- A FSM can only be in one of a finite number of states. 
 -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
 -- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**. 
 -- An **FSM implementation** is defined by **a list of its states**, **its initial state**, and **the triggering events** for **each possible transition**.
 -- An FSM implementation is composed out of **two parts**, a set of **state transition rules**, and an implementation set of **state transition handlers**, implementing those transitions.
 -- 
--- The FSM class supports a **hierarchical implementation of a Finite Stae Machine**, 
+-- The FSM class supports a **hierarchical implementation of a Finite State Machine**, 
 -- that is, it allows to **embed existing FSM implementations in a master FSM**.
 -- FSM hierarchies allow for efficient FSM re-use, **not having to re-invent the wheel every time again** when designing complex processes.
 -- 
--- Examples of ready made FSMs could be: 
+-- ![Workflow Example](..\Presentations\FSM\Dia2.JPG)
+-- 
+-- The above diagram shows a graphical representation of a FSM implementation for a **Task**, which guides a Human towards a Zone,
+-- orders him to destroy x targets and account the results.
+-- Other examples of ready made FSM could be: 
 -- 
 --   * route a plane to a zone flown by a human
 --   * detect targets by an AI and report to humans
@@ -20,25 +26,17 @@
 --   * let an AI patrol a zone
 -- 
 -- The **MOOSE framework** uses extensively the FSM class and derived FSM\_ classes, 
--- because **the goal of MOOSE is to simplify the mission design complexity for mission builders**.
--- By efficiently utilizing the FSM class, MOOSE allows mission designers to quickly build processes, 
--- that can be re-used or tailored at various places within their mission designs for various objects and purposes.
+-- because **the goal of MOOSE is to simplify mission design complexity for mission building**.
+-- By efficiently utilizing the FSM class and derived classes, MOOSE allows mission designers to quickly build processes.
 -- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used, 
--- extended and/or modified** by mission builders through **the implementation of the event handlers**.
+-- and tailored** by mission designers through **the implementation of Transition Handlers**.
 -- Each of these FSM implementation classes start either with:
 -- 
---   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}.
---   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players.
---   * an acronym **ACT\_**, which indicates an FSM implementation directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join).
---
--- MOOSE contains 3 different types of FSM class types, which govern processes for specific objects or purposes:
+--   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+--   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
+--   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
 -- 
---   * FSM class: Governs a generic process.
---   * FSM_CONTROLLABLE: Governs a process for a CONTROLLABLE, which is executed by AI @{GROUP}, @{UNIT} or @{CLIENT} objects.
---   * FSM_TASK: Governs a process for a TASK, which is executed by **groups of players**.
---   * FSM_CLIENT: Governs a process for a TASK, executed by **ONE player seated in a @{CLIENT}**.
--- 
--- Detailed explanations and API specifics are further below clarified.
+-- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
 -- 
 -- ##__Dislaimer:__
 -- The FSM class development is based on a finite state machine implementation made by Conroy Kyle.
@@ -48,36 +46,30 @@
 -- 
 -- ===
 --
--- ![Banner Image](..\Presentations\FSM\Dia1.jpg)
---
 -- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
+-- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
 -- 
--- ## 1.1) Event Handling
+-- The FSM class is the base class of all FSM\_ derived classes. It implements the main functionality to define and execute Finite State Machines.
+-- The derived FSM\_ classes extend the Finite State Machine functionality to run a workflow process for a specific purpose or component.
 -- 
--- ![Event Handlers](..\Presentations\FSM\Dia3.jpg)
+-- Finite State Machines have **Transition Rules**, **Transition Handlers** and **Event Triggers**.
 -- 
--- An FSM transitions in **4 moments** when an Event is being handled.  
--- Each moment can be catched by handling methods defined by the mission designer,  
--- that will be called by the FSM while executing the transition.  
--- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.
---
---    * To handle **State** moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
---    * To handle **Event** moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- The **Transition Rules** define the "Process Flow Boundaries", that is, 
+-- the path that can be followed hopping from state to state upon triggered events.
+-- If an event is triggered, and there is no valid path found for that event, 
+-- an error will be raised and the FSM will stop functioning.
 -- 
--- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition.**
+-- The **Transition Handlers** are special methods that can be defined by the mission designer, following a defined syntax.
+-- If the FSM object finds a method of such a handler, then the method will be called by the FSM, passing specific parameters.
+-- The method can then define its own custom logic to implement the FSM workflow, and to conduct other actions.
 -- 
--- ## 1.2) Event Triggers
+-- The **Event Triggers** are methods that are defined by the FSM, which the mission designer can use to implement the workflow.
+-- Most of the time, these Event Triggers are used within the Transition Handler methods, so that a workflow is created running through the state machine.
 -- 
--- ![Event Triggers](..\Presentations\FSM\Dia4.jpg)
+-- The underlying chapters provide more details on each of these topics. 
 -- 
--- The FSM creates for each Event **two Event Trigger methods**.  
--- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
--- 
---    * The method **FSM:Event()** triggers an Event that will be processed **embedded** or **immediately**.
---    * The method **FSM:__Event( seconds )** triggers an Event that will be processed **delayed** over time, waiting x seconds.
--- 
--- ## 1.3) FSM Transition Rules
+-- ## 1.1) FSM Transition Rules
 -- 
 -- The FSM has transition rules that it follows and validates, as it walks the process. 
 -- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
@@ -86,12 +78,74 @@
 -- 
 -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
 -- 
--- ### Example
+-- ## 1.2) Transition Handling
+-- 
+-- ![Transition Handlers](..\Presentations\FSM\Dia4.jpg)
+-- 
+-- An FSM transitions in **4 moments** when an Event is being triggered and processed.  
+-- The mission designer can define for each moment specific logic within methods implementations following a defined API syntax.  
+-- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be triggered.
+--
+--    * To handle **State** transition moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+--    * To handle **Event** transition moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- 
+-- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition!**
+-- 
+-- Transition Handler methods need to follow the above specified naming convention, but are also passed parameters from the FSM.
+-- These parameters are on the correct order: From, Event, To:
+-- 
+--    * From = A string containing the From state.
+--    * Event = A string containing the Event name that was triggered.
+--    * To = A string containing the To state.
+-- 
+-- On top, each of these methods can have a variable amount of parameters passed. See the example in section 1.3.
+-- 
+-- ## 1.3) Event Triggers
+-- 
+-- ![Event Triggers](..\Presentations\FSM\Dia5.jpg)
+-- 
+-- The FSM creates for each Event two **Event Trigger methods**.  
+-- There are two modes how Events can be triggered, which is **synchronous** and **asynchronous**:
+-- 
+--    * The method **FSM:Event()** triggers an Event that will be processed **synchronously** or **immediately**.
+--    * The method **FSM:__Event( __seconds__ )** triggers an Event that will be processed **asynchronously** over time, waiting __x seconds__.
+-- 
+-- The destinction between these 2 Event Trigger methods are important to understand. An asynchronous call will "log" the Event Trigger to be executed at a later time.
+-- Processing will just continue. Synchronous Event Trigger methods are useful to change states of the FSM immediately, but may have a larger processing impact.
+-- 
+-- The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.
+-- 
+--       function FSM:OnAfterEvent( From, Event, To, Amount )
+--         self:E( { Amount = Amount } ) 
+--       end
+--       
+--       local Amount = 1
+--       FSM:__Event( 5, Amount ) 
+--       
+--       Amount = Amount + 1
+--       FSM:Event( Text, Amount )
+--       
+-- In this example, the **:OnAfterEvent**() Transition Handler implementation will get called when **Event** is being triggered.
+-- Before we go into more detail, let's look at the last 4 lines of the example. 
+-- The last line triggers synchronously the **Event**, and passes Amount as a parameter.
+-- The 3rd last line of the example triggers asynchronously **Event**. 
+-- Event will be processed after 5 seconds, and Amount is given as a parameter.
+-- 
+-- The output of this little code fragment will be:
+-- 
+--    * Amount = 2
+--    * Amount = 2
+-- 
+-- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
+-- 
+-- ## 1.4) Transitioning Example
 -- 
 -- This example creates a new FsmDemo object from class FSM.
 -- It will set the start state of FsmDemo to Green.
--- 2 Transition Rules are created, where upon the event Switch,
+-- Two Transition Rules are created, where upon the event Switch,
 -- the FsmDemo will transition from state Green to Red and vise versa.
+-- 
+-- ![Transition Example](..\Presentations\FSM\Dia6.jpg)
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -100,6 +154,8 @@
 -- 
 -- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
 -- The next code implements this through the event handling method **OnAfterSwitch**.
+-- 
+-- ![Transition Flow](..\Presentations\FSM\Dia7.jpg)
 -- 
 --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
 --        self:E( { From, Event, To, FsmUnit } )
@@ -111,7 +167,7 @@
 --            FsmUnit:Flare(FLARECOLOR.Red)
 --          end
 --        end
---        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+--        self:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
 --      end
 --      
 --      FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the first Switch event to happen in 5 seconds.
@@ -150,11 +206,9 @@
 --   * The From states can be a table of strings, indicating that the transition rule will be valid if the current state of the FSM will be one of the given From states.
 --   * The From state can be a "*", indicating that the transition rule will always be valid, regardless of the current state of the FSM.
 -- 
--- This transition will create a new FsmDemo object from class FSM.
--- It will set the start state of FsmDemo to Green.
--- A new event is added in addition to the above example.
+-- The below code fragment extends the FsmDemo, emonstrating multiple From states declared as a table, in an additional transition rule.
 -- The new event Stop will cancel the Switching process.
--- So, the transtion for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
+-- The transtion for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -165,15 +219,16 @@
 -- The transition for event Stop can also be simplified, as any current state of the FSM is valid.
 -- 
 --      FsmDemo:AddTransition( "*", "Stop", "Stopped" )
+--      
+-- So... When FsmDemo:Stop() is being triggered, the state of FsmDemo will transition from Red or Green to Stopped.
+-- And there is no transition handling method defined for that transition, thus, no new event is being triggered causing the FsmDemo process flow to halt.
 -- 
--- ## 1.4) FSM Process Rules
+-- ## 1.5) Sub-FSM Embedding
 -- 
--- The FSM can implement sub-processes that will execute and return multiple possible states.  
--- Depending upon which state is returned, the main FSM can continue tiggering different events.
+-- The FSM can embed Sub-FSMs that will execute and return multiple possible **Return (End) States**.  
+-- Depending upon which state is returned, the main FSM can continue the flow triggering different events.
 -- 
--- The method @{#FSM.AddProcess}() adds a new Sub-Process FSM to the FSM.  
--- A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, 
--- with multiple possible States as a result.
+-- The method @{#FSM.AddProcess}() adds a new Sub-FSM to the FSM.  
 --
 -- ====
 -- 
@@ -197,11 +252,11 @@
 -- 
 -- ### Contributions: 
 -- 
---   * None.
+--   * **Pikey**: Review of documentation.
 -- 
 -- ### Authors: 
 -- 
---   * **FlightControl**: Design & Programming
+--   * **FlightControl**: Design & Programming & documenting.
 --
 -- @module Fsm
 
