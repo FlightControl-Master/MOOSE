@@ -185,6 +185,8 @@ sub {
 
 img {
   border: 0;
+  max-width:100%;
+  height:auto;
 }
 
 /**
@@ -500,6 +502,7 @@ h3 {
 
 #main-content img {
   max-width: 100%;
+  height: auto;
 }
 
 aside#sidebar {

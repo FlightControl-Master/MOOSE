@@ -29,7 +29,7 @@
 --    * To handle **State** moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
 --    * To handle **Event** moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
 -- 
--- ** The OnLeave and OnBefore transition methods may return false to cancel the transition.**
+-- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition.**
 -- 
 -- ## 1.2) Event Triggers
 -- 
@@ -49,6 +49,85 @@
 -- The method @{#FSM.AddTransition}() specifies a new possible Transition Rule for the FSM. 
 -- 
 -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
+-- 
+-- ### Example
+-- 
+-- This example creates a new FsmDemo object from class FSM.
+-- It will set the start state of FsmDemo to Green.
+-- 2 Transition Rules are created, where upon the event Switch,
+-- the FsmDemo will transition from state Green to Red and vise versa.
+-- 
+--      local FsmDemo = FSM:New() -- #FsmDemo
+--      FsmDemo:SetStartState( "Green" )
+--      FsmDemo:AddTransition( "Green", "Switch", "Red" )
+--      FsmDemo:AddTransition( "Red", "Switch", "Green" )
+-- 
+-- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
+-- The next code implements this through the event handling method **OnAfterSwitch**.
+-- 
+--      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
+--        self:E( { From, Event, To, FsmUnit } )
+--        
+--        if From == "Green" then
+--          FsmUnit:Flare(FLARECOLOR.Green)
+--        else
+--          if From == "Red" then
+--            FsmUnit:Flare(FLARECOLOR.Red)
+--          end
+--        end
+--        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+--      end
+--      
+--      FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the first Switch event to happen in 5 seconds.
+-- 
+-- The OnAfterSwitch implements a loop. The last line of the code fragment triggers the Switch Event within 5 seconds.
+-- Upon the event execution (after 5 seconds), the OnAfterSwitch method is called of FsmDemo (cfr. the double point notation!!! ":").
+-- The OnAfterSwitch method receives from the FSM the 3 transition parameter details ( From, Event, To ), 
+-- and one additional parameter that was given when the event was triggered, which is in this case the Unit that is used within OnSwitchAfter.
+-- 
+--      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
+-- 
+-- For debugging reasons the received parameters are traced within the DCS.log.
+-- 
+--         self:E( { From, Event, To, FsmUnit } )
+-- 
+-- The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.
+-- 
+--        if From == "Green" then
+--          FsmUnit:Flare(FLARECOLOR.Green)
+--        else
+--          if From == "Red" then
+--            FsmUnit:Flare(FLARECOLOR.Red)
+--          end
+--        end
+-- 
+-- It is important that the Switch event is again triggered, otherwise, the FsmDemo would stop working after having the first Event being handled.
+-- 
+--        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+-- 
+-- This example is fully implemented in the following MOOSE test mission:
+-- 
+-- 
+-- Note that transition rules can be declared with a few variations:
+-- 
+--   * The From states can be a table of strings, indicating that the transition rule will be valid if the current state of the FSM will be one of the given From states.
+--   * The From state can be a "*", indicating that the transition rule will always be valid, regardless of the current state of the FSM.
+-- 
+-- This transition will create a new FsmDemo object from class FSM.
+-- It will set the start state of FsmDemo to Green.
+-- A new event is added in addition to the above example.
+-- The new event Stop will cancel the Switching process.
+-- So, the transtion for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
+-- 
+--      local FsmDemo = FSM:New() -- #FsmDemo
+--      FsmDemo:SetStartState( "Green" )
+--      FsmDemo:AddTransition( "Green", "Switch", "Red" )
+--      FsmDemo:AddTransition( "Red", "Switch", "Green" )
+--      FsmDemo:AddTransition( { "Red", "Green" }, "Stop", "Stopped" )
+-- 
+-- The transition for event Stop can also be simplified, as any current state of the FSM is valid.
+-- 
+--      FsmDemo:AddTransition( "*", "Stop", "Stopped" )
 -- 
 -- ## 1.4) FSM Process Rules
 -- 
@@ -385,8 +464,8 @@ do -- FSM
           self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
           self:_call_handler("onafter" .. EventName, params)
   
-          self:T3( { On = "OnAfter" .. to, callback = self["OnAfter" .. to] }  )
-          ReturnValues = self:_call_handler("OnAfter" .. to, params )
+          self:T3( { On = "OnAfter" .. EventName, callback = self["OnAfter" .. EventName] }  )
+          ReturnValues = self:_call_handler("OnAfter" .. EventName, params )
         end
   
         self:_call_handler("onstatechange", params)
