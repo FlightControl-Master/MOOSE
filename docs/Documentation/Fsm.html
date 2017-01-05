@@ -68,15 +68,61 @@
 	<div id="content">
    <h1>Module <code>Fsm</code></h1>
    
-<p>This module contains the FSM class and derived FSM_ classes.</p>
+<p>This module contains the <strong>FSM</strong> (<strong>F</strong>inite <strong>S</strong>tate <strong>M</strong>achine) class and derived <strong>FSM_</strong> classes.</p>
 
    
+<h2>Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.</h2>
 
-<p>This development is based on a state machine implementation made by Conroy Kyle.
-The state machine can be found here: https://github.com/kyleconroy/lua-state-machine</p>
+<p>A FSM can only be in one of a finite number of states. 
+The machine is in only one state at a time; the state it is in at any given time is called the <strong>current state</strong>. 
+It can change from one state to another when initiated by an <strong><strong>internal</strong> or <strong>external</strong> triggering event</strong>, which is called a <strong>transition</strong>. 
+An <strong>FSM implementation</strong> is defined by <strong>a list of its states</strong>, <strong>its initial state</strong>, and <strong>the triggering events</strong> for <strong>each possible transition</strong>.
+An FSM implementation is composed out of <strong>two parts</strong>, a set of <strong>state transition rules</strong>, and an implementation set of <strong>state transition handlers</strong>, implementing those transitions.</p>
 
-<p>I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
-It is a fantastic development, this module.</p>
+<p>The FSM class supports a <strong>hierarchical implementation of a Finite Stae Machine</strong>, 
+that is, it allows to <strong>embed existing FSM implementations in a master FSM</strong>.
+FSM hierarchies allow for efficient FSM re-use, <strong>not having to re-invent the wheel every time again</strong> when designing complex processes.</p>
+
+<p>Examples of ready made FSMs could be: </p>
+
+<ul>
+    <li>route a plane to a zone flown by a human</li>
+    <li>detect targets by an AI and report to humans</li>
+    <li>account for destroyed targets by human players</li>
+    <li>handle AI infantry to deploy from or embark to a helicopter or airplane or vehicle </li>
+    <li>let an AI patrol a zone</li>
+</ul>
+
+<p>The <strong>MOOSE framework</strong> uses extensively the FSM class and derived FSM_ classes, 
+because <strong>the goal of MOOSE is to simplify the mission design complexity for mission builders</strong>.
+By efficiently utilizing the FSM class, MOOSE allows mission designers to quickly build processes, 
+that can be re-used or tailored at various places within their mission designs for various objects and purposes.
+<strong>Ready made FSM-based implementations classes</strong> exist within the MOOSE framework that <strong>can easily be re-used, 
+extended and/or modified</strong> by mission builders through <strong>the implementation of the event handlers</strong>.
+Each of these FSM implementation classes start either with:</p>
+
+<ul>
+    <li>an acronym <strong>AI_</strong>, which indicates an FSM implementation directing <strong>AI controlled</strong> <a href="GROUP.html">GROUP</a> and/or <a href="UNIT.html">UNIT</a>.</li>
+    <li>an acronym <strong>TASK_</strong>, which indicates an FSM implementation executing a <a href="TASK.html">TASK</a> executed by Groups of players.</li>
+    <li>an acronym <strong>ACT_</strong>, which indicates an FSM implementation directing <strong>Humans actions</strong> that need to be done in a <a href="TASK.html">TASK</a>, seated in a <a href="CLIENT.html">CLIENT</a> (slot) or a <a href="UNIT.html">UNIT</a> (CA join).</li>
+</ul>
+
+<p>MOOSE contains 3 different types of FSM class types, which govern processes for specific objects or purposes:</p>
+
+<ul>
+    <li>FSM class: Governs a generic process.</li>
+    <li>FSM_CONTROLLABLE: Governs a process for a CONTROLLABLE, which is executed by AI <a href="GROUP.html">GROUP</a>, <a href="UNIT.html">UNIT</a> or <a href="CLIENT.html">CLIENT</a> objects.</li>
+    <li>FSM_TASK: Governs a process for a TASK, which is executed by <strong>groups of players</strong>.</li>
+    <li>FSM_CLIENT: Governs a process for a TASK, executed by **ONE player seated in a <a href="CLIENT.html">CLIENT</a>**.</li>
+</ul>
+
+<p>Detailed explanations and API specifics are further below clarified.</p>
+
+<h2><strong>Dislaimer:</strong></h2>
+<p>The FSM class development is based on a finite state machine implementation made by Conroy Kyle.
+The state machine can be found on <a href="https://github.com/kyleconroy/lua-state-machine">github</a>
+I've reworked this development (taken the concept), and created a <strong>hierarchical state machine</strong> out of it, embedded within the DCS simulator.
+Additionally, I've added extendability and created an API that allows seamless FSM implementation.</p>
 
 <hr/>
 
@@ -84,12 +130,6 @@ It is a fantastic development, this module.</p>
 
 <h1>1) <a href="Core.Fsm.html##(FSM)">Core.Fsm#FSM</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
 
-<p>A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.</p>
-
-<ul>
-    <li>A <strong>State</strong> defines a moment in the process.</li>
-    <li>An <strong>Event</strong> describes an action, that can be triggered both internally as externally in the FSM. </li>
-</ul>
 
 <h2>1.1) Event Handling</h2>
 

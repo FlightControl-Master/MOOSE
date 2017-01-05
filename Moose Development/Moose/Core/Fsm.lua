@@ -1,21 +1,57 @@
---- This module contains the FSM class and derived FSM_ classes.
+--- This module contains the **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes.
+-- ## Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
--- This development is based on a state machine implementation made by Conroy Kyle.
--- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
+-- A FSM can only be in one of a finite number of states. 
+-- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
+-- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**. 
+-- An **FSM implementation** is defined by **a list of its states**, **its initial state**, and **the triggering events** for **each possible transition**.
+-- An FSM implementation is composed out of **two parts**, a set of **state transition rules**, and an implementation set of **state transition handlers**, implementing those transitions.
+-- 
+-- The FSM class supports a **hierarchical implementation of a Finite Stae Machine**, 
+-- that is, it allows to **embed existing FSM implementations in a master FSM**.
+-- FSM hierarchies allow for efficient FSM re-use, **not having to re-invent the wheel every time again** when designing complex processes.
+-- 
+-- Examples of ready made FSMs could be: 
+-- 
+--   * route a plane to a zone flown by a human
+--   * detect targets by an AI and report to humans
+--   * account for destroyed targets by human players
+--   * handle AI infantry to deploy from or embark to a helicopter or airplane or vehicle 
+--   * let an AI patrol a zone
+-- 
+-- The **MOOSE framework** uses extensively the FSM class and derived FSM\_ classes, 
+-- because **the goal of MOOSE is to simplify the mission design complexity for mission builders**.
+-- By efficiently utilizing the FSM class, MOOSE allows mission designers to quickly build processes, 
+-- that can be re-used or tailored at various places within their mission designs for various objects and purposes.
+-- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used, 
+-- extended and/or modified** by mission builders through **the implementation of the event handlers**.
+-- Each of these FSM implementation classes start either with:
+-- 
+--   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}.
+--   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players.
+--   * an acronym **ACT\_**, which indicates an FSM implementation directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join).
 --
--- I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
--- It is a fantastic development, this module.
---
+-- MOOSE contains 3 different types of FSM class types, which govern processes for specific objects or purposes:
+-- 
+--   * FSM class: Governs a generic process.
+--   * FSM_CONTROLLABLE: Governs a process for a CONTROLLABLE, which is executed by AI @{GROUP}, @{UNIT} or @{CLIENT} objects.
+--   * FSM_TASK: Governs a process for a TASK, which is executed by **groups of players**.
+--   * FSM_CLIENT: Governs a process for a TASK, executed by **ONE player seated in a @{CLIENT}**.
+-- 
+-- Detailed explanations and API specifics are further below clarified.
+-- 
+-- ##__Dislaimer:__
+-- The FSM class development is based on a finite state machine implementation made by Conroy Kyle.
+-- The state machine can be found on [github](https://github.com/kyleconroy/lua-state-machine)
+-- I've reworked this development (taken the concept), and created a **hierarchical state machine** out of it, embedded within the DCS simulator.
+-- Additionally, I've added extendability and created an API that allows seamless FSM implementation.
+-- 
 -- ===
 --
 -- ![Banner Image](..\Presentations\FSM\Dia1.jpg)
 --
 -- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
--- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
--- 
---    * A **State** defines a moment in the process.
---    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. 
 -- 
 -- ## 1.1) Event Handling
 -- 
