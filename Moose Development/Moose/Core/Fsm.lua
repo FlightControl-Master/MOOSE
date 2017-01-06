@@ -67,9 +67,16 @@
 -- The **Event Triggers** are methods that are defined by the FSM, which the mission designer can use to implement the workflow.
 -- Most of the time, these Event Triggers are used within the Transition Handler methods, so that a workflow is created running through the state machine.
 -- 
--- The underlying chapters provide more details on each of these topics. 
+-- As explained above, a FSM supports **Linear State Transitions** and **Hierarchical State Transitions**, and both can be mixed to make a comprehensive FSM implementation.
+-- The below documentation has a seperate chapter explaining both transition modes, taking into account the **Transition Rules**, **Transition Handlers** and **Event Triggers**.
 -- 
--- ## 1.1) FSM Transition Rules
+-- ## 1.1) FSM Linear Transitions
+-- 
+-- Linear Transitions are Transition Rules allowing an FSM to transition from one or multiple possible **From** state(s) towards a **To** state upon a Triggered **Event**.
+-- The Lineair transition rule evaluation will always be done from the **current state* of the FSM.
+-- If no valid Transition Rule can be found in the FSM, the FSM will log an error and stop.
+-- 
+-- ### 1.1.1) FSM Transition Rules
 -- 
 -- The FSM has transition rules that it follows and validates, as it walks the process. 
 -- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
@@ -78,7 +85,7 @@
 -- 
 -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
 -- 
--- ## 1.2) Transition Handling
+-- ### 1.1.2) Transition Handling
 -- 
 -- ![Transition Handlers](..\Presentations\FSM\Dia4.jpg)
 -- 
@@ -100,7 +107,7 @@
 -- 
 -- On top, each of these methods can have a variable amount of parameters passed. See the example in section 1.3.
 -- 
--- ## 1.3) Event Triggers
+-- ### 1.1.3) Event Triggers
 -- 
 -- ![Event Triggers](..\Presentations\FSM\Dia5.jpg)
 -- 
@@ -138,7 +145,7 @@
 -- 
 -- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
 -- 
--- ## 1.4) Transitioning Example
+-- ### 1.1.4) Linear Transitioning Example
 -- 
 -- This example creates a new FsmDemo object from class FSM.
 -- It will set the start state of FsmDemo to Green.
@@ -201,14 +208,14 @@
 -- 
 -- ### Some additional comments:
 -- 
--- Note that transition rules can be declared with a few variations:
+-- Note that transition rules **can be declared with a few variations**:
 -- 
---   * The From states can be a table of strings, indicating that the transition rule will be valid if the current state of the FSM will be one of the given From states.
---   * The From state can be a "*", indicating that the transition rule will always be valid, regardless of the current state of the FSM.
+--   * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
+--   * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
 -- 
--- The below code fragment extends the FsmDemo, emonstrating multiple From states declared as a table, in an additional transition rule.
--- The new event Stop will cancel the Switching process.
--- The transtion for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
+-- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, in an additional transition rule.
+-- The new event **Stop** will cancel the Switching process.
+-- The transition for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -223,10 +230,14 @@
 -- So... When FsmDemo:Stop() is being triggered, the state of FsmDemo will transition from Red or Green to Stopped.
 -- And there is no transition handling method defined for that transition, thus, no new event is being triggered causing the FsmDemo process flow to halt.
 -- 
--- ## 1.5) Sub-FSM Embedding
+-- ## 1.5) FSM Hierarchical Transitions
 -- 
--- The FSM can embed Sub-FSMs that will execute and return multiple possible **Return (End) States**.  
--- Depending upon which state is returned, the main FSM can continue the flow triggering different events.
+-- Hierarchical Transitions allow to re-use readily available and implemented FSMs.
+-- This becomes in very useful for mission building, where mission designers build complex processes and workflows, 
+-- combining smaller FSMs to one single FSM.
+-- 
+-- The FSM can embed **Sub-FSMs** that will execute and return **multiple possible Return (End) States**.  
+-- Depending upon **which state is returned**, the main FSM can continue the flow **triggering specific events**.
 -- 
 -- The method @{#FSM.AddProcess}() adds a new Sub-FSM to the FSM.  
 --
@@ -252,11 +263,11 @@
 -- 
 -- ### Contributions: 
 -- 
---   * **Pikey**: Review of documentation.
+--   * [**Pikey**](https://forums.eagle.ru/member.php?u=62835): Review of documentation & advice for improvements.
 -- 
 -- ### Authors: 
 -- 
---   * **FlightControl**: Design & Programming & documenting.
+--   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
 --
 -- @module Fsm
 
