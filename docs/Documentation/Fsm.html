@@ -163,7 +163,7 @@ These rules define when an FSM can transition from a specific state towards an o
 
 <h3>1.1.2) Transition Handling</h3>
 
-<p><img src="..\Presentations\FSM\Dia4.jpg" alt="Transition Handlers"/></p>
+<p><img src="..\Presentations\FSM\Dia4.JPG" alt="Transition Handlers"/></p>
 
 <p>An FSM transitions in <strong>4 moments</strong> when an Event is being triggered and processed. <br/>
 The mission designer can define for each moment specific logic within methods implementations following a defined API syntax. <br/>
@@ -189,7 +189,7 @@ These parameters are on the correct order: From, Event, To:</p>
 
 <h3>1.1.3) Event Triggers</h3>
 
-<p><img src="..\Presentations\FSM\Dia5.jpg" alt="Event Triggers"/></p>
+<p><img src="..\Presentations\FSM\Dia5.JPG" alt="Event Triggers"/></p>
 
 <p>The FSM creates for each Event two <strong>Event Trigger methods</strong>. <br/>
 There are two modes how Events can be triggered, which is <strong>synchronous</strong> and <strong>asynchronous</strong>:</p>
@@ -237,7 +237,7 @@ It will set the start state of FsmDemo to Green.
 Two Transition Rules are created, where upon the event Switch,
 the FsmDemo will transition from state Green to Red and vise versa.</p>
 
-<p><img src="..\Presentations\FSM\Dia6.jpg" alt="Transition Example"/></p>
+<p><img src="..\Presentations\FSM\Dia6.JPG" alt="Transition Example"/></p>
 
 <pre><code> local FsmDemo = FSM:New() -- #FsmDemo
  FsmDemo:SetStartState( "Green" )
@@ -248,7 +248,7 @@ the FsmDemo will transition from state Green to Red and vise versa.</p>
 <p>In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
 The next code implements this through the event handling method <strong>OnAfterSwitch</strong>.</p>
 
-<p><img src="..\Presentations\FSM\Dia7.jpg" alt="Transition Flow"/></p>
+<p><img src="..\Presentations\FSM\Dia7.JPG" alt="Transition Flow"/></p>
 
 <pre><code> function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
    self:E( { From, Event, To, FsmUnit } )

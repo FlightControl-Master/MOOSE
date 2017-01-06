@@ -87,7 +87,7 @@
 -- 
 -- ### 1.1.2) Transition Handling
 -- 
--- ![Transition Handlers](..\Presentations\FSM\Dia4.jpg)
+-- ![Transition Handlers](..\Presentations\FSM\Dia4.JPG)
 -- 
 -- An FSM transitions in **4 moments** when an Event is being triggered and processed.  
 -- The mission designer can define for each moment specific logic within methods implementations following a defined API syntax.  
@@ -109,7 +109,7 @@
 -- 
 -- ### 1.1.3) Event Triggers
 -- 
--- ![Event Triggers](..\Presentations\FSM\Dia5.jpg)
+-- ![Event Triggers](..\Presentations\FSM\Dia5.JPG)
 -- 
 -- The FSM creates for each Event two **Event Trigger methods**.  
 -- There are two modes how Events can be triggered, which is **synchronous** and **asynchronous**:
@@ -152,7 +152,7 @@
 -- Two Transition Rules are created, where upon the event Switch,
 -- the FsmDemo will transition from state Green to Red and vise versa.
 -- 
--- ![Transition Example](..\Presentations\FSM\Dia6.jpg)
+-- ![Transition Example](..\Presentations\FSM\Dia6.JPG)
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -162,7 +162,7 @@
 -- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
 -- The next code implements this through the event handling method **OnAfterSwitch**.
 -- 
--- ![Transition Flow](..\Presentations\FSM\Dia7.jpg)
+-- ![Transition Flow](..\Presentations\FSM\Dia7.JPG)
 -- 
 --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
 --        self:E( { From, Event, To, FsmUnit } )
