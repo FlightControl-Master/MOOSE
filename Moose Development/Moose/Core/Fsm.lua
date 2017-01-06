@@ -73,7 +73,7 @@
 -- ## 1.1) FSM Linear Transitions
 -- 
 -- Linear Transitions are Transition Rules allowing an FSM to transition from one or multiple possible **From** state(s) towards a **To** state upon a Triggered **Event**.
--- The Lineair transition rule evaluation will always be done from the **current state* of the FSM.
+-- The Lineair transition rule evaluation will always be done from the **current state** of the FSM.
 -- If no valid Transition Rule can be found in the FSM, the FSM will log an error and stop.
 -- 
 -- ### 1.1.1) FSM Transition Rules
@@ -84,6 +84,33 @@
 -- The method @{#FSM.AddTransition}() specifies a new possible Transition Rule for the FSM. 
 -- 
 -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
+-- 
+-- Find below an example of a Linear Transition Rule definition for an FSM.
+-- 
+--      local Fsm3Switch = FSM:New() -- #FsmDemo
+--      FsmSwitch:SetStartState( "Off" )
+--      FsmSwitch:AddTransition( "Off", "SwitchOn", "On" )
+--      FsmSwitch:AddTransition( "Off", "SwitchMiddle", "Middle" )
+--      FsmSwitch:AddTransition( "On", "SwitchOff", "Off" )
+--      FsmSwitch:AddTransition( "Middle", "SwitchOff", "Off" )
+-- 
+-- The above code snippet models a 3-way switch Linear Transition:
+-- 
+--    * It can be switched **On** by triggering event **SwitchOn**.
+--    * It can be switched to the **Middle** position, by triggering event **SwitchMiddle**.
+--    * It can be switched **Off** by triggering event **SwitchOff**.
+--    * Note that once the Switch is **On** or **Middle**, it can only be switched **Off**.
+-- 
+-- ### Some additional comments:
+-- 
+-- Note that Linear Transition Rules **can be declared in a few variations**:
+-- 
+--    * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
+--    * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
+--   
+-- The below code snippet shows how the two last lines can be rewritten and consensed.
+-- 
+--      FsmSwitch:AddTransition( { "On",  "Middle" }, "SwitchOff", "Off" )
 -- 
 -- ### 1.1.2) Transition Handling
 -- 
@@ -105,7 +132,7 @@
 --    * Event = A string containing the Event name that was triggered.
 --    * To = A string containing the To state.
 -- 
--- On top, each of these methods can have a variable amount of parameters passed. See the example in section 1.3.
+-- On top, each of these methods can have a variable amount of parameters passed. See the example in section [1.1.3](#1.1.3\)-event-triggers).
 -- 
 -- ### 1.1.3) Event Triggers
 -- 
@@ -145,12 +172,18 @@
 -- 
 -- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
 -- 
--- ### 1.1.4) Linear Transitioning Example
+-- ### 1.1.4) Linear Transition Example
 -- 
--- This example creates a new FsmDemo object from class FSM.
--- It will set the start state of FsmDemo to Green.
--- Two Transition Rules are created, where upon the event Switch,
--- the FsmDemo will transition from state Green to Red and vise versa.
+-- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
+-- 
+-- It models a unit standing still near Batumi, and flaring every 5 seconds while switching between a Green flare and a Red flare.
+-- The purpose of this example is not to show how exciting flaring is, but it demonstrates how a Linear Transition FSM can be build.
+-- Have a look at the source code. The source code is also further explained below in this section.
+-- 
+-- The example creates a new FsmDemo object from class FSM.
+-- It will set the start state of FsmDemo to state **Green**.
+-- Two Linear Transition Rules are created, where upon the event **Switch**,
+-- the FsmDemo will transition from state **Green** to **Red** and from **Red** back to **Green**.
 -- 
 -- ![Transition Example](..\Presentations\FSM\Dia6.JPG)
 -- 
@@ -204,16 +237,7 @@
 -- 
 --        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
 -- 
--- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
--- 
--- ### Some additional comments:
--- 
--- Note that transition rules **can be declared with a few variations**:
--- 
---   * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
---   * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
--- 
--- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, in an additional transition rule.
+-- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, adding a **Linear Transition Rule**.
 -- The new event **Stop** will cancel the Switching process.
 -- The transition for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
 -- 
