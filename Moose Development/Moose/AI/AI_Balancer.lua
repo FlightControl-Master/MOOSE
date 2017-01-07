@@ -91,7 +91,7 @@ AI_BALANCER = {
 function AI_BALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
+  self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
   
   self:SetStartState( "None" )
   self:AddTransition( "*", "Start", "Monitoring" )
@@ -103,14 +103,12 @@ function AI_BALANCER:New( SetClient, SpawnAI )
   self:AddTransition( "*", "End", "End" )
   self:AddTransition( "*", "Dead", "End" )
   
-  
-  
   self.SetClient = SetClient
   self.SpawnAI = SpawnAI
   self.ToNearestAirbase = false
   self.ToHomeAirbase = false
   
-  self:__Start( 1 )
+  self:__Start( 5 )
 
   return self
 end
@@ -189,6 +187,8 @@ end
 
 --- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
+
+  self:E( { self.SetClient:Count() } )
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client

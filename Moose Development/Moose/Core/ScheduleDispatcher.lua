@@ -68,10 +68,10 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   
   if Scheduler.SchedulerObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.ObjectSchedulers[self.CallID] } )
+    self:E( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), SchedulerObject = tostring(Scheduler.SchedulerObject) } )
   else
     self.PersistentSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.PersistentSchedulers[self.CallID] } )
+    self:E( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )

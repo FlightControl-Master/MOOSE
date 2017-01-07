@@ -233,6 +233,7 @@
 -- @field #table Filter
 -- @field #table Set
 -- @field #table List
+-- @field Core.Scheduler#SCHEDULER CallScheduler
 -- @extends Core.Base#BASE
 SET_BASE = {
   ClassName = "SET_BASE",
@@ -250,7 +251,7 @@ SET_BASE = {
 function SET_BASE:New( Database )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- Core.Set#SET_BASE
   
   self.Database = Database
 
@@ -260,6 +261,8 @@ function SET_BASE:New( Database )
   self.List = {}
   self.List.__index = self.List
   self.List = setmetatable( { Count = 0 }, self.List )
+  
+  self.CallScheduler = SCHEDULER:New( self )
 
   return self
 end
@@ -647,7 +650,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
   
   return self
 end
