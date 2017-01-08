@@ -565,7 +565,7 @@ do -- FSM
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
-        execute = true
+        execute = false
       end
   
       local fsmparent, Event = self:_isendstate( to )

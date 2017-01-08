@@ -22,7 +22,7 @@
 -- 
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
-local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
+local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
 
 -- Define the SPAWN object for the red AI plane template.
 -- We use InitCleanUp to check every 20 seconds, if there are no planes blocked at the airbase, waithing for take-off.

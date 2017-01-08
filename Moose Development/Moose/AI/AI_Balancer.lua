@@ -1,36 +1,69 @@
---- This module contains the AI_BALANCER class.
+--- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.
+-- 
+-- AI Balancing will replace in multi player missions non-occupied human slots with AI groups, in order to provide an
+-- engaging simulation environment, even when there are hardly any players in the mission.
+-- 
+-- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 -- 
 -- ===
 -- 
--- 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
--- ===================================================================================
+-- # 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
+-- 
 -- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many AI GROUPS as there are
--- CLIENTS in a SET_CLIENT collection not occupied by players.
+-- CLIENTS in a SET_CLIENT collection not occupied by human players. 
+-- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI.
+-- 
 -- The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
--- of the underlying AI GROUPS.
+-- of the spawned AI @{Wrapper.Group#GROUP)s.
 -- 
 -- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
 -- and calls for each event the state transition methods providing the internal @{Core.Fsm#FSM_SET.Set} object containing the
--- SET_GROUP and additional event parameters provided during the event.
+-- AI and additional event parameters provided during the event.
 -- 
--- 1.1) AI_BALANCER construction method
--- ---------------------------------------
--- Create a new AI_BALANCER object with the @{#AI_BALANCER.New} method:
+-- ## 1.1) AI_BALANCER construction
 -- 
---    * @{#AI_BALANCER.New}: Creates a new AI_BALANCER object.
+-- Create a new AI_BALANCER object with the @{#AI_BALANCER.New}() method:
+-- 
+-- ## 1.2) AI_BALANCER is a FSM
+-- 
+-- The AI_BALANCER is a state machine: it manages the different events and states of the @{Core.Fsm#FSM_SET.Set} it is governing.
+-- The AI_BALANCER has a default flow to manage the set.
+-- 
+-- ![Process](..\Presentations\AI_Balancer\Dia2.JPG)
+-- 
+-- 
+-- ### 1.2.1) AI_BALANCER States
+-- 
+--   * **Monitoring** ( Set ): Monitoring the Set if all AI is spawned for the Clients.
+--   * **Spawning** ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.
+--   * **Spawned** ( Set, AIGroup ): A new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.
+--   * **Destroying** ( Set, AIGroup ): The AI is being destroyed.
+--   * **Returning** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.
+-- 
+-- ### 1.2.2) AI_BALANCER Events
+-- 
+--   * **Monitor** ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.
+--   * **Spawn** ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.
+--   * **Spawned** ( Set, AIGroup ): Triggers when a new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.
+--   * **Destroy** ( Set, AIGroup ): The AI is being destroyed.
+--   * **Return** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.
 --    
--- 1.2) 
--- ----
---    * Add
---    * Remove
+-- ## 1.3) AI_BALANCER spawn interval for replacement AI
 -- 
--- 1.2) AI_BALANCER returns AI to Airbases
--- ------------------------------------------
--- You can configure to have the AI to return to:
+-- Use the method @{#AI_BALANCER.InitSpawnInterval}() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.
 -- 
---    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
---    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
--- --
+-- ## 1.4) AI_BALANCER returns AI to Airbases
+-- 
+-- By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
+-- However, there are 2 additional options that you can use to customize the destroy behaviour.
+-- When a human player joins a slot, you can configure to let the AI return to:
+-- 
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
+-- 
+-- Note that when AI returns to an airbase, it will trigger the **Return** event and will return, 
+-- otherwise when the AI is destroyed, the **Destroy** event will be triggered.
+--    
 -- ===
 -- 
 -- **API CHANGE HISTORY**
@@ -43,29 +76,21 @@
 -- 
 -- Hereby the change log:
 -- 
--- 2016-08-17: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
 -- 
 -- ===
 -- 
--- AUTHORS and CONTRIBUTIONS
--- =========================
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
 -- ### Contributions: 
 -- 
---   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AI_BALANCER class.  
---   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
---   * **SNAFU**:
---   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AI_BALANCER moose class.
+--   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
 -- 
---   * FlightControl: Framework Design &  Programming
+--   * FlightControl: Framework Design &  Programming and Documentation.
 -- 
 -- @module AI_Balancer
 
@@ -98,17 +123,14 @@ function AI_BALANCER:New( SetClient, SpawnAI )
   local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- AI.AI_Balancer#AI_BALANCER
   
   self:SetStartState( "None" )
-  self:AddTransition( "*", "Start", "Monitoring" )
   self:AddTransition( "*", "Monitor", "Monitoring" )
   self:AddTransition( "*", "Spawn", "Spawning" )
   self:AddTransition( "Spawning", "Spawned", "Spawned" )
-  self:AddTransition( "*", "Destroyed", "Destroyed" )
   self:AddTransition( "*", "Destroy", "Destroying" )
   self:AddTransition( "*", "Return", "Returning" )
-  self:AddTransition( "*", "End", "End" )
-  self:AddTransition( "*", "Dead", "End" )
   
   self.SetClient = SetClient
+  self.SetClient:FilterOnce()
   self.SpawnAI = SpawnAI
   
   self.SpawnQueue = {}
@@ -116,7 +138,7 @@ function AI_BALANCER:New( SetClient, SpawnAI )
   self.ToNearestAirbase = false
   self.ToHomeAirbase = false
   
-  self:__Start( 5 )
+  self:__Monitor( 1 )
 
   return self
 end
@@ -168,24 +190,6 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
   
   SetGroup:Add( ClientName, AIGroup )
   self.SpawnQueue[ClientName] = nil
-
-
---  --- @param Wrapper.Group#GROUP AIGroup
---  -- @param Core.Event#EVENTDATA EventData
---  local function Respawn( AIGroup, EventData )
---    if EventData.IniUnit then
---      local CheckGroup = EventData.IniUnit:GetGroup()
---      if CheckGroup:GetName() == AIGroup:GetName() then
---        if CheckGroup:GetUnits() == nil then
---          AIGroup:Respawn( AIGroup:GetTemplate() )
---        end
---      end      
---    end
---  end    
---  
---  
---  AIGroup:EventOnDead( Respawn )
---  AIGroup:EventOnEjection( Respawn )
   
   -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
   -- Mission designers can catch this event to bind further actions to the AIGroup.
@@ -195,17 +199,12 @@ end
 --- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, AIGroup )
+function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, AIGroup )
 
   AIGroup:Destroy()
-end
-
---- @param #AI_BALANCER self
--- @param Core.Set#SET_GROUP SetGroup
--- @param Wrapper.Group#GROUP AIGroup
-function AI_BALANCER:onenterDestroyed( SetGroup, From, Event, To, AIGroup )
-
-  AIGroup:Destroy()
+  SetGroup:Flush()
+  SetGroup:Remove( ClientName )
+  SetGroup:Flush()
 end
 
 --- @param #AI_BALANCER self
@@ -238,6 +237,7 @@ end
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
   self:E( { self.SetClient:Count() } )
+  self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
@@ -245,12 +245,13 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
       self:E(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
+      self:E({Client:IsAlive()})
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
 
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
-            self:Destroy( AIGroup )
+            self:Destroy( Client.UnitName, AIGroup )
           else
             -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
             -- If there is a CLIENT, the AI stays engaged and will not return.

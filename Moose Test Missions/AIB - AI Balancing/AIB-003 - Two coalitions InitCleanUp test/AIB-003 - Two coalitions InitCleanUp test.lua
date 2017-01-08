@@ -1,4 +1,4 @@
-RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
+RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
 RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
@@ -7,7 +7,7 @@ RU_AirbasesSet:Flush()
 RU_AI_Balancer:ReturnToNearestAirbases( 10000, RU_AirbasesSet )
 
 
-US_PlanesClientSet = SET_CLIENT:New():FilterCountries( "USA" ):FilterCategories( "plane" ):FilterStart()
+US_PlanesClientSet = SET_CLIENT:New():FilterCountries( "USA" ):FilterCategories( "plane" )
 US_PlanesSpawn = SPAWN:New( "AI US" ):InitCleanUp( 20 )
 US_AI_Balancer = AI_BALANCER:New( US_PlanesClientSet, US_PlanesSpawn )
 

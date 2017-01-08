@@ -119,13 +119,13 @@ All derived classes from AI</em>CARGO follow the same state machine, expose the 
 There are 2 moments when state transition methods will be called by the state machine:</p>
 
 <ul>
-    <li><p><strong>Before</strong> the state transition. 
-    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    <li><p><strong>Leaving</strong> the state. 
+    The state transition method needs to start with the name <strong>OnLeave + the name of the state</strong>. 
     If the state transition method returns false, then the processing of the state transition will not be done!
     If you want to change the behaviour of the AIControllable at this event, return false, 
     but then you'll need to specify your own logic using the AIControllable!</p></li>
-    <li><p><strong>After</strong> the state transition. 
-    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    <li><p><strong>Entering</strong> the state. 
+    The state transition method needs to start with the name <strong>OnEnter + the name of the state</strong>. 
     These state transition methods need to provide a return value, which is specified at the function description.</p></li>
 </ul>
 
@@ -254,49 +254,49 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnAfterBoarding">AI_CARGO:OnAfterBoarding(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnEnterBoarding">AI_CARGO:OnEnterBoarding(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnAfterLoaded">AI_CARGO:OnAfterLoaded(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnEnterLoaded">AI_CARGO:OnEnterLoaded(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnAfterUnBoarding">AI_CARGO:OnAfterUnBoarding(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnEnterUnBoarding">AI_CARGO:OnEnterUnBoarding(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnAfterUnLoaded">AI_CARGO:OnAfterUnLoaded(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnEnterUnLoaded">AI_CARGO:OnEnterUnLoaded(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnBeforeBoarding">AI_CARGO:OnBeforeBoarding(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnLeaveBoarding">AI_CARGO:OnLeaveBoarding(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnBeforeLoaded">AI_CARGO:OnBeforeLoaded(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnLeaveLoaded">AI_CARGO:OnLeaveLoaded(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnBeforeUnBoarding">AI_CARGO:OnBeforeUnBoarding(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnLeaveUnBoarding">AI_CARGO:OnLeaveUnBoarding(Controllable)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnBeforeUnLoaded">AI_CARGO:OnBeforeUnLoaded(Controllable)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).OnLeaveUnLoaded">AI_CARGO:OnLeaveUnLoaded(Controllable)</a></td>
 		<td class="summary">
 
 </td>
@@ -974,8 +974,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnAfterBoarding" >
-<strong>AI_CARGO:OnAfterBoarding(Controllable)</strong>
+<a id="#(AI_CARGO).OnEnterBoarding" >
+<strong>AI_CARGO:OnEnterBoarding(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -995,8 +995,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnAfterLoaded" >
-<strong>AI_CARGO:OnAfterLoaded(Controllable)</strong>
+<a id="#(AI_CARGO).OnEnterLoaded" >
+<strong>AI_CARGO:OnEnterLoaded(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -1016,8 +1016,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnAfterUnBoarding" >
-<strong>AI_CARGO:OnAfterUnBoarding(Controllable)</strong>
+<a id="#(AI_CARGO).OnEnterUnBoarding" >
+<strong>AI_CARGO:OnEnterUnBoarding(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -1037,8 +1037,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnAfterUnLoaded" >
-<strong>AI_CARGO:OnAfterUnLoaded(Controllable)</strong>
+<a id="#(AI_CARGO).OnEnterUnLoaded" >
+<strong>AI_CARGO:OnEnterUnLoaded(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -1058,34 +1058,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnBeforeBoarding" >
-<strong>AI_CARGO:OnBeforeBoarding(Controllable)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CARGO).OnBeforeLoaded" >
-<strong>AI_CARGO:OnBeforeLoaded(Controllable)</strong>
+<a id="#(AI_CARGO).OnLeaveBoarding" >
+<strong>AI_CARGO:OnLeaveBoarding(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -1110,8 +1084,8 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnBeforeUnBoarding" >
-<strong>AI_CARGO:OnBeforeUnBoarding(Controllable)</strong>
+<a id="#(AI_CARGO).OnLeaveLoaded" >
+<strong>AI_CARGO:OnLeaveLoaded(Controllable)</strong>
 </a>
 </dt>
 <dd>
@@ -1136,8 +1110,34 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CARGO).OnBeforeUnLoaded" >
-<strong>AI_CARGO:OnBeforeUnLoaded(Controllable)</strong>
+<a id="#(AI_CARGO).OnLeaveUnBoarding" >
+<strong>AI_CARGO:OnLeaveUnBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).OnLeaveUnLoaded" >
+<strong>AI_CARGO:OnLeaveUnLoaded(Controllable)</strong>
 </a>
 </dt>
 <dd>

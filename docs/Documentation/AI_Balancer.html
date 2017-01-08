@@ -68,41 +68,79 @@
 	<div id="content">
    <h1>Module <code>AI_Balancer</code></h1>
    
-<p>This module contains the AI_BALANCER class.</p>
+<p>SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.</p>
 
    
+
+<p>AI Balancing will replace in multi player missions non-occupied human slots with AI groups, in order to provide an
+engaging simulation environment, even when there are hardly any players in the mission.</p>
+
+<p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
 <h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
+
 <p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many AI GROUPS as there are
-CLIENTS in a SET<em>CLIENT collection not occupied by players.
-The AI</em>BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
-of the underlying AI GROUPS.</p>
+CLIENTS in a SET<em>CLIENT collection not occupied by human players. 
+In other words, use AI</em>BALANCER to simulate human behaviour by spawning in replacement AI.</p>
 
-<p>The parent class <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM) 
+<p>The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
+of the spawned AI <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> manages the functionality to control the Finite State Machine (FSM) 
 and calls for each event the state transition methods providing the internal <a href="Core.Fsm.html##(FSM_SET).Set">Core.Fsm#FSM_SET.Set</a> object containing the
-SET_GROUP and additional event parameters provided during the event.</p>
+AI and additional event parameters provided during the event.</p>
 
-<h2>1.1) AI_BALANCER construction method</h2>
-<p>Create a new AI_BALANCER object with the <a href="##(AI_BALANCER).New">AI_BALANCER.New</a> method:</p>
+<h2>1.1) AI_BALANCER construction</h2>
+
+<p>Create a new AI_BALANCER object with the <a href="##(AI_BALANCER).New">AI_BALANCER.New</a>() method:</p>
+
+<h2>1.2) AI_BALANCER is a FSM</h2>
+
+<p>The AI_BALANCER is a state machine: it manages the different events and states of the <a href="Core.Fsm.html##(FSM_SET).Set">Core.Fsm#FSM_SET.Set</a> it is governing.
+The AI_BALANCER has a default flow to manage the set.</p>
+
+<p><img src="..\Presentations\AI_Balancer\Dia2.JPG" alt="Process"/></p>
+
+
+<h3>1.2.1) AI_BALANCER States</h3>
 
 <ul>
-    <li><a href="##(AI_BALANCER).New">AI_BALANCER.New</a>: Creates a new AI_BALANCER object.</li>
+    <li><strong>Monitoring</strong> ( Set ): Monitoring the Set if all AI is spawned for the Clients.</li>
+    <li><strong>Spawning</strong> ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.</li>
+    <li><strong>Spawned</strong> ( Set, AIGroup ): A new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
+    <li><strong>Destroying</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
+    <li><strong>Returning</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.</li>
 </ul>
 
-<h2>1.2) </h2>
-<p>   * Add
-   * Remove</p>
-
-<h2>1.2) AI_BALANCER returns AI to Airbases</h2>
-<p>You can configure to have the AI to return to:</p>
+<h3>1.2.2) AI_BALANCER Events</h3>
 
 <ul>
-    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the home <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
-    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the nearest friendly <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.
-    --</li>
+    <li><strong>Monitor</strong> ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.</li>
+    <li><strong>Spawn</strong> ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.</li>
+    <li><strong>Spawned</strong> ( Set, AIGroup ): Triggers when a new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
+    <li><strong>Destroy</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
+    <li><strong>Return</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.</li>
 </ul>
+
+<h2>1.3) AI_BALANCER spawn interval for replacement AI</h2>
+
+<p>Use the method <a href="##(AI_BALANCER).InitSpawnInterval">AI_BALANCER.InitSpawnInterval</a>() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.</p>
+
+<h2>1.4) AI_BALANCER returns AI to Airbases</h2>
+
+<p>By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
+However, there are 2 additional options that you can use to customize the destroy behaviour.
+When a human player joins a slot, you can configure to let the AI return to:</p>
+
+<ul>
+    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the <strong>home</strong> <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
+</ul>
+
+<p>Note that when AI returns to an airbase, it will trigger the <strong>Return</strong> event and will return, 
+otherwise when the AI is destroyed, the <strong>Destroy</strong> event will be triggered.</p>
+
+<hr/>
 
 <h1><strong>API CHANGE HISTORY</strong></h1>
 
@@ -115,32 +153,23 @@ SET_GROUP and additional event parameters provided during the event.</p>
 
 <p>Hereby the change log:</p>
 
-<p>2016-08-17: SPAWN:<strong>InitCleanUp</strong>( SpawnCleanUpInterval ) replaces SPAWN:<em>CleanUp</em>( SpawnCleanUpInterval )</p>
-
-<ul>
-    <li>Want to ensure that the methods starting with <strong>Init</strong> are the first called methods before any <em>Spawn</em> method is called!</li>
-    <li>This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.</li>
-</ul>
+<p>2017-01-08: AI_BALANCER:<strong>InitSpawnInterval( Earliest, Latest )</strong> added.</p>
 
 <hr/>
 
-<h1>AUTHORS and CONTRIBUTIONS</h1>
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
 <h3>Contributions:</h3>
 
 <ul>
-    <li><p><strong>Dutch_Baron (James)</strong>: Who you can search on the Eagle Dynamics Forums. <br/>
-    Working together with James has resulted in the creation of the AI_BALANCER class. <br/>
-    James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p></li>
-    <li><p><strong>SNAFU</strong>:
-    Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
-    None of the script code has been used however within the new AI_BALANCER moose class.</p></li>
+    <li><p><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p></li>
+    <li><p><strong>SNAFU</strong>: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.</p></li>
 </ul>
 
 <h3>Authors:</h3>
 
 <ul>
-    <li>FlightControl: Framework Design &amp;  Programming</li>
+    <li>FlightControl: Framework Design &amp;  Programming and Documentation.</li>
 </ul>
 
 
@@ -163,6 +192,24 @@ SET_GROUP and additional event parameters provided during the event.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ClassName">AI_BALANCER.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).Earliest">AI_BALANCER.Earliest</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).InitSpawnInterval">AI_BALANCER:InitSpawnInterval(Earliest, Latest)</a></td>
+		<td class="summary">
+<p>Sets the earliest to the latest interval in seconds how long AI_BALANCER will wait to spawn a new AI.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).Latest">AI_BALANCER.Latest</a></td>
 		<td class="summary">
 
 </td>
@@ -210,6 +257,18 @@ SET_GROUP and additional event parameters provided during the event.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).SpawnAI">AI_BALANCER.SpawnAI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).Test">AI_BALANCER.Test</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ToHomeAirbase">AI_BALANCER.ToHomeAirbase</a></td>
 		<td class="summary">
 
@@ -222,7 +281,7 @@ SET_GROUP and additional event parameters provided during the event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).onenterDestroying">AI_BALANCER:onenterDestroying(SetGroup, AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).onenterDestroying">AI_BALANCER:onenterDestroying(SetGroup, AIGroup, From, Event, To, ClientName)</a></td>
 		<td class="summary">
 
 </td>
@@ -300,6 +359,70 @@ SET_GROUP and additional event parameters provided during the event.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_BALANCER).Earliest" >
+<strong>AI_BALANCER.Earliest</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_BALANCER).InitSpawnInterval" >
+<strong>AI_BALANCER:InitSpawnInterval(Earliest, Latest)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the earliest to the latest interval in seconds how long AI_BALANCER will wait to spawn a new AI.</p>
+
+	
+<p>Provide 2 identical seconds if the interval should be a fixed amount of seconds.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Earliest </em></code>: 
+The earliest a new AI can be spawned in seconds.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Latest </em></code>: 
+The latest a new AI can be spawned in seconds.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_BALANCER).Latest" >
+<strong>AI_BALANCER.Latest</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_BALANCER).New" >
 <strong>AI_BALANCER:New(SetClient, SpawnAI)</strong>
 </a>
@@ -327,9 +450,6 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 				
 <p><em><a href="##(AI_BALANCER)">#AI_BALANCER</a>:</em></p>
 
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new AI_BALANCER Object.</code></pre>
 
 </dd>
 </dl>
@@ -442,6 +562,34 @@ The SET of <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a>s to e
 		<dl class="function">
 <dt>
 
+		<em><a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a></em>
+<a id="#(AI_BALANCER).SpawnAI" >
+<strong>AI_BALANCER.SpawnAI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
+<a id="#(AI_BALANCER).Test" >
+<strong>AI_BALANCER.Test</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#boolean</em>
 <a id="#(AI_BALANCER).ToHomeAirbase" >
 <strong>AI_BALANCER.ToHomeAirbase</strong>
@@ -471,7 +619,7 @@ The SET of <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a>s to e
 <dt>
 
 <a id="#(AI_BALANCER).onenterDestroying" >
-<strong>AI_BALANCER:onenterDestroying(SetGroup, AIGroup, From, Event, To)</strong>
+<strong>AI_BALANCER:onenterDestroying(SetGroup, AIGroup, From, Event, To, ClientName)</strong>
 </a>
 </dt>
 <dd>
@@ -503,6 +651,11 @@ The SET of <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a>s to e
 				<li>
 				
 <p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ClientName </em></code>: </p>
 
 				</li>
 		</ul>
