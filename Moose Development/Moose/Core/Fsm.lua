@@ -582,10 +582,10 @@ do -- FSM
   
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
-        if from ~= to then
+        --if from ~= to then
           self:_call_handler("onenter" .. to, params)
           self:_call_handler("OnEnter" .. to, params)
-        end
+        --end
   
         self:_call_handler("onafter" .. EventName, params)
         self:_call_handler("OnAfter" .. EventName, params)

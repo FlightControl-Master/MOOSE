@@ -74,30 +74,35 @@
 --- AI_BALANCER class
 -- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
+-- @field Functional.Spawn#SPAWN SpawnAI
+-- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 AI_BALANCER = {
   ClassName = "AI_BALANCER",
   PatrolZones = {},
   AIGroups = {},
+  Earliest = 5, -- Earliest a new AI can be spawned is in 5 seconds.
+  Latest = 60, -- Latest a new AI can be spawned is in 60 seconds.
 }
+
+
 
 --- Creates a new AI_BALANCER object
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
 -- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
 -- @return #AI_BALANCER
--- @usage
--- -- Define a new AI_BALANCER Object.
 function AI_BALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
-  self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
+  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- AI.AI_Balancer#AI_BALANCER
   
   self:SetStartState( "None" )
   self:AddTransition( "*", "Start", "Monitoring" )
   self:AddTransition( "*", "Monitor", "Monitoring" )
   self:AddTransition( "*", "Spawn", "Spawning" )
   self:AddTransition( "Spawning", "Spawned", "Spawned" )
+  self:AddTransition( "*", "Destroyed", "Destroyed" )
   self:AddTransition( "*", "Destroy", "Destroying" )
   self:AddTransition( "*", "Return", "Returning" )
   self:AddTransition( "*", "End", "End" )
@@ -105,11 +110,28 @@ function AI_BALANCER:New( SetClient, SpawnAI )
   
   self.SetClient = SetClient
   self.SpawnAI = SpawnAI
+  
+  self.SpawnQueue = {}
+
   self.ToNearestAirbase = false
   self.ToHomeAirbase = false
   
   self:__Start( 5 )
 
+  return self
+end
+
+--- Sets the earliest to the latest interval in seconds how long AI_BALANCER will wait to spawn a new AI.
+-- Provide 2 identical seconds if the interval should be a fixed amount of seconds.
+-- @param #AI_BALANCER self
+-- @param #number Earliest The earliest a new AI can be spawned in seconds.
+-- @param #number Latest The latest a new AI can be spawned in seconds.
+-- @return self
+function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
+
+  self.Earliest = Earliest
+  self.Latest = Latest
+  
   return self
 end
 
@@ -140,21 +162,48 @@ end
 function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
-  local AIGroup = self.SpawnAI:Spawn()
+  local AIGroup = self.SpawnAI:Spawn() -- Wrapper.Group#GROUP
   AIGroup:E( "Spawning new AIGroup" )
   --TODO: need to rework UnitName thing ...
   
   SetGroup:Add( ClientName, AIGroup )
+  self.SpawnQueue[ClientName] = nil
+
+
+--  --- @param Wrapper.Group#GROUP AIGroup
+--  -- @param Core.Event#EVENTDATA EventData
+--  local function Respawn( AIGroup, EventData )
+--    if EventData.IniUnit then
+--      local CheckGroup = EventData.IniUnit:GetGroup()
+--      if CheckGroup:GetName() == AIGroup:GetName() then
+--        if CheckGroup:GetUnits() == nil then
+--          AIGroup:Respawn( AIGroup:GetTemplate() )
+--        end
+--      end      
+--    end
+--  end    
+--  
+--  
+--  AIGroup:EventOnDead( Respawn )
+--  AIGroup:EventOnEjection( Respawn )
   
   -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
   -- Mission designers can catch this event to bind further actions to the AIGroup.
-  self:Spawned( AIGroup ) 
+  self:Spawned( AIGroup )
 end
 
 --- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, AIGroup )
+
+  AIGroup:Destroy()
+end
+
+--- @param #AI_BALANCER self
+-- @param Core.Set#SET_GROUP SetGroup
+-- @param Wrapper.Group#GROUP AIGroup
+function AI_BALANCER:onenterDestroyed( SetGroup, From, Event, To, AIGroup )
 
   AIGroup:Destroy()
 end
@@ -240,9 +289,13 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
         end
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
-          self:E("client not alive")
-          self:Spawn( Client.UnitName )
-          self:E("text after spawn")
+          self:E( "Client " .. Client.UnitName .. " not alive." )
+          if not self.SpawnQueue[Client.UnitName] then
+            -- Spawn a new AI taking into account the spawn interval Earliest, Latest
+            self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )
+            self.SpawnQueue[Client.UnitName] = true
+            self:E( "New AI Spawned for Client " .. Client.UnitName )
+          end
         end
       end
       return true

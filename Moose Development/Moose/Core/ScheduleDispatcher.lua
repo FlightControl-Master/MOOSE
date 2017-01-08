@@ -75,7 +75,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
-  self.Schedule[Scheduler] = {}
+  self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
   self.Schedule[Scheduler][self.CallID] = {}
   self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments

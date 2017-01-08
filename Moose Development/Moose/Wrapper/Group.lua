@@ -883,4 +883,3 @@ function GROUP:CalculateThreatLevelA2G()
 end
 
 
-
