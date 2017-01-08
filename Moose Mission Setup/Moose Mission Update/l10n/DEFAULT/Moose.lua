@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170105_0841' ) 
+env.info( 'Moose Generation Timestamp: 20170108_2104' ) 
 local base = _G
 
 Include = {}
@@ -3884,7 +3884,11 @@ function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArgume
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
-
+  local ObjectName = "-"
+  if SchedulerObject and SchedulerObject.ClassName and SchedulerObject.ClassID then 
+    ObjectName = SchedulerObject.ClassName .. SchedulerObject.ClassID
+  end
+  self:E( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
   self.SchedulerObject = SchedulerObject
   
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
@@ -4013,14 +4017,14 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   
   if Scheduler.SchedulerObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.ObjectSchedulers[self.CallID] } )
+    self:E( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), SchedulerObject = tostring(Scheduler.SchedulerObject) } )
   else
     self.PersistentSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.PersistentSchedulers[self.CallID] } )
+    self:E( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
-  self.Schedule[Scheduler] = {}
+  self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
   self.Schedule[Scheduler][self.CallID] = {}
   self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
@@ -7667,6 +7671,7 @@ end
 -- @field #table Filter
 -- @field #table Set
 -- @field #table List
+-- @field Core.Scheduler#SCHEDULER CallScheduler
 -- @extends Core.Base#BASE
 SET_BASE = {
   ClassName = "SET_BASE",
@@ -7684,7 +7689,7 @@ SET_BASE = {
 function SET_BASE:New( Database )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- Core.Set#SET_BASE
   
   self.Database = Database
 
@@ -7694,6 +7699,8 @@ function SET_BASE:New( Database )
   self.List = {}
   self.List.__index = self.List
   self.List = setmetatable( { Count = 0 }, self.List )
+  
+  self.CallScheduler = SCHEDULER:New( self )
 
   return self
 end
@@ -8081,7 +8088,7 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     return false
   end
 
-  local Scheduler = SCHEDULER:New( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
   
   return self
 end
@@ -10699,50 +10706,85 @@ end
 ----- The _MessageQueue object is created when the MESSAGE class module is loaded.
 ----_MessageQueue = MESSAGEQUEUE:New( 0.5 )
 --
---- This module contains the FSM class and derived FSM_ classes.
+--- This module contains the **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes.
+-- ## Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
--- This development is based on a state machine implementation made by Conroy Kyle.
--- The state machine can be found here: https://github.com/kyleconroy/lua-state-machine
---
--- I've taken the development and enhanced it (actually rewrote it) to make the state machine hierarchical...
--- It is a fantastic development, this module.
---
+-- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
+-- 
+-- A FSM can only be in one of a finite number of states. 
+-- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
+-- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**. 
+-- An **FSM implementation** is defined by **a list of its states**, **its initial state**, and **the triggering events** for **each possible transition**.
+-- An FSM implementation is composed out of **two parts**, a set of **state transition rules**, and an implementation set of **state transition handlers**, implementing those transitions.
+-- 
+-- The FSM class supports a **hierarchical implementation of a Finite State Machine**, 
+-- that is, it allows to **embed existing FSM implementations in a master FSM**.
+-- FSM hierarchies allow for efficient FSM re-use, **not having to re-invent the wheel every time again** when designing complex processes.
+-- 
+-- ![Workflow Example](..\Presentations\FSM\Dia2.JPG)
+-- 
+-- The above diagram shows a graphical representation of a FSM implementation for a **Task**, which guides a Human towards a Zone,
+-- orders him to destroy x targets and account the results.
+-- Other examples of ready made FSM could be: 
+-- 
+--   * route a plane to a zone flown by a human
+--   * detect targets by an AI and report to humans
+--   * account for destroyed targets by human players
+--   * handle AI infantry to deploy from or embark to a helicopter or airplane or vehicle 
+--   * let an AI patrol a zone
+-- 
+-- The **MOOSE framework** uses extensively the FSM class and derived FSM\_ classes, 
+-- because **the goal of MOOSE is to simplify mission design complexity for mission building**.
+-- By efficiently utilizing the FSM class and derived classes, MOOSE allows mission designers to quickly build processes.
+-- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used, 
+-- and tailored** by mission designers through **the implementation of Transition Handlers**.
+-- Each of these FSM implementation classes start either with:
+-- 
+--   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{GROUP} and/or @{UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
+--   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
+--   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{TASK}, seated in a @{CLIENT} (slot) or a @{UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
+-- 
+-- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
+-- 
+-- ##__Dislaimer:__
+-- The FSM class development is based on a finite state machine implementation made by Conroy Kyle.
+-- The state machine can be found on [github](https://github.com/kyleconroy/lua-state-machine)
+-- I've reworked this development (taken the concept), and created a **hierarchical state machine** out of it, embedded within the DCS simulator.
+-- Additionally, I've added extendability and created an API that allows seamless FSM implementation.
+-- 
 -- ===
---
--- ![Banner Image](..\Presentations\FSM\Dia1.jpg)
 --
 -- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
 --
--- A Finite State Machine (FSM) defines the rules of transitioning between various States triggered by Events.
+-- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
 -- 
---    * A **State** defines a moment in the process.
---    * An **Event** describes an action, that can be triggered both internally as externally in the FSM. 
+-- The FSM class is the base class of all FSM\_ derived classes. It implements the main functionality to define and execute Finite State Machines.
+-- The derived FSM\_ classes extend the Finite State Machine functionality to run a workflow process for a specific purpose or component.
 -- 
--- ## 1.1) Event Handling
+-- Finite State Machines have **Transition Rules**, **Transition Handlers** and **Event Triggers**.
 -- 
--- ![Event Handlers](..\Presentations\FSM\Dia3.jpg)
+-- The **Transition Rules** define the "Process Flow Boundaries", that is, 
+-- the path that can be followed hopping from state to state upon triggered events.
+-- If an event is triggered, and there is no valid path found for that event, 
+-- an error will be raised and the FSM will stop functioning.
 -- 
--- An FSM transitions in **4 moments** when an Event is being handled.  
--- Each moment can be catched by handling methods defined by the mission designer,  
--- that will be called by the FSM while executing the transition.  
--- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be fired.
---
---    * To handle **State** moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
---    * To handle **Event** moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- The **Transition Handlers** are special methods that can be defined by the mission designer, following a defined syntax.
+-- If the FSM object finds a method of such a handler, then the method will be called by the FSM, passing specific parameters.
+-- The method can then define its own custom logic to implement the FSM workflow, and to conduct other actions.
 -- 
--- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition.**
+-- The **Event Triggers** are methods that are defined by the FSM, which the mission designer can use to implement the workflow.
+-- Most of the time, these Event Triggers are used within the Transition Handler methods, so that a workflow is created running through the state machine.
 -- 
--- ## 1.2) Event Triggers
+-- As explained above, a FSM supports **Linear State Transitions** and **Hierarchical State Transitions**, and both can be mixed to make a comprehensive FSM implementation.
+-- The below documentation has a seperate chapter explaining both transition modes, taking into account the **Transition Rules**, **Transition Handlers** and **Event Triggers**.
 -- 
--- ![Event Triggers](..\Presentations\FSM\Dia4.jpg)
+-- ## 1.1) FSM Linear Transitions
 -- 
--- The FSM creates for each Event **two Event Trigger methods**.  
--- There are two modes how Events can be triggered, which is **embedded** and **delayed**:
+-- Linear Transitions are Transition Rules allowing an FSM to transition from one or multiple possible **From** state(s) towards a **To** state upon a Triggered **Event**.
+-- The Lineair transition rule evaluation will always be done from the **current state** of the FSM.
+-- If no valid Transition Rule can be found in the FSM, the FSM will log an error and stop.
 -- 
---    * The method **FSM:Event()** triggers an Event that will be processed **embedded** or **immediately**.
---    * The method **FSM:__Event( seconds )** triggers an Event that will be processed **delayed** over time, waiting x seconds.
--- 
--- ## 1.3) FSM Transition Rules
+-- ### 1.1.1) FSM Transition Rules
 -- 
 -- The FSM has transition rules that it follows and validates, as it walks the process. 
 -- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
@@ -10751,12 +10793,107 @@ end
 -- 
 -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
 -- 
--- ### Example
+-- Find below an example of a Linear Transition Rule definition for an FSM.
 -- 
--- This example creates a new FsmDemo object from class FSM.
--- It will set the start state of FsmDemo to Green.
--- 2 Transition Rules are created, where upon the event Switch,
--- the FsmDemo will transition from state Green to Red and vise versa.
+--      local Fsm3Switch = FSM:New() -- #FsmDemo
+--      FsmSwitch:SetStartState( "Off" )
+--      FsmSwitch:AddTransition( "Off", "SwitchOn", "On" )
+--      FsmSwitch:AddTransition( "Off", "SwitchMiddle", "Middle" )
+--      FsmSwitch:AddTransition( "On", "SwitchOff", "Off" )
+--      FsmSwitch:AddTransition( "Middle", "SwitchOff", "Off" )
+-- 
+-- The above code snippet models a 3-way switch Linear Transition:
+-- 
+--    * It can be switched **On** by triggering event **SwitchOn**.
+--    * It can be switched to the **Middle** position, by triggering event **SwitchMiddle**.
+--    * It can be switched **Off** by triggering event **SwitchOff**.
+--    * Note that once the Switch is **On** or **Middle**, it can only be switched **Off**.
+-- 
+-- ### Some additional comments:
+-- 
+-- Note that Linear Transition Rules **can be declared in a few variations**:
+-- 
+--    * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
+--    * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
+--   
+-- The below code snippet shows how the two last lines can be rewritten and consensed.
+-- 
+--      FsmSwitch:AddTransition( { "On",  "Middle" }, "SwitchOff", "Off" )
+-- 
+-- ### 1.1.2) Transition Handling
+-- 
+-- ![Transition Handlers](..\Presentations\FSM\Dia4.JPG)
+-- 
+-- An FSM transitions in **4 moments** when an Event is being triggered and processed.  
+-- The mission designer can define for each moment specific logic within methods implementations following a defined API syntax.  
+-- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be triggered.
+--
+--    * To handle **State** transition moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+--    * To handle **Event** transition moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+-- 
+-- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition!**
+-- 
+-- Transition Handler methods need to follow the above specified naming convention, but are also passed parameters from the FSM.
+-- These parameters are on the correct order: From, Event, To:
+-- 
+--    * From = A string containing the From state.
+--    * Event = A string containing the Event name that was triggered.
+--    * To = A string containing the To state.
+-- 
+-- On top, each of these methods can have a variable amount of parameters passed. See the example in section [1.1.3](#1.1.3\)-event-triggers).
+-- 
+-- ### 1.1.3) Event Triggers
+-- 
+-- ![Event Triggers](..\Presentations\FSM\Dia5.JPG)
+-- 
+-- The FSM creates for each Event two **Event Trigger methods**.  
+-- There are two modes how Events can be triggered, which is **synchronous** and **asynchronous**:
+-- 
+--    * The method **FSM:Event()** triggers an Event that will be processed **synchronously** or **immediately**.
+--    * The method **FSM:__Event( __seconds__ )** triggers an Event that will be processed **asynchronously** over time, waiting __x seconds__.
+-- 
+-- The destinction between these 2 Event Trigger methods are important to understand. An asynchronous call will "log" the Event Trigger to be executed at a later time.
+-- Processing will just continue. Synchronous Event Trigger methods are useful to change states of the FSM immediately, but may have a larger processing impact.
+-- 
+-- The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.
+-- 
+--       function FSM:OnAfterEvent( From, Event, To, Amount )
+--         self:E( { Amount = Amount } ) 
+--       end
+--       
+--       local Amount = 1
+--       FSM:__Event( 5, Amount ) 
+--       
+--       Amount = Amount + 1
+--       FSM:Event( Text, Amount )
+--       
+-- In this example, the **:OnAfterEvent**() Transition Handler implementation will get called when **Event** is being triggered.
+-- Before we go into more detail, let's look at the last 4 lines of the example. 
+-- The last line triggers synchronously the **Event**, and passes Amount as a parameter.
+-- The 3rd last line of the example triggers asynchronously **Event**. 
+-- Event will be processed after 5 seconds, and Amount is given as a parameter.
+-- 
+-- The output of this little code fragment will be:
+-- 
+--    * Amount = 2
+--    * Amount = 2
+-- 
+-- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
+-- 
+-- ### 1.1.4) Linear Transition Example
+-- 
+-- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
+-- 
+-- It models a unit standing still near Batumi, and flaring every 5 seconds while switching between a Green flare and a Red flare.
+-- The purpose of this example is not to show how exciting flaring is, but it demonstrates how a Linear Transition FSM can be build.
+-- Have a look at the source code. The source code is also further explained below in this section.
+-- 
+-- The example creates a new FsmDemo object from class FSM.
+-- It will set the start state of FsmDemo to state **Green**.
+-- Two Linear Transition Rules are created, where upon the event **Switch**,
+-- the FsmDemo will transition from state **Green** to **Red** and from **Red** back to **Green**.
+-- 
+-- ![Transition Example](..\Presentations\FSM\Dia6.JPG)
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -10765,6 +10902,8 @@ end
 -- 
 -- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
 -- The next code implements this through the event handling method **OnAfterSwitch**.
+-- 
+-- ![Transition Flow](..\Presentations\FSM\Dia7.JPG)
 -- 
 --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
 --        self:E( { From, Event, To, FsmUnit } )
@@ -10776,7 +10915,7 @@ end
 --            FsmUnit:Flare(FLARECOLOR.Red)
 --          end
 --        end
---        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+--        self:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
 --      end
 --      
 --      FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the first Switch event to happen in 5 seconds.
@@ -10806,20 +10945,9 @@ end
 -- 
 --        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
 -- 
--- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
--- 
--- ### Some additional comments:
--- 
--- Note that transition rules can be declared with a few variations:
--- 
---   * The From states can be a table of strings, indicating that the transition rule will be valid if the current state of the FSM will be one of the given From states.
---   * The From state can be a "*", indicating that the transition rule will always be valid, regardless of the current state of the FSM.
--- 
--- This transition will create a new FsmDemo object from class FSM.
--- It will set the start state of FsmDemo to Green.
--- A new event is added in addition to the above example.
--- The new event Stop will cancel the Switching process.
--- So, the transtion for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
+-- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, adding a **Linear Transition Rule**.
+-- The new event **Stop** will cancel the Switching process.
+-- The transition for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
 -- 
 --      local FsmDemo = FSM:New() -- #FsmDemo
 --      FsmDemo:SetStartState( "Green" )
@@ -10830,15 +10958,20 @@ end
 -- The transition for event Stop can also be simplified, as any current state of the FSM is valid.
 -- 
 --      FsmDemo:AddTransition( "*", "Stop", "Stopped" )
+--      
+-- So... When FsmDemo:Stop() is being triggered, the state of FsmDemo will transition from Red or Green to Stopped.
+-- And there is no transition handling method defined for that transition, thus, no new event is being triggered causing the FsmDemo process flow to halt.
 -- 
--- ## 1.4) FSM Process Rules
+-- ## 1.5) FSM Hierarchical Transitions
 -- 
--- The FSM can implement sub-processes that will execute and return multiple possible states.  
--- Depending upon which state is returned, the main FSM can continue tiggering different events.
+-- Hierarchical Transitions allow to re-use readily available and implemented FSMs.
+-- This becomes in very useful for mission building, where mission designers build complex processes and workflows, 
+-- combining smaller FSMs to one single FSM.
 -- 
--- The method @{#FSM.AddProcess}() adds a new Sub-Process FSM to the FSM.  
--- A Sub-Process will start the Sub-Process of the FSM upon the defined triggered Event, 
--- with multiple possible States as a result.
+-- The FSM can embed **Sub-FSMs** that will execute and return **multiple possible Return (End) States**.  
+-- Depending upon **which state is returned**, the main FSM can continue the flow **triggering specific events**.
+-- 
+-- The method @{#FSM.AddProcess}() adds a new Sub-FSM to the FSM.  
 --
 -- ====
 -- 
@@ -10862,11 +10995,11 @@ end
 -- 
 -- ### Contributions: 
 -- 
---   * None.
+--   * [**Pikey**](https://forums.eagle.ru/member.php?u=62835): Review of documentation & advice for improvements.
 -- 
 -- ### Authors: 
 -- 
---   * **FlightControl**: Design & Programming
+--   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
 --
 -- @module Fsm
 
@@ -10885,7 +11018,7 @@ do -- FSM
   function FSM:New( FsmT )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() )
+    self = BASE:Inherit( self, BASE:New() )
   
     self.options = options or {}
     self.options.subs = self.options.subs or {}
@@ -11112,17 +11245,17 @@ do -- FSM
   
     self:E( { EventName, ... } )
   
-    local can, to = self:can( EventName )
-    self:E( { EventName, self.current, can, to } )
+    local Can, to = self:can( EventName )
+    self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
   
-    local ReturnValues = nil
-  
-    if can then
+    if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
   
       if self:_call_handler("onbefore" .. EventName, params) == false
-        or self:_call_handler("onleave" .. from, params) == false then
+      or self:_call_handler("OnBefore" .. EventName, params) == false
+      or self:_call_handler("onleave" .. from, params) == false
+      or self:_call_handler("OnLeave" .. from, params) == false then
         return false
       end
   
@@ -11140,14 +11273,16 @@ do -- FSM
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
-        execute = true
+        execute = false
       end
   
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
         self:_call_handler("onenter" .. to, params)
+        self:_call_handler("OnEnter" .. to, params)
         self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
         self:_call_handler("onstatechange", params)
         fsmparent[Event]( fsmparent )
         execute = false
@@ -11155,25 +11290,16 @@ do -- FSM
   
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
-        if from ~= to then
-          self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+        --if from ~= to then
           self:_call_handler("onenter" .. to, params)
-        end
+          self:_call_handler("OnEnter" .. to, params)
+        --end
   
-        self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
-        if ( self:_call_handler("OnBefore" .. to, params ) ~= false ) then
-  
-          self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
-          self:_call_handler("onafter" .. EventName, params)
-  
-          self:T3( { On = "OnAfter" .. EventName, callback = self["OnAfter" .. EventName] }  )
-          ReturnValues = self:_call_handler("OnAfter" .. EventName, params )
-        end
+        self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
   
         self:_call_handler("onstatechange", params)
       end
-  
-      return ReturnValues
     end
   
     return nil
@@ -11582,7 +11708,7 @@ do -- FSM_SET
   function FSM_SET:New( FSMSet )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
+    self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
   
     if FSMSet then
       self:Set( FSMSet )
@@ -11652,7 +11778,6 @@ OBJECT = {
   ObjectName = "",
 }
 
-
 --- A DCSObject
 -- @type DCSObject
 -- @field id_ The ID of the controllable in DCS
@@ -11661,10 +11786,11 @@ OBJECT = {
 -- @param #OBJECT self
 -- @param Dcs.DCSWrapper.Object#Object ObjectName The Object name
 -- @return #OBJECT self
-function OBJECT:New( ObjectName )
+function OBJECT:New( ObjectName, Test )
   local self = BASE:Inherit( self, BASE:New() )
   self:F2( ObjectName )
   self.ObjectName = ObjectName
+
   return self
 end
 
@@ -15446,7 +15572,6 @@ function GROUP:CalculateThreatLevelA2G()
 end
 
 
-
 --- This module contains the UNIT class.
 -- 
 -- 1) @{#UNIT} class, extends @{Wrapper.Controllable#CONTROLLABLE}
@@ -18265,6 +18390,7 @@ SPAWN = {
   SpawnTemplatePrefix = nil,
   SpawnAliasPrefix = nil,
 }
+
 
 --- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
@@ -21673,6 +21799,10 @@ function MISSILETRAINER:_EventShot( Event )
   else
      -- TODO: some weapons don't know the target unit... Need to develop a workaround for this.
     SCHEDULER:New( TrainerWeapon, TrainerWeapon.destroy, {}, 2 )
+		if ( TrainerWeapon:getTypeName() == "9M311" ) then
+		SCHEDULER:New( TrainerWeapon, TrainerWeapon.destroy, {}, 2 )
+		else
+		end
   end
 end
 
@@ -24052,39 +24182,72 @@ function DETECTION_AREAS:CreateDetectionSets()
 end
 
 
---- This module contains the AI_BALANCER class.
+--- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.
+-- 
+-- AI Balancing will replace in multi player missions non-occupied human slots with AI groups, in order to provide an
+-- engaging simulation environment, even when there are hardly any players in the mission.
+-- 
+-- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 -- 
 -- ===
 -- 
--- 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
--- ===================================================================================
+-- # 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
+-- 
 -- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many AI GROUPS as there are
--- CLIENTS in a SET_CLIENT collection not occupied by players.
+-- CLIENTS in a SET_CLIENT collection not occupied by human players. 
+-- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI.
+-- 
 -- The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
--- of the underlying AI GROUPS.
+-- of the spawned AI @{Wrapper.Group#GROUP)s.
 -- 
 -- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
 -- and calls for each event the state transition methods providing the internal @{Core.Fsm#FSM_SET.Set} object containing the
--- SET_GROUP and additional event parameters provided during the event.
+-- AI and additional event parameters provided during the event.
 -- 
--- 1.1) AI_BALANCER construction method
--- ---------------------------------------
--- Create a new AI_BALANCER object with the @{#AI_BALANCER.New} method:
+-- ## 1.1) AI_BALANCER construction
 -- 
---    * @{#AI_BALANCER.New}: Creates a new AI_BALANCER object.
+-- Create a new AI_BALANCER object with the @{#AI_BALANCER.New}() method:
+-- 
+-- ## 1.2) AI_BALANCER is a FSM
+-- 
+-- The AI_BALANCER is a state machine: it manages the different events and states of the @{Core.Fsm#FSM_SET.Set} it is governing.
+-- The AI_BALANCER has a default flow to manage the set.
+-- 
+-- ![Process](..\Presentations\AI_Balancer\Dia2.JPG)
+-- 
+-- 
+-- ### 1.2.1) AI_BALANCER States
+-- 
+--   * **Monitoring** ( Set ): Monitoring the Set if all AI is spawned for the Clients.
+--   * **Spawning** ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.
+--   * **Spawned** ( Set, AIGroup ): A new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.
+--   * **Destroying** ( Set, AIGroup ): The AI is being destroyed.
+--   * **Returning** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.
+-- 
+-- ### 1.2.2) AI_BALANCER Events
+-- 
+--   * **Monitor** ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.
+--   * **Spawn** ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.
+--   * **Spawned** ( Set, AIGroup ): Triggers when a new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.
+--   * **Destroy** ( Set, AIGroup ): The AI is being destroyed.
+--   * **Return** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.
 --    
--- 1.2) 
--- ----
---    * Add
---    * Remove
+-- ## 1.3) AI_BALANCER spawn interval for replacement AI
 -- 
--- 1.2) AI_BALANCER returns AI to Airbases
--- ------------------------------------------
--- You can configure to have the AI to return to:
+-- Use the method @{#AI_BALANCER.InitSpawnInterval}() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.
 -- 
---    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
---    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
--- --
+-- ## 1.4) AI_BALANCER returns AI to Airbases
+-- 
+-- By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
+-- However, there are 2 additional options that you can use to customize the destroy behaviour.
+-- When a human player joins a slot, you can configure to let the AI return to:
+-- 
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
+-- 
+-- Note that when AI returns to an airbase, it will trigger the **Return** event and will return, 
+-- otherwise when the AI is destroyed, the **Destroy** event will be triggered.
+--    
 -- ===
 -- 
 -- **API CHANGE HISTORY**
@@ -24097,29 +24260,21 @@ end
 -- 
 -- Hereby the change log:
 -- 
--- 2016-08-17: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
 -- 
 -- ===
 -- 
--- AUTHORS and CONTRIBUTIONS
--- =========================
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
 -- ### Contributions: 
 -- 
---   * **Dutch_Baron (James)**: Who you can search on the Eagle Dynamics Forums.  
---   Working together with James has resulted in the creation of the AI_BALANCER class.  
---   James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
---   * **SNAFU**:
---   Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE.
---   None of the script code has been used however within the new AI_BALANCER moose class.
+--   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
 -- 
---   * FlightControl: Framework Design &  Programming
+--   * FlightControl: Framework Design &  Programming and Documentation.
 -- 
 -- @module AI_Balancer
 
@@ -24128,44 +24283,61 @@ end
 --- AI_BALANCER class
 -- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
+-- @field Functional.Spawn#SPAWN SpawnAI
+-- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 AI_BALANCER = {
   ClassName = "AI_BALANCER",
   PatrolZones = {},
   AIGroups = {},
+  Earliest = 5, -- Earliest a new AI can be spawned is in 5 seconds.
+  Latest = 60, -- Latest a new AI can be spawned is in 60 seconds.
 }
+
+
 
 --- Creates a new AI_BALANCER object
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
 -- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
 -- @return #AI_BALANCER
--- @usage
--- -- Define a new AI_BALANCER Object.
 function AI_BALANCER:New( SetClient, SpawnAI )
   
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- Core.Fsm#FSM_SET
+  local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- AI.AI_Balancer#AI_BALANCER
   
   self:SetStartState( "None" )
-  self:AddTransition( "*", "Start", "Monitoring" )
   self:AddTransition( "*", "Monitor", "Monitoring" )
   self:AddTransition( "*", "Spawn", "Spawning" )
   self:AddTransition( "Spawning", "Spawned", "Spawned" )
   self:AddTransition( "*", "Destroy", "Destroying" )
   self:AddTransition( "*", "Return", "Returning" )
-  self:AddTransition( "*", "End", "End" )
-  self:AddTransition( "*", "Dead", "End" )
-  
-  
   
   self.SetClient = SetClient
+  self.SetClient:FilterOnce()
   self.SpawnAI = SpawnAI
+  
+  self.SpawnQueue = {}
+
   self.ToNearestAirbase = false
   self.ToHomeAirbase = false
   
-  self:__Start( 1 )
+  self:__Monitor( 1 )
 
+  return self
+end
+
+--- Sets the earliest to the latest interval in seconds how long AI_BALANCER will wait to spawn a new AI.
+-- Provide 2 identical seconds if the interval should be a fixed amount of seconds.
+-- @param #AI_BALANCER self
+-- @param #number Earliest The earliest a new AI can be spawned in seconds.
+-- @param #number Latest The latest a new AI can be spawned in seconds.
+-- @return self
+function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
+
+  self.Earliest = Earliest
+  self.Latest = Latest
+  
   return self
 end
 
@@ -24196,23 +24368,27 @@ end
 function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
-  local AIGroup = self.SpawnAI:Spawn()
+  local AIGroup = self.SpawnAI:Spawn() -- Wrapper.Group#GROUP
   AIGroup:E( "Spawning new AIGroup" )
   --TODO: need to rework UnitName thing ...
   
   SetGroup:Add( ClientName, AIGroup )
+  self.SpawnQueue[ClientName] = nil
   
   -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
   -- Mission designers can catch this event to bind further actions to the AIGroup.
-  self:Spawned( AIGroup ) 
+  self:Spawned( AIGroup )
 end
 
 --- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
-function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, AIGroup )
+function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, AIGroup )
 
   AIGroup:Destroy()
+  SetGroup:Flush()
+  SetGroup:Remove( ClientName )
+  SetGroup:Flush()
 end
 
 --- @param #AI_BALANCER self
@@ -24244,18 +24420,22 @@ end
 --- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
+  self:E( { self.SetClient:Count() } )
+  self.SetClient:Flush()
+
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
     function( Client )
       self:E(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
+      self:E({Client:IsAlive()})
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
 
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
-            self:Destroy( AIGroup )
+            self:Destroy( Client.UnitName, AIGroup )
           else
             -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
             -- If there is a CLIENT, the AI stays engaged and will not return.
@@ -24294,9 +24474,13 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
         end
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
-          self:E("client not alive")
-          self:Spawn( Client.UnitName )
-          self:E("text after spawn")
+          self:E( "Client " .. Client.UnitName .. " not alive." )
+          if not self.SpawnQueue[Client.UnitName] then
+            -- Spawn a new AI taking into account the spawn interval Earliest, Latest
+            self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )
+            self.SpawnQueue[Client.UnitName] = true
+            self:E( "New AI Spawned for Client " .. Client.UnitName )
+          end
         end
       end
       return true
@@ -24730,14 +24914,14 @@ end
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
 -- 
---   * **Before** the state transition. 
---     The state transition method needs to start with the name **OnBefore + the name of the state**. 
+--   * **Leaving** the state. 
+--     The state transition method needs to start with the name **OnLeave + the name of the state**. 
 --     If the state transition method returns false, then the processing of the state transition will not be done!
 --     If you want to change the behaviour of the AIControllable at this event, return false, 
 --     but then you'll need to specify your own logic using the AIControllable!
 --   
---   * **After** the state transition. 
---     The state transition method needs to start with the name **OnAfter + the name of the state**. 
+--   * **Entering** the state. 
+--     The state transition method needs to start with the name **OnEnter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 -- 
 -- 2) #AI_CARGO_UNIT class
@@ -24823,45 +25007,45 @@ end
 
 -- UnLoaded
 
---- @function [parent=#AI_CARGO] OnBeforeUnLoaded
+--- @function [parent=#AI_CARGO] OnLeaveUnLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterUnLoaded
+--- @function [parent=#AI_CARGO] OnEnterUnLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Loaded
 
---- @function [parent=#AI_CARGO] OnBeforeLoaded
+--- @function [parent=#AI_CARGO] OnLeaveLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterLoaded
+--- @function [parent=#AI_CARGO] OnEnterLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Boarding
 
---- @function [parent=#AI_CARGO] OnBeforeBoarding
+--- @function [parent=#AI_CARGO] OnLeaveBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterBoarding
+--- @function [parent=#AI_CARGO] OnEnterBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- UnBoarding
 
---- @function [parent=#AI_CARGO] OnBeforeUnBoarding
+--- @function [parent=#AI_CARGO] OnLeaveUnBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterUnBoarding
+--- @function [parent=#AI_CARGO] OnEnterUnBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 

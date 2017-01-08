@@ -42,14 +42,14 @@
 -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
 -- There are 2 moments when state transition methods will be called by the state machine:
 -- 
---   * **Before** the state transition. 
---     The state transition method needs to start with the name **OnBefore + the name of the state**. 
+--   * **Leaving** the state. 
+--     The state transition method needs to start with the name **OnLeave + the name of the state**. 
 --     If the state transition method returns false, then the processing of the state transition will not be done!
 --     If you want to change the behaviour of the AIControllable at this event, return false, 
 --     but then you'll need to specify your own logic using the AIControllable!
 --   
---   * **After** the state transition. 
---     The state transition method needs to start with the name **OnAfter + the name of the state**. 
+--   * **Entering** the state. 
+--     The state transition method needs to start with the name **OnEnter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 -- 
 -- 2) #AI_CARGO_UNIT class
@@ -135,45 +135,45 @@
 
 -- UnLoaded
 
---- @function [parent=#AI_CARGO] OnBeforeUnLoaded
+--- @function [parent=#AI_CARGO] OnLeaveUnLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterUnLoaded
+--- @function [parent=#AI_CARGO] OnEnterUnLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Loaded
 
---- @function [parent=#AI_CARGO] OnBeforeLoaded
+--- @function [parent=#AI_CARGO] OnLeaveLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterLoaded
+--- @function [parent=#AI_CARGO] OnEnterLoaded
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Boarding
 
---- @function [parent=#AI_CARGO] OnBeforeBoarding
+--- @function [parent=#AI_CARGO] OnLeaveBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterBoarding
+--- @function [parent=#AI_CARGO] OnEnterBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- UnBoarding
 
---- @function [parent=#AI_CARGO] OnBeforeUnBoarding
+--- @function [parent=#AI_CARGO] OnLeaveUnBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnAfterUnBoarding
+--- @function [parent=#AI_CARGO] OnEnterUnBoarding
 -- @param #AI_CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 

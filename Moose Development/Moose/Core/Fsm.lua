@@ -310,7 +310,7 @@ do -- FSM
   function FSM:New( FsmT )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() )
+    self = BASE:Inherit( self, BASE:New() )
   
     self.options = options or {}
     self.options.subs = self.options.subs or {}
@@ -537,17 +537,17 @@ do -- FSM
   
     self:E( { EventName, ... } )
   
-    local can, to = self:can( EventName )
-    self:E( { EventName, self.current, can, to } )
+    local Can, to = self:can( EventName )
+    self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
   
-    local ReturnValues = nil
-  
-    if can then
+    if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
   
       if self:_call_handler("onbefore" .. EventName, params) == false
-        or self:_call_handler("onleave" .. from, params) == false then
+      or self:_call_handler("OnBefore" .. EventName, params) == false
+      or self:_call_handler("onleave" .. from, params) == false
+      or self:_call_handler("OnLeave" .. from, params) == false then
         return false
       end
   
@@ -565,14 +565,16 @@ do -- FSM
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
-        execute = true
+        execute = false
       end
   
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
         self:_call_handler("onenter" .. to, params)
+        self:_call_handler("OnEnter" .. to, params)
         self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
         self:_call_handler("onstatechange", params)
         fsmparent[Event]( fsmparent )
         execute = false
@@ -580,25 +582,16 @@ do -- FSM
   
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
-        if from ~= to then
-          self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+        --if from ~= to then
           self:_call_handler("onenter" .. to, params)
-        end
+          self:_call_handler("OnEnter" .. to, params)
+        --end
   
-        self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
-        if ( self:_call_handler("OnBefore" .. to, params ) ~= false ) then
-  
-          self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
-          self:_call_handler("onafter" .. EventName, params)
-  
-          self:T3( { On = "OnAfter" .. EventName, callback = self["OnAfter" .. EventName] }  )
-          ReturnValues = self:_call_handler("OnAfter" .. EventName, params )
-        end
+        self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
   
         self:_call_handler("onstatechange", params)
       end
-  
-      return ReturnValues
     end
   
     return nil
@@ -1007,7 +1000,7 @@ do -- FSM_SET
   function FSM_SET:New( FSMSet )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
+    self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
   
     if FSMSet then
       self:Set( FSMSet )
