@@ -3,10 +3,15 @@
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
-MOOSE is currently still in alpha version, but will evolve over time. Right now, it has been updated to work with DCS world 1.5. and 2.0.
+MOOSE is designed to work with DCS world 1.5. and 2.0.
 
 You can find the source of MOOSE here on GITHUB. It is free for download: 
 https://github.com/FlightControl-Master/MOOSE/
+
+MOOSE has a broadcast channel on youtube. Various videos explain how to use the MOOSE classes in your missions.
+These videos are grouped into playlists, which explain specific MOOSE capabilities, 
+and gradually build up the "understanding" and "what is possible" to do with the MOOSE framework.
+I really, really encourage all to watch the explanation videos.
 
 Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
 
