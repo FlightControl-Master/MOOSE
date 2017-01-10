@@ -28,7 +28,7 @@
 -- 
 -- ## 1.2) AI_BALANCER is a FSM
 -- 
--- ![Process](..\Presentations\AI_Balancer\Dia2.JPG)
+-- ![Process](..\Presentations\AI_Balancer\Dia13.JPG)
 -- 
 -- ### 1.2.1) AI_BALANCER States
 -- 

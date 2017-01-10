@@ -19,10 +19,6 @@
 -- 3. If two players join the red slots, no AI plane should be spawned, and all airborne AI planes should return to the nearest home base.
 -- 4. Spawned AI should take-off from the airbase, and start patrolling the area around Anapa.
 -- 5. When the AI is out-of-fuel, it should report it is returning to the home base, and land at Anapa.
--- 
--- # Status: DEVELOP 07 Dec 2016
---
--- @module TEST.AI_BALANCER.T002
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
