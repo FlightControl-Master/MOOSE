@@ -23,8 +23,6 @@
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
 
 -- Define the SPAWN object for the red AI plane template.
--- We use InitCleanUp to check every 20 seconds, if there are no planes blocked at the airbase, waithing for take-off.
--- If a blocked plane exists, this red plane will be ReSpawned.
 local RU_PlanesSpawn = SPAWN:New( "AI RU" )
 
 -- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
