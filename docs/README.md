@@ -31,6 +31,13 @@ Some mandatory videos to watch are:
   * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
   * [MOOSE Task Dispatching](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3I6ieFM-cjey-rncF1ktNI)
 
+## MOOSE community
+
+There is a MOOSE community at various places out there. The main community can be found at slack.com.
+Various channels and people are helping each other out using the framework.
+If you would like to join, please contact me on skype: FlightControl_Skype.
+
+
 ## Test Missions
 
 The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), that you can try out and helps you to code. 
