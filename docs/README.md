@@ -13,23 +13,31 @@ The goal of MOOSE is to allow mission designers to enhance their scripting with 
 
 ## GitHub Repository
 
-You can find the source of MOOSE here on GITHUB. It is free for download: 
+You can find the source of MOOSE here on GITHUB. It is free for download. 
+
 https://github.com/FlightControl-Master/MOOSE/
 
 ## YouTube Broadcast Channel
 
-MOOSE has a broadcast channel on youtube. Various videos explain how to use the MOOSE classes in your missions.
+MOOSE has a [broadcast channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg/playlists) on youtube. 
 These videos are grouped into playlists, which explain specific MOOSE capabilities, 
 and gradually build up the "understanding" and "what is possible" to do with the MOOSE framework.
 I really, really encourage all to watch the explanation videos.
-Find the YouTube broadcast channel here:
+
+Some mandatory videos to watch are:
+
+  * [MOOSE Introduction and Setup](https://www.youtube.com/watch?v=-Hxae3mTCE8&t=159s&index=1&list=PL7ZUrU4zZUl0riB9ULVh-bZvFlw1_Wym2)
+  * [MOOSE Spawning](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+  * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
+  * [MOOSE Task Dispatching](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3I6ieFM-cjey-rncF1ktNI)
 
 ## Test Missions
 
 The framework comes with a couple of test missions, that you can try out and copy/paste code
 templates to build your own missions, while still learning the MOOSE framework.
 These exact test missions are demonstrated at the demo videos in the YouTube channel.
-Find these test missions here at GITHUB:
+Find these test missions at GITHUB on the MOOSE development site. 
+
 https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions
 
 Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
