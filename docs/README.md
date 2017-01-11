@@ -13,9 +13,7 @@ The goal of MOOSE is to allow mission designers to enhance their scripting with 
 
 ## GitHub Repository
 
-You can find the source of MOOSE here on GITHUB. It is free for download. 
-
-https://github.com/FlightControl-Master/MOOSE/
+You can find the source of [MOOSE on GITHUB](https://github.com/FlightControl-Master/MOOSE/). It is free for download. 
 
 ## YouTube Broadcast Channel
 
@@ -33,12 +31,10 @@ Some mandatory videos to watch are:
 
 ## Test Missions
 
-The framework comes with a couple of test missions, that you can try out and copy/paste code
-templates to build your own missions, while still learning the MOOSE framework.
-These exact test missions are demonstrated at the demo videos in the YouTube channel.
-Find these test missions at GITHUB on the MOOSE development site. 
+The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), that you can try out and helps you to code. 
+You can copy/paste code the code snippets into your missions, as it accellerates your mission developments.
 
-https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions
+These exact test missions are demonstrated at the demo videos in the YouTube channel.
 
 Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
 
