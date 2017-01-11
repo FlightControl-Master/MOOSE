@@ -24,6 +24,8 @@ I really, really encourage all to watch the explanation videos.
 
 Some mandatory videos to watch are:
 
+  * [MOOSE in 5 Minutes](https://www.youtube.com/watch?v=Sb4nmobV8Vk)
+
   * [MOOSE Introduction and Setup](https://www.youtube.com/watch?v=-Hxae3mTCE8&t=159s&index=1&list=PL7ZUrU4zZUl0riB9ULVh-bZvFlw1_Wym2)
   * [MOOSE Spawning](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
   * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
