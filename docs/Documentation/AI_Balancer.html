@@ -71,24 +71,31 @@
 <p>SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.</p>
 
    
-
-<p>AI Balancing will replace in multi player missions non-occupied human slots with AI groups, in order to provide an
-engaging simulation environment, even when there are hardly any players in the mission.</p>
+<p>AI Balancing will replace in multi player missions 
+non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
+even when there are hardly any players in the mission.</p>
 
 <p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>Examples can be found in the test missions.</p>
 
 <hr/>
 
 <h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
 
-<p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many AI GROUPS as there are
-CLIENTS in a SET<em>CLIENT collection not occupied by human players. 
-In other words, use AI</em>BALANCER to simulate human behaviour by spawning in replacement AI.</p>
+<p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
+CLIENTS in a SET<em>CLIENT collection, which are not occupied by human players. 
+In other words, use AI</em>BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
 
-<p>The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
-of the spawned AI <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> manages the functionality to control the Finite State Machine (FSM) 
-and calls for each event the state transition methods providing the internal <a href="Core.Fsm.html##(FSM_SET).Set">Core.Fsm#FSM_SET.Set</a> object containing the
-AI and additional event parameters provided during the event.</p>
+<p>The parent class <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
+The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
+An explanation about state and event transition methods can be found in the <a href="FSM.html">FSM</a> module documentation.</p>
+
+<p>The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:</p>
+
+<ul>
+    <li>**<a href="##(AI_BALANCER).OnAfterSpawned">AI_BALANCER.OnAfterSpawned</a>**( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.</li>
+</ul>
 
 <h2>1.1) AI_BALANCER construction</h2>
 
@@ -96,11 +103,7 @@ AI and additional event parameters provided during the event.</p>
 
 <h2>1.2) AI_BALANCER is a FSM</h2>
 
-<p>The AI_BALANCER is a state machine: it manages the different events and states of the <a href="Core.Fsm.html##(FSM_SET).Set">Core.Fsm#FSM_SET.Set</a> it is governing.
-The AI_BALANCER has a default flow to manage the set.</p>
-
-<p><img src="..\Presentations\AI_Balancer\Dia2.JPG" alt="Process"/></p>
-
+<p><img src="..\Presentations\AI_Balancer\Dia13.JPG" alt="Process"/></p>
 
 <h3>1.2.1) AI_BALANCER States</h3>
 
@@ -137,8 +140,8 @@ When a human player joins a slot, you can configure to let the AI return to:</p>
     <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
 </ul>
 
-<p>Note that when AI returns to an airbase, it will trigger the <strong>Return</strong> event and will return, 
-otherwise when the AI is destroyed, the <strong>Destroy</strong> event will be triggered.</p>
+<p>Note that when AI returns to an airbase, the AI<em>BALANCER will trigger the <strong>Return</strong> event and the AI will return, 
+otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and the AI will be destroyed.</p>
 
 <hr/>
 

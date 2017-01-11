@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170108_2104' ) 
+env.info( 'Moose Generation Timestamp: 20170110_1254' ) 
 local base = _G
 
 Include = {}
@@ -24182,27 +24182,29 @@ function DETECTION_AREAS:CreateDetectionSets()
 end
 
 
---- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.
--- 
--- AI Balancing will replace in multi player missions non-occupied human slots with AI groups, in order to provide an
--- engaging simulation environment, even when there are hardly any players in the mission.
+--- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class. AI Balancing will replace in multi player missions 
+-- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
+-- even when there are hardly any players in the mission.
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
+-- 
+-- Examples can be found in the test missions.
 -- 
 -- ===
 -- 
 -- # 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
 -- 
--- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many AI GROUPS as there are
--- CLIENTS in a SET_CLIENT collection not occupied by human players. 
--- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI.
+-- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
+-- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
+-- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- The AI_BALANCER class manages internally a collection of AI management objects, which govern the behaviour 
--- of the spawned AI @{Wrapper.Group#GROUP)s.
+-- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
+-- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
+-- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
 -- 
--- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM) 
--- and calls for each event the state transition methods providing the internal @{Core.Fsm#FSM_SET.Set} object containing the
--- AI and additional event parameters provided during the event.
+-- The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:
+-- 
+--   * **@{#AI_BALANCER.OnAfterSpawned}**( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.
 -- 
 -- ## 1.1) AI_BALANCER construction
 -- 
@@ -24210,11 +24212,7 @@ end
 -- 
 -- ## 1.2) AI_BALANCER is a FSM
 -- 
--- The AI_BALANCER is a state machine: it manages the different events and states of the @{Core.Fsm#FSM_SET.Set} it is governing.
--- The AI_BALANCER has a default flow to manage the set.
--- 
--- ![Process](..\Presentations\AI_Balancer\Dia2.JPG)
--- 
+-- ![Process](..\Presentations\AI_Balancer\Dia13.JPG)
 -- 
 -- ### 1.2.1) AI_BALANCER States
 -- 
@@ -24245,13 +24243,12 @@ end
 --    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
 --    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
 -- 
--- Note that when AI returns to an airbase, it will trigger the **Return** event and will return, 
--- otherwise when the AI is destroyed, the **Destroy** event will be triggered.
+-- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
+-- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
 --    
 -- ===
 -- 
--- **API CHANGE HISTORY**
--- ======================
+-- # **API CHANGE HISTORY**
 -- 
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
 -- 
@@ -24277,8 +24274,6 @@ end
 --   * FlightControl: Framework Design &  Programming and Documentation.
 -- 
 -- @module AI_Balancer
-
-
 
 --- AI_BALANCER class
 -- @type AI_BALANCER

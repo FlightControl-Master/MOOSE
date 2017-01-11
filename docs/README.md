@@ -3,18 +3,53 @@
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
-MOOSE is currently still in alpha version, but will evolve over time. Right now, it has been updated to work with DCS world 1.5. and 2.0.
+MOOSE is designed to work with DCS world 1.5. and 2.0.
 
-You can find the source of MOOSE here on GITHUB. It is free for download: 
-https://github.com/FlightControl-Master/MOOSE/
-
-Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
+![Banner](Presentations\MOOSE\Dia1.JPG)
 
 # Goals
 
 The goal of MOOSE is to allow mission designers to enhance their scripting with mission orchestration objects, which can be instantiated from defined classes within the framework. This will allow to write mission scripts with minimal code embedded. Of course, the richness of the framework will determine the richness of the misson scenarios. We can expect that MOOSE will evolve over time, as more missions will be designed within the framework.
 
+## GitHub Repository
+
+You can find the source of [MOOSE on GITHUB](https://github.com/FlightControl-Master/MOOSE/). It is free for download. 
+
+## YouTube Broadcast Channel
+
+MOOSE has a [broadcast channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg/playlists) on youtube. 
+These videos are grouped into playlists, which explain specific MOOSE capabilities, 
+and gradually build up the "understanding" and "what is possible" to do with the MOOSE framework.
+I really, really encourage all to watch the explanation videos.
+
+Some mandatory videos to watch are:
+
+  * [MOOSE in 5 Minutes](https://www.youtube.com/watch?v=Sb4nmobV8Vk)
+
+  * [MOOSE Introduction and Setup](https://www.youtube.com/watch?v=-Hxae3mTCE8&t=159s&index=1&list=PL7ZUrU4zZUl0riB9ULVh-bZvFlw1_Wym2)
+  * [MOOSE Spawning](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+  * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
+  * [MOOSE Task Dispatching](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3I6ieFM-cjey-rncF1ktNI)
+
+## MOOSE community
+
+There is a MOOSE community at various places out there. The main community can be found at slack.com.
+Various channels and people are helping each other out using the framework.
+If you would like to join, please contact me on skype: FlightControl_Skype.
+
+
+## Test Missions
+
+The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), that you can try out and helps you to code. 
+You can copy/paste code the code snippets into your missions, as it accellerates your mission developments.
+
+These exact test missions are demonstrated at the demo videos in the YouTube channel.
+
+Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
+
 # MOOSE Directory Structure
+
+As you can see at the GitHub site, the MOOSE framework is devided into a couple of directories:
 
 * Moose Development: Contains the collection of lua files that define the MOOSE classes. You can use this directory to build the dynamic luadoc documentation intellisense in your eclipse development environment.
 * Moose Mission Setup: Contains the Moose.lua file to be included in your scripts when using MOOSE classes (see below the point Mission Design with Moose).
@@ -38,10 +73,11 @@ IMPORTANT NOTE: When a new version of MOOSE is released, you'll have to UPDATE t
 This can be a tedious task, and for this purpose, a tool has been developed that will update the Moose.lua files automatically within your missions.
 Refer to the tool at [Moose Mission Setup\Moose Mission Update](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Mission%20Setup/Moose%20Mission%20Update) directory for further information included in the [READ.ME]() file.
 
-
 # MOOSE Classes
 
 The following classes are currently embedded within MOOSE and can be included within your mission scripts:
+
+![Classes](Presentations\MOOSE\Dia2.JPG)
 
 ## MOOSE Core Classes
 
