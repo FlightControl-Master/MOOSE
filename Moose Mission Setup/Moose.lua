@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170110_1254' ) 
+env.info( 'Moose Generation Timestamp: 20170112_1201' ) 
 local base = _G
 
 Include = {}
@@ -3857,6 +3857,8 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
 
   local ScheduleID = nil
   
+  self.MasterObject = SchedulerObject
+  
   if SchedulerFunction then
     ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   end
@@ -4015,9 +4017,9 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
   
-  if Scheduler.SchedulerObject then
+  if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
-    self:E( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), SchedulerObject = tostring(Scheduler.SchedulerObject) } )
+    self:E( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
     self.PersistentSchedulers[self.CallID] = Scheduler
     self:E( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
@@ -4029,7 +4031,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][self.CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][self.CallID].Start = Start + .001
+  self.Schedule[Scheduler][self.CallID].Start = Start + .1
   self.Schedule[Scheduler][self.CallID].Repeat = Repeat
   self.Schedule[Scheduler][self.CallID].Randomize = Randomize
   self.Schedule[Scheduler][self.CallID].Stop = Stop
@@ -4105,7 +4107,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      --self:E( "Scheduled obscolete call for CallID: " .. CallID )
+      self:E( "Scheduled obscolete call for CallID: " .. CallID )
     end
     
     return nil
@@ -12627,6 +12629,8 @@ function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
   self:F2( ControllableName )
   self.ControllableName = ControllableName
+  
+  self.TaskScheduler = SCHEDULER:New( self )
   return self
 end
 
@@ -12685,7 +12689,7 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
 
     if WaitTime then
-      SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
     end
@@ -12716,7 +12720,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       Controller:setTask( DCSTask )
     else
-      SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -13977,7 +13981,7 @@ function CONTROLLABLE:Route( GoPoints )
     local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
     local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-    SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
+    self.TaskScheduler:Schedule( Controller, Controller.setTask, { MissionTask }, 1 )
     return self
   end
 
@@ -14605,7 +14609,7 @@ end
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointInitialize( WayPoints )
-  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
+  self:F( { WayPoints } )
 
   if WayPoints then
     self.WayPoints = WayPoints
@@ -14616,6 +14620,18 @@ function CONTROLLABLE:WayPointInitialize( WayPoints )
   return self
 end
 
+--- Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).
+-- @param #CONTROLLABLE self
+-- @return #table WayPoints If WayPoints is given, then return the WayPoints structure.
+function CONTROLLABLE:GetWayPoints()
+  self:F( )
+
+  if self.WayPoints then
+    return self.WayPoints
+  end
+
+  return nil
+end
 
 --- Registers a waypoint function that will be executed when the controllable moves over the WayPoint.
 -- @param #CONTROLLABLE self
@@ -18775,6 +18791,7 @@ function SPAWN:ReSpawn( SpawnIndex )
 
 -- TODO: This logic makes DCS crash and i don't know why (yet).
 	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+	local WayPoints = SpawnGroup and SpawnGroup.WayPoints or nil
 	if SpawnGroup then
     local SpawnDCSGroup = SpawnGroup:GetDCSObject()
   	if SpawnDCSGroup then
@@ -18782,7 +18799,15 @@ function SPAWN:ReSpawn( SpawnIndex )
   	end
   end
 
-	return self:SpawnWithIndex( SpawnIndex )
+	local SpawnGroup = self:SpawnWithIndex( SpawnIndex )
+	if SpawnGroup and WayPoints then
+	  -- If there were WayPoints set, then Re-Execute those WayPoints!
+	  self:E( WayPoints )
+	  SpawnGroup:WayPointInitialize( WayPoints )
+	  SpawnGroup:WayPointExecute( 1, 5 )
+	end
+	
+	return SpawnGroup
 end
 
 --- Will spawn a group with a specified index number.
@@ -24834,8 +24859,8 @@ function AI_PATROLZONE:onenterRoute()
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
     self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
-    --- NOW ACT_ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1 )
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 5 )
     
     self:__Patrol( 30 )
   end

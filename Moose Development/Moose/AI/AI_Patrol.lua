@@ -345,8 +345,8 @@ function AI_PATROLZONE:onenterRoute()
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
     self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
 
-    --- NOW ACT_ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1 )
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 5 )
     
     self:__Patrol( 30 )
   end

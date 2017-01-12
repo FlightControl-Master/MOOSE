@@ -69,6 +69,8 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
 
   local ScheduleID = nil
   
+  self.MasterObject = SchedulerObject
+  
   if SchedulerFunction then
     ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   end
