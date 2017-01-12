@@ -144,6 +144,8 @@ function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
   self:F2( ControllableName )
   self.ControllableName = ControllableName
+  
+  self.TaskScheduler = SCHEDULER:New( self )
   return self
 end
 
@@ -202,7 +204,7 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
 
     if WaitTime then
-      SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
     end
@@ -233,7 +235,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       Controller:setTask( DCSTask )
     else
-      SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -1494,7 +1496,7 @@ function CONTROLLABLE:Route( GoPoints )
     local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
     local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-    SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
+    self.TaskScheduler:Schedule( Controller, Controller.setTask, { MissionTask }, 1 )
     return self
   end
 
@@ -2122,7 +2124,7 @@ end
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointInitialize( WayPoints )
-  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
+  self:F( { WayPoints } )
 
   if WayPoints then
     self.WayPoints = WayPoints
@@ -2133,6 +2135,18 @@ function CONTROLLABLE:WayPointInitialize( WayPoints )
   return self
 end
 
+--- Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).
+-- @param #CONTROLLABLE self
+-- @return #table WayPoints If WayPoints is given, then return the WayPoints structure.
+function CONTROLLABLE:GetWayPoints()
+  self:F( )
+
+  if self.WayPoints then
+    return self.WayPoints
+  end
+
+  return nil
+end
 
 --- Registers a waypoint function that will be executed when the controllable moves over the WayPoint.
 -- @param #CONTROLLABLE self
