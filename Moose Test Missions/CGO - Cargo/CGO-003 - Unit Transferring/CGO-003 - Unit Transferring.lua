@@ -22,3 +22,4 @@ function InfantryCargo:OnEnterUnLoaded()
   self:__Board( 1, CargoCarrierTo )
   self.OnEnterUnLoaded = nil
 end
+
