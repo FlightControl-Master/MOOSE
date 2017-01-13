@@ -123,11 +123,9 @@
 -- ===
 -- 
 -- @module Controllable
--- @author FlightControl
 
 --- The CONTROLLABLE class
 -- @type CONTROLLABLE
--- @extends Wrapper.Positionable#POSITIONABLE
 -- @field Dcs.DCSWrapper.Controllable#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
 CONTROLLABLE = {

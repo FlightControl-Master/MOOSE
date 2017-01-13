@@ -22,8 +22,7 @@
 -- 
 -- ===
 -- 
--- @module Object
--- @author FlightControl
+-- @module Wrapper.Object
 
 --- The OBJECT class
 -- @type OBJECT

@@ -28,8 +28,7 @@
 -- 
 -- ===
 -- 
--- @module Identifiable
--- @author FlightControl
+-- @module Wrapper.Identifiable
 
 --- The IDENTIFIABLE class
 -- @type IDENTIFIABLE

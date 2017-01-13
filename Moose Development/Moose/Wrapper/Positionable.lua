@@ -23,8 +23,7 @@
 -- 
 -- ===
 -- 
--- @module Positionable
--- @author FlightControl
+-- @module Wrapper.Positionable
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE
