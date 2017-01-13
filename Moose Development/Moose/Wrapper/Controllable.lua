@@ -492,17 +492,20 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, WeaponType, WeaponExpend, Atta
   local DCSTask
   DCSTask = { id = 'AttackUnit',
     params = {
+      altitudeEnabled = false,
       unitId = AttackUnit:GetID(),
-      weaponType = WeaponType,
-      expend = WeaponExpend,
-      attackQty = AttackQty,
-      direction = Direction,
-      attackQtyLimit = AttackQtyLimit,
-      controllableAttack = ControllableAttack,
+      attackQtyLimit = AttackQtyLimit or false,
+      attackQty = AttackQty or 1,
+      expend = WeaponExpend or "Auto",
+      altitude = 2000,
+      directionEnabled = false,
+      groupAttack = false,
+      weaponType = WeaponType or 1073741822,
+      direction = Direction or 0,
     },
   },
 
-  self:T3( { DCSTask } )
+  self:E( { DCSTask } )
   return DCSTask
 end
 
