@@ -43,6 +43,7 @@ Include.File( "Functional/Detection" )
 Include.File( "AI/AI_Balancer" )
 Include.File( "AI/AI_Patrol" )
 Include.File( "AI/AI_Cargo" )
+Include.File( "AI/AI_Cas" )
 
 --- Actions
 Include.File( "Actions/Act_Assign" )

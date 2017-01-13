@@ -22,7 +22,7 @@
 -- 
 -- ===
 -- 
--- @module Wrapper.Object
+-- @module Object
 
 --- The OBJECT class
 -- @type OBJECT

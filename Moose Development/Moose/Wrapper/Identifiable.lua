@@ -28,7 +28,7 @@
 -- 
 -- ===
 -- 
--- @module Wrapper.Identifiable
+-- @module Identifiable
 
 --- The IDENTIFIABLE class
 -- @type IDENTIFIABLE

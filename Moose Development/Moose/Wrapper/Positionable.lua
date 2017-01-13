@@ -23,7 +23,7 @@
 -- 
 -- ===
 -- 
--- @module Wrapper.Positionable
+-- @module Positionable
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE
