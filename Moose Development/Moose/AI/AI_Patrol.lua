@@ -175,9 +175,9 @@ function AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitu
   self.PatrolFuelTresholdPercentage = 0.2
 
   
-  self:SetStartState( "Route" )
+  self:SetStartState( "None" )
 
-do self:AddTransition( "Route", "Start", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+do self:AddTransition( "*", "Start", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
 
 	--- OnLeave State Transition for Route.
   -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
@@ -224,7 +224,7 @@ do self:AddTransition( "Route", "Start", "Route" ) -- FSM_CONTROLLABLE Transitio
 
 end -- AI_PATROLZONE  
 
-do self:AddTransition( "Route", "Route", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+do self:AddTransition( "*", "Route", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
 
 	--- OnLeave State Transition for Route.
   -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
@@ -271,7 +271,7 @@ do self:AddTransition( "Route", "Route", "Route" ) -- FSM_CONTROLLABLE Transitio
 
 end -- AI_PATROLZONE  
 
-do self:AddTransition( { "Patrol", "Route" }, "Patrol", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+do self:AddTransition( "*", "Patrol", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
 
 	--- OnLeave State Transition for Patrol.
   -- @function [parent=#AI_PATROLZONE] OnLeavePatrol
