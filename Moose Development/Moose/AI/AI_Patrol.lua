@@ -130,22 +130,7 @@
 --   * **FlightControl**: Design & Programming.
 -- 
 -- 
--- @module Patrol
-
--- State Transition Functions
-
---- OnBefore State Transition Function
--- @function [parent=#AI_PATROLZONE] OnBeforeRoute
--- @param #AI_PATROLZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable
--- @return #boolean
-
---- OnAfter State Transition Function
--- @function [parent=#AI_PATROLZONE] OnAfterRoute
--- @param #AI_PATROLZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable
-
-
+-- @module AI_Patrol
 
 --- AI_PATROLZONE class
 -- @type AI_PATROLZONE
@@ -180,20 +165,206 @@ function AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitu
   -- Inherits from BASE
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_CONTROLLABLE
   
-  self:SetStartState( "None" )
-  self:AddTransition( "*", "Start", "Route" )
-  self:AddTransition( "*", "Route", "Route" )
-  self:AddTransition( { "Patrol", "Route" }, "Patrol", "Patrol" )
-  self:AddTransition( "Patrol", "RTB", "RTB" )
-  self:AddTransition( "*", "End", "End" )
-  self:AddTransition( "*", "Dead", "End" )
   
-  self.PatrolZone = PatrolZone
+    self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
+  
+  self.PatrolFuelTresholdPercentage = 0.2
 
+  
+  self:SetStartState( "Route" )
+
+do self:AddTransition( "Route", "Start", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+
+	--- OnLeave State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnEnterRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Start.
+  -- @function [parent=#AI_PATROLZONE] OnBeforeStart
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Start.
+  -- @function [parent=#AI_PATROLZONE] OnAfterStart
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Start.
+  -- @function [parent=#AI_PATROLZONE] Start
+  -- @param #AI_PATROLZONE self
+
+	--- Delayed Event Trigger for Start
+  -- @function [parent=#AI_PATROLZONE] __Start
+  -- @param #AI_PATROLZONE self
+  -- @param #number Delay The delay in seconds.
+
+end -- AI_PATROLZONE  
+
+do self:AddTransition( "Route", "Route", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+
+	--- OnLeave State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnEnterRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnBeforeRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Route.
+  -- @function [parent=#AI_PATROLZONE] OnAfterRoute
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Route.
+  -- @function [parent=#AI_PATROLZONE] Route
+  -- @param #AI_PATROLZONE self
+
+	--- Delayed Event Trigger for Route
+  -- @function [parent=#AI_PATROLZONE] __Route
+  -- @param #AI_PATROLZONE self
+  -- @param #number Delay The delay in seconds.
+
+end -- AI_PATROLZONE  
+
+do self:AddTransition( { "Patrol", "Route" }, "Patrol", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+
+	--- OnLeave State Transition for Patrol.
+  -- @function [parent=#AI_PATROLZONE] OnLeavePatrol
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for Patrol.
+  -- @function [parent=#AI_PATROLZONE] OnEnterPatrol
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for Patrol.
+  -- @function [parent=#AI_PATROLZONE] OnBeforePatrol
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for Patrol.
+  -- @function [parent=#AI_PATROLZONE] OnAfterPatrol
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for Patrol.
+  -- @function [parent=#AI_PATROLZONE] Patrol
+  -- @param #AI_PATROLZONE self
+
+	--- Delayed Event Trigger for Patrol
+  -- @function [parent=#AI_PATROLZONE] __Patrol
+  -- @param #AI_PATROLZONE self
+  -- @param #number Delay The delay in seconds.
+
+end -- AI_PATROLZONE
+
+do self:AddTransition( "Patrol", "RTB", "RTB" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+
+	--- OnLeave State Transition for Patrol.
+  -- @function [parent=#AI_PATROLZONE] OnLeavePatrol
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnEnter State Transition for RTB.
+  -- @function [parent=#AI_PATROLZONE] OnEnterRTB
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- OnBefore State Transition for RTB.
+  -- @function [parent=#AI_PATROLZONE] OnBeforeRTB
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+
+	--- OnAfter State Transition for RTB.
+  -- @function [parent=#AI_PATROLZONE] OnAfterRTB
+  -- @param #AI_PATROLZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+	
+	--- Embedded Event Trigger for RTB.
+  -- @function [parent=#AI_PATROLZONE] RTB
+  -- @param #AI_PATROLZONE self
+
+	--- Delayed Event Trigger for RTB
+  -- @function [parent=#AI_PATROLZONE] __RTB
+  -- @param #AI_PATROLZONE self
+  -- @param #number Delay The delay in seconds.
+
+end -- AI_PATROLZONE
+  
   return self
 end
 

@@ -24,7 +24,6 @@
 -- ===
 -- 
 -- @module Positionable
--- @author FlightControl
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE

@@ -29,7 +29,6 @@
 -- ===
 -- 
 -- @module Identifiable
--- @author FlightControl
 
 --- The IDENTIFIABLE class
 -- @type IDENTIFIABLE

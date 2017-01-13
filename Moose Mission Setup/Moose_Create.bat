@@ -81,6 +81,7 @@ rem AI Classes
 COPY /b Moose.lua + %1\AI\AI_Balancer.lua  		       	Moose.lua
 COPY /b Moose.lua + %1\AI\AI_Patrol.lua           		Moose.lua
 COPY /b Moose.lua + %1\AI\AI_Cargo.lua                 	Moose.lua
+COPY /b Moose.lua + %1\AI\AI_CAS.lua                 	Moose.lua
 
 
 rem Actions

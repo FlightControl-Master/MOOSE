@@ -123,7 +123,6 @@
 -- ===
 -- 
 -- @module Controllable
--- @author FlightControl
 
 --- The CONTROLLABLE class
 -- @type CONTROLLABLE

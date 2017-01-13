@@ -23,7 +23,6 @@
 -- ===
 -- 
 -- @module Object
--- @author FlightControl
 
 --- The OBJECT class
 -- @type OBJECT
