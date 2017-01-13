@@ -439,15 +439,11 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
 
     EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
     
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
-    
-    --- Do a trick, link the NewEngageRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
-    self.Controllable:SetState( self.Controllable, "EngageZone", self )
-    self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
 
-    --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 5 )
+    Controllable:OptionROEOpenFire()
+    Controllable:OptionROTPassiveDefense()
+
+    local AttackTasks = {}
 
     local DetectedTargets = Controllable:GetDetectedTargets()
     for TargetID, Target in pairs( DetectedTargets ) do
@@ -459,16 +455,26 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
         local TargetUnitName = TargetUnit:GetName()
         
         if TargetUnit:IsInZone( self.EngageZone ) then
+          self:E( {"Engaging ", TargetUnit } )
           --local EngageTask = Controllable:EnRouteTaskEngageUnit( TargetUnit, 1 )
-          local EngageTask = Controllable:TaskAttackUnit( TargetUnit )
-          Controllable:PushTask( EngageTask, 1 )
+          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( TargetUnit )
         end
+          
       end
     end
+
+    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
+
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    self.Controllable:WayPointInitialize( EngageRoute )
     
-    Controllable:OptionROEWeaponFree()
-    Controllable:OptionROTPassiveDefense()
-    
+    --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
+    self.Controllable:SetState( self.Controllable, "EngageZone", self )
+
+    self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
+
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 5 )
   end
 end
 
