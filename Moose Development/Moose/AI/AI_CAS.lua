@@ -95,177 +95,114 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
 
-  self.PatrolZone = PatrolZone
-  self.PatrolFloorAltitude = PatrolFloorAltitude
-  self.PatrolCeilingAltitude = PatrolCeilingAltitude
-  self.PatrolMinSpeed = PatrolMinSpeed
-  self.PatrolMaxSpeed = PatrolMaxSpeed
-  
   self.EngageZone = EngageZone
+  self.Accomplished = false
   
-  do self:AddTransition( { "Patrol", "Route", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+  self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
-    --- OnLeave State Transition for Holding.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveHolding
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Engage.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeEngage
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Engage.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterEngage
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- Embedded Event Trigger for Engage.
-    -- @function [parent=#AI_CAS_ZONE] Engage
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Engage
-    -- @function [parent=#AI_CAS_ZONE] __Engage
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-
-  do self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-    --- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Fired.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeFired
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Fired.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterFired
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean
-
-    --- Embedded Event Trigger for Fired.
-    -- @function [parent=#AI_CAS_ZONE] Fired
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Fired
-    -- @function [parent=#AI_CAS_ZONE] __Fired
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-  do self:AddTransition( "Engaging", "Destroy", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-    --- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeDestroy
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterDestroy
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- Embedded Event Trigger for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] Destroy
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Destroy
-    -- @function [parent=#AI_CAS_ZONE] __Destroy
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-do self:AddTransition( "Engaging", "Abort", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-	--- OnLeave State Transition for Engaging.
-  -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
+  --- OnBefore Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeEngage
   -- @param #AI_CAS_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
-
-	--- OnEnter State Transition for Patrol.
-  -- @function [parent=#AI_CAS_ZONE] OnEnterPatrol
+  
+  --- OnAfter Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterEngage
   -- @param #AI_CAS_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-	
-	--- OnBefore State Transition for Abort.
+  	
+  --- Synchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] Engage
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] __Engage
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+--- OnLeave Transition Handler for State Engaging.
+-- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
+-- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Engaging.
+-- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
+-- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
+  self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+  
+  --- OnBefore Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeFired
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterFired
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] Fired
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] __Fired
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "*", "Destroy", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeDestroy
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterDestroy
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] Destroy
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] __Destroy
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+
+  self:AddTransition( "Engaging", "Abort", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Abort.
   -- @function [parent=#AI_CAS_ZONE] OnBeforeAbort
   -- @param #AI_CAS_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
@@ -273,73 +210,51 @@ do self:AddTransition( "Engaging", "Abort", "Patrol" ) -- FSM_CONTROLLABLE Trans
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
-
-	--- OnAfter State Transition for Abort.
+  
+  --- OnAfter Transition Handler for Event Abort.
   -- @function [parent=#AI_CAS_ZONE] OnAfterAbort
   -- @param #AI_CAS_ZONE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-	
-	--- Embedded Event Trigger for Abort.
+  	
+  --- Synchronous Event Trigger for Event Abort.
   -- @function [parent=#AI_CAS_ZONE] Abort
   -- @param #AI_CAS_ZONE self
-
-	--- Delayed Event Trigger for Abort
+  
+  --- Asynchronous Event Trigger for Event Abort.
   -- @function [parent=#AI_CAS_ZONE] __Abort
   -- @param #AI_CAS_ZONE self
   -- @param #number Delay The delay in seconds.
 
-end -- AI_CAS_ZONE
+  self:AddTransition( "Engaging", "Accomplish", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
-
-  do self:AddTransition( "Engaging", "Completed", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+  --- OnBefore Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeAccomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
   
-  	--- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-  
-  	--- OnEnter State Transition for Patrol.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterPatrol
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
+  --- OnAfter Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterAccomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
   	
-  	--- OnBefore State Transition for Completed.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeCompleted
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
+  --- Synchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] Accomplish
+  -- @param #AI_CAS_ZONE self
   
-  	--- OnAfter State Transition for Completed.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterCompleted
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-  	
-  	--- Embedded Event Trigger for Completed.
-    -- @function [parent=#AI_CAS_ZONE] Completed
-    -- @param #AI_CAS_ZONE self
-  
-  	--- Delayed Event Trigger for Completed
-    -- @function [parent=#AI_CAS_ZONE] __Completed
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-  
-  end -- AI_CAS_ZONE
+  --- Asynchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] __Accomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.  
 
   return self
 end
@@ -354,15 +269,14 @@ end
 function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
 
-  if Controllable:IsAlive() then
-    self:__Route( 1 )
-  end
-  
+  self:Route()
+  self:__Status( 30 ) -- Check status status every 30 seconds.
+  self:__Detect( 30, self.EngageZone ) -- Detect for new targets every 30 seconds in the EngageZone.
+
   self:EventOnDead( self.OnDead )
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
-  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -371,6 +285,18 @@ function _NewEngageRoute( AIControllable )
   AIControllable:T( "NewEngageRoute" )
   local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Patrol#AI_PATROLZONE
   EngageZone:__Engage( 1 )
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onbeforeEngage( Controllable, From, Event, To )
+  
+  if self.Accomplished == true then
+    return false
+  end
 end
 
 
@@ -383,7 +309,27 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
 
+    self:Detect( self.EngageZone )
+
     local EngageRoute = {}
+
+    --- Calculate the current route point.
+    local CurrentVec2 = self.Controllable:GetVec2()
+    
+    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local ToEngageZoneSpeed = self.PatrolMaxSpeed
+    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToEngageZoneSpeed, 
+        true 
+      )
+    
+    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+
   
     if self.Controllable:IsNotInZone( self.EngageZone ) then
 
@@ -435,7 +381,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
       true 
     )
     
-    ToTargetPointVec3:SmokeRed()
+    ToTargetPointVec3:SmokeBlue()
 
     EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
     
@@ -445,21 +391,16 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
 
     local AttackTasks = {}
 
-    local DetectedTargets = Controllable:GetDetectedTargets()
-    for TargetID, Target in pairs( DetectedTargets ) do
-      local TargetObject = Target.object
-      self:T( TargetObject )
-      if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
-  
-        local TargetUnit = UNIT:Find( TargetObject )
-        local TargetUnitName = TargetUnit:GetName()
-        
-        if TargetUnit:IsInZone( self.EngageZone ) then
-          self:E( {"Engaging ", TargetUnit } )
-          --local EngageTask = Controllable:EnRouteTaskEngageUnit( TargetUnit, 1 )
-          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( TargetUnit )
+    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      self:T( DetectedUnit )
+      if DetectedUnit:IsAlive() then
+        if DetectedUnit:IsInZone( self.EngageZone ) then
+          self:E( {"Engaging ", DetectedUnit } )
+          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
         end
-          
+      else
+        self.DetectedUnits[DetectedUnit] = nil
       end
     end
 
@@ -474,7 +415,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
 
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 5 )
+    self.Controllable:WayPointExecute( 1, 2 )
   end
 end
 
@@ -483,9 +424,33 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To )
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
+  
   Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterRTB( Controllable, From, Event, To, EventData )
+  self.CheckStatus = false
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
+  self.Accomplished = true
+  self.DetectUnits = false
 end
 
 --- @param #AI_CAS_ZONE self

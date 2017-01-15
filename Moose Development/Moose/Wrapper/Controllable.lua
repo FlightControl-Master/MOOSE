@@ -305,6 +305,10 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
+  
+  for TaskID, Task in ipairs( DCSTasks ) do
+    self:E( Task )
+  end
 
   self:T3( { DCSTaskCombo } )
   return DCSTaskCombo
@@ -490,22 +494,24 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, WeaponType, WeaponExpend, Atta
   --  }
 
   local DCSTask
-  DCSTask = { id = 'AttackUnit',
+  DCSTask = { 
+    id = 'AttackUnit',
     params = {
-      altitudeEnabled = false,
+      altitudeEnabled = true,
       unitId = AttackUnit:GetID(),
       attackQtyLimit = AttackQtyLimit or false,
-      attackQty = AttackQty or 1,
+      attackQty = AttackQty or 2,
       expend = WeaponExpend or "Auto",
       altitude = 2000,
-      directionEnabled = false,
-      groupAttack = false,
-      weaponType = WeaponType or 1073741822,
+      directionEnabled = true,
+      groupAttack = true,
+      --weaponType = WeaponType or 1073741822,
       direction = Direction or 0,
-    },
-  },
+    }
+  }
 
-  self:E( { DCSTask } )
+  self:E( DCSTask )
+  
   return DCSTask
 end
 

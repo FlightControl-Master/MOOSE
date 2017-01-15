@@ -535,14 +535,17 @@ do -- FSM
   
   function FSM._handler( self, EventName, ... )
   
-    self:E( { EventName, ... } )
-  
     local Can, to = self:can( EventName )
-    self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
+  
+    if to == "*" then
+      to = self.current
+    end
   
     if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
+
+      self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
   
       if self:_call_handler("onbefore" .. EventName, params) == false
       or self:_call_handler("OnBefore" .. EventName, params) == false
@@ -592,6 +595,9 @@ do -- FSM
   
         self:_call_handler("onstatechange", params)
       end
+    else
+      self:E( "Cannot execute transition." )
+      self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
     end
   
     return nil
@@ -667,7 +673,6 @@ do -- FSM
   end
   
   function FSM:can(e)
-    self:E( { e, self.Events, self.Events[e] } )
     local Event = self.Events[e]
     self:F3( { self.current, Event } )
     local To = Event and Event.map[self.current] or Event.map['*']
@@ -736,7 +741,7 @@ do -- FSM_CONTROLLABLE
     end
   
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:F3( "Calling " .. handler )
       return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
