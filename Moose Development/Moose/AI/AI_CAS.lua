@@ -115,7 +115,7 @@ AI_CAS_ZONE = {
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false

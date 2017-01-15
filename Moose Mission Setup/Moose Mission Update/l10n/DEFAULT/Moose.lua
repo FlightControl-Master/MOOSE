@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170115_1805' ) 
+env.info( 'Moose Generation Timestamp: 20170115_1826' ) 
 local base = _G
 
 Include = {}
@@ -24633,7 +24633,7 @@ end
 --   * @{#AI_PATROLZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
 -- The detection frequency can be set with @{#AI_PATROLZONE.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
--- Use the method @{#AI_PATROLZONE.GetDetectedTargets}() to obtain a list of the @{Unit}s detected by the AI.
+-- Use the method @{#AI_PATROLZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
 -- Use the method @{#AI_PATROLZONE.SetDetectionZone}() to set the zone where targets need to be detected.
@@ -26460,7 +26460,7 @@ AI_CAS_ZONE = {
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false
