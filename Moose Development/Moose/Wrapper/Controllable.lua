@@ -166,6 +166,58 @@ function CONTROLLABLE:_GetController()
   return nil
 end
 
+-- Get methods
+
+--- Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).
+-- @param #CONTROLLABLE self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function CONTROLLABLE:GetUnits()
+  self:F2( { self.ControllableName } )
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+    local DCSUnits = DCSControllable:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      Units[#Units+1] = UNIT:Find( UnitData )
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
+--- Returns the health. Dead controllables have health <= 1.0.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
+  return nil
+end
+
 
 
 -- Tasks

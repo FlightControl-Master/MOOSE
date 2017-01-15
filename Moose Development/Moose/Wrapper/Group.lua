@@ -391,26 +391,6 @@ function GROUP:GetInitialSize()
   return nil
 end
 
---- Returns the UNITs wrappers of the DCS Units of the DCS Group.
--- @param #GROUP self
--- @return #table The UNITs wrappers.
-function GROUP:GetUnits()
-  self:F2( { self.GroupName } )
-  local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
-    local Units = {}
-    for Index, UnitData in pairs( DCSUnits ) do
-      Units[#Units+1] = UNIT:Find( UnitData )
-    end
-    self:T3( Units )
-    return Units
-  end
-
-  return nil
-end
-
 
 --- Returns the DCS Units of the DCS Group.
 -- @param #GROUP self

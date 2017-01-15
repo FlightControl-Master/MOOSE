@@ -1,47 +1,70 @@
---- SP:Y MP:Y AI:Y HU:N TYP:Air -- This module contains the AI_CAS_ZONE class.
+--- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Air -- This module contains the AI_CAS_ZONE class.
 --
+-- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
+-- 
+-- Examples can be found in the test missions.
+-- 
 -- ===
 --
--- 1) @{#AI_CAS_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- ================================================================
--- The @{#AI_CAS_ZONE} class implements the core functions to CAS a @{Zone} by an AIR @{Controllable} @{Group}.
+-- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROLZONE}
+-- 
+-- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROLZONE}, inheriting its methods and behaviour.
+--  
+-- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+-- The AI_CASE_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event. 
+-- 
+-- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
+-- using a random speed within the given altitude and speed limits.
+-- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
+-- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- 
+-- When the AI is commanded to provide Close Air Support (through the event **Engage**), the AI will fly towards the Engage Zone.
+-- Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.
+-- 
+-- Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone 
+-- until it is notified through the event **Accomplish**, which is to be triggered by an observing party:
+-- 
+--   * a FAC
+--   * a timed event
+--   * a menu option selected by a human
+--   * a condition
+--   * others ...
+-- 
+-- When the AI has accomplished the CAS, it will fly back to the Patrol Zone.
+-- It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
+-- It can be notified to go RTB through the **RTB** event.
+-- 
+-- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- 
 --
--- 1.1) AI_CAS_ZONE constructor:
--- ----------------------------
+-- # 1.1) AI_CAS_ZONE constructor
 --
 --   * @{#AI_CAS_ZONE.New}(): Creates a new AI_CAS_ZONE object.
 --
--- 1.2) AI_CAS_ZONE state machine:
--- ----------------------------------
--- The AI_CAS_ZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
---
--- ### 1.2.1) AI_CAS_ZONE Events:
---
---   * @{#AI_CAS_ZONE.TakeOff}( AIControllable ):  The AI is taking-off from an airfield.
---   * @{#AI_CAS_ZONE.Hold}( AIControllable ): The AI is holding in airspace at a zone.
---   * @{#AI_CAS_ZONE.Engage}( AIControllable ): The AI is engaging the targets.
---   * @{#AI_CAS_ZONE.WeaponReleased}( AIControllable ): The AI has released a weapon to the target.
---   * @{#AI_CAS_ZONE.Destroy}( AIControllable ): The AI has destroyed a target.
---   * @{#AI_CAS_ZONE.Complete}( AIControllable ): The AI has destroyed all defined targets.
---   * @{#AI_CAS_ZONE.RTB}( AIControllable ): The AI is returning to the home base.
---
--- ### 1.2.2) AI_CAS_ZONE States:
---
---
--- ### 1.2.3) AI_CAS_ZONE state transition methods:
---
---
--- 1.3) Manage the AI_CAS_ZONE parameters:
--- ------------------------------------------
--- The following methods are available to modify the parameters of an AI_CAS_ZONE object:
---
---   * @{#AI_CAS_ZONE.SetControllable}(): Set the AIControllable.
---   * @{#AI_CAS_ZONE.GetControllable}(): Get the AIControllable.
---
+-- ## 1.2) AI_CAS_ZONE is a FSM
+-- 
+-- ![Process](..\Presentations\AI_Cas\Dia2.JPG)
+-- 
+-- ### 1.2.1) AI_CAS_ZONE States
+-- 
+--   * **None** ( Group ): The process is not started yet.
+--   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
+--   * **Engaging** ( Group ): The AI is engaging the targets in the Engage Zone, executing CAS.
+--   * **Returning** ( Group ): The AI is returning to Base..
+-- 
+-- ### 1.2.2) AI_CAS_ZONE Events:
+-- 
+--   * **Start** ( Group ): Start the process.
+--   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
+--   * **Engage** ( Group ): Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
+--   * **RTB** ( Group ): Route the AI to the home base.
+--   * **Detect** ( Group ): The AI is detecting targets.
+--   * **Detected** ( Group ): The AI has detected new targets.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--    
 -- ====
 --
--- **API CHANGE HISTORY**
--- ======================
+-- # **API CHANGE HISTORY**
 --
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
 --
@@ -50,31 +73,30 @@
 --
 -- Hereby the change log:
 --
--- 2017-01-12: Initial class and API.
+-- 2017-01-15: Initial class and API.
 --
 -- ===
 --
--- AUTHORS and CONTRIBUTIONS
--- =========================
+-- # **AUTHORS and CONTRIBUTIONS**
 --
 -- ### Contributions:
 --
---   * **Quax**: Concept & Testing.
---   * **Pikey**: Concept & Testing.
+--   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --
 -- ### Authors:
 --
 --   * **FlightControl**: Concept, Design & Programming.
 --
 --
--- @module Cas
+-- @module AI_Cas
 
 
 --- AI_CAS_ZONE class
 -- @type AI_CAS_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_PATROLZONE
+-- @extends AI.AI_Patrol#AI_CAS_ZONE
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }
@@ -93,10 +115,12 @@ AI_CAS_ZONE = {
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false
+  
+  self:SetDetectionZone( self.EngageZone )
   
   self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
@@ -283,7 +307,7 @@ end
 function _NewEngageRoute( AIControllable )
 
   AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Patrol#AI_PATROLZONE
+  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cas#AI_CAS_ZONE
   EngageZone:__Engage( 1 )
 end
 
@@ -432,15 +456,6 @@ function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
   end
   
   Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
-end
-
---- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_CAS_ZONE:onafterRTB( Controllable, From, Event, To, EventData )
-  self.CheckStatus = false
 end
 
 --- @param #AI_CAS_ZONE self

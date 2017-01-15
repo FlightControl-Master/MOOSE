@@ -467,6 +467,25 @@ function UNIT:GetFuel()
   return nil
 end
 
+--- Returns the UNIT in a UNIT list of one element.
+-- @param #UNIT self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function UNIT:GetUnits()
+  self:F2( { self.UnitName } )
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local DCSUnits = DCSUnit:getUnits()
+    local Units = {}
+    Units[1] = UNIT:Find( DCSUnit )
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
 --- Returns the unit's health. Dead units has health <= 1.0.
 -- @param #UNIT self
 -- @return #number The Unit's health value.

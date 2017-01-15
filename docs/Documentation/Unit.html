@@ -18,6 +18,8 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +43,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -280,6 +281,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetThreatLevel">UNIT:GetThreatLevel()</a></td>
 		<td class="summary">
 <p>Returns the Unit's A2G threat level on a scale from 1 to 10 ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetUnits">UNIT:GetUnits()</a></td>
+		<td class="summary">
+<p>Returns the UNIT in a UNIT list of one element.</p>
 </td>
 		</tr>
 		<tr>
@@ -996,6 +1003,24 @@ The DCS Unit is not existing or alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).GetUnits" >
+<strong>UNIT:GetUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the UNIT in a UNIT list of one element.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(list)">#list</a>:</em>
+Wrapper.Unit#UNIT> The UNITs wrappers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).HasSEAD" >
 <strong>UNIT:HasSEAD()</strong>
 </a>
@@ -1505,6 +1530,8 @@ The name of the DCS unit.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
 </div>
 
 </div>
