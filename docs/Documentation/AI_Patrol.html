@@ -79,26 +79,26 @@
 
 <hr/>
 
-<h1>1) <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
 
-<p>The <a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
-The AI<em>PATROLZONE is assigned a @(Group) and this must be done before the AI</em>PATROLZONE process can be started. 
+<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
+The AI<em>PATROL</em>ZONE is assigned a @(Group) and this must be done before the AI<em>PATROL</em>ZONE process can be started. 
 The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
-<h2>1.1) AI_PATROLZONE constructor</h2>
+<h2>1.1) AI<em>PATROL</em>ZONE constructor</h2>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).New">AI_PATROLZONE.New</a>(): Creates a new AI_PATROLZONE object.</li>
+    <li><a href="##(AI_PATROL_ZONE).New">AI<em>PATROL</em>ZONE.New</a>(): Creates a new AI<em>PATROL</em>ZONE object.</li>
 </ul>
 
-<h2>1.2) AI_PATROLZONE is a FSM</h2>
+<h2>1.2) AI<em>PATROL</em>ZONE is a FSM</h2>
 
 <p><img src="..\Presentations\AI_Patrol\Dia2.JPG" alt="Process"/></p>
 
-<h3>1.2.1) AI_PATROLZONE States</h3>
+<h3>1.2.1) AI<em>PATROL</em>ZONE States</h3>
 
 <ul>
     <li><strong>None</strong> ( Group ): The process is not started yet.</li>
@@ -106,7 +106,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
     <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
 </ul>
 
-<h3>1.2.2) AI_PATROLZONE Events:</h3>
+<h3>1.2.2) AI<em>PATROL</em>ZONE Events:</h3>
 
 <ul>
     <li><strong>Start</strong> ( Group ): Start the process.</li>
@@ -120,15 +120,15 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 <h2>1.3) Set or Get the AI controllable</h2>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).SetControllable">AI_PATROLZONE.SetControllable</a>(): Set the AIControllable.</li>
-    <li><a href="##(AI_PATROLZONE).GetControllable">AI_PATROLZONE.GetControllable</a>(): Get the AIControllable.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetControllable">AI<em>PATROL</em>ZONE.SetControllable</a>(): Set the AIControllable.</li>
+    <li><a href="##(AI_PATROL_ZONE).GetControllable">AI<em>PATROL</em>ZONE.GetControllable</a>(): Get the AIControllable.</li>
 </ul>
 
 <h2>1.4) Set the Speed and Altitude boundaries of the AI controllable</h2>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE.SetSpeed</a>(): Set the patrol speed boundaries of the AI, for the next patrol.</li>
-    <li><a href="##(AI_PATROLZONE).SetAltitude">AI_PATROLZONE.SetAltitude</a>(): Set altitude boundaries of the AI, for the next patrol.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetSpeed">AI<em>PATROL</em>ZONE.SetSpeed</a>(): Set the patrol speed boundaries of the AI, for the next patrol.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetAltitude">AI<em>PATROL</em>ZONE.SetAltitude</a>(): Set altitude boundaries of the AI, for the next patrol.</li>
 </ul>
 
 <h2>1.5) Manage the detection process of the AI controllable</h2>
@@ -138,32 +138,32 @@ Detection requires an amount of CPU power, which has an impact on your mission p
 Only put detection on when absolutely necessary, and the frequency of the detection can also be set.</p>
 
 <ul>
-    <li><a href="##(AI_PATROLZONE).SetDetectionOn">AI_PATROLZONE.SetDetectionOn</a>(): Set the detection on. The AI will detect for targets.</li>
-    <li><a href="##(AI_PATROLZONE).SetDetectionOff">AI_PATROLZONE.SetDetectionOff</a>(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetDetectionOn">AI<em>PATROL</em>ZONE.SetDetectionOn</a>(): Set the detection on. The AI will detect for targets.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI<em>PATROL</em>ZONE.SetDetectionOff</a>(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.</li>
 </ul>
 
-<p>The detection frequency can be set with <a href="##(AI_PATROLZONE).SetDetectionInterval">AI_PATROLZONE.SetDetectionInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
-Use the method <a href="##(AI_PATROLZONE).GetDetectedTargets">AI_PATROLZONE.GetDetectedTargets</a>() to obtain a list of the <a href="Unit.html">Unit</a>s detected by the AI.</p>
+<p>The detection frequency can be set with <a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI<em>PATROL</em>ZONE.SetDetectionInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+Use the method <a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI<em>PATROL</em>ZONE.GetDetectedUnits</a>() to obtain a list of the <a href="Unit.html">Unit</a>s detected by the AI.</p>
 
 <p>The detection can be filtered to potential targets in a specific zone.
-Use the method <a href="##(AI_PATROLZONE).SetDetectionZone">AI_PATROLZONE.SetDetectionZone</a>() to set the zone where targets need to be detected.
+Use the method <a href="##(AI_PATROL_ZONE).SetDetectionZone">AI<em>PATROL</em>ZONE.SetDetectionZone</a>() to set the zone where targets need to be detected.
 Note that when the zone is too far away, or the AI is not heading towards the zone, or the AI is too high, no targets may be detected
 according the weather conditions.</p>
 
-<h2>1.6) Manage the "out of fuel" in the AI_PATROLZONE</h2>
+<h2>1.6) Manage the "out of fuel" in the AI<em>PATROL</em>ZONE</h2>
 
 <p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
 When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, 
-while a new AI is targetted to the AI_PATROLZONE.
+while a new AI is targetted to the AI<em>PATROL</em>ZONE.
 Once the time is finished, the old AI will return to the base.
-Use the method <a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE.ManageFuel</a>() to have this proces in place.</p>
+Use the method <a href="##(AI_PATROL_ZONE).ManageFuel">AI<em>PATROL</em>ZONE.ManageFuel</a>() to have this proces in place.</p>
 
-<h2>1.7) Manage "damage" behaviour of the AI in the AI_PATROLZONE</h2>
+<h2>1.7) Manage "damage" behaviour of the AI in the AI<em>PATROL</em>ZONE</h2>
 
 <p>When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
 Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
-Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDamage</a>() to have this proces in place.</p>
+Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.ManageDamage</a>() to have this proces in place.</p>
 
 <hr/>
 
@@ -178,7 +178,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 
 <p>Hereby the change log:</p>
 
-<p>2016-01-15: Complete revision. AI<em>PATROLZONE is the base class for other AI</em>PATROL like classes.</p>
+<p>2016-01-15: Complete revision. AI<em>PATROL</em>ZONE is the base class for other AI_PATROL like classes.</p>
 
 <p>2016-09-01: Initial class and API.</p>
 
@@ -203,7 +203,7 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#AI_PATROLZONE">AI_PATROLZONE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#AI_PATROL_ZONE">AI_PATROL_ZONE</a></td>
 		<td class="summary">
 
 </td>
@@ -215,382 +215,382 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(AI_PATROLZONE)">Type <code>AI_PATROLZONE</code></a></h2>
+			<h2><a id="#(AI_PATROL_ZONE)">Type <code>AI_PATROL_ZONE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).AIControllable">AI_PATROLZONE.AIControllable</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).AIControllable">AI_PATROL_ZONE.AIControllable</a></td>
 		<td class="summary">
 <p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).CheckStatus">AI_PATROLZONE.CheckStatus</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).CheckStatus">AI_PATROL_ZONE.CheckStatus</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ClassName">AI_PATROLZONE.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ClassName">AI_PATROL_ZONE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).CoordTest">AI_PATROLZONE.CoordTest</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).CoordTest">AI_PATROL_ZONE.CoordTest</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).Detect">AI_PATROLZONE:Detect()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Detect">AI_PATROL_ZONE:Detect()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Detect.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).DetectInterval">AI_PATROLZONE.DetectInterval</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectInterval">AI_PATROL_ZONE.DetectInterval</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).DetectUnits">AI_PATROLZONE.DetectUnits</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectUnits">AI_PATROL_ZONE.DetectUnits</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).DetectZone">AI_PATROLZONE.DetectZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectZone">AI_PATROL_ZONE.DetectZone</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).Detected">AI_PATROLZONE:Detected()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Detected">AI_PATROL_ZONE:Detected()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Detected.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).DetectedUnits">AI_PATROLZONE.DetectedUnits</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectedUnits">AI_PATROL_ZONE.DetectedUnits</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).GetDetectedUnits">AI_PATROLZONE:GetDetectedUnits()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI_PATROL_ZONE:GetDetectedUnits()</a></td>
 		<td class="summary">
 <p>Gets a list of <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s that were detected by the AI.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE:ManageDamage(PatrolDamageTreshold)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageDamage">AI_PATROL_ZONE:ManageDamage(PatrolDamageTreshold)</a></td>
 		<td class="summary">
 <p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).ManageFuel">AI_PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageFuel">AI_PATROL_ZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
 		<td class="summary">
 <p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).New">AI_PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).New">AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
-<p>Creates a new AI_PATROLZONE object</p>
+<p>Creates a new AI<em>PATROL</em>ZONE object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterDetect">AI_PATROLZONE:OnAfterDetect(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterDetect">AI_PATROL_ZONE:OnAfterDetect(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Detect.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterDetected">AI_PATROLZONE:OnAfterDetected(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterDetected">AI_PATROL_ZONE:OnAfterDetected(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Detected.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterRTB">AI_PATROLZONE:OnAfterRTB(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterRTB">AI_PATROL_ZONE:OnAfterRTB(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event RTB.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterRoute">AI_PATROLZONE:OnAfterRoute(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterRoute">AI_PATROL_ZONE:OnAfterRoute(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterStart">AI_PATROLZONE:OnAfterStart(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterStart">AI_PATROL_ZONE:OnAfterStart(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Start.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnAfterStatus">AI_PATROLZONE:OnAfterStatus(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterStatus">AI_PATROL_ZONE:OnAfterStatus(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeDetect">AI_PATROLZONE:OnBeforeDetect(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeDetect">AI_PATROL_ZONE:OnBeforeDetect(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Detect.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeDetected">AI_PATROLZONE:OnBeforeDetected(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeDetected">AI_PATROL_ZONE:OnBeforeDetected(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Detected.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeRTB">AI_PATROLZONE:OnBeforeRTB(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeRTB">AI_PATROL_ZONE:OnBeforeRTB(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event RTB.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeRoute">AI_PATROLZONE:OnBeforeRoute(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeRoute">AI_PATROL_ZONE:OnBeforeRoute(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeStart">AI_PATROLZONE:OnBeforeStart(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeStart">AI_PATROL_ZONE:OnBeforeStart(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Start.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnBeforeStatus">AI_PATROLZONE:OnBeforeStatus(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeStatus">AI_PATROL_ZONE:OnBeforeStatus(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnEnterPatrolling">AI_PATROLZONE:OnEnterPatrolling(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnEnterPatrolling">AI_PATROL_ZONE:OnEnterPatrolling(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Patrolling.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnEnterReturning">AI_PATROLZONE:OnEnterReturning(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnEnterReturning">AI_PATROL_ZONE:OnEnterReturning(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Returning.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnLeavePatrolling">AI_PATROLZONE:OnLeavePatrolling(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeavePatrolling">AI_PATROL_ZONE:OnLeavePatrolling(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Patrolling.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).OnLeaveReturning">AI_PATROLZONE:OnLeaveReturning(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeaveReturning">AI_PATROL_ZONE:OnLeaveReturning(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Returning.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolCeilingAltitude">AI_PATROLZONE.PatrolCeilingAltitude</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolCeilingAltitude">AI_PATROL_ZONE.PatrolCeilingAltitude</a></td>
 		<td class="summary">
 <p>The highest altitude in meters where to execute the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolDamageTreshold">AI_PATROLZONE.PatrolDamageTreshold</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolDamageTreshold">AI_PATROL_ZONE.PatrolDamageTreshold</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolFloorAltitude">AI_PATROLZONE.PatrolFloorAltitude</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolFloorAltitude">AI_PATROL_ZONE.PatrolFloorAltitude</a></td>
 		<td class="summary">
 <p>The lowest altitude in meters where to execute the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolFuelTresholdPercentage">AI_PATROLZONE.PatrolFuelTresholdPercentage</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolFuelTresholdPercentage">AI_PATROL_ZONE.PatrolFuelTresholdPercentage</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolManageDamage">AI_PATROLZONE.PatrolManageDamage</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolManageDamage">AI_PATROL_ZONE.PatrolManageDamage</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolManageFuel">AI_PATROLZONE.PatrolManageFuel</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolManageFuel">AI_PATROL_ZONE.PatrolManageFuel</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMaxSpeed">AI_PATROLZONE.PatrolMaxSpeed</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolMaxSpeed">AI_PATROL_ZONE.PatrolMaxSpeed</a></td>
 		<td class="summary">
 <p>The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolMinSpeed">AI_PATROLZONE.PatrolMinSpeed</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolMinSpeed">AI_PATROL_ZONE.PatrolMinSpeed</a></td>
 		<td class="summary">
 <p>The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolOutOfFuelOrbitTime">AI_PATROLZONE.PatrolOutOfFuelOrbitTime</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolOutOfFuelOrbitTime">AI_PATROL_ZONE.PatrolOutOfFuelOrbitTime</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).PatrolZone">AI_PATROLZONE.PatrolZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolZone">AI_PATROL_ZONE.PatrolZone</a></td>
 		<td class="summary">
 <p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).RTB">AI_PATROLZONE:RTB()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).RTB">AI_PATROL_ZONE:RTB()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event RTB.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).Route">AI_PATROLZONE:Route()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Route">AI_PATROL_ZONE:Route()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetAltitude">AI_PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetAltitude">AI_PATROL_ZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</a></td>
 		<td class="summary">
 <p>Sets the floor and ceiling altitude of the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetDetectionInterval">AI_PATROLZONE:SetDetectionInterval(Seconds)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI_PATROL_ZONE:SetDetectionInterval(Seconds)</a></td>
 		<td class="summary">
 <p>Set the interval in seconds between each detection executed by the AI.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetDetectionOff">AI_PATROLZONE:SetDetectionOff()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI_PATROL_ZONE:SetDetectionOff()</a></td>
 		<td class="summary">
 <p>Set the detection off.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetDetectionOn">AI_PATROLZONE:SetDetectionOn()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionOn">AI_PATROL_ZONE:SetDetectionOn()</a></td>
 		<td class="summary">
 <p>Set the detection on.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetDetectionZone">AI_PATROLZONE:SetDetectionZone(DetectionZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionZone">AI_PATROL_ZONE:SetDetectionZone(DetectionZone)</a></td>
 		<td class="summary">
 <p>Set the detection zone where the AI is detecting targets.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).SetSpeed">AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetSpeed">AI_PATROL_ZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).Start">AI_PATROLZONE:Start()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Start">AI_PATROL_ZONE:Start()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Start.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).Status">AI_PATROLZONE:Status()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Status">AI_PATROL_ZONE:Status()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__Detect">AI_PATROLZONE:__Detect(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Detect">AI_PATROL_ZONE:__Detect(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Detect.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__Detected">AI_PATROLZONE:__Detected(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Detected">AI_PATROL_ZONE:__Detected(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Detected.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__RTB">AI_PATROLZONE:__RTB(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__RTB">AI_PATROL_ZONE:__RTB(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event RTB.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__Route">AI_PATROLZONE:__Route(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Route">AI_PATROL_ZONE:__Route(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__Start">AI_PATROLZONE:__Start(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Start">AI_PATROL_ZONE:__Start(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Start.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).__Status">AI_PATROLZONE:__Status(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Status">AI_PATROL_ZONE:__Status(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onafterDetect">AI_PATROLZONE:onafterDetect(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterDetect">AI_PATROL_ZONE:onafterDetect(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onafterRTB">AI_PATROLZONE:onafterRTB()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterRTB">AI_PATROL_ZONE:onafterRTB()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onafterRoute">AI_PATROLZONE:onafterRoute(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterRoute">AI_PATROL_ZONE:onafterRoute(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>Defines a new patrol route using the <a href="Process_PatrolZone.html">Process_PatrolZone</a> parameters and settings.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onafterStart">AI_PATROLZONE:onafterStart(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterStart">AI_PATROL_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>Defines a new patrol route using the <a href="Process_PatrolZone.html">Process_PatrolZone</a> parameters and settings.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onafterStatus">AI_PATROLZONE:onafterStatus()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterStatus">AI_PATROL_ZONE:onafterStatus()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onbeforeDetect">AI_PATROLZONE:onbeforeDetect(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onbeforeDetect">AI_PATROL_ZONE:onbeforeDetect(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROLZONE).onbeforeStatus">AI_PATROLZONE:onbeforeStatus()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onbeforeStatus">AI_PATROL_ZONE:onbeforeStatus()</a></td>
 		<td class="summary">
 
 </td>
@@ -601,9 +601,9 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 		<dl class="function">
 <dt>
 
-		<em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a></em>
-<a id="AI_PATROLZONE" >
-<strong>AI_PATROLZONE</strong>
+		<em><a href="##(AI_PATROL_ZONE)">#AI_PATROL_ZONE</a></em>
+<a id="AI_PATROL_ZONE" >
+<strong>AI_PATROL_ZONE</strong>
 </a>
 </dt>
 <dd>
@@ -635,17 +635,17 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 </dl>
 	<h2><a id="#(AI_Patrol)" >Type <code>AI_Patrol</code></a></h2>
 	
-			<h2><a id="#(AI_PATROLZONE)" >Type <code>AI_PATROLZONE</code></a></h2>
+			<h2><a id="#(AI_PATROL_ZONE)" >Type <code>AI_PATROL_ZONE</code></a></h2>
 				
-<p>AI_PATROLZONE class</p>
+<p>AI<em>PATROL</em>ZONE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
-<a id="#(AI_PATROLZONE).AIControllable" >
-<strong>AI_PATROLZONE.AIControllable</strong>
+<a id="#(AI_PATROL_ZONE).AIControllable" >
+<strong>AI_PATROL_ZONE.AIControllable</strong>
 </a>
 </dt>
 <dd>
@@ -658,8 +658,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_PATROLZONE).CheckStatus" >
-<strong>AI_PATROLZONE.CheckStatus</strong>
+<a id="#(AI_PATROL_ZONE).CheckStatus" >
+<strong>AI_PATROL_ZONE.CheckStatus</strong>
 </a>
 </dt>
 <dd>
@@ -672,8 +672,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em>#string</em>
-<a id="#(AI_PATROLZONE).ClassName" >
-<strong>AI_PATROLZONE.ClassName</strong>
+<a id="#(AI_PATROL_ZONE).ClassName" >
+<strong>AI_PATROL_ZONE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -686,8 +686,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em><a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a></em>
-<a id="#(AI_PATROLZONE).CoordTest" >
-<strong>AI_PATROLZONE.CoordTest</strong>
+<a id="#(AI_PATROL_ZONE).CoordTest" >
+<strong>AI_PATROL_ZONE.CoordTest</strong>
 </a>
 </dt>
 <dd>
@@ -699,8 +699,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).Detect" >
-<strong>AI_PATROLZONE:Detect()</strong>
+<a id="#(AI_PATROL_ZONE).Detect" >
+<strong>AI_PATROL_ZONE:Detect()</strong>
 </a>
 </dt>
 <dd>
@@ -713,8 +713,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).DetectInterval" >
-<strong>AI_PATROLZONE.DetectInterval</strong>
+<a id="#(AI_PATROL_ZONE).DetectInterval" >
+<strong>AI_PATROL_ZONE.DetectInterval</strong>
 </a>
 </dt>
 <dd>
@@ -727,8 +727,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_PATROLZONE).DetectUnits" >
-<strong>AI_PATROLZONE.DetectUnits</strong>
+<a id="#(AI_PATROL_ZONE).DetectUnits" >
+<strong>AI_PATROL_ZONE.DetectUnits</strong>
 </a>
 </dt>
 <dd>
@@ -741,8 +741,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).DetectZone" >
-<strong>AI_PATROLZONE.DetectZone</strong>
+<a id="#(AI_PATROL_ZONE).DetectZone" >
+<strong>AI_PATROL_ZONE.DetectZone</strong>
 </a>
 </dt>
 <dd>
@@ -754,8 +754,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).Detected" >
-<strong>AI_PATROLZONE:Detected()</strong>
+<a id="#(AI_PATROL_ZONE).Detected" >
+<strong>AI_PATROL_ZONE:Detected()</strong>
 </a>
 </dt>
 <dd>
@@ -768,8 +768,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).DetectedUnits" >
-<strong>AI_PATROLZONE.DetectedUnits</strong>
+<a id="#(AI_PATROL_ZONE).DetectedUnits" >
+<strong>AI_PATROL_ZONE.DetectedUnits</strong>
 </a>
 </dt>
 <dd>
@@ -784,8 +784,8 @@ Use the method <a href="##(AI_PATROLZONE).ManageDamage">AI_PATROLZONE.ManageDama
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).GetDetectedUnits" >
-<strong>AI_PATROLZONE:GetDetectedUnits()</strong>
+<a id="#(AI_PATROL_ZONE).GetDetectedUnits" >
+<strong>AI_PATROL_ZONE:GetDetectedUnits()</strong>
 </a>
 </dt>
 <dd>
@@ -806,8 +806,8 @@ The list of <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).ManageDamage" >
-<strong>AI_PATROLZONE:ManageDamage(PatrolDamageTreshold)</strong>
+<a id="#(AI_PATROL_ZONE).ManageDamage" >
+<strong>AI_PATROL_ZONE:ManageDamage(PatrolDamageTreshold)</strong>
 </a>
 </dt>
 <dd>
@@ -832,7 +832,7 @@ The treshold in percentage (between 0 and 1) when the AI is considered to be dam
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -840,8 +840,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).ManageFuel" >
-<strong>AI_PATROLZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
+<a id="#(AI_PATROL_ZONE).ManageFuel" >
+<strong>AI_PATROL_ZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
 </a>
 </dt>
 <dd>
@@ -850,7 +850,7 @@ self</p>
 
 	
 <p>Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
+When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI<em>PATROL</em>ZONE.
 Once the time is finished, the old AI will return to the base.</p>
 
 		<h3>Parameters</h3>
@@ -870,7 +870,7 @@ The amount of seconds the out of fuel AIControllable will orbit before returning
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -878,13 +878,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).New" >
-<strong>AI_PATROLZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<a id="#(AI_PATROL_ZONE).New" >
+<strong>AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new AI_PATROLZONE object</p>
+<p>Creates a new AI<em>PATROL</em>ZONE object</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -921,22 +921,22 @@ The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+		<pre class="example"><code>-- Define a new AI_PATROL_ZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
 PatrolSpawn = SPAWN:New( 'Patrol Group' )
-PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
+PatrolArea = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterDetect" >
-<strong>AI_PATROLZONE:OnAfterDetect(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterDetect" >
+<strong>AI_PATROL_ZONE:OnAfterDetect(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -975,8 +975,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterDetected" >
-<strong>AI_PATROLZONE:OnAfterDetected(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterDetected" >
+<strong>AI_PATROL_ZONE:OnAfterDetected(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1015,8 +1015,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterRTB" >
-<strong>AI_PATROLZONE:OnAfterRTB(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterRTB" >
+<strong>AI_PATROL_ZONE:OnAfterRTB(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1055,8 +1055,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterRoute" >
-<strong>AI_PATROLZONE:OnAfterRoute(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterRoute" >
+<strong>AI_PATROL_ZONE:OnAfterRoute(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1095,8 +1095,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterStart" >
-<strong>AI_PATROLZONE:OnAfterStart(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterStart" >
+<strong>AI_PATROL_ZONE:OnAfterStart(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1135,8 +1135,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnAfterStatus" >
-<strong>AI_PATROLZONE:OnAfterStatus(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnAfterStatus" >
+<strong>AI_PATROL_ZONE:OnAfterStatus(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1175,8 +1175,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeDetect" >
-<strong>AI_PATROLZONE:OnBeforeDetect(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeDetect" >
+<strong>AI_PATROL_ZONE:OnBeforeDetect(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1220,8 +1220,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeDetected" >
-<strong>AI_PATROLZONE:OnBeforeDetected(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeDetected" >
+<strong>AI_PATROL_ZONE:OnBeforeDetected(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1265,8 +1265,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeRTB" >
-<strong>AI_PATROLZONE:OnBeforeRTB(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeRTB" >
+<strong>AI_PATROL_ZONE:OnBeforeRTB(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1310,8 +1310,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeRoute" >
-<strong>AI_PATROLZONE:OnBeforeRoute(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeRoute" >
+<strong>AI_PATROL_ZONE:OnBeforeRoute(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1355,8 +1355,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeStart" >
-<strong>AI_PATROLZONE:OnBeforeStart(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeStart" >
+<strong>AI_PATROL_ZONE:OnBeforeStart(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1400,8 +1400,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnBeforeStatus" >
-<strong>AI_PATROLZONE:OnBeforeStatus(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnBeforeStatus" >
+<strong>AI_PATROL_ZONE:OnBeforeStatus(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1445,8 +1445,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnEnterPatrolling" >
-<strong>AI_PATROLZONE:OnEnterPatrolling(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnEnterPatrolling" >
+<strong>AI_PATROL_ZONE:OnEnterPatrolling(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1485,8 +1485,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnEnterReturning" >
-<strong>AI_PATROLZONE:OnEnterReturning(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnEnterReturning" >
+<strong>AI_PATROL_ZONE:OnEnterReturning(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1525,8 +1525,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnLeavePatrolling" >
-<strong>AI_PATROLZONE:OnLeavePatrolling(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnLeavePatrolling" >
+<strong>AI_PATROL_ZONE:OnLeavePatrolling(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1570,8 +1570,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).OnLeaveReturning" >
-<strong>AI_PATROLZONE:OnLeaveReturning(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).OnLeaveReturning" >
+<strong>AI_PATROL_ZONE:OnLeaveReturning(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1616,8 +1616,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a></em>
-<a id="#(AI_PATROLZONE).PatrolCeilingAltitude" >
-<strong>AI_PATROLZONE.PatrolCeilingAltitude</strong>
+<a id="#(AI_PATROL_ZONE).PatrolCeilingAltitude" >
+<strong>AI_PATROL_ZONE.PatrolCeilingAltitude</strong>
 </a>
 </dt>
 <dd>
@@ -1630,8 +1630,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).PatrolDamageTreshold" >
-<strong>AI_PATROLZONE.PatrolDamageTreshold</strong>
+<a id="#(AI_PATROL_ZONE).PatrolDamageTreshold" >
+<strong>AI_PATROL_ZONE.PatrolDamageTreshold</strong>
 </a>
 </dt>
 <dd>
@@ -1644,8 +1644,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a></em>
-<a id="#(AI_PATROLZONE).PatrolFloorAltitude" >
-<strong>AI_PATROLZONE.PatrolFloorAltitude</strong>
+<a id="#(AI_PATROL_ZONE).PatrolFloorAltitude" >
+<strong>AI_PATROL_ZONE.PatrolFloorAltitude</strong>
 </a>
 </dt>
 <dd>
@@ -1658,8 +1658,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).PatrolFuelTresholdPercentage" >
-<strong>AI_PATROLZONE.PatrolFuelTresholdPercentage</strong>
+<a id="#(AI_PATROL_ZONE).PatrolFuelTresholdPercentage" >
+<strong>AI_PATROL_ZONE.PatrolFuelTresholdPercentage</strong>
 </a>
 </dt>
 <dd>
@@ -1672,8 +1672,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_PATROLZONE).PatrolManageDamage" >
-<strong>AI_PATROLZONE.PatrolManageDamage</strong>
+<a id="#(AI_PATROL_ZONE).PatrolManageDamage" >
+<strong>AI_PATROL_ZONE.PatrolManageDamage</strong>
 </a>
 </dt>
 <dd>
@@ -1686,8 +1686,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_PATROLZONE).PatrolManageFuel" >
-<strong>AI_PATROLZONE.PatrolManageFuel</strong>
+<a id="#(AI_PATROL_ZONE).PatrolManageFuel" >
+<strong>AI_PATROL_ZONE.PatrolManageFuel</strong>
 </a>
 </dt>
 <dd>
@@ -1700,8 +1700,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a></em>
-<a id="#(AI_PATROLZONE).PatrolMaxSpeed" >
-<strong>AI_PATROLZONE.PatrolMaxSpeed</strong>
+<a id="#(AI_PATROL_ZONE).PatrolMaxSpeed" >
+<strong>AI_PATROL_ZONE.PatrolMaxSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -1714,8 +1714,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a></em>
-<a id="#(AI_PATROLZONE).PatrolMinSpeed" >
-<strong>AI_PATROLZONE.PatrolMinSpeed</strong>
+<a id="#(AI_PATROL_ZONE).PatrolMinSpeed" >
+<strong>AI_PATROL_ZONE.PatrolMinSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -1728,8 +1728,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROLZONE).PatrolOutOfFuelOrbitTime" >
-<strong>AI_PATROLZONE.PatrolOutOfFuelOrbitTime</strong>
+<a id="#(AI_PATROL_ZONE).PatrolOutOfFuelOrbitTime" >
+<strong>AI_PATROL_ZONE.PatrolOutOfFuelOrbitTime</strong>
 </a>
 </dt>
 <dd>
@@ -1742,8 +1742,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
-<a id="#(AI_PATROLZONE).PatrolZone" >
-<strong>AI_PATROLZONE.PatrolZone</strong>
+<a id="#(AI_PATROL_ZONE).PatrolZone" >
+<strong>AI_PATROL_ZONE.PatrolZone</strong>
 </a>
 </dt>
 <dd>
@@ -1755,8 +1755,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).RTB" >
-<strong>AI_PATROLZONE:RTB()</strong>
+<a id="#(AI_PATROL_ZONE).RTB" >
+<strong>AI_PATROL_ZONE:RTB()</strong>
 </a>
 </dt>
 <dd>
@@ -1768,8 +1768,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).Route" >
-<strong>AI_PATROLZONE:Route()</strong>
+<a id="#(AI_PATROL_ZONE).Route" >
+<strong>AI_PATROL_ZONE:Route()</strong>
 </a>
 </dt>
 <dd>
@@ -1781,8 +1781,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetAltitude" >
-<strong>AI_PATROLZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</strong>
+<a id="#(AI_PATROL_ZONE).SetAltitude" >
+<strong>AI_PATROL_ZONE:SetAltitude(PatrolFloorAltitude, PatrolCeilingAltitude)</strong>
 </a>
 </dt>
 <dd>
@@ -1806,7 +1806,7 @@ The highest altitude in meters where to execute the patrol.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1814,8 +1814,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetDetectionInterval" >
-<strong>AI_PATROLZONE:SetDetectionInterval(Seconds)</strong>
+<a id="#(AI_PATROL_ZONE).SetDetectionInterval" >
+<strong>AI_PATROL_ZONE:SetDetectionInterval(Seconds)</strong>
 </a>
 </dt>
 <dd>
@@ -1839,7 +1839,7 @@ The interval in seconds.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1847,8 +1847,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetDetectionOff" >
-<strong>AI_PATROLZONE:SetDetectionOff()</strong>
+<a id="#(AI_PATROL_ZONE).SetDetectionOff" >
+<strong>AI_PATROL_ZONE:SetDetectionOff()</strong>
 </a>
 </dt>
 <dd>
@@ -1861,7 +1861,7 @@ However, the list of already detected targets will be kept and can be enquired!<
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1869,8 +1869,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetDetectionOn" >
-<strong>AI_PATROLZONE:SetDetectionOn()</strong>
+<a id="#(AI_PATROL_ZONE).SetDetectionOn" >
+<strong>AI_PATROL_ZONE:SetDetectionOn()</strong>
 </a>
 </dt>
 <dd>
@@ -1882,7 +1882,7 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1890,8 +1890,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetDetectionZone" >
-<strong>AI_PATROLZONE:SetDetectionZone(DetectionZone)</strong>
+<a id="#(AI_PATROL_ZONE).SetDetectionZone" >
+<strong>AI_PATROL_ZONE:SetDetectionZone(DetectionZone)</strong>
 </a>
 </dt>
 <dd>
@@ -1909,7 +1909,7 @@ The zone where to detect targets.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1917,8 +1917,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).SetSpeed" >
-<strong>AI_PATROLZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<a id="#(AI_PATROL_ZONE).SetSpeed" >
+<strong>AI_PATROL_ZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</strong>
 </a>
 </dt>
 <dd>
@@ -1942,7 +1942,7 @@ The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -1950,8 +1950,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).Start" >
-<strong>AI_PATROLZONE:Start()</strong>
+<a id="#(AI_PATROL_ZONE).Start" >
+<strong>AI_PATROL_ZONE:Start()</strong>
 </a>
 </dt>
 <dd>
@@ -1963,8 +1963,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).Status" >
-<strong>AI_PATROLZONE:Status()</strong>
+<a id="#(AI_PATROL_ZONE).Status" >
+<strong>AI_PATROL_ZONE:Status()</strong>
 </a>
 </dt>
 <dd>
@@ -1976,8 +1976,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__Detect" >
-<strong>AI_PATROLZONE:__Detect(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__Detect" >
+<strong>AI_PATROL_ZONE:__Detect(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1998,8 +1998,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__Detected" >
-<strong>AI_PATROLZONE:__Detected(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__Detected" >
+<strong>AI_PATROL_ZONE:__Detected(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -2020,8 +2020,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__RTB" >
-<strong>AI_PATROLZONE:__RTB(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__RTB" >
+<strong>AI_PATROL_ZONE:__RTB(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -2042,8 +2042,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__Route" >
-<strong>AI_PATROLZONE:__Route(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__Route" >
+<strong>AI_PATROL_ZONE:__Route(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -2064,8 +2064,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__Start" >
-<strong>AI_PATROLZONE:__Start(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__Start" >
+<strong>AI_PATROL_ZONE:__Start(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -2086,8 +2086,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).__Status" >
-<strong>AI_PATROLZONE:__Status(Delay)</strong>
+<a id="#(AI_PATROL_ZONE).__Status" >
+<strong>AI_PATROL_ZONE:__Status(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -2108,8 +2108,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onafterDetect" >
-<strong>AI_PATROLZONE:onafterDetect(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).onafterDetect" >
+<strong>AI_PATROL_ZONE:onafterDetect(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2144,8 +2144,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onafterRTB" >
-<strong>AI_PATROLZONE:onafterRTB()</strong>
+<a id="#(AI_PATROL_ZONE).onafterRTB" >
+<strong>AI_PATROL_ZONE:onafterRTB()</strong>
 </a>
 </dt>
 <dd>
@@ -2157,8 +2157,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onafterRoute" >
-<strong>AI_PATROLZONE:onafterRoute(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).onafterRoute" >
+<strong>AI_PATROL_ZONE:onafterRoute(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2197,8 +2197,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onafterStart" >
-<strong>AI_PATROLZONE:onafterStart(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).onafterStart" >
+<strong>AI_PATROL_ZONE:onafterStart(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2234,7 +2234,7 @@ The To State string.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_PATROLZONE)">#AI_PATROLZONE</a>:</em>
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
 self</p>
 
 </dd>
@@ -2242,8 +2242,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onafterStatus" >
-<strong>AI_PATROLZONE:onafterStatus()</strong>
+<a id="#(AI_PATROL_ZONE).onafterStatus" >
+<strong>AI_PATROL_ZONE:onafterStatus()</strong>
 </a>
 </dt>
 <dd>
@@ -2255,8 +2255,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onbeforeDetect" >
-<strong>AI_PATROLZONE:onbeforeDetect(Controllable, From, Event, To)</strong>
+<a id="#(AI_PATROL_ZONE).onbeforeDetect" >
+<strong>AI_PATROL_ZONE:onbeforeDetect(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2291,8 +2291,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROLZONE).onbeforeStatus" >
-<strong>AI_PATROLZONE:onbeforeStatus()</strong>
+<a id="#(AI_PATROL_ZONE).onbeforeStatus" >
+<strong>AI_PATROL_ZONE:onbeforeStatus()</strong>
 </a>
 </dt>
 <dd>

@@ -6,23 +6,44 @@
 -- 
 -- ===
 --
--- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROLZONE}
+-- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
 -- 
--- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROLZONE}, inheriting its methods and behaviour.
+-- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
 -- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
--- The AI_CASE_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event. 
+-- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
+-- 
+-- ![HoldAndEngage](..\Presentations\AI_Cas\Dia3.JPG)
+-- 
+-- The AI_CAS_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+--  
+-- ![Start Event](..\Presentations\AI_Cas\Dia4.JPG)
 -- 
 -- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
 -- using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- 
+-- ![Route Event](..\Presentations\AI_Cas\Dia5.JPG)
+-- 
 -- When the AI is commanded to provide Close Air Support (through the event **Engage**), the AI will fly towards the Engage Zone.
 -- Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.
 -- 
--- Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone 
--- until it is notified through the event **Accomplish**, which is to be triggered by an observing party:
+-- ![Engage Event](..\Presentations\AI_Cas\Dia6.JPG)
+-- 
+-- The AI will detect the targets and will only destroy the targets within the Engage Zone.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia7.JPG)
+-- 
+-- Every target that is destroyed, is reported< by the AI.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia8.JPG)
+-- 
+-- Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. 
+--
+-- ![Engage Event](..\Presentations\AI_Cas\Dia9.JPG)
+-- 
+-- Until it is notified through the event **Accomplish**, which is to be triggered by an observing party:
 -- 
 --   * a FAC
 --   * a timed event
@@ -30,12 +51,18 @@
 --   * a condition
 --   * others ...
 -- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia10.JPG)
+-- 
 -- When the AI has accomplished the CAS, it will fly back to the Patrol Zone.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia11.JPG)
+-- 
 -- It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
 -- It can be notified to go RTB through the **RTB** event.
 -- 
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia12.JPG)
 --
 -- # 1.1) AI_CAS_ZONE constructor
 --
@@ -83,11 +110,11 @@
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
+--   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 --
 -- ### Authors:
 --
 --   * **FlightControl**: Concept, Design & Programming.
---
 --
 -- @module AI_Cas
 
@@ -115,7 +142,7 @@ AI_CAS_ZONE = {
 function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false
@@ -282,6 +309,22 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 
   return self
 end
+
+
+--- Set the Engage Zone where the AI is performing CAS. Note that if the EngageZone is changed, the AI needs to re-detect targets.
+-- @param #AI_PATROL_ZONE self
+-- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAS.
+-- @return #AI_PATROL_ZONE self
+function AI_CAS_ZONE:SetEngageZone( EngageZone )
+  self:F2()
+
+  if EngageZone then  
+    self.EngageZone = EngageZone
+  else
+    self.EngageZone = nil
+  end
+end
+
 
 
 --- onafter State Transition for Event Start.

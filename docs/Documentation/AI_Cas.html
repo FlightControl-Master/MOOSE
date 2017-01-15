@@ -79,23 +79,44 @@
 
 <hr/>
 
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROLZONE)">AI.AI<em>Patrol#AI</em>PATROLZONE</a></h1>
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROLZONE)">AI.AI<em>Patrol#AI</em>PATROLZONE</a>, inheriting its methods and behaviour.</p>
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 
 <p>The <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
-The AI<em>CASE</em>ZONE is assigned a @(Group) and this must be done before the AI<em>CAS</em>ZONE process can be started through the <strong>Start</strong> event. </p>
+The AI<em>CAS</em>ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.</p>
+
+<p><img src="..\Presentations\AI_Cas\Dia3.JPG" alt="HoldAndEngage"/></p>
+
+<p>The AI<em>CAS</em>ZONE is assigned a @(Group) and this must be done before the AI<em>CAS</em>ZONE process can be started through the <strong>Start</strong> event.</p>
+
+<p><img src="..\Presentations\AI_Cas\Dia4.JPG" alt="Start Event"/></p>
 
 <p>Upon started, The AI will <strong>Route</strong> itself towards the random 3D point within a patrol zone, 
 using a random speed within the given altitude and speed limits.
 Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.</p>
 
+<p><img src="..\Presentations\AI_Cas\Dia5.JPG" alt="Route Event"/></p>
+
 <p>When the AI is commanded to provide Close Air Support (through the event <strong>Engage</strong>), the AI will fly towards the Engage Zone.
 Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.</p>
 
-<p>Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone 
-until it is notified through the event <strong>Accomplish</strong>, which is to be triggered by an observing party:</p>
+<p><img src="..\Presentations\AI_Cas\Dia6.JPG" alt="Engage Event"/></p>
+
+<p>The AI will detect the targets and will only destroy the targets within the Engage Zone.</p>
+
+<p><img src="..\Presentations\AI_Cas\Dia7.JPG" alt="Engage Event"/></p>
+
+<p>Every target that is destroyed, is reported&lt; by the AI.</p>
+
+<p><img src="..\Presentations\AI_Cas\Dia8.JPG" alt="Engage Event"/></p>
+
+<p>Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. </p>
+
+<p><img src="..\Presentations\AI_Cas\Dia9.JPG" alt="Engage Event"/></p>
+
+<p>Until it is notified through the event <strong>Accomplish</strong>, which is to be triggered by an observing party:</p>
 
 <ul>
     <li>a FAC</li>
@@ -105,12 +126,18 @@ until it is notified through the event <strong>Accomplish</strong>, which is to 
     <li>others ...</li>
 </ul>
 
-<p>When the AI has accomplished the CAS, it will fly back to the Patrol Zone.
-It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
+<p><img src="..\Presentations\AI_Cas\Dia10.JPG" alt="Engage Event"/></p>
+
+<p>When the AI has accomplished the CAS, it will fly back to the Patrol Zone.</p>
+
+<p><img src="..\Presentations\AI_Cas\Dia11.JPG" alt="Engage Event"/></p>
+
+<p>It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
 It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 <p>When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
+<p><img src="..\Presentations\AI_Cas\Dia12.JPG" alt="Engage Event"/></p>
 
 <h1>1.1) AI<em>CAS</em>ZONE constructor</h1>
 
@@ -339,6 +366,12 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).SetEngageZone">AI_CAS_ZONE:SetEngageZone(EngageZone)</a></td>
+		<td class="summary">
+<p>Set the Engage Zone where the AI is performing CAS.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).TargetZone">AI_CAS_ZONE.TargetZone</a></td>
 		<td class="summary">
 <p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
@@ -400,6 +433,16 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onbeforeEngage">AI_CAS_ZONE:onbeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI_PATROL_ZONE)">Type <code>AI_PATROL_ZONE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).EngageZone">AI_PATROL_ZONE.EngageZone</a></td>
 		<td class="summary">
 
 </td>
@@ -1174,6 +1217,36 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_CAS_ZONE).SetEngageZone" >
+<strong>AI_CAS_ZONE:SetEngageZone(EngageZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Engage Zone where the AI is performing CAS.</p>
+
+	
+<p>Note that if the EngageZone is changed, the AI needs to re-detect targets.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> EngageZone </em></code>: 
+The zone where the AI is performing CAS.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
 <a id="#(AI_CAS_ZONE).TargetZone" >
 <strong>AI_CAS_ZONE.TargetZone</strong>
@@ -1498,6 +1571,23 @@ The To State string.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(AI_PATROL_ZONE)" >Type <code>AI_PATROL_ZONE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_PATROL_ZONE).EngageZone" >
+<strong>AI_PATROL_ZONE.EngageZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 

@@ -39,7 +39,7 @@ function RU_AI_Balancer:OnAfterSpawned( SetGroup, From, Event, To, AIGroup )
   local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
 
 
-  PatrolZones[AIGroup] = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 400, 600 )
+  PatrolZones[AIGroup] = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 400, 600 )
   PatrolZones[AIGroup]:ManageFuel( 0.2, 60 )
   PatrolZones[AIGroup]:SetControllable( AIGroup )
   PatrolZones[AIGroup]:__Start( 5 )

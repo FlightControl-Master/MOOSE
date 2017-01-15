@@ -43,7 +43,7 @@ local PatrolZoneArray = { PatrolZone1, PatrolZone2 }
 
 function RU_AI_Balancer:OnAfterSpawned( SetGroup, From, Event, To, AIGroup )
 
-  local Patrol = AI_PATROLZONE:New( PatrolZoneArray[math.random( 1, 2 )], 3000, 6000, 400, 600 )
+  local Patrol = AI_PATROL_ZONE:New( PatrolZoneArray[math.random( 1, 2 )], 3000, 6000, 400, 600 )
   Patrol:ManageFuel( 0.2, 60 )
   Patrol:SetControllable( AIGroup )
   Patrol:__Start( 5 )
