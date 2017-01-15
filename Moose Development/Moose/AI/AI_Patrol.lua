@@ -58,7 +58,7 @@
 --   * @{#AI_PATROLZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
 -- The detection frequency can be set with @{#AI_PATROLZONE.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
--- Use the method @{#AI_PATROLZONE.GetDetectedTargets}() to obtain a list of the @{Unit}s detected by the AI.
+-- Use the method @{#AI_PATROLZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
 -- Use the method @{#AI_PATROLZONE.SetDetectionZone}() to set the zone where targets need to be detected.
