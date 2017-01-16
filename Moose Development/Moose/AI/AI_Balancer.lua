@@ -1,4 +1,4 @@
---- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class. AI Balancing will replace in multi player missions 
+--- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:All -- AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 -- even when there are hardly any players in the mission.
 -- 

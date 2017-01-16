@@ -1,4 +1,4 @@
---- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Air -- Make AI patrol zones and report detected targets.
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Patrol\Dia1.JPG)
 -- 
@@ -9,11 +9,35 @@
 -- # 1) @{#AI_PATROL_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
--- The AI_PATROL_ZONE is assigned a @(Group) and this must be done before the AI_PATROL_ZONE process can be started. 
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia3.JPG)
+-- 
+-- The AI_PATROL_ZONE is assigned a @(Group) and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia4.JPG)
+-- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
--- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia5.JPG)
+-- 
+-- This cycle will continue.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia6.JPG)
+-- 
+-- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
+--
+-- ![Process](..\Presentations\AI_Patrol\Dia9.JPG)
+-- 
+---- Note that the enemy is not engaged! To model enemy engagement, either tailor the **Detected** event, or
+-- use derived AI_ classes to model AI offensive or defensive behaviour.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia10.JPG)
+-- 
+-- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia11.JPG)
 -- 
 -- ## 1.1) AI_PATROL_ZONE constructor
 --   
@@ -29,7 +53,7 @@
 --   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
 --   * **Returning** ( Group ): The AI is returning to Base..
 -- 
--- ### 1.2.2) AI_PATROL_ZONE Events:
+-- ### 1.2.2) AI_PATROL_ZONE Events
 -- 
 --   * **Start** ( Group ): Start the process.
 --   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
@@ -155,6 +179,8 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 10 )
+  
+  self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
 
@@ -525,6 +551,8 @@ end
 --- @param Wrapper.Controllable#CONTROLLABLE Controllable
 function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
 
+  local Detected = false
+
   local DetectedTargets = Controllable:GetDetectedTargets()
   for TargetID, Target in pairs( DetectedTargets ) do
     local TargetObject = Target.object
@@ -537,12 +565,18 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       if self.DetectionZone then
         if TargetUnit:IsInZone( self.DetectionZone ) then
           self:T( {"Detected ", TargetUnit } )
-          self.DetectedUnits[TargetUnit] = TargetUnit 
+          self.DetectedUnits[TargetUnit] = TargetUnit
+          Detected = true 
         end
-      else
+      else       
         self.DetectedUnits[TargetUnit] = TargetUnit
+        Detected = true
       end
     end
+  end
+  
+  if Detected == true then
+    self:__Detected( 1 )
   end
   
   self:__Detect( self.DetectInterval )

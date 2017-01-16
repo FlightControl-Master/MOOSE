@@ -1,4 +1,4 @@
---- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Air -- This module contains the AI_CAS_ZONE class.
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
 -- 
@@ -79,7 +79,7 @@
 --   * **Engaging** ( Group ): The AI is engaging the targets in the Engage Zone, executing CAS.
 --   * **Returning** ( Group ): The AI is returning to Base..
 -- 
--- ### 1.2.2) AI_CAS_ZONE Events:
+-- ### 1.2.2) AI_CAS_ZONE Events
 -- 
 --   * **Start** ( Group ): Start the process.
 --   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
@@ -312,9 +312,9 @@ end
 
 
 --- Set the Engage Zone where the AI is performing CAS. Note that if the EngageZone is changed, the AI needs to re-detect targets.
--- @param #AI_PATROL_ZONE self
+-- @param #AI_CAS_ZONE self
 -- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAS.
--- @return #AI_PATROL_ZONE self
+-- @return #AI_CAS_ZONE self
 function AI_CAS_ZONE:SetEngageZone( EngageZone )
   self:F2()
 
@@ -338,7 +338,7 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
   self:Route()
   self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( 30, self.EngageZone ) -- Detect for new targets every 30 seconds in the EngageZone.
+  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
 
   self:EventOnDead( self.OnDead )
   

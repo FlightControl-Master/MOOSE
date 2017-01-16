@@ -18,6 +18,7 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
@@ -367,6 +368,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetMinHeight">GROUP:GetMinHeight()</a></td>
 		<td class="summary">
 <p>Returns the current minimum height of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPositionVec3">GROUP:GetPositionVec3()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -953,6 +960,34 @@ Maximum velocity found.</p>
 <p><em>#number:</em>
 Minimum height found.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetPositionVec3" >
+<strong>GROUP:GetPositionVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Position)">Dcs.DCSTypes#Position</a>:</em>
+The 3D position vectors of the POSITIONABLE.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">

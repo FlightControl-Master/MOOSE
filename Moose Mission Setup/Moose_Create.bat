@@ -80,8 +80,9 @@ COPY /b Moose.lua + %1\Functional\Detection.lua         Moose.lua
 rem AI Classes
 COPY /b Moose.lua + %1\AI\AI_Balancer.lua  		       	Moose.lua
 COPY /b Moose.lua + %1\AI\AI_Patrol.lua           		Moose.lua
+COPY /b Moose.lua + %1\AI\AI_Cas.lua                 	Moose.lua
+COPY /b Moose.lua + %1\AI\AI_Cap.lua                 	Moose.lua
 COPY /b Moose.lua + %1\AI\AI_Cargo.lua                 	Moose.lua
-COPY /b Moose.lua + %1\AI\AI_CAS.lua                 	Moose.lua
 
 
 rem Actions

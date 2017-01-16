@@ -205,6 +205,23 @@ function GROUP:GetDCSObject()
   return nil
 end
 
+--- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getUnits()[1]:getPosition().p
+    self:T3( PositionablePosition )
+    return PositionablePosition
+  end
+  
+  return nil
+end
 
 --- Returns if the DCS Group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
