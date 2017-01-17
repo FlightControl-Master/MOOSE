@@ -205,6 +205,23 @@ function GROUP:GetDCSObject()
   return nil
 end
 
+--- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getUnits()[1]:getPosition().p
+    self:T3( PositionablePosition )
+    return PositionablePosition
+  end
+  
+  return nil
+end
 
 --- Returns if the DCS Group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
@@ -386,26 +403,6 @@ function GROUP:GetInitialSize()
     local GroupInitialSize = DCSGroup:getInitialSize()
     self:T3( GroupInitialSize )
     return GroupInitialSize
-  end
-
-  return nil
-end
-
---- Returns the UNITs wrappers of the DCS Units of the DCS Group.
--- @param #GROUP self
--- @return #table The UNITs wrappers.
-function GROUP:GetUnits()
-  self:F2( { self.GroupName } )
-  local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
-    local Units = {}
-    for Index, UnitData in pairs( DCSUnits ) do
-      Units[#Units+1] = UNIT:Find( UnitData )
-    end
-    self:T3( Units )
-    return Units
   end
 
   return nil
@@ -880,6 +877,32 @@ function GROUP:CalculateThreatLevelA2G()
 
   self:T3( MaxThreatLevelA2G )
   return MaxThreatLevelA2G
+end
+
+--- Returns true if the first unit of the GROUP is in the air.
+-- @param Wrapper.Group#GROUP self
+-- @return #boolean true if in the first unit of the group is in the air.
+-- @return #nil The GROUP is not existing or not alive.  
+function GROUP:InAir()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit(1)
+    if DCSUnit then
+      local GroupInAir = DCSGroup:getUnit(1):inAir()
+      self:T3( GroupInAir )
+      return GroupInAir
+    end
+  end
+  
+  return nil
+end
+
+function GROUP:OnReSpawn( ReSpawnFunction )
+
+  self.ReSpawnFunction = ReSpawnFunction
 end
 
 

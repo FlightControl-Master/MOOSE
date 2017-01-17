@@ -166,6 +166,58 @@ function CONTROLLABLE:_GetController()
   return nil
 end
 
+-- Get methods
+
+--- Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).
+-- @param #CONTROLLABLE self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function CONTROLLABLE:GetUnits()
+  self:F2( { self.ControllableName } )
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+    local DCSUnits = DCSControllable:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      Units[#Units+1] = UNIT:Find( UnitData )
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
+--- Returns the health. Dead controllables have health <= 1.0.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
+  return nil
+end
+
 
 
 -- Tasks
@@ -225,7 +277,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:E(Controller)
+    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -305,6 +357,10 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
+  
+  for TaskID, Task in ipairs( DCSTasks ) do
+    self:E( Task )
+  end
 
   self:T3( { DCSTaskCombo } )
   return DCSTaskCombo
@@ -490,22 +546,24 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, WeaponType, WeaponExpend, Atta
   --  }
 
   local DCSTask
-  DCSTask = { id = 'AttackUnit',
+  DCSTask = { 
+    id = 'AttackUnit',
     params = {
-      altitudeEnabled = false,
+      altitudeEnabled = true,
       unitId = AttackUnit:GetID(),
       attackQtyLimit = AttackQtyLimit or false,
-      attackQty = AttackQty or 1,
+      attackQty = AttackQty or 2,
       expend = WeaponExpend or "Auto",
       altitude = 2000,
-      directionEnabled = false,
-      groupAttack = false,
-      weaponType = WeaponType or 1073741822,
+      directionEnabled = true,
+      groupAttack = true,
+      --weaponType = WeaponType or 1073741822,
       direction = Direction or 0,
-    },
-  },
+    }
+  }
 
-  self:E( { DCSTask } )
+  self:E( DCSTask )
+  
   return DCSTask
 end
 
@@ -2218,5 +2276,3 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
 end
 
 -- Message APIs
-
-

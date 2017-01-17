@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170113_2007' ) 
+env.info( 'Moose Generation Timestamp: 20170117_1202' ) 
 local base = _G
 
 Include = {}
@@ -3890,7 +3890,7 @@ function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArgume
   if SchedulerObject and SchedulerObject.ClassName and SchedulerObject.ClassID then 
     ObjectName = SchedulerObject.ClassName .. SchedulerObject.ClassID
   end
-  self:E( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
+  self:F3( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
   self.SchedulerObject = SchedulerObject
   
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
@@ -4019,10 +4019,10 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
-    self:E( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
+    self:F3( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
     self.PersistentSchedulers[self.CallID] = Scheduler
-    self:E( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
+    self:F3( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
@@ -9795,9 +9795,11 @@ POINT_VEC3 = {
     BARO = "BARO",
   },
   RoutePointType = {
+    TakeOffParking = "TakeOffParking",
     TurningPoint = "Turning Point",
   },
   RoutePointAction = {
+    FromParkingArea = "From Parking Area",
     TurningPoint = "Turning Point",
   },
 }
@@ -9820,10 +9822,12 @@ do -- POINT_VEC3
 
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
+-- @field TakeOffParking "TakeOffParking"
 -- @field TurningPoint "Turning Point"
 
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
+-- @field FromParkingArea "From Parking Area"
 -- @field TurningPoint "Turning Point"
 
 -- Constructor.
@@ -11245,14 +11249,21 @@ do -- FSM
   
   function FSM._handler( self, EventName, ... )
   
-    self:E( { EventName, ... } )
-  
     local Can, to = self:can( EventName )
-    self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
+  
+    if to == "*" then
+      to = self.current
+    end
   
     if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
+
+      if self.Controllable then
+        self:E( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      else
+        self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      end        
   
       if self:_call_handler("onbefore" .. EventName, params) == false
       or self:_call_handler("OnBefore" .. EventName, params) == false
@@ -11302,6 +11313,9 @@ do -- FSM
   
         self:_call_handler("onstatechange", params)
       end
+    else
+      self:E( "Cannot execute transition." )
+      self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
     end
   
     return nil
@@ -11377,7 +11391,6 @@ do -- FSM
   end
   
   function FSM:can(e)
-    self:E( { e, self.Events, self.Events[e] } )
     local Event = self.Events[e]
     self:F3( { self.current, Event } )
     local To = Event and Event.map[self.current] or Event.map['*']
@@ -11446,7 +11459,7 @@ do -- FSM_CONTROLLABLE
     end
   
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:F3( "Calling " .. handler )
       return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
@@ -11737,7 +11750,7 @@ do -- FSM_SET
   
   function FSM_SET:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end
@@ -12105,6 +12118,7 @@ POSITIONABLE = {
 function POSITIONABLE:New( PositionableName )
   local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
 
+  self.PositionableName = PositionableName
   return self
 end
 
@@ -12113,12 +12127,12 @@ end
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:F2( self.PositionableName )
+  self:E( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePosition = DCSPositionable:getPosition()
+    local PositionablePosition = DCSPositionable:getPosition().p
     self:T3( PositionablePosition )
     return PositionablePosition
   end
@@ -12165,6 +12179,27 @@ function POSITIONABLE:GetPointVec2()
   
     self:T2( PositionablePointVec2 )
     return PositionablePointVec2
+  end
+  
+  return nil
+end
+
+--- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetPointVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = self:GetPositionVec3()
+    
+    local PositionablePointVec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
+  
+    self:T2( PositionablePointVec3 )
+    return PositionablePointVec3
   end
   
   return nil
@@ -12279,20 +12314,13 @@ end
 
 
 --- Returns true if the POSITIONABLE is in the air.
+-- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
-  local DCSPositionable = self:GetDCSObject()
-  
-  if DCSPositionable then
-    local PositionableInAir = DCSPositionable:inAir()
-    self:T3( PositionableInAir )
-    return PositionableInAir
-  end
-  
   return nil
 end
 
@@ -12648,6 +12676,58 @@ function CONTROLLABLE:_GetController()
   return nil
 end
 
+-- Get methods
+
+--- Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).
+-- @param #CONTROLLABLE self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function CONTROLLABLE:GetUnits()
+  self:F2( { self.ControllableName } )
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+    local DCSUnits = DCSControllable:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      Units[#Units+1] = UNIT:Find( UnitData )
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
+--- Returns the health. Dead controllables have health <= 1.0.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
+  return nil
+end
+
 
 
 -- Tasks
@@ -12707,7 +12787,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:E(Controller)
+    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -12787,6 +12867,10 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
+  
+  for TaskID, Task in ipairs( DCSTasks ) do
+    self:E( Task )
+  end
 
   self:T3( { DCSTaskCombo } )
   return DCSTaskCombo
@@ -12972,22 +13056,24 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, WeaponType, WeaponExpend, Atta
   --  }
 
   local DCSTask
-  DCSTask = { id = 'AttackUnit',
+  DCSTask = { 
+    id = 'AttackUnit',
     params = {
-      altitudeEnabled = false,
+      altitudeEnabled = true,
       unitId = AttackUnit:GetID(),
       attackQtyLimit = AttackQtyLimit or false,
-      attackQty = AttackQty or 1,
+      attackQty = AttackQty or 2,
       expend = WeaponExpend or "Auto",
       altitude = 2000,
-      directionEnabled = false,
-      groupAttack = false,
-      weaponType = WeaponType or 1073741822,
+      directionEnabled = true,
+      groupAttack = true,
+      --weaponType = WeaponType or 1073741822,
       direction = Direction or 0,
-    },
-  },
+    }
+  }
 
-  self:E( { DCSTask } )
+  self:E( DCSTask )
+  
   return DCSTask
 end
 
@@ -14699,10 +14785,7 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
--- Message APIs
-
-
---- This module contains the GROUP class.
+-- Message APIs--- This module contains the GROUP class.
 -- 
 -- 1) @{Wrapper.Group#GROUP} class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- =============================================================
@@ -14909,6 +14992,23 @@ function GROUP:GetDCSObject()
   return nil
 end
 
+--- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getUnits()[1]:getPosition().p
+    self:T3( PositionablePosition )
+    return PositionablePosition
+  end
+  
+  return nil
+end
 
 --- Returns if the DCS Group is alive.
 -- When the group exists at run-time, this method will return true, otherwise false.
@@ -15090,26 +15190,6 @@ function GROUP:GetInitialSize()
     local GroupInitialSize = DCSGroup:getInitialSize()
     self:T3( GroupInitialSize )
     return GroupInitialSize
-  end
-
-  return nil
-end
-
---- Returns the UNITs wrappers of the DCS Units of the DCS Group.
--- @param #GROUP self
--- @return #table The UNITs wrappers.
-function GROUP:GetUnits()
-  self:F2( { self.GroupName } )
-  local DCSGroup = self:GetDCSObject()
-
-  if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits()
-    local Units = {}
-    for Index, UnitData in pairs( DCSUnits ) do
-      Units[#Units+1] = UNIT:Find( UnitData )
-    end
-    self:T3( Units )
-    return Units
   end
 
   return nil
@@ -15586,6 +15666,32 @@ function GROUP:CalculateThreatLevelA2G()
   return MaxThreatLevelA2G
 end
 
+--- Returns true if the first unit of the GROUP is in the air.
+-- @param Wrapper.Group#GROUP self
+-- @return #boolean true if in the first unit of the group is in the air.
+-- @return #nil The GROUP is not existing or not alive.  
+function GROUP:InAir()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit(1)
+    if DCSUnit then
+      local GroupInAir = DCSGroup:getUnit(1):inAir()
+      self:T3( GroupInAir )
+      return GroupInAir
+    end
+  end
+  
+  return nil
+end
+
+function GROUP:OnReSpawn( ReSpawnFunction )
+
+  self.ReSpawnFunction = ReSpawnFunction
+end
+
 
 --- This module contains the UNIT class.
 -- 
@@ -16056,6 +16162,25 @@ function UNIT:GetFuel()
   return nil
 end
 
+--- Returns the UNIT in a UNIT list of one element.
+-- @param #UNIT self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function UNIT:GetUnits()
+  self:F2( { self.UnitName } )
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local DCSUnits = DCSUnit:getUnits()
+    local Units = {}
+    Units[1] = UNIT:Find( DCSUnit )
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
 --- Returns the unit's health. Dead units has health <= 1.0.
 -- @param #UNIT self
 -- @return #number The Unit's health value.
@@ -16383,6 +16508,24 @@ function UNIT:IsShip()
   
     self:T3( IsShipResult )
     return IsShipResult
+  end
+  
+  return nil
+end
+
+--- Returns true if the UNIT is in the air.
+-- @param Wrapper.Positionable#UNIT self
+-- @return #boolean true if in the air.
+-- @return #nil The UNIT is not existing or alive.  
+function UNIT:InAir()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitInAir = DCSUnit:inAir()
+    self:T3( UnitInAir )
+    return UnitInAir
   end
   
   return nil
@@ -18801,9 +18944,12 @@ function SPAWN:ReSpawn( SpawnIndex )
 	local SpawnGroup = self:SpawnWithIndex( SpawnIndex )
 	if SpawnGroup and WayPoints then
 	  -- If there were WayPoints set, then Re-Execute those WayPoints!
-	  self:E( WayPoints )
 	  SpawnGroup:WayPointInitialize( WayPoints )
 	  SpawnGroup:WayPointExecute( 1, 5 )
+	end
+	
+	if SpawnGroup.ReSpawnFunction then
+	  SpawnGroup:ReSpawnFunction()
 	end
 	
 	return SpawnGroup
@@ -24206,13 +24352,12 @@ function DETECTION_AREAS:CreateDetectionSets()
 end
 
 
---- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class. AI Balancing will replace in multi player missions 
+--- Single-Player:**No** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
--- even when there are hardly any players in the mission.
+-- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 -- 
@@ -24281,6 +24426,8 @@ end
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.
+-- 
 -- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
 -- 
 -- ===
@@ -24290,7 +24437,6 @@ end
 -- ### Contributions: 
 -- 
 --   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
--- 
 --   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
@@ -24439,16 +24585,15 @@ end
 --- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
-  self:E( { self.SetClient:Count() } )
-  self.SetClient:Flush()
+  self:T2( { self.SetClient:Count() } )
+  --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
     function( Client )
-      self:E(Client.ClientName)
+      self:T3(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
-      self:E({Client:IsAlive()})
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
@@ -24463,16 +24608,16 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             local PlayerInRange = { Value = false }          
             local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
             
-            self:E( RangeZone )
+            self:T2( RangeZone )
             
             _DATABASE:ForEachPlayer(
               --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
-                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
-                  self:E( "in zone" )
+                  self:T2( "in zone" )
                   if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
-                    self:E( "in range" )
+                    self:T2( "in range" )
                     PlayerInRange.Value = true
                   end
                 end
@@ -24493,7 +24638,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
         end
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
-          self:E( "Client " .. Client.UnitName .. " not alive." )
+          self:T( "Client " .. Client.UnitName .. " not alive." )
           if not self.SpawnQueue[Client.UnitName] then
             -- Spawn a new AI taking into account the spawn interval Earliest, Latest
             self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )
@@ -24511,113 +24656,125 @@ end
 
 
 
---- (AI) (FSM) Make AI patrol routes or zones.
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
+-- 
+-- ![Banner Image](..\Presentations\AI_Patrol\Dia1.JPG)
+-- 
 -- 
 -- ===
 -- 
--- 1) @{#AI_PATROLZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- ================================================================
--- The @{#AI_PATROLZONE} class implements the core functions to patrol a @{Zone} by an AIR @{Controllable} @{Group}.
--- The patrol algorithm works that for each airplane patrolling, upon arrival at the patrol zone,
--- a random point is selected as the route point within the 3D space, within the given boundary limits.
--- The airplane will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
--- Upon arrival at the random 3D point, a new 3D random point will be selected within the patrol zone using the given limits.
--- This cycle will continue until a fuel treshold has been reached by the airplane.
+-- # 1) @{#AI_PATROL_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+-- 
+-- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia3.JPG)
+-- 
+-- The AI_PATROL_ZONE is assigned a @(Group) and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia4.JPG)
+-- 
+-- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
+-- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia5.JPG)
+-- 
+-- This cycle will continue.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia6.JPG)
+-- 
+-- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
+--
+-- ![Process](..\Presentations\AI_Patrol\Dia9.JPG)
+-- 
+---- Note that the enemy is not engaged! To model enemy engagement, either tailor the **Detected** event, or
+-- use derived AI_ classes to model AI offensive or defensive behaviour.
+-- 
+-- ![Process](..\Presentations\AI_Patrol\Dia10.JPG)
+-- 
+-- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
--- 1.1) AI_PATROLZONE constructor:
--- ----------------------------
+-- ![Process](..\Presentations\AI_Patrol\Dia11.JPG)
+-- 
+-- ## 1.1) AI_PATROL_ZONE constructor
 --   
---   * @{#AI_PATROLZONE.New}(): Creates a new AI_PATROLZONE object.
+--   * @{#AI_PATROL_ZONE.New}(): Creates a new AI_PATROL_ZONE object.
 -- 
--- 1.2) AI_PATROLZONE state machine:
--- ----------------------------------
--- The AI_PATROLZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
+-- ## 1.2) AI_PATROL_ZONE is a FSM
 -- 
--- ### 1.2.1) AI_PATROLZONE Events:
+-- ![Process](..\Presentations\AI_Patrol\Dia2.JPG)
 -- 
---   * @{#AI_PATROLZONE.Route}( AIControllable ):  A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
---   * @{#AI_PATROLZONE.Patrol}( AIControllable ): The AIControllable reports it is patrolling. This event is called every 30 seconds.
---   * @{#AI_PATROLZONE.RTB}( AIControllable ): The AIControllable will report return to base.
---   * @{#AI_PATROLZONE.End}( AIControllable ): The end of the AI_PATROLZONE process.
---   * @{#AI_PATROLZONE.Dead}( AIControllable ): The AIControllable is dead. The AI_PATROLZONE process will be ended.
+-- ### 1.2.1) AI_PATROL_ZONE States
 -- 
--- ### 1.2.2) AI_PATROLZONE States:
+--   * **None** ( Group ): The process is not started yet.
+--   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
+--   * **Returning** ( Group ): The AI is returning to Base..
 -- 
---   * **Route**: A new 3D route point is selected and the AIControllable will fly towards that point with the given speed.
---   * **Patrol**: The AIControllable is patrolling. This state is set every 30 seconds, so every 30 seconds, a state transition method can be used.
---   * **RTB**: The AIControllable reports it wants to return to the base.
---   * **Dead**: The AIControllable is dead ...
---   * **End**: The process has come to an end.
---   
--- ### 1.2.3) AI_PATROLZONE state transition methods:
+-- ### 1.2.2) AI_PATROL_ZONE Events
 -- 
--- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
--- There are 2 moments when state transition methods will be called by the state machine:
--- 
---   * **Before** the state transition. 
---     The state transition method needs to start with the name **OnBefore + the name of the state**. 
---     If the state transition method returns false, then the processing of the state transition will not be done!
---     If you want to change the behaviour of the AIControllable at this event, return false, 
---     but then you'll need to specify your own logic using the AIControllable!
---   
---   * **After** the state transition. 
---     The state transition method needs to start with the name **OnAfter + the name of the state**. 
---     These state transition methods need to provide a return value, which is specified at the function description.
---
--- An example how to manage a state transition for an AI_PATROLZONE object **Patrol** for the state **RTB**:
--- 
---      local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone" )
---      local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
---
---      local PatrolSpawn = SPAWN:New( "Patrol Group" )
---      local PatrolGroup = PatrolSpawn:Spawn()
---
---      local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 300, 600 )
---      Patrol:SetControllable( PatrolGroup )
---      Patrol:ManageFuel( 0.2, 60 )
---
--- **OnBefore**RTB( AIGroup ) will be called by the AI_PATROLZONE object when the AIGroup reports RTB, but **before** the RTB default action is processed by the AI_PATROLZONE object.
---
---      --- State transition function for the AI_PATROLZONE **Patrol** object
---      -- @param #AI_PATROLZONE self 
---      -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
---      -- @return #boolean If false is returned, then the OnAfter state transition method will not be called.
---      function Patrol:OnBeforeRTB( AIGroup )
---        AIGroup:MessageToRed( "Returning to base", 20 )
---      end
---       
--- **OnAfter**RTB( AIGroup ) will be called by the AI_PATROLZONE object when the AIGroup reports RTB, but **after** the RTB default action was processed by the AI_PATROLZONE object.
---
---      --- State transition function for the AI_PATROLZONE **Patrol** object
---      -- @param #AI_PATROLZONE self 
---      -- @param Wrapper.Controllable#CONTROLLABLE AIGroup
---      -- @return #Wrapper.Controllable#CONTROLLABLE The new AIGroup object that is set to be patrolling the zone.
---      function Patrol:OnAfterRTB( AIGroup )
---        return PatrolSpawn:Spawn()
---      end 
+--   * **Start** ( Group ): Start the process.
+--   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
+--   * **RTB** ( Group ): Route the AI to the home base.
+--   * **Detect** ( Group ): The AI is detecting targets.
+--   * **Detected** ( Group ): The AI has detected new targets.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --    
--- 1.3) Manage the AI_PATROLZONE parameters:
--- ------------------------------------------
--- The following methods are available to modify the parameters of a AI_PATROLZONE object:
+-- ## 1.3) Set or Get the AI controllable
 -- 
---   * @{#AI_PATROLZONE.SetControllable}(): Set the AIControllable.
---   * @{#AI_PATROLZONE.GetControllable}(): Get the AIControllable.
---   * @{#AI_PATROLZONE.SetSpeed}(): Set the patrol speed of the AI, for the next patrol.
---   * @{#AI_PATROLZONE.SetAltitude}(): Set altitude of the AI, for the next patrol.
+--   * @{#AI_PATROL_ZONE.SetControllable}(): Set the AIControllable.
+--   * @{#AI_PATROL_ZONE.GetControllable}(): Get the AIControllable.
+--
+-- ## 1.4) Set the Speed and Altitude boundaries of the AI controllable
+--
+--   * @{#AI_PATROL_ZONE.SetSpeed}(): Set the patrol speed boundaries of the AI, for the next patrol.
+--   * @{#AI_PATROL_ZONE.SetAltitude}(): Set altitude boundaries of the AI, for the next patrol.
 -- 
--- 1.3) Manage the out of fuel in the AI_PATROLZONE:
--- ----------------------------------------------
--- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
+-- ## 1.5) Manage the detection process of the AI controllable
+-- 
+-- The detection process of the AI controllable can be manipulated.
+-- Detection requires an amount of CPU power, which has an impact on your mission performance.
+-- Only put detection on when absolutely necessary, and the frequency of the detection can also be set.
+-- 
+--   * @{#AI_PATROL_ZONE.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
+--   * @{#AI_PATROL_ZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
+-- 
+-- The detection frequency can be set with @{#AI_PATROL_ZONE.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+-- Use the method @{#AI_PATROL_ZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
+-- 
+-- The detection can be filtered to potential targets in a specific zone.
+-- Use the method @{#AI_PATROL_ZONE.SetDetectionZone}() to set the zone where targets need to be detected.
+-- Note that when the zone is too far away, or the AI is not heading towards the zone, or the AI is too high, no targets may be detected
+-- according the weather conditions.
+-- 
+-- ## 1.6) Manage the "out of fuel" in the AI_PATROL_ZONE
+-- 
+-- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
--- Once the time is finished, the old AIControllable will return to the base.
--- Use the method @{#AI_PATROLZONE.ManageFuel}() to have this proces in place.
+-- When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, 
+-- while a new AI is targetted to the AI_PATROL_ZONE.
+-- Once the time is finished, the old AI will return to the base.
+-- Use the method @{#AI_PATROL_ZONE.ManageFuel}() to have this proces in place.
+-- 
+-- ## 1.7) Manage "damage" behaviour of the AI in the AI_PATROL_ZONE
+-- 
+-- When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
+-- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
+-- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this proces in place.
 -- 
 -- ====
 -- 
--- **API CHANGE HISTORY**
--- ======================
+-- # **OPEN ISSUES**
+-- 
+-- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
+-- 
+-- 2016-01-17: 
+--   -- Fixed problem with AI returning to base too early and unexpected.
+--   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
+--   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
 -- 
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
 -- 
@@ -24626,257 +24783,282 @@ end
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
+-- 
+-- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
+-- 
 -- 2016-09-01: Initial class and API.
 -- 
 -- ===
 -- 
--- AUTHORS and CONTRIBUTIONS
--- =========================
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
 -- ### Contributions: 
 -- 
---   * **DutchBaron**: Testing.
---   * **Pikey**: Testing and API concept review.
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
 -- 
 -- ### Authors: 
 -- 
 --   * **FlightControl**: Design & Programming.
 -- 
--- 
 -- @module AI_Patrol
 
---- AI_PATROLZONE class
--- @type AI_PATROLZONE
+--- AI_PATROL_ZONE class
+-- @type AI_PATROL_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @field Functional.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
-AI_PATROLZONE = {
-  ClassName = "AI_PATROLZONE",
+AI_PATROL_ZONE = {
+  ClassName = "AI_PATROL_ZONE",
 }
 
-
-
---- Creates a new AI_PATROLZONE object
--- @param #AI_PATROLZONE self
+--- Creates a new AI_PATROL_ZONE object
+-- @param #AI_PATROL_ZONE self
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @return #AI_PATROLZONE self
+-- @return #AI_PATROL_ZONE self
 -- @usage
--- -- Define a new AI_PATROLZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- -- Define a new AI_PATROL_ZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
 -- PatrolSpawn = SPAWN:New( 'Patrol Group' )
--- PatrolArea = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 600, 900 )
-function AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+-- PatrolArea = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 600, 900 )
+function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_CONTROLLABLE
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_PATROL_ZONE
   
   
-    self.PatrolZone = PatrolZone
+  self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
   
-  self.PatrolFuelTresholdPercentage = 0.2
+  self:SetDetectionOn()
 
+  self.CheckStatus = true
   
-  self:SetStartState( "None" )
+  self:ManageFuel( .2, 60 )
+  self:ManageDamage( 1 )
+  
+  self:SetDetectionInterval( 30 )
 
-do self:AddTransition( "*", "Start", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+  self.DetectedUnits = {} -- This table contains the targets detected during patrol.
+  
+  self:SetStartState( "None" ) 
 
-	--- OnLeave State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+  self:AddTransition( "None", "Start", "Patrolling" )
 
-	--- OnEnter State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnEnterRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- OnBefore Transition Handler for Event Start.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeStart
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnAfter Transition Handler for Event Start.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterStart
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- OnBefore State Transition for Start.
-  -- @function [parent=#AI_PATROLZONE] OnBeforeStart
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+--- Synchronous Event Trigger for Event Start.
+-- @function [parent=#AI_PATROL_ZONE] Start
+-- @param #AI_PATROL_ZONE self
 
-	--- OnAfter State Transition for Start.
-  -- @function [parent=#AI_PATROLZONE] OnAfterStart
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- Asynchronous Event Trigger for Event Start.
+-- @function [parent=#AI_PATROL_ZONE] __Start
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
+
+--- OnLeave Transition Handler for State Patrolling.
+-- @function [parent=#AI_PATROL_ZONE] OnLeavePatrolling
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Patrolling.
+-- @function [parent=#AI_PATROL_ZONE] OnEnterPatrolling
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
+  self:AddTransition( "Patrolling", "Route", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
+
+--- OnBefore Transition Handler for Event Route.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeRoute
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnAfter Transition Handler for Event Route.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterRoute
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- Embedded Event Trigger for Start.
-  -- @function [parent=#AI_PATROLZONE] Start
-  -- @param #AI_PATROLZONE self
+--- Synchronous Event Trigger for Event Route.
+-- @function [parent=#AI_PATROL_ZONE] Route
+-- @param #AI_PATROL_ZONE self
 
-	--- Delayed Event Trigger for Start
-  -- @function [parent=#AI_PATROLZONE] __Start
-  -- @param #AI_PATROLZONE self
-  -- @param #number Delay The delay in seconds.
+--- Asynchronous Event Trigger for Event Route.
+-- @function [parent=#AI_PATROL_ZONE] __Route
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
 
-end -- AI_PATROLZONE  
+  self:AddTransition( "*", "Status", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
 
-do self:AddTransition( "*", "Route", "Route" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+--- OnBefore Transition Handler for Event Status.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeStatus
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
 
-	--- OnLeave State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnLeaveRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnEnter State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnEnterRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- OnAfter Transition Handler for Event Status.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterStatus
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- OnBefore State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnBeforeRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+--- Synchronous Event Trigger for Event Status.
+-- @function [parent=#AI_PATROL_ZONE] Status
+-- @param #AI_PATROL_ZONE self
 
-	--- OnAfter State Transition for Route.
-  -- @function [parent=#AI_PATROLZONE] OnAfterRoute
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- Asynchronous Event Trigger for Event Status.
+-- @function [parent=#AI_PATROL_ZONE] __Status
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "*", "Detect", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
+
+--- OnBefore Transition Handler for Event Detect.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeDetect
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnAfter Transition Handler for Event Detect.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterDetect
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- Embedded Event Trigger for Route.
-  -- @function [parent=#AI_PATROLZONE] Route
-  -- @param #AI_PATROLZONE self
+--- Synchronous Event Trigger for Event Detect.
+-- @function [parent=#AI_PATROL_ZONE] Detect
+-- @param #AI_PATROL_ZONE self
 
-	--- Delayed Event Trigger for Route
-  -- @function [parent=#AI_PATROLZONE] __Route
-  -- @param #AI_PATROLZONE self
-  -- @param #number Delay The delay in seconds.
+--- Asynchronous Event Trigger for Event Detect.
+-- @function [parent=#AI_PATROL_ZONE] __Detect
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
 
-end -- AI_PATROLZONE  
+  self:AddTransition( "*", "Detected", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
 
-do self:AddTransition( "*", "Patrol", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+--- OnBefore Transition Handler for Event Detected.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeDetected
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
 
-	--- OnLeave State Transition for Patrol.
-  -- @function [parent=#AI_PATROLZONE] OnLeavePatrol
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnEnter State Transition for Patrol.
-  -- @function [parent=#AI_PATROLZONE] OnEnterPatrol
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- OnAfter Transition Handler for Event Detected.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterDetected
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- OnBefore State Transition for Patrol.
-  -- @function [parent=#AI_PATROLZONE] OnBeforePatrol
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
+--- Synchronous Event Trigger for Event Detected.
+-- @function [parent=#AI_PATROL_ZONE] Detected
+-- @param #AI_PATROL_ZONE self
 
-	--- OnAfter State Transition for Patrol.
-  -- @function [parent=#AI_PATROLZONE] OnAfterPatrol
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
+--- Asynchronous Event Trigger for Event Detected.
+-- @function [parent=#AI_PATROL_ZONE] __Detected
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "*", "RTB", "Returning" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
+
+--- OnBefore Transition Handler for Event RTB.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeRTB
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnAfter Transition Handler for Event RTB.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterRTB
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 	
-	--- Embedded Event Trigger for Patrol.
-  -- @function [parent=#AI_PATROLZONE] Patrol
-  -- @param #AI_PATROLZONE self
+--- Synchronous Event Trigger for Event RTB.
+-- @function [parent=#AI_PATROL_ZONE] RTB
+-- @param #AI_PATROL_ZONE self
 
-	--- Delayed Event Trigger for Patrol
-  -- @function [parent=#AI_PATROLZONE] __Patrol
-  -- @param #AI_PATROLZONE self
-  -- @param #number Delay The delay in seconds.
+--- Asynchronous Event Trigger for Event RTB.
+-- @function [parent=#AI_PATROL_ZONE] __RTB
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
 
-end -- AI_PATROLZONE
+--- OnLeave Transition Handler for State Returning.
+-- @function [parent=#AI_PATROL_ZONE] OnLeaveReturning
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
 
-do self:AddTransition( "Patrol", "RTB", "RTB" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROLZONE.
+--- OnEnter Transition Handler for State Returning.
+-- @function [parent=#AI_PATROL_ZONE] OnEnterReturning
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
 
-	--- OnLeave State Transition for Patrol.
-  -- @function [parent=#AI_PATROLZONE] OnLeavePatrol
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnEnter State Transition for RTB.
-  -- @function [parent=#AI_PATROLZONE] OnEnterRTB
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-	
-	--- OnBefore State Transition for RTB.
-  -- @function [parent=#AI_PATROLZONE] OnBeforeRTB
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnAfter State Transition for RTB.
-  -- @function [parent=#AI_PATROLZONE] OnAfterRTB
-  -- @param #AI_PATROLZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-	
-	--- Embedded Event Trigger for RTB.
-  -- @function [parent=#AI_PATROLZONE] RTB
-  -- @param #AI_PATROLZONE self
-
-	--- Delayed Event Trigger for RTB
-  -- @function [parent=#AI_PATROLZONE] __RTB
-  -- @param #AI_PATROLZONE self
-  -- @param #number Delay The delay in seconds.
-
-end -- AI_PATROLZONE
+  self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
   
   return self
 end
@@ -24885,11 +25067,11 @@ end
 
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
--- @param #AI_PATROLZONE self
+-- @param #AI_PATROL_ZONE self
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
   
   self.PatrolMinSpeed = PatrolMinSpeed
@@ -24899,39 +25081,92 @@ end
 
 
 --- Sets the floor and ceiling altitude of the patrol.
--- @param #AI_PATROLZONE self
+-- @param #AI_PATROL_ZONE self
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
   self:F2( { PatrolFloorAltitude, PatrolCeilingAltitude } )
   
   self.PatrolFloorAltitude = PatrolFloorAltitude
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
 end
 
+--   * @{#AI_PATROL_ZONE.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
+--   * @{#AI_PATROL_ZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 
+--- Set the detection on. The AI will detect for targets.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionOn()
+  self:F2()
+  
+  self.DetectUnits = true
+end
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewPatrolRoute( AIControllable )
+--- Set the detection off. The AI will NOT detect for targets.
+-- However, the list of already detected targets will be kept and can be enquired!
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionOff()
+  self:F2()
+  
+  self.DetectUnits = false
+end
 
-  AIControllable:T( "NewPatrolRoute" )
-  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolCore.Zone#AI_PATROLZONE
-  PatrolZone:__Route( 1 )
+--- Set the interval in seconds between each detection executed by the AI.
+-- The list of already detected targets will be kept and updated.
+-- Newly detected targets will be added, but already detected targets that were 
+-- not detected in this cycle, will NOT be removed!
+-- The default interval is 30 seconds.
+-- @param #AI_PATROL_ZONE self
+-- @param #number Seconds The interval in seconds.
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionInterval( Seconds )
+  self:F2()
+
+  if Seconds then  
+    self.DetectInterval = Seconds
+  else
+    self.DetectInterval = 30
+  end
+end
+
+--- Set the detection zone where the AI is detecting targets.
+-- @param #AI_PATROL_ZONE self
+-- @param Core.Zone#ZONE DetectionZone The zone where to detect targets.
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionZone( DetectionZone )
+  self:F2()
+
+  if DetectionZone then  
+    self.DetectZone = DetectionZone
+  else
+    self.DetectZone = nil
+  end
+end
+
+--- Gets a list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
+-- No filtering is applied, so, ANY detected UNIT can be in this list.
+-- It is up to the mission designer to use the @{Unit} class and methods to filter the targets.
+-- @param #AI_PATROL_ZONE self
+-- @return #table The list of @{Wrapper.Unit#UNIT}s
+function AI_PATROL_ZONE:GetDetectedUnits()
+  self:F2()
+
+  return self.DetectedUnits
 end
 
 
-
-
---- When the AIControllable is out of fuel, it is required that a new AIControllable is started, before the old AIControllable can return to the home base.
+--- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
--- When the fuel treshold is reached, the AIControllable will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROLZONE.
--- Once the time is finished, the old AIControllable will return to the base.
--- @param #AI_PATROLZONE self
+-- When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROL_ZONE.
+-- Once the time is finished, the old AI will return to the base.
+-- @param #AI_PATROL_ZONE self
 -- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
 -- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
 
   self.PatrolManageFuel = true
   self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
@@ -24940,60 +25175,165 @@ function AI_PATROLZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuel
   return self
 end
 
+--- When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.
+-- However, damage cannot be foreseen early on. 
+-- Therefore, when the damage treshold is reached, 
+-- the AI will return immediately to the home base (RTB).
+-- Note that for groups, the average damage of the complete group will be calculated.
+-- So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold will be 0.25.
+-- @param #AI_PATROL_ZONE self
+-- @param #number PatrolDamageTreshold The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:ManageDamage( PatrolDamageTreshold )
+
+  self.PatrolManageDamage = true
+  self.PatrolDamageTreshold = PatrolDamageTreshold
+  
+  return self
+end
+
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
--- @param #AI_PATROLZONE self
--- @return #AI_PATROLZONE self
-function AI_PATROLZONE:onenterRoute()
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
+  self:F2()
+
+  self:__Route( 5 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
+  self:__Status( 30 ) -- Check status status every 30 seconds.
+  self:__Detect( self.DetectInterval ) -- Detect for new targets every 30 seconds.
+  
+  Controllable:OptionROEHoldFire()
+  Controllable:OptionROTVertical()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
+  
+end
+
+
+--- @param #AI_PATROL_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable
+function AI_PATROL_ZONE:onbeforeDetect( Controllable, From, Event, To )
+
+  return self.DetectUnits
+end
+
+--- @param #AI_PATROL_ZONE self
+--- @param Wrapper.Controllable#CONTROLLABLE Controllable
+function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
+
+  local Detected = false
+
+  local DetectedTargets = Controllable:GetDetectedTargets()
+  for TargetID, Target in pairs( DetectedTargets or {} ) do
+    local TargetObject = Target.object
+    self:T( TargetObject )
+    if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
+
+      local TargetUnit = UNIT:Find( TargetObject )
+      local TargetUnitName = TargetUnit:GetName()
+      
+      if self.DetectionZone then
+        if TargetUnit:IsInZone( self.DetectionZone ) then
+          self:T( {"Detected ", TargetUnit } )
+          self.DetectedUnits[TargetUnit] = TargetUnit
+          Detected = true 
+        end
+      else       
+        self.DetectedUnits[TargetUnit] = TargetUnit
+        Detected = true
+      end
+    end
+  end
+  
+  if Detected == true then
+    self:__Detected( 1 )
+  end
+  
+  self:__Detect( self.DetectInterval )
+end
+
+--- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+-- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
+-- Note that this method is required, as triggers the next route when patrolling for the Controllable.
+function AI_PATROL_ZONE:_NewPatrolRoute( AIControllable )
+
+  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolCore.Zone#AI_PATROL_ZONE
+  PatrolZone:__Route( 1 )
+end
+
+
+--- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
 
   self:F2()
 
-  local PatrolRoute = {}
+  -- When RTB, don't allow anymore the routing.
+  if From == "RTB" then
+    return
+  end
+
   
   if self.Controllable:IsAlive() then
-    --- Determine if the AIControllable is within the PatrolZone. 
+    -- Determine if the AIControllable is within the PatrolZone. 
     -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
     
---    --- Calculate the current route point.
---    local CurrentVec2 = self.Controllable:GetVec2()
---    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
---    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
---    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
---        POINT_VEC3.RoutePointAltType.BARO, 
---        POINT_VEC3.RoutePointType.TurningPoint, 
---        POINT_VEC3.RoutePointAction.TurningPoint, 
---        ToPatrolZoneSpeed, 
---        true 
---      )
---    
---    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    local PatrolRoute = {}
+
+    -- Calculate the current route point of the controllable as the start point of the route.
+    -- However, when the controllable is not in the air,
+    -- the controllable current waypoint is probably the airbase...
+    -- Thus, if we would take the current waypoint as the startpoint, upon take-off, the controllable flies
+    -- immediately back to the airbase, and this is not correct.
+    -- Therefore, when on a runway, get as the current route point a random point within the PatrolZone.
+    -- This will make the plane fly immediately to the patrol zone.
     
-    self:T2( PatrolRoute )
-  
-    if self.Controllable:IsNotInZone( self.PatrolZone ) then
-      --- Find a random 2D point in PatrolZone.
-      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
-      self:T2( ToPatrolZoneVec2 )
-      
-      --- Define Speed and Altitude.
-      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    if self.Controllable:InAir() == false then
+      self:E( "Not in the air, finding route path within PatrolZone" )
+      local CurrentVec2 = self.Controllable:GetVec2()
+      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      self:T2( ToPatrolZoneSpeed )
-      
-      --- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
-      
-      --- Create a route point of type air.
-      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToPatrolZoneSpeed, 
-        true 
-      )
-
-    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
-
-    end
+      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+          POINT_VEC3.RoutePointAltType.BARO, 
+          POINT_VEC3.RoutePointType.TakeOffParking, 
+          POINT_VEC3.RoutePointAction.FromParkingArea, 
+          ToPatrolZoneSpeed, 
+          true 
+        )
+      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    else
+      self:E( "In the air, finding route path within PatrolZone" )
+      local CurrentVec2 = self.Controllable:GetVec2()
+      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+          POINT_VEC3.RoutePointAltType.BARO, 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          ToPatrolZoneSpeed, 
+          true 
+        )
+      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    end    
+    
     
     --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
     
@@ -25018,6 +25358,8 @@ function AI_PATROLZONE:onenterRoute()
       true 
     )
     
+    --self.CoordTest:SpawnFromVec3( ToTargetPointVec3:GetVec3() )
+    
     --ToTargetPointVec3:SmokeRed()
 
     PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
@@ -25027,25 +25369,31 @@ function AI_PATROLZONE:onenterRoute()
     
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
-    self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
+    self.Controllable:WayPointFunction( #PatrolRoute, 1, "AI_PATROL_ZONE:_NewPatrolRoute" )
 
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 5 )
-    
-    self:__Patrol( 30 )
+    self.Controllable:WayPointExecute( 1, 2 )
   end
-  
+
 end
 
+--- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:onbeforeStatus()
 
---- @param #AI_PATROLZONE self
-function AI_PATROLZONE:onenterPatrol()
+  return self.CheckStatus
+end
+
+--- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:onafterStatus()
   self:F2()
 
   if self.Controllable and self.Controllable:IsAlive() then
   
+    local RTB = false
+    
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     if Fuel < self.PatrolFuelTresholdPercentage then
+      self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       local AIControllableTemplate = self.Controllable:GetTemplate()
       
@@ -25053,14 +25401,1145 @@ function AI_PATROLZONE:onenterPatrol()
       local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
       OldAIControllable:SetTask( TimedOrbitTask, 10 )
 
+      RTB = true
+    else
+    end
+    
+    -- TODO: Check GROUP damage function.
+    local Damage = self.Controllable:GetLife()
+    if Damage <= self.PatrolDamageTreshold then
+      self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
+      RTB = true
+    end
+    
+    if RTB == true then
       self:RTB()
     else
-      self:__Patrol( 30 ) -- Execute the Patrol event after 30 seconds.
+      self:__Status( 30 ) -- Execute the Patrol event after 30 seconds.
     end
   end
+end
+
+--- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:onafterRTB()
+  self:F2()
+
+  if self.Controllable and self.Controllable:IsAlive() then
+
+    self:SetDetectionOff()
+    self.CheckStatus = false
+    
+    local PatrolRoute = {}
+  
+    --- Calculate the current route point.
+    local CurrentVec2 = self.Controllable:GetVec2()
+    
+    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToPatrolZoneSpeed, 
+        true 
+      )
+    
+    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    self.Controllable:WayPointInitialize( PatrolRoute )
+  
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 1 )
+    
+  end
+    
+end
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
+--
+-- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
+-- 
+-- 
+-- ===
+--
+-- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
+-- 
+-- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+--  
+-- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+-- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
+-- 
+-- ![HoldAndEngage](..\Presentations\AI_Cas\Dia3.JPG)
+-- 
+-- The AI_CAS_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+--  
+-- ![Start Event](..\Presentations\AI_Cas\Dia4.JPG)
+-- 
+-- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
+-- using a random speed within the given altitude and speed limits.
+-- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
+-- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- 
+-- ![Route Event](..\Presentations\AI_Cas\Dia5.JPG)
+-- 
+-- When the AI is commanded to provide Close Air Support (through the event **Engage**), the AI will fly towards the Engage Zone.
+-- Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia6.JPG)
+-- 
+-- The AI will detect the targets and will only destroy the targets within the Engage Zone.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia7.JPG)
+-- 
+-- Every target that is destroyed, is reported< by the AI.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia8.JPG)
+-- 
+-- Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. 
+--
+-- ![Engage Event](..\Presentations\AI_Cas\Dia9.JPG)
+-- 
+-- Until it is notified through the event **Accomplish**, which is to be triggered by an observing party:
+-- 
+--   * a FAC
+--   * a timed event
+--   * a menu option selected by a human
+--   * a condition
+--   * others ...
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia10.JPG)
+-- 
+-- When the AI has accomplished the CAS, it will fly back to the Patrol Zone.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia11.JPG)
+-- 
+-- It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
+-- It can be notified to go RTB through the **RTB** event.
+-- 
+-- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- 
+-- ![Engage Event](..\Presentations\AI_Cas\Dia12.JPG)
+--
+-- # 1.1) AI_CAS_ZONE constructor
+--
+--   * @{#AI_CAS_ZONE.New}(): Creates a new AI_CAS_ZONE object.
+--
+-- ## 1.2) AI_CAS_ZONE is a FSM
+-- 
+-- ![Process](..\Presentations\AI_Cas\Dia2.JPG)
+-- 
+-- ### 1.2.1) AI_CAS_ZONE States
+-- 
+--   * **None** ( Group ): The process is not started yet.
+--   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
+--   * **Engaging** ( Group ): The AI is engaging the targets in the Engage Zone, executing CAS.
+--   * **Returning** ( Group ): The AI is returning to Base..
+-- 
+-- ### 1.2.2) AI_CAS_ZONE Events
+-- 
+--   * **Start** ( Group ): Start the process.
+--   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
+--   * **Engage** ( Group ): Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
+--   * **RTB** ( Group ): Route the AI to the home base.
+--   * **Detect** ( Group ): The AI is detecting targets.
+--   * **Detected** ( Group ): The AI has detected new targets.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--    
+-- ====
+--
+-- # **API CHANGE HISTORY**
+--
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+--
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+--
+-- Hereby the change log:
+--
+-- 2017-01-15: Initial class and API.
+--
+-- ===
+--
+-- # **AUTHORS and CONTRIBUTIONS**
+--
+-- ### Contributions:
+--
+--   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
+--   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
+--
+-- ### Authors:
+--
+--   * **FlightControl**: Concept, Design & Programming.
+--
+-- @module AI_Cas
+
+
+--- AI_CAS_ZONE class
+-- @type AI_CAS_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @extends AI.AI_Patrol#AI_CAS_ZONE
+AI_CAS_ZONE = {
+  ClassName = "AI_CAS_ZONE",
+}
+
+
+
+--- Creates a new AI_CAS_ZONE object
+-- @param #AI_CAS_ZONE self
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Core.Zone#ZONE EngageZone
+-- @return #AI_CAS_ZONE self
+function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+
+  self.EngageZone = EngageZone
+  self.Accomplished = false
+  
+  self:SetDetectionZone( self.EngageZone )
+  
+  self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeEngage
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterEngage
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] Engage
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAS_ZONE] __Engage
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+--- OnLeave Transition Handler for State Engaging.
+-- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
+-- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Engaging.
+-- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
+-- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
+  self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+  
+  --- OnBefore Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeFired
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterFired
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] Fired
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAS_ZONE] __Fired
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "*", "Destroy", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeDestroy
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterDestroy
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] Destroy
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAS_ZONE] __Destroy
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+
+  self:AddTransition( "Engaging", "Abort", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Abort.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeAbort
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Abort.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterAbort
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Abort.
+  -- @function [parent=#AI_CAS_ZONE] Abort
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Abort.
+  -- @function [parent=#AI_CAS_ZONE] __Abort
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "Engaging", "Accomplish", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
+
+  --- OnBefore Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] OnBeforeAccomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] OnAfterAccomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] Accomplish
+  -- @param #AI_CAS_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAS_ZONE] __Accomplish
+  -- @param #AI_CAS_ZONE self
+  -- @param #number Delay The delay in seconds.  
+
+  return self
+end
+
+
+--- Set the Engage Zone where the AI is performing CAS. Note that if the EngageZone is changed, the AI needs to re-detect targets.
+-- @param #AI_CAS_ZONE self
+-- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAS.
+-- @return #AI_CAS_ZONE self
+function AI_CAS_ZONE:SetEngageZone( EngageZone )
+  self:F2()
+
+  if EngageZone then  
+    self.EngageZone = EngageZone
+  else
+    self.EngageZone = nil
+  end
+end
+
+
+
+--- onafter State Transition for Event Start.
+-- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
+
+
+  self:Route()
+  self:__Status( 30 ) -- Check status status every 30 seconds.
+  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
+
+  self:EventOnDead( self.OnDead )
+  
+  Controllable:OptionROEHoldFire()
+  Controllable:OptionROTVertical()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
   
 end
---- Management of logical cargo objects, that can be transported from and to transportation carriers.
+
+--- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+function _NewEngageRoute( AIControllable )
+
+  AIControllable:T( "NewEngageRoute" )
+  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cas#AI_CAS_ZONE
+  EngageZone:__Engage( 1 )
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onbeforeEngage( Controllable, From, Event, To )
+  
+  if self.Accomplished == true then
+    return false
+  end
+end
+
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
+
+  if Controllable:IsAlive() then
+
+    self:Detect( self.EngageZone )
+
+    local EngageRoute = {}
+
+    --- Calculate the current route point.
+    local CurrentVec2 = self.Controllable:GetVec2()
+    
+    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local ToEngageZoneSpeed = self.PatrolMaxSpeed
+    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToEngageZoneSpeed, 
+        true 
+      )
+    
+    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+
+  
+    if self.Controllable:IsNotInZone( self.EngageZone ) then
+
+      -- Find a random 2D point in EngageZone.
+      local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
+      self:T2( ToEngageZoneVec2 )
+      
+      -- Define Speed and Altitude.
+      local ToEngageZoneAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
+      local ToEngageZoneSpeed = self.PatrolMaxSpeed
+      self:T2( ToEngageZoneSpeed )
+      
+      -- Obtain a 3D @{Point} from the 2D point + altitude.
+      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, ToEngageZoneAltitude, ToEngageZoneVec2.y )
+      
+      -- Create a route point of type air.
+      local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToEngageZoneSpeed, 
+        true 
+      )
+
+      EngageRoute[#EngageRoute+1] = ToEngageZoneRoutePoint
+
+    end
+    
+    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    
+      --- Find a random 2D point in EngageZone.
+    local ToTargetVec2 = self.EngageZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Define Speed and Altitude.
+    local ToTargetAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
+    
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      POINT_VEC3.RoutePointAltType.BARO, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+    
+    ToTargetPointVec3:SmokeBlue()
+
+    EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
+    
+
+    Controllable:OptionROEOpenFire()
+    Controllable:OptionROTPassiveDefense()
+
+    local AttackTasks = {}
+
+    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      self:T( DetectedUnit )
+      if DetectedUnit:IsAlive() then
+        if DetectedUnit:IsInZone( self.EngageZone ) then
+          self:E( {"Engaging ", DetectedUnit } )
+          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
+        end
+      else
+        self.DetectedUnits[DetectedUnit] = nil
+      end
+    end
+
+    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
+
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    self.Controllable:WayPointInitialize( EngageRoute )
+    
+    --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
+    self.Controllable:SetState( self.Controllable, "EngageZone", self )
+
+    self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
+
+    --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 2 )
+  end
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
+
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
+  
+  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
+  self.Accomplished = true
+  self.DetectUnits = false
+end
+
+--- @param #AI_CAS_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAS_ZONE:OnDead( EventData )
+  self:T( { "EventDead", EventData } )
+
+  if EventData.IniDCSUnit then
+    self:__Destroy( 1, EventData )
+  end
+end
+
+
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
+--
+-- ![Banner Image](..\Presentations\AI_Cap\Dia1.JPG)
+-- 
+-- 
+-- ===
+--
+-- # 1) @{#AI_CAP_ZONE} class, extends @{AI.AI_Cap#AI_PATROL_ZONE}
+-- 
+-- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
+-- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia3.JPG)
+-- 
+-- The AI_CAP_ZONE is assigned a @(Group) and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia4.JPG)
+-- 
+-- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
+-- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia5.JPG)
+-- 
+-- This cycle will continue.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia6.JPG)
+-- 
+-- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
+--
+-- ![Process](..\Presentations\AI_Cap\Dia9.JPG)
+-- 
+-- When enemies are detected, the AI will automatically engage the enemy.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia10.JPG)
+-- 
+-- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+-- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia13.JPG)
+-- 
+-- ## 1.1) AI_CAP_ZONE constructor
+--   
+--   * @{#AI_CAP_ZONE.New}(): Creates a new AI_CAP_ZONE object.
+-- 
+-- ## 1.2) AI_CAP_ZONE is a FSM
+-- 
+-- ![Process](..\Presentations\AI_Cap\Dia2.JPG)
+-- 
+-- ### 1.2.1) AI_CAP_ZONE States
+-- 
+--   * **None** ( Group ): The process is not started yet.
+--   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
+--   * **Engaging** ( Group ): The AI is engaging the bogeys.
+--   * **Returning** ( Group ): The AI is returning to Base..
+-- 
+-- ### 1.2.2) AI_CAP_ZONE Events
+-- 
+--   * **Start** ( Group ): Start the process.
+--   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
+--   * **Engage** ( Group ): Let the AI engage the bogeys.
+--   * **RTB** ( Group ): Route the AI to the home base.
+--   * **Detect** ( Group ): The AI is detecting targets.
+--   * **Detected** ( Group ): The AI has detected new targets.
+--   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--
+-- ## 1.3) Set the Range of Engagement
+-- 
+-- ![Range](..\Presentations\AI_Cap\Dia11.JPG)
+-- 
+-- An optional range can be set in meters, 
+-- that will define when the AI will engage with the detected airborne enemy targets.
+-- The range can be beyond or smaller than the range of the Patrol Zone.
+-- The range is applied at the position of the AI.
+-- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageRange}() to define that range.
+--
+-- ## 1.4) Set the Zone of Engagement
+-- 
+-- ![Zone](..\Presentations\AI_Cap\Dia12.JPG)
+-- 
+-- An optional @{Zone} can be set, 
+-- that will define when the AI will engage with the detected airborne enemy targets.
+-- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+--
+-- ====
+--
+-- # **API CHANGE HISTORY**
+--
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+--
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+--
+-- Hereby the change log:
+--
+-- 2017-01-15: Initial class and API.
+--
+-- ===
+--
+-- # **AUTHORS and CONTRIBUTIONS**
+--
+-- ### Contributions:
+--
+--   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
+--   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
+--
+-- ### Authors:
+--
+--   * **FlightControl**: Concept, Design & Programming.
+--
+-- @module AI_Cap
+
+
+--- AI_CAP_ZONE class
+-- @type AI_CAP_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @extends AI.AI_Patrol#AI_PATROL_ZONE
+AI_CAP_ZONE = {
+  ClassName = "AI_CAP_ZONE",
+}
+
+
+
+--- Creates a new AI_CAP_ZONE object
+-- @param #AI_CAP_ZONE self
+-- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @return #AI_CAP_ZONE self
+function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAP_ZONE
+
+  self.Accomplished = false
+  self.Engaging = false
+  
+  self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
+
+  --- OnBefore Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAP_ZONE] OnBeforeEngage
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Engage.
+  -- @function [parent=#AI_CAP_ZONE] OnAfterEngage
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAP_ZONE] Engage
+  -- @param #AI_CAP_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Engage.
+  -- @function [parent=#AI_CAP_ZONE] __Engage
+  -- @param #AI_CAP_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+--- OnLeave Transition Handler for State Engaging.
+-- @function [parent=#AI_CAP_ZONE] OnLeaveEngaging
+-- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Engaging.
+-- @function [parent=#AI_CAP_ZONE] OnEnterEngaging
+-- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
+  self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
+  
+  --- OnBefore Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAP_ZONE] OnBeforeFired
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Fired.
+  -- @function [parent=#AI_CAP_ZONE] OnAfterFired
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAP_ZONE] Fired
+  -- @param #AI_CAP_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Fired.
+  -- @function [parent=#AI_CAP_ZONE] __Fired
+  -- @param #AI_CAP_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "*", "Destroy", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
+
+  --- OnBefore Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAP_ZONE] OnBeforeDestroy
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Destroy.
+  -- @function [parent=#AI_CAP_ZONE] OnAfterDestroy
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAP_ZONE] Destroy
+  -- @param #AI_CAP_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Destroy.
+  -- @function [parent=#AI_CAP_ZONE] __Destroy
+  -- @param #AI_CAP_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+
+  self:AddTransition( "Engaging", "Abort", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
+
+  --- OnBefore Transition Handler for Event Abort.
+  -- @function [parent=#AI_CAP_ZONE] OnBeforeAbort
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Abort.
+  -- @function [parent=#AI_CAP_ZONE] OnAfterAbort
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Abort.
+  -- @function [parent=#AI_CAP_ZONE] Abort
+  -- @param #AI_CAP_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Abort.
+  -- @function [parent=#AI_CAP_ZONE] __Abort
+  -- @param #AI_CAP_ZONE self
+  -- @param #number Delay The delay in seconds.
+
+  self:AddTransition( "Engaging", "Accomplish", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_CAP_ZONE.
+
+  --- OnBefore Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAP_ZONE] OnBeforeAccomplish
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Accomplish.
+  -- @function [parent=#AI_CAP_ZONE] OnAfterAccomplish
+  -- @param #AI_CAP_ZONE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAP_ZONE] Accomplish
+  -- @param #AI_CAP_ZONE self
+  
+  --- Asynchronous Event Trigger for Event Accomplish.
+  -- @function [parent=#AI_CAP_ZONE] __Accomplish
+  -- @param #AI_CAP_ZONE self
+  -- @param #number Delay The delay in seconds.  
+
+  return self
+end
+
+
+--- Set the Engage Zone which defines where the AI will engage bogies. 
+-- @param #AI_CAP_ZONE self
+-- @param Core.Zone#ZONE EngageZone The zone where the AI is performing CAP.
+-- @return #AI_CAP_ZONE self
+function AI_CAP_ZONE:SetEngageZone( EngageZone )
+  self:F2()
+
+  if EngageZone then  
+    self.EngageZone = EngageZone
+  else
+    self.EngageZone = nil
+  end
+end
+
+--- Set the Engage Range when the AI will engage with airborne enemies. 
+-- @param #AI_CAP_ZONE self
+-- @param #number EngageRange The Engage Range.
+-- @return #AI_CAP_ZONE self
+function AI_CAP_ZONE:SetEngageRange( EngageRange )
+  self:F2()
+
+  if EngageRange then  
+    self.EngageRange = EngageRange
+  else
+    self.EngageRange = nil
+  end
+end
+
+--- onafter State Transition for Event Start.
+-- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
+
+
+  self:Route()
+  self:__Status( 30 ) -- Check status status every 30 seconds.
+  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
+
+  self:EventOnDead( self.OnDead )
+  
+  Controllable:OptionROEOpenFire()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
+  
+end
+
+--- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+function _NewEngageCapRoute( AIControllable )
+
+  AIControllable:T( "NewEngageRoute" )
+  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_CAP_ZONE
+  EngageZone:__Engage( 1 )
+end
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onbeforeEngage( Controllable, From, Event, To )
+  
+  if self.Accomplished == true then
+    return false
+  end
+end
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
+
+  if From ~= "Engaging" then
+  
+    local Engage = false
+  
+    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+    
+      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      self:T( DetectedUnit )
+      if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
+        Engage = true
+        break
+      end
+    end
+  
+    if Engage == true then
+      self:E( 'Detected -> Engaging' )
+      self:__Engage( 1 )
+    end
+  end
+end
+
+
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
+
+  if Controllable:IsAlive() then
+
+    self:Detect( self.EngageZone )
+
+    local EngageRoute = {}
+
+    --- Calculate the current route point.
+    local CurrentVec2 = self.Controllable:GetVec2()
+    
+    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local ToEngageZoneSpeed = self.PatrolMaxSpeed
+    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+        POINT_VEC3.RoutePointAltType.BARO, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToEngageZoneSpeed, 
+        true 
+      )
+    
+    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+
+    
+     --- Find a random 2D point in PatrolZone.
+    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Define Speed and Altitude.
+    local ToTargetAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
+    
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToPatrolRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      POINT_VEC3.RoutePointAltType.BARO, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+
+    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+
+    Controllable:OptionROEOpenFire()
+    Controllable:OptionROTPassiveDefense()
+
+    local AttackTasks = {}
+
+    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      self:T( DetectedUnit )
+      if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
+        if self.EngageZone then
+          if DetectedUnit:IsInZone( self.EngageZone ) then
+            self:E( {"Within Zone and Engaging ", DetectedUnit } )
+            AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
+          end
+        else        
+          if self.EngageRange then
+            if DetectedUnit:GetPointVec3():Get2DDistance(Controllable:GetPointVec3() ) <= self.EngageRange then
+              self:E( {"Within Range and Engaging", DetectedUnit } )
+              AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
+            end
+          else
+            AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
+          end
+        end
+      else
+        self.DetectedUnits[DetectedUnit] = nil
+      end
+    end
+
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    self.Controllable:WayPointInitialize( EngageRoute )
+    
+    
+    if #AttackTasks == 0 then
+      self:E("No targets found -> Going back to Patrolling")
+      self:Accomplish()
+      self:Route()
+    else
+      EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
+      
+      --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
+      self.Controllable:SetState( self.Controllable, "EngageZone", self )
+  
+      self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
+  
+    end
+    
+        --- NOW ROUTE THE GROUP!
+    self.Controllable:WayPointExecute( 1, 2 )
+  
+  end
+end
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
+
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
+  
+  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
+end
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
+  self.Accomplished = true
+  self.DetectUnits = false
+end
+
+--- @param #AI_CAP_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:OnDead( EventData )
+  self:T( { "EventDead", EventData } )
+
+  if EventData.IniDCSUnit then
+    self:__Destroy( 1, EventData )
+  end
+end
+
+
+--- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.
 --
 -- ===
 -- 
@@ -26083,507 +27562,6 @@ end
 
 end -- AI_CARGO_GROUPED
 
-
-
---- SP:Y MP:Y AI:Y HU:N TYP:Air -- This module contains the AI_CAS_ZONE class.
---
--- ===
---
--- 1) @{#AI_CAS_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- ================================================================
--- The @{#AI_CAS_ZONE} class implements the core functions to CAS a @{Zone} by an AIR @{Controllable} @{Group}.
---
--- 1.1) AI_CAS_ZONE constructor:
--- ----------------------------
---
---   * @{#AI_CAS_ZONE.New}(): Creates a new AI_CAS_ZONE object.
---
--- 1.2) AI_CAS_ZONE state machine:
--- ----------------------------------
--- The AI_CAS_ZONE is a state machine: it manages the different events and states of the AIControllable it is controlling.
---
--- ### 1.2.1) AI_CAS_ZONE Events:
---
---   * @{#AI_CAS_ZONE.TakeOff}( AIControllable ):  The AI is taking-off from an airfield.
---   * @{#AI_CAS_ZONE.Hold}( AIControllable ): The AI is holding in airspace at a zone.
---   * @{#AI_CAS_ZONE.Engage}( AIControllable ): The AI is engaging the targets.
---   * @{#AI_CAS_ZONE.WeaponReleased}( AIControllable ): The AI has released a weapon to the target.
---   * @{#AI_CAS_ZONE.Destroy}( AIControllable ): The AI has destroyed a target.
---   * @{#AI_CAS_ZONE.Complete}( AIControllable ): The AI has destroyed all defined targets.
---   * @{#AI_CAS_ZONE.RTB}( AIControllable ): The AI is returning to the home base.
---
--- ### 1.2.2) AI_CAS_ZONE States:
---
---
--- ### 1.2.3) AI_CAS_ZONE state transition methods:
---
---
--- 1.3) Manage the AI_CAS_ZONE parameters:
--- ------------------------------------------
--- The following methods are available to modify the parameters of an AI_CAS_ZONE object:
---
---   * @{#AI_CAS_ZONE.SetControllable}(): Set the AIControllable.
---   * @{#AI_CAS_ZONE.GetControllable}(): Get the AIControllable.
---
--- ====
---
--- **API CHANGE HISTORY**
--- ======================
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-01-12: Initial class and API.
---
--- ===
---
--- AUTHORS and CONTRIBUTIONS
--- =========================
---
--- ### Contributions:
---
---   * **Quax**: Concept & Testing.
---   * **Pikey**: Concept & Testing.
---
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
---
---
--- @module Cas
-
-
---- AI_CAS_ZONE class
--- @type AI_CAS_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_PATROLZONE
-AI_CAS_ZONE = {
-  ClassName = "AI_CAS_ZONE",
-}
-
-
-
---- Creates a new AI_CAS_ZONE object
--- @param #AI_CAS_ZONE self
--- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @param Core.Zone#ZONE EngageZone
--- @return #AI_CAS_ZONE self
-function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
-
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROLZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
-
-  self.PatrolZone = PatrolZone
-  self.PatrolFloorAltitude = PatrolFloorAltitude
-  self.PatrolCeilingAltitude = PatrolCeilingAltitude
-  self.PatrolMinSpeed = PatrolMinSpeed
-  self.PatrolMaxSpeed = PatrolMaxSpeed
-  
-  self.EngageZone = EngageZone
-  
-  do self:AddTransition( { "Patrol", "Route", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-    --- OnLeave State Transition for Holding.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveHolding
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Engage.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeEngage
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Engage.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterEngage
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- Embedded Event Trigger for Engage.
-    -- @function [parent=#AI_CAS_ZONE] Engage
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Engage
-    -- @function [parent=#AI_CAS_ZONE] __Engage
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-
-  do self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-    --- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Fired.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeFired
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Fired.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterFired
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean
-
-    --- Embedded Event Trigger for Fired.
-    -- @function [parent=#AI_CAS_ZONE] Fired
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Fired
-    -- @function [parent=#AI_CAS_ZONE] __Fired
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-  do self:AddTransition( "Engaging", "Destroy", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-    --- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnEnter State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- OnBefore State Transition for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeDestroy
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-
-    --- OnAfter State Transition for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterDestroy
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-
-    --- Embedded Event Trigger for Destroy.
-    -- @function [parent=#AI_CAS_ZONE] Destroy
-    -- @param #AI_CAS_ZONE self
-
-    --- Delayed Event Trigger for Destroy
-    -- @function [parent=#AI_CAS_ZONE] __Destroy
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-
-  end -- AI_CAS_ZONE
-
-do self:AddTransition( "Engaging", "Abort", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-
-	--- OnLeave State Transition for Engaging.
-  -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-  -- @param #AI_CAS_ZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnEnter State Transition for Patrol.
-  -- @function [parent=#AI_CAS_ZONE] OnEnterPatrol
-  -- @param #AI_CAS_ZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-	
-	--- OnBefore State Transition for Abort.
-  -- @function [parent=#AI_CAS_ZONE] OnBeforeAbort
-  -- @param #AI_CAS_ZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  -- @return #boolean Return false to cancel Transition.
-
-	--- OnAfter State Transition for Abort.
-  -- @function [parent=#AI_CAS_ZONE] OnAfterAbort
-  -- @param #AI_CAS_ZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-  -- @param #string From The From State string.
-  -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-	
-	--- Embedded Event Trigger for Abort.
-  -- @function [parent=#AI_CAS_ZONE] Abort
-  -- @param #AI_CAS_ZONE self
-
-	--- Delayed Event Trigger for Abort
-  -- @function [parent=#AI_CAS_ZONE] __Abort
-  -- @param #AI_CAS_ZONE self
-  -- @param #number Delay The delay in seconds.
-
-end -- AI_CAS_ZONE
-
-
-  do self:AddTransition( "Engaging", "Completed", "Patrol" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
-  
-  	--- OnLeave State Transition for Engaging.
-    -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-  
-  	--- OnEnter State Transition for Patrol.
-    -- @function [parent=#AI_CAS_ZONE] OnEnterPatrol
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-  	
-  	--- OnBefore State Transition for Completed.
-    -- @function [parent=#AI_CAS_ZONE] OnBeforeCompleted
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-    -- @return #boolean Return false to cancel Transition.
-  
-  	--- OnAfter State Transition for Completed.
-    -- @function [parent=#AI_CAS_ZONE] OnAfterCompleted
-    -- @param #AI_CAS_ZONE self
-    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
-    -- @param #string From The From State string.
-    -- @param #string Event The Event string.
-    -- @param #string To The To State string.
-  	
-  	--- Embedded Event Trigger for Completed.
-    -- @function [parent=#AI_CAS_ZONE] Completed
-    -- @param #AI_CAS_ZONE self
-  
-  	--- Delayed Event Trigger for Completed
-    -- @function [parent=#AI_CAS_ZONE] __Completed
-    -- @param #AI_CAS_ZONE self
-    -- @param #number Delay The delay in seconds.
-  
-  end -- AI_CAS_ZONE
-
-  return self
-end
-
-
---- onafter State Transition for Event Start.
--- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
-
-
-  if Controllable:IsAlive() then
-    self:__Route( 1 )
-  end
-  
-  self:EventOnDead( self.OnDead )
-  
-  Controllable:OptionROEHoldFire()
-  Controllable:OptionROTVertical()
-  
-end
-
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewEngageRoute( AIControllable )
-
-  AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Patrol#AI_PATROLZONE
-  EngageZone:__Engage( 1 )
-end
-
-
---- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
-
-  if Controllable:IsAlive() then
-
-    local EngageRoute = {}
-  
-    if self.Controllable:IsNotInZone( self.EngageZone ) then
-
-      -- Find a random 2D point in EngageZone.
-      local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
-      self:T2( ToEngageZoneVec2 )
-      
-      -- Define Speed and Altitude.
-      local ToEngageZoneAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
-      local ToEngageZoneSpeed = self.PatrolMaxSpeed
-      self:T2( ToEngageZoneSpeed )
-      
-      -- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, ToEngageZoneAltitude, ToEngageZoneVec2.y )
-      
-      -- Create a route point of type air.
-      local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToEngageZoneSpeed, 
-        true 
-      )
-
-      EngageRoute[#EngageRoute+1] = ToEngageZoneRoutePoint
-
-    end
-    
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
-    
-      --- Find a random 2D point in EngageZone.
-    local ToTargetVec2 = self.EngageZone:GetRandomVec2()
-    self:T2( ToTargetVec2 )
-
-    --- Define Speed and Altitude.
-    local ToTargetAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
-    
-    --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
-    
-    --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
-      true 
-    )
-    
-    ToTargetPointVec3:SmokeRed()
-
-    EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
-    
-
-    Controllable:OptionROEOpenFire()
-    Controllable:OptionROTPassiveDefense()
-
-    local AttackTasks = {}
-
-    local DetectedTargets = Controllable:GetDetectedTargets()
-    for TargetID, Target in pairs( DetectedTargets ) do
-      local TargetObject = Target.object
-      self:T( TargetObject )
-      if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
-  
-        local TargetUnit = UNIT:Find( TargetObject )
-        local TargetUnitName = TargetUnit:GetName()
-        
-        if TargetUnit:IsInZone( self.EngageZone ) then
-          self:E( {"Engaging ", TargetUnit } )
-          --local EngageTask = Controllable:EnRouteTaskEngageUnit( TargetUnit, 1 )
-          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( TargetUnit )
-        end
-          
-      end
-    end
-
-    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
-
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
-    
-    --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-    self.Controllable:SetState( self.Controllable, "EngageZone", self )
-
-    self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
-
-    --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 5 )
-  end
-end
-
---- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
-function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To )
-
-  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
-end
-
---- @param #AI_CAS_ZONE self
--- @param Core.Event#EVENTDATA EventData
-function AI_CAS_ZONE:OnDead( EventData )
-  self:T( { "EventDead", EventData } )
-
-  if EventData.IniDCSUnit then
-    self:__Destroy( 1, EventData )
-  end
-end
 
 
 --- (SP) (MP) (FSM) Accept or reject process for player (task) assignments.
@@ -30552,8 +31530,9 @@ Include.File( "Functional/Detection" )
 --- AI Classes
 Include.File( "AI/AI_Balancer" )
 Include.File( "AI/AI_Patrol" )
-Include.File( "AI/AI_Cargo" )
+Include.File( "AI/AI_Cap" )
 Include.File( "AI/AI_Cas" )
+Include.File( "AI/AI_Cargo" )
 
 --- Actions
 Include.File( "Actions/Act_Assign" )

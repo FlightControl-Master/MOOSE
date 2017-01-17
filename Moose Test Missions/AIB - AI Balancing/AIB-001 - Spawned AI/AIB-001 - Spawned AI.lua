@@ -1,8 +1,4 @@
---- AI Spawning and Decomissioning
--- 
--- ===
--- 
--- Name: Spawned AI
+-- Name: AIB-001 - Spawned AI
 -- Author: FlightControl
 -- Date Created: 07 Dec 2016
 --
@@ -18,10 +14,6 @@
 -- 1. If no player is logging into the red slots, 2 red AI planes should be alive.
 -- 2. If a player joins one red slot, one red AI plane should return to the nearest home base.
 -- 3. If two players join the red slots, no AI plane should be spawned, and all airborne AI planes should return to the nearest home base.
---
--- # Status: TESTED 07 Dec 2016
--- 
--- @module TEST.AI_BALANCER.T001
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
 local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )

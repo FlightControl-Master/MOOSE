@@ -602,9 +602,12 @@ function SPAWN:ReSpawn( SpawnIndex )
 	local SpawnGroup = self:SpawnWithIndex( SpawnIndex )
 	if SpawnGroup and WayPoints then
 	  -- If there were WayPoints set, then Re-Execute those WayPoints!
-	  self:E( WayPoints )
 	  SpawnGroup:WayPointInitialize( WayPoints )
 	  SpawnGroup:WayPointExecute( 1, 5 )
+	end
+	
+	if SpawnGroup.ReSpawnFunction then
+	  SpawnGroup:ReSpawnFunction()
 	end
 	
 	return SpawnGroup

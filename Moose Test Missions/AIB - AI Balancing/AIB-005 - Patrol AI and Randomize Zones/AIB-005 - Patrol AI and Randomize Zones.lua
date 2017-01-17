@@ -1,4 +1,4 @@
--- Name: AIB-006 - Declutter AI at Airbases
+-- Name: AIB-005 - Patrol AI and Randomize Zones
 -- Author: FlightControl
 -- Date Created: 10 Jan 2016
 --
@@ -25,7 +25,7 @@ local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCa
 -- Define the SPAWN object for the red AI plane template.
 -- We use InitCleanUp to check every 20 seconds, if there are no planes blocked at the airbase, waithing for take-off.
 -- If a blocked plane exists, this red plane will be ReSpawned.
-local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 60 )
+local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 
 -- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
 local RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
@@ -43,9 +43,9 @@ local PatrolZoneArray = { PatrolZone1, PatrolZone2 }
 
 function RU_AI_Balancer:OnAfterSpawned( SetGroup, From, Event, To, AIGroup )
 
-  local Patrol = AI_PATROLZONE:New( PatrolZoneArray[math.random( 1, 2 )], 3000, 6000, 400, 600 )
+  local Patrol = AI_PATROL_ZONE:New( PatrolZoneArray[math.random( 1, 2 )], 3000, 6000, 400, 600 )
   Patrol:ManageFuel( 0.2, 60 )
   Patrol:SetControllable( AIGroup )
-  Patrol:__Start( 5 )
+  Patrol:Start()
  
 end

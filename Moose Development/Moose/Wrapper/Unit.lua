@@ -467,6 +467,25 @@ function UNIT:GetFuel()
   return nil
 end
 
+--- Returns the UNIT in a UNIT list of one element.
+-- @param #UNIT self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function UNIT:GetUnits()
+  self:F2( { self.UnitName } )
+  local DCSUnit = self:GetDCSObject()
+
+  if DCSUnit then
+    local DCSUnits = DCSUnit:getUnits()
+    local Units = {}
+    Units[1] = UNIT:Find( DCSUnit )
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
 --- Returns the unit's health. Dead units has health <= 1.0.
 -- @param #UNIT self
 -- @return #number The Unit's health value.
@@ -794,6 +813,24 @@ function UNIT:IsShip()
   
     self:T3( IsShipResult )
     return IsShipResult
+  end
+  
+  return nil
+end
+
+--- Returns true if the UNIT is in the air.
+-- @param Wrapper.Positionable#UNIT self
+-- @return #boolean true if in the air.
+-- @return #nil The UNIT is not existing or alive.  
+function UNIT:InAir()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitInAir = DCSUnit:inAir()
+    self:T3( UnitInAir )
+    return UnitInAir
   end
   
   return nil

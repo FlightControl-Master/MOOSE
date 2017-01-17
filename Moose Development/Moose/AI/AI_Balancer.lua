@@ -1,10 +1,9 @@
---- SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class. AI Balancing will replace in multi player missions 
+--- Single-Player:**No** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
--- even when there are hardly any players in the mission.
+-- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 -- 
@@ -73,6 +72,8 @@
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.
+-- 
 -- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
 -- 
 -- ===
@@ -82,7 +83,6 @@
 -- ### Contributions: 
 -- 
 --   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
--- 
 --   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
@@ -231,16 +231,15 @@ end
 --- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
-  self:E( { self.SetClient:Count() } )
-  self.SetClient:Flush()
+  self:T2( { self.SetClient:Count() } )
+  --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
     function( Client )
-      self:E(Client.ClientName)
+      self:T3(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
-      self:E({Client:IsAlive()})
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
@@ -255,16 +254,16 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             local PlayerInRange = { Value = false }          
             local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
             
-            self:E( RangeZone )
+            self:T2( RangeZone )
             
             _DATABASE:ForEachPlayer(
               --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
-                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
-                  self:E( "in zone" )
+                  self:T2( "in zone" )
                   if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
-                    self:E( "in range" )
+                    self:T2( "in range" )
                     PlayerInRange.Value = true
                   end
                 end
@@ -285,7 +284,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
         end
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
-          self:E( "Client " .. Client.UnitName .. " not alive." )
+          self:T( "Client " .. Client.UnitName .. " not alive." )
           if not self.SpawnQueue[Client.UnitName] then
             -- Spawn a new AI taking into account the spawn interval Earliest, Latest
             self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )

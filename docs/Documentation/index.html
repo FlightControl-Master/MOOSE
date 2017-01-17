@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -71,7 +73,65 @@
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Balancer.html">AI_Balancer</a></td>
 			<td class="summary">
-<p>SP:N MP:Y AI:Y HU:N TYP:A -- This module contains the AI_BALANCER class.</p>
+<p>Single-Player:<strong>No</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
+non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
+even when there are hardly any players in the mission.</strong></p>
+
+<p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
+
+
+<hr/>
+
+<h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
+
+<p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
+CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_Cap.html">AI_Cap</a></td>
+			<td class="summary">
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
+
+<p><img src="..\Presentations\AI_Cap\Dia1.JPG" alt="Banner Image"/></p>
+
+
+<hr/>
+
+<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI.AI_Cap.html##(AI_PATROL_ZONE)">AI.AI<em>Cap#AI</em>PATROL_ZONE</a></h1>
+
+<p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_Cas.html">AI_Cas</a></td>
+			<td class="summary">
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
+
+<p><img src="..\Presentations\AI_Cas\Dia1.JPG" alt="Banner Image"/></p>
+
+
+<hr/>
+
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_Patrol.html">AI_Patrol</a></td>
+			<td class="summary">
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Air Patrolling or Staging.</strong></p>
+
+<p><img src="..\Presentations\AI_Patrol\Dia1.JPG" alt="Banner Image"/></p>
+
+
+<hr/>
+
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
+
+<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
 </td>
 			</tr>
 			<tr>
@@ -107,7 +167,7 @@
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>Management of logical cargo objects, that can be transported from and to transportation carriers.</p>
+<p>Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.</p>
 </td>
 			</tr>
 			<tr>
@@ -210,12 +270,6 @@
 			<td class="name" nowrap="nowrap"><a href="Object.html">Object</a></td>
 			<td class="summary">
 <p>This module contains the OBJECT class.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="Patrol.html">Patrol</a></td>
-			<td class="summary">
-<p>(AI) (FSM) Make AI patrol routes or zones.</p>
 </td>
 			</tr>
 			<tr>
