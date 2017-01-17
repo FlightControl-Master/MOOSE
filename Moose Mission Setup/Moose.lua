@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170116_1223' ) 
+env.info( 'Moose Generation Timestamp: 20170117_1202' ) 
 local base = _G
 
 Include = {}
@@ -9795,9 +9795,11 @@ POINT_VEC3 = {
     BARO = "BARO",
   },
   RoutePointType = {
+    TakeOffParking = "TakeOffParking",
     TurningPoint = "Turning Point",
   },
   RoutePointAction = {
+    FromParkingArea = "From Parking Area",
     TurningPoint = "Turning Point",
   },
 }
@@ -9820,10 +9822,12 @@ do -- POINT_VEC3
 
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
+-- @field TakeOffParking "TakeOffParking"
 -- @field TurningPoint "Turning Point"
 
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
+-- @field FromParkingArea "From Parking Area"
 -- @field TurningPoint "Turning Point"
 
 -- Constructor.
@@ -11255,7 +11259,11 @@ do -- FSM
       local from = self.current
       local params = { from, EventName, to, ...  }
 
-      self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      if self.Controllable then
+        self:E( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      else
+        self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      end        
   
       if self:_call_handler("onbefore" .. EventName, params) == false
       or self:_call_handler("OnBefore" .. EventName, params) == false
@@ -11742,7 +11750,7 @@ do -- FSM_SET
   
   function FSM_SET:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end
@@ -12306,20 +12314,13 @@ end
 
 
 --- Returns true if the POSITIONABLE is in the air.
+-- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
-  local DCSPositionable = self:GetDCSObject()
-  
-  if DCSPositionable then
-    local PositionableInAir = DCSPositionable:inAir()
-    self:T3( PositionableInAir )
-    return PositionableInAir
-  end
-  
   return nil
 end
 
@@ -12786,7 +12787,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:E(Controller)
+    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -14784,10 +14785,7 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
--- Message APIs
-
-
---- This module contains the GROUP class.
+-- Message APIs--- This module contains the GROUP class.
 -- 
 -- 1) @{Wrapper.Group#GROUP} class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- =============================================================
@@ -15668,6 +15666,32 @@ function GROUP:CalculateThreatLevelA2G()
   return MaxThreatLevelA2G
 end
 
+--- Returns true if the first unit of the GROUP is in the air.
+-- @param Wrapper.Group#GROUP self
+-- @return #boolean true if in the first unit of the group is in the air.
+-- @return #nil The GROUP is not existing or not alive.  
+function GROUP:InAir()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit(1)
+    if DCSUnit then
+      local GroupInAir = DCSGroup:getUnit(1):inAir()
+      self:T3( GroupInAir )
+      return GroupInAir
+    end
+  end
+  
+  return nil
+end
+
+function GROUP:OnReSpawn( ReSpawnFunction )
+
+  self.ReSpawnFunction = ReSpawnFunction
+end
+
 
 --- This module contains the UNIT class.
 -- 
@@ -16484,6 +16508,24 @@ function UNIT:IsShip()
   
     self:T3( IsShipResult )
     return IsShipResult
+  end
+  
+  return nil
+end
+
+--- Returns true if the UNIT is in the air.
+-- @param Wrapper.Positionable#UNIT self
+-- @return #boolean true if in the air.
+-- @return #nil The UNIT is not existing or alive.  
+function UNIT:InAir()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitInAir = DCSUnit:inAir()
+    self:T3( UnitInAir )
+    return UnitInAir
   end
   
   return nil
@@ -18902,9 +18944,12 @@ function SPAWN:ReSpawn( SpawnIndex )
 	local SpawnGroup = self:SpawnWithIndex( SpawnIndex )
 	if SpawnGroup and WayPoints then
 	  -- If there were WayPoints set, then Re-Execute those WayPoints!
-	  self:E( WayPoints )
 	  SpawnGroup:WayPointInitialize( WayPoints )
 	  SpawnGroup:WayPointExecute( 1, 5 )
+	end
+	
+	if SpawnGroup.ReSpawnFunction then
+	  SpawnGroup:ReSpawnFunction()
 	end
 	
 	return SpawnGroup
@@ -24307,13 +24352,12 @@ function DETECTION_AREAS:CreateDetectionSets()
 end
 
 
---- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:All -- AI Balancing will replace in multi player missions 
+--- Single-Player:**No** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
--- even when there are hardly any players in the mission.
+-- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 -- 
@@ -24382,6 +24426,8 @@ end
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.
+-- 
 -- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
 -- 
 -- ===
@@ -24391,7 +24437,6 @@ end
 -- ### Contributions: 
 -- 
 --   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
--- 
 --   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
 -- 
 -- ### Authors: 
@@ -24540,16 +24585,15 @@ end
 --- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
-  self:E( { self.SetClient:Count() } )
-  self.SetClient:Flush()
+  self:T2( { self.SetClient:Count() } )
+  --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
     --- @param Wrapper.Client#CLIENT Client
     function( Client )
-      self:E(Client.ClientName)
+      self:T3(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
-      self:E({Client:IsAlive()})
       if Client:IsAlive() then
 
         if AIGroup and AIGroup:IsAlive() == true then
@@ -24564,16 +24608,16 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             local PlayerInRange = { Value = false }          
             local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
             
-            self:E( RangeZone )
+            self:T2( RangeZone )
             
             _DATABASE:ForEachPlayer(
               --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
-                self:E( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
+                self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
-                  self:E( "in zone" )
+                  self:T2( "in zone" )
                   if RangeTestUnit:GetCoalition() ~= AIGroup:GetCoalition() then
-                    self:E( "in range" )
+                    self:T2( "in range" )
                     PlayerInRange.Value = true
                   end
                 end
@@ -24594,7 +24638,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
         end
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
-          self:E( "Client " .. Client.UnitName .. " not alive." )
+          self:T( "Client " .. Client.UnitName .. " not alive." )
           if not self.SpawnQueue[Client.UnitName] then
             -- Spawn a new AI taking into account the spawn interval Earliest, Latest
             self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )
@@ -24616,7 +24660,6 @@ end
 -- 
 -- ![Banner Image](..\Presentations\AI_Patrol\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 -- 
@@ -24720,6 +24763,17 @@ end
 -- 
 -- ====
 -- 
+-- # **OPEN ISSUES**
+-- 
+-- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
+-- 
+-- 2016-01-17: 
+--   -- Fixed problem with AI returning to base too early and unexpected.
+--   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
+--   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
+-- 
+-- ====
+-- 
 -- # **API CHANGE HISTORY**
 -- 
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
@@ -24729,7 +24783,9 @@ end
 -- 
 -- Hereby the change log:
 -- 
--- 2016-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
+-- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
+-- 
+-- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
 -- 
 -- 2016-09-01: Initial class and API.
 -- 
@@ -24792,12 +24848,12 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   self.CheckStatus = true
   
   self:ManageFuel( .2, 60 )
-  self:ManageDamage( 10 )
+  self:ManageDamage( 1 )
   
   self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
-
+  
   self:SetStartState( "None" ) 
 
   self:AddTransition( "None", "Start", "Patrolling" )
@@ -24957,7 +25013,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #AI_PATROL_ZONE self
 -- @param #number Delay The delay in seconds.
 
-  self:AddTransition( "*", "RTB", "RTB" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
+  self:AddTransition( "*", "RTB", "Returning" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
 
 --- OnBefore Transition Handler for Event RTB.
 -- @function [parent=#AI_PATROL_ZONE] OnBeforeRTB
@@ -25001,6 +25057,8 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
+
+  self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
   
   return self
 end
@@ -25144,12 +25202,20 @@ end
 function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:F2()
 
-  self:Route() -- Route to the patrol point.
+  self:__Route( 5 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
   self:__Status( 30 ) -- Check status status every 30 seconds.
   self:__Detect( self.DetectInterval ) -- Detect for new targets every 30 seconds.
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
   
 end
 
@@ -25168,7 +25234,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   local Detected = false
 
   local DetectedTargets = Controllable:GetDetectedTargets()
-  for TargetID, Target in pairs( DetectedTargets ) do
+  for TargetID, Target in pairs( DetectedTargets or {} ) do
     local TargetObject = Target.object
     self:T( TargetObject )
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
@@ -25197,11 +25263,12 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewPatrolRoute( AIControllable )
+-- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
+-- Note that this method is required, as triggers the next route when patrolling for the Controllable.
+function AI_PATROL_ZONE:_NewPatrolRoute( AIControllable )
 
-  AIControllable:T( "NewPatrolRoute" )
   local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolCore.Zone#AI_PATROL_ZONE
-  PatrolZone:Route()
+  PatrolZone:__Route( 1 )
 end
 
 
@@ -25222,55 +25289,51 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
 
   
   if self.Controllable:IsAlive() then
-    --- Determine if the AIControllable is within the PatrolZone. 
+    -- Determine if the AIControllable is within the PatrolZone. 
     -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
     
     local PatrolRoute = {}
 
-    --- Calculate the current route point.
-    local CurrentVec2 = self.Controllable:GetVec2()
+    -- Calculate the current route point of the controllable as the start point of the route.
+    -- However, when the controllable is not in the air,
+    -- the controllable current waypoint is probably the airbase...
+    -- Thus, if we would take the current waypoint as the startpoint, upon take-off, the controllable flies
+    -- immediately back to the airbase, and this is not correct.
+    -- Therefore, when on a runway, get as the current route point a random point within the PatrolZone.
+    -- This will make the plane fly immediately to the patrol zone.
     
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-    local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToPatrolZoneSpeed, 
-        true 
-      )
-    
-    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
-    
-    self:T2( PatrolRoute )
-  
-    if self.Controllable:IsNotInZone( self.PatrolZone ) then
-      --- Find a random 2D point in PatrolZone.
-      local ToPatrolZoneVec2 = self.PatrolZone:GetRandomVec2()
-      self:T2( ToPatrolZoneVec2 )
-      
-      --- Define Speed and Altitude.
-      local ToPatrolZoneAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
+    if self.Controllable:InAir() == false then
+      self:E( "Not in the air, finding route path within PatrolZone" )
+      local CurrentVec2 = self.Controllable:GetVec2()
+      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      self:T2( ToPatrolZoneSpeed )
-      
-      --- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToPatrolZonePointVec3 = POINT_VEC3:New( ToPatrolZoneVec2.x, ToPatrolZoneAltitude, ToPatrolZoneVec2.y )
-      
-      --- Create a route point of type air.
-      local ToPatrolZoneRoutePoint = ToPatrolZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToPatrolZoneSpeed, 
-        true 
-      )
-
-    PatrolRoute[#PatrolRoute+1] = ToPatrolZoneRoutePoint
-
-    end
+      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+          POINT_VEC3.RoutePointAltType.BARO, 
+          POINT_VEC3.RoutePointType.TakeOffParking, 
+          POINT_VEC3.RoutePointAction.FromParkingArea, 
+          ToPatrolZoneSpeed, 
+          true 
+        )
+      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    else
+      self:E( "In the air, finding route path within PatrolZone" )
+      local CurrentVec2 = self.Controllable:GetVec2()
+      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
+      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
+      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+          POINT_VEC3.RoutePointAltType.BARO, 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          ToPatrolZoneSpeed, 
+          true 
+        )
+      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    end    
+    
     
     --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
     
@@ -25297,7 +25360,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     
     --self.CoordTest:SpawnFromVec3( ToTargetPointVec3:GetVec3() )
     
-    ToTargetPointVec3:SmokeRed()
+    --ToTargetPointVec3:SmokeRed()
 
     PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
     
@@ -25306,7 +25369,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
     self.Controllable:SetState( self.Controllable, "PatrolZone", self )
-    self.Controllable:WayPointFunction( #PatrolRoute, 1, "_NewPatrolRoute" )
+    self.Controllable:WayPointFunction( #PatrolRoute, 1, "AI_PATROL_ZONE:_NewPatrolRoute" )
 
     --- NOW ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1, 2 )
@@ -25330,6 +25393,7 @@ function AI_PATROL_ZONE:onafterStatus()
     
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     if Fuel < self.PatrolFuelTresholdPercentage then
+      self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       local AIControllableTemplate = self.Controllable:GetTemplate()
       
@@ -25344,11 +25408,12 @@ function AI_PATROL_ZONE:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     if Damage <= self.PatrolDamageTreshold then
+      self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
     
     if RTB == true then
-      self:__RTB( 1 )
+      self:RTB()
     else
       self:__Status( 30 ) -- Execute the Patrol event after 30 seconds.
     end
@@ -25391,11 +25456,11 @@ function AI_PATROL_ZONE:onafterRTB()
     
   end
     
-end--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
+end
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 --
@@ -25737,6 +25802,15 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
+  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -25919,7 +25993,6 @@ end
 --
 -- ![Banner Image](..\Presentations\AI_Cap\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 --
@@ -26262,6 +26335,15 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
   self:EventOnDead( self.OnDead )
   
   Controllable:OptionROEOpenFire()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
+  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable

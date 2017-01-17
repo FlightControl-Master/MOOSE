@@ -277,7 +277,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:E(Controller)
+    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -2276,5 +2276,3 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
 end
 
 -- Message APIs
-
-

@@ -70,23 +70,22 @@
 	<div id="content">
    <h1>Module <code>AI_Balancer</code></h1>
    
-<p>Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:All -- AI Balancing will replace in multi player missions 
+<p>Single-Player:<strong>No</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
 non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
-even when there are hardly any players in the mission.</p>
-
-   
+even when there are hardly any players in the mission.</strong></p>
 
 <p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
 
-<p>Examples can be found in the test missions.</p>
 
 <hr/>
 
 <h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
 
 <p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
-CLIENTS in a SET<em>CLIENT collection, which are not occupied by human players. 
-In other words, use AI</em>BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
+CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
+
+   
+<p>In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
 
 <p>The parent class <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
 The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
@@ -157,6 +156,8 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 
 <p>Hereby the change log:</p>
 
+<p>2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.</p>
+
 <p>2017-01-08: AI_BALANCER:<strong>InitSpawnInterval( Earliest, Latest )</strong> added.</p>
 
 <hr/>
@@ -166,8 +167,8 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 <h3>Contributions:</h3>
 
 <ul>
-    <li><p><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p></li>
-    <li><p><strong>SNAFU</strong>: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.</p></li>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</li>
+    <li><strong>SNAFU</strong>: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.</li>
 </ul>
 
 <h3>Authors:</h3>

@@ -545,7 +545,11 @@ do -- FSM
       local from = self.current
       local params = { from, EventName, to, ...  }
 
-      self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      if self.Controllable then
+        self:E( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      else
+        self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      end        
   
       if self:_call_handler("onbefore" .. EventName, params) == false
       or self:_call_handler("OnBefore" .. EventName, params) == false
@@ -1032,7 +1036,7 @@ do -- FSM_SET
   
   function FSM_SET:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end

@@ -2,7 +2,6 @@
 --
 -- ![Banner Image](..\Presentations\AI_Cap\Dia1.JPG)
 -- 
--- Examples can be found in the test missions.
 -- 
 -- ===
 --
@@ -345,6 +344,15 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
   self:EventOnDead( self.OnDead )
   
   Controllable:OptionROEOpenFire()
+  
+  self.Controllable:OnReSpawn(
+    function( PatrolGroup )
+      self:E( "ReSpawn" )
+      self:__Reset()
+      self:__Route( 5 )
+    end
+  )
+  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable

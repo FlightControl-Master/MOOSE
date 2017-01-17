@@ -818,3 +818,21 @@ function UNIT:IsShip()
   return nil
 end
 
+--- Returns true if the UNIT is in the air.
+-- @param Wrapper.Positionable#UNIT self
+-- @return #boolean true if in the air.
+-- @return #nil The UNIT is not existing or alive.  
+function UNIT:InAir()
+  self:F2( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  
+  if DCSUnit then
+    local UnitInAir = DCSUnit:inAir()
+    self:T3( UnitInAir )
+    return UnitInAir
+  end
+  
+  return nil
+end
+

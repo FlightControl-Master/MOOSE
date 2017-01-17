@@ -879,4 +879,30 @@ function GROUP:CalculateThreatLevelA2G()
   return MaxThreatLevelA2G
 end
 
+--- Returns true if the first unit of the GROUP is in the air.
+-- @param Wrapper.Group#GROUP self
+-- @return #boolean true if in the first unit of the group is in the air.
+-- @return #nil The GROUP is not existing or not alive.  
+function GROUP:InAir()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit(1)
+    if DCSUnit then
+      local GroupInAir = DCSGroup:getUnit(1):inAir()
+      self:T3( GroupInAir )
+      return GroupInAir
+    end
+  end
+  
+  return nil
+end
+
+function GROUP:OnReSpawn( ReSpawnFunction )
+
+  self.ReSpawnFunction = ReSpawnFunction
+end
+
 

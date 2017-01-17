@@ -74,9 +74,11 @@ POINT_VEC3 = {
     BARO = "BARO",
   },
   RoutePointType = {
+    TakeOffParking = "TakeOffParking",
     TurningPoint = "Turning Point",
   },
   RoutePointAction = {
+    FromParkingArea = "From Parking Area",
     TurningPoint = "Turning Point",
   },
 }
@@ -99,10 +101,12 @@ do -- POINT_VEC3
 
 --- RoutePoint Types
 -- @type POINT_VEC3.RoutePointType
+-- @field TakeOffParking "TakeOffParking"
 -- @field TurningPoint "Turning Point"
 
 --- RoutePoint Actions
 -- @type POINT_VEC3.RoutePointAction
+-- @field FromParkingArea "From Parking Area"
 -- @field TurningPoint "Turning Point"
 
 -- Constructor.

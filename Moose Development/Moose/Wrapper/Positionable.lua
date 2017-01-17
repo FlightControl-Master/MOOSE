@@ -241,20 +241,13 @@ end
 
 
 --- Returns true if the POSITIONABLE is in the air.
+-- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
-  local DCSPositionable = self:GetDCSObject()
-  
-  if DCSPositionable then
-    local PositionableInAir = DCSPositionable:inAir()
-    self:T3( PositionableInAir )
-    return PositionableInAir
-  end
-  
   return nil
 end
 

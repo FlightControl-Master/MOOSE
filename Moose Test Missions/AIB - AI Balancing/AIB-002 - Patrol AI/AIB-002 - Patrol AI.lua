@@ -1,8 +1,4 @@
---- AI Patrolling
--- 
--- ===
--- 
--- Name: Patrol AI
+-- Name: AIB-002 - Patrol AI.lua
 -- Author: FlightControl
 -- Date Created: 7 December 2016
 --
