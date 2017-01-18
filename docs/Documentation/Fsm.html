@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -467,7 +469,19 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).CallScheduler">FSM.CallScheduler</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).ClassName">FSM.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).Events">FSM.Events</a></td>
 		<td class="summary">
 
 </td>
@@ -539,13 +553,43 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).Scores">FSM.Scores</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).SetStartState">FSM:SetStartState(State)</a></td>
 		<td class="summary">
 <p>Sets the start state of the FSM.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._EndStates">FSM._EndStates</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._Processes">FSM._Processes</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._Scores">FSM._Scores</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM)._StartState">FSM._StartState</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._Transitions">FSM._Transitions</a></td>
 		<td class="summary">
 
 </td>
@@ -623,7 +667,25 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).endstates">FSM.endstates</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM).is">FSM:is(state)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).options">FSM.options</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM).subs">FSM.subs</a></td>
 		<td class="summary">
 
 </td>
@@ -1106,9 +1168,37 @@ The To state.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(FSM).CallScheduler" >
+<strong>FSM.CallScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(FSM).ClassName" >
 <strong>FSM.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM).Events" >
+<strong>FSM.Events</strong>
 </a>
 </dt>
 <dd>
@@ -1320,6 +1410,20 @@ A string containing the start state.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(FSM).Scores" >
+<strong>FSM.Scores</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(FSM).SetStartState" >
 <strong>FSM:SetStartState(State)</strong>
 </a>
@@ -1343,8 +1447,64 @@ A string defining the start state.</p>
 <dt>
 
 		<em></em>
+<a id="#(FSM)._EndStates" >
+<strong>FSM._EndStates</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM)._Processes" >
+<strong>FSM._Processes</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM)._Scores" >
+<strong>FSM._Scores</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
 <a id="#(FSM)._StartState" >
 <strong>FSM._StartState</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM)._Transitions" >
+<strong>FSM._Transitions</strong>
 </a>
 </dt>
 <dd>
@@ -1622,9 +1782,22 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(FSM).current" >
 <strong>FSM.current</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM).endstates" >
+<strong>FSM.endstates</strong>
 </a>
 </dt>
 <dd>
@@ -1652,6 +1825,33 @@ A string defining the start state.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM).options" >
+<strong>FSM.options</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM).subs" >
+<strong>FSM.subs</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 

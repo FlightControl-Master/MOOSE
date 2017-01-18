@@ -23,7 +23,6 @@
 -- ===
 -- 
 -- @module Object
--- @author FlightControl
 
 --- The OBJECT class
 -- @type OBJECT
@@ -34,7 +33,6 @@ OBJECT = {
   ObjectName = "",
 }
 
-
 --- A DCSObject
 -- @type DCSObject
 -- @field id_ The ID of the controllable in DCS
@@ -43,10 +41,11 @@ OBJECT = {
 -- @param #OBJECT self
 -- @param Dcs.DCSWrapper.Object#Object ObjectName The Object name
 -- @return #OBJECT self
-function OBJECT:New( ObjectName )
+function OBJECT:New( ObjectName, Test )
   local self = BASE:Inherit( self, BASE:New() )
   self:F2( ObjectName )
   self.ObjectName = ObjectName
+
   return self
 end
 

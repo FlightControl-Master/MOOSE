@@ -310,7 +310,7 @@ do -- FSM
   function FSM:New( FsmT )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() )
+    self = BASE:Inherit( self, BASE:New() )
   
     self.options = options or {}
     self.options.subs = self.options.subs or {}
@@ -535,19 +535,26 @@ do -- FSM
   
   function FSM._handler( self, EventName, ... )
   
-    self:E( { EventName, ... } )
+    local Can, to = self:can( EventName )
   
-    local can, to = self:can( EventName )
-    self:E( { EventName, self.current, can, to } )
+    if to == "*" then
+      to = self.current
+    end
   
-    local ReturnValues = nil
-  
-    if can then
+    if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
+
+      if self.Controllable then
+        self:E( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      else
+        self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      end        
   
       if self:_call_handler("onbefore" .. EventName, params) == false
-        or self:_call_handler("onleave" .. from, params) == false then
+      or self:_call_handler("OnBefore" .. EventName, params) == false
+      or self:_call_handler("onleave" .. from, params) == false
+      or self:_call_handler("OnLeave" .. from, params) == false then
         return false
       end
   
@@ -565,14 +572,16 @@ do -- FSM
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
-        execute = true
+        execute = false
       end
   
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
         self:_call_handler("onenter" .. to, params)
+        self:_call_handler("OnEnter" .. to, params)
         self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
         self:_call_handler("onstatechange", params)
         fsmparent[Event]( fsmparent )
         execute = false
@@ -580,25 +589,19 @@ do -- FSM
   
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
-        if from ~= to then
-          self:T3( { onenter = "onenter" .. to, callback = self["onenter" .. to] }  )
+        --if from ~= to then
           self:_call_handler("onenter" .. to, params)
-        end
+          self:_call_handler("OnEnter" .. to, params)
+        --end
   
-        self:T3( { On = "OnBefore" .. to, callback = self["OnBefore" .. to] }  )
-        if ( self:_call_handler("OnBefore" .. to, params ) ~= false ) then
-  
-          self:T3( { onafter = "onafter" .. EventName, callback = self["onafter" .. EventName] }  )
-          self:_call_handler("onafter" .. EventName, params)
-  
-          self:T3( { On = "OnAfter" .. EventName, callback = self["OnAfter" .. EventName] }  )
-          ReturnValues = self:_call_handler("OnAfter" .. EventName, params )
-        end
+        self:_call_handler("onafter" .. EventName, params)
+        self:_call_handler("OnAfter" .. EventName, params)
   
         self:_call_handler("onstatechange", params)
       end
-  
-      return ReturnValues
+    else
+      self:E( "Cannot execute transition." )
+      self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
     end
   
     return nil
@@ -674,7 +677,6 @@ do -- FSM
   end
   
   function FSM:can(e)
-    self:E( { e, self.Events, self.Events[e] } )
     local Event = self.Events[e]
     self:F3( { self.current, Event } )
     local To = Event and Event.map[self.current] or Event.map['*']
@@ -743,7 +745,7 @@ do -- FSM_CONTROLLABLE
     end
   
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:F3( "Calling " .. handler )
       return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
@@ -1007,7 +1009,7 @@ do -- FSM_SET
   function FSM_SET:New( FSMSet )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
+    self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_SET
   
     if FSMSet then
       self:Set( FSMSet )
@@ -1034,7 +1036,7 @@ do -- FSM_SET
   
   function FSM_SET:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end

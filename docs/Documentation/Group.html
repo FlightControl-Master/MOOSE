@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -369,6 +371,12 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPositionVec3">GROUP:GetPositionVec3()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetSize">GROUP:GetSize()</a></td>
 		<td class="summary">
 <p>Returns current size of the DCS Group.</p>
@@ -405,12 +413,6 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetUnits">GROUP:GetUnits()</a></td>
-		<td class="summary">
-<p>Returns the UNITs wrappers of the DCS Units of the DCS Group.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetVec2">GROUP:GetVec2()</a></td>
 		<td class="summary">
 <p>Returns the current point (Vec2 vector) of the first DCS Unit in the DCS Group.</p>
@@ -426,6 +428,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GroupName">GROUP.GroupName</a></td>
 		<td class="summary">
 <p>The name of the group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).InAir">GROUP:InAir()</a></td>
+		<td class="summary">
+<p>Returns true if the first unit of the GROUP is in the air.</p>
 </td>
 		</tr>
 		<tr>
@@ -480,6 +488,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsShip">GROUP:IsShip()</a></td>
 		<td class="summary">
 <p>Returns if the DCS Group contains Ships.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).OnReSpawn">GROUP:OnReSpawn(ReSpawnFunction)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -963,6 +977,34 @@ Minimum height found.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetPositionVec3" >
+<strong>GROUP:GetPositionVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Position)">Dcs.DCSTypes#Position</a>:</em>
+The 3D position vectors of the POSITIONABLE.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetSize" >
 <strong>GROUP:GetSize()</strong>
 </a>
@@ -1086,24 +1128,6 @@ The UNIT wrapper class.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(GROUP).GetUnits" >
-<strong>GROUP:GetUnits()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns the UNITs wrappers of the DCS Units of the DCS Group.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#table:</em>
-The UNITs wrappers.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(GROUP).GetVec2" >
 <strong>GROUP:GetVec2()</strong>
 </a>
@@ -1149,6 +1173,34 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 	
 <p>The name of the group.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).InAir" >
+<strong>GROUP:InAir()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if the first unit of the GROUP is in the air.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if in the first unit of the group is in the air.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The GROUP is not existing or not alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1344,6 +1396,27 @@ Returns true if the Group is completely within the <a href="Core.Zone.html##(ZON
 <p><em>#boolean:</em>
 true if DCS Group contains Ships.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).OnReSpawn" >
+<strong>GROUP:OnReSpawn(ReSpawnFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReSpawnFunction </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

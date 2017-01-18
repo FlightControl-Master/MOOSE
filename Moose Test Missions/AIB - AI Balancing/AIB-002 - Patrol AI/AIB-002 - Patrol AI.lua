@@ -1,8 +1,4 @@
---- AI Patrolling
--- 
--- ===
--- 
--- Name: Patrol AI
+-- Name: AIB-002 - Patrol AI.lua
 -- Author: FlightControl
 -- Date Created: 7 December 2016
 --
@@ -19,13 +15,9 @@
 -- 3. If two players join the red slots, no AI plane should be spawned, and all airborne AI planes should return to the nearest home base.
 -- 4. Spawned AI should take-off from the airbase, and start patrolling the area around Anapa.
 -- 5. When the AI is out-of-fuel, it should report it is returning to the home base, and land at Anapa.
--- 
--- # Status: DEVELOP 07 Dec 2016
---
--- @module TEST.AI_BALANCER.T002
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
-local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" ):FilterStart()
+local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
 
 -- Define the SPAWN object for the red AI plane template.
 -- We use InitCleanUp to check every 20 seconds, if there are no planes blocked at the airbase, waithing for take-off.
@@ -35,15 +27,17 @@ local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 -- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
 local RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
+local PatrolZones = {}
+
 function RU_AI_Balancer:OnAfterSpawned( SetGroup, From, Event, To, AIGroup )
 
   local PatrolZoneGroup = GROUP:FindByName( "PatrolZone" )
   local PatrolZone = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
 
 
-  local Patrol = AI_PATROLZONE:New( PatrolZone, 3000, 6000, 400, 600 )
-  Patrol:ManageFuel( 0.2, 60 )
-  Patrol:SetControllable( AIGroup )
-  Patrol:__Start( 5 )
+  PatrolZones[AIGroup] = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 400, 600 )
+  PatrolZones[AIGroup]:ManageFuel( 0.2, 60 )
+  PatrolZones[AIGroup]:SetControllable( AIGroup )
+  PatrolZones[AIGroup]:__Start( 5 )
  
 end

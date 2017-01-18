@@ -207,6 +207,7 @@ SPAWN = {
   SpawnAliasPrefix = nil,
 }
 
+
 --- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
@@ -590,6 +591,7 @@ function SPAWN:ReSpawn( SpawnIndex )
 
 -- TODO: This logic makes DCS crash and i don't know why (yet).
 	local SpawnGroup = self:GetGroupFromIndex( SpawnIndex )
+	local WayPoints = SpawnGroup and SpawnGroup.WayPoints or nil
 	if SpawnGroup then
     local SpawnDCSGroup = SpawnGroup:GetDCSObject()
   	if SpawnDCSGroup then
@@ -597,7 +599,18 @@ function SPAWN:ReSpawn( SpawnIndex )
   	end
   end
 
-	return self:SpawnWithIndex( SpawnIndex )
+	local SpawnGroup = self:SpawnWithIndex( SpawnIndex )
+	if SpawnGroup and WayPoints then
+	  -- If there were WayPoints set, then Re-Execute those WayPoints!
+	  SpawnGroup:WayPointInitialize( WayPoints )
+	  SpawnGroup:WayPointExecute( 1, 5 )
+	end
+	
+	if SpawnGroup.ReSpawnFunction then
+	  SpawnGroup:ReSpawnFunction()
+	end
+	
+	return SpawnGroup
 end
 
 --- Will spawn a group with a specified index number.
