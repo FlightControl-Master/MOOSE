@@ -13466,6 +13466,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
   --   params = {
   --     point = Vec2,
   --     radius = Distance,
+  --     expendQty = number,
+  --     expendQtyEnabled = boolean, 
   --   }
   -- }
 
@@ -13474,6 +13476,8 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
     params = {
       point = Vec2,
       radius = Radius,
+      expendQty = 100,  -- added both parameters to override the bug the apparent custome value of expendQty = 1 and expendQty = true
+      expendQtyEnabled = false, --  -- added both parameters to override the bug the apparent custome value of expendQty = 1 and expendQty = true
     }
   }
 
