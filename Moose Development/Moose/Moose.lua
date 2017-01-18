@@ -42,6 +42,8 @@ Include.File( "Functional/Detection" )
 --- AI Classes
 Include.File( "AI/AI_Balancer" )
 Include.File( "AI/AI_Patrol" )
+Include.File( "AI/AI_Cap" )
+Include.File( "AI/AI_Cas" )
 Include.File( "AI/AI_Cargo" )
 
 --- Actions

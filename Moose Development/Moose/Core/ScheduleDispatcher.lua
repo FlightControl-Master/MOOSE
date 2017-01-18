@@ -66,21 +66,21 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
   
-  if Scheduler.SchedulerObject then
+  if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.ObjectSchedulers[self.CallID] } )
+    self:F3( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
     self.PersistentSchedulers[self.CallID] = Scheduler
-    self:T3( { self.CallID, self.PersistentSchedulers[self.CallID] } )
+    self:F3( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
-  self.Schedule[Scheduler] = {}
+  self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
   self.Schedule[Scheduler][self.CallID] = {}
   self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][self.CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][self.CallID].Start = Start + .001
+  self.Schedule[Scheduler][self.CallID].Start = Start + .1
   self.Schedule[Scheduler][self.CallID].Repeat = Repeat
   self.Schedule[Scheduler][self.CallID].Randomize = Randomize
   self.Schedule[Scheduler][self.CallID].Stop = Stop
@@ -156,7 +156,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      --self:E( "Scheduled obscolete call for CallID: " .. CallID )
+      self:E( "Scheduled obscolete call for CallID: " .. CallID )
     end
     
     return nil

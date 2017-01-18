@@ -506,7 +506,7 @@ SEADProcess:AddScoreProcess( "Updated", "Account", "Failed", "failed to destroy 
 SEADProcess:AddScore( "Success", "Destroyed all target radars", 250 )
 SEADProcess:AddScore( "Failed", "Failed to destroy all target radars", -100 )
 
-function SEADProcess:OnEnterUpdated(Controllable,From,Event,To)
+function SEADProcess:OnEnterUpdated( Controllable, From, Event, To )
   self:E( { self } )
   self:Account()
   self:Smoke()
@@ -517,7 +517,7 @@ end
 -- we check if the SEADTask has still AlivePlayers assigned to the Task.
 -- If not, the Task will Abort.
 -- And it will be Replanned within 30 seconds.
-function SEADTask:OnAfterPlayerCrashed( PlayerUnit, PlayerName )
+function SEADTask:OnEnterPlayerCrashed( PlayerUnit, PlayerName )
   if not SEADTask:HasAliveUnits() then
     SEADTask:__Abort()
     SEADTask:__Replan( 30 )
