@@ -14,7 +14,7 @@
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_Cas\Dia3.JPG)
 -- 
--- The AI_CAS_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+-- The AI_CAS_ZONE is assigned a @{Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
 --  
 -- ![Start Event](..\Presentations\AI_Cas\Dia4.JPG)
 -- 
@@ -122,7 +122,7 @@
 -- @type AI_CAS_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_CAS_ZONE
+-- @extends AI.AI_Patrol#AI_PATROL_ZONE
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }
@@ -334,23 +334,9 @@ end
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
-
-  self:Route()
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
-
+  -- Call the parent Start event handler
+  self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
   self:EventOnDead( self.OnDead )
-  
-  Controllable:OptionROEHoldFire()
-  Controllable:OptionROTVertical()
-  
-  self.Controllable:OnReSpawn(
-    function( PatrolGroup )
-      self:E( "ReSpawn" )
-      self:__Reset()
-      self:__Route( 5 )
-    end
-  )
   
 end
 
@@ -383,8 +369,6 @@ end
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
-
-    self:Detect( self.EngageZone )
 
     local EngageRoute = {}
 
@@ -516,7 +500,7 @@ end
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
-  self.DetectUnits = false
+  self:SetDetectionOff()
 end
 
 --- @param #AI_CAS_ZONE self

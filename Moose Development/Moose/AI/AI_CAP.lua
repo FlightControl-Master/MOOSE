@@ -12,7 +12,7 @@
 -- 
 -- ![Process](..\Presentations\AI_Cap\Dia3.JPG)
 -- 
--- The AI_CAP_ZONE is assigned a @(Group) and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
+-- The AI_CAP_ZONE is assigned a @{Group} and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_Cap\Dia4.JPG)
 -- 
@@ -103,7 +103,9 @@
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
+--        
 -- ### Authors:
 --
 --   * **FlightControl**: Concept, Design & Programming.
@@ -336,23 +338,9 @@ end
 -- @param #string To The To State string.
 function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
+  -- Call the parent Start event handler
+  self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
 
-  self:Route()
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
-
-  self:EventOnDead( self.OnDead )
-  
-  Controllable:OptionROEOpenFire()
-  
-  self.Controllable:OnReSpawn(
-    function( PatrolGroup )
-      self:E( "ReSpawn" )
-      self:__Reset()
-      self:__Route( 5 )
-    end
-  )
-  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -414,8 +402,6 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
 
-    self:Detect( self.EngageZone )
-
     local EngageRoute = {}
 
     --- Calculate the current route point.
@@ -466,7 +452,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
     for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
       local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
-      self:T( DetectedUnit )
+      self:T( { DetectedUnit, DetectedUnit:IsAlive(), DetectedUnit:IsAir() } )
       if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
         if self.EngageZone then
           if DetectedUnit:IsInZone( self.EngageZone ) then
@@ -494,8 +480,9 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:Accomplish()
-      self:Route()
+      self:__Accomplish( 1 )
+      self:__Route( 1 )
+      self:SetDetectionActivated()
     else
       EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
       
@@ -503,10 +490,11 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       self.Controllable:SetState( self.Controllable, "EngageZone", self )
   
       self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
-  
+      
+      self:SetDetectionDeactivated()
     end
     
-        --- NOW ROUTE THE GROUP!
+    --- NOW ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1, 2 )
   
   end
@@ -534,17 +522,7 @@ end
 -- @param #string To The To State string.
 function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
-  self.DetectUnits = false
-end
-
---- @param #AI_CAP_ZONE self
--- @param Core.Event#EVENTDATA EventData
-function AI_CAP_ZONE:OnDead( EventData )
-  self:T( { "EventDead", EventData } )
-
-  if EventData.IniDCSUnit then
-    self:__Destroy( 1, EventData )
-  end
+  self:SetDetectionOff()
 end
 
 
