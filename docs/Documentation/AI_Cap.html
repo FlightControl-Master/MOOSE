@@ -72,45 +72,45 @@
    
 <p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
 
-<p><img src="..\Presentations\AI_Cap\Dia1.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
 
 <hr/>
 
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI.AI_Cap.html##(AI_PATROL_ZONE)">AI.AI<em>Cap#AI</em>PATROL_ZONE</a></h1>
+<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI.AI_CAP.html##(AI_PATROL_ZONE)">AI.AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
 <p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 
    
 
-<p><img src="..\Presentations\AI_Cap\Dia3.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia3.JPG" alt="Process"/></p>
 
 <p>The AI<em>CAP</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>CAP</em>ZONE process can be started using the <strong>Start</strong> event.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia4.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia4.JPG" alt="Process"/></p>
 
 <p>The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia5.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia5.JPG" alt="Process"/></p>
 
 <p>This cycle will continue.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia6.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia6.JPG" alt="Process"/></p>
 
 <p>During the patrol, the AI will detect enemy targets, which are reported through the <strong>Detected</strong> event.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia9.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia9.JPG" alt="Process"/></p>
 
 <p>When enemies are detected, the AI will automatically engage the enemy.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia10.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia10.JPG" alt="Process"/></p>
 
 <p>Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
-<p><img src="..\Presentations\AI_Cap\Dia13.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia13.JPG" alt="Process"/></p>
 
 <h2>1.1) AI<em>CAP</em>ZONE constructor</h2>
 
@@ -120,7 +120,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 
 <h2>1.2) AI<em>CAP</em>ZONE is a FSM</h2>
 
-<p><img src="..\Presentations\AI_Cap\Dia2.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia2.JPG" alt="Process"/></p>
 
 <h3>1.2.1) AI<em>CAP</em>ZONE States</h3>
 
@@ -145,17 +145,17 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 
 <h2>1.3) Set the Range of Engagement</h2>
 
-<p><img src="..\Presentations\AI_Cap\Dia11.JPG" alt="Range"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia11.JPG" alt="Range"/></p>
 
 <p>An optional range can be set in meters, 
 that will define when the AI will engage with the detected airborne enemy targets.
 The range can be beyond or smaller than the range of the Patrol Zone.
 The range is applied at the position of the AI.
-Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageRange">AI.AI<em>Cap#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
+Use the method <a href="AI.AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI.AI<em>CAP#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
 
 <h2>1.4) Set the Zone of Engagement</h2>
 
-<p><img src="..\Presentations\AI_Cap\Dia12.JPG" alt="Zone"/></p>
+<p><img src="..\Presentations\AI_CAP\Dia12.JPG" alt="Zone"/></p>
 
 <p>An optional <a href="Zone.html">Zone</a> can be set, 
 that will define when the AI will engage with the detected airborne enemy targets.

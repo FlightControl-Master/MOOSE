@@ -72,7 +72,7 @@
    
 <p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
-<p><img src="..\Presentations\AI_Cas\Dia1.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
 
 
 <hr/>
@@ -86,35 +86,35 @@
 The <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
 The AI<em>CAS</em>ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia3.JPG" alt="HoldAndEngage"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia3.JPG" alt="HoldAndEngage"/></p>
 
 <p>The AI<em>CAS</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>CAS</em>ZONE process can be started through the <strong>Start</strong> event.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia4.JPG" alt="Start Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia4.JPG" alt="Start Event"/></p>
 
 <p>Upon started, The AI will <strong>Route</strong> itself towards the random 3D point within a patrol zone, 
 using a random speed within the given altitude and speed limits.
 Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia5.JPG" alt="Route Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia5.JPG" alt="Route Event"/></p>
 
 <p>When the AI is commanded to provide Close Air Support (through the event <strong>Engage</strong>), the AI will fly towards the Engage Zone.
 Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia6.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia6.JPG" alt="Engage Event"/></p>
 
 <p>The AI will detect the targets and will only destroy the targets within the Engage Zone.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia7.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia7.JPG" alt="Engage Event"/></p>
 
 <p>Every target that is destroyed, is reported&lt; by the AI.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia8.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia8.JPG" alt="Engage Event"/></p>
 
 <p>Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. </p>
 
-<p><img src="..\Presentations\AI_Cas\Dia9.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia9.JPG" alt="Engage Event"/></p>
 
 <p>Until it is notified through the event <strong>Accomplish</strong>, which is to be triggered by an observing party:</p>
 
@@ -126,18 +126,18 @@ Any target that is detected in the Engage Zone will be reported and will be dest
     <li>others ...</li>
 </ul>
 
-<p><img src="..\Presentations\AI_Cas\Dia10.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia10.JPG" alt="Engage Event"/></p>
 
 <p>When the AI has accomplished the CAS, it will fly back to the Patrol Zone.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia11.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia11.JPG" alt="Engage Event"/></p>
 
 <p>It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
 It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 <p>When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
 
-<p><img src="..\Presentations\AI_Cas\Dia12.JPG" alt="Engage Event"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia12.JPG" alt="Engage Event"/></p>
 
 <h1>1.1) AI<em>CAS</em>ZONE constructor</h1>
 
@@ -147,7 +147,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 <h2>1.2) AI<em>CAS</em>ZONE is a FSM</h2>
 
-<p><img src="..\Presentations\AI_Cas\Dia2.JPG" alt="Process"/></p>
+<p><img src="..\Presentations\AI_CAS\Dia2.JPG" alt="Process"/></p>
 
 <h3>1.2.1) AI<em>CAS</em>ZONE States</h3>
 
