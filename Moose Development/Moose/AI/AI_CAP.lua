@@ -1,42 +1,42 @@
 --- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
 --
--- ![Banner Image](..\Presentations\AI_Cap\Dia1.JPG)
+-- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
 -- 
 -- ===
 --
--- # 1) @{#AI_CAP_ZONE} class, extends @{AI.AI_Cap#AI_PATROL_ZONE}
+-- # 1) @{#AI_CAP_ZONE} class, extends @{AI.AI_CAP#AI_PATROL_ZONE}
 -- 
 -- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia3.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
 -- 
 -- The AI_CAP_ZONE is assigned a @{Group} and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia4.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia4.JPG)
 -- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia5.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia5.JPG)
 -- 
 -- This cycle will continue.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia6.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia6.JPG)
 -- 
 -- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
 --
--- ![Process](..\Presentations\AI_Cap\Dia9.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia9.JPG)
 -- 
 -- When enemies are detected, the AI will automatically engage the enemy.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia10.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia10.JPG)
 -- 
 -- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia13.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia13.JPG)
 -- 
 -- ## 1.1) AI_CAP_ZONE constructor
 --   
@@ -44,7 +44,7 @@
 -- 
 -- ## 1.2) AI_CAP_ZONE is a FSM
 -- 
--- ![Process](..\Presentations\AI_Cap\Dia2.JPG)
+-- ![Process](..\Presentations\AI_CAP\Dia2.JPG)
 -- 
 -- ### 1.2.1) AI_CAP_ZONE States
 -- 
@@ -65,17 +65,17 @@
 --
 -- ## 1.3) Set the Range of Engagement
 -- 
--- ![Range](..\Presentations\AI_Cap\Dia11.JPG)
+-- ![Range](..\Presentations\AI_CAP\Dia11.JPG)
 -- 
 -- An optional range can be set in meters, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 1.4) Set the Zone of Engagement
 -- 
--- ![Zone](..\Presentations\AI_Cap\Dia12.JPG)
+-- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.

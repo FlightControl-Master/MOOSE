@@ -1,6 +1,6 @@
 --- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
 -- 
--- ![Banner Image](..\Presentations\AI_Patrol\Dia1.JPG)
+-- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
 -- 
 -- ===
@@ -9,34 +9,34 @@
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia3.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
 -- The AI_PATROL_ZONE is assigned a @{Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia4.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia4.JPG)
 -- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia5.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia5.JPG)
 -- 
 -- This cycle will continue.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia6.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia6.JPG)
 -- 
 -- During the patrol, the AI will detect enemy targets, which are reported through the **Detected** event.
 --
--- ![Process](..\Presentations\AI_Patrol\Dia9.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia9.JPG)
 -- 
 ---- Note that the enemy is not engaged! To model enemy engagement, either tailor the **Detected** event, or
 -- use derived AI_ classes to model AI offensive or defensive behaviour.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia10.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia10.JPG)
 -- 
 -- Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia11.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia11.JPG)
 -- 
 -- ## 1.1) AI_PATROL_ZONE constructor
 --   
@@ -44,7 +44,7 @@
 -- 
 -- ## 1.2) AI_PATROL_ZONE is a FSM
 -- 
--- ![Process](..\Presentations\AI_Patrol\Dia2.JPG)
+-- ![Process](..\Presentations\AI_PATROL\Dia2.JPG)
 -- 
 -- ### 1.2.1) AI_PATROL_ZONE States
 -- 

@@ -1,6 +1,6 @@
 --- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
 --
--- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
+-- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
 -- 
 -- ===
@@ -12,35 +12,35 @@
 -- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
--- ![HoldAndEngage](..\Presentations\AI_Cas\Dia3.JPG)
+-- ![HoldAndEngage](..\Presentations\AI_CAS\Dia3.JPG)
 -- 
 -- The AI_CAS_ZONE is assigned a @{Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
 --  
--- ![Start Event](..\Presentations\AI_Cas\Dia4.JPG)
+-- ![Start Event](..\Presentations\AI_CAS\Dia4.JPG)
 -- 
 -- Upon started, The AI will **Route** itself towards the random 3D point within a patrol zone, 
 -- using a random speed within the given altitude and speed limits.
 -- Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
 -- This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
 -- 
--- ![Route Event](..\Presentations\AI_Cas\Dia5.JPG)
+-- ![Route Event](..\Presentations\AI_CAS\Dia5.JPG)
 -- 
 -- When the AI is commanded to provide Close Air Support (through the event **Engage**), the AI will fly towards the Engage Zone.
 -- Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia6.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia6.JPG)
 -- 
 -- The AI will detect the targets and will only destroy the targets within the Engage Zone.
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia7.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia7.JPG)
 -- 
 -- Every target that is destroyed, is reported< by the AI.
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia8.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia8.JPG)
 -- 
 -- Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. 
 --
--- ![Engage Event](..\Presentations\AI_Cas\Dia9.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia9.JPG)
 -- 
 -- Until it is notified through the event **Accomplish**, which is to be triggered by an observing party:
 -- 
@@ -50,18 +50,18 @@
 --   * a condition
 --   * others ...
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia10.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia10.JPG)
 -- 
 -- When the AI has accomplished the CAS, it will fly back to the Patrol Zone.
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia11.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia11.JPG)
 -- 
 -- It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
 -- It can be notified to go RTB through the **RTB** event.
 -- 
 -- When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.
 -- 
--- ![Engage Event](..\Presentations\AI_Cas\Dia12.JPG)
+-- ![Engage Event](..\Presentations\AI_CAS\Dia12.JPG)
 --
 -- # 1.1) AI_CAS_ZONE constructor
 --
@@ -69,7 +69,7 @@
 --
 -- ## 1.2) AI_CAS_ZONE is a FSM
 -- 
--- ![Process](..\Presentations\AI_Cas\Dia2.JPG)
+-- ![Process](..\Presentations\AI_CAS\Dia2.JPG)
 -- 
 -- ### 1.2.1) AI_CAS_ZONE States
 -- 
