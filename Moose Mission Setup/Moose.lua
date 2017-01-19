@@ -12549,7 +12549,7 @@ end
 --   * @{#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
 --   * @{#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne controllable. 
 --   * @{#CONTROLLABLE.TaskFAC_AttackControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
---   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire some or all ammunition at a VEC2 point.
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
@@ -13457,15 +13457,18 @@ end
 -- @param #CONTROLLABLE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The point to fire at.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
+-- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
-  self:F2( { self.ControllableName, Vec2, Radius } )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount )
+  self:F2( { self.ControllableName, Vec2, Radius, AmmoCount } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
   --   params = {
   --     point = Vec2,
   --     radius = Distance,
+  --     expendQty = number,
+  --     expendQtyEnabled = boolean, 
   --   }
   -- }
 
@@ -13474,8 +13477,15 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
     params = {
       point = Vec2,
       radius = Radius,
+      expendQty = 100, -- dummy value
+      expendQtyEnabled = false,
     }
   }
+  
+  if AmmoCount then
+	DCSTask.params.expendQty = AmmoCount
+	DCSTask.params.expendQtyEnabled = true
+  end
 
   self:T3( { DCSTask } )
   return DCSTask
