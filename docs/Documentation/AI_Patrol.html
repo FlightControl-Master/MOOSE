@@ -85,7 +85,7 @@
 
 <p><img src="..\Presentations\AI_Patrol\Dia3.JPG" alt="Process"/></p>
 
-<p>The AI<em>PATROL</em>ZONE is assigned a @(Group) and this must be done before the AI<em>PATROL</em>ZONE process can be started using the <strong>Start</strong> event.</p>
+<p>The AI<em>PATROL</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>PATROL</em>ZONE process can be started using the <strong>Start</strong> event.</p>
 
 <p><img src="..\Presentations\AI_Patrol\Dia4.JPG" alt="Process"/></p>
 
@@ -279,13 +279,19 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectActivated">AI_PATROL_ZONE.DetectActivated</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectInterval">AI_PATROL_ZONE.DetectInterval</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectUnits">AI_PATROL_ZONE.DetectUnits</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).DetectOn">AI_PATROL_ZONE.DetectOn</a></td>
 		<td class="summary">
 
 </td>
@@ -405,6 +411,18 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnCrash">AI_PATROL_ZONE:OnCrash(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnEjection">AI_PATROL_ZONE:OnEjection(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnEnterPatrolling">AI_PATROL_ZONE:OnEnterPatrolling(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Patrolling.</p>
@@ -426,6 +444,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeaveReturning">AI_PATROL_ZONE:OnLeaveReturning(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Returning.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnPilotDead">AI_PATROL_ZONE:OnPilotDead(EventData)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -507,6 +531,18 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionActivated">AI_PATROL_ZONE:SetDetectionActivated()</a></td>
+		<td class="summary">
+<p>Activate the detection.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionDeactivated">AI_PATROL_ZONE:SetDetectionDeactivated()</a></td>
+		<td class="summary">
+<p>Deactivate the detection.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI_PATROL_ZONE:SetDetectionInterval(Seconds)</a></td>
 		<td class="summary">
 <p>Set the interval in seconds between each detection executed by the AI.</p>
@@ -534,6 +570,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetSpeed">AI_PATROL_ZONE:SetSpeed(PatrolMinSpeed, PatrolMaxSpeed)</a></td>
 		<td class="summary">
 <p>Sets (modifies) the minimum and maximum speed of the patrol.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetStatusOff">AI_PATROL_ZONE:SetStatusOff()</a></td>
+		<td class="summary">
+<p>Set the status checking off.</p>
 </td>
 		</tr>
 		<tr>
@@ -588,6 +630,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Status">AI_PATROL_ZONE:__Status(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Status.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).onafterDead">AI_PATROL_ZONE:onafterDead()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -728,6 +776,20 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(AI_PATROL_ZONE).DetectActivated" >
+<strong>AI_PATROL_ZONE.DetectActivated</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_PATROL_ZONE).DetectInterval" >
 <strong>AI_PATROL_ZONE.DetectInterval</strong>
@@ -743,8 +805,8 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_PATROL_ZONE).DetectUnits" >
-<strong>AI_PATROL_ZONE.DetectUnits</strong>
+<a id="#(AI_PATROL_ZONE).DetectOn" >
+<strong>AI_PATROL_ZONE.DetectOn</strong>
 </a>
 </dt>
 <dd>
@@ -1461,6 +1523,48 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).OnCrash" >
+<strong>AI_PATROL_ZONE:OnCrash(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).OnEjection" >
+<strong>AI_PATROL_ZONE:OnEjection(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE).OnEnterPatrolling" >
 <strong>AI_PATROL_ZONE:OnEnterPatrolling(Controllable, From, Event, To)</strong>
 </a>
@@ -1626,6 +1730,27 @@ The To State string.</p>
 <p><em>#boolean:</em>
 Return false to cancel Transition.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).OnPilotDead" >
+<strong>AI_PATROL_ZONE:OnPilotDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1830,6 +1955,48 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).SetDetectionActivated" >
+<strong>AI_PATROL_ZONE:SetDetectionActivated()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Activate the detection.</p>
+
+	
+<p>The AI will detect for targets if the Detection is switched On.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).SetDetectionDeactivated" >
+<strong>AI_PATROL_ZONE:SetDetectionDeactivated()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Deactivate the detection.</p>
+
+	
+<p>The AI will NOT detect for targets.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE).SetDetectionInterval" >
 <strong>AI_PATROL_ZONE:SetDetectionInterval(Seconds)</strong>
 </a>
@@ -1956,6 +2123,24 @@ The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).SetStatusOff" >
+<strong>AI_PATROL_ZONE:SetStatusOff()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the status checking off.</p>
+
 		<h3>Return value</h3>
 				
 <p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
@@ -2147,6 +2332,19 @@ The delay in seconds.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).onafterDead" >
+<strong>AI_PATROL_ZONE:onafterDead()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">

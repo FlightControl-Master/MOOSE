@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170117_1202' ) 
+env.info( 'Moose Generation Timestamp: 20170119_1944' ) 
 local base = _G
 
 Include = {}
@@ -4878,6 +4878,16 @@ end
 -- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
 
+  local ErrorHandler = function( errmsg )
+
+    env.info( "Error in SCHEDULER function:" .. errmsg )
+    if debug ~= nil then
+      env.info( debug.traceback() )
+    end
+    
+    return errmsg
+  end
+
   if self and self.Events and self.Events[Event.id] then
     if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
       Event.IniDCSUnit = Event.initiator
@@ -4919,14 +4929,16 @@ function EVENT:onEvent( Event )
       -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
-        EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
+        local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
+        --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
       else
         -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
         -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
         if Event.IniDCSUnit and not EventData.IniUnit then
           if EventClass == EventData.EventClass then
             self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
-            EventData.EventFunction( EventData.EventClass, Event )
+            local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
+            --EventData.EventFunction( EventData.EventClass, Event )
           end
         end
       end
@@ -11243,7 +11255,8 @@ do -- FSM
   function FSM:_call_handler(handler, params)
     if self[handler] then
       self:E( "Calling " .. handler )
-      return self[handler]( self, unpack(params) )
+      local Value = self[handler]( self, unpack(params) )
+      return Value
     end
   end
   
@@ -11265,10 +11278,11 @@ do -- FSM
         self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
       end        
   
-      if self:_call_handler("onbefore" .. EventName, params) == false
-      or self:_call_handler("OnBefore" .. EventName, params) == false
-      or self:_call_handler("onleave" .. from, params) == false
-      or self:_call_handler("OnLeave" .. from, params) == false then
+      if ( self:_call_handler("onbefore" .. EventName, params) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
+      or ( self:_call_handler("onleave" .. from, params) == false )
+      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+        self:E( "Cancel Transition" )
         return false
       end
   
@@ -11460,7 +11474,8 @@ do -- FSM_CONTROLLABLE
   
     if self[handler] then
       self:F3( "Calling " .. handler )
-      return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
   end
@@ -12549,7 +12564,7 @@ end
 --   * @{#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
 --   * @{#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne controllable. 
 --   * @{#CONTROLLABLE.TaskFAC_AttackControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
---   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire some or all ammunition at a VEC2 point.
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
@@ -13457,15 +13472,18 @@ end
 -- @param #CONTROLLABLE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The point to fire at.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
+-- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
-  self:F2( { self.ControllableName, Vec2, Radius } )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount )
+  self:F2( { self.ControllableName, Vec2, Radius, AmmoCount } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
   --   params = {
   --     point = Vec2,
   --     radius = Distance,
+  --     expendQty = number,
+  --     expendQtyEnabled = boolean, 
   --   }
   -- }
 
@@ -13474,8 +13492,15 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
     params = {
       point = Vec2,
       radius = Radius,
+      expendQty = 100, -- dummy value
+      expendQtyEnabled = false,
     }
   }
+  
+  if AmmoCount then
+    DCSTask.params.expendQty = AmmoCount
+    DCSTask.params.expendQtyEnabled = true
+  end
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -24669,7 +24694,7 @@ end
 -- 
 -- ![Process](..\Presentations\AI_Patrol\Dia3.JPG)
 -- 
--- The AI_PATROL_ZONE is assigned a @(Group) and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
+-- The AI_PATROL_ZONE is assigned a @{Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_Patrol\Dia4.JPG)
 -- 
@@ -25060,6 +25085,10 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
   
+  self:AddTransition( "*", "Eject", "Ejected" )
+  self:AddTransition( "*", "Crash", "Crashed" )
+  self:AddTransition( "*", "PilotDead", "PilotDead" )
+  
   return self
 end
 
@@ -25101,7 +25130,7 @@ end
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
   
-  self.DetectUnits = true
+  self.DetectOn = true
 end
 
 --- Set the detection off. The AI will NOT detect for targets.
@@ -25111,7 +25140,35 @@ end
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
   
-  self.DetectUnits = false
+  self.DetectOn = false
+end
+
+--- Set the status checking off.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetStatusOff()
+  self:F2()
+  
+  self.CheckStatus = false
+end
+
+--- Activate the detection. The AI will detect for targets if the Detection is switched On.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionActivated()
+  self:F2()
+  
+  self.DetectActivated = true
+  self:__Detect( self.DetectInterval )
+end
+
+--- Deactivate the detection. The AI will NOT detect for targets.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionDeactivated()
+  self:F2()
+  
+  self.DetectActivated = false
 end
 
 --- Set the interval in seconds between each detection executed by the AI.
@@ -25154,7 +25211,7 @@ end
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 
-  return self.DetectedUnits
+  return self.DetectedUnits 
 end
 
 
@@ -25202,13 +25259,18 @@ end
 function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:F2()
 
-  self:__Route( 5 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every 30 seconds.
+  self:__Route( 1 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
+  self:__Status( 60 ) -- Check status status every 30 seconds.
+  self:SetDetectionActivated()
+  
+  self:EventOnPilotDead( self.OnPilotDead )
+  self:EventOnCrash( self.OnCrash )
+  self:EventOnEjection( self.OnEjection )
+  
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
-  
+
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
       self:E( "ReSpawn" )
@@ -25224,7 +25286,7 @@ end
 --- @param Wrapper.Controllable#CONTROLLABLE Controllable
 function AI_PATROL_ZONE:onbeforeDetect( Controllable, From, Event, To )
 
-  return self.DetectUnits
+  return self.DetectOn and self.DetectActivated
 end
 
 --- @param #AI_PATROL_ZONE self
@@ -25255,11 +25317,12 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
     end
   end
   
+  self:__Detect( self.DetectInterval )
+
   if Detected == true then
-    self:__Detected( 1 )
+    self:__Detected( 1.5 )
   end
   
-  self:__Detect( self.DetectInterval )
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -25415,7 +25478,7 @@ function AI_PATROL_ZONE:onafterStatus()
     if RTB == true then
       self:RTB()
     else
-      self:__Status( 30 ) -- Execute the Patrol event after 30 seconds.
+      self:__Status( 60 ) -- Execute the Patrol event after 30 seconds.
     end
   end
 end
@@ -25457,6 +25520,40 @@ function AI_PATROL_ZONE:onafterRTB()
   end
     
 end
+
+--- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:onafterDead()
+  self:SetDetectionOff()
+  self:SetStatusOff()
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnCrash( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__Crash( 1, EventData )
+  end
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnEjection( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__Eject( 1, EventData )
+  end
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnPilotDead( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__PilotDead( 1, EventData )
+  end
+end
+
 --- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_Cas\Dia1.JPG)
@@ -25473,7 +25570,7 @@ end
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_Cas\Dia3.JPG)
 -- 
--- The AI_CAS_ZONE is assigned a @(Group) and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+-- The AI_CAS_ZONE is assigned a @{Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
 --  
 -- ![Start Event](..\Presentations\AI_Cas\Dia4.JPG)
 -- 
@@ -25581,7 +25678,7 @@ end
 -- @type AI_CAS_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_CAS_ZONE
+-- @extends AI.AI_Patrol#AI_PATROL_ZONE
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }
@@ -25793,23 +25890,9 @@ end
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
-
-  self:Route()
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
-
+  -- Call the parent Start event handler
+  self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
   self:EventOnDead( self.OnDead )
-  
-  Controllable:OptionROEHoldFire()
-  Controllable:OptionROTVertical()
-  
-  self.Controllable:OnReSpawn(
-    function( PatrolGroup )
-      self:E( "ReSpawn" )
-      self:__Reset()
-      self:__Route( 5 )
-    end
-  )
   
 end
 
@@ -25842,8 +25925,6 @@ end
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
-
-    self:Detect( self.EngageZone )
 
     local EngageRoute = {}
 
@@ -25975,7 +26056,7 @@ end
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
-  self.DetectUnits = false
+  self:SetDetectionOff()
 end
 
 --- @param #AI_CAS_ZONE self
@@ -26003,7 +26084,7 @@ end
 -- 
 -- ![Process](..\Presentations\AI_Cap\Dia3.JPG)
 -- 
--- The AI_CAP_ZONE is assigned a @(Group) and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
+-- The AI_CAP_ZONE is assigned a @{Group} and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_Cap\Dia4.JPG)
 -- 
@@ -26094,7 +26175,9 @@ end
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
+--        
 -- ### Authors:
 --
 --   * **FlightControl**: Concept, Design & Programming.
@@ -26327,23 +26410,9 @@ end
 -- @param #string To The To State string.
 function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
+  -- Call the parent Start event handler
+  self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
 
-  self:Route()
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every DetectInterval in the EngageZone.
-
-  self:EventOnDead( self.OnDead )
-  
-  Controllable:OptionROEOpenFire()
-  
-  self.Controllable:OnReSpawn(
-    function( PatrolGroup )
-      self:E( "ReSpawn" )
-      self:__Reset()
-      self:__Route( 5 )
-    end
-  )
-  
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -26405,8 +26474,6 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
   if Controllable:IsAlive() then
 
-    self:Detect( self.EngageZone )
-
     local EngageRoute = {}
 
     --- Calculate the current route point.
@@ -26457,7 +26524,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
     for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
       local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
-      self:T( DetectedUnit )
+      self:T( { DetectedUnit, DetectedUnit:IsAlive(), DetectedUnit:IsAir() } )
       if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
         if self.EngageZone then
           if DetectedUnit:IsInZone( self.EngageZone ) then
@@ -26485,8 +26552,9 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:Accomplish()
-      self:Route()
+      self:__Accomplish( 1 )
+      self:__Route( 1 )
+      self:SetDetectionActivated()
     else
       EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
       
@@ -26494,10 +26562,11 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       self.Controllable:SetState( self.Controllable, "EngageZone", self )
   
       self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
-  
+      
+      self:SetDetectionDeactivated()
     end
     
-        --- NOW ROUTE THE GROUP!
+    --- NOW ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1, 2 )
   
   end
@@ -26525,17 +26594,7 @@ end
 -- @param #string To The To State string.
 function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
-  self.DetectUnits = false
-end
-
---- @param #AI_CAP_ZONE self
--- @param Core.Event#EVENTDATA EventData
-function AI_CAP_ZONE:OnDead( EventData )
-  self:T( { "EventDead", EventData } )
-
-  if EventData.IniDCSUnit then
-    self:__Destroy( 1, EventData )
-  end
+  self:SetDetectionOff()
 end
 
 

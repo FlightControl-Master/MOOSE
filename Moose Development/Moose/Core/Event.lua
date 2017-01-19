@@ -717,6 +717,16 @@ end
 -- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
 
+  local ErrorHandler = function( errmsg )
+
+    env.info( "Error in SCHEDULER function:" .. errmsg )
+    if debug ~= nil then
+      env.info( debug.traceback() )
+    end
+    
+    return errmsg
+  end
+
   if self and self.Events and self.Events[Event.id] then
     if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
       Event.IniDCSUnit = Event.initiator
@@ -758,14 +768,16 @@ function EVENT:onEvent( Event )
       -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
         self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
-        EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
+        local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
+        --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
       else
         -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
         -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
         if Event.IniDCSUnit and not EventData.IniUnit then
           if EventClass == EventData.EventClass then
             self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
-            EventData.EventFunction( EventData.EventClass, Event )
+            local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
+            --EventData.EventFunction( EventData.EventClass, Event )
           end
         end
       end

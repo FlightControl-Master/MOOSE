@@ -115,7 +115,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).TaskEmbarkToTransport">CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
     <li><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne controllable. </li>
     <li><a href="##(CONTROLLABLE).TaskFAC_AttackControllable">CONTROLLABLE.TaskFAC_AttackControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
-    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
+    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire some or all ammunition at a VEC2 point.</li>
     <li><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne controllable.</li>
     <li><a href="##(CONTROLLABLE).TaskHold">CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground controllable from moving.</li>
     <li><a href="##(CONTROLLABLE).TaskHoldPosition">CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the controllable.</li>
@@ -568,7 +568,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(Vec2, Radius, AmmoCount)</a></td>
 		<td class="summary">
 <p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
 </td>
@@ -2504,7 +2504,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFireAtPoint" >
-<strong>CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</strong>
+<strong>CONTROLLABLE:TaskFireAtPoint(Vec2, Radius, AmmoCount)</strong>
 </a>
 </dt>
 <dd>
@@ -2523,6 +2523,12 @@ The point to fire at.</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
 The radius of the zone to deploy the fire at.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AmmoCount </em></code>: 
+(optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).</p>
 
 				</li>
 		</ul>

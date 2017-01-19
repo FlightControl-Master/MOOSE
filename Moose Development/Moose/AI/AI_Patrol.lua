@@ -11,7 +11,7 @@
 -- 
 -- ![Process](..\Presentations\AI_Patrol\Dia3.JPG)
 -- 
--- The AI_PATROL_ZONE is assigned a @(Group) and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
+-- The AI_PATROL_ZONE is assigned a @{Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_Patrol\Dia4.JPG)
 -- 
@@ -402,6 +402,10 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
   
+  self:AddTransition( "*", "Eject", "Ejected" )
+  self:AddTransition( "*", "Crash", "Crashed" )
+  self:AddTransition( "*", "PilotDead", "PilotDead" )
+  
   return self
 end
 
@@ -443,7 +447,7 @@ end
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
   
-  self.DetectUnits = true
+  self.DetectOn = true
 end
 
 --- Set the detection off. The AI will NOT detect for targets.
@@ -453,7 +457,35 @@ end
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
   
-  self.DetectUnits = false
+  self.DetectOn = false
+end
+
+--- Set the status checking off.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetStatusOff()
+  self:F2()
+  
+  self.CheckStatus = false
+end
+
+--- Activate the detection. The AI will detect for targets if the Detection is switched On.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionActivated()
+  self:F2()
+  
+  self.DetectActivated = true
+  self:__Detect( self.DetectInterval )
+end
+
+--- Deactivate the detection. The AI will NOT detect for targets.
+-- @param #AI_PATROL_ZONE self
+-- @return #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:SetDetectionDeactivated()
+  self:F2()
+  
+  self.DetectActivated = false
 end
 
 --- Set the interval in seconds between each detection executed by the AI.
@@ -496,7 +528,7 @@ end
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 
-  return self.DetectedUnits
+  return self.DetectedUnits 
 end
 
 
@@ -544,13 +576,18 @@ end
 function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:F2()
 
-  self:__Route( 5 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
-  self:__Status( 30 ) -- Check status status every 30 seconds.
-  self:__Detect( self.DetectInterval ) -- Detect for new targets every 30 seconds.
+  self:__Route( 1 ) -- Route to the patrol point. The asynchronous trigger is important, because a spawned group and units takes at least one second to come live.
+  self:__Status( 60 ) -- Check status status every 30 seconds.
+  self:SetDetectionActivated()
+  
+  self:EventOnPilotDead( self.OnPilotDead )
+  self:EventOnCrash( self.OnCrash )
+  self:EventOnEjection( self.OnEjection )
+  
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
-  
+
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
       self:E( "ReSpawn" )
@@ -566,7 +603,7 @@ end
 --- @param Wrapper.Controllable#CONTROLLABLE Controllable
 function AI_PATROL_ZONE:onbeforeDetect( Controllable, From, Event, To )
 
-  return self.DetectUnits
+  return self.DetectOn and self.DetectActivated
 end
 
 --- @param #AI_PATROL_ZONE self
@@ -597,11 +634,12 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
     end
   end
   
+  self:__Detect( self.DetectInterval )
+
   if Detected == true then
-    self:__Detected( 1 )
+    self:__Detected( 1.5 )
   end
   
-  self:__Detect( self.DetectInterval )
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -757,7 +795,7 @@ function AI_PATROL_ZONE:onafterStatus()
     if RTB == true then
       self:RTB()
     else
-      self:__Status( 30 ) -- Execute the Patrol event after 30 seconds.
+      self:__Status( 60 ) -- Execute the Patrol event after 30 seconds.
     end
   end
 end
@@ -799,3 +837,37 @@ function AI_PATROL_ZONE:onafterRTB()
   end
     
 end
+
+--- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:onafterDead()
+  self:SetDetectionOff()
+  self:SetStatusOff()
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnCrash( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__Crash( 1, EventData )
+  end
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnEjection( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__Eject( 1, EventData )
+  end
+end
+
+--- @param #AI_PATROL_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_PATROL_ZONE:OnPilotDead( EventData )
+
+  if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
+    self:__PilotDead( 1, EventData )
+  end
+end
+

@@ -193,15 +193,6 @@ For example, for the SEAD Task, the task action flow combines the actions ASSIGN
 * [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
 
 
-# MOOSE Tutorials and Examples
-
-You can download [test missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Test%20Missions) to have examples and learn the syntax and usage of the MOOSE classes.
-
-There are [Video Tutorials](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) on my YOUTUBE channel on which you can learn some coding aspects with mission execution demos, as well as some of the tooling and internal mechanisms within MOOSE.
-
-
-In the triggers section, there is a flag (9999) that will decide how MOOSE will be loaded. When flag 9999 is set, MOOSE will be dynamically loaded. When flag 9999 is off, MOOSE will be loaded embedded. Note that when loaded embedded, **your mission must include the last Moose_Embedded.lua file**. So, ensure that the last file is included in the DO SCRIPT section when MOOSE got an update! 
-
 # Credits
 
 Note that the framework is based on code i've written myself, but some of it is also based on code that i've seen as great scripting code and ideas, and which i've revised. I see this framework evolving towards a broader public, and the ownership may dissapear (or parts of it). Consider this code public domain. Therefore a list of credits to all who have or are contributing (this list will increase over time): Grimes, Prof_Hilactic, xcom, the 476 virtual squadron team, ...
@@ -223,8 +214,8 @@ Working together with James has resulted in the creation of the AIBALANCER class
 **Stuka (Danny)**
 Working together with Danny has resulted in the MISSILETRAINER class. Stuka has shared his ideas and together we made a design. Together with the 476 virtual team, we tested this CLASS, and got much positive feedback!
 
-**Mechanic (G�bor)**
-Worked together with G�bor to create the concept of the DETECTION and FAC classes. Mechanic shared his ideas and concepts to group detected targets into sets within detection zones... Will continue to work with G�bor to workout the DETECTION and FAC classes.
+**Mechanic (Gabor)**
+Worked together with Gabor to create the concept of the DETECTION and FAC classes. Mechanic shared his ideas and concepts to group detected targets into sets within detection zones... Will continue to work with G�bor to workout the DETECTION and FAC classes.
 
 **Shadoh**
 Interacted on the eagle dynamics forum to build the FOLLOW class to build large WWII airplane formations.

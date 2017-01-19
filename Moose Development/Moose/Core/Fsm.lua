@@ -529,7 +529,8 @@ do -- FSM
   function FSM:_call_handler(handler, params)
     if self[handler] then
       self:E( "Calling " .. handler )
-      return self[handler]( self, unpack(params) )
+      local Value = self[handler]( self, unpack(params) )
+      return Value
     end
   end
   
@@ -551,10 +552,11 @@ do -- FSM
         self:E( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
       end        
   
-      if self:_call_handler("onbefore" .. EventName, params) == false
-      or self:_call_handler("OnBefore" .. EventName, params) == false
-      or self:_call_handler("onleave" .. from, params) == false
-      or self:_call_handler("OnLeave" .. from, params) == false then
+      if ( self:_call_handler("onbefore" .. EventName, params) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
+      or ( self:_call_handler("onleave" .. from, params) == false )
+      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+        self:E( "Cancel Transition" )
         return false
       end
   
@@ -746,7 +748,8 @@ do -- FSM_CONTROLLABLE
   
     if self[handler] then
       self:F3( "Calling " .. handler )
-      return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
   end

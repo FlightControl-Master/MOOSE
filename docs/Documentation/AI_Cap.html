@@ -86,7 +86,7 @@ and automatically engage any airborne enemies that are within a certain range or
 
 <p><img src="..\Presentations\AI_Cap\Dia3.JPG" alt="Process"/></p>
 
-<p>The AI<em>CAP</em>ZONE is assigned a @(Group) and this must be done before the AI<em>CAP</em>ZONE process can be started using the <strong>Start</strong> event.</p>
+<p>The AI<em>CAP</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>CAP</em>ZONE process can be started using the <strong>Start</strong> event.</p>
 
 <p><img src="..\Presentations\AI_Cap\Dia4.JPG" alt="Process"/></p>
 
@@ -186,6 +186,8 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
     <li><strong><a href="https://forums.eagle.ru/member.php?u=90530">Quax</a></strong>: Concept, Advice &amp; Testing.</li>
     <li><strong><a href="https://forums.eagle.ru/member.php?u=62835">Pikey</a></strong>: Concept, Advice &amp; Testing.</li>
     <li><strong><a href="http://forums.eagle.ru:8080/member.php?u=75036">Gunterlund</a></strong>: Test case revision.</li>
+    <li>**<a href="http://forums.eagle.ru/member.php?u=3829">Whisper</a>: Testing.</li>
+    <li>**<a href="https://forums.eagle.ru/member.php?u=125166">Delta99</a>: Testing. </li>
 </ul>
 
 <h3>Authors:</h3>
@@ -246,12 +248,6 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Destroy">AI_CAP_ZONE:Destroy()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Destroy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).DetectUnits">AI_CAP_ZONE.DetectUnits</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -348,12 +344,6 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeFired">AI_CAP_ZONE:OnBeforeFired(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Fired.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnDead">AI_CAP_ZONE:OnDead(EventData)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -575,20 +565,6 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
 <dd>
 	
 <p>Synchronous Event Trigger for Event Destroy.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(AI_CAP_ZONE).DetectUnits" >
-<strong>AI_CAP_ZONE.DetectUnits</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
@@ -1134,27 +1110,6 @@ The To State string.</p>
 <p><em>#boolean:</em>
 Return false to cancel Transition.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).OnDead" >
-<strong>AI_CAP_ZONE:OnDead(EventData)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
