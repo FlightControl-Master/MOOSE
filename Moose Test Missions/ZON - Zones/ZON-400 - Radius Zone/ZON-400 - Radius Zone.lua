@@ -7,7 +7,8 @@ local GroupInside = GROUP:FindByName( "Test Inside Polygon" )
 local GroupOutside = GROUP:FindByName( "Test Outside Polygon" )
 
 local House = STATIC:FindByName( "House" )
-local ZoneA = ZONE_RADIUS:New( "Zone A", House:GetPointVec2(), 300 ):SmokeZone( SMOKECOLOR.White, 90 )
+local ZoneA = ZONE_RADIUS:New( "Zone A", House:GetVec2(), 300 )
+ZoneA:SmokeZone( SMOKECOLOR.White, 90 )
 
 Messager = SCHEDULER:New( nil,
   function()
