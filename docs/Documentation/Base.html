@@ -202,6 +202,19 @@ The <a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> structure co
     <li><a href="##(BASE).GetClassNameAndID">BASE.GetClassNameAndID</a>(): Gets the name and ID of the object.</li>
 </ul>
 
+<h2>1.5) All objects derived from BASE can have "States"</h2>
+
+<p>A mechanism is in place in MOOSE, that allows to let the objects administer <strong>states</strong>. 
+States are essentially properties of objects, which are identified by a <strong>Key</strong> and a <strong>Value</strong>.
+The method <a href="##(BASE).SetState">BASE.SetState</a>() can be used to set a Value with a reference Key to the object.
+To <strong>read or retrieve</strong> a state Value based on a Key, use the <a href="##(BASE).GetState">BASE.GetState</a> method.
+These two methods provide a very handy way to keep state at long lasting processes.
+Values can be stored within the objects, and later retrieved or changed when needed.
+There is one other important thing to note, the <a href="##(BASE).SetState">BASE.SetState</a>() and <a href="##(BASE).GetState">BASE.GetState</a> methods
+receive as the <strong>first parameter the object for which the state needs to be set</strong>.
+Thus, if the state is to be set for the same object as the object for which the method is used, then provide the same
+object name to the method.</p>
+
 <h2>1.10) BASE Inheritance (tree) support</h2>
 
 <p>The following methods are available to support inheritance:</p>
@@ -520,9 +533,9 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).GetState">BASE:GetState(Object, StateName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetState">BASE:GetState(Object, Key, Value)</a></td>
 		<td class="summary">
-
+<p>Get a Value given a Key from the Object.</p>
 </td>
 		</tr>
 		<tr>
@@ -544,9 +557,9 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).SetState">BASE:SetState(Object, StateName, State)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SetState">BASE:SetState(Object, Key, Value)</a></td>
 		<td class="summary">
-
+<p>Set a state or property of the Object given a Key and a Value.</p>
 </td>
 		</tr>
 		<tr>
@@ -1746,26 +1759,42 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 <dt>
 
 <a id="#(BASE).GetState" >
-<strong>BASE:GetState(Object, StateName)</strong>
+<strong>BASE:GetState(Object, Key, Value)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Get a Value given a Key from the Object.</p>
 
+	
+<p>Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Object </em></code>: </p>
+<p><code><em> Object </em></code>: 
+The object that holds the Value set by the Key.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> StateName </em></code>: </p>
+<p><code><em> Key </em></code>: 
+The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Value </em></code>: 
+The value to is stored in the Object.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+
+<p>The Value retrieved.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1839,31 +1868,52 @@ Child</p>
 <dt>
 
 <a id="#(BASE).SetState" >
-<strong>BASE:SetState(Object, StateName, State)</strong>
+<strong>BASE:SetState(Object, Key, Value)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Set a state or property of the Object given a Key and a Value.</p>
 
+	
+<p>Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> Object </em></code>: </p>
+<p><code><em> Object </em></code>: 
+The object that will hold the Value set by the Key.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> StateName </em></code>: </p>
+<p><code><em> Key </em></code>: 
+The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!</p>
 
 				</li>
 				<li>
 				
-<p><code><em> State </em></code>: </p>
+<p><code><em> Value </em></code>: 
+The value to is stored in the object.</p>
 
 				</li>
 		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+
+<p>The Value set.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The Key was not found and thus the Value could not be retrieved.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
