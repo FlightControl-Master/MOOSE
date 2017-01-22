@@ -239,6 +239,7 @@ end
 function COMMANDCENTER:MessageToCoalition( Message )
 
   local CCCoalition = self:GetPositionable():GetCoalition()
+    --TODO: Fix coalition bug!
     self:GetPositionable():MessageToBlue( Message , 20, CCCoalition )
 
 end
