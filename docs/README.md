@@ -1,10 +1,23 @@
-# 1) Context
+# 1) MOOSE framework
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
 MOOSE works with DCS world 1.5. and 2.0.
 
 ![MOOSE Banner](Presentations\MOOSE\Dia1.JPG)
+
+MOOSE defines **Classes**, which are definitions that combine **Methods** and **Variables** or **Properties** as one encapsulated structure.
+Mission Designers can what we call **instantiate objects** from these MOOSE classes.
+
+An example of what this means is shortly explained as follows using the SPAWN class within MOOSE, which spawns new groups into your mission.
+The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
+
+```local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject from the SPAWN class, using the :New method constructor to instantiate a new SPAWN object searching for the GroupName as the late activated group defined within your Mission Editor.  
+-- Nothing is spawned yet..., so let's use now the SpawnObject to spawn a new GROUP.
+
+local SpawnGroup = SpawnObject:Spawn() -- Here we use the :Spawn() method of the SPAWN class. This method creates a new group from the GroupName template as defined within the Mission Editor.
+```
+
 
 ## 1.1) MOOSE framework goal
 
@@ -18,29 +31,40 @@ It is the ambition to grow this framework as a de-facto standard for mission des
 
 You can find the source of [MOOSE framework on GITHUB](https://github.com/FlightControl-Master/MOOSE/). 
 It is free for download and usage, but it is under license of the GNU open source 3.0 license policy.
-The GITHUB service is meant to control the development of the MOOSE framework from within the community.
-It support a structured approval process, and enfoces a release managed distribution and deployment.
+The MOOSE development uses the GITHUB service to enforce and control a structured development within a growing community.
+GITHUB enforces a structured approval process, release and change management, and a communicative distribution and deployment.
 The MOOSE framework development is considered an open source project, where contributors are welcome to contribute on the development.
-Some key users have already started with this process.
+Some key users have already started with this process. Contact me if you're interested to contribute.
 
-# 2) Installation of tools and sync the MOOSE framework.
+## 1.3) Eclipse LDT
 
-There is a complete installation guide as part of this documentation.
+MOOSE utilizes the Eclipse Lua Development Tools. As a result, the MOOSE framework is documented using the luadocumentor standard.
+As a result, every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
+What that means is that 
+
+# 2) Installation of tooling and synchronize the MOOSE framework from the MOOSE development site.
+
+There is a complete installation guide as part of this documentation.  
+
 [Click here for the installation guide of the MOOSE framework](Installation.html).
 
 # 3) MOOSE framework support channels
 
-MOOSE is broadcasted, documented and supported through various social media channels.
+MOOSE is broadcasted, documented and supported through various social media channels.  
+
 [Click here for the communities guide of the MOOSE framework](Communities.html).
 
-# 4) Test Missions
+# 4) Test or Demonstration Missions
 
-The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), that you can try out and helps you to code. 
-You can copy/paste code the code snippets into your missions, as it accellerates your mission developments.
+The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), 
+that you can try out and helps you to code. These test missions provide examples of defined use cases how the MOOSE
+framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
+The .lua file contains the mission script file that shows how the use case was implemented.
+You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
+You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create
+more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
 
-These exact test missions are demonstrated at the demo videos in the YouTube channel.
-
-Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
+These exact test missions are also demonstrated at the demo videos in the YouTube channel.
 
 # 5) MOOSE Directory Structure
 
@@ -199,8 +223,11 @@ Therefore a list of credits to all who have or are contributing (this list will 
 You'll notice that within this framework, there are functions used from mist. I've taken the liberty to copy those atomic mist functions that are very nice and useful, and used those. 
 
 **Grimes**
-Without the effort of Grimes with MIST and his continuous documentation of the DCS API, the development of MOOSE would not have been possible. 
-MOOSE is not replacing MIST, but is compensating it.
+Without the effort of Grimes with MIST and his continuous documentation of the DCS API, the development of MOOSE would not have been possible.  
+MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.  
+The documentation of the [DCS API] is the work of Grimes. Please consult his documentation in case of any question concerning the DCS API level.
+
+
 
 **Prof_hilactic**
 SEAD Defenses. I've taken the script, and reworded it to fit within MOOSE. The script within MOOSE is hardly recognizable anymore from the original. Find here the posts: http://forums.eagle.ru/showpost.php?...59&postcount=1

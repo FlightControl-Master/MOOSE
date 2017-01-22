@@ -63,7 +63,8 @@ We will link into that directory and load the Project properties.
 3. Type the Project Name: **Moose_Framework**.
 4. In the sub-box "Project Contents", select the option Create Project at existing location (from existing source). 
 5. Browse to the local MOOSE directory (press on the Browse button) and select the root directory of your local MO.OSE directory on your PC. Press OK.
-6. You're back at the "New Project" dialog box. Select the Next button. (All the other settings are by default ok).
+6. You're back at the "New Project" dialog box. Press the **Next** button below the dialog box. 
+__(All the other settings are by default ok)__.
 7. You should see now a dialog box with the following properties. 
 Note that the Moose Development/Moose directory is flagged as the **Source Directory*. (It is listed totally on top.) 
 This is important because it will search in the files in this directory and sub directories for lua documentator enabled lua files. 
@@ -71,10 +72,10 @@ This will enable the intellisense of the MOOSE repository!
 
 ![LDT Finish](Installation/LDT_Moose_Framework_Finish.JPG)
 
-8. Press the Finish button.
+8. Press the **Finish** button.
 
 As a result, when you browse to the Script Explorer, you'll see the following:
 
 ![LDT_Script_Explorer](Installation/LDT_Script_Explorer.JPG)
 
-**You have setup your Moose_Framework project LDT environment!**
+**Congratulations! You have now setup your Moose_Framework project LDT environment!**
