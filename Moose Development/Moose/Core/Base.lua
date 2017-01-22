@@ -115,6 +115,19 @@
 --   * @{#BASE.GetClassName}(): Gets the name of the object, which is the name of the class the object was instantiated from.
 --   * @{#BASE.GetClassNameAndID}(): Gets the name and ID of the object.
 -- 
+-- ## 1.5) All objects derived from BASE can have "States"
+-- 
+-- A mechanism is in place in MOOSE, that allows to let the objects administer **states**. 
+-- States are essentially properties of objects, which are identified by a **Key** and a **Value**.
+-- The method @{#BASE.SetState}() can be used to set a Value with a reference Key to the object.
+-- To **read or retrieve** a state Value based on a Key, use the @{#BASE.GetState} method.
+-- These two methods provide a very handy way to keep state at long lasting processes.
+-- Values can be stored within the objects, and later retrieved or changed when needed.
+-- There is one other important thing to note, the @{#BASE.SetState}() and @{#BASE.GetState} methods
+-- receive as the **first parameter the object for which the state needs to be set**.
+-- Thus, if the state is to be set for the same object as the object for which the method is used, then provide the same
+-- object name to the method.
+-- 
 -- ## 1.10) BASE Inheritance (tree) support
 -- 
 -- The following methods are available to support inheritance:
@@ -706,25 +719,41 @@ function BASE:onEvent(event)
 	end
 end
 
-function BASE:SetState( Object, StateName, State )
+--- Set a state or property of the Object given a Key and a Value.
+-- Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.
+-- @param #BASE self
+-- @param Object The object that will hold the Value set by the Key.
+-- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
+-- @param Value The value to is stored in the object.
+-- @return The Value set.
+-- @return #nil The Key was not found and thus the Value could not be retrieved.
+function BASE:SetState( Object, Key, Value )
 
   local ClassNameAndID = Object:GetClassNameAndID()
 
   self.States[ClassNameAndID] = self.States[ClassNameAndID] or {}
-  self.States[ClassNameAndID][StateName] = State
-  self:T2( { ClassNameAndID, StateName, State } )
+  self.States[ClassNameAndID][Key] = Value
+  self:T2( { ClassNameAndID, Key, Value } )
   
-  return self.States[ClassNameAndID][StateName]
+  return self.States[ClassNameAndID][Key]
 end
-  
-function BASE:GetState( Object, StateName )
+
+
+--- Get a Value given a Key from the Object.
+-- Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.
+-- @param #BASE self
+-- @param Object The object that holds the Value set by the Key.
+-- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
+-- @param Value The value to is stored in the Object.
+-- @return The Value retrieved.
+function BASE:GetState( Object, Key )
 
   local ClassNameAndID = Object:GetClassNameAndID()
 
   if self.States[ClassNameAndID] then
-    local State = self.States[ClassNameAndID][StateName] or false
-    self:T2( { ClassNameAndID, StateName, State } )
-    return State
+    local Value = self.States[ClassNameAndID][Key] or false
+    self:T2( { ClassNameAndID, Key, Value } )
+    return Value
   end
   
   return nil

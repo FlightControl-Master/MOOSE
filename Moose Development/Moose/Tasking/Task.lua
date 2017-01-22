@@ -630,7 +630,7 @@ function TASK.MenuTaskAbort( MenuParam )
   local self = MenuParam.self
   local TaskGroup = MenuParam.TaskGroup
   
-  --self:AssignToGroup( TaskGroup )
+  self:Abort()
 end
 
 
