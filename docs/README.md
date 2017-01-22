@@ -6,7 +6,7 @@ MOOSE works with DCS world 1.5. and 2.0.
 
 ![MOOSE Banner](Presentations\MOOSE\Dia1.JPG)
 
-MOOSE defines **Classes**, which are definitions that combine **Methods** and **Variables** or **Properties** as one encapsulated structure.
+MOOSE is an Object Oriented framework and defines **Classes**, which are components that combine **Methods** and **Variables**/**Properties** as one encapsulated structure (table).
 Mission Designers can what we call **instantiate objects** from these MOOSE classes.
 
 An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
@@ -18,7 +18,6 @@ local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject f
 
 local SpawnGroup = SpawnObject:Spawn() -- Here we use the :Spawn() method of the SPAWN class. This method creates a new group from the GroupName template as defined within the Mission Editor.
 ```
-
 
 ## 1.1) MOOSE framework goal
 
@@ -41,7 +40,9 @@ Some key users have already started with this process. Contact me if you're inte
 
 MOOSE utilizes the Eclipse Lua Development Tools. As a result, the MOOSE framework is documented using the luadocumentor standard.
 As a result, every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
-What that means is that 
+What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes) will list the methods and properties of that class interactively while coding ...
+
+![Intellisense](Usage/Intellisense.JPG)
 
 # 2) Installation of tooling and synchronize the MOOSE framework from the MOOSE development site.
 
@@ -98,6 +99,25 @@ Refer to the tool at [Moose Mission Setup\Moose Mission Update](https://github.c
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
 ![MOOSE framework](Presentations\MOOSE\Dia2.JPG)
+
+MOOSE is an Object Oriented framework and defines **Classes**, which are components that combine **Methods** and **Variables**/**Properties** as one encapsulated structure (table).
+Mission Designers can what we call **instantiate objects** from these MOOSE classes.
+
+An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
+The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
+
+```lua
+local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject from the SPAWN class, using the :New method constructor to instantiate a new SPAWN object searching for the GroupName as the late activated group defined within your Mission Editor.  
+-- Nothing is spawned yet..., so let's use now the SpawnObject to spawn a new GROUP.
+
+local SpawnGroup = SpawnObject:Spawn() -- Here we use the :Spawn() method of the SPAWN class. This method creates a new group from the GroupName template as defined within the Mission Editor.
+```
+
+MOOSE Classes derive or inherit from each other, that means, within MOOSE there is an **Inheritance** structure where **inherited MOOSE Classes** are re-using properties and methods from the **Parent MOOSE Class**.
+This powerful concept is used everywhere within the MOOSE framework. The main (Parent) Class in the MOOSE framework is the BASE class. Every MOOSE Class is derived from this top BASE Class.
+So is also the SPAWN class derived from the BASE class. The BASE class provides powerful methods for debugging, event handling and implements the class handling logic.
+As a normal MOOSE user, you won't implement any code using inheritance but just know that the inheritance structure is omni present in the intellisense and documentation.
+You'll need to browse to the right MOOSE Class within the inheritance tree structure to identify which methods are properties are defined for which class.
 
 ## 7.1) MOOSE Core Classes
 
