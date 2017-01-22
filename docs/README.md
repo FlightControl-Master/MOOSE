@@ -7,7 +7,9 @@ MOOSE works with DCS world 1.5. and 2.0.
 ![MOOSE Banner](Presentations\MOOSE\Dia1.JPG)
 
 MOOSE is an Object Oriented framework and defines **Classes**, which are components that combine **Methods** and **Variables**/**Properties** as one encapsulated structure (table).
-Mission Designers can what we call **instantiate objects** from these MOOSE classes.
+Mission Designers can **instantiate objects** from these MOOSE classes, which declares a variable that contains a reference to the instantiated object from the MOOSE Class.
+So, you can use that variable to use its methods and properties to build your logic. Note that in OO lua, a methods are addressed using the ":" notation, 
+because a "self" variable is passed that contains the object reference to that function! 
 
 An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
 The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
@@ -29,10 +31,10 @@ MOOSE is NOT meant to be a one-man show, it is meant to evolve within a growing 
 Within the community, key users will start supporting, documenting, explaining and even creating new classes for the framework.
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
-## 1.2) MOOSE framework at GITHIB
+## 1.2) MOOSE framework at GITHUB
 
 You can find the source of [MOOSE framework on GITHUB](https://github.com/FlightControl-Master/MOOSE/). 
-It is free for download and usage, but it is under license of the GNU open source 3.0 license policy.
+It is free for download and usage, but it is under license of the GNU 3.0 open source license policy.
 The MOOSE development uses the GITHUB service to enforce and control a structured development within a growing community.
 GITHUB enforces a structured approval process, release and change management, and a communicative distribution and deployment.
 The MOOSE framework development is considered an open source project, where contributors are welcome to contribute on the development.
@@ -45,6 +47,16 @@ As a result, every class, method and variable is documented within the source, a
 What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes) will list the methods and properties of that class interactively while coding ...
 
 ![Intellisense](Usage/Intellisense.JPG)
+
+## 1.4) LUA training
+
+In order to efficiently use the MOOSE framework, it is highly recommended that you learn a couple of basic principles of lua.
+I recommend you learn the basic lua principles following this [lua tutorial](https://www.tutorialspoint.com/lua).
+We're not asking you to become an expert in lua, leave that to the experts, but, you'll need to have some basic lua coding 
+knowledge to "understand" the code, and also, to understand the syntax.  
+
+**Therefore, I suggest you walk through this [lua quick guide](https://www.tutorialspoint.com/lua/lua_quick_guide.htm)**.  
+Ignore the lua environment setup. DCS comes with a pre-defined lua environment.
 
 # 2) Installation of tooling and synchronize the MOOSE framework from the MOOSE development site.
 
