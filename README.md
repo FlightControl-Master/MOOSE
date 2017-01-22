@@ -1,17 +1,19 @@
 # Context
 
+
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
-MOOSE is currently still in alpha version, but will evolve over time. Right now, it has been updated to work with DCS world 1.5. and 2.0.
+MOOSE is designed to work with DCS world 1.5. and 2.0.
 
-You can find the source of MOOSE here on GITHUB. It is free for download: 
-https://github.com/FlightControl-Master/MOOSE/
-
-Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
+![Banner](Presentations\MOOSE\Dia1.JPG)
 
 # Goals
 
 The goal of MOOSE is to allow mission designers to enhance their scripting with mission orchestration objects, which can be instantiated from defined classes within the framework. This will allow to write mission scripts with minimal code embedded. Of course, the richness of the framework will determine the richness of the misson scenarios. We can expect that MOOSE will evolve over time, as more missions will be designed within the framework.
+
+## GitHub Repository
+
+You can find the source of [MOOSE on GITHUB](https://github.com/FlightControl-Master/MOOSE/). It is free for download. 
 
 # Installation of tools and sync the MOOSE repository.
 
@@ -30,26 +32,60 @@ As a result, you have installed the MOOSE repository on your PC, and it is fully
 2. Select the workspace to be stored at your user id.
 3. Select from the Menu: File -> New -> Lua Project.
 
-![LDT_New_Project](Setup\LDT_New_Project.JPG)
+![LDT_New_Project](Setup/LDT_New_Project.JPG)
 
 4. A dialog box is shown.
 
-![LDT_Project](Setup\LDT_Project.JPG)
+![LDT_Project](Setup/LDT_Project.JPG)
 
 5. Type the Project Name: Moose_Framework
 6. In the sub-box Project Contents, select the option Create Project at existing location (from existing source). Browse to the local MOOSE directory and select the root directory of MOOSE.
 7. Select the Next button.
 8. You should see now a dialog box with the following properties. Note that the Moose_Framework/Moose Development/Moose directory is flagged as the **Source Directory*. This is important because it will search in the files in this directory and sub directories for lua documentator enabled lua files. It will make the intellisense work!
 
-![LDT Finish](Setup\LDT_Moose_Framework_Finish.JPG)
+![LDT Finish](Setup/LDT_Moose_Framework_Finish.JPG)
 
 9. Press the Finish button.
 
 As a result, when you browse to the Script Explorer, you'll see the following:
 
-![LDT_Script_Explorer](Setup\LDT_Script_Explorer.JPG)
+![LDT_Script_Explorer](Setup/LDT_Script_Explorer.JPG)
+
+## YouTube Broadcast Channel
+
+MOOSE has a [broadcast channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg/playlists) on youtube. 
+These videos are grouped into playlists, which explain specific MOOSE capabilities, 
+and gradually build up the "understanding" and "what is possible" to do with the MOOSE framework.
+I really, really encourage all to watch the explanation videos.
+
+Some mandatory videos to watch are:
+
+  * [MOOSE Introduction](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1JEtVcyf9sazUV5_fGICz4)
+
+  * [MOOSE Setup](https://www.youtube.com/watch?v=-Hxae3mTCE8&t=159s&index=1&list=PL7ZUrU4zZUl0riB9ULVh-bZvFlw1_Wym2)
+  * [MOOSE Spawning](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+  * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
+  * [MOOSE Task Dispatching](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3I6ieFM-cjey-rncF1ktNI)
+
+## MOOSE community
+
+There is a MOOSE community at various places out there. The main community can be found at slack.com.
+Various channels and people are helping each other out using the framework.
+If you would like to join, please contact me on skype: FlightControl_Skype.
+
+
+## Test Missions
+
+The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), that you can try out and helps you to code. 
+You can copy/paste code the code snippets into your missions, as it accellerates your mission developments.
+
+These exact test missions are demonstrated at the demo videos in the YouTube channel.
+
+Note: MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.
 
 # MOOSE Directory Structure
+
+As you can see at the GitHub site, the MOOSE framework is devided into a couple of directories:
 
 * Moose Development: Contains the collection of lua files that define the MOOSE classes. You can use this directory to build the dynamic luadoc documentation intellisense in your eclipse development environment.
 * Moose Mission Setup: Contains the Moose.lua file to be included in your scripts when using MOOSE classes (see below the point Mission Design with Moose).
@@ -73,10 +109,11 @@ IMPORTANT NOTE: When a new version of MOOSE is released, you'll have to UPDATE t
 This can be a tedious task, and for this purpose, a tool has been developed that will update the Moose.lua files automatically within your missions.
 Refer to the tool at [Moose Mission Setup\Moose Mission Update](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Mission%20Setup/Moose%20Mission%20Update) directory for further information included in the [READ.ME]() file.
 
-
 # MOOSE Classes
 
 The following classes are currently embedded within MOOSE and can be included within your mission scripts:
+
+![Classes](Presentations\MOOSE\Dia2.JPG)
 
 ## MOOSE Core Classes
 
@@ -140,6 +177,8 @@ The STATIC class derives from the POSITIONABLE class, thus contains also the pos
 
 ## MOOSE Functional Classes
 
+MOOSE Functional Classes provide various functions that are useful in mission design.
+
 * [SPAWN](Documentation/Spawn.html): Spawn new groups (and units) during mission execution.
 
 * [ESCORT](Moose Training/Documentation/Escort.html): Makes groups consisting of helicopters, airplanes, ground troops or ships within a mission joining your flight. You can control these groups through the ratio menu during your flight. Available commands are around: Navigation, Position Hold, Reporting (Target Detection), Attacking, Assisted Attacks, ROE, Evasion, Mission Execution and more ...
@@ -150,22 +189,45 @@ The STATIC class derives from the POSITIONABLE class, thus contains also the pos
 
 ## MOOSE AI Controlling Classes
 
+MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
+These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
+
 * [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
 * [AI_PATROLZONE](Documentation/AI_PatrolZone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
 
-* [FAC](Moose Training/Documentation/Fac.html): Using the DETECTION_BASE derived classes, detected objects can be reported in different ways to a set of clients (SET_CLIENT). FAC_BASE derived classes will provide target detection reporting and control using the radio menu. 
+* [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
-* [FOLLOW](Moose Training/Documentation/Follow.html): Build large air formations using the FOLLOW class.
+## MOOSE Tasking Classes
 
-# MOOSE Tutorials and Examples
+MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
+Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
+Within each MISSION, various TASKs can be defined.
+Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a UNIT) within the simulator needs to follow and accomplish.
 
-You can download [test missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Test%20Missions) to have examples and learn the syntax and usage of the MOOSE classes.
+* [COMMANDCENTER](Documentation/CommandCenter.html): Orchestrates various logical MISSIONs for a coalition.
 
-There are [Video Tutorials](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) on my YOUTUBE channel on which you can learn some coding aspects with mission execution demos, as well as some of the tooling and internal mechanisms within MOOSE.
+* [MISSION](Documentation/Mission.html): Each MISSION has various TASKs to be executed and accomplished by players.
 
+* [TASK](Documentation/Task.html): Each TASK has a status, and has a TASK ACTION flow for each Player acting and executing the TASK.
 
-In the triggers section, there is a flag (9999) that will decide how MOOSE will be loaded. When flag 9999 is set, MOOSE will be dynamically loaded. When flag 9999 is off, MOOSE will be loaded embedded. Note that when loaded embedded, **your mission must include the last Moose_Embedded.lua file**. So, ensure that the last file is included in the DO SCRIPT section when MOOSE got an update! 
+* [TASK_SEAD](Documentation/Task_SEAD.html): Models a SEAD Task, where a Player is routed towards an attack zone, and various SEADing targets need to be eliminated.
+
+* [TASK_A2G](Documentation/Task_A2G.html): Models a A2G Task, where a Player is routed towards an attack zone, and various A2G targets need to be eliminated.
+
+## MOOSE Action Classes
+
+MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
+For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.
+
+* [ACT_ASSIGN](Documentation/Assign.html): Mechanism to accept a TASK by a player. For example, assign the task only after the player accepts the task using the menu.
+
+* [ACT_ROUTE](Documentation/Route.html): Mechanisms to route players to zones or any other positionable coordinate. For example, route a player towards a zone.
+
+* [ACT_ACCOUNT](Documentation/Account.html): Mechanisms to account various events within the simulator. For example, account the dead events, accounting dead units within a Target SET within a ZONE.
+
+* [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
+
 
 # Credits
 
@@ -188,8 +250,8 @@ Working together with James has resulted in the creation of the AIBALANCER class
 **Stuka (Danny)**
 Working together with Danny has resulted in the MISSILETRAINER class. Stuka has shared his ideas and together we made a design. Together with the 476 virtual team, we tested this CLASS, and got much positive feedback!
 
-**Mechanic (G�bor)**
-Worked together with G�bor to create the concept of the DETECTION and FAC classes. Mechanic shared his ideas and concepts to group detected targets into sets within detection zones... Will continue to work with G�bor to workout the DETECTION and FAC classes.
+**Mechanic (Gabor)**
+Worked together with Gabor to create the concept of the DETECTION and FAC classes. Mechanic shared his ideas and concepts to group detected targets into sets within detection zones... Will continue to work with G�bor to workout the DETECTION and FAC classes.
 
 **Shadoh**
 Interacted on the eagle dynamics forum to build the FOLLOW class to build large WWII airplane formations.

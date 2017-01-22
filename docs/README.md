@@ -15,6 +15,42 @@ The goal of MOOSE is to allow mission designers to enhance their scripting with 
 
 You can find the source of [MOOSE on GITHUB](https://github.com/FlightControl-Master/MOOSE/). It is free for download. 
 
+# Installation of tools and sync the MOOSE repository.
+
+1. Install [Eclipse LDT](https://eclipse.org/ldt) on your Windows 64 bit system. This is a free lua editor based on the Eclipse ecosystem. The advantage of LDT is that it greatly enhances your lua development environment with intellisense, better search capabilities etc. You may have to install [java](https://www.java.com/en/download) first. Ensure you install the **64-bit versions** of both Eclipse LDT and java!
+2. Install [GITHUB](https://desktop.github.com) desktop. We use GITHUB desktop to sync the moose repository to your system.
+3. Link the MOOSE repository on GITHUB to your freshly installed GITHUB desktop. Do this by browing to the MOOSE repository at GITHUB, and select the green button **Clone or Download** -> **Open in Desktop**.
+4. Specify a local directory on your PC where you want to store the MOOSE repository contents.
+5. Sync the MOOSE repository to a defined local MOOSE directory on your PC using GITHUB desktop (press the sync button).
+6. On your local MOOOSE directory, execute the batch file [DCS_Folder_Sync.bat](https://github.com/FlightControl-Master/MOOSE/blob/master/DCS_Folder_Sync.bat). This will sync the dcs folder in the MOOSE repository from the submodule DCS API.
+
+As a result, you have installed the MOOSE repository on your PC, and it is fully synced.
+
+# Setup Eclipse LDT to work with MOOSE and activate your intellisense etc.
+
+1. Open Eclipse LDT.
+2. Select the workspace to be stored at your user id.
+3. Select from the Menu: File -> New -> Lua Project.
+
+![LDT_New_Project](Setup/LDT_New_Project.JPG)
+
+4. A dialog box is shown.
+
+![LDT_Project](Setup/LDT_Project.JPG)
+
+5. Type the Project Name: Moose_Framework
+6. In the sub-box Project Contents, select the option Create Project at existing location (from existing source). Browse to the local MOOSE directory and select the root directory of MOOSE.
+7. Select the Next button.
+8. You should see now a dialog box with the following properties. Note that the Moose_Framework/Moose Development/Moose directory is flagged as the **Source Directory*. This is important because it will search in the files in this directory and sub directories for lua documentator enabled lua files. It will make the intellisense work!
+
+![LDT Finish](Setup/LDT_Moose_Framework_Finish.JPG)
+
+9. Press the Finish button.
+
+As a result, when you browse to the Script Explorer, you'll see the following:
+
+![LDT_Script_Explorer](Setup/LDT_Script_Explorer.JPG)
+
 ## YouTube Broadcast Channel
 
 MOOSE has a [broadcast channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg/playlists) on youtube. 
