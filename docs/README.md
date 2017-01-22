@@ -9,10 +9,11 @@ MOOSE works with DCS world 1.5. and 2.0.
 MOOSE defines **Classes**, which are definitions that combine **Methods** and **Variables** or **Properties** as one encapsulated structure.
 Mission Designers can what we call **instantiate objects** from these MOOSE classes.
 
-An example of what this means is shortly explained as follows using the SPAWN class within MOOSE, which spawns new groups into your mission.
+An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
 The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
 
-```local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject from the SPAWN class, using the :New method constructor to instantiate a new SPAWN object searching for the GroupName as the late activated group defined within your Mission Editor.  
+```lua
+local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject from the SPAWN class, using the :New method constructor to instantiate a new SPAWN object searching for the GroupName as the late activated group defined within your Mission Editor.  
 -- Nothing is spawned yet..., so let's use now the SpawnObject to spawn a new GROUP.
 
 local SpawnGroup = SpawnObject:Spawn() -- Here we use the :Spawn() method of the SPAWN class. This method creates a new group from the GroupName template as defined within the Mission Editor.
