@@ -231,7 +231,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition, Name)</a></td>
 		<td class="summary">
 <p>Send a message to a coalition.</p>
 </td>
@@ -851,7 +851,7 @@ The client object receiving the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToCoalition" >
-<strong>POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</strong>
+<strong>POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -877,13 +877,14 @@ The duration of the message.</p>
 				</li>
 				<li>
 				
-<p><code><em>#string Name </em></code>: 
-(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition)">Dcs.DCScoalition#coalition</a> MessageCoalition </em></code>: 
+The Coalition receiving the message.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> MessageCoalition </em></code>: </p>
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
 
 				</li>
 		</ul>
