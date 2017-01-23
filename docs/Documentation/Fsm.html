@@ -240,7 +240,7 @@ Processing will just continue. Synchronous Event Trigger methods are useful to c
 <p>The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.</p>
 
 <pre><code>  function FSM:OnAfterEvent( From, Event, To, Amount )
-    self:E( { Amount = Amount } ) 
+    self:T( { Amount = Amount } ) 
   end
 
   local Amount = 1
@@ -292,7 +292,7 @@ The next code implements this through the event handling method <strong>OnAfterS
 <p><img src="..\Presentations\FSM\Dia7.JPG" alt="Transition Flow"/></p>
 
 <pre><code> function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
-   self:E( { From, Event, To, FsmUnit } )
+   self:T( { From, Event, To, FsmUnit } )
 
    if From == "Green" then
      FsmUnit:Flare(FLARECOLOR.Green)
@@ -317,7 +317,7 @@ and one additional parameter that was given when the event was triggered, which 
 
 <p>For debugging reasons the received parameters are traced within the DCS.log.</p>
 
-<pre><code>    self:E( { From, Event, To, FsmUnit } )
+<pre><code>    self:T( { From, Event, To, FsmUnit } )
 </code></pre>
 
 <p>The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.</p>
