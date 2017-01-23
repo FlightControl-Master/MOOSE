@@ -274,27 +274,30 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
   local PlayerName = PlayerUnit:GetPlayerName()
   local MissionName = Mission:GetName()
 
-  self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+  self:E( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
   
-  local PlayerData = self.Players[PlayerName]
-
-  if not PlayerData.Mission[MissionName] then
-    PlayerData.Mission[MissionName] = {}
-    PlayerData.Mission[MissionName].ScoreTask = 0
-    PlayerData.Mission[MissionName].ScoreMission = 0
+    if not PlayerData.Mission[MissionName] then
+      PlayerData.Mission[MissionName] = {}
+      PlayerData.Mission[MissionName].ScoreTask = 0
+      PlayerData.Mission[MissionName].ScoreMission = 0
+    end
+  
+    self:T( PlayerName )
+    self:T( PlayerData.Mission[MissionName] )
+  
+    PlayerData.Score = self.Players[PlayerName].Score + Score
+    PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+  
+    MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+      Score .. " task score!",
+      30 ):ToAll()
+  
+    self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
-
-  self:T( PlayerName )
-  self:T( PlayerData.Mission[MissionName] )
-
-  PlayerData.Score = self.Players[PlayerName].Score + Score
-  PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
-
-  MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
-    Score .. " task score!",
-    30 ):ToAll()
-
-  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
 end
 
 
