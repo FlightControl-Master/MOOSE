@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170123_1416' ) 
+env.info( 'Moose Generation Timestamp: 20170123_1503' ) 
 local base = _G
 
 Include = {}
@@ -11651,23 +11651,7 @@ end
   
     return self
   end
-  
-  --- Adds a score for the FSM_PROCESS to be achieved.
-  -- @param #FSM_PROCESS self
-  -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
-  -- @param #string ScoreText is a text describing the score that is given according the status.
-  -- @param #number Score is a number providing the score of the status.
-  -- @return #FSM_PROCESS self
-  function FSM_PROCESS:AddScore( State, ScoreText, Score )
-    self:F2( { State, ScoreText, Score } )
-  
-    self.Scores[State] = self.Scores[State] or {}
-    self.Scores[State].ScoreText = ScoreText
-    self.Scores[State].Score = Score
-  
-    return self
-  end
-  
+    
   function FSM_PROCESS:onenterAssigned( ProcessUnit )
     self:T( "Assign" )
   
@@ -11699,14 +11683,14 @@ end
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
-    self:T( self.Scores[To] )
+    self:T( self._Scores[To] )
     -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
-    if self.Scores[To] then
+    if self._Scores[To] then
     
       local Task = self.Task  
       local Scoring = Task:GetScoring()
       if Scoring then
-        Scoring:_AddMissionTaskScore( Task.Mission, ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
+        Scoring:_AddMissionTaskScore( Task.Mission, ProcessUnit, self._Scores[To].ScoreText, self._Scores[To].Score )
       end
     end
   end
@@ -17524,27 +17508,30 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
   local PlayerName = PlayerUnit:GetPlayerName()
   local MissionName = Mission:GetName()
 
-  self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+  self:E( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
   
-  local PlayerData = self.Players[PlayerName]
-
-  if not PlayerData.Mission[MissionName] then
-    PlayerData.Mission[MissionName] = {}
-    PlayerData.Mission[MissionName].ScoreTask = 0
-    PlayerData.Mission[MissionName].ScoreMission = 0
+    if not PlayerData.Mission[MissionName] then
+      PlayerData.Mission[MissionName] = {}
+      PlayerData.Mission[MissionName].ScoreTask = 0
+      PlayerData.Mission[MissionName].ScoreMission = 0
+    end
+  
+    self:T( PlayerName )
+    self:T( PlayerData.Mission[MissionName] )
+  
+    PlayerData.Score = self.Players[PlayerName].Score + Score
+    PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+  
+    MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+      Score .. " task score!",
+      30 ):ToAll()
+  
+    self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
-
-  self:T( PlayerName )
-  self:T( PlayerData.Mission[MissionName] )
-
-  PlayerData.Score = self.Players[PlayerName].Score + Score
-  PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
-
-  MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
-    Score .. " task score!",
-    30 ):ToAll()
-
-  self:ScoreCSV( PlayerName, "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
 end
 
 
