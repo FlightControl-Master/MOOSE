@@ -329,6 +329,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
+-- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )

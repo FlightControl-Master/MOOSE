@@ -43,7 +43,7 @@ Some key users have already started with this process. Contact me if you're inte
 ## 1.3) Eclipse LDT
 
 MOOSE utilizes the Eclipse Lua Development Tools. As a result, the MOOSE framework is documented using the luadocumentor standard.
-As a result, every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
+Every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
 What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes) will list the methods and properties of that class interactively while coding ...
 
 ![Intellisense](Usage/Intellisense.JPG)
@@ -58,19 +58,19 @@ knowledge to "understand" the code, and also, to understand the syntax.
 **Therefore, I suggest you walk through this [lua quick guide](https://www.tutorialspoint.com/lua/lua_quick_guide.htm)**.  
 Ignore the lua environment setup. DCS comes with a pre-defined lua environment.
 
-# 2) Installation of tooling and synchronize the MOOSE framework from the MOOSE development site.
+# 2) Installation
 
 There is a complete installation guide as part of this documentation.  
 
 [Click here for the installation guide of the MOOSE framework](Installation.html).
 
-# 3) MOOSE framework support channels
+# 3) Support Channels
 
 MOOSE is broadcasted, documented and supported through various social media channels.  
 
 [Click here for the communities guide of the MOOSE framework](Communities.html).
 
-# 4) Test or Demonstration Missions
+# 4) Demonstration Missions
 
 The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), 
 that you can try out and helps you to code. These test missions provide examples of defined use cases how the MOOSE
@@ -91,7 +91,7 @@ The MOOSE framework is devided into a couple of directories:
 * Moose Test Missions: Contains a directory structure with Moose Test Missions and examples. In each directory, you will find a miz file and a lua file containing the main mission script.
 * Moose Training: Contains the documentation of Moose generated with luadoc from the Moose source code. The presentations used during the videos in my [youtube channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg), are also to be found here.
 
-# 6) Mission Design with Moose
+# 6) Mission Design with MOOSE
 
 In order to create or design a mission using MOOSE, you'll have to include a file named **Moose.lua**:
 
@@ -108,7 +108,7 @@ IMPORTANT NOTE: When a new version of MOOSE is released, you'll have to UPDATE t
 This can be a tedious task, and for this purpose, a tool has been developed that will update the Moose.lua files automatically within your missions.
 Refer to the tool at [Moose Mission Setup\Moose Mission Update](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Mission%20Setup/Moose%20Mission%20Update) directory for further information included in the [READ.ME]() file.
 
-# 7) MOOSE framework overview
+# 7) MOOSE Framework
 
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
@@ -216,7 +216,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 
 * [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
-## 7.5) MOOSE Tasking Classes
+## 7.5) MOOSE Human Tasking Classes
 
 MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
 Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.

@@ -897,8 +897,8 @@ end
 
 --- FSM function for a TASK
 -- @param #TASK self
--- @param #string Event
 -- @param #string From
+-- @param #string Event
 -- @param #string To
 function TASK:onenterAborted( From, Event, To )
 
@@ -907,12 +907,29 @@ function TASK:onenterAborted( From, Event, To )
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
   
   self:UnAssignFromGroups()
+  
+  self:__Replan( 5 )
 end
 
 --- FSM function for a TASK
 -- @param #TASK self
--- @param #string Event
 -- @param #string From
+-- @param #string Event
+-- @param #string To
+function TASK:onafterReplan( From, Event, To )
+
+  self:E( "Task Replanned" )
+  
+  self:GetMission():GetCommandCenter():MessageToCoalition( "Replanning Task " .. self:GetName() .. "." )
+  
+  self:SetMenu()
+  
+end
+
+--- FSM function for a TASK
+-- @param #TASK self
+-- @param #string From
+-- @param #string Event
 -- @param #string To
 function TASK:onenterFailed( From, Event, To )
 
