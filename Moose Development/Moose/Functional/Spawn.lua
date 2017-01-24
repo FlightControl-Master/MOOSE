@@ -47,6 +47,9 @@
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
+--   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOff}(): Turns the AI Off when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOnOff}(): Turns the AI On or Off when spawning the new @{Group} object.
 -- 
 -- ## 1.3) SPAWN spawning methods
 -- 
@@ -238,6 +241,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -275,6 +279,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+    self.AIOnOff = true                               -- The AI is on by default when spawning a group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -565,6 +570,31 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	return self
 end
 
+--- Turns the AI On or Off for the @{Group} when spawning.
+-- @param #SPAWN self
+-- @param #boolean AIOnOff
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitAIOnOff( AIOnOff )
+
+  self.AIOnOff = AIOnOff
+  return self
+end
+
+--- Turns the AI On for the @{Group} when spawning.
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitAIOn()
+
+  return self:InitAIOnOff( true )
+end
+
+--- Turns the AI Off for the @{Group} when spawning.
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitAIOff()
+
+  return self:InitAIOnOff( true )
+end
 
 
 --- Will spawn a group based on the internal index.
@@ -660,6 +690,14 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       self:T3( SpawnTemplate.name )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
+			
+			local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Wrapper.Group#GROUP
+			
+			--TODO: Need to check if this function doesn't need to be scheduled, as the group may not be immediately there!
+      if SpawnGroup then
+      
+			  SpawnGroup:SetAIOnOff( self.AIOnOff )
+			end
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
