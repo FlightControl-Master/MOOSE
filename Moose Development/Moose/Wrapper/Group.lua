@@ -65,6 +65,35 @@
 --   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
 --   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
 --   
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2017-01-24: GROUP:**SetAIOnOff( AIOnOff )** added.  
+-- 
+-- 2017-01-24: GROUP:**SetAIOn()** added.  
+-- 
+-- 2017-01-24: GROUP:**SetAIOff()** added.  
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+-- 
 -- @module Group
 -- @author FlightControl
 
@@ -586,16 +615,16 @@ do -- AI methods
 
   --- Turns the AI On or Off for the GROUP.
   -- @param #GROUP self
-  -- @param #boolean OnOff The value true turns the AI On, the value false turns the AI Off.
+  -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
   -- @return #GROUP The GROUP.
-  function GROUP:SetAIOnOff( OnOff )
+  function GROUP:SetAIOnOff( AIOnOff )
   
     local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
     
     if DCSGroup then
       local DCSController = DCSGroup:getController() -- Dcs.DCSController#Controller
       if DCSController then
-        DCSController:setOnOff( OnOff )
+        DCSController:setOnOff( AIOnOff )
         return self
       end
     end

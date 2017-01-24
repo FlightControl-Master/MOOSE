@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170123_1503' ) 
+env.info( 'Moose Generation Timestamp: 20170124_1109' ) 
 local base = _G
 
 Include = {}
@@ -14852,114 +14852,26 @@ end
 --  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
 --  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
 --
--- 1.2) GROUP task methods
--- -----------------------
--- Several group task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a  
--- @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#CONTROLLABLE.SetTask} method to assign the task to the GROUP.
--- Tasks are specific for the category of the GROUP, more specific, for AIR, GROUND or AIR and GROUND. 
--- Each task description where applicable indicates for which group category the task is valid.
--- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
--- 
--- ### 1.2.1) Assigned task methods
--- 
--- Assigned task methods make the group execute the task where the location of the (possible) targets of the task are known before being detected.
--- This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.
--- 
--- Find below a list of the **assigned task** methods:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackGroup}: (AIR) Attack a Group.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackMapObject}: (AIR) Attacking the map object (building, structure, e.t.c).
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskAttackUnit}: (AIR) Attack the Unit.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskBombing}: (Wrapper.Controllable#CONTROLLABLEDelivering weapon at the point on the ground.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskBombingRunway}: (AIR) Delivering weapon on the runway.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskEmbarking}: (AIR) Move the group to a Vec2 Point, wait for a defined duration and embark a group.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne group. 
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskFAC_AttackGroup}: (AIR + GROUND) The task makes the group/unit a FAC and orders the FAC to control the target (enemy ground group) destruction.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne group.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskHold}: (GROUND) Hold ground group from moving.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the group.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the group at a @{Core.Zone#ZONE_RADIUS).
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the group at a specified alititude.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskRoute}: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec2}: (AIR + GROUND) Make the Group move to a given point.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToVec3}: (AIR + GROUND) Make the Group move to a given point.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the group to a given zone.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the group to an airbase.
+-- ## 1.2) GROUP task methods
 --
--- ### 1.2.2) EnRoute task methods
--- 
--- EnRoute tasks require the targets of the task need to be detected by the group (using its sensors) before the task can be executed:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageGroup}: (AIR) Engaging a group. The task does not assign the target group to the unit/group to attack now; it just allows the unit/group to engage the target group as well as other assigned targets.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose a targets (enemy ground group) around as well as other assigned targets.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskFAC_EngageGroup}: (AIR + GROUND) The task makes the group/unit a FAC and lets the FAC to choose the target (enemy ground group) as well as other assigned targets.
---   * @{Wrapper.Controllable#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
--- 
--- ### 1.2.3) Preparation task methods
--- 
--- There are certain task methods that allow to tailor the task behaviour:
+-- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
 --
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskWrappedAction}: Return a WrappedAction Task taking a Command.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskCombo}: Return a Combo Task taking an array of Tasks.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
--- 
 -- ### 1.2.4) Obtain the mission from group templates
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
 --   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
--- 1.3) GROUP Command methods
--- --------------------------
--- Group **command methods** prepare the execution of commands using the @{Wrapper.Controllable#CONTROLLABLE.SetCommand} method:
+-- ## 1.3) GROUP Command methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
 -- 
---   * @{Wrapper.Controllable#CONTROLLABLE.CommandDoScript}: Do Script command.
---   * @{Wrapper.Controllable#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
+-- ## 1.4) GROUP option methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
 -- 
--- 1.4) GROUP Option methods
--- -------------------------
--- Group **Option methods** change the behaviour of the Group while being alive.
+-- ## 1.5) GROUP Zone validation methods
 -- 
--- ### 1.4.1) Rule of Engagement:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFree} 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFire}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFire}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFire}
--- 
--- To check whether an ROE option is valid for a specific group, use:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEWeaponFreePossible} 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEOpenFirePossible}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEReturnFirePossible}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROEEvadeFirePossible}
--- 
--- ### 1.4.2) Rule on thread:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTNoReaction}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefense}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFire}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTVertical}
--- 
--- To test whether an ROT option is valid for a specific group, use:
--- 
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTNoReactionPossible}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTPassiveDefensePossible}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTEvadeFirePossible}
---   * @{Wrapper.Controllable#CONTROLLABLE.OptionROTVerticalPossible}
--- 
--- 1.5) GROUP Zone validation methods
--- ----------------------------------
 -- The group can be validated whether it is completely, partly or not within a @{Zone}.
 -- Use the following Zone validation methods on the group:
 -- 
@@ -14968,6 +14880,43 @@ end
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
 --   
 -- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- 
+-- ## 1.6) GROUP AI methods
+-- 
+-- A GROUP has AI methods to control the AI activation.
+-- 
+--   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
+--   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
+--   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
+--   
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2017-01-24: GROUP:**SetAIOnOff( AIOnOff )** added.  
+-- 
+-- 2017-01-24: GROUP:**SetAIOn()** added.  
+-- 
+-- 2017-01-24: GROUP:**SetAIOff()** added.  
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
 -- 
 -- @module Group
 -- @author FlightControl
@@ -15318,7 +15267,7 @@ end
 
 
 
--- Is Zone Functions
+do -- Is Zone methods
 
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
@@ -15483,6 +15432,49 @@ function GROUP:AllOnGround()
 
   return nil
 end
+
+end
+
+do -- AI methods
+
+  --- Turns the AI On or Off for the GROUP.
+  -- @param #GROUP self
+  -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
+  -- @return #GROUP The GROUP.
+  function GROUP:SetAIOnOff( AIOnOff )
+  
+    local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
+    
+    if DCSGroup then
+      local DCSController = DCSGroup:getController() -- Dcs.DCSController#Controller
+      if DCSController then
+        DCSController:setOnOff( AIOnOff )
+        return self
+      end
+    end
+    
+    return nil
+  end
+
+  --- Turns the AI On for the GROUP.
+  -- @param #GROUP self
+  -- @return #GROUP The GROUP.
+  function GROUP:SetAIOn()
+
+    return self:SetAIOnOff( true )  
+  end
+  
+  --- Turns the AI Off for the GROUP.
+  -- @param #GROUP self
+  -- @return #GROUP The GROUP.
+  function GROUP:SetAIOff()
+
+    return self:SetAIOnOff( false )  
+  end
+
+end
+
+
 
 --- Returns the current maximum velocity of the group.
 -- Each unit within the group gets evaluated, and the maximum velocity (= the unit which is going the fastest) is returned.
@@ -18429,6 +18421,9 @@ end
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
+--   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOff}(): Turns the AI Off when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOnOff}(): Turns the AI On or Off when spawning the new @{Group} object.
 -- 
 -- ## 1.3) SPAWN spawning methods
 -- 
@@ -18491,70 +18486,39 @@ end
 -- 
 -- Hereby the change log:
 -- 
--- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
+-- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 2017-01-24: SPAWN:**InitAIOn()** added.
+-- 
+-- 2017-01-24: SPAWN:**InitAIOff()** added.
+-- 
+-- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval ).
 -- 
 -- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones )** added.
--- 
---    * This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types. 
 -- 
 -- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
 -- 
 -- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
--- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
 -- 
 -- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
 -- 
---    * This method enables the randomization of units at the first route point in a radius band at a spawn event.
--- 
 -- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
--- 
 -- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
--- 
 -- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- ===
 -- 
@@ -18563,6 +18527,7 @@ end
 -- ### Contributions: 
 -- 
 --   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
+--   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
 -- ### Authors: 
 -- 
@@ -18620,6 +18585,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -18657,6 +18623,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+    self.AIOnOff = true                               -- The AI is on by default when spawning a group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -18947,7 +18914,34 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	return self
 end
 
+do -- AI methods
+  --- Turns the AI On or Off for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @param #boolean AIOnOff A value of true sets the AI On, a value of false sets the AI Off.
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOnOff( AIOnOff )
+  
+    self.AIOnOff = AIOnOff
+    return self
+  end
+  
+  --- Turns the AI On for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOn()
+  
+    return self:InitAIOnOff( true )
+  end
+  
+  --- Turns the AI Off for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOff()
+  
+    return self:InitAIOnOff( false )
+  end
 
+end -- AI methods
 
 --- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
@@ -19042,6 +19036,14 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       self:T3( SpawnTemplate.name )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
+			
+			local SpawnGroup = self.SpawnGroups[self.SpawnIndex].Group -- Wrapper.Group#GROUP
+			
+			--TODO: Need to check if this function doesn't need to be scheduled, as the group may not be immediately there!
+      if SpawnGroup then
+      
+			  SpawnGroup:SetAIOnOff( self.AIOnOff )
+			end
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then

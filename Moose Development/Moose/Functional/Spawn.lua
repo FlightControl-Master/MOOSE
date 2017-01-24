@@ -112,70 +112,39 @@
 -- 
 -- Hereby the change log:
 -- 
--- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval )
+-- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
+-- 2017-01-24: SPAWN:**InitAIOn()** added.
+-- 
+-- 2017-01-24: SPAWN:**InitAIOff()** added.
+-- 
+-- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval ).
 -- 
 -- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones )** added.
--- 
---    * This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types. 
 -- 
 -- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
 -- 
 -- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
 -- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
---
 -- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
--- 
---    * The RandomizeUnits, OuterRadius and InnerRadius have been replaced with a new method @{#SPAWN.InitRandomizeUnits}( RandomizeUnits, OuterRadius, InnerRadius ).
---    * A new parameter RandomizeGroup to reflect the randomization of the starting position of the Spawned @{Group}.
 -- 
 -- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
 -- 
---    * This method enables the randomization of units at the first route point in a radius band at a spawn event.
--- 
 -- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
--- 
 -- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
 -- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
--- 
 -- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
--- 
---    * Want to ensure that the methods starting with **Init** are the first called methods before any _Spawn_ method is called!
---    * This notation makes it now more clear which methods are initialization methods and which methods are Spawn enablement methods.
 -- 
 -- ===
 -- 
@@ -184,6 +153,7 @@
 -- ### Contributions: 
 -- 
 --   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
+--   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
 -- ### Authors: 
 -- 
@@ -570,32 +540,34 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	return self
 end
 
---- Turns the AI On or Off for the @{Group} when spawning.
--- @param #SPAWN self
--- @param #boolean AIOnOff
--- @return #SPAWN The SPAWN object
-function SPAWN:InitAIOnOff( AIOnOff )
+do -- AI methods
+  --- Turns the AI On or Off for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @param #boolean AIOnOff A value of true sets the AI On, a value of false sets the AI Off.
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOnOff( AIOnOff )
+  
+    self.AIOnOff = AIOnOff
+    return self
+  end
+  
+  --- Turns the AI On for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOn()
+  
+    return self:InitAIOnOff( true )
+  end
+  
+  --- Turns the AI Off for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitAIOff()
+  
+    return self:InitAIOnOff( false )
+  end
 
-  self.AIOnOff = AIOnOff
-  return self
-end
-
---- Turns the AI On for the @{Group} when spawning.
--- @param #SPAWN self
--- @return #SPAWN The SPAWN object
-function SPAWN:InitAIOn()
-
-  return self:InitAIOnOff( true )
-end
-
---- Turns the AI Off for the @{Group} when spawning.
--- @param #SPAWN self
--- @return #SPAWN The SPAWN object
-function SPAWN:InitAIOff()
-
-  return self:InitAIOnOff( true )
-end
-
+end -- AI methods
 
 --- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
