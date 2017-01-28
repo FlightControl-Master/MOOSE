@@ -6321,16 +6321,20 @@ end
 
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
+-- @param #number inner minimal distance from the center of the zone
+-- @param #number outer minimal distance from the outer edge of the zone
 -- @return Dcs.DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomVec2()
-	self:F( self.ZoneName )
+function ZONE_RADIUS:GetRandomVec2(inner, outer)
+	self:F( self.ZoneName, inner, outer )
 
 	local Point = {}
 	local Vec2 = self:GetVec2()
+	local _inner = inner or 0
+	local _outer = outer or self:GetRadius()
 
-	local angle = math.random() * math.pi*2;
-	Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-	Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+	local angle = math.random() * math.pi * 2;
+	Point.x = Vec2.x + math.cos( angle ) * math.random(_inner, _outer);
+	Point.y = Vec2.y + math.sin( angle ) * math.random(_inner, _outer);
 	
 	self:T( { Point } )
 	
