@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -238,7 +240,7 @@ Processing will just continue. Synchronous Event Trigger methods are useful to c
 <p>The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.</p>
 
 <pre><code>  function FSM:OnAfterEvent( From, Event, To, Amount )
-    self:E( { Amount = Amount } ) 
+    self:T( { Amount = Amount } ) 
   end
 
   local Amount = 1
@@ -290,7 +292,7 @@ The next code implements this through the event handling method <strong>OnAfterS
 <p><img src="..\Presentations\FSM\Dia7.JPG" alt="Transition Flow"/></p>
 
 <pre><code> function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
-   self:E( { From, Event, To, FsmUnit } )
+   self:T( { From, Event, To, FsmUnit } )
 
    if From == "Green" then
      FsmUnit:Flare(FLARECOLOR.Green)
@@ -315,7 +317,7 @@ and one additional parameter that was given when the event was triggered, which 
 
 <p>For debugging reasons the received parameters are traced within the DCS.log.</p>
 
-<pre><code>    self:E( { From, Event, To, FsmUnit } )
+<pre><code>    self:T( { From, Event, To, FsmUnit } )
 </code></pre>
 
 <p>The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.</p>
@@ -732,12 +734,6 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 
 			<h2><a id="#(FSM_PROCESS)">Type <code>FSM_PROCESS</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).AddScore">FSM_PROCESS:AddScore(State, ScoreText, Score)</a></td>
-		<td class="summary">
-<p>Adds a score for the FSM_PROCESS to be achieved.</p>
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).Assign">FSM_PROCESS:Assign(Task, ProcessUnit)</a></td>
 		<td class="summary">
@@ -1486,7 +1482,7 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#string</em>
 <a id="#(FSM)._StartState" >
 <strong>FSM._StartState</strong>
 </a>
@@ -1780,7 +1776,6 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(FSM).current" >
 <strong>FSM.current</strong>
 </a>
@@ -1996,45 +1991,6 @@ Finite State Machine Table</p>
 <p>FSM_PROCESS class</p>
 
 	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(FSM_PROCESS).AddScore" >
-<strong>FSM_PROCESS:AddScore(State, ScoreText, Score)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Adds a score for the FSM_PROCESS to be achieved.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string State </em></code>: 
-is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ScoreText </em></code>: 
-is a text describing the score that is given according the status.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-is a number providing the score of the status.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(FSM_PROCESS)">#FSM_PROCESS</a>:</em>
-self</p>
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 

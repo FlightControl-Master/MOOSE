@@ -15,10 +15,10 @@ US_AI_Balancer = AI_BALANCER:New( US_PlanesClientSet, US_PlanesSpawn )
 
 --local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone Blue" )
 --local PatrolZoneBlue = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
---local PatrolZoneB = AI_PATROLZONE:New( PatrolZoneBlue, 3000, 6000, 900, 1100 ):ManageFuel( 0.2, 180 )
+--local PatrolZoneB = AI_PATROL_ZONE:New( PatrolZoneBlue, 3000, 6000, 900, 1100 ):ManageFuel( 0.2, 180 )
 --US_AI_Balancer:SetPatrolZone( PatrolZoneB )
 --
 --local PatrolZoneGroup = GROUP:FindByName( "Patrol Zone Red" )
 --local PatrolZoneRed = ZONE_POLYGON:New( "PatrolZone", PatrolZoneGroup )
---local PatrolZoneR = AI_PATROLZONE:New( PatrolZoneRed, 3000, 6000, 900, 1100 ):ManageFuel( 0.2, 180 )
+--local PatrolZoneR = AI_PATROL_ZONE:New( PatrolZoneRed, 3000, 6000, 900, 1100 ):ManageFuel( 0.2, 180 )
 --RU_AI_Balancer:SetPatrolZone( PatrolZoneR )

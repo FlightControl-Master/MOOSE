@@ -69,6 +69,8 @@ function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, 
 
   local ScheduleID = nil
   
+  self.MasterObject = SchedulerObject
+  
   if SchedulerFunction then
     ScheduleID = self:Schedule( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   end
@@ -100,7 +102,7 @@ function SCHEDULER:Schedule( SchedulerObject, SchedulerFunction, SchedulerArgume
   if SchedulerObject and SchedulerObject.ClassName and SchedulerObject.ClassID then 
     ObjectName = SchedulerObject.ClassName .. SchedulerObject.ClassID
   end
-  self:E( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
+  self:F3( { "Schedule :", ObjectName, tostring( SchedulerObject ),  Start, Repeat, RandomizeFactor, Stop } )
   self.SchedulerObject = SchedulerObject
   
   local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 

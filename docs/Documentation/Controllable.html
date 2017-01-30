@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -113,7 +115,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).TaskEmbarkToTransport">CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
     <li><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne controllable. </li>
     <li><a href="##(CONTROLLABLE).TaskFAC_AttackControllable">CONTROLLABLE.TaskFAC_AttackControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
-    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire at a VEC2 point until ammunition is finished.</li>
+    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire some or all ammunition at a VEC2 point.</li>
     <li><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne controllable.</li>
     <li><a href="##(CONTROLLABLE).TaskHold">CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground controllable from moving.</li>
     <li><a href="##(CONTROLLABLE).TaskHoldPosition">CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the controllable.</li>
@@ -319,6 +321,12 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife">CONTROLLABLE:GetLife()</a></td>
+		<td class="summary">
+<p>Returns the health.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetTaskMission">CONTROLLABLE:GetTaskMission()</a></td>
 		<td class="summary">
 <p>Return the mission template of the controllable.</p>
@@ -328,6 +336,18 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetTaskRoute">CONTROLLABLE:GetTaskRoute()</a></td>
 		<td class="summary">
 <p>Return the mission route of the controllable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetUnits">CONTROLLABLE:GetUnits()</a></td>
+		<td class="summary">
+<p>Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetWayPoints">CONTROLLABLE:GetWayPoints()</a></td>
+		<td class="summary">
+<p>Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).</p>
 </td>
 		</tr>
 		<tr>
@@ -548,7 +568,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE:TaskFireAtPoint(Vec2, Radius, AmmoCount)</a></td>
 		<td class="summary">
 <p>(GROUND) Fire at a VEC2 point until ammunition is finished.</p>
 </td>
@@ -1285,6 +1305,37 @@ DetectedTargets</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).GetLife" >
+<strong>CONTROLLABLE:GetLife()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the health.</p>
+
+	
+<p>Dead controllables have health &lt;= 1.0.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+The controllable health value (unit or group average).</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The controllable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).GetTaskMission" >
 <strong>CONTROLLABLE:GetTaskMission()</strong>
 </a>
@@ -1316,6 +1367,42 @@ TODO: Rework the method how to retrieve a template ...</p>
 				
 <p><em>#table:</em>
 The mission route defined by points.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).GetUnits" >
+<strong>CONTROLLABLE:GetUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(list)">#list</a>:</em>
+Wrapper.Unit#UNIT> The UNITs wrappers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).GetWayPoints" >
+<strong>CONTROLLABLE:GetWayPoints()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+WayPoints If WayPoints is given, then return the WayPoints structure.</p>
 
 </dd>
 </dl>
@@ -2417,7 +2504,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFireAtPoint" >
-<strong>CONTROLLABLE:TaskFireAtPoint(Vec2, Radius)</strong>
+<strong>CONTROLLABLE:TaskFireAtPoint(Vec2, Radius, AmmoCount)</strong>
 </a>
 </dt>
 <dd>
@@ -2436,6 +2523,12 @@ The point to fire at.</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
 The radius of the zone to deploy the fire at.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AmmoCount </em></code>: 
+(optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).</p>
 
 				</li>
 		</ul>
@@ -3096,6 +3189,8 @@ If WayPoints is given, then use the route.</p>
 			<h2><a id="#(DCSCommand)" >Type <code>DCSCommand</code></a></h2>
 			
 			<h2><a id="#(DCSStopCondition)" >Type <code>DCSStopCondition</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
 			
 </div>
 

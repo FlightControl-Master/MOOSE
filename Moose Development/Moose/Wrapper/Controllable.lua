@@ -39,7 +39,7 @@
 --   * @{#CONTROLLABLE.TaskEmbarkToTransport}: (GROUND) Embark to a Transport landed at a location.
 --   * @{#CONTROLLABLE.TaskEscort}: (AIR) Escort another airborne controllable. 
 --   * @{#CONTROLLABLE.TaskFAC_AttackControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.
---   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire at a VEC2 point until ammunition is finished.
+--   * @{#CONTROLLABLE.TaskFireAtPoint}: (GROUND) Fire some or all ammunition at a VEC2 point.
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
@@ -123,7 +123,6 @@
 -- ===
 -- 
 -- @module Controllable
--- @author FlightControl
 
 --- The CONTROLLABLE class
 -- @type CONTROLLABLE
@@ -144,6 +143,8 @@ function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
   self:F2( ControllableName )
   self.ControllableName = ControllableName
+  
+  self.TaskScheduler = SCHEDULER:New( self )
   return self
 end
 
@@ -162,6 +163,58 @@ function CONTROLLABLE:_GetController()
     return ControllableController
   end
 
+  return nil
+end
+
+-- Get methods
+
+--- Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).
+-- @param #CONTROLLABLE self
+-- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+function CONTROLLABLE:GetUnits()
+  self:F2( { self.ControllableName } )
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+    local DCSUnits = DCSControllable:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      Units[#Units+1] = UNIT:Find( UnitData )
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
+--- Returns the health. Dead controllables have health <= 1.0.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
   return nil
 end
 
@@ -202,7 +255,7 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
     -- Controller:pushTask( DCSTask )
 
     if WaitTime then
-      SCHEDULER:New( Controller, Controller.pushTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.pushTask, { DCSTask }, WaitTime )
     else
       Controller:pushTask( DCSTask )
     end
@@ -224,7 +277,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:E(Controller)
+    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -233,7 +286,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     if not WaitTime then
       Controller:setTask( DCSTask )
     else
-      SCHEDULER:New( Controller, Controller.setTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -304,6 +357,10 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
       tasks = DCSTasks
     }
   }
+  
+  for TaskID, Task in ipairs( DCSTasks ) do
+    self:E( Task )
+  end
 
   self:T3( { DCSTaskCombo } )
   return DCSTaskCombo
@@ -489,19 +546,24 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, WeaponType, WeaponExpend, Atta
   --  }
 
   local DCSTask
-  DCSTask = { id = 'AttackUnit',
+  DCSTask = { 
+    id = 'AttackUnit',
     params = {
+      altitudeEnabled = true,
       unitId = AttackUnit:GetID(),
-      weaponType = WeaponType,
-      expend = WeaponExpend,
-      attackQty = AttackQty,
-      direction = Direction,
-      attackQtyLimit = AttackQtyLimit,
-      controllableAttack = ControllableAttack,
-    },
-  },
+      attackQtyLimit = AttackQtyLimit or false,
+      attackQty = AttackQty or 2,
+      expend = WeaponExpend or "Auto",
+      altitude = 2000,
+      directionEnabled = true,
+      groupAttack = true,
+      --weaponType = WeaponType or 1073741822,
+      direction = Direction or 0,
+    }
+  }
 
-  self:T3( { DCSTask } )
+  self:E( DCSTask )
+  
   return DCSTask
 end
 
@@ -885,15 +947,18 @@ end
 -- @param #CONTROLLABLE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The point to fire at.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone to deploy the fire at.
+-- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
-  self:F2( { self.ControllableName, Vec2, Radius } )
+function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount )
+  self:F2( { self.ControllableName, Vec2, Radius, AmmoCount } )
 
   -- FireAtPoint = {
   --   id = 'FireAtPoint',
   --   params = {
   --     point = Vec2,
   --     radius = Distance,
+  --     expendQty = number,
+  --     expendQtyEnabled = boolean, 
   --   }
   -- }
 
@@ -902,8 +967,15 @@ function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius )
     params = {
       point = Vec2,
       radius = Radius,
+      expendQty = 100, -- dummy value
+      expendQtyEnabled = false,
     }
   }
+  
+  if AmmoCount then
+    DCSTask.params.expendQty = AmmoCount
+    DCSTask.params.expendQtyEnabled = true
+  end
 
   self:T3( { DCSTask } )
   return DCSTask
@@ -1494,7 +1566,7 @@ function CONTROLLABLE:Route( GoPoints )
     local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
     local Controller = self:_GetController()
     --Controller.setTask( Controller, MissionTask )
-    SCHEDULER:New( Controller, Controller.setTask, { MissionTask }, 1 )
+    self.TaskScheduler:Schedule( Controller, Controller.setTask, { MissionTask }, 1 )
     return self
   end
 
@@ -2122,7 +2194,7 @@ end
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE
 function CONTROLLABLE:WayPointInitialize( WayPoints )
-  self:F( { WayPoint, WayPointIndex, WayPointFunction } )
+  self:F( { WayPoints } )
 
   if WayPoints then
     self.WayPoints = WayPoints
@@ -2133,6 +2205,18 @@ function CONTROLLABLE:WayPointInitialize( WayPoints )
   return self
 end
 
+--- Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).
+-- @param #CONTROLLABLE self
+-- @return #table WayPoints If WayPoints is given, then return the WayPoints structure.
+function CONTROLLABLE:GetWayPoints()
+  self:F( )
+
+  if self.WayPoints then
+    return self.WayPoints
+  end
+
+  return nil
+end
 
 --- Registers a waypoint function that will be executed when the controllable moves over the WayPoint.
 -- @param #CONTROLLABLE self
@@ -2202,5 +2286,3 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
 end
 
 -- Message APIs
-
-

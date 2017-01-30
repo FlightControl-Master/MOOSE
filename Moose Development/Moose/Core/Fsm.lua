@@ -150,7 +150,7 @@
 -- The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.
 -- 
 --       function FSM:OnAfterEvent( From, Event, To, Amount )
---         self:E( { Amount = Amount } ) 
+--         self:T( { Amount = Amount } ) 
 --       end
 --       
 --       local Amount = 1
@@ -198,7 +198,7 @@
 -- ![Transition Flow](..\Presentations\FSM\Dia7.JPG)
 -- 
 --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
---        self:E( { From, Event, To, FsmUnit } )
+--        self:T( { From, Event, To, FsmUnit } )
 --        
 --        if From == "Green" then
 --          FsmUnit:Flare(FLARECOLOR.Green)
@@ -221,7 +221,7 @@
 -- 
 -- For debugging reasons the received parameters are traced within the DCS.log.
 -- 
---         self:E( { From, Event, To, FsmUnit } )
+--         self:T( { From, Event, To, FsmUnit } )
 -- 
 -- The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.
 -- 
@@ -365,7 +365,7 @@ do -- FSM
     Transition.Event = Event
     Transition.To = To
   
-    self:E( Transition )
+    self:T( Transition )
     
     self._Transitions[Transition] = Transition
     self:_eventmap( self.Events, Transition )
@@ -387,7 +387,7 @@ do -- FSM
   -- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
   -- @return Core.Fsm#FSM_PROCESS The SubFSM.
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
-    self:E( { From, Event, Process, ReturnEvents } )
+    self:T( { From, Event, Process, ReturnEvents } )
   
     local Sub = {}
     Sub.From = From
@@ -417,7 +417,7 @@ do -- FSM
   
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       if Process.From == From and Process.Event == Event then
-        self:E( Process )
+        self:T( Process )
         return Process.fsm
       end
     end
@@ -468,7 +468,7 @@ do -- FSM
   
     local Process = self:GetProcess( From, Event )
     
-    self:E( { Process = Process._Name, Scores = Process._Scores, State = State, ScoreText = ScoreText, Score = Score } )
+    self:T( { Process = Process._Name, Scores = Process._Scores, State = State, ScoreText = ScoreText, Score = Score } )
     Process._Scores[State] = Process._Scores[State] or {}
     Process._Scores[State].ScoreText = ScoreText
     Process._Scores[State].Score = Score
@@ -528,26 +528,35 @@ do -- FSM
   
   function FSM:_call_handler(handler, params)
     if self[handler] then
-      self:E( "Calling " .. handler )
-      return self[handler]( self, unpack(params) )
+      self:T( "Calling " .. handler )
+      local Value = self[handler]( self, unpack(params) )
+      return Value
     end
   end
   
   function FSM._handler( self, EventName, ... )
   
-    self:E( { EventName, ... } )
-  
     local Can, to = self:can( EventName )
-    self:E( { From = self.current, Event = EventName, To = to, Can = Can } )
+  
+    if to == "*" then
+      to = self.current
+    end
   
     if Can then
       local from = self.current
       local params = { from, EventName, to, ...  }
+
+      if self.Controllable then
+        self:T( "FSM Transition for " .. self.Controllable.ControllableName .. " :" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      else
+        self:T( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
+      end        
   
-      if self:_call_handler("onbefore" .. EventName, params) == false
-      or self:_call_handler("OnBefore" .. EventName, params) == false
-      or self:_call_handler("onleave" .. from, params) == false
-      or self:_call_handler("OnLeave" .. from, params) == false then
+      if ( self:_call_handler("onbefore" .. EventName, params) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
+      or ( self:_call_handler("onleave" .. from, params) == false )
+      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+        self:T( "Cancel Transition" )
         return false
       end
   
@@ -561,7 +570,7 @@ do -- FSM
         --  self:F2( "nextevent = " .. sub.nextevent )
         --  self[sub.nextevent]( self )
         --end
-        self:E( "calling sub start event: " .. sub.StartEvent )
+        self:T( "calling sub start event: " .. sub.StartEvent )
         sub.fsm.fsmparent = self
         sub.fsm.ReturnEvents = sub.ReturnEvents
         sub.fsm[sub.StartEvent]( sub.fsm )
@@ -592,29 +601,30 @@ do -- FSM
   
         self:_call_handler("onstatechange", params)
       end
+    else
+      self:T( "Cannot execute transition." )
+      self:T( { From = self.current, Event = EventName, To = to, Can = Can } )
     end
   
     return nil
   end
   
   function FSM:_delayed_transition( EventName )
-    self:E( { EventName = EventName } )
     return function( self, DelaySeconds, ... )
-      self:T( "Delayed Event: " .. EventName )
+      self:T2( "Delayed Event: " .. EventName )
       local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
-      self:T( { CallID = CallID } )
+      self:T2( { CallID = CallID } )
     end
   end
   
   function FSM:_create_transition( EventName )
-    self:E( { Event =  EventName  } )
     return function( self, ... ) return self._handler( self,  EventName , ... ) end
   end
   
   function FSM:_gosub( ParentFrom, ParentEvent )
     local fsmtable = {}
     if self.subs[ParentFrom] and self.subs[ParentFrom][ParentEvent] then
-      self:E( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
+      self:T( { ParentFrom, ParentEvent, self.subs[ParentFrom], self.subs[ParentFrom][ParentEvent] } )
       return self.subs[ParentFrom][ParentEvent]
     else
       return {}
@@ -624,17 +634,17 @@ do -- FSM
   function FSM:_isendstate( Current )
     local FSMParent = self.fsmparent
     if FSMParent and self.endstates[Current] then
-      self:E( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
+      self:T( { state = Current, endstates = self.endstates, endstate = self.endstates[Current] } )
       FSMParent.current = Current
       local ParentFrom = FSMParent.current
-      self:E( ParentFrom )
-      self:E( self.ReturnEvents )
+      self:T( ParentFrom )
+      self:T( self.ReturnEvents )
       local Event = self.ReturnEvents[Current]
-      self:E( { ParentFrom, Event, self.ReturnEvents } )
+      self:T( { ParentFrom, Event, self.ReturnEvents } )
       if Event then
         return FSMParent, Event
       else
-        self:E( { "Could not find parent event name for state ", ParentFrom } )
+        self:T( { "Could not find parent event name for state ", ParentFrom } )
       end
     end
   
@@ -667,7 +677,6 @@ do -- FSM
   end
   
   function FSM:can(e)
-    self:E( { e, self.Events, self.Events[e] } )
     local Event = self.Events[e]
     self:F3( { self.current, Event } )
     local To = Event and Event.map[self.current] or Event.map['*']
@@ -736,8 +745,9 @@ do -- FSM_CONTROLLABLE
     end
   
     if self[handler] then
-      self:E( "Calling " .. handler )
-      return xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      self:F3( "Calling " .. handler )
+      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
+      return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
     end
   end
@@ -769,14 +779,14 @@ do -- FSM_PROCESS
   end
   
   function FSM_PROCESS:Init( FsmProcess )
-    self:E( "No Initialisation" )
+    self:T( "No Initialisation" )
   end  
   
   --- Creates a new FSM_PROCESS object based on this FSM_PROCESS.
   -- @param #FSM_PROCESS self
   -- @return #FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
-    self:E( { self:GetClassNameAndID() } )
+    self:T( { self:GetClassNameAndID() } )
   
     local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
   
@@ -795,19 +805,19 @@ do -- FSM_PROCESS
   
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:E( { Process} )
+      self:T( { Process} )
       local FsmProcess = NewFsm:AddProcess( Process.From, Process.Event, Process.fsm:Copy( Controllable, Task ), Process.ReturnEvents )
     end
   
     -- Copy End States
     for EndStateID, EndState in pairs( self:GetEndStates() ) do
-      self:E( EndState )
+      self:T( EndState )
       NewFsm:AddEndState( EndState )
     end
     
     -- Copy the score tables
     for ScoreID, Score in pairs( self:GetScores() ) do
-      self:E( Score )
+      self:T( Score )
       NewFsm:AddScore( ScoreID, Score.ScoreText, Score.Score )
     end
   
@@ -877,7 +887,7 @@ end
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #FSM_PROCESS self
   function FSM_PROCESS:Assign( ProcessUnit, Task )
-    self:E( { Task, ProcessUnit } )
+    self:T( { Task, ProcessUnit } )
   
     self:SetControllable( ProcessUnit )
     self:SetTask( Task )
@@ -886,37 +896,21 @@ end
   
     return self
   end
-  
-  --- Adds a score for the FSM_PROCESS to be achieved.
-  -- @param #FSM_PROCESS self
-  -- @param #string State is the state of the process when the score needs to be given. (See the relevant state descriptions of the process).
-  -- @param #string ScoreText is a text describing the score that is given according the status.
-  -- @param #number Score is a number providing the score of the status.
-  -- @return #FSM_PROCESS self
-  function FSM_PROCESS:AddScore( State, ScoreText, Score )
-    self:F2( { State, ScoreText, Score } )
-  
-    self.Scores[State] = self.Scores[State] or {}
-    self.Scores[State].ScoreText = ScoreText
-    self.Scores[State].Score = Score
-  
-    return self
-  end
-  
+    
   function FSM_PROCESS:onenterAssigned( ProcessUnit )
-    self:E( "Assign" )
+    self:T( "Assign" )
   
     self.Task:Assign()
   end
   
   function FSM_PROCESS:onenterFailed( ProcessUnit )
-    self:E( "Failed" )
+    self:T( "Failed" )
   
     self.Task:Fail()
   end
   
   function FSM_PROCESS:onenterSuccess( ProcessUnit )
-    self:E( "Success" )
+    self:T( "Success" )
   
     self.Task:Success()
   end
@@ -928,20 +922,20 @@ end
   -- @param #string From
   -- @param #string To
   function FSM_PROCESS:onstatechange( ProcessUnit, From, Event, To, Dummy )
-    self:E( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
+    self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
-    self:E( self.Scores[To] )
+    self:T( self._Scores[To] )
     -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
-    if self.Scores[To] then
+    if self._Scores[To] then
     
       local Task = self.Task  
       local Scoring = Task:GetScoring()
       if Scoring then
-        Scoring:_AddMissionTaskScore( Task.Mission, ProcessUnit, self.Scores[To].ScoreText, self.Scores[To].Score )
+        Scoring:_AddMissionTaskScore( Task.Mission, ProcessUnit, self._Scores[To].ScoreText, self._Scores[To].Score )
       end
     end
   end
@@ -975,7 +969,7 @@ do -- FSM_TASK
   
   function FSM_TASK:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, unpack( params ) )
     end
   end
@@ -1027,7 +1021,7 @@ do -- FSM_SET
   
   function FSM_SET:_call_handler( handler, params )
     if self[handler] then
-      self:E( "Calling " .. handler )
+      self:T( "Calling " .. handler )
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end

@@ -24,7 +24,6 @@
 -- ===
 -- 
 -- @module Positionable
--- @author FlightControl
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE
@@ -46,6 +45,7 @@ POSITIONABLE = {
 function POSITIONABLE:New( PositionableName )
   local self = BASE:Inherit( self, IDENTIFIABLE:New( PositionableName ) )
 
+  self.PositionableName = PositionableName
   return self
 end
 
@@ -54,12 +54,12 @@ end
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:F2( self.PositionableName )
+  self:E( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local PositionablePosition = DCSPositionable:getPosition()
+    local PositionablePosition = DCSPositionable:getPosition().p
     self:T3( PositionablePosition )
     return PositionablePosition
   end
@@ -106,6 +106,27 @@ function POSITIONABLE:GetPointVec2()
   
     self:T2( PositionablePointVec2 )
     return PositionablePointVec2
+  end
+  
+  return nil
+end
+
+--- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetPointVec3()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = self:GetPositionVec3()
+    
+    local PositionablePointVec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
+  
+    self:T2( PositionablePointVec3 )
+    return PositionablePointVec3
   end
   
   return nil
@@ -220,20 +241,13 @@ end
 
 
 --- Returns true if the POSITIONABLE is in the air.
+-- Polymorphic, is overridden in GROUP and UNIT.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #boolean true if in the air.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:InAir()
   self:F2( self.PositionableName )
 
-  local DCSPositionable = self:GetDCSObject()
-  
-  if DCSPositionable then
-    local PositionableInAir = DCSPositionable:inAir()
-    self:T3( PositionableInAir )
-    return PositionableInAir
-  end
-  
   return nil
 end
 
@@ -315,6 +329,7 @@ end
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
+-- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )

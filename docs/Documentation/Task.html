@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -637,7 +639,13 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAborted">TASK:onenterAborted(Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onafterReplan">TASK:onafterReplan(From, Event, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAborted">TASK:onenterAborted(From, Event, To)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
 </td>
@@ -649,7 +657,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterFailed">TASK:onenterFailed(Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterFailed">TASK:onenterFailed(From, Event, To)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
 </td>
@@ -2309,8 +2317,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).onenterAborted" >
-<strong>TASK:onenterAborted(Event, From, To)</strong>
+<a id="#(TASK).onafterReplan" >
+<strong>TASK:onafterReplan(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2321,12 +2329,43 @@ self</p>
 		<ul>
 				<li>
 				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
 <p><code><em>#string Event </em></code>: </p>
 
 				</li>
 				<li>
 				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).onenterAborted" >
+<strong>TASK:onenterAborted(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
 <p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
 
 				</li>
 				<li>
@@ -2372,7 +2411,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).onenterFailed" >
-<strong>TASK:onenterFailed(Event, From, To)</strong>
+<strong>TASK:onenterFailed(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -2383,12 +2422,12 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string Event </em></code>: </p>
+<p><code><em>#string From </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string From </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
 
 				</li>
 				<li>

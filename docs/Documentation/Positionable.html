@@ -18,6 +18,9 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
 					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
@@ -41,7 +44,6 @@
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
 					<li><a href="Object.html">Object</a></li>
-					<li><a href="Patrol.html">Patrol</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li>Positionable</li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
@@ -151,6 +153,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec3">POSITIONABLE:GetPointVec3()</a></td>
+		<td class="summary">
+<p>Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPositionVec3">POSITIONABLE:GetPositionVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
@@ -223,7 +231,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToCoalition">POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition, Name)</a></td>
 		<td class="summary">
 <p>Send a message to a coalition.</p>
 </td>
@@ -425,6 +433,34 @@ The POSITIONABLE is not existing or alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(POSITIONABLE).GetPointVec3" >
+<strong>POSITIONABLE:GetPointVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a>:</em>
+The 3D point vector of the POSITIONABLE.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POSITIONABLE).GetPositionVec3" >
 <strong>POSITIONABLE:GetPositionVec3()</strong>
 </a>
@@ -608,6 +644,9 @@ The POSITIONABLE is not existing or alive.  </p>
 <dd>
 	
 <p>Returns true if the POSITIONABLE is in the air.</p>
+
+	
+<p>Polymorphic, is overridden in GROUP and UNIT.</p>
 
 		<h3>Return values</h3>
 			<ol>
@@ -812,7 +851,7 @@ The client object receiving the message.</p>
 <dt>
 
 <a id="#(POSITIONABLE).MessageToCoalition" >
-<strong>POSITIONABLE:MessageToCoalition(Message, Duration, Name, MessageCoalition)</strong>
+<strong>POSITIONABLE:MessageToCoalition(Message, Duration, MessageCoalition, Name)</strong>
 </a>
 </dt>
 <dd>
@@ -838,13 +877,14 @@ The duration of the message.</p>
 				</li>
 				<li>
 				
-<p><code><em>#string Name </em></code>: 
-(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition)">Dcs.DCScoalition#coalition</a> MessageCoalition </em></code>: 
+The Coalition receiving the message.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> MessageCoalition </em></code>: </p>
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
 
 				</li>
 		</ul>

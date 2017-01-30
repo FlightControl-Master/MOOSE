@@ -1,0 +1,1551 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li>AI_Cas</li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>AI_Cas</code></h1>
+   
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
+
+<p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
+
+
+<hr/>
+
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+
+   
+<p> 
+The <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
+The AI<em>CAS</em>ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia3.JPG" alt="HoldAndEngage"/></p>
+
+<p>The AI<em>CAS</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>CAS</em>ZONE process can be started through the <strong>Start</strong> event.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia4.JPG" alt="Start Event"/></p>
+
+<p>Upon started, The AI will <strong>Route</strong> itself towards the random 3D point within a patrol zone, 
+using a random speed within the given altitude and speed limits.
+Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.
+This cycle will continue until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia5.JPG" alt="Route Event"/></p>
+
+<p>When the AI is commanded to provide Close Air Support (through the event <strong>Engage</strong>), the AI will fly towards the Engage Zone.
+Any target that is detected in the Engage Zone will be reported and will be destroyed by the AI.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia6.JPG" alt="Engage Event"/></p>
+
+<p>The AI will detect the targets and will only destroy the targets within the Engage Zone.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia7.JPG" alt="Engage Event"/></p>
+
+<p>Every target that is destroyed, is reported&lt; by the AI.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia8.JPG" alt="Engage Event"/></p>
+
+<p>Note that the AI does not know when the Engage Zone is cleared, and therefore will keep circling in the zone. </p>
+
+<p><img src="..\Presentations\AI_CAS\Dia9.JPG" alt="Engage Event"/></p>
+
+<p>Until it is notified through the event <strong>Accomplish</strong>, which is to be triggered by an observing party:</p>
+
+<ul>
+    <li>a FAC</li>
+    <li>a timed event</li>
+    <li>a menu option selected by a human</li>
+    <li>a condition</li>
+    <li>others ...</li>
+</ul>
+
+<p><img src="..\Presentations\AI_CAS\Dia10.JPG" alt="Engage Event"/></p>
+
+<p>When the AI has accomplished the CAS, it will fly back to the Patrol Zone.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia11.JPG" alt="Engage Event"/></p>
+
+<p>It will keep patrolling there, until it is notified to RTB or move to another CAS Zone.
+It can be notified to go RTB through the <strong>RTB</strong> event.</p>
+
+<p>When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
+
+<p><img src="..\Presentations\AI_CAS\Dia12.JPG" alt="Engage Event"/></p>
+
+<h1>1.1) AI<em>CAS</em>ZONE constructor</h1>
+
+<ul>
+    <li><a href="##(AI_CAS_ZONE).New">AI<em>CAS</em>ZONE.New</a>(): Creates a new AI<em>CAS</em>ZONE object.</li>
+</ul>
+
+<h2>1.2) AI<em>CAS</em>ZONE is a FSM</h2>
+
+<p><img src="..\Presentations\AI_CAS\Dia2.JPG" alt="Process"/></p>
+
+<h3>1.2.1) AI<em>CAS</em>ZONE States</h3>
+
+<ul>
+    <li><strong>None</strong> ( Group ): The process is not started yet.</li>
+    <li><strong>Patrolling</strong> ( Group ): The AI is patrolling the Patrol Zone.</li>
+    <li><strong>Engaging</strong> ( Group ): The AI is engaging the targets in the Engage Zone, executing CAS.</li>
+    <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
+</ul>
+
+<h3>1.2.2) AI<em>CAS</em>ZONE Events</h3>
+
+<ul>
+    <li><strong>Start</strong> ( Group ): Start the process.</li>
+    <li><strong>Route</strong> ( Group ): Route the AI to a new random 3D point within the Patrol Zone.</li>
+    <li><strong>Engage</strong> ( Group ): Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.</li>
+    <li><strong>RTB</strong> ( Group ): Route the AI to the home base.</li>
+    <li><strong>Detect</strong> ( Group ): The AI is detecting targets.</li>
+    <li><strong>Detected</strong> ( Group ): The AI has detected new targets.</li>
+    <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
+</ul>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-01-15: Initial class and API.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=90530">Quax</a></strong>: Concept, Advice &amp; Testing.</li>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=62835">Pikey</a></strong>: Concept, Advice &amp; Testing.</li>
+    <li><strong><a href="http://forums.eagle.ru:8080/member.php?u=75036">Gunterlund</a></strong>: Test case revision.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AI_CAS_ZONE">AI_CAS_ZONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#_NewEngageRoute">_NewEngageRoute(AIControllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(AI_CAS_ZONE)">Type <code>AI_CAS_ZONE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).AIControllable">AI_CAS_ZONE.AIControllable</a></td>
+		<td class="summary">
+<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Abort">AI_CAS_ZONE:Abort()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplish">AI_CAS_ZONE:Accomplish()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplished">AI_CAS_ZONE.Accomplished</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).ClassName">AI_CAS_ZONE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Destroy">AI_CAS_ZONE:Destroy()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageZone">AI_CAS_ZONE.EngageZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Fired">AI_CAS_ZONE:Fired()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone)</a></td>
+		<td class="summary">
+<p>Creates a new AI<em>CAS</em>ZONE object</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAbort">AI_CAS_ZONE:OnAfterAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAccomplish">AI_CAS_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterDestroy">AI_CAS_ZONE:OnAfterDestroy(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterFired">AI_CAS_ZONE:OnAfterFired(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAbort">AI_CAS_ZONE:OnBeforeAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAccomplish">AI_CAS_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeDestroy">AI_CAS_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeFired">AI_CAS_ZONE:OnBeforeFired(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnDead">AI_CAS_ZONE:OnDead(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnEnterEngaging">AI_CAS_ZONE:OnEnterEngaging(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Engaging.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnLeaveEngaging">AI_CAS_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Engaging.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).SetEngageZone">AI_CAS_ZONE:SetEngageZone(EngageZone)</a></td>
+		<td class="summary">
+<p>Set the Engage Zone where the AI is performing CAS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).TargetZone">AI_CAS_ZONE.TargetZone</a></td>
+		<td class="summary">
+<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Abort">AI_CAS_ZONE:__Abort(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Accomplish">AI_CAS_ZONE:__Accomplish(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Destroy">AI_CAS_ZONE:__Destroy(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Fired">AI_CAS_ZONE:__Fired(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterAccomplish">AI_CAS_ZONE:onafterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterDestroy">AI_CAS_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterStart">AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>onafter State Transition for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onbeforeEngage">AI_CAS_ZONE:onbeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI_CAS_ZONE)">#AI_CAS_ZONE</a></em>
+<a id="AI_CAS_ZONE" >
+<strong>AI_CAS_ZONE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="_NewEngageRoute" >
+<strong>_NewEngageRoute(AIControllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+	<h2><a id="#(AI_Cas)" >Type <code>AI_Cas</code></a></h2>
+	
+			<h2><a id="#(AI_CAS_ZONE)" >Type <code>AI_CAS_ZONE</code></a></h2>
+				
+<p>AI<em>CAS</em>ZONE class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
+<a id="#(AI_CAS_ZONE).AIControllable" >
+<strong>AI_CAS_ZONE.AIControllable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).Abort" >
+<strong>AI_CAS_ZONE:Abort()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Abort.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).Accomplish" >
+<strong>AI_CAS_ZONE:Accomplish()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Accomplish.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(AI_CAS_ZONE).Accomplished" >
+<strong>AI_CAS_ZONE.Accomplished</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(AI_CAS_ZONE).ClassName" >
+<strong>AI_CAS_ZONE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).Destroy" >
+<strong>AI_CAS_ZONE:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Destroy.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).Engage" >
+<strong>AI_CAS_ZONE:Engage()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Engage.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_CAS_ZONE).EngageZone" >
+<strong>AI_CAS_ZONE.EngageZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).Fired" >
+<strong>AI_CAS_ZONE:Fired()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Fired.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).New" >
+<strong>AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new AI<em>CAS</em>ZONE object</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> PatrolZone </em></code>: 
+The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolFloorAltitude </em></code>: 
+The lowest altitude in meters where to execute the patrol.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Altitude)">Dcs.DCSTypes#Altitude</a> PatrolCeilingAltitude </em></code>: 
+The highest altitude in meters where to execute the patrol.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
+The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
+The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> EngageZone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnAfterAbort" >
+<strong>AI_CAS_ZONE:OnAfterAbort(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Abort.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnAfterAccomplish" >
+<strong>AI_CAS_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Accomplish.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnAfterDestroy" >
+<strong>AI_CAS_ZONE:OnAfterDestroy(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Destroy.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnAfterEngage" >
+<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Engage.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnAfterFired" >
+<strong>AI_CAS_ZONE:OnAfterFired(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Fired.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnBeforeAbort" >
+<strong>AI_CAS_ZONE:OnBeforeAbort(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Abort.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnBeforeAccomplish" >
+<strong>AI_CAS_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Accomplish.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnBeforeDestroy" >
+<strong>AI_CAS_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Destroy.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnBeforeEngage" >
+<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Engage.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnBeforeFired" >
+<strong>AI_CAS_ZONE:OnBeforeFired(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Fired.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnDead" >
+<strong>AI_CAS_ZONE:OnDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnEnterEngaging" >
+<strong>AI_CAS_ZONE:OnEnterEngaging(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnEnter Transition Handler for State Engaging.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).OnLeaveEngaging" >
+<strong>AI_CAS_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State Engaging.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).SetEngageZone" >
+<strong>AI_CAS_ZONE:SetEngageZone(EngageZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Engage Zone where the AI is performing CAS.</p>
+
+	
+<p>Note that if the EngageZone is changed, the AI needs to re-detect targets.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> EngageZone </em></code>: 
+The zone where the AI is performing CAS.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(AI_CAS_ZONE).TargetZone" >
+<strong>AI_CAS_ZONE.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).__Abort" >
+<strong>AI_CAS_ZONE:__Abort(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Abort.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).__Accomplish" >
+<strong>AI_CAS_ZONE:__Accomplish(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Accomplish.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.  </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).__Destroy" >
+<strong>AI_CAS_ZONE:__Destroy(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Destroy.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).__Engage" >
+<strong>AI_CAS_ZONE:__Engage(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Engage.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).__Fired" >
+<strong>AI_CAS_ZONE:__Fired(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Fired.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onafterAccomplish" >
+<strong>AI_CAS_ZONE:onafterAccomplish(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onafterDestroy" >
+<strong>AI_CAS_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onafterEngage" >
+<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onafterStart" >
+<strong>AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>onafter State Transition for Event Start.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onbeforeEngage" >
+<strong>AI_CAS_ZONE:onbeforeEngage(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

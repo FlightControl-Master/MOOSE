@@ -1,4 +1,4 @@
--- This module contains the DETECTION_MANAGER class and derived classes.
+--- This module contains the DETECTION_MANAGER class and derived classes.
 -- 
 -- ===
 -- 

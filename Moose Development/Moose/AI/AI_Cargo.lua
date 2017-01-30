@@ -1,4 +1,4 @@
---- Management of logical cargo objects, that can be transported from and to transportation carriers.
+--- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.
 --
 -- ===
 -- 
