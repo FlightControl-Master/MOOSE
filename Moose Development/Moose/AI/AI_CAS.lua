@@ -136,12 +136,13 @@ AI_CAS_ZONE = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @param Core.Zone#ZONE EngageZone
 -- @return #AI_CAS_ZONE self
-function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
+function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false
@@ -380,7 +381,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToEngageZoneSpeed, 
@@ -406,7 +407,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
       
       -- Create a route point of type air.
       local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToEngageZoneSpeed, 
@@ -433,7 +434,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
+      self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
