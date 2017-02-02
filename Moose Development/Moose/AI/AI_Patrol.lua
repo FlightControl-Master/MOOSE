@@ -167,13 +167,14 @@ AI_PATROL_ZONE = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_PATROL_ZONE self
 -- @usage
 -- -- Define a new AI_PATROL_ZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
 -- PatrolSpawn = SPAWN:New( 'Patrol Group' )
 -- PatrolArea = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 600, 900 )
-function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_PATROL_ZONE
@@ -184,6 +185,9 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
+  
+  -- defafult PatrolAltType to "RADIO" if not specified
+  self.PatrolAltType = PatrolAltType or "RADIO"
   
   self:SetDetectionOn()
 
@@ -690,7 +694,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          POINT_VEC3.RoutePointAltType.BARO, 
+          self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TakeOffParking, 
           POINT_VEC3.RoutePointAction.FromParkingArea, 
           ToPatrolZoneSpeed, 
@@ -705,7 +709,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          POINT_VEC3.RoutePointAltType.BARO, 
+          self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
           ToPatrolZoneSpeed, 
@@ -731,7 +735,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
+      self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
@@ -819,7 +823,7 @@ function AI_PATROL_ZONE:onafterRTB()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToPatrolZoneSpeed, 
