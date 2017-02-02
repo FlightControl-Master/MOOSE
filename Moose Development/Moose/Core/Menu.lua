@@ -865,7 +865,7 @@ do
       end
     end
 
-    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
 
     return self
   end
