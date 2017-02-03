@@ -234,14 +234,14 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of the Task.
-function TASK:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function TASK:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -394,7 +394,6 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  self:GetGroups():FilterOnce() -- Ensure that the filter is updated.
   return self:GetGroups():IsIncludeObject( FindGroup )
 
 end

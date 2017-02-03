@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170124_1109' ) 
+env.info( 'Moose Generation Timestamp: 20170203_2208' ) 
 local base = _G
 
 Include = {}
@@ -4211,6 +4211,7 @@ end
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
+  SortedEvents = {},
 }
 
 local _EVENTCODES = {
@@ -4238,6 +4239,33 @@ local _EVENTCODES = {
    "S_EVENT_SHOOTING_START",
    "S_EVENT_SHOOTING_END",
    "S_EVENT_MAX",
+}
+
+local _EVENTORDER = {
+   [world.event.S_EVENT_SHOT] = 1,
+   [world.event.S_EVENT_HIT] = 1,
+   [world.event.S_EVENT_TAKEOFF] = 1,
+   [world.event.S_EVENT_LAND] = 1,
+   [world.event.S_EVENT_CRASH] = -1,
+   [world.event.S_EVENT_EJECTION] = -1,
+   [world.event.S_EVENT_REFUELING] = 1,
+   [world.event.S_EVENT_DEAD] = -1,
+   [world.event.S_EVENT_PILOT_DEAD] = -1,
+   [world.event.S_EVENT_BASE_CAPTURED] = 1,
+   [world.event.S_EVENT_MISSION_START] = 1,
+   [world.event.S_EVENT_MISSION_END] = -1,
+   [world.event.S_EVENT_TOOK_CONTROL] = 1,
+   [world.event.S_EVENT_REFUELING_STOP] = 1,
+   [world.event.S_EVENT_BIRTH] = 1,
+   [world.event.S_EVENT_HUMAN_FAILURE] = 1,
+   [world.event.S_EVENT_ENGINE_STARTUP] = 1,
+   [world.event.S_EVENT_ENGINE_SHUTDOWN] = 1,
+   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = 1,
+   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = -1,
+   [world.event.S_EVENT_PLAYER_COMMENT] = 1,
+   [world.event.S_EVENT_SHOOTING_START] = 1,
+   [world.event.S_EVENT_SHOOTING_END] = 1,
+   [world.event.S_EVENT_MAX] = 1,
 }
 
 --- The Event structure
@@ -4292,7 +4320,7 @@ function EVENT:Init( EventID, EventClass )
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
     self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
-
+    self.SortedEvents[EventID] = setmetatable( {}, { __mode = "k" } )
   end
 
   if not self.Events[EventID][EventClass] then
@@ -4311,6 +4339,12 @@ function EVENT:Remove( EventClass, EventID  )
 
   local EventClass = EventClass
   self.Events[EventID][EventClass] = nil
+
+  self.SortedEvents[EventID] = nil
+  self.SortedEvents[EventID] = {}
+  for EventClass, Event in pairs(self.Events[EventID]) do table.insert( self.SortedEvents[EventID], Event) end
+  table.sort( self.SortedEvents[EventID], function( Event1, Event2 ) return Event1.EventTime < Event2.EventTime end )
+  
 end
 
 --- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
@@ -4322,6 +4356,7 @@ function EVENT:RemoveAll( EventObject  )
   local EventClass = EventObject:GetClassNameAndID()
   for EventID, EventData in pairs( self.Events ) do
     self.Events[EventID][EventClass] = nil
+    self.SortedEvents[EventID] = nil
   end
 end
 
@@ -4355,6 +4390,13 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   local Event = self:Init( EventID, EventClass )
   Event.EventFunction = EventFunction
   Event.EventClass = EventClass
+  Event.EventTime = EventClass.EventPriority and EventClass.EventPriority or 10
+  
+  self.SortedEvents[EventID] = nil
+  self.SortedEvents[EventID] = {}
+  for EventClass, Event in pairs(self.Events[EventID]) do table.insert( self.SortedEvents[EventID], Event) end
+  table.sort( self.SortedEvents[EventID], function( Event1, Event2 ) return Event1.EventTime < Event2.EventTime end )
+  
   return self
 end
 
@@ -4931,6 +4973,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+        self:E( { IniGroup = Event.IniGroup } )
       end
     end
     if Event.target then
@@ -4953,11 +4997,27 @@ function EVENT:onEvent( Event )
     end
     self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
-    -- Okay, we got the event from DCS. Now loop the self.Events[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
-    for EventClass, EventData in pairs( self.Events[Event.id] ) do
+    local function pairsByEventSorted( EventSorted, Order )
+      local i = Order == -1 and #EventSorted or 0
+      local iter = function()
+        i = i + Order
+        if EventSorted[i] == nil then 
+          return nil
+        else
+          return EventSorted[i].EventClass, EventSorted[i]
+        end
+      end
+      return iter
+    end
+    
+    self:E( { Order = _EVENTORDER[Event.id] } )
+    
+    -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
+    for EventClass, EventData in pairsByEventSorted( self.SortedEvents[Event.id], _EVENTORDER[Event.id] ) do
       -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
       if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
+        self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventData.EventTime } )
+        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
         local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
         --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
       else
@@ -4965,7 +5025,8 @@ function EVENT:onEvent( Event )
         -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
         if Event.IniDCSUnit and not EventData.IniUnit then
           if EventClass == EventData.EventClass then
-            self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
+            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventData.EventTime } )
+            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
             local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
             --EventData.EventFunction( EventData.EventClass, Event )
           end
@@ -5765,7 +5826,7 @@ do
       end
     end
     
-    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
 
     return self
   end
@@ -5844,7 +5905,7 @@ do
       end
     end
 
-    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
 
     return self
   end
@@ -6321,16 +6382,20 @@ end
 
 --- Returns a random location within the zone.
 -- @param #ZONE_RADIUS self
+-- @param #number inner minimal distance from the center of the zone
+-- @param #number outer minimal distance from the outer edge of the zone
 -- @return Dcs.DCSTypes#Vec2 The random location within the zone.
-function ZONE_RADIUS:GetRandomVec2()
-	self:F( self.ZoneName )
+function ZONE_RADIUS:GetRandomVec2(inner, outer)
+	self:F( self.ZoneName, inner, outer )
 
 	local Point = {}
 	local Vec2 = self:GetVec2()
+	local _inner = inner or 0
+	local _outer = outer or self:GetRadius()
 
-	local angle = math.random() * math.pi*2;
-	Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
-	Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
+	local angle = math.random() * math.pi * 2;
+	Point.x = Vec2.x + math.cos( angle ) * math.random(_inner, _outer);
+	Point.y = Vec2.y + math.sin( angle ) * math.random(_inner, _outer);
 	
 	self:T( { Point } )
 	
@@ -6757,6 +6822,8 @@ DATABASE = {
   CLIENTS = {},
   AIRBASES = {},
   NavPoints = {},
+  EventPriority = 1, -- Used to sort the DCS event order processing (complicated). Database has highest priority.
+  
 }
 
 local _DATABASECoalition =
@@ -6930,6 +6997,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
+    self:E( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -7271,6 +7339,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     local PlayerName = Event.IniUnit:GetPlayerName()
     if not self.PLAYERS[PlayerName] then
       self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -7721,6 +7791,7 @@ SET_BASE = {
   Filter = {},
   Set = {},
   List = {},
+  EventPriority = 2, -- Used to sort the DCS event order processing (complicated)
 }
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -22398,7 +22469,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
-                      Client:GetGroup():Destroy()
+                      Client:Destroy()
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end
@@ -24867,13 +24938,14 @@ AI_PATROL_ZONE = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_PATROL_ZONE self
 -- @usage
 -- -- Define a new AI_PATROL_ZONE Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
 -- PatrolSpawn = SPAWN:New( 'Patrol Group' )
 -- PatrolArea = AI_PATROL_ZONE:New( PatrolZone, 3000, 6000, 600, 900 )
-function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_PATROL_ZONE
@@ -24884,6 +24956,9 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   self.PatrolCeilingAltitude = PatrolCeilingAltitude
   self.PatrolMinSpeed = PatrolMinSpeed
   self.PatrolMaxSpeed = PatrolMaxSpeed
+  
+  -- defafult PatrolAltType to "RADIO" if not specified
+  self.PatrolAltType = PatrolAltType or "RADIO"
   
   self:SetDetectionOn()
 
@@ -25390,7 +25465,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          POINT_VEC3.RoutePointAltType.BARO, 
+          self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TakeOffParking, 
           POINT_VEC3.RoutePointAction.FromParkingArea, 
           ToPatrolZoneSpeed, 
@@ -25405,7 +25480,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          POINT_VEC3.RoutePointAltType.BARO, 
+          self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
           ToPatrolZoneSpeed, 
@@ -25431,7 +25506,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
+      self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
@@ -25519,7 +25594,7 @@ function AI_PATROL_ZONE:onafterRTB()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToPatrolZoneSpeed, 
@@ -25709,12 +25784,13 @@ AI_CAS_ZONE = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @param Core.Zone#ZONE EngageZone
 -- @return #AI_CAS_ZONE self
-function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone )
+function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAS_ZONE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_CAS_ZONE
 
   self.EngageZone = EngageZone
   self.Accomplished = false
@@ -25953,7 +26029,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToEngageZoneSpeed, 
@@ -25979,7 +26055,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
       
       -- Create a route point of type air.
       local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToEngageZoneSpeed, 
@@ -26006,7 +26082,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
+      self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
@@ -26220,11 +26296,12 @@ AI_CAP_ZONE = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_CAP_ZONE self
-function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed )
+function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed ) ) -- #AI_CAP_ZONE
+  local self = BASE:Inherit( self, AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_CAP_ZONE
 
   self.Accomplished = false
   self.Engaging = false
@@ -26501,7 +26578,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        POINT_VEC3.RoutePointAltType.BARO, 
+        self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
         ToEngageZoneSpeed, 
@@ -26525,7 +26602,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     --- Create a route point of type air.
     local ToPatrolRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      POINT_VEC3.RoutePointAltType.BARO, 
+      self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
@@ -28739,7 +28816,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
       
@@ -28758,7 +28836,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
     end
@@ -28773,6 +28852,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
         Mission:AbortUnit( PlayerUnit )
       end
     end
@@ -29040,15 +29120,16 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
-function MISSION:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:JoinUnit( PlayerUnit ) then
+    if Task:JoinUnit( PlayerUnit, PlayerGroup ) then
       PlayerUnitAdded = true
     end
   end
@@ -30125,14 +30206,14 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of the Task.
-function TASK:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function TASK:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -30285,7 +30366,6 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  self:GetGroups():FilterOnce() -- Ensure that the filter is updated.
   return self:GetGroups():IsIncludeObject( FindGroup )
 
 end
@@ -30911,7 +30991,7 @@ end
 
 
 end -- Reporting
--- This module contains the DETECTION_MANAGER class and derived classes.
+--- This module contains the DETECTION_MANAGER class and derived classes.
 -- 
 -- ===
 -- 

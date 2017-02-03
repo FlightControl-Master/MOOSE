@@ -240,6 +240,7 @@ SET_BASE = {
   Filter = {},
   Set = {},
   List = {},
+  EventPriority = 2, -- Used to sort the DCS event order processing (complicated)
 }
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.

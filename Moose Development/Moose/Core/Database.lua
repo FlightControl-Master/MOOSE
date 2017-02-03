@@ -55,6 +55,8 @@ DATABASE = {
   CLIENTS = {},
   AIRBASES = {},
   NavPoints = {},
+  EventPriority = 1, -- Used to sort the DCS event order processing (complicated). Database has highest priority.
+  
 }
 
 local _DATABASECoalition =
@@ -228,6 +230,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
+    self:E( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -569,6 +572,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     local PlayerName = Event.IniUnit:GetPlayerName()
     if not self.PLAYERS[PlayerName] then
       self:AddPlayer( Event.IniUnitName, PlayerName )

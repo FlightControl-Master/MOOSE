@@ -182,7 +182,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
-                      Client:GetGroup():Destroy()
+                      Client:Destroy()
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end
