@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170131_2204' ) 
+env.info( 'Moose Generation Timestamp: "20170202_2257"' ) 
 local base = _G
 
 Include = {}
@@ -5765,7 +5765,7 @@ do
       end
     end
     
-    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
 
     return self
   end
@@ -5844,7 +5844,7 @@ do
       end
     end
 
-    self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
+    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
 
     return self
   end
