@@ -181,6 +181,7 @@ local _ClassID = 0
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
+  _Private = {},
   Events = {},
   States = {}
 }
@@ -286,6 +287,26 @@ end
 function BASE:GetClassID()
   return self.ClassID
 end
+
+--- Get the Class @{Core.Event} processing Priority.
+-- The Event processing Priority is a number from 1 to 10, 
+-- reflecting the order of the classes subscribed to the Event to be processed.
+-- @param #BASE self
+-- @return #number The @{Core.Event} processing Priority.
+function BASE:GetEventPriority()
+  return self._Private.EventPriority or 5
+end
+
+--- Set the Class @{Core.Event} processing Priority.
+-- The Event processing Priority is a number from 1 to 10, 
+-- reflecting the order of the classes subscribed to the Event to be processed.
+-- @param #BASE self
+-- @param #number EventPriority The @{Core.Event} processing Priority.
+-- @return self
+function BASE:SetEventPriority( EventPriority )
+  self._Private.EventPriority = EventPriority
+end
+
 
 --- Set a new listener for the class.
 -- @param self

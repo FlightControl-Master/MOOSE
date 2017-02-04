@@ -97,6 +97,8 @@ UNIT = {
 function UNIT:Register( UnitName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
   self.UnitName = UnitName
+  
+  self:SetEventPriority( 3 )
   return self
 end
 

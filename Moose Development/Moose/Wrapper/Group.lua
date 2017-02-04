@@ -113,6 +113,8 @@ function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
+  
+  self:SetEventPriority( 4 )
   return self
 end
 

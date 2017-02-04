@@ -55,8 +55,6 @@ DATABASE = {
   CLIENTS = {},
   AIRBASES = {},
   NavPoints = {},
-  EventPriority = 1, -- Used to sort the DCS event order processing (complicated). Database has highest priority.
-  
 }
 
 local _DATABASECoalition =
@@ -101,6 +99,8 @@ function DATABASE:New()
   self:_RegisterStatics()
   self:_RegisterPlayers()
   self:_RegisterAirbases()
+  
+  self:SetEventPriority( 1 )
   
   return self
 end
