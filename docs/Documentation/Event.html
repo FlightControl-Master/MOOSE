@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li>Event</li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -124,7 +125,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventClass)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventPriority, EventClass)</a></td>
 		<td class="summary">
 <p>Initializes the Events structure for the event</p>
 </td>
@@ -378,7 +379,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveAll">EVENT:RemoveAll(EventObject)</a></td>
 		<td class="summary">
-<p>Clears all event subscriptions for a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> derived object.</p>
+<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
 </td>
 		</tr>
 		<tr>
@@ -421,6 +422,12 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniDCSUnitName">EVENTDATA.IniDCSUnitName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniGroup">EVENTDATA.IniGroup</a></td>
 		<td class="summary">
 
 </td>
@@ -606,7 +613,7 @@
 <dt>
 
 <a id="#(EVENT).Init" >
-<strong>EVENT:Init(EventID, EventClass)</strong>
+<strong>EVENT:Init(EventID, EventPriority, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -618,6 +625,12 @@
 				<li>
 				
 <p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EventPriority </em></code>: 
+The priority of the EventClass.</p>
 
 				</li>
 				<li>
@@ -1978,7 +1991,7 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-<p>Clears all event subscriptions for a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> derived object.</p>
+<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2081,6 +2094,20 @@ The self instance of the class for which the event is.</p>
 
 <a id="#(EVENTDATA).IniDCSUnitName" >
 <strong>EVENTDATA.IniDCSUnitName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTDATA).IniGroup" >
+<strong>EVENTDATA.IniGroup</strong>
 </a>
 </dt>
 <dd>

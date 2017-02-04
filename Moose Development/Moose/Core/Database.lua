@@ -2,7 +2,7 @@
 -- 
 -- ====
 -- 
--- 1) @{Core.Database#DATABASE} class, extends @{Core.Base#BASE}
+-- 1) @{#DATABASE} class, extends @{Base#BASE}
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
@@ -99,6 +99,8 @@ function DATABASE:New()
   self:_RegisterStatics()
   self:_RegisterPlayers()
   self:_RegisterAirbases()
+  
+  self:SetEventPriority( 1 )
   
   return self
 end
@@ -228,6 +230,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
+    self:E( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -569,6 +572,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     local PlayerName = Event.IniUnit:GetPlayerName()
     if not self.PLAYERS[PlayerName] then
       self:AddPlayer( Event.IniUnitName, PlayerName )

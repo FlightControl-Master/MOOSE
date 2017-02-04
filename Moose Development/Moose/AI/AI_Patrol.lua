@@ -1,11 +1,11 @@
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+-- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
--- 
 -- ===
 -- 
--- # 1) @{#AI_PATROL_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+-- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
@@ -524,11 +524,11 @@ function AI_PATROL_ZONE:SetDetectionZone( DetectionZone )
   end
 end
 
---- Gets a list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
+--- Gets a list of @{Unit#UNIT}s that were detected by the AI.
 -- No filtering is applied, so, ANY detected UNIT can be in this list.
 -- It is up to the mission designer to use the @{Unit} class and methods to filter the targets.
 -- @param #AI_PATROL_ZONE self
--- @return #table The list of @{Wrapper.Unit#UNIT}s
+-- @return #table The list of @{Unit#UNIT}s
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 

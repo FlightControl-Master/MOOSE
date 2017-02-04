@@ -50,6 +50,33 @@ local _EVENTCODES = {
    "S_EVENT_MAX",
 }
 
+local _EVENTORDER = {
+   [world.event.S_EVENT_SHOT] = 1,
+   [world.event.S_EVENT_HIT] = 1,
+   [world.event.S_EVENT_TAKEOFF] = 1,
+   [world.event.S_EVENT_LAND] = 1,
+   [world.event.S_EVENT_CRASH] = -1,
+   [world.event.S_EVENT_EJECTION] = -1,
+   [world.event.S_EVENT_REFUELING] = 1,
+   [world.event.S_EVENT_DEAD] = -1,
+   [world.event.S_EVENT_PILOT_DEAD] = -1,
+   [world.event.S_EVENT_BASE_CAPTURED] = 1,
+   [world.event.S_EVENT_MISSION_START] = 1,
+   [world.event.S_EVENT_MISSION_END] = -1,
+   [world.event.S_EVENT_TOOK_CONTROL] = 1,
+   [world.event.S_EVENT_REFUELING_STOP] = 1,
+   [world.event.S_EVENT_BIRTH] = 1,
+   [world.event.S_EVENT_HUMAN_FAILURE] = 1,
+   [world.event.S_EVENT_ENGINE_STARTUP] = 1,
+   [world.event.S_EVENT_ENGINE_SHUTDOWN] = 1,
+   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = 1,
+   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = -1,
+   [world.event.S_EVENT_PLAYER_COMMENT] = 1,
+   [world.event.S_EVENT_SHOOTING_START] = 1,
+   [world.event.S_EVENT_SHOOTING_END] = 1,
+   [world.event.S_EVENT_MAX] = 1,
+}
+
 --- The Event structure
 -- @type EVENTDATA
 -- @field id
@@ -94,6 +121,7 @@ end
 --- Initializes the Events structure for the event
 -- @param #EVENT self
 -- @param Dcs.DCSWorld#world.event EventID
+-- @param #number EventPriority The priority of the EventClass.
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
@@ -102,8 +130,13 @@ function EVENT:Init( EventID, EventClass )
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
     self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
-
   end
+  
+  -- Each event has a subtable of EventClasses, ordered by EventPriority.
+  local EventPriority = EventClass:GetEventPriority()
+  if not self.Events[EventID][EventPriority] then
+    self.Events[EventID][EventPriority] = {}
+  end 
 
   if not self.Events[EventID][EventClass] then
      self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
@@ -120,18 +153,20 @@ function EVENT:Remove( EventClass, EventID  )
   self:F3( { EventClass, _EVENTCODES[EventID] } )
 
   local EventClass = EventClass
-  self.Events[EventID][EventClass] = nil
+  local EventPriority = EventClass:GetEventPriority()
+  self.Events[EventID][EventPriority][EventClass] = nil
 end
 
---- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
+--- Clears all event subscriptions for a @{Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )
   self:F3( { EventObject:GetClassNameAndID() } )
 
   local EventClass = EventObject:GetClassNameAndID()
+  local EventPriority = EventClass:GetEventPriority()
   for EventID, EventData in pairs( self.Events ) do
-    self.Events[EventID][EventClass] = nil
+    self.Events[EventID][EventPriority][EventClass] = nil
   end
 end
 
@@ -165,6 +200,7 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   local Event = self:Init( EventID, EventClass )
   Event.EventFunction = EventFunction
   Event.EventClass = EventClass
+  
   return self
 end
 
@@ -741,6 +777,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+        self:E( { IniGroup = Event.IniGroup } )
       end
     end
     if Event.target then
@@ -763,21 +801,33 @@ function EVENT:onEvent( Event )
     end
     self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
-    -- Okay, we got the event from DCS. Now loop the self.Events[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
-    for EventClass, EventData in pairs( self.Events[Event.id] ) do
-      -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
-      if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
-        local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
-        --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
-      else
-        -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
-        -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-        if Event.IniDCSUnit and not EventData.IniUnit then
-          if EventClass == EventData.EventClass then
-            self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
-            local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
-            --EventData.EventFunction( EventData.EventClass, Event )
+    local Order = _EVENTORDER[Event.id]
+    self:E( { Order = Order } )
+    
+    for EventPriority = Order == -1 and 5 or 1, Order == -1 and 1 or 5, Order do
+    
+      if self.Events[Event.id][EventPriority] then
+      
+        -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
+        for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
+        
+          -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
+          if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
+            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+            local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
+            --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
+          else
+            -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
+            -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
+            if Event.IniDCSUnit and not EventData.IniUnit then
+              if EventClass == EventData.EventClass then
+                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
+                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
+                --EventData.EventFunction( EventData.EventClass, Event )
+              end
+            end
           end
         end
       end

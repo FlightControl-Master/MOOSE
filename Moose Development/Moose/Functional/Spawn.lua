@@ -1,6 +1,11 @@
---- This module contains the SPAWN class.
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** --  
+-- **Spawn groups of units dynamically in your missions.**
+--  
+-- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
 -- 
--- # 1) @{Functional.Spawn#SPAWN} class, extends @{Core.Base#BASE}
+-- ===
+-- 
+-- # 1) @{#SPAWN} class, extends @{Base#BASE}
 -- 
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
@@ -42,7 +47,7 @@
 --   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
 --   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
---   * @{#SPAWN.InitUncontrolled}(): Spawn plane groups uncontrolled.
+--   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
@@ -111,6 +116,8 @@
 --   * _Removed_ parts are expressed in italic type face.
 -- 
 -- Hereby the change log:
+-- 
+-- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().
 -- 
 -- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.
 -- 
@@ -646,6 +653,10 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
             self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
           end
         end
+        
+        if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
+          SpawnTemplate.uncontrolled = self.SpawnUnControlled
+        end
       end
 		  
       _EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
@@ -734,7 +745,7 @@ end
 
 --- Allows to place a CallFunction hook when a new group spawns.
 -- The provided method will be called when a new group is spawned, including its given parameters.
--- The first parameter of the SpawnFunction is the @{Wrapper.Group#GROUP} that was spawned.
+-- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
 -- @param #SPAWN self
 -- @param #function SpawnCallBackFunction The function to be called when a group spawns.
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
@@ -874,7 +885,7 @@ function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{Zone}.
--- The @{Zone} can be of any type derived from @{Core.Zone#ZONE_BASE}.
+-- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
 -- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
 -- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
@@ -897,17 +908,20 @@ function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
   return nil
 end
 
---- (AIR) Will spawn a plane group in uncontrolled mode... 
+--- (**AIR**) Will spawn a plane group in UnControlled or Controlled mode... 
 -- This will be similar to the uncontrolled flag setting in the ME.
+-- You can use UnControlled mode to simulate planes startup and ready for take-off but aren't moving (yet).
+-- ReSpawn the plane in Controlled mode, and the plane will move...
 -- @param #SPAWN self
+-- @param #boolean UnControlled true if UnControlled, false if Controlled.
 -- @return #SPAWN self
-function SPAWN:InitUnControlled()
-	self:F( { self.SpawnTemplatePrefix } )
+function SPAWN:InitUnControlled( UnControlled )
+	self:F2( { self.SpawnTemplatePrefix, UnControlled } )
 	
-	self.SpawnUnControlled = true
+	self.SpawnUnControlled = UnControlled
 	
 	for SpawnGroupID = 1, self.SpawnMaxGroups do
-		self.SpawnGroups[SpawnGroupID].UnControlled = true
+		self.SpawnGroups[SpawnGroupID].UnControlled = UnControlled
 	end
 	
 	return self
@@ -1227,9 +1241,6 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		SpawnTemplate.visible = false 
 	end
 	
-	if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
-		SpawnTemplate.uncontrolled = false
-	end
 
 	for UnitID = 1, #SpawnTemplate.units do
 		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )

@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,8 +75,8 @@
 
    
 
-<h1>1) <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> class, extends <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></h1>
-<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
+<h1>1) <a href="Group.html##(GROUP)">Group#GROUP</a> class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
 
 <ul>
     <li>Support all DCS Group APIs.</li>
@@ -113,7 +114,7 @@ If the DCS Group object does not exist or is nil, the GROUP methods will return 
 <p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
 
 <ul>
-    <li><a href="Wrapper.Controllable.html##(CONTROLLABLE).TaskMission">Wrapper.Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskMission">Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
 </ul>
 
 <h2>1.3) GROUP Command methods</h2>
@@ -135,7 +136,7 @@ Use the following Zone validation methods on the group:</p>
     <li><a href="##(GROUP).IsNotInZone">GROUP.IsNotInZone</a>: Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</li>
 </ul>
 
-<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
+<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
 
 <h2>1.6) GROUP AI methods</h2>
 
@@ -221,7 +222,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).CopyRoute">GROUP:CopyRoute(Begin, End, Randomize, Radius)</a></td>
 		<td class="summary">
-<p>Return the route of a group by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+<p>Return the route of a group by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
 </td>
 		</tr>
 		<tr>
@@ -319,7 +320,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPositionVec3">GROUP:GetPositionVec3()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -584,7 +585,7 @@ All units on the ground result.</p>
 </dt>
 <dd>
 	
-<p>Return the route of a group by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+<p>Return the route of a group by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -947,7 +948,7 @@ Minimum height found.</p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
 
 		<h3>Return values</h3>
 			<ol>
@@ -1250,7 +1251,7 @@ The zone to test.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1313,7 +1314,7 @@ The zone to test.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1340,7 +1341,7 @@ The zone to test.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-Returns true if the Group is completely within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+Returns true if the Group is completely within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1422,7 +1423,7 @@ self</p>
 <p>Respawn the <a href="GROUP.html">GROUP</a> using a (tweaked) template of the Group.</p>
 
 	
-<p>The template must be retrieved with the <a href="Wrapper.Group.html##(GROUP).GetTemplate">Wrapper.Group#GROUP.GetTemplate</a>() function.
+<p>The template must be retrieved with the <a href="Group.html##(GROUP).GetTemplate">Group#GROUP.GetTemplate</a>() function.
 The template contains all the definitions as declared within the mission file.
 To understand templates, do the following: </p>
 

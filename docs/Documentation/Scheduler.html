@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,19 +75,19 @@
 
    
 
-<h1>1) <a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
-<p>The <a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a> class creates schedule.</p>
+<p>The <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class creates schedule.</p>
 
 <h2>1.1) SCHEDULER constructor</h2>
 
 <p>The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:</p>
 
 <ul>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.</li>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.</li>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).New">Core.Scheduler#SCHEDULER.New</a>( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
 </ul>
 
 <h2>1.2) SCHEDULER timer stopping and (re-)starting.</h2>
@@ -94,13 +95,13 @@
 <p>The SCHEDULER can be stopped and restarted with the following methods:</p>
 
 <ul>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).Start">Core.Scheduler#SCHEDULER.Start</a>(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.</li>
-    <li><a href="Core.Scheduler.html##(SCHEDULER).Stop">Core.Scheduler#SCHEDULER.Stop</a>(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).Start">Scheduler#SCHEDULER.Start</a>(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.</li>
+    <li><a href="Scheduler.html##(SCHEDULER).Stop">Scheduler#SCHEDULER.Stop</a>(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.</li>
 </ul>
 
 <h2>1.3) Create a new schedule</h2>
 
-<p>With <a href="Core.Scheduler.html##(SCHEDULER).Schedule">Core.Scheduler#SCHEDULER.Schedule</a>() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.</p>
+<p>With <a href="Scheduler.html##(SCHEDULER).Schedule">Scheduler#SCHEDULER.Schedule</a>() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.</p>
 
 <hr/>
 

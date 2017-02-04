@@ -1,8 +1,8 @@
 --- This module contains the GROUP class.
 -- 
--- 1) @{Wrapper.Group#GROUP} class, extends @{Wrapper.Controllable#CONTROLLABLE}
+-- 1) @{Group#GROUP} class, extends @{Controllable#CONTROLLABLE}
 -- =============================================================
--- The @{Wrapper.Group#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -36,7 +36,7 @@
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- ## 1.3) GROUP Command methods
 --
@@ -55,7 +55,7 @@
 --   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- ## 1.6) GROUP AI methods
 -- 
@@ -113,6 +113,8 @@ function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
+  
+  self:SetEventPriority( 4 )
   return self
 end
 
@@ -154,7 +156,7 @@ function GROUP:GetDCSObject()
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -295,7 +297,6 @@ function GROUP:GetUnit( UnitNumber )
 
   if DCSGroup then
     local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
-    self:T3( UnitFound.UnitName )
     self:T2( UnitFound )
     return UnitFound
   end
@@ -448,7 +449,7 @@ do -- Is Zone methods
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -467,7 +468,7 @@ end
 --- Returns true if some units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -484,7 +485,7 @@ end
 --- Returns true if none of the group units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -701,7 +702,7 @@ end
 -- SPAWNING
 
 --- Respawn the @{GROUP} using a (tweaked) template of the Group.
--- The template must be retrieved with the @{Wrapper.Group#GROUP.GetTemplate}() function.
+-- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
 -- The template contains all the definitions as declared within the mission file.
 -- To understand templates, do the following: 
 -- 
@@ -803,7 +804,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Core.Database#DATABASE} class.
+--- Return the route of a group by using the @{Database#DATABASE} class.
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.

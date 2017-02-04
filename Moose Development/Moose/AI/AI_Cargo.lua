@@ -1,4 +1,7 @@
---- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.
+---Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
+-- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
+--
+-- ![Banner Image](..\Presentations\AI_CARGO\CARGO.JPG)
 --
 -- ===
 -- 
@@ -12,8 +15,8 @@
 --   
 --   * AI_CARGO_GROUPED, represented by a Group of CARGO_UNITs.
 -- 
--- 1) @{AI.AI_Cargo#AI_CARGO} class, extends @{Core.Fsm#FSM_PROCESS}
--- ==========================================================================
+-- # 1) @{#AI_CARGO} class, extends @{Fsm#FSM_PROCESS}
+-- 
 -- The @{#AI_CARGO} class defines the core functions that defines a cargo object within MOOSE.
 -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
 --
@@ -52,13 +55,13 @@
 --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 -- 
--- 2) #AI_CARGO_UNIT class
--- ====================
+-- # 2) #AI_CARGO_UNIT class
+-- 
 -- The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
 -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
 -- 
--- 5) #AI_CARGO_GROUPED class
--- =======================
+-- # 5) #AI_CARGO_GROUPED class
+--
 -- The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
 -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
 -- 
@@ -90,14 +93,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] UnBoard
 -- @param #AI_CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] __UnBoard
 -- @param #AI_CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 
 -- Load
@@ -122,14 +125,14 @@
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] UnLoad
 -- @param #AI_CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] __UnLoad
 -- @param #AI_CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 -- State Transition Functions
 

@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -256,7 +257,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).JoinUnit">MISSION:JoinUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).JoinUnit">MISSION:JoinUnit(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>Add a Unit to join the Mission.</p>
 </td>
@@ -1294,7 +1295,7 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 <dt>
 
 <a id="#(MISSION).JoinUnit" >
-<strong>MISSION:JoinUnit(PlayerUnit)</strong>
+<strong>MISSION:JoinUnit(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1306,12 +1307,18 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 If the Unit was not part of a Task in the Mission, false is returned.
 If the Unit is part of a Task in the Mission, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
 The CLIENT or UNIT of the Player joining the Mission.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> PlayerGroup </em></code>: 
+The GROUP of the player joining the Mission.</p>
 
 				</li>
 		</ul>

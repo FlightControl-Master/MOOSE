@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIGN} FSM template class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIGN state machine:
 -- 

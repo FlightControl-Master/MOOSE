@@ -81,7 +81,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
       
@@ -100,7 +101,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
     end
@@ -115,6 +117,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
         Mission:AbortUnit( PlayerUnit )
       end
     end

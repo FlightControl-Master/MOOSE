@@ -1,8 +1,8 @@
 --- This module contains the OBJECT class.
 -- 
--- 1) @{Wrapper.Object#OBJECT} class, extends @{Core.Base#BASE}
+-- 1) @{Object#OBJECT} class, extends @{Base#BASE}
 -- ===========================================================
--- The @{Wrapper.Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
+-- The @{Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.
@@ -12,13 +12,13 @@
 -- ------------------------------
 -- The OBJECT class provides the following functions to construct a OBJECT instance:
 --
---  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
+--  * @{Object#OBJECT.New}(): Create a OBJECT instance.
 --
 -- 1.2) OBJECT methods:
 -- --------------------------
 -- The following methods can be used to identify an Object object:
 -- 
---    * @{Wrapper.Object#OBJECT.GetID}(): Returns the ID of the Object object.
+--    * @{Object#OBJECT.GetID}(): Returns the ID of the Object object.
 -- 
 -- ===
 -- 

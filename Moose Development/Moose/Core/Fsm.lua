@@ -3,6 +3,8 @@
 -- 
 -- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
 -- 
+-- ===
+-- 
 -- A FSM can only be in one of a finite number of states. 
 -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
 -- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**. 
@@ -46,7 +48,7 @@
 -- 
 -- ===
 --
--- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
+-- # 1) @{#FSM} class, extends @{Base#BASE}
 --
 -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
 -- 

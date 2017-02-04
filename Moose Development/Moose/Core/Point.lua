@@ -1,8 +1,8 @@
 --- This module contains the POINT classes.
 -- 
--- 1) @{Core.Point#POINT_VEC3} class, extends @{Core.Base#BASE}
+-- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
 -- ==================================================
--- The @{Core.Point#POINT_VEC3} class defines a 3D point in the simulator.
+-- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 -- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
@@ -11,20 +11,20 @@
 -- ---------------------------
 -- A new POINT_VEC3 instance can be created with:
 -- 
---  * @{#POINT_VEC3.New}(): a 3D point.
---  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{Dcs.DCSTypes#Vec3}.
+--  * @{Point#POINT_VEC3.New}(): a 3D point.
+--  * @{Point#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
 --  
 --
--- 2) @{Core.Point#POINT_VEC2} class, extends @{Core.Point#POINT_VEC3}
+-- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
--- The @{Core.Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
 -- A new POINT_VEC2 instance can be created with:
 -- 
---  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
---  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{Dcs.DCSTypes#Vec2}.
+--  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
 -- 
 -- ===
 -- 
@@ -672,10 +672,10 @@ function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   return Distance
 end
 
---- Calculate the distance from a reference @{Dcs.DCSTypes#Vec2}.
+--- Calculate the distance from a reference @{DCSTypes#Vec2}.
 -- @param #POINT_VEC2 self
--- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{Dcs.DCSTypes#Vec2}.
--- @return Dcs.DCSTypes#Distance The distance from the reference @{Dcs.DCSTypes#Vec2} in meters.
+-- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+-- @return Dcs.DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
 function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   self:F2( Vec2Reference )
   

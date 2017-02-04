@@ -2,9 +2,9 @@
 --
 -- ===
 --
--- 1) @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
 -- ==================================================================
--- The @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
+-- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
 -- CLIENTS should not be allowed to:
 --
 --   * Don't taxi faster than 40 km/h.
@@ -12,7 +12,7 @@
 --   * Avoid to hit other planes on the airbase.
 --   * Obey ground control orders.
 --
--- 2) @{Functional.AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
+-- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the caucasus map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -39,7 +39,7 @@
 --   * TbilisiLochini
 --   * Vaziani
 --
--- 3) @{Functional.AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
+-- 3) @{AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the NEVADA map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -182,7 +182,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
-                      Client:GetGroup():Destroy()
+                      Client:Destroy()
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end

@@ -1,6 +1,6 @@
 --- This module contains the MESSAGE class.
 -- 
--- 1) @{Core.Message#MESSAGE} class, extends @{Core.Base#BASE}
+-- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
 -- =================================================
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
@@ -8,16 +8,16 @@
 -- 
 -- 1.1) MESSAGE construction methods
 -- ---------------------------------
--- Messages are created with @{Core.Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
 -- 1.2) Send messages with MESSAGE To methods
 -- ------------------------------------------
 -- Messages are sent to:
 --
---   * Clients with @{Core.Message#MESSAGE.ToClient}.
---   * Coalitions with @{Core.Message#MESSAGE.ToCoalition}.
---   * All Players with @{Core.Message#MESSAGE.ToAll}.
+--   * Clients with @{Message#MESSAGE.ToClient}.
+--   * Coalitions with @{Message#MESSAGE.ToCoalition}.
+--   * All Players with @{Message#MESSAGE.ToAll}.
 --   
 -- @module Message
 -- @author FlightControl

@@ -3,17 +3,16 @@
 -- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
--- 
--- 
+--  
 -- ===
 -- 
--- # 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
+-- # 1) @{AI_Balancer#AI_BALANCER} class, extends @{Fsm#FSM_SET}
 -- 
--- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
+-- The @{AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
+-- The parent class @{Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
 -- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
 -- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
 -- 
@@ -55,8 +54,8 @@
 -- However, there are 2 additional options that you can use to customize the destroy behaviour.
 -- When a human player joins a slot, you can configure to let the AI return to:
 -- 
---    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
---    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Airbase#AIRBASE}.
 -- 
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
@@ -152,10 +151,10 @@ function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
   return self
 end
 
---- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
--- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
 function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -163,9 +162,9 @@ function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbase
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
---- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--- Returns the AI to the home @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
