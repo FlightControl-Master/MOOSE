@@ -1,6 +1,6 @@
 --- This module contains the UNIT class.
 -- 
--- 1) @{#UNIT} class, extends @{Wrapper.Controllable#CONTROLLABLE}
+-- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
 -- ===========================================================
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
@@ -33,7 +33,7 @@
 -- ------------------
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{Dcs.DCSWrapper.Unit#Unit.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
 -- 1.3) Smoke, Flare Units
@@ -60,7 +60,7 @@
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
 -- ### 1.6.1) Zones
--- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
 -- ### 1.6.2) Units
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
@@ -584,7 +584,7 @@ end
 --- Returns true if the unit is within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -601,7 +601,7 @@ end
 --- Returns true if the unit is not within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 

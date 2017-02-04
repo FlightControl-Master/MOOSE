@@ -2,7 +2,7 @@
 -- 
 -- ====
 -- 
--- 1) @{Core.Database#DATABASE} class, extends @{Core.Base#BASE}
+-- 1) @{#DATABASE} class, extends @{Base#BASE}
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 

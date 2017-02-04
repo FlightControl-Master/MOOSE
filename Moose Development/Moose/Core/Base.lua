@@ -13,8 +13,8 @@
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, must use the @{Core.Base#BASE.New) constructor within the @{Core.Base#BASE.Inherit) method. 
--- See an example at the @{Core.Base#BASE.New} method how this is done.
+-- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
+-- See an example at the @{Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) BASE Trace functionality
 -- 
@@ -84,8 +84,8 @@
 --   * @{#BASE.EventOnTakeOff}(): Handle the event when a unit takes off from a runway.
 --   * @{#BASE.EventOnTookControl}(): Handle the event when a player takes control of a unit.
 -- 
--- The EventOn() methods provide the @{Core.Event#EVENTDATA} structure to the event handling function. 
--- The @{Core.Event#EVENTDATA} structure contains an enriched data set of information about the event being handled.
+-- The EventOn() methods provide the @{Event#EVENTDATA} structure to the event handling function. 
+-- The @{Event#EVENTDATA} structure contains an enriched data set of information about the event being handled.
 -- 
 -- Find below an example of the prototype how to write an event handling function: 
 --
@@ -105,7 +105,7 @@
 -- Note the function( self, EventData ). It takes two parameters:
 -- 
 --   * self = the object that is handling the EventOnPlayerEnterUnit.
---   * EventData = the @{Core.Event#EVENTDATA} structure, containing more information of the Event.
+--   * EventData = the @{Event#EVENTDATA} structure, containing more information of the Event.
 -- 
 -- ## 1.4) Class identification methods
 -- 
@@ -288,20 +288,20 @@ function BASE:GetClassID()
   return self.ClassID
 end
 
---- Get the Class @{Core.Event} processing Priority.
+--- Get the Class @{Event} processing Priority.
 -- The Event processing Priority is a number from 1 to 10, 
 -- reflecting the order of the classes subscribed to the Event to be processed.
 -- @param #BASE self
--- @return #number The @{Core.Event} processing Priority.
+-- @return #number The @{Event} processing Priority.
 function BASE:GetEventPriority()
   return self._Private.EventPriority or 5
 end
 
---- Set the Class @{Core.Event} processing Priority.
+--- Set the Class @{Event} processing Priority.
 -- The Event processing Priority is a number from 1 to 10, 
 -- reflecting the order of the classes subscribed to the Event to be processed.
 -- @param #BASE self
--- @param #number EventPriority The @{Core.Event} processing Priority.
+-- @param #number EventPriority The @{Event} processing Priority.
 -- @return self
 function BASE:SetEventPriority( EventPriority )
   self._Private.EventPriority = EventPriority

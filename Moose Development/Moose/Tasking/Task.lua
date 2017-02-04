@@ -1,6 +1,6 @@
 --- This module contains the TASK class.
 -- 
--- 1) @{#TASK} class, extends @{Core.Base#BASE}
+-- 1) @{#TASK} class, extends @{Base#BASE}
 -- ============================================
 -- 1.1) The @{#TASK} class implements the methods for task orchestration within MOOSE. 
 -- ----------------------------------------------------------------------------------------

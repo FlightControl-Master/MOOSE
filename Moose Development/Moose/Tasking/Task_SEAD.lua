@@ -1,14 +1,14 @@
 --- This module contains the TASK_SEAD classes.
 -- 
--- 1) @{#TASK_SEAD} class, extends @{Tasking.Task#TASK}
+-- 1) @{#TASK_SEAD} class, extends @{Task#TASK}
 -- =================================================
 -- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
--- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
+-- based on the tasking capabilities defined in @{Task#TASK}.
 -- The TASK_SEAD is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#ACT_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 

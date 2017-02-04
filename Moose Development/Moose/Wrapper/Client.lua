@@ -1,10 +1,10 @@
 --- This module contains the CLIENT class.
 -- 
--- 1) @{Wrapper.Client#CLIENT} class, extends @{Wrapper.Unit#UNIT}
+-- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
 -- ===============================================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{Wrapper.Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -35,7 +35,6 @@
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).
 -- 
 -- @module Client
--- @author FlightControl
 
 --- The CLIENT class
 -- @type CLIENT
@@ -226,7 +225,7 @@ end
 
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
--- @param #function CallBack Function.
+-- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
 -- @return #CLIENT
 function CLIENT:Alive( CallBackFunction, ... )
   self:F()
@@ -399,8 +398,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
+--- Shows the @{AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{AI_Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
@@ -433,7 +432,7 @@ end
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
 -- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )

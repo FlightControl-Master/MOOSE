@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -70,24 +71,32 @@
 	<div id="content">
    <h1>Module <code>Cargo</code></h1>
    
-<p>Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.</p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
+<strong>Management of logical cargo objects, that can be transported from and to transportation carriers.</strong></p>
 
-   
+<p><img src="..\Presentations\AI_CARGO\CARGO.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
 <p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
 
 <ul>
-    <li><p>AI<em>CARGO</em>UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost.</p></li>
-    <li><p>CARGO_STATIC, represented by a <a href="Static.html">Static</a>: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.</p></li>
-    <li><p>AI<em>CARGO</em>PACKAGE, contained in a <a href="Unit.html">Unit</a> of a <a href="Group.html">Group</a>: Cargo can be contained within a Unit of a Group. The cargo can be <strong>delivered</strong> by the <a href="Unit.html">Unit</a>. If the Unit is destroyed, the cargo will be destroyed also.</p></li>
-    <li><p>AI<em>CARGO</em>PACKAGE, Contained in a <a href="Static.html">Static</a>: Cargo can be contained within a Static. The cargo can be <strong>collected</strong> from the @Static. If the <a href="Static.html">Static</a> is destroyed, the cargo will be destroyed.</p></li>
-    <li><p>CARGO_SLINGLOAD, represented by a <a href="Cargo.html">Cargo</a> that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.</p></li>
-    <li><p>AI<em>CARGO</em>GROUPED, represented by a Group of CARGO_UNITs.</p></li>
+    <li>AI<em>CARGO</em>UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group.</li>
 </ul>
 
-<h1>1) <a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> class, extends <a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a></h1>
+   
+<p>Destruction of the Unit will mean that the cargo is lost.
+  * CARGO_STATIC, represented by a <a href="Static.html">Static</a>: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.
+  * AI<em>CARGO</em>PACKAGE, contained in a <a href="Unit.html">Unit</a> of a <a href="Group.html">Group</a>: Cargo can be contained within a Unit of a Group. The cargo can be <strong>delivered</strong> by the <a href="Unit.html">Unit</a>. If the Unit is destroyed, the cargo will be destroyed also.
+  * AI<em>CARGO</em>PACKAGE, Contained in a <a href="Static.html">Static</a>: Cargo can be contained within a Static. The cargo can be <strong>collected</strong> from the @Static. If the <a href="Static.html">Static</a> is destroyed, the cargo will be destroyed.
+  * CARGO_SLINGLOAD, represented by a <a href="Cargo.html">Cargo</a> that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.</p>
+
+<ul>
+    <li>AI<em>CARGO</em>GROUPED, represented by a Group of CARGO_UNITs.</li>
+</ul>
+
+<h1>1) <a href="##(AI_CARGO)">#AI_CARGO</a> class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
 <p>The <a href="##(AI_CARGO)">#AI_CARGO</a> class defines the core functions that defines a cargo object within MOOSE.
 A cargo is a logical object defined that is available for transport, and has a life status within a simulation.</p>
 
@@ -132,10 +141,12 @@ There are 2 moments when state transition methods will be called by the state ma
 </ul>
 
 <h1>2) #AI<em>CARGO</em>UNIT class</h1>
+
 <p>The AI<em>CARGO</em>UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
 Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI<em>CARGO</em>UNIT objects to and from carriers.</p>
 
 <h1>5) #AI<em>CARGO</em>GROUPED class</h1>
+
 <p>The AI<em>CARGO</em>GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
 Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI<em>CARGO</em>UNIT objects to and from carriers.</p>
 
@@ -1263,7 +1274,7 @@ The cargo must be in the <strong>Loaded</strong> state.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
-(optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
+(optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -1289,7 +1300,7 @@ The cargo must be in the <strong>Loaded</strong> state.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
-(optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
+(optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -1399,7 +1410,7 @@ The amount of seconds to delay the action.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
-(optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
+(optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -1431,7 +1442,7 @@ The amount of seconds to delay the action.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
-(optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
+(optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
 
 				</li>
 		</ul>
@@ -2413,7 +2424,6 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(AI_CARGO_UNIT).CargoCarrier" >
 <strong>AI_CARGO_UNIT.CargoCarrier</strong>
 </a>

@@ -62,7 +62,7 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	end
 end
 
---- Destroys a @{Dcs.DCSWrapper.Unit#Unit} from the simulator, but checks first if it is still existing!
+--- Destroys a @{DCSWrapper.Unit#Unit} from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
 -- @param Dcs.DCSWrapper.Unit#Unit CleanUpUnit The object to be destroyed.
 -- @param #string CleanUpUnitName The Unit name ...
@@ -199,7 +199,7 @@ function CLEANUP:_EventHitCleanUp( Event )
 	end
 end
 
---- Add the @{Dcs.DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
+--- Add the @{DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 

@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -76,18 +77,17 @@ even when there are hardly any players in the mission.</strong></p>
 
 <p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
+<h1>1) <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
 
-<p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
+<p>The <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
 CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 
    
 <p>In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
 
-<p>The parent class <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
+<p>The parent class <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
 The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
 An explanation about state and event transition methods can be found in the <a href="FSM.html">FSM</a> module documentation.</p>
 
@@ -136,8 +136,8 @@ However, there are 2 additional options that you can use to customize the destro
 When a human player joins a slot, you can configure to let the AI return to:</p>
 
 <ul>
-    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the <strong>home</strong> <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
-    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the <strong>home</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
 </ul>
 
 <p>Note that when AI returns to an airbase, the AI<em>BALANCER will trigger the <strong>Return</strong> event and the AI will return, 
@@ -240,13 +240,13 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
 		<td class="summary">
-<p>Returns the AI to the home <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
 		<td class="summary">
-<p>Returns the AI to the nearest friendly <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -495,14 +495,14 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 </dt>
 <dd>
 	
-<p>Returns the AI to the home <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+<p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 		</ul>
@@ -517,20 +517,20 @@ If there is an enemy <a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIE
 </dt>
 <dd>
 	
-<p>Returns the AI to the nearest friendly <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+<p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a> ReturnAirbaseSet </em></code>: 
-The SET of <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a>s to evaluate where to return to.</p>
+The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate where to return to.</p>
 
 				</li>
 		</ul>

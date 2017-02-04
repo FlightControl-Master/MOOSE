@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,8 +75,8 @@
 
    
 
-<h1>1) <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> class, extends <a href="Wrapper.Identifiable.html##(IDENTIFIABLE)">Wrapper.Identifiable#IDENTIFIABLE</a></h1>
-<p>The <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> class is a wrapper class to handle the POSITIONABLE objects:</p>
+<h1>1) <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> class, extends <a href="Identifiable.html##(IDENTIFIABLE)">Identifiable#IDENTIFIABLE</a></h1>
+<p>The <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> class is a wrapper class to handle the POSITIONABLE objects:</p>
 
 <ul>
     <li>Support all DCS APIs.</li>
@@ -87,15 +88,15 @@
 <p>The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:</p>
 
 <ul>
-    <li><a href="Wrapper.Positionable.html##(POSITIONABLE).New">Wrapper.Positionable#POSITIONABLE.New</a>(): Create a POSITIONABLE instance.</li>
+    <li><a href="Positionable.html##(POSITIONABLE).New">Positionable#POSITIONABLE.New</a>(): Create a POSITIONABLE instance.</li>
 </ul>
 
 <h2>1.2) POSITIONABLE methods:</h2>
 <p>The following methods can be used to identify an measurable object:</p>
 
 <ul>
-    <li><a href="Wrapper.Positionable.html##(POSITIONABLE).GetID">Wrapper.Positionable#POSITIONABLE.GetID</a>(): Returns the ID of the measurable object.</li>
-    <li><a href="Wrapper.Positionable.html##(POSITIONABLE).GetName">Wrapper.Positionable#POSITIONABLE.GetName</a>(): Returns the name of the measurable object.</li>
+    <li><a href="Positionable.html##(POSITIONABLE).GetID">Positionable#POSITIONABLE.GetID</a>(): Returns the ID of the measurable object.</li>
+    <li><a href="Positionable.html##(POSITIONABLE).GetName">Positionable#POSITIONABLE.GetName</a>(): Returns the name of the measurable object.</li>
 </ul>
 
 <hr/>
@@ -161,25 +162,25 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPositionVec3">POSITIONABLE:GetPositionVec3()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetRandomVec3">POSITIONABLE:GetRandomVec3(Radius)</a></td>
 		<td class="summary">
-<p>Returns a random <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns a random <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVec2">POSITIONABLE:GetVec2()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> vector indicating the point in 2D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVec3">POSITIONABLE:GetVec3()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> vector indicating the 3D vector of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the 3D vector of the POSITIONABLE within the mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -467,7 +468,7 @@ The POSITIONABLE is not existing or alive.  </p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Position3)">Dcs.DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
 
 		<h3>Return values</h3>
 			<ol>
@@ -495,7 +496,7 @@ The POSITIONABLE is not existing or alive.  </p>
 </dt>
 <dd>
 	
-<p>Returns a random <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.</p>
+<p>Returns a random <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -531,7 +532,7 @@ The POSITIONABLE is not existing or alive.  </p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> vector indicating the point in 2D of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> vector indicating the point in 2D of the POSITIONABLE within the mission.</p>
 
 		<h3>Return values</h3>
 			<ol>
@@ -559,7 +560,7 @@ The POSITIONABLE is not existing or alive.  </p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> vector indicating the 3D vector of the POSITIONABLE within the mission.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector indicating the 3D vector of the POSITIONABLE within the mission.</p>
 
 		<h3>Return values</h3>
 			<ol>

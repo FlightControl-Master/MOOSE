@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -70,14 +71,19 @@
 	<div id="content">
    <h1>Module <code>Spawn</code></h1>
    
-<p>This module contains the SPAWN class.</p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
+<strong>Spawn groups of units dynamically in your missions.</strong></p>
+
+<p><img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<h1>1) <a href="##(SPAWN)">#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.</p>
 
    
-
-<h1>1) <a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
-
-<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
-For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
+<p>For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the <em>"Spawn Template"</em> of the SPAWN object.
 A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.</p>
 
 <p>Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
@@ -123,7 +129,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).InitLimit">SPAWN.InitLimit</a>(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.</li>
     <li><a href="##(SPAWN).InitRandomizeRoute">SPAWN.InitRandomizeRoute</a>(): Randomize the routes of spawned groups, and for air groups also optionally the height.</li>
     <li><a href="##(SPAWN).InitRandomizeTemplate">SPAWN.InitRandomizeTemplate</a>(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. </li>
-    <li><a href="##(SPAWN).InitUncontrolled">SPAWN.InitUncontrolled</a>(): Spawn plane groups uncontrolled.</li>
+    <li><a href="##(SPAWN).InitUnControlled">SPAWN.InitUnControlled</a>(): Spawn plane groups uncontrolled.</li>
     <li><a href="##(SPAWN).InitArray">SPAWN.InitArray</a>(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.</li>
     <li><a href="##(SPAWN).InitRepeat">SPAWN.InitRepeat</a>(): Re-spawn groups when they land at the home base. Similar methods are <a href="##(SPAWN).InitRepeatOnLanding">SPAWN.InitRepeatOnLanding</a> and <a href="##(SPAWN).InitRepeatOnEngineShutDown">SPAWN.InitRepeatOnEngineShutDown</a>.</li>
     <li><a href="##(SPAWN).InitRandomizeUnits">SPAWN.InitRandomizeUnits</a>(): Randomizes the <a href="Unit.html">Unit</a>s in the <a href="Group.html">Group</a> that is spawned within a <strong>radius band</strong>, given an Outer and Inner radius.</li>
@@ -199,6 +205,8 @@ A coding example is provided at the description of the <a href="##(SPAWN).OnSpaw
 </ul>
 
 <p>Hereby the change log:</p>
+
+<p>2017-02-04: SPAWN:InitUnControlled( <strong>UnControlled</strong> ) replaces SPAWN:InitUnControlled().</p>
 
 <p>2017-01-24: SPAWN:<strong>InitAIOnOff( AIOnOff )</strong> added.</p>
 
@@ -396,9 +404,9 @@ A coding example is provided at the description of the <a href="##(SPAWN).OnSpaw
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitUnControlled">SPAWN:InitUnControlled()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitUnControlled">SPAWN:InitUnControlled(UnControlled)</a></td>
 		<td class="summary">
-<p>(AIR) Will spawn a plane group in uncontrolled mode...</p>
+<p>(<strong>AIR</strong>) Will spawn a plane group in UnControlled or Controlled mode...</p>
 </td>
 		</tr>
 		<tr>
@@ -1524,16 +1532,27 @@ self</p>
 <dt>
 
 <a id="#(SPAWN).InitUnControlled" >
-<strong>SPAWN:InitUnControlled()</strong>
+<strong>SPAWN:InitUnControlled(UnControlled)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>(AIR) Will spawn a plane group in uncontrolled mode...</p>
+<p>(<strong>AIR</strong>) Will spawn a plane group in UnControlled or Controlled mode...</p>
 
 	
-<p>This will be similar to the uncontrolled flag setting in the ME.</p>
+<p>This will be similar to the uncontrolled flag setting in the ME.
+You can use UnControlled mode to simulate planes startup and ready for take-off but aren't moving (yet).
+ReSpawn the plane in Controlled mode, and the plane will move...</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean UnControlled </em></code>: 
+true if UnControlled, false if Controlled.</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(SPAWN)">#SPAWN</a>:</em>
@@ -1656,7 +1675,7 @@ Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter 
 
 	
 <p>The provided method will be called when a new group is spawned, including its given parameters.
-The first parameter of the SpawnFunction is the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> that was spawned.</p>
+The first parameter of the SpawnFunction is the <a href="Group.html##(GROUP)">Group#GROUP</a> that was spawned.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1738,9 +1757,6 @@ The group that was spawned. You can use this group for further actions.</p>
 <dd>
 	
 
-
-	
-<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
 
 </dd>
 </dl>
@@ -2127,7 +2143,7 @@ SpawnGroupName</p>
 <p>Will spawn a Group within a given <a href="Zone.html">Zone</a>.</p>
 
 	
-<p>The <a href="Zone.html">Zone</a> can be of any type derived from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>.
+<p>The <a href="Zone.html">Zone</a> can be of any type derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.
 Once the <a href="Group.html">Group</a> is spawned within the zone, the <a href="Group.html">Group</a> will continue on its route.
 The <strong>first waypoint</strong> (where the group is spawned) is replaced with the zone location coordinates.</p>
 
@@ -2512,7 +2528,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
+		<em></em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>

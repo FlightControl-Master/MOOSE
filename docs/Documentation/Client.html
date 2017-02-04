@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,10 +75,10 @@
 
    
 
-<h1>1) <a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> class, extends <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></h1>
+<h1>1) <a href="Client.html##(CLIENT)">Client#CLIENT</a> class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
 <p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.
 Note that clients are NOT the same as Units, they are NOT necessarily alive.
-The <a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
+The <a href="Client.html##(CLIENT)">Client#CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
 
 <ul>
     <li>Wraps the DCS Unit objects with skill level set to Player or Client.</li>
@@ -129,7 +130,7 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBack, CallBackFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBackFunction, ...)</a></td>
 		<td class="summary">
 <p>Checks for a client alive event and calls a function on a continuous basis.</p>
 </td>
@@ -299,7 +300,7 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ShowCargo">CLIENT:ShowCargo()</a></td>
 		<td class="summary">
-<p>Shows the <a href="AI.AI_Cargo.html##(CARGO)">AI.AI_Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
+<p>Shows the <a href="AI_Cargo.html##(CARGO)">AI_Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
 </td>
 		</tr>
 		<tr>
@@ -393,7 +394,7 @@ self</p>
 <dt>
 
 <a id="#(CLIENT).Alive" >
-<strong>CLIENT:Alive(CallBack, CallBackFunction, ...)</strong>
+<strong>CLIENT:Alive(CallBackFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -404,13 +405,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em>#function CallBack </em></code>: 
-Function.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> CallBackFunction </em></code>: </p>
+<p><code><em>#function CallBackFunction </em></code>: 
+Create a function that will be called when a player joins the slot.</p>
 
 				</li>
 				<li>
@@ -859,7 +855,7 @@ is the category of the message (the title).</p>
 				<li>
 				
 <p><code><em>#number MessageInterval </em></code>: 
-is the interval in seconds between the display of the <a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> when the CLIENT is in the air.</p>
+is the interval in seconds between the display of the <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> when the CLIENT is in the air.</p>
 
 				</li>
 				<li>
@@ -969,10 +965,10 @@ self</p>
 </dt>
 <dd>
 	
-<p>Shows the <a href="AI.AI_Cargo.html##(CARGO)">AI.AI_Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
+<p>Shows the <a href="AI_Cargo.html##(CARGO)">AI_Cargo#CARGO</a> contained within the CLIENT to the player as a message.</p>
 
 	
-<p>The <a href="AI.AI_Cargo.html##(CARGO)">AI.AI_Cargo#CARGO</a> is shown using the <a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> distribution system.</p>
+<p>The <a href="AI_Cargo.html##(CARGO)">AI_Cargo#CARGO</a> is shown using the <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> distribution system.</p>
 
 </dd>
 </dl>

@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -79,12 +80,11 @@ even when there are hardly any players in the mission.</strong></p>
 
 <p><img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Core.Fsm.html##(FSM_SET)">Core.Fsm#FSM_SET</a></h1>
+<h1>1) <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
 
-<p>The <a href="AI.AI_Balancer.html##(AI_BALANCER)">AI.AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
+<p>The <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
 CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 </td>
 			</tr>
@@ -95,10 +95,9 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 
 <p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI.AI_CAP.html##(AI_PATROL_ZONE)">AI.AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
 <p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
@@ -107,29 +106,29 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cas.html">AI_Cas</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Patrol.html">AI_Patrol</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Air Patrolling or Staging.</strong></p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<strong>Air Patrolling or Staging.</strong></p>
 
 <p><img src="..\Presentations\AI_PATROL\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
 
 <p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
 </td>
@@ -167,7 +166,18 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.</p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
+<strong>Management of logical cargo objects, that can be transported from and to transportation carriers.</strong></p>
+
+<p><img src="..\Presentations\AI_CARGO\CARGO.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
+
+<ul>
+    <li>AI<em>CARGO</em>UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group.</li>
+</ul>
 </td>
 			</tr>
 			<tr>
@@ -204,6 +214,12 @@ and automatically engage any airborne enemies that are within a certain range or
 			<td class="name" nowrap="nowrap"><a href="Detection.html">Detection</a></td>
 			<td class="summary">
 <p> This module contains the DETECTION classes.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DetectionManager.html">DetectionManager</a></td>
+			<td class="summary">
+<p>This module contains the DETECTION_MANAGER class and derived classes.</p>
 </td>
 			</tr>
 			<tr>
@@ -341,7 +357,16 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Spawn.html">Spawn</a></td>
 			<td class="summary">
-<p>This module contains the SPAWN class.</p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
+<strong>Spawn groups of units dynamically in your missions.</strong></p>
+
+<p><img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<h1>1) <a href="##(SPAWN)">#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.</p>
 </td>
 			</tr>
 			<tr>
@@ -390,7 +415,7 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Zone.html">Zone</a></td>
 			<td class="summary">
-<p>This module contains the ZONE classes, inherited from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>.</p>
+<p>This module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
 </td>
 			</tr>
 			<tr>

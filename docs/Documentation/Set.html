@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -76,24 +77,24 @@
 
 <hr/>
 
-<h1>1) <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
-<p>The <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> class defines the core functions that define a collection of objects.
+<h1>1) <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class defines the core functions that define a collection of objects.
 A SET provides iterators to iterate the SET, but will <strong>temporarily</strong> yield the ForEach interator loop at defined <strong>"intervals"</strong> to the mail simulator loop.
 In this way, large loops can be done while not blocking the simulator main processing loop.
 The default <strong>"yield interval"</strong> is after 10 objects processed.
 The default <strong>"time interval"</strong> is after 0.001 seconds.</p>
 
 <h2>1.1) Add or remove objects from the SET</h2>
-<p>Some key core functions are <a href="Core.Set.html##(SET_BASE).Add">Core.Set#SET_BASE.Add</a> and <a href="Core.Set.html##(SET_BASE).Remove">Core.Set#SET_BASE.Remove</a> to add or remove objects from the SET in your logic.</p>
+<p>Some key core functions are <a href="Set.html##(SET_BASE).Add">Set#SET_BASE.Add</a> and <a href="Set.html##(SET_BASE).Remove">Set#SET_BASE.Remove</a> to add or remove objects from the SET in your logic.</p>
 
 <h2>1.2) Define the SET iterator <strong>"yield interval"</strong> and the <strong>"time interval"</strong></h2>
-<p>Modify the iterator intervals with the <a href="Core.Set.html##(SET_BASE).SetInteratorIntervals">Core.Set#SET_BASE.SetInteratorIntervals</a> method.
+<p>Modify the iterator intervals with the <a href="Set.html##(SET_BASE).SetInteratorIntervals">Set#SET_BASE.SetInteratorIntervals</a> method.
 You can set the <strong>"yield interval"</strong>, and the <strong>"time interval"</strong>. (See above).</p>
 
 <hr/>
 
-<h1>2) <a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> class, extends <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
+<h1>2) <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<p>Mission designers can use the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
 
 <ul>
     <li>Coalitions</li>
@@ -110,7 +111,7 @@ You can set the <strong>"yield interval"</strong>, and the <strong>"time interva
 </ul>
 
 <h2>2.2) Add or Remove GROUP(s) from SET_GROUP: </h2>
-<p>GROUPS can be added and removed using the <a href="Core.Set.html##(SET_GROUP).AddGroupsByName">Core.Set#SET_GROUP.AddGroupsByName</a> and <a href="Core.Set.html##(SET_GROUP).RemoveGroupsByName">Core.Set#SET_GROUP.RemoveGroupsByName</a> respectively. 
+<p>GROUPS can be added and removed using the <a href="Set.html##(SET_GROUP).AddGroupsByName">Set#SET_GROUP.AddGroupsByName</a> and <a href="Set.html##(SET_GROUP).RemoveGroupsByName">Set#SET_GROUP.RemoveGroupsByName</a> respectively. 
 These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.</p>
 
 <h2>2.3) SET_GROUP filter criteria: </h2>
@@ -133,7 +134,7 @@ Filter criteria are defined by:</p>
 <p>Planned filter criteria within development are (so these are not yet available):</p>
 
 <ul>
-    <li><a href="##(SET_GROUP).FilterZones">SET_GROUP.FilterZones</a>: Builds the SET_GROUP with the groups within a <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>.</li>
+    <li><a href="##(SET_GROUP).FilterZones">SET_GROUP.FilterZones</a>: Builds the SET_GROUP with the groups within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
 </ul>
 
 <h2>2.4) SET_GROUP iterators:</h2>
@@ -150,8 +151,8 @@ The following iterator methods are currently available within the SET</em>GROUP:
 
 <hr/>
 
-<h1>3) <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> class, extends <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> class to build sets of units belonging to certain:</p>
+<h1>3) <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<p>Mission designers can use the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> class to build sets of units belonging to certain:</p>
 
 <ul>
     <li>Coalitions</li>
@@ -169,7 +170,7 @@ The following iterator methods are currently available within the SET</em>GROUP:
 </ul>
 
 <h2>3.2) Add or Remove UNIT(s) from SET_UNIT: </h2>
-<p>UNITs can be added and removed using the <a href="Core.Set.html##(SET_UNIT).AddUnitsByName">Core.Set#SET_UNIT.AddUnitsByName</a> and <a href="Core.Set.html##(SET_UNIT).RemoveUnitsByName">Core.Set#SET_UNIT.RemoveUnitsByName</a> respectively. 
+<p>UNITs can be added and removed using the <a href="Set.html##(SET_UNIT).AddUnitsByName">Set#SET_UNIT.AddUnitsByName</a> and <a href="Set.html##(SET_UNIT).RemoveUnitsByName">Set#SET_UNIT.RemoveUnitsByName</a> respectively. 
 These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.</p>
 
 <h2>3.3) SET_UNIT filter criteria: </h2>
@@ -193,7 +194,7 @@ Filter criteria are defined by:</p>
 <p>Planned filter criteria within development are (so these are not yet available):</p>
 
 <ul>
-    <li><a href="##(SET_UNIT).FilterZones">SET_UNIT.FilterZones</a>: Builds the SET_UNIT with the units within a <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>.</li>
+    <li><a href="##(SET_UNIT).FilterZones">SET_UNIT.FilterZones</a>: Builds the SET_UNIT with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
 </ul>
 
 <h2>3.4) SET_UNIT iterators:</h2>
@@ -217,8 +218,8 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 
 <hr/>
 
-<h1>4) <a href="Core.Set.html##(SET_CLIENT)">Core.Set#SET_CLIENT</a> class, extends <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Core.Set.html##(SET_CLIENT)">Core.Set#SET_CLIENT</a> class to build sets of units belonging to certain:</p>
+<h1>4) <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<p>Mission designers can use the <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class to build sets of units belonging to certain:</p>
 
 <ul>
     <li>Coalitions</li>
@@ -236,7 +237,7 @@ The following iterator methods are currently available within the SET</em>UNIT:<
 </ul>
 
 <h2>4.2) Add or Remove CLIENT(s) from SET_CLIENT: </h2>
-<p>CLIENTs can be added and removed using the <a href="Core.Set.html##(SET_CLIENT).AddClientsByName">Core.Set#SET_CLIENT.AddClientsByName</a> and <a href="Core.Set.html##(SET_CLIENT).RemoveClientsByName">Core.Set#SET_CLIENT.RemoveClientsByName</a> respectively. 
+<p>CLIENTs can be added and removed using the <a href="Set.html##(SET_CLIENT).AddClientsByName">Set#SET_CLIENT.AddClientsByName</a> and <a href="Set.html##(SET_CLIENT).RemoveClientsByName">Set#SET_CLIENT.RemoveClientsByName</a> respectively. 
 These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.</p>
 
 <h2>4.3) SET_CLIENT filter criteria: </h2>
@@ -260,7 +261,7 @@ Filter criteria are defined by:</p>
 <p>Planned filter criteria within development are (so these are not yet available):</p>
 
 <ul>
-    <li><a href="##(SET_CLIENT).FilterZones">SET_CLIENT.FilterZones</a>: Builds the SET_CLIENT with the clients within a <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>.</li>
+    <li><a href="##(SET_CLIENT).FilterZones">SET_CLIENT.FilterZones</a>: Builds the SET_CLIENT with the clients within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
 </ul>
 
 <h2>4.4) SET_CLIENT iterators:</h2>
@@ -274,8 +275,8 @@ The following iterator methods are currently available within the SET</em>CLIENT
 
 <hr/>
 
-<h1>5) <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a> class, extends <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Core.Set.html##(SET_AIRBASE)">Core.Set#SET_AIRBASE</a> class to build sets of airbases optionally belonging to certain:</p>
+<h1>5) <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<p>Mission designers can use the <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class to build sets of airbases optionally belonging to certain:</p>
 
 <ul>
     <li>Coalitions</li>
@@ -289,7 +290,7 @@ The following iterator methods are currently available within the SET</em>CLIENT
 </ul>
 
 <h2>5.2) Add or Remove AIRBASEs from SET_AIRBASE </h2>
-<p>AIRBASEs can be added and removed using the <a href="Core.Set.html##(SET_AIRBASE).AddAirbasesByName">Core.Set#SET_AIRBASE.AddAirbasesByName</a> and <a href="Core.Set.html##(SET_AIRBASE).RemoveAirbasesByName">Core.Set#SET_AIRBASE.RemoveAirbasesByName</a> respectively. 
+<p>AIRBASEs can be added and removed using the <a href="Set.html##(SET_AIRBASE).AddAirbasesByName">Set#SET_AIRBASE.AddAirbasesByName</a> and <a href="Set.html##(SET_AIRBASE).RemoveAirbasesByName">Set#SET_AIRBASE.RemoveAirbasesByName</a> respectively. 
 These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.</p>
 
 <h2>5.3) SET_AIRBASE filter criteria </h2>
@@ -431,7 +432,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_AIRBASE).FindNearestAirbaseFromPointVec2">SET_AIRBASE:FindNearestAirbaseFromPointVec2(PointVec2)</a></td>
 		<td class="summary">
-<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> from a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>.</p>
+<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -465,13 +466,13 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Add">SET_BASE:Add(ObjectName, Object)</a></td>
 		<td class="summary">
-<p>Adds a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>, using a given ObjectName as the index.</p>
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using a given ObjectName as the index.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).AddObject">SET_BASE:AddObject(Object)</a></td>
 		<td class="summary">
-<p>Adds a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>, using the Object Name as the index.</p>
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using the Object Name as the index.</p>
 </td>
 		</tr>
 		<tr>
@@ -489,7 +490,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Count">SET_BASE:Count()</a></td>
 		<td class="summary">
-<p>Retrieves the amount of objects in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes.</p>
+<p>Retrieves the amount of objects in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes.</p>
 </td>
 		</tr>
 		<tr>
@@ -519,7 +520,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).FindNearestObjectFromPointVec2">SET_BASE:FindNearestObjectFromPointVec2(PointVec2)</a></td>
 		<td class="summary">
-<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>.</p>
+<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -537,7 +538,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Get">SET_BASE:Get(ObjectName)</a></td>
 		<td class="summary">
-<p>Gets a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object from the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
+<p>Gets a <a href="Base.html##(BASE)">Base#BASE</a> object from the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -567,7 +568,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).Remove">SET_BASE:Remove(ObjectName)</a></td>
 		<td class="summary">
-<p>Removes a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object from the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
+<p>Removes a <a href="Base.html##(BASE)">Base#BASE</a> object from the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -633,7 +634,7 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._Find">SET_BASE:_Find(ObjectName)</a></td>
 		<td class="summary">
-<p>Finds an <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object based on the object Name.</p>
+<p>Finds an <a href="Base.html##(BASE)">Base#BASE</a> object based on the object Name.</p>
 </td>
 		</tr>
 	</table>
@@ -1422,21 +1423,21 @@ The AIRBASE</p>
 </dt>
 <dd>
 	
-<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> from a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>.</p>
+<p>Iterate the SET_AIRBASE while identifying the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
-A <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> object from where to evaluate the closest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
-The closest <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>.</p>
+The closest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 </dd>
 </dl>
@@ -1562,7 +1563,7 @@ A single name or an array of AIRBASE names.</p>
 </dt>
 <dd>
 	
-<p>Adds a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>, using a given ObjectName as the index.</p>
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using a given ObjectName as the index.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1593,7 +1594,7 @@ The added BASE Object.</p>
 </dt>
 <dd>
 	
-<p>Adds a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>, using the Object Name as the index.</p>
+<p>Adds a <a href="Base.html##(BASE)">Base#BASE</a> object in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>, using the Object Name as the index.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1647,7 +1648,7 @@ The added BASE Object.</p>
 </dt>
 <dd>
 	
-<p>Retrieves the amount of objects in the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes.</p>
+<p>Retrieves the amount of objects in the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes.</p>
 
 		<h3>Return value</h3>
 				
@@ -1732,14 +1733,14 @@ self</p>
 </dt>
 <dd>
 	
-<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>.</p>
+<p>Iterate the SET_BASE while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
-A <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> object from where to evaluate the closest object in the set.</p>
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest object in the set.</p>
 
 				</li>
 		</ul>
@@ -1827,7 +1828,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Gets a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object from the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
+<p>Gets a <a href="Base.html##(BASE)">Base#BASE</a> object from the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1941,7 +1942,7 @@ DBObject = SET_BASE:New()</code></pre>
 </dt>
 <dd>
 	
-<p>Removes a <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object from the <a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
+<p>Removes a <a href="Base.html##(BASE)">Base#BASE</a> object from the <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> and derived classes, based on the Object Name.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2165,7 +2166,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Finds an <a href="Core.Base.html##(BASE)">Core.Base#BASE</a> object based on the object Name.</p>
+<p>Finds an <a href="Base.html##(BASE)">Base#BASE</a> object based on the object Name.</p>
 
 		<h3>Parameter</h3>
 		<ul>

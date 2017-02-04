@@ -157,7 +157,7 @@ function EVENT:Remove( EventClass, EventID  )
   self.Events[EventID][EventPriority][EventClass] = nil
 end
 
---- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
+--- Clears all event subscriptions for a @{Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )

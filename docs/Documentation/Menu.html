@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,8 +75,6 @@
 
    
 
-<p> There is a small note... When you see a class like MENU<em>COMMAND</em>COALITION with COMMAND in italic, it acutally represents it like this: <code>MENU_COMMAND_COALITION</code>.</p>
-
 <hr/>
 
 <p>DCS Menus can be managed using the MENU classes. 
@@ -90,19 +89,19 @@ On top, MOOSE implements <strong>variable parameter</strong> passing for command
 <h3>To manage <strong>main menus</strong>, the classes begin with <strong>MENU_</strong>:</h3>
 
 <ul>
-    <li><a href="Core.Menu.html##(MENU_MISSION)">Core.Menu#MENU_MISSION</a>: Manages main menus for whole mission file.</li>
-    <li><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a>: Manages main menus for whole coalition.</li>
-    <li><a href="Core.Menu.html##(MENU_GROUP)">Core.Menu#MENU_GROUP</a>: Manages main menus for GROUPs.</li>
-    <li><a href="Core.Menu.html##(MENU_CLIENT)">Core.Menu#MENU_CLIENT</a>: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
+    <li><a href="Menu.html##(MENU_MISSION)">Menu#MENU_MISSION</a>: Manages main menus for whole mission file.</li>
+    <li><a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a>: Manages main menus for whole coalition.</li>
+    <li><a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a>: Manages main menus for GROUPs.</li>
+    <li><a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a>: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
 </ul>
 
 <h3>To manage <strong>command menus</strong>, which are menus that allow the player to issue <strong>functions</strong>, the classes begin with <strong>MENU<em>COMMAND</em></strong>:</h3>
 
 <ul>
-    <li><a href="Core.Menu.html##(MENU_MISSION_COMMAND)">Core.Menu#MENU<em>MISSION</em>COMMAND</a>: Manages command menus for whole mission file.</li>
-    <li><a href="Core.Menu.html##(MENU_COALITION_COMMAND)">Core.Menu#MENU<em>COALITION</em>COMMAND</a>: Manages command menus for whole coalition.</li>
-    <li><a href="Core.Menu.html##(MENU_GROUP_COMMAND)">Core.Menu#MENU<em>GROUP</em>COMMAND</a>: Manages command menus for GROUPs.</li>
-    <li><a href="Core.Menu.html##(MENU_CLIENT_COMMAND)">Core.Menu#MENU<em>CLIENT</em>COMMAND</a>: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
+    <li><a href="Menu.html##(MENU_MISSION_COMMAND)">Menu#MENU<em>MISSION</em>COMMAND</a>: Manages command menus for whole mission file.</li>
+    <li><a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a>: Manages command menus for whole coalition.</li>
+    <li><a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a>: Manages command menus for GROUPs.</li>
+    <li><a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a>: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".</li>
 </ul>
 
 <hr/>
@@ -114,10 +113,10 @@ On top, MOOSE implements <strong>variable parameter</strong> passing for command
 These are simply abstract base classes defining a couple of fields that are used by the 
 derived MENU_ classes to manage menus.</p>
 
-<h2>1.1) <a href="Core.Menu.html##(MENU_BASE)">Core.Menu#MENU_BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h2>
+<h2>1.1) <a href="##(MENU_BASE)">#MENU_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
 <p>The <a href="##(MENU_BASE)">#MENU_BASE</a> class defines the main MENU class where other MENU classes are derived from.</p>
 
-<h2>1.2) <a href="Core.Menu.html##(MENU_COMMAND_BASE)">Core.Menu#MENU<em>COMMAND</em>BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h2>
+<h2>1.2) <a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
 <p>The <a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a> class defines the main MENU class where other MENU COMMAND_ classes are derived from, in order to set commands.</p>
 
 <hr/>
@@ -127,13 +126,13 @@ derived MENU_ classes to manage menus.</p>
 <h1>2) MENU MISSION classes</h1>
 <p>The underlying classes manage the menus for a complete mission file.</p>
 
-<h2>2.1) <a href="Menu.html##(MENU_MISSION)">Menu#MENU_MISSION</a> class, extends <a href="Core.Menu.html##(MENU_BASE)">Core.Menu#MENU_BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_MISSION)">Core.Menu#MENU_MISSION</a> class manages the main menus for a complete mission. <br/>
+<h2>2.1) <a href="##(MENU_MISSION)">#MENU_MISSION</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_MISSION)">Menu#MENU_MISSION</a> class manages the main menus for a complete mission. <br/>
 You can add menus with the <a href="##(MENU_MISSION).New">MENU_MISSION.New</a> method, which constructs a MENU_MISSION object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION).Remove">MENU_MISSION.Remove</a>.</p>
 
-<h2>2.2) <a href="Menu.html##(MENU_MISSION_COMMAND)">Menu#MENU<em>MISSION</em>COMMAND</a> class, extends <a href="Core.Menu.html##(MENU_COMMAND_BASE)">Core.Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_MISSION_COMMAND)">Core.Menu#MENU<em>MISSION</em>COMMAND</a> class manages the command menus for a complete mission, which allow players to execute functions during mission execution. <br/>
+<h2>2.2) <a href="##(MENU_MISSION_COMMAND)">#MENU<em>MISSION</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_MISSION_COMMAND)">Menu#MENU<em>MISSION</em>COMMAND</a> class manages the command menus for a complete mission, which allow players to execute functions during mission execution. <br/>
 You can add menus with the <a href="##(MENU_MISSION_COMMAND).New">MENU<em>MISSION</em>COMMAND.New</a> method, which constructs a MENU<em>MISSION</em>COMMAND object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION_COMMAND).Remove">MENU<em>MISSION</em>COMMAND.Remove</a>.</p>
 
@@ -142,13 +141,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 <h1>3) MENU COALITION classes</h1>
 <p>The underlying classes manage the menus for whole coalitions.</p>
 
-<h2>3.1) <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class, extends <a href="Core.Menu.html##(MENU_BASE)">Core.Menu#MENU_BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a> class manages the main menus for coalitions. <br/>
+<h2>3.1) <a href="##(MENU_COALITION)">#MENU_COALITION</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class manages the main menus for coalitions. <br/>
 You can add menus with the <a href="##(MENU_COALITION).New">MENU_COALITION.New</a> method, which constructs a MENU_COALITION object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION).Remove">MENU_COALITION.Remove</a>.</p>
 
-<h2>3.2) <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class, extends <a href="Core.Menu.html##(MENU_COMMAND_BASE)">Core.Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_COALITION_COMMAND)">Core.Menu#MENU<em>COALITION</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+<h2>3.2) <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
 You can add menus with the <a href="##(MENU_COALITION_COMMAND).New">MENU<em>COALITION</em>COMMAND.New</a> method, which constructs a MENU<em>COALITION</em>COMMAND object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION_COMMAND).Remove">MENU<em>COALITION</em>COMMAND.Remove</a>.</p>
 
@@ -157,13 +156,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 <h1>4) MENU GROUP classes</h1>
 <p>The underlying classes manage the menus for groups. Note that groups can be inactive, alive or can be destroyed.</p>
 
-<h2>4.1) <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class, extends <a href="Core.Menu.html##(MENU_BASE)">Core.Menu#MENU_BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_GROUP)">Core.Menu#MENU_GROUP</a> class manages the main menus for coalitions. <br/>
+<h2>4.1) <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class manages the main menus for coalitions. <br/>
 You can add menus with the <a href="##(MENU_GROUP).New">MENU_GROUP.New</a> method, which constructs a MENU_GROUP object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP).Remove">MENU_GROUP.Remove</a>.</p>
 
-<h2>4.2) <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class, extends <a href="Core.Menu.html##(MENU_COMMAND_BASE)">Core.Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_GROUP_COMMAND)">Core.Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+<h2>4.2) <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
 You can add menus with the <a href="##(MENU_GROUP_COMMAND).New">MENU<em>GROUP</em>COMMAND.New</a> method, which constructs a MENU<em>GROUP</em>COMMAND object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP_COMMAND).Remove">MENU<em>GROUP</em>COMMAND.Remove</a>.</p>
 
@@ -172,13 +171,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 <h1>5) MENU CLIENT classes</h1>
 <p>The underlying classes manage the menus for units with skill level client or player.</p>
 
-<h2>5.1) <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class, extends <a href="Core.Menu.html##(MENU_BASE)">Core.Menu#MENU_BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_CLIENT)">Core.Menu#MENU_CLIENT</a> class manages the main menus for coalitions. <br/>
+<h2>5.1) <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class manages the main menus for coalitions. <br/>
 You can add menus with the <a href="##(MENU_CLIENT).New">MENU_CLIENT.New</a> method, which constructs a MENU_CLIENT object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT).Remove">MENU_CLIENT.Remove</a>.</p>
 
-<h2>5.2) <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class, extends <a href="Core.Menu.html##(MENU_COMMAND_BASE)">Core.Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Core.Menu.html##(MENU_CLIENT_COMMAND)">Core.Menu#MENU<em>CLIENT</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
+<h2>5.2) <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
+<p>The <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
 You can add menus with the <a href="##(MENU_CLIENT_COMMAND).New">MENU<em>CLIENT</em>COMMAND.New</a> method, which constructs a MENU<em>CLIENT</em>COMMAND object and returns you the object reference.
 Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT_COMMAND).Remove">MENU<em>CLIENT</em>COMMAND.Remove</a>.</p>
 
@@ -322,7 +321,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).New">MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, MenuClient, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).New">MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, ...)</a></td>
 		<td class="summary">
 <p>MENU<em>CLIENT</em>COMMAND constructor.</p>
 </td>
@@ -1000,7 +999,7 @@ self</p>
 <dt>
 
 <a id="#(MENU_CLIENT_COMMAND).New" >
-<strong>MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, MenuClient, ...)</strong>
+<strong>MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1034,17 +1033,6 @@ The parent menu.</p>
 				
 <p><code><em> CommandMenuFunction </em></code>: 
 A function that is called when the menu key is pressed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> CommandMenuArgument </em></code>: 
-An argument for the function.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> MenuClient </em></code>: </p>
 
 				</li>
 				<li>

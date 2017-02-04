@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,10 +75,9 @@
 
 <p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI.AI_CAP.html##(AI_PATROL_ZONE)">AI.AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
 <p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
@@ -151,7 +151,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 that will define when the AI will engage with the detected airborne enemy targets.
 The range can be beyond or smaller than the range of the Patrol Zone.
 The range is applied at the position of the AI.
-Use the method <a href="AI.AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI.AI<em>CAP#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
+Use the method <a href="AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI<em>CAP#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
 
 <h2>1.4) Set the Zone of Engagement</h2>
 
@@ -159,7 +159,7 @@ Use the method <a href="AI.AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI.AI<em>C
 
 <p>An optional <a href="Zone.html">Zone</a> can be set, 
 that will define when the AI will engage with the detected airborne enemy targets.
-Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Cap#AI</em>CAP_ZONE.SetEngageZone</a>() to define that Zone.</p>
+Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</em>CAP_ZONE.SetEngageZone</a>() to define that Zone.</p>
 
 <hr/>
 
@@ -281,7 +281,7 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).New">AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).New">AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>CAP</em>ZONE object</p>
 </td>
@@ -640,7 +640,7 @@ Use the method <a href="AI.AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI.AI<em>Ca
 <dt>
 
 <a id="#(AI_CAP_ZONE).New" >
-<strong>AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<strong>AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
@@ -677,6 +677,12 @@ The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
 The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
+The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 
 				</li>
 		</ul>

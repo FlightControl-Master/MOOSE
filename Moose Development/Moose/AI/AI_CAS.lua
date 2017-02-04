@@ -1,13 +1,13 @@
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+-- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
--- 
 -- ===
 --
--- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
+-- # 1) @{#AI_CAS_ZONE} class, extends @{AI_Patrol#AI_PATROL_ZONE}
 -- 
--- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+-- @{#AI_CAS_ZONE} derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
 -- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.

@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIST} FSM class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIST} FSM class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIST state machine:
 -- 

@@ -80,7 +80,7 @@
 -- ============================
 -- Create a new SPAWN object with the @{#ESCORT.New} method:
 --
---  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
 --
 -- ESCORT initialization methods.
 -- ==============================
