@@ -219,6 +219,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
 		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+    self.SpawnUnControlled = false
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -257,6 +258,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
     self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+    self.SpawnUnControlled = false
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -655,7 +657,9 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         end
         
         if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
-          SpawnTemplate.uncontrolled = self.SpawnUnControlled
+          if SpawnTemplate.route.points[1].type == "TakeOffParking" then
+            SpawnTemplate.uncontrolled = self.SpawnUnControlled
+          end
         end
       end
 		  
