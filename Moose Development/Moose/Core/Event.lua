@@ -18,6 +18,7 @@
 --- The EVENT structure
 -- @type EVENT
 -- @field #EVENT.Events Events
+-- @extends Core.Base#BASE
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
@@ -134,14 +135,15 @@ function EVENT:Init( EventID, EventClass )
   
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
+  self:E(EventPriority)
   if not self.Events[EventID][EventPriority] then
     self.Events[EventID][EventPriority] = {}
   end 
 
-  if not self.Events[EventID][EventClass] then
-     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
+  if not self.Events[EventID][EventPriority][EventClass] then
+     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "k" } )
   end
-  return self.Events[EventID][EventClass]
+  return self.Events[EventID][EventPriority][EventClass]
 end
 
 --- Removes an Events entry
@@ -799,12 +801,14 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
-    local Order = _EVENTORDER[Event.id]
-    self:E( { Order = Order } )
+    local PriorityOrder = _EVENTORDER[Event.id]
+    local PriorityBegin = PriorityOrder == -1 and 5 or 1
+    local PriorityEnd = PriorityOrder == -1 and 1 or 5
+
+    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     
-    for EventPriority = Order == -1 and 5 or 1, Order == -1 and 1 or 5, Order do
+    for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
     
       if self.Events[Event.id][EventPriority] then
       
