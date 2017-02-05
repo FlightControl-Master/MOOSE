@@ -718,6 +718,8 @@ function DATABASE:_RegisterTemplates()
 
     if (CoalitionName == 'red' or CoalitionName == 'blue') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
+      
+      local CoalitionSide = coalition.side[string.upper(CoalitionName)]
 
       ----------------------------------------------
       -- build nav points DB
@@ -741,6 +743,8 @@ function DATABASE:_RegisterTemplates()
         for cntry_id, cntry_data in pairs(coa_data.country) do
 
           local CountryName = string.upper(cntry_data.name)
+          local CountryID = cntry_data.id
+          
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
@@ -761,9 +765,9 @@ function DATABASE:_RegisterTemplates()
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
                       self:_RegisterTemplate( 
                         GroupTemplate, 
-                        coalition.side[string.upper(CoalitionName)], 
+                        CoalitionSide, 
                         _DATABASECategory[string.lower(CategoryName)], 
-                        country.id[string.upper(CountryName)] 
+                        CountryID 
                       )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
