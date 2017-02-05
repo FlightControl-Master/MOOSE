@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170205_1023' ) 
+env.info( 'Moose Generation Timestamp: 20170205_1705' ) 
 local base = _G
 
 Include = {}
@@ -3899,7 +3899,7 @@ SCHEDULER = {
 -- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
--- @return #SCHEDULER self
+-- @return #SCHEDULER self.
 -- @return #number The ScheduleID of the planned schedule.
 function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   local self = BASE:Inherit( self, BASE:New() )
@@ -4346,7 +4346,6 @@ function EVENT:Init( EventID, EventClass )
   
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
-  self:E(EventPriority)
   if not self.Events[EventID][EventPriority] then
     self.Events[EventID][EventPriority] = {}
   end 
@@ -4899,7 +4898,7 @@ do -- OnHit
     self:Remove( EventClass, world.event.S_EVENT_HIT )
     
     return self
-  end
+  end 
 
 end
 
@@ -5028,7 +5027,7 @@ function EVENT:onEvent( Event )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
           if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
+            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
             Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
             local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
             --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
@@ -5037,7 +5036,7 @@ function EVENT:onEvent( Event )
             -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
             if Event.IniDCSUnit and not EventData.IniUnit then
               if EventClass == EventData.EventClass then
-                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
+                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                 Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
                 local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
                 --EventData.EventFunction( EventData.EventClass, Event )
@@ -11172,6 +11171,7 @@ do -- FSM
     self._Processes = {}
     self._EndStates = {}
     self._Scores = {}
+    self._EventSchedules = {}
     
     self.CallScheduler = SCHEDULER:New( self )
     
@@ -11372,9 +11372,10 @@ do -- FSM
   end
   
   
-  function FSM:_call_handler(handler, params)
+  function FSM:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Value = self[handler]( self, unpack(params) )
       return Value
     end
@@ -11398,10 +11399,10 @@ do -- FSM
         self:T( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
       end        
   
-      if ( self:_call_handler("onbefore" .. EventName, params) == false )
-      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
-      or ( self:_call_handler("onleave" .. from, params) == false )
-      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+      if ( self:_call_handler("onbefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("onleave" .. from, params, EventName ) == false )
+      or ( self:_call_handler("OnLeave" .. from, params, EventName ) == false ) then
         self:T( "Cancel Transition" )
         return false
       end
@@ -11426,11 +11427,11 @@ do -- FSM
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
-        self:_call_handler("onenter" .. to, params)
-        self:_call_handler("OnEnter" .. to, params)
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onenter" .. to, params, EventName )
+        self:_call_handler("OnEnter" .. to, params, EventName )
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
+        self:_call_handler("onstatechange", params, EventName )
         fsmparent[Event]( fsmparent )
         execute = false
       end
@@ -11438,14 +11439,14 @@ do -- FSM
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
         --if from ~= to then
-          self:_call_handler("onenter" .. to, params)
-          self:_call_handler("OnEnter" .. to, params)
+          self:_call_handler("onenter" .. to, params, EventName )
+          self:_call_handler("OnEnter" .. to, params, EventName )
         --end
   
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
   
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onstatechange", params, EventName )
       end
     else
       self:T( "Cannot execute transition." )
@@ -11458,7 +11459,18 @@ do -- FSM
   function FSM:_delayed_transition( EventName )
     return function( self, DelaySeconds, ... )
       self:T2( "Delayed Event: " .. EventName )
-      local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      local CallID = 0
+      if DelaySeconds < 0 then -- Only call the event ONCE!
+        DelaySeconds = math.abs( DelaySeconds )
+        if not self._EventSchedules[EventName] then
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          self._EventSchedules[EventName] = CallID
+        else
+          -- reschedule
+        end
+      else
+        CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      end
       self:T2( { CallID = CallID } )
     end
   end
@@ -11578,7 +11590,7 @@ do -- FSM_CONTROLLABLE
     return self.Controllable
   end
   
-  function FSM_CONTROLLABLE:_call_handler( handler, params )
+  function FSM_CONTROLLABLE:_call_handler( handler, params, EventName )
   
     local ErrorHandler = function( errmsg )
   
@@ -11592,6 +11604,7 @@ do -- FSM_CONTROLLABLE
   
     if self[handler] then
       self:F3( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
@@ -11813,9 +11826,10 @@ do -- FSM_TASK
     return self
   end
   
-  function FSM_TASK:_call_handler( handler, params )
+  function FSM_TASK:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, unpack( params ) )
     end
   end
@@ -11865,9 +11879,10 @@ do -- FSM_SET
     return self.Controllable
   end
   
-  function FSM_SET:_call_handler( handler, params )
+  function FSM_SET:_call_handler( handler, params, EventName  )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end
@@ -12244,7 +12259,7 @@ end
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:E( self.PositionableName )
+  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
@@ -24996,14 +25011,13 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionOn()
-
+  self:SetDetectionInterval( 30 )
+  
   self.CheckStatus = true
   
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 1 )
   
-  self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
   
@@ -25257,7 +25271,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
-  
+
   self.DetectOn = true
 end
 
@@ -25267,7 +25281,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
-  
+
   self.DetectOn = false
 end
 
@@ -25287,7 +25301,7 @@ function AI_PATROL_ZONE:SetDetectionActivated()
   self:F2()
   
   self.DetectActivated = true
-  self:__Detect( self.DetectInterval )
+  self:__Detect( -self.DetectInterval )
 end
 
 --- Deactivate the detection. The AI will NOT detect for targets.
@@ -25395,7 +25409,6 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:EventOnCrash( self.OnCrash )
   self:EventOnEjection( self.OnEjection )
   
-  
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
 
@@ -25406,6 +25419,8 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
       self:__Route( 5 )
     end
   )
+
+  self:SetDetectionOn()
   
 end
 
@@ -25426,7 +25441,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   local DetectedTargets = Controllable:GetDetectedTargets()
   for TargetID, Target in pairs( DetectedTargets or {} ) do
     local TargetObject = Target.object
-    self:T( TargetObject )
+
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
@@ -25444,9 +25459,9 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       end
     end
   end
-  
-  self:__Detect( self.DetectInterval )
 
+  self:__Detect( -self.DetectInterval )
+  
   if Detected == true then
     self:__Detected( 1.5 )
   end
@@ -25681,7 +25696,6 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
-
 --- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
 -- **Provide Close Air Support to friendly ground troops.**
 --
@@ -26681,7 +26695,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:__Accomplish( 1 )
+      self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else

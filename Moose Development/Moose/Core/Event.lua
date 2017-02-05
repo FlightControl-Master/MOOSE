@@ -135,7 +135,6 @@ function EVENT:Init( EventID, EventClass )
   
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
-  self:E(EventPriority)
   if not self.Events[EventID][EventPriority] then
     self.Events[EventID][EventPriority] = {}
   end 
@@ -688,7 +687,7 @@ do -- OnHit
     self:Remove( EventClass, world.event.S_EVENT_HIT )
     
     return self
-  end
+  end 
 
 end
 
@@ -817,7 +816,7 @@ function EVENT:onEvent( Event )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
           if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
+            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
             Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
             local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
             --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
@@ -826,7 +825,7 @@ function EVENT:onEvent( Event )
             -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
             if Event.IniDCSUnit and not EventData.IniUnit then
               if EventClass == EventData.EventClass then
-                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
+                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                 Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
                 local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
                 --EventData.EventFunction( EventData.EventClass, Event )

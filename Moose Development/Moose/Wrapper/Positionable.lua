@@ -54,7 +54,7 @@ end
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:E( self.PositionableName )
+  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
