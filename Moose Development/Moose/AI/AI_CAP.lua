@@ -480,7 +480,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:__Accomplish( 1 )
+      self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else

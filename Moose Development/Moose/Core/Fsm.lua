@@ -328,6 +328,7 @@ do -- FSM
     self._Processes = {}
     self._EndStates = {}
     self._Scores = {}
+    self._EventSchedules = {}
     
     self.CallScheduler = SCHEDULER:New( self )
     
@@ -528,9 +529,10 @@ do -- FSM
   end
   
   
-  function FSM:_call_handler(handler, params)
+  function FSM:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Value = self[handler]( self, unpack(params) )
       return Value
     end
@@ -554,10 +556,10 @@ do -- FSM
         self:T( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
       end        
   
-      if ( self:_call_handler("onbefore" .. EventName, params) == false )
-      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
-      or ( self:_call_handler("onleave" .. from, params) == false )
-      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+      if ( self:_call_handler("onbefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("onleave" .. from, params, EventName ) == false )
+      or ( self:_call_handler("OnLeave" .. from, params, EventName ) == false ) then
         self:T( "Cancel Transition" )
         return false
       end
@@ -582,11 +584,11 @@ do -- FSM
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
-        self:_call_handler("onenter" .. to, params)
-        self:_call_handler("OnEnter" .. to, params)
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onenter" .. to, params, EventName )
+        self:_call_handler("OnEnter" .. to, params, EventName )
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
+        self:_call_handler("onstatechange", params, EventName )
         fsmparent[Event]( fsmparent )
         execute = false
       end
@@ -594,14 +596,14 @@ do -- FSM
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
         --if from ~= to then
-          self:_call_handler("onenter" .. to, params)
-          self:_call_handler("OnEnter" .. to, params)
+          self:_call_handler("onenter" .. to, params, EventName )
+          self:_call_handler("OnEnter" .. to, params, EventName )
         --end
   
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
   
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onstatechange", params, EventName )
       end
     else
       self:T( "Cannot execute transition." )
@@ -614,7 +616,18 @@ do -- FSM
   function FSM:_delayed_transition( EventName )
     return function( self, DelaySeconds, ... )
       self:T2( "Delayed Event: " .. EventName )
-      local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      local CallID = 0
+      if DelaySeconds < 0 then -- Only call the event ONCE!
+        DelaySeconds = math.abs( DelaySeconds )
+        if not self._EventSchedules[EventName] then
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          self._EventSchedules[EventName] = CallID
+        else
+          -- reschedule
+        end
+      else
+        CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      end
       self:T2( { CallID = CallID } )
     end
   end
@@ -734,7 +747,7 @@ do -- FSM_CONTROLLABLE
     return self.Controllable
   end
   
-  function FSM_CONTROLLABLE:_call_handler( handler, params )
+  function FSM_CONTROLLABLE:_call_handler( handler, params, EventName )
   
     local ErrorHandler = function( errmsg )
   
@@ -748,6 +761,7 @@ do -- FSM_CONTROLLABLE
   
     if self[handler] then
       self:F3( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
@@ -969,9 +983,10 @@ do -- FSM_TASK
     return self
   end
   
-  function FSM_TASK:_call_handler( handler, params )
+  function FSM_TASK:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, unpack( params ) )
     end
   end
@@ -1021,9 +1036,10 @@ do -- FSM_SET
     return self.Controllable
   end
   
-  function FSM_SET:_call_handler( handler, params )
+  function FSM_SET:_call_handler( handler, params, EventName  )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end

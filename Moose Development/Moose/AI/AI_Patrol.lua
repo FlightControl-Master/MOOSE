@@ -189,14 +189,13 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionOn()
-
+  self:SetDetectionInterval( 30 )
+  
   self.CheckStatus = true
   
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 1 )
   
-  self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
   
@@ -450,7 +449,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
-  
+
   self.DetectOn = true
 end
 
@@ -460,7 +459,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
-  
+
   self.DetectOn = false
 end
 
@@ -480,7 +479,7 @@ function AI_PATROL_ZONE:SetDetectionActivated()
   self:F2()
   
   self.DetectActivated = true
-  self:__Detect( self.DetectInterval )
+  self:__Detect( -self.DetectInterval )
 end
 
 --- Deactivate the detection. The AI will NOT detect for targets.
@@ -588,7 +587,6 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:EventOnCrash( self.OnCrash )
   self:EventOnEjection( self.OnEjection )
   
-  
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
 
@@ -599,6 +597,8 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
       self:__Route( 5 )
     end
   )
+
+  self:SetDetectionOn()
   
 end
 
@@ -619,7 +619,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   local DetectedTargets = Controllable:GetDetectedTargets()
   for TargetID, Target in pairs( DetectedTargets or {} ) do
     local TargetObject = Target.object
-    self:T( TargetObject )
+
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
@@ -637,9 +637,9 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       end
     end
   end
-  
-  self:__Detect( self.DetectInterval )
 
+  self:__Detect( -self.DetectInterval )
+  
   if Detected == true then
     self:__Detected( 1.5 )
   end
@@ -874,4 +874,3 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
-
