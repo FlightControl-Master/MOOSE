@@ -478,6 +478,7 @@ end
 function AI_PATROL_ZONE:SetDetectionActivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = true
   self:__Detect( -self.DetectInterval )
 end
@@ -488,6 +489,7 @@ end
 function AI_PATROL_ZONE:SetDetectionDeactivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = false
 end
 
@@ -534,6 +536,12 @@ function AI_PATROL_ZONE:GetDetectedUnits()
   return self.DetectedUnits 
 end
 
+--- Clears the list of @{Unit#UNIT}s that were detected by the AI.
+-- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:ClearDetectedUnits()
+  self:F2()
+  self.DetectedUnits = {}
+end
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
@@ -628,11 +636,15 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       if self.DetectionZone then
         if TargetUnit:IsInZone( self.DetectionZone ) then
           self:T( {"Detected ", TargetUnit } )
-          self.DetectedUnits[TargetUnit] = TargetUnit
+          if self.DetectedUnits[TargetUnit] == nil then
+            self.DetectedUnits[TargetUnit] = true
+          end
           Detected = true 
         end
       else       
-        self.DetectedUnits[TargetUnit] = TargetUnit
+        if self.DetectedUnits[TargetUnit] == nil then
+          self.DetectedUnits[TargetUnit] = true
+        end
         Detected = true
       end
     end

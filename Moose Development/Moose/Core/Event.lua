@@ -1,3 +1,12 @@
+--- This module contains the **EVENT** class, which models the dispatching of DCS Events to subscribed MOOSE classes,
+-- following a given priority.
+-- 
+-- ## 
+-- 
+-- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
+-- 
+-- ===
+-- 
 --- This module contains the EVENT class.
 -- 
 -- ===
@@ -122,7 +131,6 @@ end
 --- Initializes the Events structure for the event
 -- @param #EVENT self
 -- @param Dcs.DCSWorld#world.event EventID
--- @param #number EventPriority The priority of the EventClass.
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
