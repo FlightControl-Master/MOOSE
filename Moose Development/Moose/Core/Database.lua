@@ -83,11 +83,12 @@ function DATABASE:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
+
+  self:SetEventPriority( 1 )
   
   _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
   _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
   _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  
   
   -- Follow alive players and clients
   _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
@@ -99,8 +100,6 @@ function DATABASE:New()
   self:_RegisterStatics()
   self:_RegisterPlayers()
   self:_RegisterAirbases()
-  
-  self:SetEventPriority( 1 )
   
   return self
 end
