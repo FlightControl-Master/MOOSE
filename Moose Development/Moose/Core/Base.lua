@@ -347,6 +347,137 @@ do -- Event Handling
     
     return self
   end
+  
+  -- Event handling function prototypes
+  
+  --- Occurs whenever any unit in a mission fires a weapon. But not any machine gun or autocannon based weapon, those are handled by EVENT.ShootingStart.
+  -- @function [parent=#BASE] OnEventShot
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs whenever an object is hit by a weapon.
+  -- initiator : The unit object the fired the weapon
+  -- weapon: Weapon object that hit the target
+  -- target: The Object that was hit. 
+  -- @function [parent=#BASE] OnEventHit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft takes off from an airbase, farp, or ship.
+  -- initiator : The unit that tookoff
+  -- place: Object from where the AI took-off from. Can be an Airbase Object, FARP, or Ships 
+  -- @function [parent=#BASE] OnEventTakeoff
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft lands at an airbase, farp or ship
+  -- initiator : The unit that has landed
+  -- place: Object that the unit landed on. Can be an Airbase Object, FARP, or Ships 
+  -- @function [parent=#BASE] OnEventLand
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft crashes into the ground and is completely destroyed.
+  -- initiator : The unit that has crashed 
+  -- @function [parent=#BASE] OnEventCrash
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a pilot ejects from an aircraft
+  -- initiator : The unit that has ejected 
+  -- @function [parent=#BASE] OnEventEjection
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft connects with a tanker and begins taking on fuel.
+  -- initiator : The unit that is receiving fuel. 
+  -- @function [parent=#BASE] OnEventRefueling
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an object is completely destroyed.
+  -- initiator : The unit that is was destroyed. 
+  -- @function [parent=#BASE] OnEvent
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when the pilot of an aircraft is killed. Can occur either if the player is alive and crashes or if a weapon kills the pilot without completely destroying the plane.
+  -- initiator : The unit that the pilot has died in. 
+  -- @function [parent=#BASE] OnEventPilotDead
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a ground unit captures either an airbase or a farp.
+  -- initiator : The unit that captured the base
+  -- place: The airbase that was captured, can be a FARP or Airbase. When calling place:getCoalition() the faction will already be the new owning faction. 
+  -- @function [parent=#BASE] OnEventBaseCaptured
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mission starts 
+  -- @function [parent=#BASE] OnEventMissionStart
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mission ends
+  -- @function [parent=#BASE] OnEventMissionEnd
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft is finished taking fuel.
+  -- initiator : The unit that was receiving fuel. 
+  -- @function [parent=#BASE] OnEventRefuelingStop
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any object is spawned into the mission.
+  -- initiator : The unit that was spawned 
+  -- @function [parent=#BASE] OnEventBirth
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any system fails on a human controlled aircraft.
+  -- initiator : The unit that had the failure 
+  -- @function [parent=#BASE] OnEventHumanFailure
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft starts its engines.
+  -- initiator : The unit that is starting its engines. 
+  -- @function [parent=#BASE] OnEventEngineStartup
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft shuts down its engines.
+  -- initiator : The unit that is stopping its engines. 
+  -- @function [parent=#BASE] OnEventEngineShutdown
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any player assumes direct control of a unit.
+  -- initiator : The unit that is being taken control of. 
+  -- @function [parent=#BASE] OnEventPlayerEnterUnit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any player relieves control of a unit to the AI.
+  -- initiator : The unit that the player left. 
+  -- @function [parent=#BASE] OnEventPlayerLeaveUnit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any unit begins firing a weapon that has a high rate of fire. Most common with aircraft cannons (GAU-8), autocannons, and machine guns.
+  -- initiator : The unit that is doing the shooing.
+  -- target: The unit that is being targeted. 
+  -- @function [parent=#BASE] OnEventShootingStart
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any unit stops firing its weapon. Event will always correspond with a shooting start event.
+  -- initiator : The unit that was doing the shooing. 
+  -- @function [parent=#BASE] OnEventShootingEnd
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
 end
  

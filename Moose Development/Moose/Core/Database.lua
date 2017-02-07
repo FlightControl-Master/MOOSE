@@ -88,11 +88,11 @@ function DATABASE:New()
   
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-  self.HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  self.HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
-  self.HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()

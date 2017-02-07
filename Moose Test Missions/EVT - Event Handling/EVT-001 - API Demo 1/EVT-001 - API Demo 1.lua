@@ -33,4 +33,8 @@ function Tank2:OnEventDead( EventData )
   self:SmokeBlue()
 end
 
+function Tank2:OnEventCrash(EventData)
+
+end
+
 
