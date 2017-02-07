@@ -350,7 +350,7 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
   self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
-  self:EventOnDead( self.OnDead )
+  self:HandleEvent( EVENTS.Dead, self.OnDead )
   
   self:SetDetectionDeactivated() -- When not engaging, set the detection off.
 end

@@ -292,7 +292,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -1064,7 +1064,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).EnRouteTaskEngageUnit" >
-<strong>CONTROLLABLE:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</strong>
+<strong>CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</strong>
 </a>
 </dt>
 <dd>
@@ -1075,20 +1075,20 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> EngageUnit </em></code>: 
 The UNIT.</p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number Priority </em></code>: 
-All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+(optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -1111,8 +1111,14 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Visible </em></code>: 
+(optional) Unit must be visible.</p>
 
 				</li>
 				<li>

@@ -838,3 +838,29 @@ function UNIT:InAir()
   return nil
 end
 
+do -- Event Handling
+
+  --- Subscribe to a DCS Event.
+  -- @param #UNIT self
+  -- @param Core.Event#EVENTS Event
+  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
+  -- @return #UNIT
+  function UNIT:HandleEvent( Event, EventFunction )
+  
+    self:EventDispatcher():OnEventForUnit( self:GetName(), EventFunction, self, Event )
+    
+    return self
+  end
+  
+  --- UnSubscribe to a DCS event.
+  -- @param #UNIT self
+  -- @param Core.Event#EVENTS Event
+  -- @return #UNIT
+  function UNIT:UnHandleEvent( Event )
+  
+    self:EventDispatcher():RemoveForUnit( self:GetName(), self, Event )
+    
+    return self
+  end
+
+end

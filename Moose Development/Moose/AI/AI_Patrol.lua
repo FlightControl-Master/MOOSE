@@ -591,9 +591,9 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:__Status( 60 ) -- Check status status every 30 seconds.
   self:SetDetectionActivated()
   
-  self:EventOnPilotDead( self.OnPilotDead )
-  self:EventOnCrash( self.OnCrash )
-  self:EventOnEjection( self.OnEjection )
+  self:HandleEvent( EVENTS.PilotDead, self.OnPilotDead )
+  self:HandleEvent( EVENTS.Crash, self.OnCrash )
+  self:HandleEvent( EVENTS.Ejection, self.OnEjection )
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
