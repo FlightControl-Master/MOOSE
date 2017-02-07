@@ -71,33 +71,172 @@
 	<div id="content">
    <h1>Module <code>Event</code></h1>
    
-<p>This module contains the <strong>EVENT</strong> class, which models the dispatching of DCS Events to subscribed MOOSE classes,
+<p>This core module models the dispatching of DCS Events to subscribed MOOSE classes,
 following a given priority.</p>
 
    
 
-<h2></h2>
-
-<p><img src="..\Presentations\FSM\Dia1.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\EVENT\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
+<h1>1) Event Handling Overview</h1>
+
+<p><img src="..\Presentations\EVENT\Dia2.JPG" alt="Objects"/></p>
+
+<p>Within a running mission, various DCS events occur. Units are dynamically created, crash, die, shoot stuff, get hit etc.
+This module provides a mechanism to dispatch those events occuring within your running mission, to the different objects orchestrating your mission.</p>
+
+<p><img src="..\Presentations\EVENT\Dia3.JPG" alt="Objects"/></p>
+
+<p>Objects can subscribe to different events. The Event dispatcher will publish the received DCS events to the subscribed MOOSE objects, in a specified order.
+In this way, the subscribed MOOSE objects are kept in sync with your evolving running mission.</p>
+
+<h2>1.1) Event Dispatching</h2>
+
+<p><img src="..\Presentations\EVENT\Dia4.JPG" alt="Objects"/></p>
+
+<p>The _EVENTDISPATCHER object is automatically created within MOOSE, 
+and handles the dispatching of DCS Events occurring 
+in the simulator to the subscribed objects 
+in the correct processing order.</p>
+
+<p><img src="..\Presentations\EVENT\Dia5.JPG" alt="Objects"/></p>
+
+<p>There are 5 levels of kind of objects that the _EVENTDISPATCHER services:</p>
+
 <ul>
-    <li>This module contains the EVENT class.</li>
+    <li>_DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.</li>
+    <li>SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.</li>
+    <li>UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.</li>
+    <li>GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.</li>
+    <li>Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.</li>
+</ul>
+
+<p><img src="..\Presentations\EVENT\Dia6.JPG" alt="Objects"/></p>
+
+<p>For most DCS events, the above order of updating will be followed.1</p>
+
+<p><img src="..\Presentations\EVENT\Dia7.JPG" alt="Objects"/></p>
+
+<p>But for some DCS events, the publishing order is reversed. This is due to the fact that objects need to be <strong>erased</strong> instead of added.</p>
+
+<h2>1.2) Event Handling</h2>
+
+<p><img src="..\Presentations\EVENT\Dia8.JPG" alt="Objects"/></p>
+
+<p>The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the <a href="BASE.html">BASE</a> class, <a href="UNIT.html">UNIT</a> class and <a href="GROUP.html">GROUP</a> class.
+The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.</p>
+
+<p><img src="..\Presentations\EVENT\Dia9.JPG" alt="Objects"/></p>
+
+<p>The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
+and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.</p>
+
+<h3>1.2.1 Subscribe / Unsubscribe to DCS Events</h3>
+
+<p>At first, the mission designer will need to <strong>Subscribe</strong> to a specific DCS event for the class.
+So, when the DCS event occurs, the class will be notified of that event.
+There are two functions which you use to subscribe to or unsubscribe from an event.</p>
+
+<ul>
+    <li><a href="Base.html##(BASE).HandleEvent">Base#BASE.HandleEvent</a>(): Subscribe to a DCS Event.</li>
+    <li><a href="Base.html##(BASE).UnHandleEvent">Base#BASE.UnHandleEvent</a>(): Unsubscribe from a DCS Event.</li>
+</ul>
+
+<h3>1.3.2 Event Handling of DCS Events</h3>
+
+<p>Once the class is subscribed to the event, an <strong>Event Handling</strong> method on the object or class needs to be written that will be called
+when the DCS event occurs. The Event Handling method receives an <a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> structure, which contains a lot of information
+about the event that occurred.</p>
+
+<p>Find below an example of the prototype how to write an event handling function for two units: </p>
+
+<pre><code> local Tank1 = UNIT:FindByName( "Tank A" )
+ local Tank2 = UNIT:FindByName( "Tank B" )
+
+ -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+ Tank1:HandleEvent( EVENTS.Dead )
+ Tank2:HandleEvent( EVENTS.Dead )
+
+ --- This function is an Event Handling function that will be called when Tank1 is Dead.
+ -- @param Wrapper.Unit#UNIT self 
+ -- @param Core.Event#EVENTDATA EventData
+ function Tank1:OnEventDead( EventData )
+
+   self:SmokeGreen()
+ end
+
+ --- This function is an Event Handling function that will be called when Tank2 is Dead.
+ -- @param Wrapper.Unit#UNIT self 
+ -- @param Core.Event#EVENTDATA EventData
+ function Tank2:OnEventDead( EventData )
+
+   self:SmokeBlue()
+ end
+</code></pre>
+
+<h3>1.3.3 Event Handling methods that are automatically called upon subscribed DCS events</h3>
+
+<p><img src="..\Presentations\EVENT\Dia10.JPG" alt="Objects"/></p>
+
+<p>The following list outlines which EVENTS item in the structure corresponds to which Event Handling method.
+Always ensure that your event handling methods align with the events being subscribed to, or nothing will be executed.</p>
+
+<h1>2) EVENTS type</h1>
+
+<p>The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
+<a href="Base.html##(BASE).HandleEvent">Base#BASE.HandleEvent</a>() method.</p>
+
+<h1>3) EVENTDATA type</h1>
+
+<p>The EVENTDATA contains all the fields that are populated with event information before 
+an Event Handler method is being called by the event dispatcher.
+The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
+There are basically 4 main categories of information stored in the EVENTDATA structure:</p>
+
+<ul>
+    <li>Initiator Unit data: Several fields documenting the initiator unit related to the event.</li>
+    <li>Target Unit data: Several fields documenting the target unit related to the event.</li>
+    <li>Weapon data: Certain events populate weapon information.</li>
+    <li>Place data: Certain events populate place information.</li>
+</ul>
+
+<p>Find below an overview which events populate which information categories:</p>
+
+<p><img src="..\Presentations\EVENT\Dia14.JPG" alt="Objects"/></p>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>YYYY-MM-DD: CLASS:<strong>NewFunction</strong>( Params ) replaces CLASS:<em>OldFunction</em>( Params )
+YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
+
+<p>Hereby the change log:</p>
+
+<ul>
+    <li>2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.</li>
 </ul>
 
 <hr/>
 
-<p>Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.</p>
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
-<hr/>
+<h3>Contributions:</h3>
 
-<p>The above menus classes <strong>are derived</strong> from 2 main <strong>abstract</strong> classes defined within the MOOSE framework (so don't use these):</p>
+<h3>Authors:</h3>
 
-<hr/>
-
-<h3>Contributions: -</h3>
-<h3>Authors: FlightControl : Design &amp; Programming</h3>
+<ul>
+    <li><a href="https://forums.eagle.ru/member.php?u=89536"><strong>FlightControl</strong></a>: Design &amp; Programming &amp; documentation.</li>
+</ul>
 
 
 	<h2>Global(s)</h2>
@@ -547,6 +686,148 @@ following a given priority.</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(EVENTS)">Type <code>EVENTS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).BaseCaptured">EVENTS.BaseCaptured</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Birth">EVENTS.Birth</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Crash">EVENTS.Crash</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Dead">EVENTS.Dead</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Ejection">EVENTS.Ejection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).EngineShutdown">EVENTS.EngineShutdown</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).EngineStartup">EVENTS.EngineStartup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Hit">EVENTS.Hit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).HumanFailure">EVENTS.HumanFailure</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Land">EVENTS.Land</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).MissionEnd">EVENTS.MissionEnd</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).MissionStart">EVENTS.MissionStart</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).PilotDead">EVENTS.PilotDead</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).PlayerComment">EVENTS.PlayerComment</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).PlayerEnterUnit">EVENTS.PlayerEnterUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).PlayerLeaveUnit">EVENTS.PlayerLeaveUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Refueling">EVENTS.Refueling</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).RefuelingStop">EVENTS.RefuelingStop</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).ShootingEnd">EVENTS.ShootingEnd</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).ShootingStart">EVENTS.ShootingStart</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Shot">EVENTS.Shot</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Takeoff">EVENTS.Takeoff</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).TookControl">EVENTS.TookControl</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -565,7 +846,7 @@ following a given priority.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="##(EVENTS)">#EVENTS</a></em>
 <a id="EVENTS" >
 <strong>EVENTS</strong>
 </a>
@@ -2375,6 +2656,337 @@ The self instance of the class for which the event is.</p>
 
 <a id="#(EVENTDATA).weapon" >
 <strong>EVENTDATA.weapon</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(EVENTS)" >Type <code>EVENTS</code></a></h2>
+				
+<p>The different types of events supported by MOOSE.</p>
+
+	
+<p>Use this structure to subscribe to events using the <a href="Base.html##(BASE).HandleEvent">Base#BASE.HandleEvent</a>() method.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).BaseCaptured" >
+<strong>EVENTS.BaseCaptured</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Birth" >
+<strong>EVENTS.Birth</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Crash" >
+<strong>EVENTS.Crash</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Dead" >
+<strong>EVENTS.Dead</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Ejection" >
+<strong>EVENTS.Ejection</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).EngineShutdown" >
+<strong>EVENTS.EngineShutdown</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).EngineStartup" >
+<strong>EVENTS.EngineStartup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Hit" >
+<strong>EVENTS.Hit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).HumanFailure" >
+<strong>EVENTS.HumanFailure</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Land" >
+<strong>EVENTS.Land</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).MissionEnd" >
+<strong>EVENTS.MissionEnd</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).MissionStart" >
+<strong>EVENTS.MissionStart</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).PilotDead" >
+<strong>EVENTS.PilotDead</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).PlayerComment" >
+<strong>EVENTS.PlayerComment</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).PlayerEnterUnit" >
+<strong>EVENTS.PlayerEnterUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).PlayerLeaveUnit" >
+<strong>EVENTS.PlayerLeaveUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Refueling" >
+<strong>EVENTS.Refueling</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).RefuelingStop" >
+<strong>EVENTS.RefuelingStop</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).ShootingEnd" >
+<strong>EVENTS.ShootingEnd</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).ShootingStart" >
+<strong>EVENTS.ShootingStart</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Shot" >
+<strong>EVENTS.Shot</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).Takeoff" >
+<strong>EVENTS.Takeoff</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).TookControl" >
+<strong>EVENTS.TookControl</strong>
 </a>
 </dt>
 <dd>
