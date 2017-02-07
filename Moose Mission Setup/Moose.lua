@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170207_1733' ) 
+env.info( 'Moose Generation Timestamp: 20170207_2151' ) 
 local base = _G
 
 Include = {}
@@ -4121,20 +4121,56 @@ end
 -- 
 -- ![Objects](..\Presentations\EVENT\Dia10.JPG)
 -- 
--- The following list outlines which EVENTS item in the structure corresponds to which Event Handling method:
+-- The following list outlines which EVENTS item in the structure corresponds to which Event Handling method.
+-- Always ensure that your event handling methods align with the events being subscribed to, or nothing will be executed.
 -- 
--- First Header | Second Header
--- ------------ | -------------
--- Content from cell 1 | Content from cell 2
--- Content in the first column | Content in the second column
+-- # 2) EVENTS type
 -- 
--- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
+-- The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
+-- @{Base#BASE.HandleEvent}() method.
+-- 
+-- # 3) EVENTDATA type
+-- 
+-- The EVENTDATA contains all the fields that are populated with event information before 
+-- an Event Handler method is being called by the event dispatcher.
+-- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
+-- There are basically 4 main categories of information stored in the EVENTDATA structure:
+-- 
+--    * Initiator Unit data: Several fields documenting the initiator unit related to the event.
+--    * Target Unit data: Several fields documenting the target unit related to the event.
+--    * Weapon data: Certain events populate weapon information.
+--    * Place data: Certain events populate place information.
+-- 
+-- Find below an overview which events populate which information categories:
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia14.JPG)
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+--   * 2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.
 -- 
 -- ===
 -- 
--- ### Contributions: -
--- ### Authors: FlightControl : Design & Programming
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
+-- ### Contributions: 
+-- 
+-- ### Authors: 
+-- 
+--   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
+--
 -- @module Event
 
 --- The EVENT structure
@@ -4146,6 +4182,9 @@ EVENT = {
   ClassID = 0,
 }
 
+--- The different types of events supported by MOOSE.
+-- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
+-- @type EVENTS
 EVENTS = {
   Shot =              world.event.S_EVENT_SHOT,
   Hit =               world.event.S_EVENT_HIT,
@@ -4171,6 +4210,28 @@ EVENTS = {
   ShootingStart =     world.event.S_EVENT_SHOOTING_START,
   ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
 }
+
+--- The Event structure
+-- @type EVENTDATA
+-- @field id
+-- @field initiator
+-- @field target
+-- @field weapon
+-- @field IniDCSUnit
+-- @field IniDCSUnitName
+-- @field Wrapper.Unit#UNIT           IniUnit
+-- @field #string             IniUnitName
+-- @field IniDCSGroup
+-- @field IniDCSGroupName
+-- @field TgtDCSUnit
+-- @field TgtDCSUnitName
+-- @field Wrapper.Unit#UNIT           TgtUnit
+-- @field #string             TgtUnitName
+-- @field TgtDCSGroup
+-- @field TgtDCSGroupName
+-- @field Weapon
+-- @field WeaponName
+-- @field WeaponTgtDCSUnit
 
 
 local _EVENTMETA = {
@@ -4291,27 +4352,6 @@ local _EVENTMETA = {
    },
 }
 
---- The Event structure
--- @type EVENTDATA
--- @field id
--- @field initiator
--- @field target
--- @field weapon
--- @field IniDCSUnit
--- @field IniDCSUnitName
--- @field Wrapper.Unit#UNIT           IniUnit
--- @field #string             IniUnitName
--- @field IniDCSGroup
--- @field IniDCSGroupName
--- @field TgtDCSUnit
--- @field TgtDCSUnitName
--- @field Wrapper.Unit#UNIT           TgtUnit
--- @field #string             TgtUnitName
--- @field TgtDCSGroup
--- @field TgtDCSGroupName
--- @field Weapon
--- @field WeaponName
--- @field WeaponTgtDCSUnit
 
 --- The Events structure
 -- @type EVENT.Events
