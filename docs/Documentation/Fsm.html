@@ -574,6 +574,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._EventSchedules">FSM._EventSchedules</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM)._Processes">FSM._Processes</a></td>
 		<td class="summary">
 
@@ -604,7 +610,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM)._call_handler">FSM:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._call_handler">FSM:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -728,7 +734,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE)._call_handler">FSM_CONTROLLABLE:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE)._call_handler">FSM_CONTROLLABLE:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -856,7 +862,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_SET)._call_handler">FSM_SET:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_SET)._call_handler">FSM_SET:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -884,7 +890,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_TASK)._call_handler">FSM_TASK:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_TASK)._call_handler">FSM_TASK:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -1458,6 +1464,20 @@ A string defining the start state.</p>
 <dt>
 
 		<em></em>
+<a id="#(FSM)._EventSchedules" >
+<strong>FSM._EventSchedules</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(FSM)._Processes" >
 <strong>FSM._Processes</strong>
 </a>
@@ -1540,7 +1560,7 @@ A string defining the start state.</p>
 <dt>
 
 <a id="#(FSM)._call_handler" >
-<strong>FSM:_call_handler(handler, params)</strong>
+<strong>FSM:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -1557,6 +1577,11 @@ A string defining the start state.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1967,7 +1992,7 @@ Finite State Machine Table</p>
 <dt>
 
 <a id="#(FSM_CONTROLLABLE)._call_handler" >
-<strong>FSM_CONTROLLABLE:_call_handler(handler, params)</strong>
+<strong>FSM_CONTROLLABLE:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -1984,6 +2009,11 @@ Finite State Machine Table</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2436,7 +2466,7 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 <dt>
 
 <a id="#(FSM_SET)._call_handler" >
-<strong>FSM_SET:_call_handler(handler, params)</strong>
+<strong>FSM_SET:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -2453,6 +2483,11 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2532,7 +2567,7 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 <dt>
 
 <a id="#(FSM_TASK)._call_handler" >
-<strong>FSM_TASK:_call_handler(handler, params)</strong>
+<strong>FSM_TASK:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -2549,6 +2584,11 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>

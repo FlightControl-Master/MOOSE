@@ -292,6 +292,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).HandleEvent">UNIT:HandleEvent(Event, EventFunction)</a></td>
+		<td class="summary">
+<p>Subscribe to a DCS Event.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).HasSEAD">UNIT:HasSEAD()</a></td>
 		<td class="summary">
 <p>Returns if the unit is SEADable.</p>
@@ -409,6 +415,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeWhite">UNIT:SmokeWhite()</a></td>
 		<td class="summary">
 <p>Smoke the UNIT White.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).UnHandleEvent">UNIT:UnHandleEvent(Event)</a></td>
+		<td class="summary">
+<p>UnSubscribe to a DCS event.</p>
 </td>
 		</tr>
 	</table>
@@ -1029,6 +1041,38 @@ Wrapper.Unit#UNIT> The UNITs wrappers.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).HandleEvent" >
+<strong>UNIT:HandleEvent(Event, EventFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Subscribe to a DCS Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+(optional) The function to be called when the event occurs for the unit.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).HasSEAD" >
 <strong>UNIT:HasSEAD()</strong>
 </a>
@@ -1504,6 +1548,32 @@ The name of the DCS unit.</p>
 <dd>
 	
 <p>Smoke the UNIT White.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).UnHandleEvent" >
+<strong>UNIT:UnHandleEvent(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnSubscribe to a DCS event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
+
 
 </dd>
 </dl>

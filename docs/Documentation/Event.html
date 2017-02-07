@@ -71,9 +71,20 @@
 	<div id="content">
    <h1>Module <code>Event</code></h1>
    
-<p>This module contains the EVENT class.</p>
+<p>This module contains the <strong>EVENT</strong> class, which models the dispatching of DCS Events to subscribed MOOSE classes,
+following a given priority.</p>
 
    
+
+<h2></h2>
+
+<p><img src="..\Presentations\FSM\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<ul>
+    <li>This module contains the EVENT class.</li>
+</ul>
 
 <hr/>
 
@@ -93,6 +104,12 @@
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#EVENT">EVENT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#EVENTS">EVENTS</a></td>
 		<td class="summary">
 
 </td>
@@ -125,7 +142,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventPriority, EventClass)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventClass)</a></td>
 		<td class="summary">
 <p>Initializes the Events structure for the event</p>
 </td>
@@ -383,6 +400,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForUnit">EVENT:RemoveForUnit(EventClass, EventID, UnitName)</a></td>
+		<td class="summary">
+<p>Removes an Events entry for a Unit</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).onEvent">EVENT:onEvent(Event)</a></td>
 		<td class="summary">
 
@@ -539,6 +562,20 @@
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="EVENTS" >
+<strong>EVENTS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 	<h2><a id="#(Event)" >Type <code>Event</code></a></h2>
 	
 			<h2><a id="#(EVENT)" >Type <code>EVENT</code></a></h2>
@@ -613,7 +650,7 @@
 <dt>
 
 <a id="#(EVENT).Init" >
-<strong>EVENT:Init(EventID, EventPriority, EventClass)</strong>
+<strong>EVENT:Init(EventID, EventClass)</strong>
 </a>
 </dt>
 <dd>
@@ -625,12 +662,6 @@
 				<li>
 				
 <p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EventPriority </em></code>: 
-The priority of the EventClass.</p>
 
 				</li>
 				<li>
@@ -2001,6 +2032,43 @@ The self instance of the class for which the event is.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).RemoveForUnit" >
+<strong>EVENT:RemoveForUnit(EventClass, EventID, UnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes an Events entry for a Unit</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> UnitName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
