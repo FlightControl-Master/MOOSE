@@ -157,7 +157,7 @@ local _EVENTMETA = {
      Text = "S_EVENT_PLAYER_ENTER_UNIT" 
    },
    [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = {
-     Order = 1,
+     Order = -1,
      Event = "OnEventPlayerLeaveUnit",
      Text = "S_EVENT_PLAYER_LEAVE_UNIT" 
    },
