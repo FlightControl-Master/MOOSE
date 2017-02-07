@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,7 +75,7 @@
 
    
 
-<h1>1) <a href="##(UNIT)">#UNIT</a> class, extends <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></h1>
+<h1>1) <a href="##(UNIT)">#UNIT</a> class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
 <p>The <a href="##(UNIT)">#UNIT</a> class is a wrapper class to handle the DCS Unit objects:</p>
 
 <ul>
@@ -108,7 +109,7 @@ If the DCS Unit object does not exist or is nil, the UNIT methods will return ni
 <h2>1.2) DCS UNIT APIs</h2>
 <p>The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
-the first letter of the method is also capitalized. So, by example, the DCS Unit method <a href="Dcs.DCSWrapper.Unit.html##(Unit).getName">Dcs.DCSWrapper.Unit#Unit.getName</a>()
+the first letter of the method is also capitalized. So, by example, the DCS Unit method <a href="DCSWrapper.Unit.html##(Unit).getName">DCSWrapper.Unit#Unit.getName</a>()
 is implemented in the UNIT class as <a href="##(UNIT).GetName">UNIT.GetName</a>().</p>
 
 <h2>1.3) Smoke, Flare Units</h2>
@@ -131,7 +132,7 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 <p>The UNIT class contains methods to test the location or proximity against zones or other objects.</p>
 
 <h3>1.6.1) Zones</h3>
-<p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>. </p>
+<p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. </p>
 
 <h3>1.6.2) Units</h3>
 <p>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
@@ -291,6 +292,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).HandleEvent">UNIT:HandleEvent(Event, EventFunction)</a></td>
+		<td class="summary">
+<p>Subscribe to a DCS Event.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).HasSEAD">UNIT:HasSEAD()</a></td>
 		<td class="summary">
 <p>Returns if the unit is SEADable.</p>
@@ -408,6 +415,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeWhite">UNIT:SmokeWhite()</a></td>
 		<td class="summary">
 <p>Smoke the UNIT White.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).UnHandleEvent">UNIT:UnHandleEvent(Event)</a></td>
+		<td class="summary">
+<p>UnSubscribe to a DCS event.</p>
 </td>
 		</tr>
 	</table>
@@ -1028,6 +1041,38 @@ Wrapper.Unit#UNIT> The UNITs wrappers.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).HandleEvent" >
+<strong>UNIT:HandleEvent(Event, EventFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Subscribe to a DCS Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+(optional) The function to be called when the event occurs for the unit.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).HasSEAD" >
 <strong>UNIT:HasSEAD()</strong>
 </a>
@@ -1236,7 +1281,7 @@ The zone to test.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-Returns true if the unit is within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+Returns true if the unit is within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1263,7 +1308,7 @@ The zone to test.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-Returns true if the unit is not within the <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></p>
+Returns true if the unit is not within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
 
 </dd>
 </dl>
@@ -1503,6 +1548,32 @@ The name of the DCS unit.</p>
 <dd>
 	
 <p>Smoke the UNIT White.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).UnHandleEvent" >
+<strong>UNIT:UnHandleEvent(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnSubscribe to a DCS event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
+
 
 </dd>
 </dl>

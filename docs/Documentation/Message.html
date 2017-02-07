@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,22 +75,22 @@
 
    
 
-<h1>1) <a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>Message System to display Messages to Clients, Coalitions or All.
 Messages are shown on the display panel for an amount of seconds, and will then disappear.
 Messages can contain a category which is indicating the category of the message.</p>
 
 <h2>1.1) MESSAGE construction methods</h2>
-<p>Messages are created with <a href="Core.Message.html##(MESSAGE).New">Core.Message#MESSAGE.New</a>. Note that when the MESSAGE object is created, no message is sent yet.
+<p>Messages are created with <a href="Message.html##(MESSAGE).New">Message#MESSAGE.New</a>. Note that when the MESSAGE object is created, no message is sent yet.
 To send messages, you need to use the To functions.</p>
 
 <h2>1.2) Send messages with MESSAGE To methods</h2>
 <p>Messages are sent to:</p>
 
 <ul>
-    <li>Clients with <a href="Core.Message.html##(MESSAGE).ToClient">Core.Message#MESSAGE.ToClient</a>.</li>
-    <li>Coalitions with <a href="Core.Message.html##(MESSAGE).ToCoalition">Core.Message#MESSAGE.ToCoalition</a>.</li>
-    <li>All Players with <a href="Core.Message.html##(MESSAGE).ToAll">Core.Message#MESSAGE.ToAll</a>.
+    <li>Clients with <a href="Message.html##(MESSAGE).ToClient">Message#MESSAGE.ToClient</a>.</li>
+    <li>Coalitions with <a href="Message.html##(MESSAGE).ToCoalition">Message#MESSAGE.ToCoalition</a>.</li>
+    <li>All Players with <a href="Message.html##(MESSAGE).ToAll">Message#MESSAGE.ToAll</a>.
     </li>
 </ul>
 

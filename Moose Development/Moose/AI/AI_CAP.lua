@@ -2,10 +2,9 @@
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
--- 
 -- ===
 --
--- # 1) @{#AI_CAP_ZONE} class, extends @{AI.AI_CAP#AI_PATROL_ZONE}
+-- # 1) @{#AI_CAP_ZONE} class, extends @{AI_CAP#AI_PATROL_ZONE}
 -- 
 -- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
@@ -71,7 +70,7 @@
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 1.4) Set the Zone of Engagement
 -- 
@@ -79,7 +78,7 @@
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --
 -- ====
 --
@@ -481,7 +480,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:__Accomplish( 1 )
+      self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else

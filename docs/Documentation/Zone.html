@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -70,7 +71,7 @@
 	<div id="content">
    <h1>Module <code>Zone</code></h1>
    
-<p>This module contains the ZONE classes, inherited from <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>.</p>
+<p>This module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
 
    
 <p>There are essentially two core functions that zones accomodate:</p>
@@ -84,7 +85,7 @@
 
 <ul>
     <li>Test if completely within the zone.</li>
-    <li>Test if partly within the zone (for <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> objects).</li>
+    <li>Test if partly within the zone (for <a href="Group.html##(GROUP)">Group#GROUP</a> objects).</li>
     <li>Test if not in the zone.</li>
     <li>Distance to the nearest intersecting point of the zone.</li>
     <li>Distance to the center of the zone.</li>
@@ -94,17 +95,17 @@
 <p>Each of these ZONE classes have a zone name, and specific parameters defining the zone type:</p>
 
 <ul>
-    <li><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>: The ZONE_BASE class defining the base for all other zone classes.</li>
-    <li><a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a>: The ZONE_RADIUS class defined by a zone name, a location and a radius.</li>
-    <li><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>: The ZONE class, defined by the zone name as defined within the Mission Editor.</li>
-    <li><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>: The ZONE_UNIT class defines by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.</li>
-    <li><a href="Core.Zone.html##(ZONE_GROUP)">Core.Zone#ZONE_GROUP</a>: The ZONE_GROUP class defines by a zone around a <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> with a radius.</li>
-    <li><a href="Core.Zone.html##(ZONE_POLYGON)">Core.Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defines by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
+    <li><a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>: The ZONE_BASE class defining the base for all other zone classes.</li>
+    <li><a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a>: The ZONE_RADIUS class defined by a zone name, a location and a radius.</li>
+    <li><a href="Zone.html##(ZONE)">Zone#ZONE</a>: The ZONE class, defined by the zone name as defined within the Mission Editor.</li>
+    <li><a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>: The ZONE_UNIT class defines by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</li>
+    <li><a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a>: The ZONE_GROUP class defines by a zone around a <a href="Group.html##(GROUP)">Group#GROUP</a> with a radius.</li>
+    <li><a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>: The ZONE_POLYGON class defines by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</li>
 </ul>
 
 <hr/>
 
-<h1>1) <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
 
 <h3>1.1) Each zone has a name:</h3>
@@ -113,11 +114,11 @@
     <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
 </ul>
 
-<h3>1.2) Each zone implements two polymorphic functions defined in <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</h3>
+<h3>1.2) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h3>
 
 <ul>
-    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> is within the zone.</li>
-    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> is within the zone.</li>
 </ul>
 
 <h3>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h3>
@@ -131,8 +132,8 @@
 <h3>1.4) A zone manages Vectors:</h3>
 
 <ul>
-    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</li>
 </ul>
 
 <h3>1.5) A zone has a bounding square:</h3>
@@ -150,11 +151,11 @@
 
 <hr/>
 
-<h1>2) <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> class, extends <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></h1>
+<h1>2) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
 <p>The ZONE<em>RADIUS class defined by a zone name, a location and a radius.
 This class implements the inherited functions from Core.Zone#ZONE</em>BASE taking into account the own zone format and properties.</p>
 
-<h3>2.1) <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> constructor:</h3>
+<h3>2.1) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> constructor:</h3>
 
 <ul>
     <li><a href="##(ZONE_BASE).New">ZONE_BASE.New</a>(): Constructor.</li>
@@ -170,41 +171,41 @@ This class implements the inherited functions from Core.Zone#ZONE</em>BASE takin
 <h3>2.3) Manage the location of the zone:</h3>
 
 <ul>
-    <li><a href="##(ZONE_BASE).SetVec2">ZONE_BASE.SetVec2</a>(): Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetVec3">ZONE_BASE.GetVec3</a>(): Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the zone, taking an additional height parameter.</li>
+    <li><a href="##(ZONE_BASE).SetVec2">ZONE_BASE.SetVec2</a>(): Sets the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec3">ZONE_BASE.GetVec3</a>(): Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the zone, taking an additional height parameter.</li>
 </ul>
 
 <hr/>
 
-<h1>3) <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
+<h1>3) <a href="Zone.html##(ZONE)">Zone#ZONE</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
 <p>The ZONE class, defined by the zone name as defined within the Mission Editor.
 This class implements the inherited functions from {Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.</p>
 
 <hr/>
 
-<h1>4) <a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
-<p>The ZONE_UNIT class defined by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.
-This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+<h1>4) <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.
+This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
 <hr/>
 
-<h1>5) <a href="Core.Zone.html##(ZONE_GROUP)">Core.Zone#ZONE_GROUP</a> class, extends <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a></h1>
-<p>The ZONE_GROUP class defines by a zone around a <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> with a radius. The current leader of the group defines the center of the zone.
-This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+<h1>5) <a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+<p>The ZONE_GROUP class defines by a zone around a <a href="Group.html##(GROUP)">Group#GROUP</a> with a radius. The current leader of the group defines the center of the zone.
+This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
 <hr/>
 
-<h1>6) <a href="Core.Zone.html##(ZONE_POLYGON_BASE)">Core.Zone#ZONE<em>POLYGON</em>BASE</a> class, extends <a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></h1>
-<p>The ZONE<em>POLYGON</em>BASE class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
-This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.
+<h1>6) <a href="Zone.html##(ZONE_POLYGON_BASE)">Zone#ZONE<em>POLYGON</em>BASE</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+<p>The ZONE<em>POLYGON</em>BASE class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
+This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.
 This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
 
 <hr/>
 
-<h1>7) <a href="Core.Zone.html##(ZONE_POLYGON)">Core.Zone#ZONE_POLYGON</a> class, extends <a href="Core.Zone.html##(ZONE_POLYGON_BASE)">Core.Zone#ZONE<em>POLYGON</em>BASE</a></h1>
-<p>The ZONE_POLYGON class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
-This class implements the inherited functions from <a href="Core.Zone.html##(ZONE_RADIUS)">Core.Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
+<h1>7) <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a> class, extends <a href="Zone.html##(ZONE_POLYGON_BASE)">Zone#ZONE<em>POLYGON</em>BASE</a></h1>
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
+This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
 <hr/>
 
@@ -314,13 +315,13 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE:GetRandomVec2()</a></td>
 		<td class="summary">
-<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetVec2">ZONE_BASE:GetVec2()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -430,7 +431,7 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).New">ZONE_GROUP:New(ZoneName, ZoneGROUP, Radius)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> and a radius.</p>
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Group.html##(GROUP)">Group#GROUP</a> and a radius.</p>
 </td>
 		</tr>
 		<tr>
@@ -452,7 +453,7 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
 	</table>
@@ -480,7 +481,7 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomVec2">ZONE_POLYGON_BASE:GetRandomVec2()</a></td>
 		<td class="summary">
-<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -492,13 +493,13 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).New">ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Polygon">ZONE_POLYGON_BASE.Polygon</a></td>
 		<td class="summary">
-<p>The polygon defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -530,7 +531,7 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2(inner, outer)</a></td>
 		<td class="summary">
 <p>Returns a random location within the zone.</p>
 </td>
@@ -538,13 +539,13 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec2">ZONE_RADIUS:GetVec2()</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec3">ZONE_RADIUS:GetVec3(Height)</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
 </td>
 		</tr>
 		<tr>
@@ -580,7 +581,7 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetVec2">ZONE_RADIUS:SetVec2(Vec2)</a></td>
 		<td class="summary">
-<p>Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+<p>Sets the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -614,13 +615,13 @@ This class implements the inherited functions from <a href="Core.Zone.html##(ZON
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetVec2">ZONE_UNIT:GetVec2()</a></td>
 		<td class="summary">
-<p>Returns the current location of the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>.</p>
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_UNIT).GetVec3">ZONE_UNIT:GetVec3(Height)</a></td>
 		<td class="summary">
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -858,7 +859,7 @@ The name of the zone.</p>
 </dt>
 <dd>
 	
-<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 
 		<h3>Return value</h3>
 				
@@ -876,7 +877,7 @@ The Vec2 coordinates.</p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> coordinate of the zone.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</p>
 
 		<h3>Return value</h3>
 				
@@ -1211,7 +1212,7 @@ The location of the zone based on the <a href="Group.html">Group</a> location.</
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> and a radius.</p>
+<p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Group.html##(GROUP)">Group#GROUP</a> and a radius.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1258,7 +1259,7 @@ self</p>
 
 			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
 				
-<p>The ZONE_POLYGON class defined by a sequence of <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
+<p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1284,10 +1285,10 @@ self</p>
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 
 	
-<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1314,7 +1315,7 @@ self</p>
 
 			<h2><a id="#(ZONE_POLYGON_BASE)" >Type <code>ZONE_POLYGON_BASE</code></a></h2>
 				
-<p>The ZONE<em>POLYGON</em>BASE class defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+<p>The ZONE<em>POLYGON</em>BASE class defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1376,7 +1377,7 @@ The bounding square.</p>
 </dt>
 <dd>
 	
-<p>Define a random <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> within the zone.</p>
+<p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
 
 		<h3>Return value</h3>
 				
@@ -1424,10 +1425,10 @@ true if the location is within the zone.</p>
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon.</p>
+<p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
 
 	
-<p>The <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected.</p>
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1440,7 +1441,7 @@ Name of the zone.</p>
 				<li>
 				
 <p><code><em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE<em>POLYGON</em>BASE.ListVec2</a> PointsArray </em></code>: 
-An array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>, forming a polygon..</p>
+An array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon..</p>
 
 				</li>
 		</ul>
@@ -1461,7 +1462,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>The polygon defined by an array of <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 
 </dd>
 </dl>
@@ -1580,13 +1581,28 @@ The radius of the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).GetRandomVec2" >
-<strong>ZONE_RADIUS:GetRandomVec2()</strong>
+<strong>ZONE_RADIUS:GetRandomVec2(inner, outer)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Returns a random location within the zone.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+minimal distance from the center of the zone</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+minimal distance from the outer edge of the zone</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
@@ -1603,7 +1619,7 @@ The random location within the zone.</p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</p>
 
 		<h3>Return value</h3>
 				
@@ -1621,7 +1637,7 @@ The location of the zone.</p>
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1782,7 +1798,7 @@ The radius of the zone.</p>
 </dt>
 <dd>
 	
-<p>Sets the <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> of the zone.</p>
+<p>Sets the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1850,7 +1866,7 @@ self</p>
 
 			<h2><a id="#(ZONE_UNIT)" >Type <code>ZONE_UNIT</code></a></h2>
 				
-<p>The ZONE_UNIT class defined by a zone around a <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> with a radius.</p>
+<p>The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1894,12 +1910,12 @@ The random location within the zone.</p>
 </dt>
 <dd>
 	
-<p>Returns the current location of the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>.</p>
+<p>Returns the current location of the <a href="Unit.html##(UNIT)">Unit#UNIT</a>.</p>
 
 		<h3>Return value</h3>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
-The location of the zone based on the <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>location.</p>
+The location of the zone based on the <a href="Unit.html##(UNIT)">Unit#UNIT</a>location.</p>
 
 </dd>
 </dl>
@@ -1912,7 +1928,7 @@ The location of the zone based on the <a href="Wrapper.Unit.html##(UNIT)">Wrappe
 </dt>
 <dd>
 	
-<p>Returns the <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the ZONE_UNIT.</p>
 
 		<h3>Parameter</h3>
 		<ul>

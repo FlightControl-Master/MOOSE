@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -70,14 +71,14 @@
 	<div id="content">
    <h1>Module <code>AI_Patrol</code></h1>
    
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Air Patrolling or Staging.</strong></p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<strong>Air Patrolling or Staging.</strong></p>
 
 <p><img src="..\Presentations\AI_PATROL\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Core.Fsm.html##(FSM_CONTROLLABLE)">Core.Fsm#FSM_CONTROLLABLE</a></h1>
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
 
 <p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
 
@@ -267,6 +268,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ClearDetectedUnits">AI_PATROL_ZONE:ClearDetectedUnits()</a></td>
+		<td class="summary">
+<p>Clears the list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s that were detected by the AI.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).CoordTest">AI_PATROL_ZONE.CoordTest</a></td>
 		<td class="summary">
 
@@ -317,7 +324,7 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI_PATROL_ZONE:GetDetectedUnits()</a></td>
 		<td class="summary">
-<p>Gets a list of <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s that were detected by the AI.</p>
+<p>Gets a list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s that were detected by the AI.</p>
 </td>
 		</tr>
 		<tr>
@@ -333,7 +340,7 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).New">AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).New">AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>PATROL</em>ZONE object</p>
 </td>
@@ -448,6 +455,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnPilotDead">AI_PATROL_ZONE:OnPilotDead(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolAltType">AI_PATROL_ZONE.PatrolAltType</a></td>
 		<td class="summary">
 
 </td>
@@ -749,6 +762,19 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).ClearDetectedUnits" >
+<strong>AI_PATROL_ZONE:ClearDetectedUnits()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clears the list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s that were detected by the AI.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a></em>
 <a id="#(AI_PATROL_ZONE).CoordTest" >
 <strong>AI_PATROL_ZONE.CoordTest</strong>
@@ -868,7 +894,7 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </dt>
 <dd>
 	
-<p>Gets a list of <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s that were detected by the AI.</p>
+<p>Gets a list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s that were detected by the AI.</p>
 
 	
 <p>No filtering is applied, so, ANY detected UNIT can be in this list.
@@ -877,7 +903,7 @@ It is up to the mission designer to use the <a href="Unit.html">Unit</a> class a
 		<h3>Return value</h3>
 				
 <p><em>#table:</em>
-The list of <a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>s</p>
+The list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s</p>
 
 </dd>
 </dl>
@@ -957,7 +983,7 @@ self</p>
 <dt>
 
 <a id="#(AI_PATROL_ZONE).New" >
-<strong>AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed)</strong>
+<strong>AI_PATROL_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
@@ -994,6 +1020,12 @@ The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
 The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
+The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 
 				</li>
 		</ul>
@@ -1751,6 +1783,22 @@ Return false to cancel Transition.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).PatrolAltType" >
+<strong>AI_PATROL_ZONE.PatrolAltType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> defafult PatrolAltType to "RADIO" if not specified</p>
+
 </dd>
 </dl>
 		<dl class="function">

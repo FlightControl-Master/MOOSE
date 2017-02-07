@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li>Fsm</li>
@@ -76,6 +77,8 @@
 <h2>Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.</h2>
 
 <p><img src="..\Presentations\FSM\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
 
 <p>A FSM can only be in one of a finite number of states. 
 The machine is in only one state at a time; the state it is in at any given time is called the <strong>current state</strong>. 
@@ -124,7 +127,7 @@ Additionally, I've added extendability and created an API that allows seamless F
 
 <hr/>
 
-<h1>1) <a href="Core.Fsm.html##(FSM)">Core.Fsm#FSM</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="##(FSM)">#FSM</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
 <p><img src="..\Presentations\FSM\Dia3.JPG" alt="Transition Rules and Transition Handlers and Event Triggers"/></p>
 
@@ -571,6 +574,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._EventSchedules">FSM._EventSchedules</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM)._Processes">FSM._Processes</a></td>
 		<td class="summary">
 
@@ -601,7 +610,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM)._call_handler">FSM:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM)._call_handler">FSM:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -725,7 +734,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE)._call_handler">FSM_CONTROLLABLE:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE)._call_handler">FSM_CONTROLLABLE:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -853,7 +862,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_SET)._call_handler">FSM_SET:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_SET)._call_handler">FSM_SET:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -881,7 +890,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_TASK)._call_handler">FSM_TASK:_call_handler(handler, params)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_TASK)._call_handler">FSM_TASK:_call_handler(handler, params, EventName)</a></td>
 		<td class="summary">
 
 </td>
@@ -1455,6 +1464,20 @@ A string defining the start state.</p>
 <dt>
 
 		<em></em>
+<a id="#(FSM)._EventSchedules" >
+<strong>FSM._EventSchedules</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(FSM)._Processes" >
 <strong>FSM._Processes</strong>
 </a>
@@ -1482,7 +1505,7 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
+		<em></em>
 <a id="#(FSM)._StartState" >
 <strong>FSM._StartState</strong>
 </a>
@@ -1537,7 +1560,7 @@ A string defining the start state.</p>
 <dt>
 
 <a id="#(FSM)._call_handler" >
-<strong>FSM:_call_handler(handler, params)</strong>
+<strong>FSM:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -1554,6 +1577,11 @@ A string defining the start state.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1776,6 +1804,7 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(FSM).current" >
 <strong>FSM.current</strong>
 </a>
@@ -1963,7 +1992,7 @@ Finite State Machine Table</p>
 <dt>
 
 <a id="#(FSM_CONTROLLABLE)._call_handler" >
-<strong>FSM_CONTROLLABLE:_call_handler(handler, params)</strong>
+<strong>FSM_CONTROLLABLE:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -1980,6 +2009,11 @@ Finite State Machine Table</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2432,7 +2466,7 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 <dt>
 
 <a id="#(FSM_SET)._call_handler" >
-<strong>FSM_SET:_call_handler(handler, params)</strong>
+<strong>FSM_SET:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -2449,6 +2483,11 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2528,7 +2567,7 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 <dt>
 
 <a id="#(FSM_TASK)._call_handler" >
-<strong>FSM_TASK:_call_handler(handler, params)</strong>
+<strong>FSM_TASK:_call_handler(handler, params, EventName)</strong>
 </a>
 </dt>
 <dd>
@@ -2545,6 +2584,11 @@ FSMSet (optional) The Set object that the FSM_SET governs.</p>
 				<li>
 				
 <p><code><em> params </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventName </em></code>: </p>
 
 				</li>
 		</ul>

@@ -1,8 +1,8 @@
 --- This module contains the CONTROLLABLE class.
 -- 
--- 1) @{Wrapper.Controllable#CONTROLLABLE} class, extends @{Wrapper.Positionable#POSITIONABLE}
+-- 1) @{Controllable#CONTROLLABLE} class, extends @{Positionable#POSITIONABLE}
 -- ===========================================================
--- The @{Wrapper.Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
+-- The @{Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
 --
 --  * Support all DCS Controllable APIs.
 --  * Enhance with Controllable specific APIs not in the DCS Controllable API set.
@@ -18,7 +18,7 @@
 -- 1.2) CONTROLLABLE task methods
 -- ------------------------------
 -- Several controllable task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#SetTask} method to assign the task to the CONTROLLABLE.
+-- These methods return a string consisting of the task description, which can then be given to either a @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#SetTask} method to assign the task to the CONTROLLABLE.
 -- Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -44,7 +44,7 @@
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
 --   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
+--   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
@@ -344,7 +344,7 @@ end
 
 --- Return a Combo Task taking an array of Tasks.
 -- @param #CONTROLLABLE self
--- @param Dcs.DCSTasking.Task#TaskArray DCSTasks Array of @{Dcs.DCSTasking.Task#Task}
+-- @param Dcs.DCSTasking.Task#TaskArray DCSTasks Array of @{DCSTasking.Task#Task}
 -- @return Dcs.DCSTasking.Task#Task
 function CONTROLLABLE:TaskCombo( DCSTasks )
   self:F2( { DCSTasks } )
@@ -829,7 +829,7 @@ function CONTROLLABLE:TaskLandAtVec2( Point, Duration )
   return DCSTask
 end
 
---- (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
+--- (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
@@ -1175,17 +1175,18 @@ end
 
 --- (AIR) Attack the Unit.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Unit#UNIT AttackUnit The UNIT.
--- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
+-- @param Wrapper.Unit#UNIT EngageUnit The UNIT.
+-- @param #number Priority (optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
+-- @param Dcs.DCSTypes#Distance Altitude (optional) Desired altitude to perform the unit engagement.
+-- @param #boolean Visible (optional) Unit must be visible.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack )
-  self:F2( { self.ControllableName, AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack } )
+function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack )
+  self:F2( { self.ControllableName,          EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack } )
 
   --  EngageUnit = {
   --    id = 'EngageUnit',
@@ -1204,14 +1205,18 @@ function CONTROLLABLE:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, W
   local DCSTask
   DCSTask = { id = 'EngageUnit',
     params = {
-      unitId = AttackUnit:GetID(),
-      weaponType = WeaponType,
-      expend = WeaponExpend,
-      attackQty = AttackQty,
+      unitId = EngageUnit:GetID(),
+      priority = Priority or 1,
+      groupAttack = GroupAttack or false,
+      visible = Visible or false,
+      expend = WeaponExpend or "Auto",
+      directionEnabled = Direction and true or false,
       direction = Direction,
-      attackQtyLimit = AttackQtyLimit,
+      altitudeEnabled = Altitude and true or false,
+      altitude = Altitude,
+      attackQtyLimit = AttackQty and true or false,
+      attackQty = AttackQty,
       controllableAttack = ControllableAttack,
-      priority = Priority,
     },
   },
 
@@ -1638,11 +1643,11 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
---- (AIR) Return the Controllable to an @{Wrapper.Airbase#AIRBASE}
+--- (AIR) Return the Controllable to an @{Airbase#AIRBASE}
 -- A speed can be given in km/h.
 -- A given formation can be given.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Wrapper.Airbase#AIRBASE} to return to.
+-- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
 -- @param #number Speed (optional) The speed.
 -- @return #string The route
 function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
@@ -1762,7 +1767,7 @@ function CONTROLLABLE:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
 
---- Return the route of a controllable by using the @{Core.Database#DATABASE} class.
+--- Return the route of a controllable by using the @{Database#DATABASE} class.
 -- @param #CONTROLLABLE self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -2187,7 +2192,7 @@ function CONTROLLABLE:OptionROTVertical()
 end
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
--- Use the method @{Wrapper.Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
+-- Use the method @{Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self

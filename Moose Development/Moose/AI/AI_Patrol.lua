@@ -1,11 +1,11 @@
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+-- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
--- 
 -- ===
 -- 
--- # 1) @{#AI_PATROL_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+-- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
@@ -189,14 +189,13 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionOn()
-
+  self:SetDetectionInterval( 30 )
+  
   self.CheckStatus = true
   
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 1 )
   
-  self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
   
@@ -450,7 +449,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
-  
+
   self.DetectOn = true
 end
 
@@ -460,7 +459,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
-  
+
   self.DetectOn = false
 end
 
@@ -479,8 +478,9 @@ end
 function AI_PATROL_ZONE:SetDetectionActivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = true
-  self:__Detect( self.DetectInterval )
+  self:__Detect( -self.DetectInterval )
 end
 
 --- Deactivate the detection. The AI will NOT detect for targets.
@@ -489,6 +489,7 @@ end
 function AI_PATROL_ZONE:SetDetectionDeactivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = false
 end
 
@@ -524,17 +525,23 @@ function AI_PATROL_ZONE:SetDetectionZone( DetectionZone )
   end
 end
 
---- Gets a list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
+--- Gets a list of @{Unit#UNIT}s that were detected by the AI.
 -- No filtering is applied, so, ANY detected UNIT can be in this list.
 -- It is up to the mission designer to use the @{Unit} class and methods to filter the targets.
 -- @param #AI_PATROL_ZONE self
--- @return #table The list of @{Wrapper.Unit#UNIT}s
+-- @return #table The list of @{Unit#UNIT}s
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 
   return self.DetectedUnits 
 end
 
+--- Clears the list of @{Unit#UNIT}s that were detected by the AI.
+-- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:ClearDetectedUnits()
+  self:F2()
+  self.DetectedUnits = {}
+end
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
@@ -584,10 +591,9 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:__Status( 60 ) -- Check status status every 30 seconds.
   self:SetDetectionActivated()
   
-  self:EventOnPilotDead( self.OnPilotDead )
-  self:EventOnCrash( self.OnCrash )
-  self:EventOnEjection( self.OnEjection )
-  
+  self:HandleEvent( EVENTS.PilotDead, self.OnPilotDead )
+  self:HandleEvent( EVENTS.Crash, self.OnCrash )
+  self:HandleEvent( EVENTS.Ejection, self.OnEjection )
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
@@ -599,6 +605,8 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
       self:__Route( 5 )
     end
   )
+
+  self:SetDetectionOn()
   
 end
 
@@ -619,7 +627,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   local DetectedTargets = Controllable:GetDetectedTargets()
   for TargetID, Target in pairs( DetectedTargets or {} ) do
     local TargetObject = Target.object
-    self:T( TargetObject )
+
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
@@ -628,18 +636,22 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       if self.DetectionZone then
         if TargetUnit:IsInZone( self.DetectionZone ) then
           self:T( {"Detected ", TargetUnit } )
-          self.DetectedUnits[TargetUnit] = TargetUnit
+          if self.DetectedUnits[TargetUnit] == nil then
+            self.DetectedUnits[TargetUnit] = true
+          end
           Detected = true 
         end
       else       
-        self.DetectedUnits[TargetUnit] = TargetUnit
+        if self.DetectedUnits[TargetUnit] == nil then
+          self.DetectedUnits[TargetUnit] = true
+        end
         Detected = true
       end
     end
   end
-  
-  self:__Detect( self.DetectInterval )
 
+  self:__Detect( -self.DetectInterval )
+  
   if Detected == true then
     self:__Detected( 1.5 )
   end
@@ -874,4 +886,3 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
-

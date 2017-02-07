@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- # @{#ACT_ACCOUNT} FSM class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ACCOUNT state machine:
 -- 
@@ -117,7 +117,7 @@ do -- ACT_ACCOUNT
   -- @param #string To
   function ACT_ACCOUNT:onafterStart( ProcessUnit, From, Event, To )
 
-    self:EventOnDead( self.onfuncEventDead )
+    self:HandleEvent( EVENTS.Dead, self.onfuncEventDead )
 
     self:__Wait( 1 )
   end

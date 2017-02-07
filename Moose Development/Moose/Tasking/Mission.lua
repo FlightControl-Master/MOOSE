@@ -103,15 +103,16 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
-function MISSION:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:JoinUnit( PlayerUnit ) then
+    if Task:JoinUnit( PlayerUnit, PlayerGroup ) then
       PlayerUnitAdded = true
     end
   end

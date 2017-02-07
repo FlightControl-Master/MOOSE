@@ -2,7 +2,7 @@
 -- 
 -- ====
 -- 
--- 1) @{Core.Database#DATABASE} class, extends @{Core.Base#BASE}
+-- 1) @{#DATABASE} class, extends @{Base#BASE}
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
@@ -83,15 +83,16 @@ function DATABASE:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
+
+  self:SetEventPriority( 1 )
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  
+  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
@@ -228,6 +229,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
+    self:E( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -569,6 +571,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     local PlayerName = Event.IniUnit:GetPlayerName()
     if not self.PLAYERS[PlayerName] then
       self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -713,6 +717,8 @@ function DATABASE:_RegisterTemplates()
 
     if (CoalitionName == 'red' or CoalitionName == 'blue') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
+      
+      local CoalitionSide = coalition.side[string.upper(CoalitionName)]
 
       ----------------------------------------------
       -- build nav points DB
@@ -736,6 +742,8 @@ function DATABASE:_RegisterTemplates()
         for cntry_id, cntry_data in pairs(coa_data.country) do
 
           local CountryName = string.upper(cntry_data.name)
+          local CountryID = cntry_data.id
+          
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
@@ -756,9 +764,9 @@ function DATABASE:_RegisterTemplates()
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
                       self:_RegisterTemplate( 
                         GroupTemplate, 
-                        coalition.side[string.upper(CoalitionName)], 
+                        CoalitionSide, 
                         _DATABASECategory[string.lower(CategoryName)], 
-                        country.id[string.upper(CountryName)] 
+                        CountryID 
                       )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do

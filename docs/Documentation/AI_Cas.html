@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -70,16 +71,16 @@
 	<div id="content">
    <h1>Module <code>AI_Cas</code></h1>
    
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
+<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
 
-
 <hr/>
 
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI.AI_Patrol.html##(AI_PATROL_ZONE)">AI.AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 
    
 <p> 
@@ -264,6 +265,36 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAltitude">AI_CAS_ZONE.EngageAltitude</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAttackQty">AI_CAS_ZONE.EngageAttackQty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageDirection">AI_CAS_ZONE.EngageDirection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageSpeed">AI_CAS_ZONE.EngageSpeed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageWeaponExpend">AI_CAS_ZONE.EngageWeaponExpend</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageZone">AI_CAS_ZONE.EngageZone</a></td>
 		<td class="summary">
 
@@ -276,7 +307,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType, EngageZone)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>CAS</em>ZONE object</p>
 </td>
@@ -300,7 +331,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Engage.</p>
 </td>
@@ -330,7 +361,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Engage.</p>
 </td>
@@ -414,7 +445,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 
 </td>
@@ -423,6 +454,12 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterStart">AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>onafter State Transition for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterTarget">AI_CAS_ZONE:onafterTarget(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -573,6 +610,74 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_CAS_ZONE).EngageAltitude" >
+<strong>AI_CAS_ZONE.EngageAltitude</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_CAS_ZONE).EngageAttackQty" >
+<strong>AI_CAS_ZONE.EngageAttackQty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_CAS_ZONE).EngageDirection" >
+<strong>AI_CAS_ZONE.EngageDirection</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).EngageSpeed" >
+<strong>AI_CAS_ZONE.EngageSpeed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_CAS_ZONE).EngageWeaponExpend" >
+<strong>AI_CAS_ZONE.EngageWeaponExpend</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_CAS_ZONE).EngageZone" >
 <strong>AI_CAS_ZONE.EngageZone</strong>
@@ -601,7 +706,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).New" >
-<strong>AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone)</strong>
+<strong>AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType, EngageZone)</strong>
 </a>
 </dt>
 <dd>
@@ -638,6 +743,12 @@ The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
 The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
+The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 
 				</li>
 				<li>
@@ -777,7 +888,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnAfterEngage" >
-<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</strong>
+<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -808,6 +919,36 @@ The Event string.</p>
 				
 <p><code><em>#string To </em></code>: 
 The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageSpeed </em></code>: 
+(optional) The speed the Group will hold when engaging to the target zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageAttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -992,7 +1133,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnBeforeEngage" >
-<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</strong>
+<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -1025,12 +1166,37 @@ The Event string.</p>
 The To State string.</p>
 
 				</li>
-		</ul>
-		<h3>Return value</h3>
+				<li>
 				
-<p><em>#boolean:</em>
-Return false to cancel Transition.</p>
+<p><code><em>#number EngageSpeed </em></code>: 
+(optional) The speed the Group will hold when engaging to the target zone.</p>
 
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageAttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1427,12 +1593,82 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).onafterEngage" >
-<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To)</strong>
+<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
 	
 
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageSpeed </em></code>: 
+(optional) The speed the Group will hold when engaging to the target zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageAttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).onafterStart" >
+<strong>AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>onafter State Transition for Event Start.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1466,13 +1702,13 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAS_ZONE).onafterStart" >
-<strong>AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</strong>
+<a id="#(AI_CAS_ZONE).onafterTarget" >
+<strong>AI_CAS_ZONE:onafterTarget(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>onafter State Transition for Event Start.</p>
+
 
 		<h3>Parameters</h3>
 		<ul>

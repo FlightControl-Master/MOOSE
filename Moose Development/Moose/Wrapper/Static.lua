@@ -1,10 +1,10 @@
 --- This module contains the STATIC class.
 -- 
--- 1) @{Wrapper.Static#STATIC} class, extends @{Wrapper.Positionable#POSITIONABLE}
+-- 1) @{Static#STATIC} class, extends @{Positionable#POSITIONABLE}
 -- ===============================================================
 -- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
--- The @{Wrapper.Static#STATIC} class is a wrapper class to handle the DCS Static objects:
+-- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
 -- 
 --  * Wraps the DCS Static objects.
 --  * Support all DCS Static APIs.

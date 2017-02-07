@@ -1,8 +1,8 @@
 --- This module contains the POSITIONABLE class.
 -- 
--- 1) @{Wrapper.Positionable#POSITIONABLE} class, extends @{Wrapper.Identifiable#IDENTIFIABLE}
+-- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
 -- ===========================================================
--- The @{Wrapper.Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
+-- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
 --
 --  * Support all DCS APIs.
 --  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
@@ -12,14 +12,14 @@
 -- ------------------------------
 -- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
 --
---  * @{Wrapper.Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+--  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
 --
 -- 1.2) POSITIONABLE methods:
 -- --------------------------
 -- The following methods can be used to identify an measurable object:
 -- 
---    * @{Wrapper.Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
---    * @{Wrapper.Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
 -- 
 -- ===
 -- 
@@ -49,12 +49,12 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:E( self.PositionableName )
+  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
@@ -67,7 +67,7 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -133,7 +133,7 @@ function POSITIONABLE:GetPointVec3()
 end
 
 
---- Returns a random @{Dcs.DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -157,7 +157,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  

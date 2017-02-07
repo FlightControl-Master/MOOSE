@@ -33,6 +33,7 @@
 					<li>Controllable</li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,8 +75,8 @@
 
    
 
-<h1>1) <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> class, extends <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></h1>
-<p>The <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> class is a wrapper class to handle the DCS Controllable objects:</p>
+<h1>1) <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+<p>The <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class is a wrapper class to handle the DCS Controllable objects:</p>
 
 <ul>
     <li>Support all DCS Controllable APIs.</li>
@@ -93,7 +94,7 @@
 
 <h2>1.2) CONTROLLABLE task methods</h2>
 <p>Several controllable task methods are available that help you to prepare tasks. 
-These methods return a string consisting of the task description, which can then be given to either a <a href="Wrapper.Controllable.html##(CONTROLLABLE).PushTask">Wrapper.Controllable#CONTROLLABLE.PushTask</a> or <a href="Wrapper.Controllable.html##(SetTask)">Wrapper.Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
+These methods return a string consisting of the task description, which can then be given to either a <a href="Controllable.html##(CONTROLLABLE).PushTask">Controllable#CONTROLLABLE.PushTask</a> or <a href="Controllable.html##(SetTask)">Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
 Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 Each task description where applicable indicates for which controllable category the task is valid.
 There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
@@ -257,7 +258,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CopyRoute">CONTROLLABLE:CopyRoute(Begin, End, Randomize, Radius)</a></td>
 		<td class="summary">
-<p>Return the route of a controllable by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+<p>Return the route of a controllable by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
 </td>
 		</tr>
 		<tr>
@@ -291,7 +292,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -479,7 +480,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteReturnToAirbase">CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</a></td>
 		<td class="summary">
-<p>(AIR) Return the Controllable to an <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>
+<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
 A speed can be given in km/h.</p>
 </td>
 		</tr>
@@ -606,7 +607,7 @@ A speed can be given in km/h.</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskLandAtZone">CONTROLLABLE:TaskLandAtZone(Zone, Duration, RandomPoint)</a></td>
 		<td class="summary">
-<p>(AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).</p>
+<p>(AIR) Land the controllable at a @{Zone#ZONE_RADIUS).</p>
 </td>
 		</tr>
 		<tr>
@@ -861,7 +862,7 @@ SCHEDULER:New( nil,
 </dt>
 <dd>
 	
-<p>Return the route of a controllable by using the <a href="Core.Database.html##(DATABASE)">Core.Database#DATABASE</a> class.</p>
+<p>Return the route of a controllable by using the <a href="Database.html##(DATABASE)">Database#DATABASE</a> class.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1063,7 +1064,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).EnRouteTaskEngageUnit" >
-<strong>CONTROLLABLE:EnRouteTaskEngageUnit(AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</strong>
+<strong>CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</strong>
 </a>
 </dt>
 <dd>
@@ -1074,20 +1075,20 @@ The DCS task structure.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> EngageUnit </em></code>: 
 The UNIT.</p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number Priority </em></code>: 
-All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+(optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -1110,8 +1111,14 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				</li>
 				<li>
 				
-<p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Visible </em></code>: 
+(optional) Unit must be visible.</p>
 
 				</li>
 				<li>
@@ -1827,7 +1834,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>(AIR) Return the Controllable to an <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>
+<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
 A speed can be given in km/h.</p>
 
 	
@@ -1838,7 +1845,7 @@ A speed can be given in km/h.</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> ReturnAirbase </em></code>: 
-The <a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> to return to.</p>
+The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> to return to.</p>
 
 				</li>
 				<li>
@@ -2225,7 +2232,7 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTasking.Task.html##(TaskArray)">Dcs.DCSTasking.Task#TaskArray</a> DCSTasks </em></code>: 
-Array of <a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a></p>
+Array of <a href="DCSTasking.Task.html##(Task)">DCSTasking.Task#Task</a></p>
 
 				</li>
 		</ul>
@@ -2708,7 +2715,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>(AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).</p>
+<p>(AIR) Land the controllable at a @{Zone#ZONE_RADIUS).</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -3133,7 +3140,7 @@ The waypoint function to be called when the controllable moves over the waypoint
 <p> Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.</p>
 
 	
-<p> Use the method <a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> to define the hook functions for specific waypoints.
+<p> Use the method <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> to define the hook functions for specific waypoints.
  Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
  Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!</p>
 

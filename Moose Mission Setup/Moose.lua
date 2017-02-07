@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: "20170202_2257"' ) 
+env.info( 'Moose Generation Timestamp: 20170207_2151' ) 
 local base = _G
 
 Include = {}
@@ -2805,8 +2805,8 @@ end
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, must use the @{Core.Base#BASE.New) constructor within the @{Core.Base#BASE.Inherit) method. 
--- See an example at the @{Core.Base#BASE.New} method how this is done.
+-- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
+-- See an example at the @{Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) BASE Trace functionality
 -- 
@@ -2851,53 +2851,50 @@ end
 -- 
 -- The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
 -- and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.
--- Therefore, the BASE class exposes the following event handling functions:
 -- 
---   * @{#BASE.EventOnBirth}(): Handle the birth of a new unit.
---   * @{#BASE.EventOnBaseCaptured}(): Handle the capturing of an airbase or a helipad.
---   * @{#BASE.EventOnCrash}(): Handle the crash of a unit.
---   * @{#BASE.EventOnDead}(): Handle the death of a unit.
---   * @{#BASE.EventOnEjection}(): Handle the ejection of a player out of an airplane.
---   * @{#BASE.EventOnEngineShutdown}(): Handle the shutdown of an engine.
---   * @{#BASE.EventOnEngineStartup}(): Handle the startup of an engine.
---   * @{#BASE.EventOnHit}(): Handle the hit of a shell to a unit.
---   * @{#BASE.EventOnHumanFailure}(): No a clue ...
---   * @{#BASE.EventOnLand}(): Handle the event when a unit lands. 
---   * @{#BASE.EventOnMissionStart}(): Handle the start of the mission.
---   * @{#BASE.EventOnPilotDead}(): Handle the event when a pilot is dead.
---   * @{#BASE.EventOnPlayerComment}(): Handle the event when a player posts a comment.
---   * @{#BASE.EventOnPlayerEnterUnit}(): Handle the event when a player enters a unit.
---   * @{#BASE.EventOnPlayerLeaveUnit}(): Handle the event when a player leaves a unit.
---   * @{#BASE.EventOnBirthPlayerMissionEnd}(): Handle the event when a player ends the mission. (Not a clue what that does).
---   * @{#BASE.EventOnRefueling}(): Handle the event when a unit is refueling. 
---   * @{#BASE.EventOnShootingEnd}(): Handle the event when a unit starts shooting (guns).
---   * @{#BASE.EventOnShootingStart}(): Handle the event when a unit ends shooting (guns). 
---   * @{#BASE.EventOnShot}(): Handle the event when a unit shot a missile.
---   * @{#BASE.EventOnTakeOff}(): Handle the event when a unit takes off from a runway.
---   * @{#BASE.EventOnTookControl}(): Handle the event when a player takes control of a unit.
+-- ### 1.3.1 Subscribe / Unsubscribe to DCS Events
 -- 
--- The EventOn() methods provide the @{Core.Event#EVENTDATA} structure to the event handling function. 
--- The @{Core.Event#EVENTDATA} structure contains an enriched data set of information about the event being handled.
+-- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
+-- So, when the DCS event occurs, the class will be notified of that event.
+-- There are two functions which you use to subscribe to or unsubscribe from an event.
 -- 
--- Find below an example of the prototype how to write an event handling function: 
+--   * @{#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+-- 
+-- ### 1.3.2 Event Handling of DCS Events
+-- 
+-- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
+-- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- about the event that occurred.
+-- 
+-- Find below an example of the prototype how to write an event handling function for two units: 
 --
---      CommandCenter:EventOnPlayerEnterUnit(
---        --- @param #COMMANDCENTER self
---        -- @param Core.Event#EVENTDATA EventData
---        function( self, EventData )
---          local PlayerUnit = EventData.IniUnit
---          for MissionID, Mission in pairs( self:GetMissions() ) do
---            local Mission = Mission -- Tasking.Mission#MISSION
---            Mission:JoinUnit( PlayerUnit )
---            Mission:ReportDetails()
---          end
---        end
---        )
+--      local Tank1 = UNIT:FindByName( "Tank A" )
+--      local Tank2 = UNIT:FindByName( "Tank B" )
+--      
+--      -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+--      Tank1:HandleEvent( EVENTS.Dead )
+--      Tank2:HandleEvent( EVENTS.Dead )
+--      
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        self:SmokeGreen()
+--      end
+--
+--      --- This function is an Event Handling function that will be called when Tank2 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank2:OnEventDead( EventData )
+--
+--        self:SmokeBlue()
+--      end
 -- 
--- Note the function( self, EventData ). It takes two parameters:
 -- 
---   * self = the object that is handling the EventOnPlayerEnterUnit.
---   * EventData = the @{Core.Event#EVENTDATA} structure, containing more information of the Event.
+-- 
+-- See the @{Event} module for more information about event handling.
 -- 
 -- ## 1.4) Class identification methods
 -- 
@@ -2973,6 +2970,7 @@ local _ClassID = 0
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
+  _Private = {},
   Events = {},
   States = {}
 }
@@ -3079,369 +3077,202 @@ function BASE:GetClassID()
   return self.ClassID
 end
 
---- Set a new listener for the class.
--- @param self
--- @param Dcs.DCSTypes#Event Event
--- @param #function EventFunction
--- @return #BASE
-function BASE:AddEvent( Event, EventFunction )
-	self:F( Event )
+do -- Event Handling
 
-	self.Events[#self.Events+1] = {}
-	self.Events[#self.Events].Event = Event
-	self.Events[#self.Events].EventFunction = EventFunction
-	self.Events[#self.Events].EventEnabled = false
-
-	return self
-end
-
---- Returns the event dispatcher
--- @param #BASE self
--- @return Core.Event#EVENT
-function BASE:Event()
-
-  return _EVENTDISPATCHER
-end
-
---- Remove all subscribed events
--- @param #BASE self
--- @return #BASE
-function BASE:EventRemoveAll()
-
-  _EVENTDISPATCHER:RemoveAll( self )
+  --- Returns the event dispatcher
+  -- @param #BASE self
+  -- @return Core.Event#EVENT
+  function BASE:EventDispatcher()
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_SHOT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShot( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOT )
+    return _EVENTDISPATCHER
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_HIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnHit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HIT )
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_TAKEOFF event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnTakeOff( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TAKEOFF )
+  --- Get the Class @{Event} processing Priority.
+  -- The Event processing Priority is a number from 1 to 10, 
+  -- reflecting the order of the classes subscribed to the Event to be processed.
+  -- @param #BASE self
+  -- @return #number The @{Event} processing Priority.
+  function BASE:GetEventPriority()
+    return self._Private.EventPriority or 5
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_LAND event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnLand( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_LAND )
+  --- Set the Class @{Event} processing Priority.
+  -- The Event processing Priority is a number from 1 to 10, 
+  -- reflecting the order of the classes subscribed to the Event to be processed.
+  -- @param #BASE self
+  -- @param #number EventPriority The @{Event} processing Priority.
+  -- @return self
+  function BASE:SetEventPriority( EventPriority )
+    self._Private.EventPriority = EventPriority
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_CRASH event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnCrash( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_CRASH )
+  --- Remove all subscribed events
+  -- @param #BASE self
+  -- @return #BASE
+  function BASE:EventRemoveAll()
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_EJECTION event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEjection( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_EJECTION )
+    self:EventDispatcher():RemoveAll( self )
+    
+    return self
+  end
   
-  return self
-end
-
-
---- Subscribe to a S_EVENT\_REFUELING event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnRefueling( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING )
+  --- Subscribe to a DCS Event.
+  -- @param #BASE self
+  -- @param Core.Event#EVENTS Event
+  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
+  -- @return #BASE
+  function BASE:HandleEvent( Event, EventFunction )
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_DEAD event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnDead( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_DEAD )
+    self:EventDispatcher():OnEventGeneric( EventFunction, self, Event )
+    
+    return self
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT_PILOT\_DEAD event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPilotDead( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PILOT_DEAD )
+  --- UnSubscribe to a DCS event.
+  -- @param #BASE self
+  -- @param Core.Event#EVENTS Event
+  -- @return #BASE
+  function BASE:UnHandleEvent( Event )
   
-  return self
-end
-
---- Subscribe to a S_EVENT_BASE\_CAPTURED event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnBaseCaptured( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BASE_CAPTURED )
+    self:EventDispatcher():Remove( self, Event )
+    
+    return self
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT_MISSION\_START event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnMissionStart( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_START )
+  -- Event handling function prototypes
   
-  return self
+  --- Occurs whenever any unit in a mission fires a weapon. But not any machine gun or autocannon based weapon, those are handled by EVENT.ShootingStart.
+  -- @function [parent=#BASE] OnEventShot
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs whenever an object is hit by a weapon.
+  -- initiator : The unit object the fired the weapon
+  -- weapon: Weapon object that hit the target
+  -- target: The Object that was hit. 
+  -- @function [parent=#BASE] OnEventHit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft takes off from an airbase, farp, or ship.
+  -- initiator : The unit that tookoff
+  -- place: Object from where the AI took-off from. Can be an Airbase Object, FARP, or Ships 
+  -- @function [parent=#BASE] OnEventTakeoff
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft lands at an airbase, farp or ship
+  -- initiator : The unit that has landed
+  -- place: Object that the unit landed on. Can be an Airbase Object, FARP, or Ships 
+  -- @function [parent=#BASE] OnEventLand
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft crashes into the ground and is completely destroyed.
+  -- initiator : The unit that has crashed 
+  -- @function [parent=#BASE] OnEventCrash
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a pilot ejects from an aircraft
+  -- initiator : The unit that has ejected 
+  -- @function [parent=#BASE] OnEventEjection
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft connects with a tanker and begins taking on fuel.
+  -- initiator : The unit that is receiving fuel. 
+  -- @function [parent=#BASE] OnEventRefueling
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an object is completely destroyed.
+  -- initiator : The unit that is was destroyed. 
+  -- @function [parent=#BASE] OnEvent
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when the pilot of an aircraft is killed. Can occur either if the player is alive and crashes or if a weapon kills the pilot without completely destroying the plane.
+  -- initiator : The unit that the pilot has died in. 
+  -- @function [parent=#BASE] OnEventPilotDead
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a ground unit captures either an airbase or a farp.
+  -- initiator : The unit that captured the base
+  -- place: The airbase that was captured, can be a FARP or Airbase. When calling place:getCoalition() the faction will already be the new owning faction. 
+  -- @function [parent=#BASE] OnEventBaseCaptured
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mission starts 
+  -- @function [parent=#BASE] OnEventMissionStart
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when a mission ends
+  -- @function [parent=#BASE] OnEventMissionEnd
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an aircraft is finished taking fuel.
+  -- initiator : The unit that was receiving fuel. 
+  -- @function [parent=#BASE] OnEventRefuelingStop
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any object is spawned into the mission.
+  -- initiator : The unit that was spawned 
+  -- @function [parent=#BASE] OnEventBirth
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any system fails on a human controlled aircraft.
+  -- initiator : The unit that had the failure 
+  -- @function [parent=#BASE] OnEventHumanFailure
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft starts its engines.
+  -- initiator : The unit that is starting its engines. 
+  -- @function [parent=#BASE] OnEventEngineStartup
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any aircraft shuts down its engines.
+  -- initiator : The unit that is stopping its engines. 
+  -- @function [parent=#BASE] OnEventEngineShutdown
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any player assumes direct control of a unit.
+  -- initiator : The unit that is being taken control of. 
+  -- @function [parent=#BASE] OnEventPlayerEnterUnit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any player relieves control of a unit to the AI.
+  -- initiator : The unit that the player left. 
+  -- @function [parent=#BASE] OnEventPlayerLeaveUnit
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any unit begins firing a weapon that has a high rate of fire. Most common with aircraft cannons (GAU-8), autocannons, and machine guns.
+  -- initiator : The unit that is doing the shooing.
+  -- target: The unit that is being targeted. 
+  -- @function [parent=#BASE] OnEventShootingStart
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when any unit stops firing its weapon. Event will always correspond with a shooting start event.
+  -- initiator : The unit that was doing the shooing. 
+  -- @function [parent=#BASE] OnEventShootingEnd
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
 end
-
---- Subscribe to a S_EVENT_MISSION\_END event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerMissionEnd( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_END )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_TOOK\_CONTROL event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnTookControl( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TOOK_CONTROL )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_REFUELING\_STOP event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnRefuelingStop( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING_STOP )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT\_BIRTH event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnBirth( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BIRTH )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_HUMAN\_FAILURE event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnHumanFailure( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HUMAN_FAILURE )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_ENGINE\_STARTUP event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEngineStartup( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_STARTUP )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_ENGINE\_SHUTDOWN event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEngineShutdown( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_SHUTDOWN )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER_ENTER\_UNIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerEnterUnit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_ENTER_UNIT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER_LEAVE\_UNIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerLeaveUnit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER\_COMMENT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerComment( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_COMMENT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_SHOOTING\_START event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShootingStart( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_START )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_SHOOTING\_END event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShootingEnd( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_END )
-  
-  return self
-end
-
-
-
-
-
-
-
---- Enable the event listeners for the class.
--- @param #BASE self
--- @return #BASE
-function BASE:EnableEvents()
-	self:F( #self.Events )
-
-	for EventID, Event in pairs( self.Events ) do
-		Event.Self = self
-		Event.EventEnabled = true
-	end
-	self.Events.Handler = world.addEventHandler( self )
-
-	return self
-end
-
-
---- Disable the event listeners for the class.
--- @param #BASE self
--- @return #BASE
-function BASE:DisableEvents()
-	self:F()
-  
-	world.removeEventHandler( self )
-	for EventID, Event in pairs( self.Events ) do
-		Event.Self = nil
-		Event.EventEnabled = false
-	end
-
-	return self
-end
-
-
-local BaseEventCodes = {
-   "S_EVENT_SHOT",
-   "S_EVENT_HIT",
-   "S_EVENT_TAKEOFF",
-   "S_EVENT_LAND",
-   "S_EVENT_CRASH",
-   "S_EVENT_EJECTION",
-   "S_EVENT_REFUELING",
-   "S_EVENT_DEAD",
-   "S_EVENT_PILOT_DEAD",
-   "S_EVENT_BASE_CAPTURED",
-   "S_EVENT_MISSION_START",
-   "S_EVENT_MISSION_END",
-   "S_EVENT_TOOK_CONTROL",
-   "S_EVENT_REFUELING_STOP",
-   "S_EVENT_BIRTH",
-   "S_EVENT_HUMAN_FAILURE",
-   "S_EVENT_ENGINE_STARTUP",
-   "S_EVENT_ENGINE_SHUTDOWN",
-   "S_EVENT_PLAYER_ENTER_UNIT",
-   "S_EVENT_PLAYER_LEAVE_UNIT",
-   "S_EVENT_PLAYER_COMMENT",
-   "S_EVENT_SHOOTING_START",
-   "S_EVENT_SHOOTING_END",
-   "S_EVENT_MAX",
-}
  
---onEvent( {[1]="S_EVENT_BIRTH",[2]={["subPlace"]=5,["time"]=0,["initiator"]={["id_"]=16884480,},["place"]={["id_"]=5000040,},["id"]=15,["IniUnitName"]="US F-15C@RAMP-Air Support Mountains#001-01",},}
--- Event = {
---   id = enum world.event,
---   time = Time,
---   initiator = Unit,
---   target = Unit,
---   place = Unit,
---   subPlace = enum world.BirthPlace,
---   weapon = Weapon
--- }
 
 --- Creation of a Birth Event.
 -- @param #BASE self
@@ -3817,29 +3648,29 @@ end
 
 --- This module contains the SCHEDULER class.
 --
--- # 1) @{Core.Scheduler#SCHEDULER} class, extends @{Core.Base#BASE}
+-- # 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
 -- 
--- The @{Core.Scheduler#SCHEDULER} class creates schedule.
+-- The @{Scheduler#SCHEDULER} class creates schedule.
 --
 -- ## 1.1) SCHEDULER constructor
 -- 
 -- The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:
 --
---  * @{Core.Scheduler#SCHEDULER.New}( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.
---  * @{Core.Scheduler#SCHEDULER.New}( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.
---  * @{Core.Scheduler#SCHEDULER.New}( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
---  * @{Core.Scheduler#SCHEDULER.New}( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
+--  * @{Scheduler#SCHEDULER.New}( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.
+--  * @{Scheduler#SCHEDULER.New}( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.
+--  * @{Scheduler#SCHEDULER.New}( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
+--  * @{Scheduler#SCHEDULER.New}( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
 --
 -- ## 1.2) SCHEDULER timer stopping and (re-)starting.
 --
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
---  * @{Core.Scheduler#SCHEDULER.Start}(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.
---  * @{Core.Scheduler#SCHEDULER.Stop}(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.
+--  * @{Scheduler#SCHEDULER.Start}(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.
+--  * @{Scheduler#SCHEDULER.Stop}(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.
 --
 -- ## 1.3) Create a new schedule
 -- 
--- With @{Core.Scheduler#SCHEDULER.Schedule}() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.
+-- With @{Scheduler#SCHEDULER.Schedule}() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.
 --
 -- ===
 --
@@ -3878,7 +3709,7 @@ SCHEDULER = {
 -- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
--- @return #SCHEDULER self
+-- @return #SCHEDULER self.
 -- @return #number The ScheduleID of the planned schedule.
 function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   local self = BASE:Inherit( self, BASE:New() )
@@ -4002,7 +3833,7 @@ end
 -- 
 -- The SCHEDULEDISPATCHER allows multiple scheduled functions to be planned and executed for one SCHEDULER object.
 -- The SCHEDULER object therefore keeps a table of "CallID's", which are returned after each planning of a new scheduled function by the SCHEDULEDISPATCHER.
--- The SCHEDULER object plans new scheduled functions through the @{Core.Scheduler#SCHEDULER.Schedule}() method. 
+-- The SCHEDULER object plans new scheduled functions through the @{Scheduler#SCHEDULER.Schedule}() method. 
 -- The Schedule() method returns the CallID that is the reference ID for each planned schedule.
 -- 
 -- ===
@@ -4188,56 +4019,196 @@ end
 
 
 
---- This module contains the EVENT class.
+--- This core module models the dispatching of DCS Events to subscribed MOOSE classes,
+-- following a given priority.
+-- 
+-- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
 -- ===
 -- 
--- Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.
+-- # 1) Event Handling Overview
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia2.JPG)
+-- 
+-- Within a running mission, various DCS events occur. Units are dynamically created, crash, die, shoot stuff, get hit etc.
+-- This module provides a mechanism to dispatch those events occuring within your running mission, to the different objects orchestrating your mission.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia3.JPG)
+-- 
+-- Objects can subscribe to different events. The Event dispatcher will publish the received DCS events to the subscribed MOOSE objects, in a specified order.
+-- In this way, the subscribed MOOSE objects are kept in sync with your evolving running mission.
+-- 
+-- ## 1.1) Event Dispatching
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia4.JPG)
+-- 
+-- The _EVENTDISPATCHER object is automatically created within MOOSE, 
+-- and handles the dispatching of DCS Events occurring 
+-- in the simulator to the subscribed objects 
+-- in the correct processing order.
+--
+-- ![Objects](..\Presentations\EVENT\Dia5.JPG)
+-- 
+-- There are 5 levels of kind of objects that the _EVENTDISPATCHER services:
+-- 
+--  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
+--  * SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.
+--  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
+--  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia6.JPG)
+-- 
+-- For most DCS events, the above order of updating will be followed.1
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia7.JPG)
+-- 
+-- But for some DCS events, the publishing order is reversed. This is due to the fact that objects need to be **erased** instead of added.
+-- 
+-- ## 1.2) Event Handling
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia8.JPG)
+-- 
+-- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{BASE} class, @{UNIT} class and @{GROUP} class.
+-- The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia9.JPG)
+-- 
+-- The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
+-- and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.
+-- 
+-- ### 1.2.1 Subscribe / Unsubscribe to DCS Events
+-- 
+-- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
+-- So, when the DCS event occurs, the class will be notified of that event.
+-- There are two functions which you use to subscribe to or unsubscribe from an event.
+-- 
+--   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+-- 
+-- ### 1.3.2 Event Handling of DCS Events
+-- 
+-- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
+-- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- about the event that occurred.
+-- 
+-- Find below an example of the prototype how to write an event handling function for two units: 
+--
+--      local Tank1 = UNIT:FindByName( "Tank A" )
+--      local Tank2 = UNIT:FindByName( "Tank B" )
+--      
+--      -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+--      Tank1:HandleEvent( EVENTS.Dead )
+--      Tank2:HandleEvent( EVENTS.Dead )
+--      
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        self:SmokeGreen()
+--      end
+--
+--      --- This function is an Event Handling function that will be called when Tank2 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank2:OnEventDead( EventData )
+--
+--        self:SmokeBlue()
+--      end
+-- 
+-- ### 1.3.3 Event Handling methods that are automatically called upon subscribed DCS events
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia10.JPG)
+-- 
+-- The following list outlines which EVENTS item in the structure corresponds to which Event Handling method.
+-- Always ensure that your event handling methods align with the events being subscribed to, or nothing will be executed.
+-- 
+-- # 2) EVENTS type
+-- 
+-- The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
+-- @{Base#BASE.HandleEvent}() method.
+-- 
+-- # 3) EVENTDATA type
+-- 
+-- The EVENTDATA contains all the fields that are populated with event information before 
+-- an Event Handler method is being called by the event dispatcher.
+-- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
+-- There are basically 4 main categories of information stored in the EVENTDATA structure:
+-- 
+--    * Initiator Unit data: Several fields documenting the initiator unit related to the event.
+--    * Target Unit data: Several fields documenting the target unit related to the event.
+--    * Weapon data: Certain events populate weapon information.
+--    * Place data: Certain events populate place information.
+-- 
+-- Find below an overview which events populate which information categories:
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia14.JPG)
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+--   * 2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.
 -- 
 -- ===
 -- 
--- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
--- ===
+-- ### Contributions: 
 -- 
--- ### Contributions: -
--- ### Authors: FlightControl : Design & Programming
+-- ### Authors: 
 -- 
+--   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
+--
 -- @module Event
 
 --- The EVENT structure
 -- @type EVENT
 -- @field #EVENT.Events Events
+-- @extends Core.Base#BASE
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
 }
 
-local _EVENTCODES = {
-   "S_EVENT_SHOT",
-   "S_EVENT_HIT",
-   "S_EVENT_TAKEOFF",
-   "S_EVENT_LAND",
-   "S_EVENT_CRASH",
-   "S_EVENT_EJECTION",
-   "S_EVENT_REFUELING",
-   "S_EVENT_DEAD",
-   "S_EVENT_PILOT_DEAD",
-   "S_EVENT_BASE_CAPTURED",
-   "S_EVENT_MISSION_START",
-   "S_EVENT_MISSION_END",
-   "S_EVENT_TOOK_CONTROL",
-   "S_EVENT_REFUELING_STOP",
-   "S_EVENT_BIRTH",
-   "S_EVENT_HUMAN_FAILURE",
-   "S_EVENT_ENGINE_STARTUP",
-   "S_EVENT_ENGINE_SHUTDOWN",
-   "S_EVENT_PLAYER_ENTER_UNIT",
-   "S_EVENT_PLAYER_LEAVE_UNIT",
-   "S_EVENT_PLAYER_COMMENT",
-   "S_EVENT_SHOOTING_START",
-   "S_EVENT_SHOOTING_END",
-   "S_EVENT_MAX",
+--- The different types of events supported by MOOSE.
+-- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
+-- @type EVENTS
+EVENTS = {
+  Shot =              world.event.S_EVENT_SHOT,
+  Hit =               world.event.S_EVENT_HIT,
+  Takeoff =           world.event.S_EVENT_TAKEOFF,
+  Land =              world.event.S_EVENT_LAND,
+  Crash =             world.event.S_EVENT_CRASH,
+  Ejection =          world.event.S_EVENT_EJECTION,
+  Refueling =         world.event.S_EVENT_REFUELING,
+  Dead =              world.event.S_EVENT_DEAD,
+  PilotDead =         world.event.S_EVENT_PILOT_DEAD,
+  BaseCaptured =      world.event.S_EVENT_BASE_CAPTURED,
+  MissionStart =      world.event.S_EVENT_MISSION_START,
+  MissionEnd =        world.event.S_EVENT_MISSION_END,
+  TookControl =       world.event.S_EVENT_TOOK_CONTROL,
+  RefuelingStop =     world.event.S_EVENT_REFUELING_STOP,
+  Birth =             world.event.S_EVENT_BIRTH,
+  HumanFailure =      world.event.S_EVENT_HUMAN_FAILURE,
+  EngineStartup =     world.event.S_EVENT_ENGINE_STARTUP,
+  EngineShutdown =    world.event.S_EVENT_ENGINE_SHUTDOWN,
+  PlayerEnterUnit =   world.event.S_EVENT_PLAYER_ENTER_UNIT,
+  PlayerLeaveUnit =   world.event.S_EVENT_PLAYER_LEAVE_UNIT,
+  PlayerComment =     world.event.S_EVENT_PLAYER_COMMENT,
+  ShootingStart =     world.event.S_EVENT_SHOOTING_START,
+  ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
 }
 
 --- The Event structure
@@ -4262,6 +4233,126 @@ local _EVENTCODES = {
 -- @field WeaponName
 -- @field WeaponTgtDCSUnit
 
+
+local _EVENTMETA = {
+   [world.event.S_EVENT_SHOT] = {
+     Order = 1,
+     Event = "OnEventShot",
+     Text = "S_EVENT_SHOT" 
+   },
+   [world.event.S_EVENT_HIT] = {
+     Order = 1,
+     Event = "OnEventHit",
+     Text = "S_EVENT_HIT" 
+   },
+   [world.event.S_EVENT_TAKEOFF] = {
+     Order = 1,
+     Event = "OnEventTakeOff",
+     Text = "S_EVENT_TAKEOFF" 
+   },
+   [world.event.S_EVENT_LAND] = {
+     Order = 1,
+     Event = "OnEventLand",
+     Text = "S_EVENT_LAND" 
+   },
+   [world.event.S_EVENT_CRASH] = {
+     Order = -1,
+     Event = "OnEventCrash",
+     Text = "S_EVENT_CRASH" 
+   },
+   [world.event.S_EVENT_EJECTION] = {
+     Order = 1,
+     Event = "OnEventEjection",
+     Text = "S_EVENT_EJECTION" 
+   },
+   [world.event.S_EVENT_REFUELING] = {
+     Order = 1,
+     Event = "OnEventRefueling",
+     Text = "S_EVENT_REFUELING" 
+   },
+   [world.event.S_EVENT_DEAD] = {
+     Order = -1,
+     Event = "OnEventDead",
+     Text = "S_EVENT_DEAD" 
+   },
+   [world.event.S_EVENT_PILOT_DEAD] = {
+     Order = 1,
+     Event = "OnEventPilotDead",
+     Text = "S_EVENT_PILOT_DEAD" 
+   },
+   [world.event.S_EVENT_BASE_CAPTURED] = {
+     Order = 1,
+     Event = "OnEventBaseCaptured",
+     Text = "S_EVENT_BASE_CAPTURED" 
+   },
+   [world.event.S_EVENT_MISSION_START] = {
+     Order = 1,
+     Event = "OnEventMissionStart",
+     Text = "S_EVENT_MISSION_START" 
+   },
+   [world.event.S_EVENT_MISSION_END] = {
+     Order = 1,
+     Event = "OnEventMissionEnd",
+     Text = "S_EVENT_MISSION_END" 
+   },
+   [world.event.S_EVENT_TOOK_CONTROL] = {
+     Order = 1,
+     Event = "OnEventTookControl",
+     Text = "S_EVENT_TOOK_CONTROL" 
+   },
+   [world.event.S_EVENT_REFUELING_STOP] = {
+     Order = 1,
+     Event = "OnEventRefuelingStop",
+     Text = "S_EVENT_REFUELING_STOP" 
+   },
+   [world.event.S_EVENT_BIRTH] = {
+     Order = 1,
+     Event = "OnEventBirth",
+     Text = "S_EVENT_BIRTH" 
+   },
+   [world.event.S_EVENT_HUMAN_FAILURE] = {
+     Order = 1,
+     Event = "OnEventHumanFailure",
+     Text = "S_EVENT_HUMAN_FAILURE" 
+   },
+   [world.event.S_EVENT_ENGINE_STARTUP] = {
+     Order = 1,
+     Event = "OnEventEngineStartup",
+     Text = "S_EVENT_ENGINE_STARTUP" 
+   },
+   [world.event.S_EVENT_ENGINE_SHUTDOWN] = {
+     Order = 1,
+     Event = "OnEventEngineShutdown",
+     Text = "S_EVENT_ENGINE_SHUTDOWN" 
+   },
+   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = {
+     Order = 1,
+     Event = "OnEventPlayerEnterUnit",
+     Text = "S_EVENT_PLAYER_ENTER_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = {
+     Order = -1,
+     Event = "OnEventPlayerLeaveUnit",
+     Text = "S_EVENT_PLAYER_LEAVE_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_COMMENT] = {
+     Order = 1,
+     Event = "OnEventPlayerComment",
+     Text = "S_EVENT_PLAYER_COMMENT" 
+   },
+   [world.event.S_EVENT_SHOOTING_START] = {
+     Order = 1,
+     Event = "OnEventShootingStart",
+     Text = "S_EVENT_SHOOTING_START" 
+   },
+   [world.event.S_EVENT_SHOOTING_END] = {
+     Order = 1,
+     Event = "OnEventShootingEnd",
+     Text = "S_EVENT_SHOOTING_END" 
+   },
+}
+
+
 --- The Events structure
 -- @type EVENT.Events
 -- @field #number IniUnit
@@ -4275,7 +4366,7 @@ end
 
 function EVENT:EventText( EventID )
 
-  local EventText = _EVENTCODES[EventID]
+  local EventText = _EVENTMETA[EventID].Text
   
   return EventText
 end
@@ -4287,18 +4378,23 @@ end
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F3( { _EVENTCODES[EventID], EventClass } )
+  self:F3( { _EVENTMETA[EventID].Text, EventClass } )
 
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
     self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
-
   end
+  
+  -- Each event has a subtable of EventClasses, ordered by EventPriority.
+  local EventPriority = EventClass:GetEventPriority()
+  if not self.Events[EventID][EventPriority] then
+    self.Events[EventID][EventPriority] = {}
+  end 
 
-  if not self.Events[EventID][EventClass] then
-     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
+  if not self.Events[EventID][EventPriority][EventClass] then
+     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "k" } )
   end
-  return self.Events[EventID][EventClass]
+  return self.Events[EventID][EventPriority][EventClass]
 end
 
 --- Removes an Events entry
@@ -4307,21 +4403,37 @@ end
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Remove( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTCODES[EventID] } )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
 
   local EventClass = EventClass
-  self.Events[EventID][EventClass] = nil
+  local EventPriority = EventClass:GetEventPriority()
+  self.Events[EventID][EventPriority][EventClass] = nil
 end
 
---- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
+--- Removes an Events entry for a Unit
+-- @param #EVENT self
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+-- @param Dcs.DCSWorld#world.event EventID
+-- @return #EVENT.Events
+function EVENT:RemoveForUnit( UnitName, EventClass, EventID  )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
+
+  local EventClass = EventClass
+  local EventPriority = EventClass:GetEventPriority()
+  local Event = self.Events[EventID][EventPriority][EventClass]
+  Event.IniUnit[UnitName] = nil
+end
+
+--- Clears all event subscriptions for a @{Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )
   self:F3( { EventObject:GetClassNameAndID() } )
 
   local EventClass = EventObject:GetClassNameAndID()
+  local EventPriority = EventClass:GetEventPriority()
   for EventID, EventData in pairs( self.Events ) do
-    self.Events[EventID][EventClass] = nil
+    self.Events[EventID][EventPriority][EventClass] = nil
   end
 end
 
@@ -4355,6 +4467,7 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   local Event = self:Init( EventID, EventClass )
   Event.EventFunction = EventFunction
   Event.EventClass = EventClass
+  
   return self
 end
 
@@ -4840,7 +4953,7 @@ do -- OnHit
     self:Remove( EventClass, world.event.S_EVENT_HIT )
     
     return self
-  end
+  end 
 
 end
 
@@ -4931,6 +5044,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+        self:E( { IniGroup = Event.IniGroup } )
       end
     end
     if Event.target then
@@ -4951,35 +5066,99 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
-    -- Okay, we got the event from DCS. Now loop the self.Events[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
-    for EventClass, EventData in pairs( self.Events[Event.id] ) do
-      -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
-      if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
-        local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
-        --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
-      else
-        -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
-        -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-        if Event.IniDCSUnit and not EventData.IniUnit then
-          if EventClass == EventData.EventClass then
-            self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
-            local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
-            --EventData.EventFunction( EventData.EventClass, Event )
+    local PriorityOrder = _EVENTMETA[Event.id].Order
+    local PriorityBegin = PriorityOrder == -1 and 5 or 1
+    local PriorityEnd = PriorityOrder == -1 and 1 or 5
+
+    self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    
+    for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
+    
+      if self.Events[Event.id][EventPriority] then
+      
+        -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
+        for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
+        
+          -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
+          if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+
+            -- First test if a EventFunction is Set, otherwise search for the default function
+            if EventData.IniUnit[Event.IniDCSUnitName].EventFunction then
+          
+              self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+              Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+              local Result, Value = xpcall( 
+                function() 
+                  return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
+                end, ErrorHandler )
+
+            else
+
+              -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+              local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+              if EventFunction and type( EventFunction ) == "function" then
+                
+                -- Now call the default event function.
+                self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                
+                local Result, Value = xpcall( 
+                  function() 
+                    return EventFunction( EventClass, Event ) 
+                  end, ErrorHandler )
+              end
+              
+            end
+          
+          else
+          
+            -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
+            -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
+            if Event.IniDCSUnit and not EventData.IniUnit then
+            
+              if EventClass == EventData.EventClass then
+                
+                -- First test if a EventFunction is Set, otherwise search for the default function
+                if EventData.EventFunction then
+                  
+                  -- There is an EventFunction defined, so call the EventFunction.
+                  self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+                else
+                  
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+                  end
+                end
+              end
+            end
           end
         end
       end
     end
   else
-    self:E( { _EVENTCODES[Event.id], Event } )    
+    self:E( { _EVENTMETA[Event.id].Text, Event } )    
   end
 end
 
 --- This module contains the MENU classes.
--- 
---  There is a small note... When you see a class like MENU_COMMAND_COALITION with COMMAND in italic, it acutally represents it like this: `MENU_COMMAND_COALITION`.
 -- 
 -- ===
 -- 
@@ -4994,17 +5173,17 @@ end
 -- 
 -- ### To manage **main menus**, the classes begin with **MENU_**:
 -- 
---   * @{Core.Menu#MENU_MISSION}: Manages main menus for whole mission file.
---   * @{Core.Menu#MENU_COALITION}: Manages main menus for whole coalition.
---   * @{Core.Menu#MENU_GROUP}: Manages main menus for GROUPs.
---   * @{Core.Menu#MENU_CLIENT}: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".
+--   * @{Menu#MENU_MISSION}: Manages main menus for whole mission file.
+--   * @{Menu#MENU_COALITION}: Manages main menus for whole coalition.
+--   * @{Menu#MENU_GROUP}: Manages main menus for GROUPs.
+--   * @{Menu#MENU_CLIENT}: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".
 --   
 -- ### To manage **command menus**, which are menus that allow the player to issue **functions**, the classes begin with **MENU_COMMAND_**:
 --   
---   * @{Core.Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
---   * @{Core.Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
---   * @{Core.Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
---   * @{Core.Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
+--   * @{Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
+--   * @{Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
+--   * @{Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
+--   * @{Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
 -- 
 -- ===
 -- 
@@ -5016,11 +5195,11 @@ end
 -- These are simply abstract base classes defining a couple of fields that are used by the 
 -- derived MENU_ classes to manage menus.
 -- 
--- 1.1) @{Core.Menu#MENU_BASE} class, extends @{Core.Base#BASE}
+-- 1.1) @{#MENU_BASE} class, extends @{Base#BASE}
 -- --------------------------------------------------
 -- The @{#MENU_BASE} class defines the main MENU class where other MENU classes are derived from.
 -- 
--- 1.2) @{Core.Menu#MENU_COMMAND_BASE} class, extends @{Core.Base#BASE}
+-- 1.2) @{#MENU_COMMAND_BASE} class, extends @{Base#BASE}
 -- ----------------------------------------------------------
 -- The @{#MENU_COMMAND_BASE} class defines the main MENU class where other MENU COMMAND_ classes are derived from, in order to set commands.
 -- 
@@ -5032,15 +5211,15 @@ end
 -- ======================
 -- The underlying classes manage the menus for a complete mission file.
 -- 
--- 2.1) @{Menu#MENU_MISSION} class, extends @{Core.Menu#MENU_BASE}
+-- 2.1) @{#MENU_MISSION} class, extends @{Menu#MENU_BASE}
 -- ---------------------------------------------------------
--- The @{Core.Menu#MENU_MISSION} class manages the main menus for a complete mission.  
+-- The @{Menu#MENU_MISSION} class manages the main menus for a complete mission.  
 -- You can add menus with the @{#MENU_MISSION.New} method, which constructs a MENU_MISSION object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION.Remove}.
 -- 
--- 2.2) @{Menu#MENU_MISSION_COMMAND} class, extends @{Core.Menu#MENU_COMMAND_BASE}
+-- 2.2) @{#MENU_MISSION_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- -------------------------------------------------------------------------
--- The @{Core.Menu#MENU_MISSION_COMMAND} class manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
+-- The @{Menu#MENU_MISSION_COMMAND} class manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_MISSION_COMMAND.New} method, which constructs a MENU_MISSION_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION_COMMAND.Remove}.
 -- 
@@ -5050,15 +5229,15 @@ end
 -- =========================
 -- The underlying classes manage the menus for whole coalitions.
 -- 
--- 3.1) @{Menu#MENU_COALITION} class, extends @{Core.Menu#MENU_BASE}
+-- 3.1) @{#MENU_COALITION} class, extends @{Menu#MENU_BASE}
 -- ------------------------------------------------------------
--- The @{Core.Menu#MENU_COALITION} class manages the main menus for coalitions.  
+-- The @{Menu#MENU_COALITION} class manages the main menus for coalitions.  
 -- You can add menus with the @{#MENU_COALITION.New} method, which constructs a MENU_COALITION object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION.Remove}.
 -- 
--- 3.2) @{Menu#MENU_COALITION_COMMAND} class, extends @{Core.Menu#MENU_COMMAND_BASE}
+-- 3.2) @{Menu#MENU_COALITION_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- ----------------------------------------------------------------------------
--- The @{Core.Menu#MENU_COALITION_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+-- The @{Menu#MENU_COALITION_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_COALITION_COMMAND.New} method, which constructs a MENU_COALITION_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION_COMMAND.Remove}.
 -- 
@@ -5068,15 +5247,15 @@ end
 -- =====================
 -- The underlying classes manage the menus for groups. Note that groups can be inactive, alive or can be destroyed.
 -- 
--- 4.1) @{Menu#MENU_GROUP} class, extends @{Core.Menu#MENU_BASE}
+-- 4.1) @{Menu#MENU_GROUP} class, extends @{Menu#MENU_BASE}
 -- --------------------------------------------------------
--- The @{Core.Menu#MENU_GROUP} class manages the main menus for coalitions.  
+-- The @{Menu#MENU_GROUP} class manages the main menus for coalitions.  
 -- You can add menus with the @{#MENU_GROUP.New} method, which constructs a MENU_GROUP object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP.Remove}.
 -- 
--- 4.2) @{Menu#MENU_GROUP_COMMAND} class, extends @{Core.Menu#MENU_COMMAND_BASE}
+-- 4.2) @{Menu#MENU_GROUP_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- ------------------------------------------------------------------------
--- The @{Core.Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+-- The @{Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_GROUP_COMMAND.New} method, which constructs a MENU_GROUP_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND.Remove}.
 -- 
@@ -5086,15 +5265,15 @@ end
 -- ======================
 -- The underlying classes manage the menus for units with skill level client or player.
 -- 
--- 5.1) @{Menu#MENU_CLIENT} class, extends @{Core.Menu#MENU_BASE}
+-- 5.1) @{Menu#MENU_CLIENT} class, extends @{Menu#MENU_BASE}
 -- ---------------------------------------------------------
--- The @{Core.Menu#MENU_CLIENT} class manages the main menus for coalitions.  
+-- The @{Menu#MENU_CLIENT} class manages the main menus for coalitions.  
 -- You can add menus with the @{#MENU_CLIENT.New} method, which constructs a MENU_CLIENT object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT.Remove}.
 -- 
--- 5.2) @{Menu#MENU_CLIENT_COMMAND} class, extends @{Core.Menu#MENU_COMMAND_BASE}
+-- 5.2) @{Menu#MENU_CLIENT_COMMAND} class, extends @{Menu#MENU_COMMAND_BASE}
 -- -------------------------------------------------------------------------
--- The @{Core.Menu#MENU_CLIENT_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+-- The @{Menu#MENU_CLIENT_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
 -- You can add menus with the @{#MENU_CLIENT_COMMAND.New} method, which constructs a MENU_CLIENT_COMMAND object and returns you the object reference.
 -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT_COMMAND.Remove}.
 -- 
@@ -5601,9 +5780,8 @@ do -- MENU_CLIENT
   -- @param #string MenuText The text for the menu.
   -- @param #MENU_BASE ParentMenu The parent menu.
   -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @param CommandMenuArgument An argument for the function.
   -- @return Menu#MENU_CLIENT_COMMAND self
-  function MENU_CLIENT_COMMAND:New( MenuClient, MenuText, ParentMenu, CommandMenuFunction, ... )
+  function MENU_CLIENT_COMMAND:New( Client, MenuText, ParentMenu, CommandMenuFunction, ... )
   
   	-- Arrange meta tables
   	
@@ -5614,8 +5792,8 @@ do -- MENU_CLIENT
   
   	local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, MenuParentPath, CommandMenuFunction, arg ) ) -- Menu#MENU_CLIENT_COMMAND
   	
-    self.MenuClient = MenuClient
-    self.MenuClientGroupID = MenuClient:GetClientGroupID()
+    self.MenuClient = Client
+    self.MenuClientGroupID = Client:GetClientGroupID()
     self.MenuParentPath = MenuParentPath
     self.MenuText = MenuText
     self.ParentMenu = ParentMenu
@@ -5626,7 +5804,7 @@ do -- MENU_CLIENT
     
     local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
   
-    self:T( { MenuClient:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, arg } )
+    self:T( { Client:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, arg } )
   
     local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
     if MenuPath[MenuPathID] then
@@ -5636,7 +5814,9 @@ do -- MENU_CLIENT
   	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, self.MenuCallHandler, arg )
     MenuPath[MenuPathID] = self.MenuPath
    
-  	ParentMenu.Menus[self.MenuPath] = self
+    if ParentMenu and ParentMenu.Menus then
+    	ParentMenu.Menus[self.MenuPath] = self
+    end
   	
   	return self
   end
@@ -5870,7 +6050,7 @@ do
 
 end
 
---- This module contains the ZONE classes, inherited from @{Core.Zone#ZONE_BASE}.
+--- This module contains the ZONE classes, inherited from @{Zone#ZONE_BASE}.
 -- There are essentially two core functions that zones accomodate:
 -- 
 --   * Test if an object is within the zone boundaries.
@@ -5879,7 +6059,7 @@ end
 -- The object classes are using the zone classes to test the zone boundaries, which can take various forms:
 -- 
 --   * Test if completely within the zone.
---   * Test if partly within the zone (for @{Wrapper.Group#GROUP} objects).
+--   * Test if partly within the zone (for @{Group#GROUP} objects).
 --   * Test if not in the zone.
 --   * Distance to the nearest intersecting point of the zone.
 --   * Distance to the center of the zone.
@@ -5887,16 +6067,16 @@ end
 -- 
 -- Each of these ZONE classes have a zone name, and specific parameters defining the zone type:
 --   
---   * @{Core.Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
---   * @{Core.Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
---   * @{Core.Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
---   * @{Core.Zone#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Wrapper.Unit#UNIT} with a radius.
---   * @{Core.Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
---   * @{Core.Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
+--   * @{Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
+--   * @{Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
+--   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
+--   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
+--   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- 
 -- ===
 -- 
--- 1) @{Core.Zone#ZONE_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
 -- ================================================
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
@@ -5904,10 +6084,10 @@ end
 -- 
 --   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
 -- 
--- ### 1.2) Each zone implements two polymorphic functions defined in @{Core.Zone#ZONE_BASE}:
+-- ### 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
---   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Core.Point#POINT_VEC2} is within the zone.
---   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Core.Point#POINT_VEC3} is within the zone.
+--   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Point#POINT_VEC2} is within the zone.
+--   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Point#POINT_VEC3} is within the zone.
 --   
 -- ### 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
 -- 
@@ -5917,8 +6097,8 @@ end
 -- 
 -- ### 1.4) A zone manages Vectors:
 -- 
---   * @{#ZONE_BASE.GetVec2}(): Returns the @{Dcs.DCSTypes#Vec2} coordinate of the zone.
---   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{Dcs.DCSTypes#Vec2} within the zone.
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
+--   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
 -- 
 -- ### 1.5) A zone has a bounding square:
 -- 
@@ -5931,12 +6111,12 @@ end
 -- 
 -- ===
 -- 
--- 2) @{Core.Zone#ZONE_RADIUS} class, extends @{Core.Zone#ZONE_BASE}
+-- 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
 -- =======================================================
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
 -- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
 -- 
--- ### 2.1) @{Core.Zone#ZONE_RADIUS} constructor:
+-- ### 2.1) @{Zone#ZONE_RADIUS} constructor:
 -- 
 --   * @{#ZONE_BASE.New}(): Constructor.
 --   
@@ -5947,45 +6127,45 @@ end
 -- 
 -- ### 2.3) Manage the location of the zone:
 -- 
---   * @{#ZONE_BASE.SetVec2}(): Sets the @{Dcs.DCSTypes#Vec2} of the zone.
---   * @{#ZONE_BASE.GetVec2}(): Returns the @{Dcs.DCSTypes#Vec2} of the zone.
---   * @{#ZONE_BASE.GetVec3}(): Returns the @{Dcs.DCSTypes#Vec3} of the zone, taking an additional height parameter.
+--   * @{#ZONE_BASE.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_BASE.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
 -- 
 -- ===
 -- 
--- 3) @{Core.Zone#ZONE} class, extends @{Core.Zone#ZONE_RADIUS}
+-- 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
 -- ==========================================
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from {Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
--- 4) @{Core.Zone#ZONE_UNIT} class, extends @{Core.Zone#ZONE_RADIUS}
+-- 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
--- The ZONE_UNIT class defined by a zone around a @{Wrapper.Unit#UNIT} with a radius.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
--- 5) @{Core.Zone#ZONE_GROUP} class, extends @{Core.Zone#ZONE_RADIUS}
+-- 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
 -- =======================================================
--- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ===
 -- 
--- 6) @{Core.Zone#ZONE_POLYGON_BASE} class, extends @{Core.Zone#ZONE_BASE}
+-- 6) @{Zone#ZONE_POLYGON_BASE} class, extends @{Zone#ZONE_BASE}
 -- ========================================================
--- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
 -- ===
 -- 
--- 7) @{Core.Zone#ZONE_POLYGON} class, extends @{Core.Zone#ZONE_POLYGON_BASE}
+-- 7) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_POLYGON_BASE}
 -- ================================================================
--- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ====
 -- 
@@ -6076,7 +6256,7 @@ function ZONE_BASE:IsPointVec3InZone( Vec3 )
   return InZone
 end
 
---- Returns the @{Dcs.DCSTypes#Vec2} coordinate of the zone.
+--- Returns the @{DCSTypes#Vec2} coordinate of the zone.
 -- @param #ZONE_BASE self
 -- @return #nil.
 function ZONE_BASE:GetVec2()
@@ -6084,7 +6264,7 @@ function ZONE_BASE:GetVec2()
 
   return nil 
 end
---- Define a random @{Dcs.DCSTypes#Vec2} within the zone.
+--- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
 -- @return Dcs.DCSTypes#Vec2 The Vec2 coordinates.
 function ZONE_BASE:GetRandomVec2()
@@ -6246,7 +6426,7 @@ function ZONE_RADIUS:SetRadius( Radius )
   return self.Radius
 end
 
---- Returns the @{Dcs.DCSTypes#Vec2} of the zone.
+--- Returns the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @return Dcs.DCSTypes#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
@@ -6257,7 +6437,7 @@ function ZONE_RADIUS:GetVec2()
 	return self.Vec2	
 end
 
---- Sets the @{Dcs.DCSTypes#Vec2} of the zone.
+--- Sets the @{DCSTypes#Vec2} of the zone.
 -- @param #ZONE_RADIUS self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The new location of the zone.
 -- @return Dcs.DCSTypes#Vec2 The new location of the zone.
@@ -6271,7 +6451,7 @@ function ZONE_RADIUS:SetVec2( Vec2 )
   return self.Vec2 
 end
 
---- Returns the @{Dcs.DCSTypes#Vec3} of the ZONE_RADIUS.
+--- Returns the @{DCSTypes#Vec3} of the ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Dcs.DCSTypes#Vec3 The point of the zone.
@@ -6373,7 +6553,7 @@ function ZONE:New( ZoneName )
 end
 
 
---- The ZONE_UNIT class defined by a zone around a @{Wrapper.Unit#UNIT} with a radius.
+--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
@@ -6398,9 +6578,9 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
 end
 
 
---- Returns the current location of the @{Wrapper.Unit#UNIT}.
+--- Returns the current location of the @{Unit#UNIT}.
 -- @param #ZONE_UNIT self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Wrapper.Unit#UNIT}location.
+-- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
 function ZONE_UNIT:GetVec2()
   self:F( self.ZoneName )
   
@@ -6439,7 +6619,7 @@ function ZONE_UNIT:GetRandomVec2()
   return RandomVec2
 end
 
---- Returns the @{Dcs.DCSTypes#Vec3} of the ZONE_UNIT.
+--- Returns the @{DCSTypes#Vec3} of the ZONE_UNIT.
 -- @param #ZONE_UNIT self
 -- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Dcs.DCSTypes#Vec3 The point of the zone.
@@ -6465,7 +6645,7 @@ ZONE_GROUP = {
   ClassName="ZONE_GROUP",
   }
   
---- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Wrapper.Group#GROUP} and a radius.
+--- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Group#GROUP} and a radius.
 -- @param #ZONE_GROUP self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGROUP The @{Group} as the center of the zone.
@@ -6516,9 +6696,9 @@ end
 
 -- Polygons
 
---- The ZONE_POLYGON_BASE class defined by an array of @{Dcs.DCSTypes#Vec2}, forming a polygon.
+--- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
 -- @type ZONE_POLYGON_BASE
--- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{Dcs.DCSTypes#Vec2}.
+-- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
 -- @extends Core.Zone#ZONE_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
@@ -6528,11 +6708,11 @@ ZONE_POLYGON_BASE = {
 -- @type ZONE_POLYGON_BASE.ListVec2
 -- @list <Dcs.DCSTypes#Vec2>
 
---- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{Dcs.DCSTypes#Vec2}, forming a polygon.
--- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
+--- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName Name of the zone.
--- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{Dcs.DCSTypes#Vec2}, forming a polygon..
+-- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCSTypes#Vec2}, forming a polygon..
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
@@ -6629,7 +6809,7 @@ function ZONE_POLYGON_BASE:IsPointVec2InZone( Vec2 )
   return InPolygon
 end
 
---- Define a random @{Dcs.DCSTypes#Vec2} within the zone.
+--- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return Dcs.DCSTypes#Vec2 The Vec2 coordinate.
 function ZONE_POLYGON_BASE:GetRandomVec2()
@@ -6681,15 +6861,15 @@ end
 
 
 
---- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- @type ZONE_POLYGON
 -- @extends Core.Zone#ZONE_POLYGON_BASE
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Wrapper.Group#GROUP} defined within the Mission Editor.
--- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
@@ -6708,7 +6888,7 @@ end
 -- 
 -- ====
 -- 
--- 1) @{Core.Database#DATABASE} class, extends @{Core.Base#BASE}
+-- 1) @{#DATABASE} class, extends @{Base#BASE}
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
@@ -6789,15 +6969,16 @@ function DATABASE:New()
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() )
+
+  self:SetEventPriority( 1 )
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  
+  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
@@ -6934,6 +7115,7 @@ end
 function DATABASE:AddGroup( GroupName )
 
   if not self.GROUPS[GroupName] then
+    self:E( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end  
   
@@ -7275,6 +7457,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
+    self:AddUnit( Event.IniDCSUnitName )
+    self:AddGroup( Event.IniDCSGroupName )
     local PlayerName = Event.IniUnit:GetPlayerName()
     if not self.PLAYERS[PlayerName] then
       self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -7419,6 +7603,8 @@ function DATABASE:_RegisterTemplates()
 
     if (CoalitionName == 'red' or CoalitionName == 'blue') and type(coa_data) == 'table' then
       --self.Units[coa_name] = {}
+      
+      local CoalitionSide = coalition.side[string.upper(CoalitionName)]
 
       ----------------------------------------------
       -- build nav points DB
@@ -7442,6 +7628,8 @@ function DATABASE:_RegisterTemplates()
         for cntry_id, cntry_data in pairs(coa_data.country) do
 
           local CountryName = string.upper(cntry_data.name)
+          local CountryID = cntry_data.id
+          
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id
 
@@ -7462,9 +7650,9 @@ function DATABASE:_RegisterTemplates()
                     if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
                       self:_RegisterTemplate( 
                         GroupTemplate, 
-                        coalition.side[string.upper(CoalitionName)], 
+                        CoalitionSide, 
                         _DATABASECategory[string.lower(CategoryName)], 
-                        country.id[string.upper(CountryName)] 
+                        CountryID 
                       )
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do
@@ -7487,9 +7675,9 @@ end
 -- 
 -- ===
 -- 
--- 1) @{Core.Set#SET_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
 -- ==============================================
--- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
+-- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
 -- The default **"yield interval"** is after 10 objects processed.
@@ -7497,18 +7685,18 @@ end
 -- 
 -- 1.1) Add or remove objects from the SET
 -- ---------------------------------------
--- Some key core functions are @{Core.Set#SET_BASE.Add} and @{Core.Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
 -- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
 -- -----------------------------------------------------------------------------
--- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
+-- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- ===
 -- 
--- 2) @{Core.Set#SET_GROUP} class, extends @{Core.Set#SET_BASE}
+-- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
 -- ==================================================
--- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
+-- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -7523,7 +7711,7 @@ end
 -- 
 -- 2.2) Add or Remove GROUP(s) from SET_GROUP: 
 -- -------------------------------------------
--- GROUPS can be added and removed using the @{Core.Set#SET_GROUP.AddGroupsByName} and @{Core.Set#SET_GROUP.RemoveGroupsByName} respectively. 
+-- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
 -- 2.3) SET_GROUP filter criteria: 
@@ -7542,7 +7730,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
+--    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
 -- 
 -- 2.4) SET_GROUP iterators:
 -- -------------------------
@@ -7557,9 +7745,9 @@ end
 -- 
 -- ====
 -- 
--- 3) @{Core.Set#SET_UNIT} class, extends @{Core.Set#SET_BASE}
+-- 3) @{Set#SET_UNIT} class, extends @{Set#SET_BASE}
 -- ===================================================
--- Mission designers can use the @{Core.Set#SET_UNIT} class to build sets of units belonging to certain:
+-- Mission designers can use the @{Set#SET_UNIT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -7575,7 +7763,7 @@ end
 --   
 -- 3.2) Add or Remove UNIT(s) from SET_UNIT: 
 -- -----------------------------------------
--- UNITs can be added and removed using the @{Core.Set#SET_UNIT.AddUnitsByName} and @{Core.Set#SET_UNIT.RemoveUnitsByName} respectively. 
+-- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
 -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
 -- 
 -- 3.3) SET_UNIT filter criteria: 
@@ -7595,7 +7783,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
+--    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
 -- 
 -- 3.4) SET_UNIT iterators:
 -- ------------------------
@@ -7615,9 +7803,9 @@ end
 -- 
 -- ===
 -- 
--- 4) @{Core.Set#SET_CLIENT} class, extends @{Core.Set#SET_BASE}
+-- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
 -- ===================================================
--- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
+-- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -7633,7 +7821,7 @@ end
 --   
 -- 4.2) Add or Remove CLIENT(s) from SET_CLIENT: 
 -- -----------------------------------------
--- CLIENTs can be added and removed using the @{Core.Set#SET_CLIENT.AddClientsByName} and @{Core.Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
 -- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
 -- 
 -- 4.3) SET_CLIENT filter criteria: 
@@ -7653,7 +7841,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
 -- 
 -- 4.4) SET_CLIENT iterators:
 -- ------------------------
@@ -7665,9 +7853,9 @@ end
 -- 
 -- ====
 -- 
--- 5) @{Core.Set#SET_AIRBASE} class, extends @{Core.Set#SET_BASE}
+-- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
 -- ====================================================
--- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
 -- 
 --  * Coalitions
 --  
@@ -7679,7 +7867,7 @@ end
 --   
 -- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
 -- --------------------------------------------
--- AIRBASEs can be added and removed using the @{Core.Set#SET_AIRBASE.AddAirbasesByName} and @{Core.Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
 -- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
 -- 
 -- 5.3) SET_AIRBASE filter criteria 
@@ -7749,10 +7937,12 @@ function SET_BASE:New( Database )
   
   self.CallScheduler = SCHEDULER:New( self )
 
+  self:SetEventPriority( 2 )
+
   return self
 end
 
---- Finds an @{Core.Base#BASE} object based on the object Name.
+--- Finds an @{Base#BASE} object based on the object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE The Object found.
@@ -7772,7 +7962,7 @@ function SET_BASE:GetSet()
   return self.Set
 end
 
---- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @param Core.Base#BASE Object
@@ -7798,7 +7988,7 @@ function SET_BASE:Add( ObjectName, Object )
   
 end
 
---- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
 -- @param Wrapper.Object#OBJECT Object
 -- @return Core.Base#BASE The added BASE Object.
@@ -7813,7 +8003,7 @@ end
 
 
 
---- Removes a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
+--- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
@@ -7852,7 +8042,7 @@ function SET_BASE:Remove( ObjectName )
   
 end
 
---- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
+--- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE
@@ -7867,7 +8057,7 @@ function SET_BASE:Get( ObjectName )
   
 end
 
---- Retrieves the amount of objects in the @{Core.Set#SET_BASE} and derived classes.
+--- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
 function SET_BASE:Count()
@@ -7936,13 +8126,13 @@ function SET_BASE:_FilterStart()
     end
   end
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   
   return self
@@ -7953,16 +8143,16 @@ end
 -- @return #SET_BASE self
 function SET_BASE:FilterStop()
 
-  _EVENTDISPATCHER:OnBirthRemove( self )
-  _EVENTDISPATCHER:OnDeadRemove( self )
-  _EVENTDISPATCHER:OnCrashRemove( self )
+  self:UnHandleEvent( EVENTS.Birth )
+  self:UnHandleEvent( EVENTS.Dead )
+  self:UnHandleEvent( EVENTS.Crash )
   
   return self
 end
 
---- Iterate the SET_BASE while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+--- Iterate the SET_BASE while identifying the nearest object from a @{Point#POINT_VEC2}.
 -- @param #SET_BASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
 -- @return Core.Base#BASE The closest object.
 function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
@@ -9709,10 +9899,10 @@ function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
+--- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
 -- @param #SET_AIRBASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
--- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
+-- @return Wrapper.Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
 function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
@@ -9766,9 +9956,9 @@ function SET_AIRBASE:IsIncludeObject( MAirbase )
 end
 --- This module contains the POINT classes.
 -- 
--- 1) @{Core.Point#POINT_VEC3} class, extends @{Core.Base#BASE}
+-- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
 -- ==================================================
--- The @{Core.Point#POINT_VEC3} class defines a 3D point in the simulator.
+-- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
 -- 
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 -- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
@@ -9777,20 +9967,20 @@ end
 -- ---------------------------
 -- A new POINT_VEC3 instance can be created with:
 -- 
---  * @{#POINT_VEC3.New}(): a 3D point.
---  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{Dcs.DCSTypes#Vec3}.
+--  * @{Point#POINT_VEC3.New}(): a 3D point.
+--  * @{Point#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
 --  
 --
--- 2) @{Core.Point#POINT_VEC2} class, extends @{Core.Point#POINT_VEC3}
+-- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
--- The @{Core.Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
 -- 
 -- 2.1) POINT_VEC2 constructor
 -- ---------------------------
 -- A new POINT_VEC2 instance can be created with:
 -- 
---  * @{#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
---  * @{#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{Dcs.DCSTypes#Vec2}.
+--  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
 -- 
 -- ===
 -- 
@@ -10438,10 +10628,10 @@ function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
   return Distance
 end
 
---- Calculate the distance from a reference @{Dcs.DCSTypes#Vec2}.
+--- Calculate the distance from a reference @{DCSTypes#Vec2}.
 -- @param #POINT_VEC2 self
--- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{Dcs.DCSTypes#Vec2}.
--- @return Dcs.DCSTypes#Distance The distance from the reference @{Dcs.DCSTypes#Vec2} in meters.
+-- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+-- @return Dcs.DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
 function POINT_VEC2:DistanceFromVec2( Vec2Reference )
   self:F2( Vec2Reference )
   
@@ -10479,7 +10669,7 @@ end
 
 --- This module contains the MESSAGE class.
 -- 
--- 1) @{Core.Message#MESSAGE} class, extends @{Core.Base#BASE}
+-- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
 -- =================================================
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
@@ -10487,16 +10677,16 @@ end
 -- 
 -- 1.1) MESSAGE construction methods
 -- ---------------------------------
--- Messages are created with @{Core.Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
+-- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
 -- 1.2) Send messages with MESSAGE To methods
 -- ------------------------------------------
 -- Messages are sent to:
 --
---   * Clients with @{Core.Message#MESSAGE.ToClient}.
---   * Coalitions with @{Core.Message#MESSAGE.ToCoalition}.
---   * All Players with @{Core.Message#MESSAGE.ToAll}.
+--   * Clients with @{Message#MESSAGE.ToClient}.
+--   * Coalitions with @{Message#MESSAGE.ToCoalition}.
+--   * All Players with @{Message#MESSAGE.ToAll}.
 --   
 -- @module Message
 -- @author FlightControl
@@ -10762,6 +10952,8 @@ end
 -- 
 -- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
 -- 
+-- ===
+-- 
 -- A FSM can only be in one of a finite number of states. 
 -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
 -- It can change from one state to another when initiated by an **__internal__ or __external__ triggering event**, which is called a **transition**. 
@@ -10805,7 +10997,7 @@ end
 -- 
 -- ===
 --
--- # 1) @{Core.Fsm#FSM} class, extends @{Core.Base#BASE}
+-- # 1) @{#FSM} class, extends @{Base#BASE}
 --
 -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
 -- 
@@ -11085,6 +11277,7 @@ do -- FSM
     self._Processes = {}
     self._EndStates = {}
     self._Scores = {}
+    self._EventSchedules = {}
     
     self.CallScheduler = SCHEDULER:New( self )
     
@@ -11285,9 +11478,10 @@ do -- FSM
   end
   
   
-  function FSM:_call_handler(handler, params)
+  function FSM:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Value = self[handler]( self, unpack(params) )
       return Value
     end
@@ -11311,10 +11505,10 @@ do -- FSM
         self:T( "FSM Transition:" .. self.current .. " --> " .. EventName .. " --> " .. to )
       end        
   
-      if ( self:_call_handler("onbefore" .. EventName, params) == false )
-      or ( self:_call_handler("OnBefore" .. EventName, params) == false )
-      or ( self:_call_handler("onleave" .. from, params) == false )
-      or ( self:_call_handler("OnLeave" .. from, params) == false ) then
+      if ( self:_call_handler("onbefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("OnBefore" .. EventName, params, EventName ) == false )
+      or ( self:_call_handler("onleave" .. from, params, EventName ) == false )
+      or ( self:_call_handler("OnLeave" .. from, params, EventName ) == false ) then
         self:T( "Cancel Transition" )
         return false
       end
@@ -11339,11 +11533,11 @@ do -- FSM
       local fsmparent, Event = self:_isendstate( to )
       if fsmparent and Event then
         self:F2( { "end state: ", fsmparent, Event } )
-        self:_call_handler("onenter" .. to, params)
-        self:_call_handler("OnEnter" .. to, params)
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onenter" .. to, params, EventName )
+        self:_call_handler("OnEnter" .. to, params, EventName )
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
+        self:_call_handler("onstatechange", params, EventName )
         fsmparent[Event]( fsmparent )
         execute = false
       end
@@ -11351,14 +11545,14 @@ do -- FSM
       if execute then
         -- only execute the call if the From state is not equal to the To state! Otherwise this function should never execute!
         --if from ~= to then
-          self:_call_handler("onenter" .. to, params)
-          self:_call_handler("OnEnter" .. to, params)
+          self:_call_handler("onenter" .. to, params, EventName )
+          self:_call_handler("OnEnter" .. to, params, EventName )
         --end
   
-        self:_call_handler("onafter" .. EventName, params)
-        self:_call_handler("OnAfter" .. EventName, params)
+        self:_call_handler("onafter" .. EventName, params, EventName )
+        self:_call_handler("OnAfter" .. EventName, params, EventName )
   
-        self:_call_handler("onstatechange", params)
+        self:_call_handler("onstatechange", params, EventName )
       end
     else
       self:T( "Cannot execute transition." )
@@ -11371,7 +11565,18 @@ do -- FSM
   function FSM:_delayed_transition( EventName )
     return function( self, DelaySeconds, ... )
       self:T2( "Delayed Event: " .. EventName )
-      local CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      local CallID = 0
+      if DelaySeconds < 0 then -- Only call the event ONCE!
+        DelaySeconds = math.abs( DelaySeconds )
+        if not self._EventSchedules[EventName] then
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+          self._EventSchedules[EventName] = CallID
+        else
+          -- reschedule
+        end
+      else
+        CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+      end
       self:T2( { CallID = CallID } )
     end
   end
@@ -11491,7 +11696,7 @@ do -- FSM_CONTROLLABLE
     return self.Controllable
   end
   
-  function FSM_CONTROLLABLE:_call_handler( handler, params )
+  function FSM_CONTROLLABLE:_call_handler( handler, params, EventName )
   
     local ErrorHandler = function( errmsg )
   
@@ -11505,6 +11710,7 @@ do -- FSM_CONTROLLABLE
   
     if self[handler] then
       self:F3( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, unpack( params ) ) end, ErrorHandler )
       return Value
       --return self[handler]( self, self.Controllable, unpack( params ) )
@@ -11726,9 +11932,10 @@ do -- FSM_TASK
     return self
   end
   
-  function FSM_TASK:_call_handler( handler, params )
+  function FSM_TASK:_call_handler( handler, params, EventName )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, unpack( params ) )
     end
   end
@@ -11778,9 +11985,10 @@ do -- FSM_SET
     return self.Controllable
   end
   
-  function FSM_SET:_call_handler( handler, params )
+  function FSM_SET:_call_handler( handler, params, EventName  )
     if self[handler] then
       self:T( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end
@@ -11789,9 +11997,9 @@ end -- FSM_SET
 
 --- This module contains the OBJECT class.
 -- 
--- 1) @{Wrapper.Object#OBJECT} class, extends @{Core.Base#BASE}
+-- 1) @{Object#OBJECT} class, extends @{Base#BASE}
 -- ===========================================================
--- The @{Wrapper.Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
+-- The @{Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.
@@ -11801,13 +12009,13 @@ end -- FSM_SET
 -- ------------------------------
 -- The OBJECT class provides the following functions to construct a OBJECT instance:
 --
---  * @{Wrapper.Object#OBJECT.New}(): Create a OBJECT instance.
+--  * @{Object#OBJECT.New}(): Create a OBJECT instance.
 --
 -- 1.2) OBJECT methods:
 -- --------------------------
 -- The following methods can be used to identify an Object object:
 -- 
---    * @{Wrapper.Object#OBJECT.GetID}(): Returns the ID of the Object object.
+--    * @{Object#OBJECT.GetID}(): Returns the ID of the Object object.
 -- 
 -- ===
 -- 
@@ -11877,7 +12085,7 @@ end
 
 --- This module contains the IDENTIFIABLE class.
 -- 
--- 1) @{#IDENTIFIABLE} class, extends @{Wrapper.Object#OBJECT}
+-- 1) @{#IDENTIFIABLE} class, extends @{Object#OBJECT}
 -- ===============================================================
 -- The @{#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
 --
@@ -12103,9 +12311,9 @@ end
 
 --- This module contains the POSITIONABLE class.
 -- 
--- 1) @{Wrapper.Positionable#POSITIONABLE} class, extends @{Wrapper.Identifiable#IDENTIFIABLE}
+-- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
 -- ===========================================================
--- The @{Wrapper.Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
+-- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
 --
 --  * Support all DCS APIs.
 --  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
@@ -12115,14 +12323,14 @@ end
 -- ------------------------------
 -- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
 --
---  * @{Wrapper.Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+--  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
 --
 -- 1.2) POSITIONABLE methods:
 -- --------------------------
 -- The following methods can be used to identify an measurable object:
 -- 
---    * @{Wrapper.Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
---    * @{Wrapper.Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
 -- 
 -- ===
 -- 
@@ -12152,12 +12360,12 @@ function POSITIONABLE:New( PositionableName )
   return self
 end
 
---- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetPositionVec3()
-  self:E( self.PositionableName )
+  self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
   
@@ -12170,7 +12378,7 @@ function POSITIONABLE:GetPositionVec3()
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Vec2} vector indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec2 The 2D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -12236,7 +12444,7 @@ function POSITIONABLE:GetPointVec3()
 end
 
 
---- Returns a random @{Dcs.DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -12260,7 +12468,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Vec3} vector indicating the 3D vector of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -12541,9 +12749,9 @@ end
 
 --- This module contains the CONTROLLABLE class.
 -- 
--- 1) @{Wrapper.Controllable#CONTROLLABLE} class, extends @{Wrapper.Positionable#POSITIONABLE}
+-- 1) @{Controllable#CONTROLLABLE} class, extends @{Positionable#POSITIONABLE}
 -- ===========================================================
--- The @{Wrapper.Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
+-- The @{Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
 --
 --  * Support all DCS Controllable APIs.
 --  * Enhance with Controllable specific APIs not in the DCS Controllable API set.
@@ -12559,7 +12767,7 @@ end
 -- 1.2) CONTROLLABLE task methods
 -- ------------------------------
 -- Several controllable task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#SetTask} method to assign the task to the CONTROLLABLE.
+-- These methods return a string consisting of the task description, which can then be given to either a @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#SetTask} method to assign the task to the CONTROLLABLE.
 -- Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -12585,7 +12793,7 @@ end
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
 --   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
+--   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
@@ -12885,7 +13093,7 @@ end
 
 --- Return a Combo Task taking an array of Tasks.
 -- @param #CONTROLLABLE self
--- @param Dcs.DCSTasking.Task#TaskArray DCSTasks Array of @{Dcs.DCSTasking.Task#Task}
+-- @param Dcs.DCSTasking.Task#TaskArray DCSTasks Array of @{DCSTasking.Task#Task}
 -- @return Dcs.DCSTasking.Task#Task
 function CONTROLLABLE:TaskCombo( DCSTasks )
   self:F2( { DCSTasks } )
@@ -13370,7 +13578,7 @@ function CONTROLLABLE:TaskLandAtVec2( Point, Duration )
   return DCSTask
 end
 
---- (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
+--- (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
@@ -13716,17 +13924,18 @@ end
 
 --- (AIR) Attack the Unit.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Unit#UNIT AttackUnit The UNIT.
--- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
+-- @param Wrapper.Unit#UNIT EngageUnit The UNIT.
+-- @param #number Priority (optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
+-- @param Dcs.DCSTypes#Distance Altitude (optional) Desired altitude to perform the unit engagement.
+-- @param #boolean Visible (optional) Unit must be visible.
 -- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack )
-  self:F2( { self.ControllableName, AttackUnit, Priority, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack } )
+function CONTROLLABLE:EnRouteTaskEngageUnit( EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack )
+  self:F2( { self.ControllableName,          EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack } )
 
   --  EngageUnit = {
   --    id = 'EngageUnit',
@@ -13745,14 +13954,18 @@ function CONTROLLABLE:EnRouteTaskEngageUnit( AttackUnit, Priority, WeaponType, W
   local DCSTask
   DCSTask = { id = 'EngageUnit',
     params = {
-      unitId = AttackUnit:GetID(),
-      weaponType = WeaponType,
-      expend = WeaponExpend,
-      attackQty = AttackQty,
+      unitId = EngageUnit:GetID(),
+      priority = Priority or 1,
+      groupAttack = GroupAttack or false,
+      visible = Visible or false,
+      expend = WeaponExpend or "Auto",
+      directionEnabled = Direction and true or false,
       direction = Direction,
-      attackQtyLimit = AttackQtyLimit,
+      altitudeEnabled = Altitude and true or false,
+      altitude = Altitude,
+      attackQtyLimit = AttackQty and true or false,
+      attackQty = AttackQty,
       controllableAttack = ControllableAttack,
-      priority = Priority,
     },
   },
 
@@ -14179,11 +14392,11 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
---- (AIR) Return the Controllable to an @{Wrapper.Airbase#AIRBASE}
+--- (AIR) Return the Controllable to an @{Airbase#AIRBASE}
 -- A speed can be given in km/h.
 -- A given formation can be given.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Wrapper.Airbase#AIRBASE} to return to.
+-- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
 -- @param #number Speed (optional) The speed.
 -- @return #string The route
 function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
@@ -14303,7 +14516,7 @@ function CONTROLLABLE:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
 
---- Return the route of a controllable by using the @{Core.Database#DATABASE} class.
+--- Return the route of a controllable by using the @{Database#DATABASE} class.
 -- @param #CONTROLLABLE self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -14728,7 +14941,7 @@ function CONTROLLABLE:OptionROTVertical()
 end
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
--- Use the method @{Wrapper.Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
+-- Use the method @{Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self
@@ -14828,9 +15041,9 @@ end
 
 -- Message APIs--- This module contains the GROUP class.
 -- 
--- 1) @{Wrapper.Group#GROUP} class, extends @{Wrapper.Controllable#CONTROLLABLE}
+-- 1) @{Group#GROUP} class, extends @{Controllable#CONTROLLABLE}
 -- =============================================================
--- The @{Wrapper.Group#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -14864,7 +15077,7 @@ end
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- ## 1.3) GROUP Command methods
 --
@@ -14883,7 +15096,7 @@ end
 --   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- ## 1.6) GROUP AI methods
 -- 
@@ -14941,6 +15154,8 @@ function GROUP:Register( GroupName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
+  
+  self:SetEventPriority( 4 )
   return self
 end
 
@@ -14982,7 +15197,7 @@ function GROUP:GetDCSObject()
   return nil
 end
 
---- Returns the @{Dcs.DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
+--- Returns the @{DCSTypes#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Position The 3D position vectors of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
@@ -15123,7 +15338,6 @@ function GROUP:GetUnit( UnitNumber )
 
   if DCSGroup then
     local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
-    self:T3( UnitFound.UnitName )
     self:T2( UnitFound )
     return UnitFound
   end
@@ -15276,7 +15490,7 @@ do -- Is Zone methods
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -15295,7 +15509,7 @@ end
 --- Returns true if some units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -15312,7 +15526,7 @@ end
 --- Returns true if none of the group units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -15529,7 +15743,7 @@ end
 -- SPAWNING
 
 --- Respawn the @{GROUP} using a (tweaked) template of the Group.
--- The template must be retrieved with the @{Wrapper.Group#GROUP.GetTemplate}() function.
+-- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
 -- The template contains all the definitions as declared within the mission file.
 -- To understand templates, do the following: 
 -- 
@@ -15631,7 +15845,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Core.Database#DATABASE} class.
+--- Return the route of a group by using the @{Database#DATABASE} class.
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -15728,7 +15942,7 @@ end
 
 --- This module contains the UNIT class.
 -- 
--- 1) @{#UNIT} class, extends @{Wrapper.Controllable#CONTROLLABLE}
+-- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
 -- ===========================================================
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
@@ -15761,7 +15975,7 @@ end
 -- ------------------
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{Dcs.DCSWrapper.Unit#Unit.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
 -- 1.3) Smoke, Flare Units
@@ -15788,7 +16002,7 @@ end
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
 -- ### 1.6.1) Zones
--- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
 -- ### 1.6.2) Units
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
@@ -15825,6 +16039,8 @@ UNIT = {
 function UNIT:Register( UnitName )
   local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) )
   self.UnitName = UnitName
+  
+  self:SetEventPriority( 3 )
   return self
 end
 
@@ -16310,7 +16526,7 @@ end
 --- Returns true if the unit is within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -16327,7 +16543,7 @@ end
 --- Returns true if the unit is not within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -16564,13 +16780,38 @@ function UNIT:InAir()
   return nil
 end
 
---- This module contains the CLIENT class.
+do -- Event Handling
+
+  --- Subscribe to a DCS Event.
+  -- @param #UNIT self
+  -- @param Core.Event#EVENTS Event
+  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
+  -- @return #UNIT
+  function UNIT:HandleEvent( Event, EventFunction )
+  
+    self:EventDispatcher():OnEventForUnit( self:GetName(), EventFunction, self, Event )
+    
+    return self
+  end
+  
+  --- UnSubscribe to a DCS event.
+  -- @param #UNIT self
+  -- @param Core.Event#EVENTS Event
+  -- @return #UNIT
+  function UNIT:UnHandleEvent( Event )
+  
+    self:EventDispatcher():RemoveForUnit( self:GetName(), self, Event )
+    
+    return self
+  end
+
+end--- This module contains the CLIENT class.
 -- 
--- 1) @{Wrapper.Client#CLIENT} class, extends @{Wrapper.Unit#UNIT}
+-- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
 -- ===============================================
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{Wrapper.Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -16601,7 +16842,6 @@ end
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).
 -- 
 -- @module Client
--- @author FlightControl
 
 --- The CLIENT class
 -- @type CLIENT
@@ -16792,7 +17032,7 @@ end
 
 --- Checks for a client alive event and calls a function on a continuous basis.
 -- @param #CLIENT self
--- @param #function CallBack Function.
+-- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
 -- @return #CLIENT
 function CLIENT:Alive( CallBackFunction, ... )
   self:F()
@@ -16965,8 +17205,8 @@ function CLIENT:IsTransport()
 	return self.ClientTransport
 end
 
---- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
+--- Shows the @{AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
+-- The @{AI_Cargo#CARGO} is shown using the @{Message#MESSAGE} distribution system.
 -- @param #CLIENT self
 function CLIENT:ShowCargo()
 	self:F()
@@ -16999,7 +17239,7 @@ end
 -- @param #string Message is the text describing the message.
 -- @param #number MessageDuration is the duration in seconds that the Message should be displayed.
 -- @param #string MessageCategory is the category of the message (the title).
--- @param #number MessageInterval is the interval in seconds between the display of the @{Core.Message#MESSAGE} when the CLIENT is in the air.
+-- @param #number MessageInterval is the interval in seconds between the display of the @{Message#MESSAGE} when the CLIENT is in the air.
 -- @param #string MessageID is the identifier of the message when displayed with intervals.
 function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInterval, MessageID )
 	self:F( { Message, MessageDuration, MessageCategory, MessageInterval } )
@@ -17040,11 +17280,11 @@ function CLIENT:Message( Message, MessageDuration, MessageCategory, MessageInter
 end
 --- This module contains the STATIC class.
 -- 
--- 1) @{Wrapper.Static#STATIC} class, extends @{Wrapper.Positionable#POSITIONABLE}
+-- 1) @{Static#STATIC} class, extends @{Positionable#POSITIONABLE}
 -- ===============================================================
 -- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
--- The @{Wrapper.Static#STATIC} class is a wrapper class to handle the DCS Static objects:
+-- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
 -- 
 --  * Wraps the DCS Static objects.
 --  * Support all DCS Static APIs.
@@ -17123,7 +17363,7 @@ end
 -- 
 -- ===
 -- 
--- 1) @{Wrapper.Airbase#AIRBASE} class, extends @{Wrapper.Positionable#POSITIONABLE}
+-- 1) @{Airbase#AIRBASE} class, extends @{Positionable#POSITIONABLE}
 -- =================================================================
 -- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
 -- 
@@ -17154,7 +17394,7 @@ end
 -- ---------------------
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
--- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{Dcs.DCSWrapper.Airbase#Airbase.getName}()
+-- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 -- 
 -- More functions will be added
@@ -17281,9 +17521,9 @@ function SCORING:New( GameName )
   end
   
   
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Hit, self._EventOnHit )
 
   --self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
   self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )
@@ -18120,7 +18360,7 @@ function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
 	end
 end
 
---- Destroys a @{Dcs.DCSWrapper.Unit#Unit} from the simulator, but checks first if it is still existing!
+--- Destroys a @{DCSWrapper.Unit#Unit} from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
 -- @param Dcs.DCSWrapper.Unit#Unit CleanUpUnit The object to be destroyed.
 -- @param #string CleanUpUnitName The Unit name ...
@@ -18257,7 +18497,7 @@ function CLEANUP:_EventHitCleanUp( Event )
 	end
 end
 
---- Add the @{Dcs.DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
+--- Add the @{DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
 function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
@@ -18376,9 +18616,14 @@ function CLEANUP:_CleanUpScheduler()
 	return true
 end
 
---- This module contains the SPAWN class.
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** --  
+-- **Spawn groups of units dynamically in your missions.**
+--  
+-- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
 -- 
--- # 1) @{Functional.Spawn#SPAWN} class, extends @{Core.Base#BASE}
+-- ===
+-- 
+-- # 1) @{#SPAWN} class, extends @{Base#BASE}
 -- 
 -- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
 -- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
@@ -18420,7 +18665,7 @@ end
 --   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
 --   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
---   * @{#SPAWN.InitUncontrolled}(): Spawn plane groups uncontrolled.
+--   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
@@ -18489,6 +18734,8 @@ end
 --   * _Removed_ parts are expressed in italic type face.
 -- 
 -- Hereby the change log:
+-- 
+-- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().
 -- 
 -- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.
 -- 
@@ -18590,6 +18837,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
 		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+    self.SpawnUnControlled = false
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -18628,6 +18876,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
     self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+    self.SpawnUnControlled = false
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -19024,6 +19273,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
             self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
           end
         end
+        
+        if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
+          if SpawnTemplate.route.points[1].type == "TakeOffParking" then
+            SpawnTemplate.uncontrolled = self.SpawnUnControlled
+          end
+        end
       end
 		  
       _EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
@@ -19112,7 +19367,7 @@ end
 
 --- Allows to place a CallFunction hook when a new group spawns.
 -- The provided method will be called when a new group is spawned, including its given parameters.
--- The first parameter of the SpawnFunction is the @{Wrapper.Group#GROUP} that was spawned.
+-- The first parameter of the SpawnFunction is the @{Group#GROUP} that was spawned.
 -- @param #SPAWN self
 -- @param #function SpawnCallBackFunction The function to be called when a group spawns.
 -- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
@@ -19252,7 +19507,7 @@ function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
 end
 
 --- Will spawn a Group within a given @{Zone}.
--- The @{Zone} can be of any type derived from @{Core.Zone#ZONE_BASE}.
+-- The @{Zone} can be of any type derived from @{Zone#ZONE_BASE}.
 -- Once the @{Group} is spawned within the zone, the @{Group} will continue on its route.
 -- The **first waypoint** (where the group is spawned) is replaced with the zone location coordinates.
 -- @param #SPAWN self
@@ -19275,17 +19530,20 @@ function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
   return nil
 end
 
---- (AIR) Will spawn a plane group in uncontrolled mode... 
+--- (**AIR**) Will spawn a plane group in UnControlled or Controlled mode... 
 -- This will be similar to the uncontrolled flag setting in the ME.
+-- You can use UnControlled mode to simulate planes startup and ready for take-off but aren't moving (yet).
+-- ReSpawn the plane in Controlled mode, and the plane will move...
 -- @param #SPAWN self
+-- @param #boolean UnControlled true if UnControlled, false if Controlled.
 -- @return #SPAWN self
-function SPAWN:InitUnControlled()
-	self:F( { self.SpawnTemplatePrefix } )
+function SPAWN:InitUnControlled( UnControlled )
+	self:F2( { self.SpawnTemplatePrefix, UnControlled } )
 	
-	self.SpawnUnControlled = true
+	self.SpawnUnControlled = UnControlled
 	
 	for SpawnGroupID = 1, self.SpawnMaxGroups do
-		self.SpawnGroups[SpawnGroupID].UnControlled = true
+		self.SpawnGroups[SpawnGroupID].UnControlled = UnControlled
 	end
 	
 	return self
@@ -19605,9 +19863,6 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		SpawnTemplate.visible = false 
 	end
 	
-	if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
-		SpawnTemplate.uncontrolled = false
-	end
 
 	for UnitID = 1, #SpawnTemplate.units do
 		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
@@ -20312,7 +20567,7 @@ end
 -- ============================
 -- Create a new SPAWN object with the @{#ESCORT.New} method:
 --
---  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT}, with an optional briefing text.
+--  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
 --
 -- ESCORT initialization methods.
 -- ==============================
@@ -21515,7 +21770,7 @@ end
 -- 
 -- ===
 --
--- 1) @{Functional.MissileTrainer#MISSILETRAINER} class, extends @{Core.Base#BASE}
+-- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Base#BASE}
 -- ===============================================================
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
@@ -22222,9 +22477,9 @@ end
 --
 -- ===
 --
--- 1) @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
 -- ==================================================================
--- The @{Functional.AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
+-- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
 -- CLIENTS should not be allowed to:
 --
 --   * Don't taxi faster than 40 km/h.
@@ -22232,7 +22487,7 @@ end
 --   * Avoid to hit other planes on the airbase.
 --   * Obey ground control orders.
 --
--- 2) @{Functional.AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
+-- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the caucasus map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -22259,7 +22514,7 @@ end
 --   * TbilisiLochini
 --   * Vaziani
 --
--- 3) @{Functional.AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{Functional.AirbasePolice#AIRBASEPOLICE_BASE}
+-- 3) @{AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
 -- =============================================================================================
 -- All the airbases on the NEVADA map can be monitored using this class.
 -- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
@@ -22402,7 +22657,8 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
-                      Client:GetGroup():Destroy()
+                      Client:Destroy()
+                      trigger.action.setUserFlag( "AIRCRAFT_"..Client:GetID(), 100)
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end
@@ -23417,14 +23673,14 @@ end
 -- 
 -- ===
 -- 
--- 1) @{Functional.Detection#DETECTION_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{Detection#DETECTION_BASE} class, extends @{Base#BASE}
 -- ==========================================================
--- The @{Functional.Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
--- The @{Functional.Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
+-- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
+-- The @{Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
--- Construct a new DETECTION_BASE instance using the @{Functional.Detection#DETECTION_BASE.New}() method.
+-- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION_BASE.New}() method.
 -- 
 -- 1.2) DETECTION_BASE initialization
 -- ----------------------------------
@@ -23435,46 +23691,46 @@ end
 -- 
 -- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
 -- 
---   * @{Functional.Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
+--   * @{Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
+--   * @{Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
+--   * @{Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
+--   * @{Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
+--   * @{Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
+--   * @{Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
 -- 
 -- 1.3) Obtain objects detected by DETECTION_BASE
 -- ----------------------------------------------
--- DETECTION_BASE builds @{Set}s of objects detected. These @{Core.Set#SET_BASE}s can be retrieved using the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}().
--- The method will return a list (table) of @{Core.Set#SET_BASE} objects.
+-- DETECTION_BASE builds @{Set}s of objects detected. These @{Set#SET_BASE}s can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSets}().
+-- The method will return a list (table) of @{Set#SET_BASE} objects.
 -- 
 -- ===
 -- 
--- 2) @{Functional.Detection#DETECTION_AREAS} class, extends @{Functional.Detection#DETECTION_BASE}
+-- 2) @{Detection#DETECTION_AREAS} class, extends @{Detection#DETECTION_BASE}
 -- ===============================================================================
--- The @{Functional.Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
--- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
+-- The @{Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
+-- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
 -- The class is group the detected units within zones given a DetectedZoneRange parameter.
 -- A set with multiple detected zones will be created as there are groups of units detected.
 -- 
 -- 2.1) Retrieve the Detected Unit sets and Detected Zones
 -- -------------------------------------------------------
--- The DetectedUnitSets methods are implemented in @{Functional.Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Functional.Detection#DETECTION_AREAS}.
+-- The DetectedUnitSets methods are implemented in @{Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Detection#DETECTION_AREAS}.
 -- 
--- Retrieve the DetectedUnitSets with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Core.Set#SET_UNIT}s.
--- To understand the amount of sets created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSetCount}(). 
--- If you want to obtain a specific set from the DetectedSets, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
+-- Retrieve the DetectedUnitSets with the method @{Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Set#SET_UNIT}s.
+-- To understand the amount of sets created, use the method @{Detection#DETECTION_BASE.GetDetectedSetCount}(). 
+-- If you want to obtain a specific set from the DetectedSets, use the method @{Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
 -- 
--- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZones}().
--- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
--- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+-- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
+-- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
+-- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
 -- 
 -- 1.4) Flare or Smoke detected units
 -- ----------------------------------
--- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
 -- 
 -- 1.5) Flare or Smoke detected zones
 -- ----------------------------------
--- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
 -- 
 -- ===
 -- 
@@ -23660,7 +23916,7 @@ function DETECTION_BASE:GetDetectedObject( ObjectName )
   return nil
 end
 
---- Get the detected @{Core.Set#SET_BASE}s.
+--- Get the detected @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 -- @return #DETECTION_BASE.DetectedSets DetectedSets
 function DETECTION_BASE:GetDetectedSets()
@@ -23723,12 +23979,12 @@ function DETECTION_BASE:Schedule( DelayTime, RepeatInterval )
   self.ScheduleDelayTime = DelayTime
   self.ScheduleRepeatInterval = RepeatInterval
   
-  self.DetectionScheduler = SCHEDULER:New(self, self._DetectionScheduler, { self, "Detection" }, DelayTime, RepeatInterval )
+  self.DetectionScheduler = SCHEDULER:New( self, self._DetectionScheduler, { self, "Detection" }, DelayTime, RepeatInterval )
   return self
 end
 
 
---- Form @{Set}s of detected @{Wrapper.Unit#UNIT}s in an array of @{Core.Set#SET_BASE}s.
+--- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:F2( { SchedulerName } )
@@ -23848,7 +24104,7 @@ function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRa
   self._SmokeDetectedZones = false
   self._FlareDetectedZones = false
   
-  self:Schedule( 0, 30 )
+  self:Schedule( 10, 10 )
 
   return self
 end
@@ -23902,7 +24158,7 @@ function DETECTION_AREAS:GetDetectedAreaCount()
   return DetectedAreaCount
 end
 
---- Get the @{Core.Set#SET_UNIT} of a detecttion area using a given numeric index.
+--- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Core.Set#SET_UNIT DetectedSet
@@ -23916,7 +24172,7 @@ function DETECTION_AREAS:GetDetectedSet( Index )
   return nil
 end
 
---- Get the @{Core.Zone#ZONE_UNIT} of a detection area using a given numeric index.
+--- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Core.Zone#ZONE_UNIT DetectedZone
@@ -24403,17 +24659,16 @@ end
 -- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
--- 
--- 
+--  
 -- ===
 -- 
--- # 1) @{AI.AI_Balancer#AI_BALANCER} class, extends @{Core.Fsm#FSM_SET}
+-- # 1) @{AI_Balancer#AI_BALANCER} class, extends @{Fsm#FSM_SET}
 -- 
--- The @{AI.AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
+-- The @{AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- The parent class @{Core.Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
+-- The parent class @{Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 
 -- The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
 -- An explanation about state and event transition methods can be found in the @{FSM} module documentation.
 -- 
@@ -24455,8 +24710,8 @@ end
 -- However, there are 2 additional options that you can use to customize the destroy behaviour.
 -- When a human player joins a slot, you can configure to let the AI return to:
 -- 
---    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
---    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Airbase#AIRBASE}.
 -- 
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
@@ -24552,10 +24807,10 @@ function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
   return self
 end
 
---- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
+--- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
--- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
 function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -24563,9 +24818,9 @@ function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbase
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
---- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
+--- Returns the AI to the home @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
 
   self.ToHomeAirbase = true
@@ -24702,14 +24957,14 @@ end
 
 
 
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Air Patrolling or Staging.**
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+-- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
--- 
 -- ===
 -- 
--- # 1) @{#AI_PATROL_ZONE} class, extends @{Core.Fsm#FSM_CONTROLLABLE}
+-- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
@@ -24893,14 +25148,13 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionOn()
-
+  self:SetDetectionInterval( 30 )
+  
   self.CheckStatus = true
   
   self:ManageFuel( .2, 60 )
   self:ManageDamage( 1 )
   
-  self:SetDetectionInterval( 30 )
 
   self.DetectedUnits = {} -- This table contains the targets detected during patrol.
   
@@ -25154,7 +25408,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOn()
   self:F2()
-  
+
   self.DetectOn = true
 end
 
@@ -25164,7 +25418,7 @@ end
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetDetectionOff()
   self:F2()
-  
+
   self.DetectOn = false
 end
 
@@ -25183,8 +25437,9 @@ end
 function AI_PATROL_ZONE:SetDetectionActivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = true
-  self:__Detect( self.DetectInterval )
+  self:__Detect( -self.DetectInterval )
 end
 
 --- Deactivate the detection. The AI will NOT detect for targets.
@@ -25193,6 +25448,7 @@ end
 function AI_PATROL_ZONE:SetDetectionDeactivated()
   self:F2()
   
+  self:ClearDetectedUnits()
   self.DetectActivated = false
 end
 
@@ -25228,17 +25484,23 @@ function AI_PATROL_ZONE:SetDetectionZone( DetectionZone )
   end
 end
 
---- Gets a list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
+--- Gets a list of @{Unit#UNIT}s that were detected by the AI.
 -- No filtering is applied, so, ANY detected UNIT can be in this list.
 -- It is up to the mission designer to use the @{Unit} class and methods to filter the targets.
 -- @param #AI_PATROL_ZONE self
--- @return #table The list of @{Wrapper.Unit#UNIT}s
+-- @return #table The list of @{Unit#UNIT}s
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 
   return self.DetectedUnits 
 end
 
+--- Clears the list of @{Unit#UNIT}s that were detected by the AI.
+-- @param #AI_PATROL_ZONE self
+function AI_PATROL_ZONE:ClearDetectedUnits()
+  self:F2()
+  self.DetectedUnits = {}
+end
 
 --- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
@@ -25288,10 +25550,9 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self:__Status( 60 ) -- Check status status every 30 seconds.
   self:SetDetectionActivated()
   
-  self:EventOnPilotDead( self.OnPilotDead )
-  self:EventOnCrash( self.OnCrash )
-  self:EventOnEjection( self.OnEjection )
-  
+  self:HandleEvent( EVENTS.PilotDead, self.OnPilotDead )
+  self:HandleEvent( EVENTS.Crash, self.OnCrash )
+  self:HandleEvent( EVENTS.Ejection, self.OnEjection )
   
   Controllable:OptionROEHoldFire()
   Controllable:OptionROTVertical()
@@ -25303,6 +25564,8 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
       self:__Route( 5 )
     end
   )
+
+  self:SetDetectionOn()
   
 end
 
@@ -25323,7 +25586,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   local DetectedTargets = Controllable:GetDetectedTargets()
   for TargetID, Target in pairs( DetectedTargets or {} ) do
     local TargetObject = Target.object
-    self:T( TargetObject )
+
     if TargetObject and TargetObject:isExist() and TargetObject.id_ < 50000000 then
 
       local TargetUnit = UNIT:Find( TargetObject )
@@ -25332,18 +25595,22 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
       if self.DetectionZone then
         if TargetUnit:IsInZone( self.DetectionZone ) then
           self:T( {"Detected ", TargetUnit } )
-          self.DetectedUnits[TargetUnit] = TargetUnit
+          if self.DetectedUnits[TargetUnit] == nil then
+            self.DetectedUnits[TargetUnit] = true
+          end
           Detected = true 
         end
       else       
-        self.DetectedUnits[TargetUnit] = TargetUnit
+        if self.DetectedUnits[TargetUnit] == nil then
+          self.DetectedUnits[TargetUnit] = true
+        end
         Detected = true
       end
     end
   end
-  
-  self:__Detect( self.DetectInterval )
 
+  self:__Detect( -self.DetectInterval )
+  
   if Detected == true then
     self:__Detected( 1.5 )
   end
@@ -25578,17 +25845,16 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
-
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Provide Close Air Support to friendly ground troops.**
+--- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+-- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
--- 
 -- ===
 --
--- # 1) @{#AI_CAS_ZONE} class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
+-- # 1) @{#AI_CAS_ZONE} class, extends @{AI_Patrol#AI_PATROL_ZONE}
 -- 
--- @{#AI_CAS_ZONE} derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+-- @{#AI_CAS_ZONE} derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
 -- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
@@ -25729,7 +25995,7 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   self.Accomplished = false
   
   self:SetDetectionZone( self.EngageZone )
-  
+
   self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
   --- OnBefore Transition Handler for Event Engage.
@@ -25739,6 +26005,12 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+  
   -- @return #boolean Return false to cancel Transition.
   
   --- OnAfter Transition Handler for Event Engage.
@@ -25748,6 +26020,11 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   	
   --- Synchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] Engage
@@ -25774,6 +26051,8 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
+
+  self:AddTransition( "Engaging", "Target", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
 
   self:AddTransition( "Engaging", "Fired", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_CAS_ZONE.
   
@@ -25918,8 +26197,9 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
   self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
-  self:EventOnDead( self.OnDead )
+  self:HandleEvent( EVENTS.Dead, self.OnDead )
   
+  self:SetDetectionDeactivated() -- When not engaging, set the detection off.
 end
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
@@ -25942,15 +26222,62 @@ function AI_CAS_ZONE:onbeforeEngage( Controllable, From, Event, To )
   end
 end
 
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAS_ZONE:onafterTarget( Controllable, From, Event, To )
+  self:E("onafterTarget")
+
+  if Controllable:IsAlive() then
+
+    local AttackTasks = {}
+
+    for DetectedUnit, Detected in pairs( self.DetectedUnits ) do
+      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      if DetectedUnit:IsAlive() then
+        if DetectedUnit:IsInZone( self.EngageZone ) then
+          if Detected == true then
+            self:E( {"Target: ", DetectedUnit } )
+            self.DetectedUnits[DetectedUnit] = false
+            local AttackTask = Controllable:EnRouteTaskEngageUnit( DetectedUnit, 1, true, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
+            self.Controllable:PushTask( AttackTask, 1 )
+          end
+        end
+      else
+        self.DetectedUnits[DetectedUnit] = nil
+      end
+    end
+
+    self:__Target( -10 )
+
+  end
+end
+
+
 
 --- @param #AI_CAS_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
+-- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+-- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+-- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection )
+  self:E("onafterEngage")
+
+  self.EngageSpeed = EngageSpeed or 400
+  self.EngageAltitude = EngageAltitude or 2000
+  self.EngageWeaponExpend = EngageWeaponExpend
+  self.EngageAttackQty = EngageAttackQty
+  self.EngageDirection = EngageDirection
 
   if Controllable:IsAlive() then
+  
 
     local EngageRoute = {}
 
@@ -25965,7 +26292,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToEngageZoneSpeed, 
+        self.EngageSpeed, 
         true 
       )
     
@@ -25978,20 +26305,15 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
       local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
       self:T2( ToEngageZoneVec2 )
       
-      -- Define Speed and Altitude.
-      local ToEngageZoneAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
-      local ToEngageZoneSpeed = self.PatrolMaxSpeed
-      self:T2( ToEngageZoneSpeed )
-      
       -- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, ToEngageZoneAltitude, ToEngageZoneVec2.y )
+      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, self.EngageAltitude, ToEngageZoneVec2.y )
       
       -- Create a route point of type air.
       local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToEngageZoneSpeed, 
+        self.EngageSpeed, 
         true 
       )
 
@@ -26005,20 +26327,15 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     local ToTargetVec2 = self.EngageZone:GetRandomVec2()
     self:T2( ToTargetVec2 )
 
-    --- Define Speed and Altitude.
-    local ToTargetAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
-    
     --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, self.EngageAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
+      self.EngageSpeed, 
       true 
     )
     
@@ -26028,24 +26345,24 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     
 
     Controllable:OptionROEOpenFire()
-    Controllable:OptionROTPassiveDefense()
+    Controllable:OptionROTVertical()
 
-    local AttackTasks = {}
-
-    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
-      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
-      self:T( DetectedUnit )
-      if DetectedUnit:IsAlive() then
-        if DetectedUnit:IsInZone( self.EngageZone ) then
-          self:E( {"Engaging ", DetectedUnit } )
-          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
-        end
-      else
-        self.DetectedUnits[DetectedUnit] = nil
-      end
-    end
-
-    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
+--    local AttackTasks = {}
+--
+--    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+--      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+--      self:T( DetectedUnit )
+--      if DetectedUnit:IsAlive() then
+--        if DetectedUnit:IsInZone( self.EngageZone ) then
+--          self:E( {"Engaging ", DetectedUnit } )
+--          AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
+--        end
+--      else
+--        self.DetectedUnits[DetectedUnit] = nil
+--      end
+--    end
+--
+--    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
 
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
     self.Controllable:WayPointInitialize( EngageRoute )
@@ -26056,7 +26373,11 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To )
     self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
 
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 2 )
+    self.Controllable:WayPointExecute( 1 )
+    
+    self:SetDetectionInterval( 10 )
+    self:SetDetectionActivated()
+    self:__Target( -10 ) -- Start Targetting
   end
 end
 
@@ -26082,7 +26403,7 @@ end
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self.Accomplished = true
-  self:SetDetectionOff()
+  self:SetDetectionDeactivated()
 end
 
 --- @param #AI_CAS_ZONE self
@@ -26100,10 +26421,9 @@ end
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
--- 
 -- ===
 --
--- # 1) @{#AI_CAP_ZONE} class, extends @{AI.AI_CAP#AI_PATROL_ZONE}
+-- # 1) @{#AI_CAP_ZONE} class, extends @{AI_CAP#AI_PATROL_ZONE}
 -- 
 -- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
@@ -26169,7 +26489,7 @@ end
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- The range can be beyond or smaller than the range of the Patrol Zone.
 -- The range is applied at the position of the AI.
--- Use the method @{AI.AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
+-- Use the method @{AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
 -- ## 1.4) Set the Zone of Engagement
 -- 
@@ -26177,7 +26497,7 @@ end
 -- 
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
--- Use the method @{AI.AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
+-- Use the method @{AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
 --
 -- ====
 --
@@ -26579,7 +26899,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     if #AttackTasks == 0 then
       self:E("No targets found -> Going back to Patrolling")
-      self:__Accomplish( 1 )
+      self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else
@@ -26625,7 +26945,10 @@ function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
 end
 
 
---- Single-Player:Yes / Mulit-Player:Yes / AI:Yes / Human:No / Types:Ground -- Management of logical cargo objects, that can be transported from and to transportation carriers.
+---Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
+-- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
+--
+-- ![Banner Image](..\Presentations\AI_CARGO\CARGO.JPG)
 --
 -- ===
 -- 
@@ -26639,8 +26962,8 @@ end
 --   
 --   * AI_CARGO_GROUPED, represented by a Group of CARGO_UNITs.
 -- 
--- 1) @{AI.AI_Cargo#AI_CARGO} class, extends @{Core.Fsm#FSM_PROCESS}
--- ==========================================================================
+-- # 1) @{#AI_CARGO} class, extends @{Fsm#FSM_PROCESS}
+-- 
 -- The @{#AI_CARGO} class defines the core functions that defines a cargo object within MOOSE.
 -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
 --
@@ -26679,13 +27002,13 @@ end
 --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
 --     These state transition methods need to provide a return value, which is specified at the function description.
 -- 
--- 2) #AI_CARGO_UNIT class
--- ====================
+-- # 2) #AI_CARGO_UNIT class
+-- 
 -- The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
 -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
 -- 
--- 5) #AI_CARGO_GROUPED class
--- =======================
+-- # 5) #AI_CARGO_GROUPED class
+--
 -- The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
 -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
 -- 
@@ -26717,14 +27040,14 @@ end
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] UnBoard
 -- @param #AI_CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] __UnBoard
 -- @param #AI_CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 
 -- Load
@@ -26749,14 +27072,14 @@ end
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] UnLoad
 -- @param #AI_CARGO self
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
 -- @function [parent=#AI_CARGO] __UnLoad
 -- @param #AI_CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
--- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Core.Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
+-- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 -- State Transition Functions
 
@@ -27654,7 +27977,7 @@ end -- AI_CARGO_GROUPED
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIGN} FSM template class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIGN state machine:
 -- 
@@ -27947,7 +28270,7 @@ end -- ACT_ASSIGN_MENU_ACCEPT
 -- 
 -- ===
 -- 
--- # @{#ACT_ROUTE} FSM class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ROUTE} FSM class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ROUTE state machine:
 -- 
@@ -28199,7 +28522,7 @@ end -- ACT_ROUTE_ZONE
 -- 
 -- ===
 -- 
--- # @{#ACT_ACCOUNT} FSM class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ACCOUNT state machine:
 -- 
@@ -28314,7 +28637,7 @@ do -- ACT_ACCOUNT
   -- @param #string To
   function ACT_ACCOUNT:onafterStart( ProcessUnit, From, Event, To )
 
-    self:EventOnDead( self.onfuncEventDead )
+    self:HandleEvent( EVENTS.Dead, self.onfuncEventDead )
 
     self:__Wait( 1 )
   end
@@ -28465,7 +28788,7 @@ end -- ACT_ACCOUNT DEADS
 -- 
 -- ===
 -- 
--- # @{#ACT_ASSIST} FSM class, extends @{Core.Fsm#FSM_PROCESS}
+-- # @{#ACT_ASSIST} FSM class, extends @{Fsm#FSM_PROCESS}
 -- 
 -- ## ACT_ASSIST state machine:
 -- 
@@ -28734,7 +29057,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 	
 	self.Missions = {}
 
-  self:EventOnBirth(
+  self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
     --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
@@ -28749,7 +29072,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
       
@@ -28761,14 +29085,15 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- - Set the correct menu.
   -- - Assign the PlayerUnit to the Task if required.
   -- - Send a message to the other players in the group that this player has joined.
-  self:EventOnPlayerEnterUnit(
+  self:HandleEvent( EVENTS.PlayerEnterUnit,
     --- @param #COMMANDCENTER self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
     end
@@ -28777,12 +29102,13 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:EventOnPlayerLeaveUnit(
+  self:HandleEvent( EVENTS.PlayerLeaveUnit,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
         Mission:AbortUnit( PlayerUnit )
       end
     end
@@ -28791,7 +29117,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:EventOnCrash(
+  self:HandleEvent( EVENTS.Crash,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
@@ -29050,15 +29376,16 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
-function MISSION:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:JoinUnit( PlayerUnit ) then
+    if Task:JoinUnit( PlayerUnit, PlayerGroup ) then
       PlayerUnitAdded = true
     end
   end
@@ -29901,7 +30228,7 @@ end
 
 --- This module contains the TASK class.
 -- 
--- 1) @{#TASK} class, extends @{Core.Base#BASE}
+-- 1) @{#TASK} class, extends @{Base#BASE}
 -- ============================================
 -- 1.1) The @{#TASK} class implements the methods for task orchestration within MOOSE. 
 -- ----------------------------------------------------------------------------------------
@@ -30082,31 +30409,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
-
-  -- Handle the birth of new planes within the assigned set.
-  
-
-  -- Handle when a player crashes ... 
-  -- The Task is UnAssigned from the Unit.
-  -- When there is no Unit left running the Task, and all of the Players crashed, the Task goes into Failed ...
---  self:EventOnCrash(
---    --- @param #TASK self
---    -- @param Core.Event#EVENTDATA EventData
---    function( self, EventData )
---      self:E( "In LeaveUnit" )
---      self:E( { "State", self:GetState() } )
---      if self:IsStateAssigned() then
---        local TaskUnit = EventData.IniUnit
---        local TaskGroup = EventData.IniUnit:GetGroup()
---        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
---        if self.SetGroup:IsIncludeObject( TaskGroup ) then
---          self:UnAssignFromUnit( TaskUnit )
---        end
---        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
---      end
---    end
---  )
---  
   
   Mission:AddTask( self )
   
@@ -30135,14 +30437,14 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of the Task.
-function TASK:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function TASK:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -30295,7 +30597,6 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  self:GetGroups():FilterOnce() -- Ensure that the filter is updated.
   return self:GetGroups():IsIncludeObject( FindGroup )
 
 end
@@ -30925,37 +31226,37 @@ end -- Reporting
 -- 
 -- ===
 -- 
--- 1) @{Tasking.DetectionManager#DETECTION_MANAGER} class, extends @{Core.Base#BASE}
+-- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Base#BASE}
 -- ====================================================================
--- The @{Tasking.DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
+-- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
 -- 
 -- 1.1) DETECTION_MANAGER constructor:
 -- -----------------------------------
---   * @{Tasking.DetectionManager#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
+--   * @{DetectionManager#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.
 -- 
 -- 1.2) DETECTION_MANAGER reporting:
 -- ---------------------------------
--- Derived DETECTION_MANAGER classes will reports detected units using the method @{Tasking.DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
+-- Derived DETECTION_MANAGER classes will reports detected units using the method @{DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
 -- 
--- The time interval in seconds of the reporting can be changed using the methods @{Tasking.DetectionManager#DETECTION_MANAGER.SetReportInterval}(). 
--- To control how long a reporting message is displayed, use @{Tasking.DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
--- Derived classes need to implement the method @{Tasking.DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
+-- The time interval in seconds of the reporting can be changed using the methods @{DetectionManager#DETECTION_MANAGER.SetReportInterval}(). 
+-- To control how long a reporting message is displayed, use @{DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
+-- Derived classes need to implement the method @{DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
--- Reporting can be started and stopped using the methods @{Tasking.DetectionManager#DETECTION_MANAGER.StartReporting}() and @{Tasking.DetectionManager#DETECTION_MANAGER.StopReporting}() respectively.
--- If an ad-hoc report is requested, use the method @{Tasking.DetectionManager#DETECTION_MANAGER#ReportNow}().
+-- Reporting can be started and stopped using the methods @{DetectionManager#DETECTION_MANAGER.StartReporting}() and @{DetectionManager#DETECTION_MANAGER.StopReporting}() respectively.
+-- If an ad-hoc report is requested, use the method @{DetectionManager#DETECTION_MANAGER#ReportNow}().
 -- 
 -- The default reporting interval is every 60 seconds. The reporting messages are displayed 15 seconds.
 -- 
 -- ===
 -- 
--- 2) @{Tasking.DetectionManager#DETECTION_REPORTING} class, extends @{Tasking.DetectionManager#DETECTION_MANAGER}
+-- 2) @{DetectionManager#DETECTION_REPORTING} class, extends @{DetectionManager#DETECTION_MANAGER}
 -- =========================================================================================
--- The @{Tasking.DetectionManager#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{Tasking.DetectionManager#DETECTION_MANAGER} class.
+-- The @{DetectionManager#DETECTION_REPORTING} class implements detected units reporting. Reporting can be controlled using the reporting methods available in the @{DetectionManager#DETECTION_MANAGER} class.
 -- 
 -- 2.1) DETECTION_REPORTING constructor:
 -- -------------------------------
--- The @{Tasking.DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
+-- The @{DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
 --    
 -- ===
 -- 
@@ -31071,7 +31372,7 @@ do -- DETECTION MANAGER
     return self
   end
   
-  --- Report the detected @{Wrapper.Unit#UNIT}s detected within the @{Functional.Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
+  --- Report the detected @{Unit#UNIT}s detected within the @{Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
   -- @param #DETECTION_MANAGER self
   function DETECTION_MANAGER:_FacScheduler( SchedulerName )
     self:F2( { SchedulerName } )
@@ -31121,7 +31422,7 @@ do -- DETECTION_REPORTING
   
   --- Creates a string of the detected items in a @{Detection}.
   -- @param #DETECTION_MANAGER self
-  -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Functional.Detection#DETECTION_BASE} object.
+  -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Detection#DETECTION_BASE} object.
   -- @return #DETECTION_MANAGER self
   function DETECTION_REPORTING:GetDetectedItemsText( DetectedSet )
     self:F2()
@@ -31154,7 +31455,7 @@ do -- DETECTION_REPORTING
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_REPORTING self
   -- @param Wrapper.Group#GROUP Group The @{Group} object to where the report needs to go.
-  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_BASE} object.
+  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_BASE} object.
   -- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
   function DETECTION_REPORTING:ProcessDetected( Group, Detection )
     self:F2( Group )
@@ -31315,7 +31616,7 @@ do -- DETECTION_DISPATCHER
 
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Functional.Detection#DETECTION_AREAS} object.
+  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_AREAS} object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function DETECTION_DISPATCHER:ProcessDetected( Detection )
     self:F2()
@@ -31430,15 +31731,15 @@ do -- DETECTION_DISPATCHER
 
 end--- This module contains the TASK_SEAD classes.
 -- 
--- 1) @{#TASK_SEAD} class, extends @{Tasking.Task#TASK}
+-- 1) @{#TASK_SEAD} class, extends @{Task#TASK}
 -- =================================================
 -- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units, located at a Target Zone, 
--- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
+-- based on the tasking capabilities defined in @{Task#TASK}.
 -- The TASK_SEAD is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#ACT_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
@@ -31508,15 +31809,15 @@ do -- TASK_SEAD
 end  
 --- (AI) (SP) (MP) Tasking for Air to Ground Processes.
 -- 
--- 1) @{#TASK_A2G} class, extends @{Tasking.Task#TASK}
+-- 1) @{#TASK_A2G} class, extends @{Task#TASK}
 -- =================================================
 -- The @{#TASK_A2G} class defines a CAS or BAI task of a @{Set} of Target Units, 
--- located at a Target Zone, based on the tasking capabilities defined in @{Tasking.Task#TASK}.
+-- located at a Target Zone, based on the tasking capabilities defined in @{Task#TASK}.
 -- The TASK_A2G is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#ACT_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 

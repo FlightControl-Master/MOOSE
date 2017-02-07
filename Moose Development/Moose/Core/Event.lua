@@ -1,53 +1,193 @@
---- This module contains the EVENT class.
+--- This core module models the dispatching of DCS Events to subscribed MOOSE classes,
+-- following a given priority.
+-- 
+-- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
 -- ===
 -- 
--- Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.
+-- # 1) Event Handling Overview
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia2.JPG)
+-- 
+-- Within a running mission, various DCS events occur. Units are dynamically created, crash, die, shoot stuff, get hit etc.
+-- This module provides a mechanism to dispatch those events occuring within your running mission, to the different objects orchestrating your mission.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia3.JPG)
+-- 
+-- Objects can subscribe to different events. The Event dispatcher will publish the received DCS events to the subscribed MOOSE objects, in a specified order.
+-- In this way, the subscribed MOOSE objects are kept in sync with your evolving running mission.
+-- 
+-- ## 1.1) Event Dispatching
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia4.JPG)
+-- 
+-- The _EVENTDISPATCHER object is automatically created within MOOSE, 
+-- and handles the dispatching of DCS Events occurring 
+-- in the simulator to the subscribed objects 
+-- in the correct processing order.
+--
+-- ![Objects](..\Presentations\EVENT\Dia5.JPG)
+-- 
+-- There are 5 levels of kind of objects that the _EVENTDISPATCHER services:
+-- 
+--  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
+--  * SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.
+--  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
+--  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia6.JPG)
+-- 
+-- For most DCS events, the above order of updating will be followed.1
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia7.JPG)
+-- 
+-- But for some DCS events, the publishing order is reversed. This is due to the fact that objects need to be **erased** instead of added.
+-- 
+-- ## 1.2) Event Handling
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia8.JPG)
+-- 
+-- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{BASE} class, @{UNIT} class and @{GROUP} class.
+-- The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia9.JPG)
+-- 
+-- The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
+-- and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.
+-- 
+-- ### 1.2.1 Subscribe / Unsubscribe to DCS Events
+-- 
+-- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
+-- So, when the DCS event occurs, the class will be notified of that event.
+-- There are two functions which you use to subscribe to or unsubscribe from an event.
+-- 
+--   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+-- 
+-- ### 1.3.2 Event Handling of DCS Events
+-- 
+-- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
+-- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- about the event that occurred.
+-- 
+-- Find below an example of the prototype how to write an event handling function for two units: 
+--
+--      local Tank1 = UNIT:FindByName( "Tank A" )
+--      local Tank2 = UNIT:FindByName( "Tank B" )
+--      
+--      -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+--      Tank1:HandleEvent( EVENTS.Dead )
+--      Tank2:HandleEvent( EVENTS.Dead )
+--      
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        self:SmokeGreen()
+--      end
+--
+--      --- This function is an Event Handling function that will be called when Tank2 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank2:OnEventDead( EventData )
+--
+--        self:SmokeBlue()
+--      end
+-- 
+-- ### 1.3.3 Event Handling methods that are automatically called upon subscribed DCS events
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia10.JPG)
+-- 
+-- The following list outlines which EVENTS item in the structure corresponds to which Event Handling method.
+-- Always ensure that your event handling methods align with the events being subscribed to, or nothing will be executed.
+-- 
+-- # 2) EVENTS type
+-- 
+-- The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
+-- @{Base#BASE.HandleEvent}() method.
+-- 
+-- # 3) EVENTDATA type
+-- 
+-- The EVENTDATA contains all the fields that are populated with event information before 
+-- an Event Handler method is being called by the event dispatcher.
+-- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
+-- There are basically 4 main categories of information stored in the EVENTDATA structure:
+-- 
+--    * Initiator Unit data: Several fields documenting the initiator unit related to the event.
+--    * Target Unit data: Several fields documenting the target unit related to the event.
+--    * Weapon data: Certain events populate weapon information.
+--    * Place data: Certain events populate place information.
+-- 
+-- Find below an overview which events populate which information categories:
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia14.JPG)
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+--   * 2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.
 -- 
 -- ===
 -- 
--- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
+-- # **AUTHORS and CONTRIBUTIONS**
 -- 
--- ===
+-- ### Contributions: 
 -- 
--- ### Contributions: -
--- ### Authors: FlightControl : Design & Programming
+-- ### Authors: 
 -- 
+--   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
+--
 -- @module Event
 
 --- The EVENT structure
 -- @type EVENT
 -- @field #EVENT.Events Events
+-- @extends Core.Base#BASE
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
 }
 
-local _EVENTCODES = {
-   "S_EVENT_SHOT",
-   "S_EVENT_HIT",
-   "S_EVENT_TAKEOFF",
-   "S_EVENT_LAND",
-   "S_EVENT_CRASH",
-   "S_EVENT_EJECTION",
-   "S_EVENT_REFUELING",
-   "S_EVENT_DEAD",
-   "S_EVENT_PILOT_DEAD",
-   "S_EVENT_BASE_CAPTURED",
-   "S_EVENT_MISSION_START",
-   "S_EVENT_MISSION_END",
-   "S_EVENT_TOOK_CONTROL",
-   "S_EVENT_REFUELING_STOP",
-   "S_EVENT_BIRTH",
-   "S_EVENT_HUMAN_FAILURE",
-   "S_EVENT_ENGINE_STARTUP",
-   "S_EVENT_ENGINE_SHUTDOWN",
-   "S_EVENT_PLAYER_ENTER_UNIT",
-   "S_EVENT_PLAYER_LEAVE_UNIT",
-   "S_EVENT_PLAYER_COMMENT",
-   "S_EVENT_SHOOTING_START",
-   "S_EVENT_SHOOTING_END",
-   "S_EVENT_MAX",
+--- The different types of events supported by MOOSE.
+-- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
+-- @type EVENTS
+EVENTS = {
+  Shot =              world.event.S_EVENT_SHOT,
+  Hit =               world.event.S_EVENT_HIT,
+  Takeoff =           world.event.S_EVENT_TAKEOFF,
+  Land =              world.event.S_EVENT_LAND,
+  Crash =             world.event.S_EVENT_CRASH,
+  Ejection =          world.event.S_EVENT_EJECTION,
+  Refueling =         world.event.S_EVENT_REFUELING,
+  Dead =              world.event.S_EVENT_DEAD,
+  PilotDead =         world.event.S_EVENT_PILOT_DEAD,
+  BaseCaptured =      world.event.S_EVENT_BASE_CAPTURED,
+  MissionStart =      world.event.S_EVENT_MISSION_START,
+  MissionEnd =        world.event.S_EVENT_MISSION_END,
+  TookControl =       world.event.S_EVENT_TOOK_CONTROL,
+  RefuelingStop =     world.event.S_EVENT_REFUELING_STOP,
+  Birth =             world.event.S_EVENT_BIRTH,
+  HumanFailure =      world.event.S_EVENT_HUMAN_FAILURE,
+  EngineStartup =     world.event.S_EVENT_ENGINE_STARTUP,
+  EngineShutdown =    world.event.S_EVENT_ENGINE_SHUTDOWN,
+  PlayerEnterUnit =   world.event.S_EVENT_PLAYER_ENTER_UNIT,
+  PlayerLeaveUnit =   world.event.S_EVENT_PLAYER_LEAVE_UNIT,
+  PlayerComment =     world.event.S_EVENT_PLAYER_COMMENT,
+  ShootingStart =     world.event.S_EVENT_SHOOTING_START,
+  ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
 }
 
 --- The Event structure
@@ -72,6 +212,126 @@ local _EVENTCODES = {
 -- @field WeaponName
 -- @field WeaponTgtDCSUnit
 
+
+local _EVENTMETA = {
+   [world.event.S_EVENT_SHOT] = {
+     Order = 1,
+     Event = "OnEventShot",
+     Text = "S_EVENT_SHOT" 
+   },
+   [world.event.S_EVENT_HIT] = {
+     Order = 1,
+     Event = "OnEventHit",
+     Text = "S_EVENT_HIT" 
+   },
+   [world.event.S_EVENT_TAKEOFF] = {
+     Order = 1,
+     Event = "OnEventTakeOff",
+     Text = "S_EVENT_TAKEOFF" 
+   },
+   [world.event.S_EVENT_LAND] = {
+     Order = 1,
+     Event = "OnEventLand",
+     Text = "S_EVENT_LAND" 
+   },
+   [world.event.S_EVENT_CRASH] = {
+     Order = -1,
+     Event = "OnEventCrash",
+     Text = "S_EVENT_CRASH" 
+   },
+   [world.event.S_EVENT_EJECTION] = {
+     Order = 1,
+     Event = "OnEventEjection",
+     Text = "S_EVENT_EJECTION" 
+   },
+   [world.event.S_EVENT_REFUELING] = {
+     Order = 1,
+     Event = "OnEventRefueling",
+     Text = "S_EVENT_REFUELING" 
+   },
+   [world.event.S_EVENT_DEAD] = {
+     Order = -1,
+     Event = "OnEventDead",
+     Text = "S_EVENT_DEAD" 
+   },
+   [world.event.S_EVENT_PILOT_DEAD] = {
+     Order = 1,
+     Event = "OnEventPilotDead",
+     Text = "S_EVENT_PILOT_DEAD" 
+   },
+   [world.event.S_EVENT_BASE_CAPTURED] = {
+     Order = 1,
+     Event = "OnEventBaseCaptured",
+     Text = "S_EVENT_BASE_CAPTURED" 
+   },
+   [world.event.S_EVENT_MISSION_START] = {
+     Order = 1,
+     Event = "OnEventMissionStart",
+     Text = "S_EVENT_MISSION_START" 
+   },
+   [world.event.S_EVENT_MISSION_END] = {
+     Order = 1,
+     Event = "OnEventMissionEnd",
+     Text = "S_EVENT_MISSION_END" 
+   },
+   [world.event.S_EVENT_TOOK_CONTROL] = {
+     Order = 1,
+     Event = "OnEventTookControl",
+     Text = "S_EVENT_TOOK_CONTROL" 
+   },
+   [world.event.S_EVENT_REFUELING_STOP] = {
+     Order = 1,
+     Event = "OnEventRefuelingStop",
+     Text = "S_EVENT_REFUELING_STOP" 
+   },
+   [world.event.S_EVENT_BIRTH] = {
+     Order = 1,
+     Event = "OnEventBirth",
+     Text = "S_EVENT_BIRTH" 
+   },
+   [world.event.S_EVENT_HUMAN_FAILURE] = {
+     Order = 1,
+     Event = "OnEventHumanFailure",
+     Text = "S_EVENT_HUMAN_FAILURE" 
+   },
+   [world.event.S_EVENT_ENGINE_STARTUP] = {
+     Order = 1,
+     Event = "OnEventEngineStartup",
+     Text = "S_EVENT_ENGINE_STARTUP" 
+   },
+   [world.event.S_EVENT_ENGINE_SHUTDOWN] = {
+     Order = 1,
+     Event = "OnEventEngineShutdown",
+     Text = "S_EVENT_ENGINE_SHUTDOWN" 
+   },
+   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = {
+     Order = 1,
+     Event = "OnEventPlayerEnterUnit",
+     Text = "S_EVENT_PLAYER_ENTER_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = {
+     Order = -1,
+     Event = "OnEventPlayerLeaveUnit",
+     Text = "S_EVENT_PLAYER_LEAVE_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_COMMENT] = {
+     Order = 1,
+     Event = "OnEventPlayerComment",
+     Text = "S_EVENT_PLAYER_COMMENT" 
+   },
+   [world.event.S_EVENT_SHOOTING_START] = {
+     Order = 1,
+     Event = "OnEventShootingStart",
+     Text = "S_EVENT_SHOOTING_START" 
+   },
+   [world.event.S_EVENT_SHOOTING_END] = {
+     Order = 1,
+     Event = "OnEventShootingEnd",
+     Text = "S_EVENT_SHOOTING_END" 
+   },
+}
+
+
 --- The Events structure
 -- @type EVENT.Events
 -- @field #number IniUnit
@@ -85,7 +345,7 @@ end
 
 function EVENT:EventText( EventID )
 
-  local EventText = _EVENTCODES[EventID]
+  local EventText = _EVENTMETA[EventID].Text
   
   return EventText
 end
@@ -97,18 +357,23 @@ end
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F3( { _EVENTCODES[EventID], EventClass } )
+  self:F3( { _EVENTMETA[EventID].Text, EventClass } )
 
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
     self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
-
   end
+  
+  -- Each event has a subtable of EventClasses, ordered by EventPriority.
+  local EventPriority = EventClass:GetEventPriority()
+  if not self.Events[EventID][EventPriority] then
+    self.Events[EventID][EventPriority] = {}
+  end 
 
-  if not self.Events[EventID][EventClass] then
-     self.Events[EventID][EventClass] = setmetatable( {}, { __mode = "k" } )
+  if not self.Events[EventID][EventPriority][EventClass] then
+     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "k" } )
   end
-  return self.Events[EventID][EventClass]
+  return self.Events[EventID][EventPriority][EventClass]
 end
 
 --- Removes an Events entry
@@ -117,21 +382,37 @@ end
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Remove( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTCODES[EventID] } )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
 
   local EventClass = EventClass
-  self.Events[EventID][EventClass] = nil
+  local EventPriority = EventClass:GetEventPriority()
+  self.Events[EventID][EventPriority][EventClass] = nil
 end
 
---- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
+--- Removes an Events entry for a Unit
+-- @param #EVENT self
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+-- @param Dcs.DCSWorld#world.event EventID
+-- @return #EVENT.Events
+function EVENT:RemoveForUnit( UnitName, EventClass, EventID  )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
+
+  local EventClass = EventClass
+  local EventPriority = EventClass:GetEventPriority()
+  local Event = self.Events[EventID][EventPriority][EventClass]
+  Event.IniUnit[UnitName] = nil
+end
+
+--- Clears all event subscriptions for a @{Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )
   self:F3( { EventObject:GetClassNameAndID() } )
 
   local EventClass = EventObject:GetClassNameAndID()
+  local EventPriority = EventClass:GetEventPriority()
   for EventID, EventData in pairs( self.Events ) do
-    self.Events[EventID][EventClass] = nil
+    self.Events[EventID][EventPriority][EventClass] = nil
   end
 end
 
@@ -165,6 +446,7 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   local Event = self:Init( EventID, EventClass )
   Event.EventFunction = EventFunction
   Event.EventClass = EventClass
+  
   return self
 end
 
@@ -650,7 +932,7 @@ do -- OnHit
     self:Remove( EventClass, world.event.S_EVENT_HIT )
     
     return self
-  end
+  end 
 
 end
 
@@ -741,6 +1023,8 @@ function EVENT:onEvent( Event )
       Event.IniDCSGroupName = ""
       if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
         Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+        self:E( { IniGroup = Event.IniGroup } )
       end
     end
     if Event.target then
@@ -761,29 +1045,95 @@ function EVENT:onEvent( Event )
       Event.WeaponName = Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
-    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName } )
     
-    -- Okay, we got the event from DCS. Now loop the self.Events[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
-    for EventClass, EventData in pairs( self.Events[Event.id] ) do
-      -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
-      if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-        self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName } )
-        local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
-        --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
-      else
-        -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
-        -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-        if Event.IniDCSUnit and not EventData.IniUnit then
-          if EventClass == EventData.EventClass then
-            self:T( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID() } )
-            local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
-            --EventData.EventFunction( EventData.EventClass, Event )
+    local PriorityOrder = _EVENTMETA[Event.id].Order
+    local PriorityBegin = PriorityOrder == -1 and 5 or 1
+    local PriorityEnd = PriorityOrder == -1 and 1 or 5
+
+    self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    
+    for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
+    
+      if self.Events[Event.id][EventPriority] then
+      
+        -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
+        for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
+        
+          -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
+          if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+
+            -- First test if a EventFunction is Set, otherwise search for the default function
+            if EventData.IniUnit[Event.IniDCSUnitName].EventFunction then
+          
+              self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+              Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+              local Result, Value = xpcall( 
+                function() 
+                  return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
+                end, ErrorHandler )
+
+            else
+
+              -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+              local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+              if EventFunction and type( EventFunction ) == "function" then
+                
+                -- Now call the default event function.
+                self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                
+                local Result, Value = xpcall( 
+                  function() 
+                    return EventFunction( EventClass, Event ) 
+                  end, ErrorHandler )
+              end
+              
+            end
+          
+          else
+          
+            -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
+            -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
+            if Event.IniDCSUnit and not EventData.IniUnit then
+            
+              if EventClass == EventData.EventClass then
+                
+                -- First test if a EventFunction is Set, otherwise search for the default function
+                if EventData.EventFunction then
+                  
+                  -- There is an EventFunction defined, so call the EventFunction.
+                  self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+                else
+                  
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+                  end
+                end
+              end
+            end
           end
         end
       end
     end
   else
-    self:E( { _EVENTCODES[Event.id], Event } )    
+    self:E( { _EVENTMETA[Event.id].Text, Event } )    
   end
 end
 

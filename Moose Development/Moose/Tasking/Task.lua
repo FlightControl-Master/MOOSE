@@ -1,6 +1,6 @@
 --- This module contains the TASK class.
 -- 
--- 1) @{#TASK} class, extends @{Core.Base#BASE}
+-- 1) @{#TASK} class, extends @{Base#BASE}
 -- ============================================
 -- 1.1) The @{#TASK} class implements the methods for task orchestration within MOOSE. 
 -- ----------------------------------------------------------------------------------------
@@ -181,31 +181,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
-
-  -- Handle the birth of new planes within the assigned set.
-  
-
-  -- Handle when a player crashes ... 
-  -- The Task is UnAssigned from the Unit.
-  -- When there is no Unit left running the Task, and all of the Players crashed, the Task goes into Failed ...
---  self:EventOnCrash(
---    --- @param #TASK self
---    -- @param Core.Event#EVENTDATA EventData
---    function( self, EventData )
---      self:E( "In LeaveUnit" )
---      self:E( { "State", self:GetState() } )
---      if self:IsStateAssigned() then
---        local TaskUnit = EventData.IniUnit
---        local TaskGroup = EventData.IniUnit:GetGroup()
---        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
---        if self.SetGroup:IsIncludeObject( TaskGroup ) then
---          self:UnAssignFromUnit( TaskUnit )
---        end
---        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
---      end
---    end
---  )
---  
   
   Mission:AddTask( self )
   
@@ -234,14 +209,14 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
+-- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of the Task.
-function TASK:JoinUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
+function TASK:JoinUnit( PlayerUnit, PlayerGroup )
+  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -394,7 +369,6 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  self:GetGroups():FilterOnce() -- Ensure that the filter is updated.
   return self:GetGroups():IsIncludeObject( FindGroup )
 
 end

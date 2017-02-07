@@ -2,14 +2,14 @@
 -- 
 -- ===
 -- 
--- 1) @{Functional.Detection#DETECTION_BASE} class, extends @{Core.Base#BASE}
+-- 1) @{Detection#DETECTION_BASE} class, extends @{Base#BASE}
 -- ==========================================================
--- The @{Functional.Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
--- The @{Functional.Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
+-- The @{Detection#DETECTION_BASE} class defines the core functions to administer detected objects.
+-- The @{Detection#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
 -- 
 -- 1.1) DETECTION_BASE constructor
 -- -------------------------------
--- Construct a new DETECTION_BASE instance using the @{Functional.Detection#DETECTION_BASE.New}() method.
+-- Construct a new DETECTION_BASE instance using the @{Detection#DETECTION_BASE.New}() method.
 -- 
 -- 1.2) DETECTION_BASE initialization
 -- ----------------------------------
@@ -20,46 +20,46 @@
 -- 
 -- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
 -- 
---   * @{Functional.Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
---   * @{Functional.Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
+--   * @{Detection#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
+--   * @{Detection#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
+--   * @{Detection#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
+--   * @{Detection#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
+--   * @{Detection#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
+--   * @{Detection#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
 -- 
 -- 1.3) Obtain objects detected by DETECTION_BASE
 -- ----------------------------------------------
--- DETECTION_BASE builds @{Set}s of objects detected. These @{Core.Set#SET_BASE}s can be retrieved using the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}().
--- The method will return a list (table) of @{Core.Set#SET_BASE} objects.
+-- DETECTION_BASE builds @{Set}s of objects detected. These @{Set#SET_BASE}s can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSets}().
+-- The method will return a list (table) of @{Set#SET_BASE} objects.
 -- 
 -- ===
 -- 
--- 2) @{Functional.Detection#DETECTION_AREAS} class, extends @{Functional.Detection#DETECTION_BASE}
+-- 2) @{Detection#DETECTION_AREAS} class, extends @{Detection#DETECTION_BASE}
 -- ===============================================================================
--- The @{Functional.Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
--- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
+-- The @{Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
+-- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
 -- The class is group the detected units within zones given a DetectedZoneRange parameter.
 -- A set with multiple detected zones will be created as there are groups of units detected.
 -- 
 -- 2.1) Retrieve the Detected Unit sets and Detected Zones
 -- -------------------------------------------------------
--- The DetectedUnitSets methods are implemented in @{Functional.Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Functional.Detection#DETECTION_AREAS}.
+-- The DetectedUnitSets methods are implemented in @{Detection#DECTECTION_BASE} and the DetectedZones methods is implemented in @{Detection#DETECTION_AREAS}.
 -- 
--- Retrieve the DetectedUnitSets with the method @{Functional.Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Core.Set#SET_UNIT}s.
--- To understand the amount of sets created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSetCount}(). 
--- If you want to obtain a specific set from the DetectedSets, use the method @{Functional.Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
+-- Retrieve the DetectedUnitSets with the method @{Detection#DETECTION_BASE.GetDetectedSets}(). A table will be return of @{Set#SET_UNIT}s.
+-- To understand the amount of sets created, use the method @{Detection#DETECTION_BASE.GetDetectedSetCount}(). 
+-- If you want to obtain a specific set from the DetectedSets, use the method @{Detection#DETECTION_BASE.GetDetectedSet}() with a given index.
 -- 
--- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZones}().
--- To understand the amount of zones created, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
--- If you want to obtain a specific zone from the DetectedZones, use the method @{Functional.Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+-- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
+-- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
+-- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
 -- 
 -- 1.4) Flare or Smoke detected units
 -- ----------------------------------
--- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
 -- 
 -- 1.5) Flare or Smoke detected zones
 -- ----------------------------------
--- Use the methods @{Functional.Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Functional.Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
+-- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
 -- 
 -- ===
 -- 
@@ -245,7 +245,7 @@ function DETECTION_BASE:GetDetectedObject( ObjectName )
   return nil
 end
 
---- Get the detected @{Core.Set#SET_BASE}s.
+--- Get the detected @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 -- @return #DETECTION_BASE.DetectedSets DetectedSets
 function DETECTION_BASE:GetDetectedSets()
@@ -308,12 +308,12 @@ function DETECTION_BASE:Schedule( DelayTime, RepeatInterval )
   self.ScheduleDelayTime = DelayTime
   self.ScheduleRepeatInterval = RepeatInterval
   
-  self.DetectionScheduler = SCHEDULER:New(self, self._DetectionScheduler, { self, "Detection" }, DelayTime, RepeatInterval )
+  self.DetectionScheduler = SCHEDULER:New( self, self._DetectionScheduler, { self, "Detection" }, DelayTime, RepeatInterval )
   return self
 end
 
 
---- Form @{Set}s of detected @{Wrapper.Unit#UNIT}s in an array of @{Core.Set#SET_BASE}s.
+--- Form @{Set}s of detected @{Unit#UNIT}s in an array of @{Set#SET_BASE}s.
 -- @param #DETECTION_BASE self
 function DETECTION_BASE:_DetectionScheduler( SchedulerName )
   self:F2( { SchedulerName } )
@@ -433,7 +433,7 @@ function DETECTION_AREAS:New( DetectionSetGroup, DetectionRange, DetectionZoneRa
   self._SmokeDetectedZones = false
   self._FlareDetectedZones = false
   
-  self:Schedule( 0, 30 )
+  self:Schedule( 10, 10 )
 
   return self
 end
@@ -487,7 +487,7 @@ function DETECTION_AREAS:GetDetectedAreaCount()
   return DetectedAreaCount
 end
 
---- Get the @{Core.Set#SET_UNIT} of a detecttion area using a given numeric index.
+--- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Core.Set#SET_UNIT DetectedSet
@@ -501,7 +501,7 @@ function DETECTION_AREAS:GetDetectedSet( Index )
   return nil
 end
 
---- Get the @{Core.Zone#ZONE_UNIT} of a detection area using a given numeric index.
+--- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
 -- @param #DETECTION_AREAS self
 -- @param #number Index
 -- @return Core.Zone#ZONE_UNIT DetectedZone

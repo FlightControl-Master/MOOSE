@@ -1,6 +1,6 @@
 --- This module contains the IDENTIFIABLE class.
 -- 
--- 1) @{#IDENTIFIABLE} class, extends @{Wrapper.Object#OBJECT}
+-- 1) @{#IDENTIFIABLE} class, extends @{Object#OBJECT}
 -- ===============================================================
 -- The @{#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
 --

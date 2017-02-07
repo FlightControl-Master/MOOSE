@@ -1,28 +1,28 @@
 --- This module contains the SCHEDULER class.
 --
--- # 1) @{Core.Scheduler#SCHEDULER} class, extends @{Core.Base#BASE}
+-- # 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
 -- 
--- The @{Core.Scheduler#SCHEDULER} class creates schedule.
+-- The @{Scheduler#SCHEDULER} class creates schedule.
 --
 -- ## 1.1) SCHEDULER constructor
 -- 
 -- The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:
 --
---  * @{Core.Scheduler#SCHEDULER.New}( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.
---  * @{Core.Scheduler#SCHEDULER.New}( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.
---  * @{Core.Scheduler#SCHEDULER.New}( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
---  * @{Core.Scheduler#SCHEDULER.New}( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
+--  * @{Scheduler#SCHEDULER.New}( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.
+--  * @{Scheduler#SCHEDULER.New}( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.
+--  * @{Scheduler#SCHEDULER.New}( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
+--  * @{Scheduler#SCHEDULER.New}( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.
 --
 -- ## 1.2) SCHEDULER timer stopping and (re-)starting.
 --
 -- The SCHEDULER can be stopped and restarted with the following methods:
 --
---  * @{Core.Scheduler#SCHEDULER.Start}(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.
---  * @{Core.Scheduler#SCHEDULER.Stop}(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.
+--  * @{Scheduler#SCHEDULER.Start}(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.
+--  * @{Scheduler#SCHEDULER.Stop}(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.
 --
 -- ## 1.3) Create a new schedule
 -- 
--- With @{Core.Scheduler#SCHEDULER.Schedule}() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.
+-- With @{Scheduler#SCHEDULER.Schedule}() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.
 --
 -- ===
 --
@@ -61,7 +61,7 @@ SCHEDULER = {
 -- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
--- @return #SCHEDULER self
+-- @return #SCHEDULER self.
 -- @return #number The ScheduleID of the planned schedule.
 function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
   local self = BASE:Inherit( self, BASE:New() )

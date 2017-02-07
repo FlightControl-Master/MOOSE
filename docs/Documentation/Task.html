@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,7 +75,7 @@
 
    
 
-<h1>1) <a href="##(TASK)">#TASK</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
+<h1>1) <a href="##(TASK)">#TASK</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <h2>1.1) The <a href="##(TASK)">#TASK</a> class implements the methods for task orchestration within MOOSE. </h2>
 <p>The class provides a couple of methods to:</p>
 
@@ -327,7 +328,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).JoinUnit">TASK:JoinUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).JoinUnit">TASK:JoinUnit(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>Add a PlayerUnit to join the Task.</p>
 </td>
@@ -1310,7 +1311,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).JoinUnit" >
-<strong>TASK:JoinUnit(PlayerUnit)</strong>
+<strong>TASK:JoinUnit(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1322,12 +1323,18 @@ self</p>
 If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
 The CLIENT or UNIT of the Player joining the Mission.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> PlayerGroup </em></code>: 
+The GROUP of the player joining the Mission.</p>
 
 				</li>
 		</ul>

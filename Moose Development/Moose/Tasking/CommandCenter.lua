@@ -66,7 +66,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 	
 	self.Missions = {}
 
-  self:EventOnBirth(
+  self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
     --- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
@@ -81,7 +81,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
       
@@ -93,14 +94,15 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- - Set the correct menu.
   -- - Assign the PlayerUnit to the Task if required.
   -- - Send a message to the other players in the group that this player has joined.
-  self:EventOnPlayerEnterUnit(
+  self:HandleEvent( EVENTS.PlayerEnterUnit,
     --- @param #COMMANDCENTER self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:JoinUnit( PlayerUnit )
+        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+        Mission:JoinUnit( PlayerUnit, PlayerGroup )
         Mission:ReportDetails()
       end
     end
@@ -109,12 +111,13 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:EventOnPlayerLeaveUnit(
+  self:HandleEvent( EVENTS.PlayerLeaveUnit,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
         Mission:AbortUnit( PlayerUnit )
       end
     end
@@ -123,7 +126,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:EventOnCrash(
+  self:HandleEvent( EVENTS.Crash,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )

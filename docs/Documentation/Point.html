@@ -33,6 +33,7 @@
 					<li><a href="Controllable.html">Controllable</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
@@ -74,8 +75,8 @@
 
    
 
-<h1>1) <a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> class, extends <a href="Core.Base.html##(BASE)">Core.Base#BASE</a></h1>
-<p>The <a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> class defines a 3D point in the simulator.</p>
+<h1>1) <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class defines a 3D point in the simulator.</p>
 
 <p><strong>Important Note:</strong> Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.</p>
@@ -84,20 +85,20 @@ In order to keep the credibility of the the author, I want to emphasize that the
 <p>A new POINT_VEC3 instance can be created with:</p>
 
 <ul>
-    <li><a href="##(POINT_VEC3).New">POINT_VEC3.New</a>(): a 3D point.</li>
-    <li><a href="##(POINT_VEC3).NewFromVec3">POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>.</li>
+    <li><a href="Point.html##(POINT_VEC3).New">Point#POINT_VEC3.New</a>(): a 3D point.</li>
+    <li><a href="Point.html##(POINT_VEC3).NewFromVec3">Point#POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
 </ul>
 
 
-<h1>2) <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> class, extends <a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a></h1>
-<p>The <a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.</p>
+<h1>2) <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
+<p>The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.</p>
 
 <h2>2.1) POINT_VEC2 constructor</h2>
 <p>A new POINT_VEC2 instance can be created with:</p>
 
 <ul>
-    <li><a href="##(POINT_VEC2).New">POINT_VEC2.New</a>(): a 2D point, taking an additional height parameter.</li>
-    <li><a href="##(POINT_VEC2).NewFromVec2">POINT_VEC2.NewFromVec2</a>(): a 2D point created from a <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</li>
+    <li><a href="Point.html##(POINT_VEC2).New">Point#POINT_VEC2.New</a>(): a 2D point, taking an additional height parameter.</li>
+    <li><a href="Point.html##(POINT_VEC2).NewFromVec2">Point#POINT_VEC2.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
 </ul>
 
 <hr/>
@@ -165,7 +166,7 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromVec2">POINT_VEC2:DistanceFromVec2(Vec2Reference)</a></td>
 		<td class="summary">
-<p>Calculate the distance from a reference <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -668,21 +669,21 @@ The distance from the reference <a href="##(POINT_VEC2)">#POINT_VEC2</a> in mete
 </dt>
 <dd>
 	
-<p>Calculate the distance from a reference <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2Reference </em></code>: 
-The reference <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>.</p>
+The reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
-The distance from the reference <a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> in meters.</p>
+The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> in meters.</p>
 
 </dd>
 </dl>
