@@ -33,58 +33,149 @@ EVENT = {
   ClassID = 0,
 }
 
-local _EVENTCODES = {
-   "S_EVENT_SHOT",
-   "S_EVENT_HIT",
-   "S_EVENT_TAKEOFF",
-   "S_EVENT_LAND",
-   "S_EVENT_CRASH",
-   "S_EVENT_EJECTION",
-   "S_EVENT_REFUELING",
-   "S_EVENT_DEAD",
-   "S_EVENT_PILOT_DEAD",
-   "S_EVENT_BASE_CAPTURED",
-   "S_EVENT_MISSION_START",
-   "S_EVENT_MISSION_END",
-   "S_EVENT_TOOK_CONTROL",
-   "S_EVENT_REFUELING_STOP",
-   "S_EVENT_BIRTH",
-   "S_EVENT_HUMAN_FAILURE",
-   "S_EVENT_ENGINE_STARTUP",
-   "S_EVENT_ENGINE_SHUTDOWN",
-   "S_EVENT_PLAYER_ENTER_UNIT",
-   "S_EVENT_PLAYER_LEAVE_UNIT",
-   "S_EVENT_PLAYER_COMMENT",
-   "S_EVENT_SHOOTING_START",
-   "S_EVENT_SHOOTING_END",
-   "S_EVENT_MAX",
+EVENTS = {
+  Shot =              world.event.S_EVENT_SHOT,
+  Hit =               world.event.S_EVENT_HIT,
+  Takeoff =           world.event.S_EVENT_TAKEOFF,
+  Land =              world.event.S_EVENT_LAND,
+  Crash =             world.event.S_EVENT_CRASH,
+  Ejection =          world.event.S_EVENT_EJECTION,
+  Refueling =         world.event.S_EVENT_REFUELING,
+  Dead =              world.event.S_EVENT_DEAD,
+  PilotDead =         world.event.S_EVENT_PILOT_DEAD,
+  BaseCaptured =      world.event.S_EVENT_BASE_CAPTURED,
+  MissionStart =      world.event.S_EVENT_MISSION_START,
+  MissionEnd =        world.event.S_EVENT_MISSION_END,
+  TookControl =       world.event.S_EVENT_TOOK_CONTROL,
+  RefuelingStop =     world.event.S_EVENT_REFUELING_STOP,
+  Birth =             world.event.S_EVENT_BIRTH,
+  HumanFailure =      world.event.S_EVENT_HUMAN_FAILURE,
+  EngineStartup =     world.event.S_EVENT_ENGINE_STARTUP,
+  EngineShutDown =    world.event.S_EVENT_ENGINE_SHUTDOWN,
+  PlayerEnterUnit =   world.event.S_EVENT_PLAYER_ENTER_UNIT,
+  PlayerLeaveUnit =   world.event.S_EVENT_PLAYER_LEAVE_UNIT,
+  PlayerComment =     world.event.S_EVENT_PLAYER_COMMENT,
+  ShootingStart =     world.event.S_EVENT_SHOOTING_START,
+  ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
 }
 
-local _EVENTORDER = {
-   [world.event.S_EVENT_SHOT] = 1,
-   [world.event.S_EVENT_HIT] = 1,
-   [world.event.S_EVENT_TAKEOFF] = 1,
-   [world.event.S_EVENT_LAND] = 1,
-   [world.event.S_EVENT_CRASH] = -1,
-   [world.event.S_EVENT_EJECTION] = -1,
-   [world.event.S_EVENT_REFUELING] = 1,
-   [world.event.S_EVENT_DEAD] = -1,
-   [world.event.S_EVENT_PILOT_DEAD] = -1,
-   [world.event.S_EVENT_BASE_CAPTURED] = 1,
-   [world.event.S_EVENT_MISSION_START] = 1,
-   [world.event.S_EVENT_MISSION_END] = -1,
-   [world.event.S_EVENT_TOOK_CONTROL] = 1,
-   [world.event.S_EVENT_REFUELING_STOP] = 1,
-   [world.event.S_EVENT_BIRTH] = 1,
-   [world.event.S_EVENT_HUMAN_FAILURE] = 1,
-   [world.event.S_EVENT_ENGINE_STARTUP] = 1,
-   [world.event.S_EVENT_ENGINE_SHUTDOWN] = 1,
-   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = 1,
-   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = -1,
-   [world.event.S_EVENT_PLAYER_COMMENT] = 1,
-   [world.event.S_EVENT_SHOOTING_START] = 1,
-   [world.event.S_EVENT_SHOOTING_END] = 1,
-   [world.event.S_EVENT_MAX] = 1,
+
+local _EVENTMETA = {
+   [world.event.S_EVENT_SHOT] = {
+     Order = 1,
+     Event = "OnEventShot",
+     Text = "S_EVENT_SHOT" 
+   },
+   [world.event.S_EVENT_HIT] = {
+     Order = 1,
+     Event = "OnEventHit",
+     Text = "S_EVENT_HIT" 
+   },
+   [world.event.S_EVENT_TAKEOFF] = {
+     Order = 1,
+     Event = "OnEventTakeOff",
+     Text = "S_EVENT_TAKEOFF" 
+   },
+   [world.event.S_EVENT_LAND] = {
+     Order = 1,
+     Event = "OnEventLand",
+     Text = "S_EVENT_LAND" 
+   },
+   [world.event.S_EVENT_CRASH] = {
+     Order = -1,
+     Event = "OnEventCrash",
+     Text = "S_EVENT_CRASH" 
+   },
+   [world.event.S_EVENT_EJECTION] = {
+     Order = 1,
+     Event = "OnEventEjection",
+     Text = "S_EVENT_EJECTION" 
+   },
+   [world.event.S_EVENT_REFUELING] = {
+     Order = 1,
+     Event = "OnEventRefueling",
+     Text = "S_EVENT_REFUELING" 
+   },
+   [world.event.S_EVENT_DEAD] = {
+     Order = -1,
+     Event = "OnEventDead",
+     Text = "S_EVENT_DEAD" 
+   },
+   [world.event.S_EVENT_PILOT_DEAD] = {
+     Order = 1,
+     Event = "OnEventPilotDead",
+     Text = "S_EVENT_PILOT_DEAD" 
+   },
+   [world.event.S_EVENT_BASE_CAPTURED] = {
+     Order = 1,
+     Event = "OnEventBaseCaptured",
+     Text = "S_EVENT_BASE_CAPTURED" 
+   },
+   [world.event.S_EVENT_MISSION_START] = {
+     Order = 1,
+     Event = "OnEventMissionStart",
+     Text = "S_EVENT_MISSION_START" 
+   },
+   [world.event.S_EVENT_MISSION_END] = {
+     Order = 1,
+     Event = "OnEventMissionEnd",
+     Text = "S_EVENT_MISSION_END" 
+   },
+   [world.event.S_EVENT_TOOK_CONTROL] = {
+     Order = 1,
+     Event = "OnEventTookControl",
+     Text = "S_EVENT_TOOK_CONTROL" 
+   },
+   [world.event.S_EVENT_REFUELING_STOP] = {
+     Order = 1,
+     Event = "OnEventRefuelingStop",
+     Text = "S_EVENT_REFUELING_STOP" 
+   },
+   [world.event.S_EVENT_BIRTH] = {
+     Order = 1,
+     Event = "OnEventBirth",
+     Text = "S_EVENT_BIRTH" 
+   },
+   [world.event.S_EVENT_HUMAN_FAILURE] = {
+     Order = 1,
+     Event = "OnEventHumanFailure",
+     Text = "S_EVENT_HUMAN_FAILURE" 
+   },
+   [world.event.S_EVENT_ENGINE_STARTUP] = {
+     Order = 1,
+     Event = "OnEventEngineStartup",
+     Text = "S_EVENT_ENGINE_STARTUP" 
+   },
+   [world.event.S_EVENT_ENGINE_SHUTDOWN] = {
+     Order = 1,
+     Event = "OnEventEngineShutdown",
+     Text = "S_EVENT_ENGINE_SHUTDOWN" 
+   },
+   [world.event.S_EVENT_PLAYER_ENTER_UNIT] = {
+     Order = 1,
+     Event = "OnEventPlayerEnterUnit",
+     Text = "S_EVENT_PLAYER_ENTER_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = {
+     Order = 1,
+     Event = "OnEventPlayerLeaveUnit",
+     Text = "S_EVENT_PLAYER_LEAVE_UNIT" 
+   },
+   [world.event.S_EVENT_PLAYER_COMMENT] = {
+     Order = 1,
+     Event = "OnEventPlayerComment",
+     Text = "S_EVENT_PLAYER_COMMENT" 
+   },
+   [world.event.S_EVENT_SHOOTING_START] = {
+     Order = 1,
+     Event = "OnEventShootingStart",
+     Text = "S_EVENT_SHOOTING_START" 
+   },
+   [world.event.S_EVENT_SHOOTING_END] = {
+     Order = 1,
+     Event = "OnEventShootingEnd",
+     Text = "S_EVENT_SHOOTING_END" 
+   },
 }
 
 --- The Event structure
@@ -122,7 +213,7 @@ end
 
 function EVENT:EventText( EventID )
 
-  local EventText = _EVENTCODES[EventID]
+  local EventText = _EVENTMETA[EventID].Text
   
   return EventText
 end
@@ -134,7 +225,7 @@ end
 -- @param Core.Base#BASE EventClass
 -- @return #EVENT.Events
 function EVENT:Init( EventID, EventClass )
-  self:F3( { _EVENTCODES[EventID], EventClass } )
+  self:F3( { _EVENTMETA[EventID].Text, EventClass } )
 
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
@@ -159,11 +250,25 @@ end
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Remove( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTCODES[EventID] } )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
 
   local EventClass = EventClass
   local EventPriority = EventClass:GetEventPriority()
   self.Events[EventID][EventPriority][EventClass] = nil
+end
+
+--- Removes an Events entry for a Unit
+-- @param #EVENT self
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+-- @param Dcs.DCSWorld#world.event EventID
+-- @return #EVENT.Events
+function EVENT:RemoveForUnit( UnitName, EventClass, EventID  )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
+
+  local EventClass = EventClass
+  local EventPriority = EventClass:GetEventPriority()
+  local Event = self.Events[EventID][EventPriority][EventClass]
+  Event.IniUnit[UnitName] = nil
 end
 
 --- Clears all event subscriptions for a @{Base#BASE} derived object.
@@ -809,11 +914,11 @@ function EVENT:onEvent( Event )
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
-    local PriorityOrder = _EVENTORDER[Event.id]
+    local PriorityOrder = _EVENTMETA[Event.id].Order
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
-    self:E( { _EVENTCODES[Event.id], Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
     
@@ -824,19 +929,71 @@ function EVENT:onEvent( Event )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
           if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
-            self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-            Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-            local Result, Value = xpcall( function() return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event ) end, ErrorHandler )
-            --EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventData.IniUnit[Event.IniDCSUnitName].EventClass, Event )
+
+            -- First test if a EventFunction is Set, otherwise search for the default function
+            if EventData.IniUnit[Event.IniDCSUnitName].EventFunction then
+          
+              self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+              Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+              local Result, Value = xpcall( 
+                function() 
+                  return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
+                end, ErrorHandler )
+
+            else
+
+              -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+              local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+              if EventFunction and type( EventFunction ) == "function" then
+                
+                -- Now call the default event function.
+                self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                
+                local Result, Value = xpcall( 
+                  function() 
+                    return EventFunction( EventClass, Event ) 
+                  end, ErrorHandler )
+              end
+              
+            end
+          
           else
+          
             -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
             -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
             if Event.IniDCSUnit and not EventData.IniUnit then
+            
               if EventClass == EventData.EventClass then
-                self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-                local Result, Value = xpcall( function() return EventData.EventFunction( EventData.EventClass, Event ) end, ErrorHandler )
-                --EventData.EventFunction( EventData.EventClass, Event )
+                
+                -- First test if a EventFunction is Set, otherwise search for the default function
+                if EventData.EventFunction then
+                  
+                  -- There is an EventFunction defined, so call the EventFunction.
+                  self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+                else
+                  
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+                  end
+                end
               end
             end
           end
@@ -844,7 +1001,7 @@ function EVENT:onEvent( Event )
       end
     end
   else
-    self:E( { _EVENTCODES[Event.id], Event } )    
+    self:E( { _EVENTMETA[Event.id].Text, Event } )    
   end
 end
 

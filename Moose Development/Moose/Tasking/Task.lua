@@ -181,31 +181,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
-
-  -- Handle the birth of new planes within the assigned set.
-  
-
-  -- Handle when a player crashes ... 
-  -- The Task is UnAssigned from the Unit.
-  -- When there is no Unit left running the Task, and all of the Players crashed, the Task goes into Failed ...
---  self:EventOnCrash(
---    --- @param #TASK self
---    -- @param Core.Event#EVENTDATA EventData
---    function( self, EventData )
---      self:E( "In LeaveUnit" )
---      self:E( { "State", self:GetState() } )
---      if self:IsStateAssigned() then
---        local TaskUnit = EventData.IniUnit
---        local TaskGroup = EventData.IniUnit:GetGroup()
---        self:E( self.SetGroup:IsIncludeObject( TaskGroup ) )
---        if self.SetGroup:IsIncludeObject( TaskGroup ) then
---          self:UnAssignFromUnit( TaskUnit )
---        end
---        self:MessageToGroups( TaskUnit:GetPlayerName() .. " crashed!, and has aborted Task " .. self:GetName() )
---      end
---    end
---  )
---  
   
   Mission:AddTask( self )
   

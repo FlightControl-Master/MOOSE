@@ -51,9 +51,9 @@ function SCORING:New( GameName )
   end
   
   
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnHit( self._EventOnHit, self )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Hit, self._EventOnHit )
 
   --self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
   self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )

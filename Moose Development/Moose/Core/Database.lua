@@ -86,13 +86,13 @@ function DATABASE:New()
 
   self:SetEventPriority( 1 )
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self.HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  self.HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self.HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()

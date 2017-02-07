@@ -59,53 +59,50 @@
 -- 
 -- The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
 -- and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.
--- Therefore, the BASE class exposes the following event handling functions:
 -- 
---   * @{#BASE.EventOnBirth}(): Handle the birth of a new unit.
---   * @{#BASE.EventOnBaseCaptured}(): Handle the capturing of an airbase or a helipad.
---   * @{#BASE.EventOnCrash}(): Handle the crash of a unit.
---   * @{#BASE.EventOnDead}(): Handle the death of a unit.
---   * @{#BASE.EventOnEjection}(): Handle the ejection of a player out of an airplane.
---   * @{#BASE.EventOnEngineShutdown}(): Handle the shutdown of an engine.
---   * @{#BASE.EventOnEngineStartup}(): Handle the startup of an engine.
---   * @{#BASE.EventOnHit}(): Handle the hit of a shell to a unit.
---   * @{#BASE.EventOnHumanFailure}(): No a clue ...
---   * @{#BASE.EventOnLand}(): Handle the event when a unit lands. 
---   * @{#BASE.EventOnMissionStart}(): Handle the start of the mission.
---   * @{#BASE.EventOnPilotDead}(): Handle the event when a pilot is dead.
---   * @{#BASE.EventOnPlayerComment}(): Handle the event when a player posts a comment.
---   * @{#BASE.EventOnPlayerEnterUnit}(): Handle the event when a player enters a unit.
---   * @{#BASE.EventOnPlayerLeaveUnit}(): Handle the event when a player leaves a unit.
---   * @{#BASE.EventOnBirthPlayerMissionEnd}(): Handle the event when a player ends the mission. (Not a clue what that does).
---   * @{#BASE.EventOnRefueling}(): Handle the event when a unit is refueling. 
---   * @{#BASE.EventOnShootingEnd}(): Handle the event when a unit starts shooting (guns).
---   * @{#BASE.EventOnShootingStart}(): Handle the event when a unit ends shooting (guns). 
---   * @{#BASE.EventOnShot}(): Handle the event when a unit shot a missile.
---   * @{#BASE.EventOnTakeOff}(): Handle the event when a unit takes off from a runway.
---   * @{#BASE.EventOnTookControl}(): Handle the event when a player takes control of a unit.
+-- ### 1.3.1 Subscribe / Unsubscribe to DCS Events
 -- 
--- The EventOn() methods provide the @{Event#EVENTDATA} structure to the event handling function. 
--- The @{Event#EVENTDATA} structure contains an enriched data set of information about the event being handled.
+-- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
+-- So, when the DCS event occurs, the class will be notified of that event.
+-- There are two functions which you use to subscribe to or unsubscribe from an event.
 -- 
--- Find below an example of the prototype how to write an event handling function: 
+--   * @{#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+-- 
+-- ### 1.3.2 Event Handling of DCS Events
+-- 
+-- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
+-- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- about the event that occurred.
+-- 
+-- Find below an example of the prototype how to write an event handling function for two units: 
 --
---      CommandCenter:EventOnPlayerEnterUnit(
---        --- @param #COMMANDCENTER self
---        -- @param Core.Event#EVENTDATA EventData
---        function( self, EventData )
---          local PlayerUnit = EventData.IniUnit
---          for MissionID, Mission in pairs( self:GetMissions() ) do
---            local Mission = Mission -- Tasking.Mission#MISSION
---            Mission:JoinUnit( PlayerUnit )
---            Mission:ReportDetails()
---          end
---        end
---        )
+--      local Tank1 = UNIT:FindByName( "Tank A" )
+--      local Tank2 = UNIT:FindByName( "Tank B" )
+--      
+--      -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+--      Tank1:HandleEvent( EVENTS.Dead )
+--      Tank2:HandleEvent( EVENTS.Dead )
+--      
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        self:SmokeGreen()
+--      end
+--
+--      --- This function is an Event Handling function that will be called when Tank2 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank2:OnEventDead( EventData )
+--
+--        self:SmokeBlue()
+--      end
 -- 
--- Note the function( self, EventData ). It takes two parameters:
 -- 
---   * self = the object that is handling the EventOnPlayerEnterUnit.
---   * EventData = the @{Event#EVENTDATA} structure, containing more information of the Event.
+-- 
+-- See the @{Event} module for more information about event handling.
 -- 
 -- ## 1.4) Class identification methods
 -- 
@@ -288,389 +285,71 @@ function BASE:GetClassID()
   return self.ClassID
 end
 
---- Get the Class @{Event} processing Priority.
--- The Event processing Priority is a number from 1 to 10, 
--- reflecting the order of the classes subscribed to the Event to be processed.
--- @param #BASE self
--- @return #number The @{Event} processing Priority.
-function BASE:GetEventPriority()
-  return self._Private.EventPriority or 5
-end
+do -- Event Handling
 
---- Set the Class @{Event} processing Priority.
--- The Event processing Priority is a number from 1 to 10, 
--- reflecting the order of the classes subscribed to the Event to be processed.
--- @param #BASE self
--- @param #number EventPriority The @{Event} processing Priority.
--- @return self
-function BASE:SetEventPriority( EventPriority )
-  self._Private.EventPriority = EventPriority
-end
-
-
---- Set a new listener for the class.
--- @param self
--- @param Dcs.DCSTypes#Event Event
--- @param #function EventFunction
--- @return #BASE
-function BASE:AddEvent( Event, EventFunction )
-	self:F( Event )
-
-	self.Events[#self.Events+1] = {}
-	self.Events[#self.Events].Event = Event
-	self.Events[#self.Events].EventFunction = EventFunction
-	self.Events[#self.Events].EventEnabled = false
-
-	return self
-end
-
---- Returns the event dispatcher
--- @param #BASE self
--- @return Core.Event#EVENT
-function BASE:Event()
-
-  return _EVENTDISPATCHER
-end
-
---- Remove all subscribed events
--- @param #BASE self
--- @return #BASE
-function BASE:EventRemoveAll()
-
-  _EVENTDISPATCHER:RemoveAll( self )
+  --- Returns the event dispatcher
+  -- @param #BASE self
+  -- @return Core.Event#EVENT
+  function BASE:EventDispatcher()
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_SHOT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShot( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOT )
+    return _EVENTDISPATCHER
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_HIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnHit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HIT )
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_TAKEOFF event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnTakeOff( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TAKEOFF )
+  --- Get the Class @{Event} processing Priority.
+  -- The Event processing Priority is a number from 1 to 10, 
+  -- reflecting the order of the classes subscribed to the Event to be processed.
+  -- @param #BASE self
+  -- @return #number The @{Event} processing Priority.
+  function BASE:GetEventPriority()
+    return self._Private.EventPriority or 5
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_LAND event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnLand( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_LAND )
+  --- Set the Class @{Event} processing Priority.
+  -- The Event processing Priority is a number from 1 to 10, 
+  -- reflecting the order of the classes subscribed to the Event to be processed.
+  -- @param #BASE self
+  -- @param #number EventPriority The @{Event} processing Priority.
+  -- @return self
+  function BASE:SetEventPriority( EventPriority )
+    self._Private.EventPriority = EventPriority
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_CRASH event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnCrash( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_CRASH )
+  --- Remove all subscribed events
+  -- @param #BASE self
+  -- @return #BASE
+  function BASE:EventRemoveAll()
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_EJECTION event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEjection( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_EJECTION )
+    self:EventDispatcher():RemoveAll( self )
+    
+    return self
+  end
   
-  return self
-end
-
-
---- Subscribe to a S_EVENT\_REFUELING event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnRefueling( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING )
+  --- Subscribe to a DCS Event.
+  -- @param #BASE self
+  -- @param Core.Event#EVENTS Event
+  -- @param #function EventFunction (optional) The function to be called when the event occurs for the unit.
+  -- @return #BASE
+  function BASE:HandleEvent( Event, EventFunction )
   
-  return self
-end
-
---- Subscribe to a S_EVENT\_DEAD event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnDead( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_DEAD )
+    self:EventDispatcher():OnEventGeneric( EventFunction, self, Event )
+    
+    return self
+  end
   
-  return self
-end
-
---- Subscribe to a S_EVENT_PILOT\_DEAD event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPilotDead( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PILOT_DEAD )
+  --- UnSubscribe to a DCS event.
+  -- @param #BASE self
+  -- @param Core.Event#EVENTS Event
+  -- @return #BASE
+  function BASE:UnHandleEvent( Event )
   
-  return self
+    self:EventDispatcher():Remove( self, Event )
+    
+    return self
+  end
+
 end
-
---- Subscribe to a S_EVENT_BASE\_CAPTURED event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnBaseCaptured( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BASE_CAPTURED )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_MISSION\_START event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnMissionStart( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_START )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_MISSION\_END event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerMissionEnd( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_MISSION_END )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_TOOK\_CONTROL event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnTookControl( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_TOOK_CONTROL )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_REFUELING\_STOP event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnRefuelingStop( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_REFUELING_STOP )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT\_BIRTH event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnBirth( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_BIRTH )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_HUMAN\_FAILURE event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnHumanFailure( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_HUMAN_FAILURE )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_ENGINE\_STARTUP event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEngineStartup( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_STARTUP )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_ENGINE\_SHUTDOWN event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnEngineShutdown( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_ENGINE_SHUTDOWN )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER_ENTER\_UNIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerEnterUnit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_ENTER_UNIT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER_LEAVE\_UNIT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerLeaveUnit( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_PLAYER\_COMMENT event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnPlayerComment( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_PLAYER_COMMENT )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_SHOOTING\_START event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShootingStart( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_START )
-  
-  return self
-end
-
---- Subscribe to a S_EVENT_SHOOTING\_END event.
--- @param #BASE self
--- @param #function EventFunction The function to be called when the event occurs for the unit.
--- @return #BASE
-function BASE:EventOnShootingEnd( EventFunction )
-
-  _EVENTDISPATCHER:OnEventGeneric( EventFunction, self, world.event.S_EVENT_SHOOTING_END )
-  
-  return self
-end
-
-
-
-
-
-
-
---- Enable the event listeners for the class.
--- @param #BASE self
--- @return #BASE
-function BASE:EnableEvents()
-	self:F( #self.Events )
-
-	for EventID, Event in pairs( self.Events ) do
-		Event.Self = self
-		Event.EventEnabled = true
-	end
-	self.Events.Handler = world.addEventHandler( self )
-
-	return self
-end
-
-
---- Disable the event listeners for the class.
--- @param #BASE self
--- @return #BASE
-function BASE:DisableEvents()
-	self:F()
-  
-	world.removeEventHandler( self )
-	for EventID, Event in pairs( self.Events ) do
-		Event.Self = nil
-		Event.EventEnabled = false
-	end
-
-	return self
-end
-
-
-local BaseEventCodes = {
-   "S_EVENT_SHOT",
-   "S_EVENT_HIT",
-   "S_EVENT_TAKEOFF",
-   "S_EVENT_LAND",
-   "S_EVENT_CRASH",
-   "S_EVENT_EJECTION",
-   "S_EVENT_REFUELING",
-   "S_EVENT_DEAD",
-   "S_EVENT_PILOT_DEAD",
-   "S_EVENT_BASE_CAPTURED",
-   "S_EVENT_MISSION_START",
-   "S_EVENT_MISSION_END",
-   "S_EVENT_TOOK_CONTROL",
-   "S_EVENT_REFUELING_STOP",
-   "S_EVENT_BIRTH",
-   "S_EVENT_HUMAN_FAILURE",
-   "S_EVENT_ENGINE_STARTUP",
-   "S_EVENT_ENGINE_SHUTDOWN",
-   "S_EVENT_PLAYER_ENTER_UNIT",
-   "S_EVENT_PLAYER_LEAVE_UNIT",
-   "S_EVENT_PLAYER_COMMENT",
-   "S_EVENT_SHOOTING_START",
-   "S_EVENT_SHOOTING_END",
-   "S_EVENT_MAX",
-}
  
---onEvent( {[1]="S_EVENT_BIRTH",[2]={["subPlace"]=5,["time"]=0,["initiator"]={["id_"]=16884480,},["place"]={["id_"]=5000040,},["id"]=15,["IniUnitName"]="US F-15C@RAMP-Air Support Mountains#001-01",},}
--- Event = {
---   id = enum world.event,
---   time = Time,
---   initiator = Unit,
---   target = Unit,
---   place = Unit,
---   subPlace = enum world.BirthPlace,
---   weapon = Weapon
--- }
 
 --- Creation of a Birth Event.
 -- @param #BASE self

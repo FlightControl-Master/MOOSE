@@ -117,7 +117,7 @@ do -- ACT_ACCOUNT
   -- @param #string To
   function ACT_ACCOUNT:onafterStart( ProcessUnit, From, Event, To )
 
-    self:EventOnDead( self.onfuncEventDead )
+    self:HandleEvent( EVENTS.Dead, self.onfuncEventDead )
 
     self:__Wait( 1 )
   end

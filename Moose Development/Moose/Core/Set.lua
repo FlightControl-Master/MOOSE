@@ -453,13 +453,13 @@ function SET_BASE:_FilterStart()
     end
   end
   
-  _EVENTDISPATCHER:OnBirth( self._EventOnBirth, self )
-  _EVENTDISPATCHER:OnDead( self._EventOnDeadOrCrash, self )
-  _EVENTDISPATCHER:OnCrash( self._EventOnDeadOrCrash, self )
+  self.HandleEvent( EVENTS.Birth, self._EventOnBirth )
+  self.HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  self.HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
-  _EVENTDISPATCHER:OnPlayerEnterUnit( self._EventOnPlayerEnterUnit, self )
-  _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventOnPlayerLeaveUnit, self )
+  self.HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self.HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   
   return self
@@ -470,9 +470,9 @@ end
 -- @return #SET_BASE self
 function SET_BASE:FilterStop()
 
-  _EVENTDISPATCHER:OnBirthRemove( self )
-  _EVENTDISPATCHER:OnDeadRemove( self )
-  _EVENTDISPATCHER:OnCrashRemove( self )
+  self:UnHandleEvent( EVENTS.Birth )
+  self:UnHandleEvent( EVENTS.Dead )
+  self:UnHandleEvent( EVENTS.Crash )
   
   return self
 end
