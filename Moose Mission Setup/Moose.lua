@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170207_1336' ) 
+env.info( 'Moose Generation Timestamp: 20170207_1733' ) 
 local base = _G
 
 Include = {}
@@ -4019,22 +4019,114 @@ end
 
 
 
---- This module contains the **EVENT** class, which models the dispatching of DCS Events to subscribed MOOSE classes,
+--- This core module models the dispatching of DCS Events to subscribed MOOSE classes,
 -- following a given priority.
 -- 
--- ## 
--- 
--- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
+-- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
 -- ===
 -- 
---- This module contains the EVENT class.
+-- # 1) Event Handling Overview
 -- 
--- ===
+-- ![Objects](..\Presentations\EVENT\Dia2.JPG)
 -- 
--- Takes care of EVENT dispatching between DCS events and event handling functions defined in MOOSE classes.
+-- Within a running mission, various DCS events occur. Units are dynamically created, crash, die, shoot stuff, get hit etc.
+-- This module provides a mechanism to dispatch those events occuring within your running mission, to the different objects orchestrating your mission.
 -- 
--- ===
+-- ![Objects](..\Presentations\EVENT\Dia3.JPG)
+-- 
+-- Objects can subscribe to different events. The Event dispatcher will publish the received DCS events to the subscribed MOOSE objects, in a specified order.
+-- In this way, the subscribed MOOSE objects are kept in sync with your evolving running mission.
+-- 
+-- ## 1.1) Event Dispatching
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia4.JPG)
+-- 
+-- The _EVENTDISPATCHER object is automatically created within MOOSE, 
+-- and handles the dispatching of DCS Events occurring 
+-- in the simulator to the subscribed objects 
+-- in the correct processing order.
+--
+-- ![Objects](..\Presentations\EVENT\Dia5.JPG)
+-- 
+-- There are 5 levels of kind of objects that the _EVENTDISPATCHER services:
+-- 
+--  * _DATABASE object: The core of the MOOSE objects. Any object that is created, deleted or updated, is done in this database.
+--  * SET_ derived classes: Subsets of the _DATABASE object. These subsets are updated by the _EVENTDISPATCHER as the second priority.
+--  * UNIT objects: UNIT objects can subscribe to DCS events. Each DCS event will be directly published to teh subscribed UNIT object.
+--  * GROUP objects: GROUP objects can subscribe to DCS events. Each DCS event will be directly published to the subscribed GROUP object.
+--  * Any other object: Various other objects can subscribe to DCS events. Each DCS event triggered will be published to each subscribed object.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia6.JPG)
+-- 
+-- For most DCS events, the above order of updating will be followed.1
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia7.JPG)
+-- 
+-- But for some DCS events, the publishing order is reversed. This is due to the fact that objects need to be **erased** instead of added.
+-- 
+-- ## 1.2) Event Handling
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia8.JPG)
+-- 
+-- The actual event subscribing and handling is not facilitated through the _EVENTDISPATCHER, but it is done through the @{BASE} class, @{UNIT} class and @{GROUP} class.
+-- The _EVENTDISPATCHER is a component that is quietly working in the background of MOOSE.
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia9.JPG)
+-- 
+-- The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
+-- and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.
+-- 
+-- ### 1.2.1 Subscribe / Unsubscribe to DCS Events
+-- 
+-- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
+-- So, when the DCS event occurs, the class will be notified of that event.
+-- There are two functions which you use to subscribe to or unsubscribe from an event.
+-- 
+--   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+-- 
+-- ### 1.3.2 Event Handling of DCS Events
+-- 
+-- Once the class is subscribed to the event, an **Event Handling** method on the object or class needs to be written that will be called
+-- when the DCS event occurs. The Event Handling method receives an @{Event#EVENTDATA} structure, which contains a lot of information
+-- about the event that occurred.
+-- 
+-- Find below an example of the prototype how to write an event handling function for two units: 
+--
+--      local Tank1 = UNIT:FindByName( "Tank A" )
+--      local Tank2 = UNIT:FindByName( "Tank B" )
+--      
+--      -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+--      Tank1:HandleEvent( EVENTS.Dead )
+--      Tank2:HandleEvent( EVENTS.Dead )
+--      
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        self:SmokeGreen()
+--      end
+--
+--      --- This function is an Event Handling function that will be called when Tank2 is Dead.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank2:OnEventDead( EventData )
+--
+--        self:SmokeBlue()
+--      end
+-- 
+-- ### 1.3.3 Event Handling methods that are automatically called upon subscribed DCS events
+-- 
+-- ![Objects](..\Presentations\EVENT\Dia10.JPG)
+-- 
+-- The following list outlines which EVENTS item in the structure corresponds to which Event Handling method:
+-- 
+-- First Header | Second Header
+-- ------------ | -------------
+-- Content from cell 1 | Content from cell 2
+-- Content in the first column | Content in the second column
 -- 
 -- The above menus classes **are derived** from 2 main **abstract** classes defined within the MOOSE framework (so don't use these):
 -- 
@@ -22526,6 +22618,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
                       Client:Destroy()
+                      trigger.action.setUserFlag( "AIRCRAFT_"..Client:GetID(), 100)
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end

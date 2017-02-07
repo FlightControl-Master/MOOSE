@@ -183,6 +183,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     else
                       MESSAGE:New( "Player " .. Client:GetPlayerName() .. " has been removed from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
                       Client:Destroy()
+                      trigger.action.setUserFlag( "AIRCRAFT_"..Client:GetID(), 100)
                       Client:SetState( self, "Speeding", false )
                       Client:SetState( self, "Warnings", 0 )
                     end
