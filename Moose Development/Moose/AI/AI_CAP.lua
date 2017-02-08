@@ -374,7 +374,7 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
   
     local Engage = false
   
-    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+    for DetectedUnit, Detected in pairs( self.DetectedUnits ) do
     
       local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
       self:T( DetectedUnit )
@@ -450,7 +450,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
     local AttackTasks = {}
 
-    for DetectedUnitID, DetectedUnit in pairs( self.DetectedUnits ) do
+    for DetectedUnit, Detected in pairs( self.DetectedUnits ) do
       local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
       self:T( { DetectedUnit, DetectedUnit:IsAlive(), DetectedUnit:IsAir() } )
       if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
