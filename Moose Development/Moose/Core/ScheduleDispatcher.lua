@@ -206,5 +206,13 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   end
 end
 
+function SCHEDULEDISPATCHER:Clear( Scheduler )
+  self:F2( { Scheduler = Scheduler } )
+
+  for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    self:Stop( Scheduler, CallID ) -- Recursive
+  end
+end
+
 
 

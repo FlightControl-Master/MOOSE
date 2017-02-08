@@ -218,9 +218,10 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.FollowDistance = 100
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
+  self.FollowScheduler, self.FollowSchedule = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
+  self.FollowScheduler:Stop( self.FollowSchedule )
+
   self.EscortMode = ESCORT.MODE.MISSION
-  self.FollowScheduler:Stop()
 
   return self
 end
@@ -669,7 +670,7 @@ function ESCORT._HoldPosition( MenuParam )
   local OrbitHeight = MenuParam.ParamHeight
   local OrbitSeconds = MenuParam.ParamSeconds -- Not implemented yet
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   local PointFrom = {}
   local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
@@ -721,7 +722,7 @@ end
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   EscortGroup:OptionROEHoldFire()
   EscortGroup:OptionROTPassiveDefense()
@@ -730,7 +731,7 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
 
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler:Start()
+  self.FollowScheduler:Start( self.FollowSchedule )
 
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
@@ -785,7 +786,7 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
+      self.ReportTargetsScheduler:Schedule( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
     routines.removeFunction( self.ReportTargetsScheduler )
@@ -802,7 +803,7 @@ function ESCORT._ScanTargets( MenuParam )
 
   local ScanDuration = MenuParam.ParamScanDuration
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   if EscortGroup:IsHelicopter() then
     SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
@@ -827,7 +828,7 @@ function ESCORT._ScanTargets( MenuParam )
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 
   if self.EscortMode == ESCORT.MODE.FOLLOW then
-    self.FollowScheduler:Start()
+    self.FollowScheduler:Start( self.FollowSchedule )
   end
 
 end
@@ -853,7 +854,7 @@ function ESCORT._AttackTarget( MenuParam )
   local EscortClient = self.EscortClient
   local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   self:T( AttackUnit )
 
@@ -894,7 +895,7 @@ function ESCORT._AssistTarget( MenuParam )
   local EscortGroupAttack = MenuParam.ParamEscortGroup
   local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   self:T( AttackUnit )
 
@@ -961,7 +962,7 @@ function ESCORT._ResumeMission( MenuParam )
 
   local WayPoint = MenuParam.ParamWayPoint
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   local WayPoints = EscortGroup:GetTaskRoute()
   self:T( WayPoint, WayPoints )

@@ -728,7 +728,65 @@ do -- FSM_CONTROLLABLE
       self:SetControllable( Controllable )
     end
   
+    self:AddTransition( "*", "Stop", "Stopped" )
+  
+    --- OnBefore Transition Handler for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] OnBeforeStop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @return #boolean Return false to cancel Transition.
+    
+    --- OnAfter Transition Handler for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    	
+    --- Synchronous Event Trigger for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] Stop
+    -- @param #FSM_CONTROLLABLE self
+    
+    --- Asynchronous Event Trigger for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] __Stop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param #number Delay The delay in seconds.  
+      
+    --- OnLeave Transition Handler for State Stopped.
+    -- @function [parent=#FSM_CONTROLLABLE] OnLeaveStopped
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @return #boolean Return false to cancel Transition.
+    
+    --- OnEnter Transition Handler for State Stopped.
+    -- @function [parent=#FSM_CONTROLLABLE] OnEnterStopped
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+
     return self
+  end
+
+  --- OnAfter Transition Handler for Event Stop.
+  -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
+  -- @param #FSM_CONTROLLABLE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  function FSM_CONTROLLABLE:OnAfterStop(Controllable,From,Event,To)  
+    
+    -- Clear all pending schedules
+    self.CallScheduler:Clear()
   end
   
   --- Sets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.

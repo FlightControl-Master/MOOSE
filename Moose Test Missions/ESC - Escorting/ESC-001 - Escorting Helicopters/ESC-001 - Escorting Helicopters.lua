@@ -66,9 +66,4 @@ do
 
 end
 
--- MISSION SCHEDULER STARTUP
-MISSIONSCHEDULER.Start()
-MISSIONSCHEDULER.ReportMenu()
-MISSIONSCHEDULER.ReportMissionsHide()
-
 env.info( "Test Mission loaded" )

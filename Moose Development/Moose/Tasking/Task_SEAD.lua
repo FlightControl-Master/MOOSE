@@ -62,11 +62,6 @@ do -- TASK_SEAD
       self:Smoke()
     end
 
---    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
---    _EVENTDISPATCHER:OnDead( self._EventDead, self )
---    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
---    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
-  
     return self
   end
  

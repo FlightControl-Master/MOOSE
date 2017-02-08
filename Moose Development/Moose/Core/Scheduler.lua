@@ -147,6 +147,13 @@ function SCHEDULER:Remove( ScheduleID )
   _SCHEDULEDISPATCHER:Remove( self, ScheduleID )
 end
 
+--- Clears all pending schedules.
+-- @param #SCHEDULER self
+function SCHEDULER:Clear()
+  self:F3( )
+
+  _SCHEDULEDISPATCHER:Clear( self )
+end
 
 
 

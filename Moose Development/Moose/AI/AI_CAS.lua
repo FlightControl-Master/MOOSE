@@ -158,11 +158,6 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
   -- @return #boolean Return false to cancel Transition.
   
@@ -173,20 +168,25 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
-  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
-  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
-  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
-  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
-  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   	
   --- Synchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] Engage
   -- @param #AI_CAS_ZONE self
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
   --- Asynchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] __Engage
   -- @param #AI_CAS_ZONE self
   -- @param #number Delay The delay in seconds.
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
@@ -394,7 +394,7 @@ function AI_CAS_ZONE:onafterTarget( Controllable, From, Event, To )
           if Detected == true then
             self:E( {"Target: ", DetectedUnit } )
             self.DetectedUnits[DetectedUnit] = false
-            local AttackTask = Controllable:EnRouteTaskEngageUnit( DetectedUnit, 1, true, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
+            local AttackTask = Controllable:TaskAttackUnit( DetectedUnit, false, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
             self.Controllable:PushTask( AttackTask, 1 )
           end
         end
@@ -416,8 +416,8 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
--- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+-- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection )
@@ -452,28 +452,28 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, 
     EngageRoute[#EngageRoute+1] = CurrentRoutePoint
 
   
-    if self.Controllable:IsNotInZone( self.EngageZone ) then
-
-      -- Find a random 2D point in EngageZone.
-      local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
-      self:T2( ToEngageZoneVec2 )
-      
-      -- Obtain a 3D @{Point} from the 2D point + altitude.
-      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, self.EngageAltitude, ToEngageZoneVec2.y )
-      
-      -- Create a route point of type air.
-      local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        self.EngageSpeed, 
-        true 
-      )
-
-      EngageRoute[#EngageRoute+1] = ToEngageZoneRoutePoint
-
-    end
-    
+--    if self.Controllable:IsNotInZone( self.EngageZone ) then
+--
+--      -- Find a random 2D point in EngageZone.
+--      local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
+--      self:T2( ToEngageZoneVec2 )
+--      
+--      -- Obtain a 3D @{Point} from the 2D point + altitude.
+--      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, self.EngageAltitude, ToEngageZoneVec2.y )
+--      
+--      -- Create a route point of type air.
+--      local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
+--        self.PatrolAltType, 
+--        POINT_VEC3.RoutePointType.TurningPoint, 
+--        POINT_VEC3.RoutePointAction.TurningPoint, 
+--        self.EngageSpeed, 
+--        true 
+--      )
+--
+--      EngageRoute[#EngageRoute+1] = ToEngageZoneRoutePoint
+--
+--    end
+--    
     --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
     
       --- Find a random 2D point in EngageZone.
@@ -528,9 +528,9 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, 
     --- NOW ROUTE THE GROUP!
     self.Controllable:WayPointExecute( 1 )
     
-    self:SetDetectionInterval( 10 )
+    self:SetDetectionInterval( 2 )
     self:SetDetectionActivated()
-    self:__Target( -10 ) -- Start Targetting
+    self:__Target( -2 ) -- Start Targetting
   end
 end
 

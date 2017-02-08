@@ -56,8 +56,7 @@ function PROCESS_JTAC:New( Task, ProcessUnit, TargetSetUnit, FACUnit )
     endstates = { 'Failed' }
   } )
 
-
-  _EVENTDISPATCHER:OnDead( self.EventDead, self )
+  self:HandleEvent( EVENTS.Dead, self.EventDead )
   
   return self
 end
