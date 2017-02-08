@@ -405,9 +405,9 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
 
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_PATROL_ZONE.
   
-  self:AddTransition( "*", "Eject", "Ejected" )
+  self:AddTransition( "*", "Eject", "*" )
   self:AddTransition( "*", "Crash", "Crashed" )
-  self:AddTransition( "*", "PilotDead", "PilotDead" )
+  self:AddTransition( "*", "PilotDead", "*" )
   
   return self
 end
@@ -865,7 +865,10 @@ end
 function AI_PATROL_ZONE:OnCrash( EventData )
 
   if self.Controllable:IsAlive() and EventData.IniDCSGroupName == self.Controllable:GetName() then
-    self:__Crash( 1, EventData )
+    self:E( self.Controllable:GetUnits() )
+    if #self.Controllable:GetUnits() == 1 then
+      self:__Crash( 1, EventData )
+    end
   end
 end
 
