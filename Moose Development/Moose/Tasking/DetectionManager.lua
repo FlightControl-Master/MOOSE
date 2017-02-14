@@ -404,21 +404,21 @@ do -- DETECTION_DISPATCHER
     local Mission = self.Mission
 
     --- First we need to  the detected targets.
-    for DetectedAreaID, DetectedAreaData in ipairs( Detection:GetDetectedAreas() ) do
+    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
-      local DetectedArea = DetectedAreaData -- Functional.Detection#DETECTION_AREAS.DetectedArea
-      local DetectedSet = DetectedArea.Set
-      local DetectedZone = DetectedArea.Zone
-      self:E( { "Targets in DetectedArea", DetectedArea.AreaID, DetectedSet:Count(), tostring( DetectedArea ) } )
+      local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+      local DetectedSet = DetectedItem.Set -- Functional.Detection#DETECTION_BASE.DetectedSet
+      local DetectedZone = DetectedItem.Zone
+      self:E( { "Targets in DetectedArea", DetectedItem.AreaID, DetectedSet:Count(), tostring( DetectedItem ) } )
       DetectedSet:Flush()
       
-      local AreaID = DetectedArea.AreaID
+      local AreaID = DetectedItem.AreaID
       
       -- Evaluate SEAD Tasking
       local SEADTask = Mission:GetTask( "SEAD." .. AreaID )
-      SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedArea )
+      SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedItem )
       if not SEADTask then
-        local TargetSetUnit = self:EvaluateSEAD( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
+        local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
           SEADTask = Mission:AddTask( TASK_SEAD:New( Mission, self.SetGroup, "SEAD." .. AreaID, TargetSetUnit , DetectedZone ) )
         end
@@ -431,11 +431,11 @@ do -- DETECTION_DISPATCHER
 
       -- Evaluate CAS Tasking
       local CASTask = Mission:GetTask( "CAS." .. AreaID )
-      CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedArea )
+      CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedItem )
       if not CASTask then
-        local TargetSetUnit = self:EvaluateCAS( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
+        local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
+          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedItem.NearestFAC ) )
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
@@ -445,11 +445,11 @@ do -- DETECTION_DISPATCHER
 
       -- Evaluate BAI Tasking
       local BAITask = Mission:GetTask( "BAI." .. AreaID )
-      BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedArea )
+      BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedItem )
       if not BAITask then
-        local TargetSetUnit = self:EvaluateBAI( DetectedArea, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
+        local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
+          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedItem.NearestFAC ) )
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
@@ -459,20 +459,20 @@ do -- DETECTION_DISPATCHER
 
       if #TaskMsg > 0 then
     
-        local ThreatLevel = Detection:GetTreatLevelA2G( DetectedArea )
+        local ThreatLevel = Detection:GetTreatLevelA2G( DetectedItem )
 
         local DetectedAreaVec3 = DetectedZone:GetVec3()
         local DetectedAreaPointVec3 = POINT_VEC3:New( DetectedAreaVec3.x, DetectedAreaVec3.y, DetectedAreaVec3.z )
         local DetectedAreaPointLL = DetectedAreaPointVec3:ToStringLL( 3, true )
         AreaMsg[#AreaMsg+1] = string.format( "  - Area #%d - %s - Threat Level [%s] (%2d)", 
-                                                     DetectedAreaID,
+                                                     DetectedItemID,
                                                      DetectedAreaPointLL,
                                                      string.rep(  "■", ThreatLevel ),
                                                      ThreatLevel
                                       )
         
         -- Loop through the changes ...
-        local ChangeText = Detection:GetChangeText( DetectedArea )
+        local ChangeText = Detection:GetChangeText( DetectedItem )
         
         if ChangeText ~= "" then
           ChangeMsg[#ChangeMsg+1] = string.gsub( string.gsub( ChangeText, "\n", "%1  - " ), "^.", "  - %1" )
@@ -480,7 +480,7 @@ do -- DETECTION_DISPATCHER
       end
       
       -- OK, so the tasking has been done, now delete the changes reported for the area.
-      Detection:AcceptChanges( DetectedArea )
+      Detection:AcceptChanges( DetectedItem )
       
     end
     

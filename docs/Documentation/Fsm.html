@@ -39,11 +39,11 @@
 					<li>Fsm</li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -728,9 +728,45 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).OnAfterStop">FSM_CONTROLLABLE:OnAfterStop(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).OnBeforeStop">FSM_CONTROLLABLE:OnBeforeStop(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).OnEnterStopped">FSM_CONTROLLABLE:OnEnterStopped(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Stopped.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).OnLeaveStopped">FSM_CONTROLLABLE:OnLeaveStopped(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Stopped.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).SetControllable">FSM_CONTROLLABLE:SetControllable(FSMControllable)</a></td>
 		<td class="summary">
 <p>Sets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).Stop">FSM_CONTROLLABLE:Stop()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_CONTROLLABLE).__Stop">FSM_CONTROLLABLE:__Stop(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Stop.</p>
 </td>
 		</tr>
 		<tr>
@@ -1965,6 +2001,176 @@ Finite State Machine Table</p>
 		<dl class="function">
 <dt>
 
+<a id="#(FSM_CONTROLLABLE).OnAfterStop" >
+<strong>FSM_CONTROLLABLE:OnAfterStop(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM_CONTROLLABLE).OnBeforeStop" >
+<strong>FSM_CONTROLLABLE:OnBeforeStop(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM_CONTROLLABLE).OnEnterStopped" >
+<strong>FSM_CONTROLLABLE:OnEnterStopped(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnEnter Transition Handler for State Stopped.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM_CONTROLLABLE).OnLeaveStopped" >
+<strong>FSM_CONTROLLABLE:OnLeaveStopped(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State Stopped.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(FSM_CONTROLLABLE).SetControllable" >
 <strong>FSM_CONTROLLABLE:SetControllable(FSMControllable)</strong>
 </a>
@@ -1986,6 +2192,41 @@ Finite State Machine Table</p>
 <p><em><a href="##(FSM_CONTROLLABLE)">#FSM_CONTROLLABLE</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM_CONTROLLABLE).Stop" >
+<strong>FSM_CONTROLLABLE:Stop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Stop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(FSM_CONTROLLABLE).__Stop" >
+<strong>FSM_CONTROLLABLE:__Stop(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Stop.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.  </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

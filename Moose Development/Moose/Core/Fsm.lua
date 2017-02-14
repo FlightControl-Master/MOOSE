@@ -530,10 +530,20 @@ do -- FSM
   
   
   function FSM:_call_handler( handler, params, EventName )
+
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in SCHEDULER function:" .. errmsg )
+      if debug ~= nil then
+        env.info( debug.traceback() )
+      end
+      
+      return errmsg
+    end
     if self[handler] then
       self:T( "Calling " .. handler )
       self._EventSchedules[EventName] = nil
-      local Value = self[handler]( self, unpack(params) )
+      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
       return Value
     end
   end

@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -259,7 +259,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Engage.</p>
 </td>
@@ -331,7 +331,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Engage.</p>
 </td>
@@ -361,7 +361,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Engage.</p>
 </td>
@@ -421,7 +421,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Engage.</p>
 </td>
@@ -445,7 +445,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 
 </td>
@@ -598,13 +598,46 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).Engage" >
-<strong>AI_CAS_ZONE:Engage()</strong>
+<strong>AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Synchronous Event Trigger for Event Engage.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number EngageSpeed </em></code>: 
+(optional) The speed the Group will hold when engaging to the target zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageAttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -888,7 +921,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnAfterEngage" >
-<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -919,36 +952,6 @@ The Event string.</p>
 				
 <p><code><em>#string To </em></code>: 
 The To State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageSpeed </em></code>: 
-(optional) The speed the Group will hold when engaging to the target zone.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageAttackQty </em></code>: 
-(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
-(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -1133,7 +1136,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnBeforeEngage" >
-<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1164,36 +1167,6 @@ The Event string.</p>
 				
 <p><code><em>#string To </em></code>: 
 The To State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageSpeed </em></code>: 
-(optional) The speed the Group will hold when engaging to the target zone.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageAttackQty </em></code>: 
-(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
-(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -1464,19 +1437,49 @@ The delay in seconds.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).__Engage" >
-<strong>AI_CAS_ZONE:__Engage(Delay)</strong>
+<strong>AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Asynchronous Event Trigger for Event Engage.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number Delay </em></code>: 
 The delay in seconds.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageSpeed </em></code>: 
+(optional) The speed the Group will hold when engaging to the target zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageAttackQty </em></code>: 
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
+(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -1593,7 +1596,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).onafterEngage" >
-<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -1634,14 +1637,14 @@ The To State string.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
 				<li>

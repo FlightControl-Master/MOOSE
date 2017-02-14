@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -294,7 +294,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
-<p>(AIR) Attack the Unit.</p>
+<p>(AIR) Search and attack the Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -509,7 +509,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -1069,7 +1069,7 @@ The DCS task structure.</p>
 </dt>
 <dd>
 	
-<p>(AIR) Attack the Unit.</p>
+<p>(AIR) Search and attack the Unit.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2043,7 +2043,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackUnit" >
-<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</strong>
 </a>
 </dt>
 <dd>
@@ -2055,13 +2055,13 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
-The unit.</p>
+The UNIT.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2084,8 +2084,14 @@ The unit.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Visible </em></code>: 
+(optional) Unit must be visible.</p>
 
 				</li>
 				<li>

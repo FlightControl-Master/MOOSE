@@ -212,6 +212,60 @@ function ZONE_BASE:GetVec2()
 
   return nil 
 end
+
+--- Returns a @{Point#POINT_VEC2} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
+function ZONE_BASE:GetPointVec2()
+  self:F2( self.ZoneName )
+  
+  local Vec2 = self:GetVec2()
+
+  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
+
+  self:T2( { PointVec2 } )
+  
+  return PointVec2  
+end
+
+
+--- Returns the @{DCSTypes#Vec3} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Dcs.DCSTypes#Vec3 The Vec3 of the zone.
+function ZONE_BASE:GetVec3( Height )
+  self:F2( self.ZoneName )
+  
+  Height = Height or 0
+  
+  local Vec2 = self:GetVec2()
+
+  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+
+  self:T2( { Vec3 } )
+  
+  return Vec3  
+end
+
+--- Returns a @{Point#POINT_VEC3} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
+function ZONE_BASE:GetPointVec3( Height )
+  self:F2( self.ZoneName )
+  
+  local Vec3 = self:GetVec3( Height )
+
+  local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+
+  self:T2( { PointVec3 } )
+  
+  return PointVec3  
+end
+
+
+
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
 -- @return Dcs.DCSTypes#Vec2 The Vec2 coordinates.

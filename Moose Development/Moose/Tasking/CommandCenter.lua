@@ -224,6 +224,14 @@ function COMMANDCENTER:HasGroup( MissionGroup )
   return Has
 end
 
+--- Send a CC message to the coalition of the CC.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:MessageToAll( Message )
+
+    self:GetPositionable():MessageToAll( Message, 20, self:GetName() )
+
+end
+
 --- Send a CC message to a GROUP.
 -- @param #COMMANDCENTER self
 -- @param #string Message
@@ -246,6 +254,7 @@ function COMMANDCENTER:MessageToCoalition( Message )
     self:GetPositionable():MessageToCoalition( Message, 20, CCCoalition, self:GetName() )
 
 end
+
 
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.

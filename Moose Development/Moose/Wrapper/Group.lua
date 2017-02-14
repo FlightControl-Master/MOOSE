@@ -110,7 +110,7 @@ GROUP = {
 -- @param Dcs.DCSWrapper.Group#Group GroupName The DCS Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
-  local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
+  self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
   

@@ -1,0 +1,5 @@
+mapResource = 
+{
+    ["ResKey_Action_8"] = "ESC-001 - Escorting Helicopters.lua",
+    ["ResKey_Action_6"] = "Moose.lua",
+} -- end of mapResource

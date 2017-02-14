@@ -181,11 +181,15 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]
-    Schedule[CallID].ScheduleID = timer.scheduleFunction( 
-      Schedule[CallID].CallHandler, 
-      CallID, 
-      timer.getTime() + Schedule[CallID].Start
-    )
+    -- Only start when there is no ScheduleID defined!
+    -- This prevents to "Start" the scheduler twice with the same CallID...
+    if not Schedule[CallID].ScheduleID then
+      Schedule[CallID].ScheduleID = timer.scheduleFunction( 
+        Schedule[CallID].CallHandler, 
+        CallID, 
+        timer.getTime() + Schedule[CallID].Start
+      )
+    end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
       self:Start( Scheduler, CallID ) -- Recursive
@@ -198,7 +202,12 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]
-    timer.removeFunction( Schedule[CallID].ScheduleID )
+    -- Only stop when there is a ScheduleID defined for the CallID.
+    -- So, when the scheduler was stopped before, do nothing.
+    if Schedule[CallID].ScheduleID then
+      timer.removeFunction( Schedule[CallID].ScheduleID )
+      Schedule[CallID].ScheduleID = nil
+    end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
       self:Stop( Scheduler, CallID ) -- Recursive

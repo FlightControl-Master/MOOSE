@@ -384,6 +384,29 @@ function SET_BASE:Get( ObjectName )
   
 end
 
+--- Gets the first object from the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return Core.Base#BASE
+function SET_BASE:GetFirst()
+  self:F()
+
+  local t = self.List.first._
+  self:T3( { t } )
+  return t
+end
+
+--- Gets the last object from the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return Core.Base#BASE
+function SET_BASE:GetLast()
+  self:F()
+
+  local t = self.List.last._
+  self:T3( { t } )
+  return t
+end
+
+
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
@@ -652,7 +675,8 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     return false
   end
 
-  self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  --self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  Schedule()
   
   return self
 end
@@ -725,7 +749,7 @@ end
 
 --- SET_GROUP class
 -- @type SET_GROUP
--- @extends #SET_BASE
+-- @extends Core.Set#SET_BASE
 SET_GROUP = {
   ClassName = "SET_GROUP",
   Filter = {

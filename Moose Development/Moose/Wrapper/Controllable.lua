@@ -543,10 +543,10 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       directionEnabled = Direction and true or false,
       direction = Direction,
       altitudeEnabled = Altitude and true or false,
-      altitude = Altitude,
+      altitude = Altitude or 30,
       attackQtyLimit = AttackQty and true or false,
       attackQty = AttackQty,
-      controllableAttack = ControllableAttack,
+      weaponType = 1073741822,
     },
   }
 
