@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170214_1049' ) 
+env.info( 'Moose Generation Timestamp: 20170214_1314' ) 
 local base = _G
 
 Include = {}
@@ -4173,6 +4173,10 @@ end
 --
 -- @module Event
 
+
+
+
+
 --- The EVENT structure
 -- @type EVENT
 -- @field #EVENT.Events Events
@@ -5158,6 +5162,21 @@ function EVENT:onEvent( Event )
   end
 end
 
+--- The EVENTHANDLER structure
+-- @type EVENTHANDLER
+-- @extends Core.Base#BASE
+EVENTHANDLER = {
+  ClassName = "EVENTHANDLER",
+  ClassID = 0,
+}
+
+--- The EVENTHANDLER constructor
+-- @param #EVENTHANDLER self
+-- @return #EVENTHANDLER
+function EVENTHANDLER:New()
+  self = BASE:Inherit( self, BASE:New() ) -- #EVENTHANDLER
+  return self
+end
 --- This module contains the MENU classes.
 -- 
 -- ===
