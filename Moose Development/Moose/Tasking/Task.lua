@@ -848,7 +848,7 @@ function TASK:onenterAssigned( From, Event, To )
   self:E("Task Assigned")
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
-  self:GetMission():__Start()
+  self:GetMission():__Start( 1 )
 end
 
 
@@ -864,7 +864,7 @@ function TASK:onenterSuccess( From, Event, To )
   self:MessageToGroups( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
-  self:GetMission():__Complete()
+  self:GetMission():__Complete( 1 )
   
 end
 
