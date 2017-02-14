@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170214_1314' ) 
+env.info( 'Moose Generation Timestamp: 20170214_1649' ) 
 local base = _G
 
 Include = {}
@@ -25583,7 +25583,7 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
       self:E( "ReSpawn" )
-      self:__Reset()
+      self:__Reset( 1 )
       self:__Route( 5 )
     end
   )
@@ -31102,7 +31102,7 @@ function TASK:onenterAssigned( From, Event, To )
   self:E("Task Assigned")
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
-  self:GetMission():__Start()
+  self:GetMission():__Start( 1 )
 end
 
 
@@ -31118,7 +31118,7 @@ function TASK:onenterSuccess( From, Event, To )
   self:MessageToGroups( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
-  self:GetMission():__Complete()
+  self:GetMission():__Complete( 1 )
   
 end
 
