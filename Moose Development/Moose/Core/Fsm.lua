@@ -617,16 +617,20 @@ do -- FSM
     return function( self, DelaySeconds, ... )
       self:T2( "Delayed Event: " .. EventName )
       local CallID = 0
-      if DelaySeconds < 0 then -- Only call the event ONCE!
-        DelaySeconds = math.abs( DelaySeconds )
-        if not self._EventSchedules[EventName] then
-          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
-          self._EventSchedules[EventName] = CallID
+      if DelaySeconds ~= nil then
+        if DelaySeconds < 0 then -- Only call the event ONCE!
+          DelaySeconds = math.abs( DelaySeconds )
+          if not self._EventSchedules[EventName] then
+            CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+            self._EventSchedules[EventName] = CallID
+          else
+            -- reschedule
+          end
         else
-          -- reschedule
+          CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
         end
       else
-        CallID = self.CallScheduler:Schedule( self, self._handler, { EventName, ... }, DelaySeconds or 1 )
+        error( "FSM: An asynchronous event trigger requires a DelaySeconds parameter!!! This can be positive or negative! Sorry, but will not process this." )
       end
       self:T2( { CallID = CallID } )
     end
