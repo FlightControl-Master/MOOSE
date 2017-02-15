@@ -601,7 +601,7 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
   self.Controllable:OnReSpawn(
     function( PatrolGroup )
       self:E( "ReSpawn" )
-      self:__Reset()
+      self:__Reset( 1 )
       self:__Route( 5 )
     end
   )
