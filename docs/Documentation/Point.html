@@ -114,6 +114,8 @@ In order to keep the credibility of the the author, I want to emphasize that the
 
 <p>Hereby the change log:</p>
 
+<p>2017-02-18: POINT_VEC3:<strong>NewFromVec2( Vec2, LandHeightAdd )</strong> added.</p>
+
 <p>2016-08-12: POINT_VEC3:<strong>Translate( Distance, Angle )</strong> added.</p>
 
 <p>2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.</p>
@@ -399,6 +401,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).New">POINT_VEC3:New(x, y, z)</a></td>
 		<td class="summary">
 <p>Create a new POINT_VEC3 object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).NewFromVec2">POINT_VEC3:NewFromVec2(Vec2, LandHeightAdd)</a></td>
+		<td class="summary">
+<p>Create a new POINT_VEC3 object from Vec2 coordinates.</p>
 </td>
 		</tr>
 		<tr>
@@ -1586,6 +1594,38 @@ The y coordinate of the Vec3 point, pointing Upwards.</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> z </em></code>: 
 The z coordinate of the Vec3 point, pointing to the Right.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).NewFromVec2" >
+<strong>POINT_VEC3:NewFromVec2(Vec2, LandHeightAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new POINT_VEC3 object from Vec2 coordinates.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The Vec2 point.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> LandHeightAdd </em></code>: </p>
 
 				</li>
 		</ul>
