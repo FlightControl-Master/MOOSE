@@ -71,9 +71,10 @@
 	<div id="content">
    <h1>Module <code>Zone</code></h1>
    
-<p>This module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
+<p>This core module contains the ZONE classes, inherited from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.</p>
 
    
+
 <p>There are essentially two core functions that zones accomodate:</p>
 
 <ul>
@@ -106,22 +107,23 @@
 <hr/>
 
 <h1>1) <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
 <p>This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
 
-<h3>1.1) Each zone has a name:</h3>
+<h2>1.1) Each zone has a name:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
 </ul>
 
-<h3>1.2) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h3>
+<h2>1.2) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> is within the zone.</li>
     <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> is within the zone.</li>
 </ul>
 
-<h3>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h3>
+<h2>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).SetRandomizeProbability">ZONE_BASE.SetRandomizeProbability</a>(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
@@ -129,20 +131,20 @@
     <li><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE.GetZoneMaybe</a>(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.</li>
 </ul>
 
-<h3>1.4) A zone manages Vectors:</h3>
+<h2>1.4) A zone manages Vectors:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</li>
     <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</li>
 </ul>
 
-<h3>1.5) A zone has a bounding square:</h3>
+<h2>1.5) A zone has a bounding square:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).GetBoundingSquare">ZONE_BASE.GetBoundingSquare</a>(): Get the outer most bounding square of the zone.</li>
 </ul>
 
-<h3>1.6) A zone can be marked:</h3>
+<h2>1.6) A zone can be marked:</h2>
 
 <ul>
     <li><a href="##(ZONE_BASE).SmokeZone">ZONE_BASE.SmokeZone</a>(): Smokes the zone boundaries in a color.</li>
@@ -152,58 +154,85 @@
 <hr/>
 
 <h1>2) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+
 <p>The ZONE<em>RADIUS class defined by a zone name, a location and a radius.
 This class implements the inherited functions from Core.Zone#ZONE</em>BASE taking into account the own zone format and properties.</p>
 
-<h3>2.1) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> constructor:</h3>
+<h2>2.1) <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> constructor</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).New">ZONE_BASE.New</a>(): Constructor.</li>
+    <li><a href="##(ZONE_RADIUS).New">ZONE_RADIUS.New</a>(): Constructor.</li>
 </ul>
 
-<h3>2.2) Manage the radius of the zone:</h3>
+<h2>2.2) Manage the radius of the zone</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).SetRadius">ZONE_BASE.SetRadius</a>(): Sets the radius of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetRadius">ZONE_BASE.GetRadius</a>(): Returns the radius of the zone.</li>
+    <li><a href="##(ZONE_RADIUS).SetRadius">ZONE_RADIUS.SetRadius</a>(): Sets the radius of the zone.</li>
+    <li><a href="##(ZONE_RADIUS).GetRadius">ZONE_RADIUS.GetRadius</a>(): Returns the radius of the zone.</li>
 </ul>
 
-<h3>2.3) Manage the location of the zone:</h3>
+<h2>2.3) Manage the location of the zone</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).SetVec2">ZONE_BASE.SetVec2</a>(): Sets the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetVec3">ZONE_BASE.GetVec3</a>(): Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the zone, taking an additional height parameter.</li>
+    <li><a href="##(ZONE_RADIUS).SetVec2">ZONE_RADIUS.SetVec2</a>(): Sets the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_RADIUS).GetVec2">ZONE_RADIUS.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</li>
+    <li><a href="##(ZONE_RADIUS).GetVec3">ZONE_RADIUS.GetVec3</a>(): Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the zone, taking an additional height parameter.</li>
+</ul>
+
+<h2>2.4) Zone point randomization</h2>
+
+<p>Various functions exist to find random points within the zone.</p>
+
+<ul>
+    <li><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS.GetRandomVec2</a>(): Gets a random 2D point in the zone.</li>
+    <li><a href="##(ZONE_RADIUS).GetRandomPointVec2">ZONE_RADIUS.GetRandomPointVec2</a>(): Gets a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object representing a random 2D point in the zone.</li>
+    <li><a href="##(ZONE_RADIUS).GetRandomPointVec3">ZONE_RADIUS.GetRandomPointVec3</a>(): Gets a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object representing a random 3D point in the zone. Note that the height of the point is at landheight.</li>
 </ul>
 
 <hr/>
 
 <h1>3) <a href="Zone.html##(ZONE)">Zone#ZONE</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+
 <p>The ZONE class, defined by the zone name as defined within the Mission Editor.
 This class implements the inherited functions from {Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.</p>
 
 <hr/>
 
 <h1>4) <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+
 <p>The ZONE_UNIT class defined by a zone around a <a href="Unit.html##(UNIT)">Unit#UNIT</a> with a radius.
 This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
 <hr/>
 
 <h1>5) <a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a> class, extends <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a></h1>
+
 <p>The ZONE_GROUP class defines by a zone around a <a href="Group.html##(GROUP)">Group#GROUP</a> with a radius. The current leader of the group defines the center of the zone.
 This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
 <hr/>
 
 <h1>6) <a href="Zone.html##(ZONE_POLYGON_BASE)">Zone#ZONE<em>POLYGON</em>BASE</a> class, extends <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></h1>
+
 <p>The ZONE<em>POLYGON</em>BASE class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
 This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.
 This class is an abstract BASE class for derived classes, and is not meant to be instantiated.</p>
 
+<h2>6.1) Zone point randomization</h2>
+
+<p>Various functions exist to find random points within the zone.</p>
+
+<ul>
+    <li><a href="##(ZONE_POLYGON_BASE).GetRandomVec2">ZONE<em>POLYGON</em>BASE.GetRandomVec2</a>(): Gets a random 2D point in the zone.</li>
+    <li><a href="##(ZONE_POLYGON_BASE).GetRandomPointVec2">ZONE<em>POLYGON</em>BASE.GetRandomPointVec2</a>(): Return a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object representing a random 2D point within the zone.</li>
+    <li><a href="##(ZONE_POLYGON_BASE).GetRandomPointVec3">ZONE<em>POLYGON</em>BASE.GetRandomPointVec3</a>(): Return a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object representing a random 3D point at landheight within the zone.</li>
+</ul>
+
+
 <hr/>
 
 <h1>7) <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a> class, extends <a href="Zone.html##(ZONE_POLYGON_BASE)">Zone#ZONE<em>POLYGON</em>BASE</a></h1>
+
 <p>The ZONE_POLYGON class defined by a sequence of <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints within the Mission Editor, forming a polygon.
 This class implements the inherited functions from <a href="Zone.html##(ZONE_RADIUS)">Zone#ZONE_RADIUS</a> taking into account the own zone format and properties.</p>
 
@@ -219,6 +248,14 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </ul>
 
 <p>Hereby the change log:</p>
+
+<p>2017-02-18: ZONE<em>POLYGON</em>BASE:<strong>GetRandomPointVec2()</strong> added.</p>
+
+<p>2017-02-18: ZONE<em>POLYGON</em>BASE:<strong>GetRandomPointVec3()</strong> added.</p>
+
+<p>2017-02-18: ZONE_RADIUS:<strong>GetRandomPointVec3( inner, outer )</strong> added.</p>
+
+<p>2017-02-18: ZONE_RADIUS:<strong>GetRandomPointVec2( inner, outer )</strong> added.</p>
 
 <p>2016-08-15: ZONE_BASE:<strong>GetName()</strong> added.</p>
 
@@ -310,6 +347,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetName">ZONE_BASE:GetName()</a></td>
 		<td class="summary">
 <p>Returns the name of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomPointVec2">ZONE_BASE:GetRandomPointVec2()</a></td>
+		<td class="summary">
+<p>Define a random <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -479,6 +522,18 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomPointVec2">ZONE_POLYGON_BASE:GetRandomPointVec2()</a></td>
+		<td class="summary">
+<p>Return a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object representing a random 2D point at landheight within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomPointVec3">ZONE_POLYGON_BASE:GetRandomPointVec3()</a></td>
+		<td class="summary">
+<p>Return a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object representing a random 3D point at landheight within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomVec2">ZONE_POLYGON_BASE:GetRandomVec2()</a></td>
 		<td class="summary">
 <p>Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</p>
@@ -531,9 +586,21 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomPointVec2">ZONE_RADIUS:GetRandomPointVec2(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomPointVec3">ZONE_RADIUS:GetRandomPointVec3(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object reflecting a random 3D location within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2(inner, outer)</a></td>
 		<td class="summary">
-<p>Returns a random location within the zone.</p>
+<p>Returns a random Vec2 location within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -847,6 +914,24 @@ The bounding square.</p>
 				
 <p><em>#string:</em>
 The name of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetRandomPointVec2" >
+<strong>ZONE_BASE:GetRandomPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The PointVec2 coordinates.</p>
 
 </dd>
 </dl>
@@ -1371,6 +1456,42 @@ The bounding square.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_POLYGON_BASE).GetRandomPointVec2" >
+<strong>ZONE_POLYGON_BASE:GetRandomPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object representing a random 2D point at landheight within the zone.</p>
+
+		<h3>Return value</h3>
+				
+
+<p><a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetRandomPointVec3" >
+<strong>ZONE_POLYGON_BASE:GetRandomPointVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object representing a random 3D point at landheight within the zone.</p>
+
+		<h3>Return value</h3>
+				
+
+<p><a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_POLYGON_BASE).GetRandomVec2" >
 <strong>ZONE_POLYGON_BASE:GetRandomVec2()</strong>
 </a>
@@ -1580,26 +1701,92 @@ The radius of the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_RADIUS).GetRandomVec2" >
-<strong>ZONE_RADIUS:GetRandomVec2(inner, outer)</strong>
+<a id="#(ZONE_RADIUS).GetRandomPointVec2" >
+<strong>ZONE_RADIUS:GetRandomPointVec2(inner, outer)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns a random location within the zone.</p>
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number inner </em></code>: 
-minimal distance from the center of the zone</p>
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
 
 				</li>
 				<li>
 				
 <p><code><em>#number outer </em></code>: 
-minimal distance from the outer edge of the zone</p>
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting the random 3D location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomPointVec3" >
+<strong>ZONE_RADIUS:GetRandomPointVec3(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object reflecting a random 3D location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a>:</em>
+The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object reflecting the random 3D location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomVec2" >
+<strong>ZONE_RADIUS:GetRandomVec2(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random Vec2 location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
 
 				</li>
 		</ul>
