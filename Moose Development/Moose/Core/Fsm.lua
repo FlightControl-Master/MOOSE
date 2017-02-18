@@ -869,6 +869,27 @@ do -- FSM_PROCESS
   function FSM_PROCESS:Init( FsmProcess )
     self:T( "No Initialisation" )
   end  
+
+  function FSM_PROCESS:_call_handler( handler, params, EventName )
+  
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in FSM_PROCESS call handler:" .. errmsg )
+      if debug ~= nil then
+        env.info( debug.traceback() )
+      end
+      
+      return errmsg
+    end
+  
+    if self[handler] then
+      self:F3( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
+      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
+      return Value
+      --return self[handler]( self, self.Controllable, unpack( params ) )
+    end
+  end
   
   --- Creates a new FSM_PROCESS object based on this FSM_PROCESS.
   -- @param #FSM_PROCESS self
@@ -893,7 +914,7 @@ do -- FSM_PROCESS
   
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:T( { Process} )
+      self:E( { Process} )
       local FsmProcess = NewFsm:AddProcess( Process.From, Process.Event, Process.fsm:Copy( Controllable, Task ), Process.ReturnEvents )
     end
   

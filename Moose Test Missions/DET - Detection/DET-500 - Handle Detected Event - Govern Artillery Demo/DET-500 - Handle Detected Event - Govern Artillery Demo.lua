@@ -37,9 +37,11 @@ function RecceDetection:OnAfterDetect(From,Event,To)
 
   local DetectionReport = RecceDetection:DetectedReportDetailed()
 
-  CC:MessageToAll( DetectionReport, 15, "" )
+  CC:GetPositionable():MessageToAll( DetectionReport, 15, "" )
 end
 
+local ArtilleryTime = {}
+local ArtilleryAim = 180
 
 --- OnAfter Transition Handler for Event Detect.
 -- @param Functional.Detection#DETECTION_UNITS self
@@ -48,14 +50,21 @@ end
 -- @param #string To The To State string.
 -- @param Wrapper.Unit#UNIT DetectedUnits
 function RecceDetection:OnAfterDetected( From, Event, To, DetectedUnits )
-
-  local ArtilleryArray = ArtillerySetGroup:GetSet()
-  local ArtilleryArrayCount = ArtillerySetGroup:Count()
+  self:E( { From, Event, To, DetectedUnits } )
 
   for DetectedUnitID, DetectedUnit in pairs( DetectedUnits ) do
     local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
-    local Artillery = ArtilleryArray[ math.random( 1, ArtilleryArrayCount ) ] -- Wrapper.Group#GROUP
-    local Task = Artillery:TaskFireAtPoint( DetectedUnit:GetVec2(), 500, 2 ) -- Fire 2 rockets to the target point.
-    Artillery:SetTask( Task, 0.5 )
+    local Artillery = ArtillerySetGroup:GetRandom() -- Wrapper.Group#GROUP
+    
+    if ArtilleryTime[Artillery] and ArtilleryTime[Artillery] <= timer.getTime() - ArtilleryAim then
+      ArtilleryTime[Artillery] = nil
+    end
+
+    if not ArtilleryTime[Artillery] then
+      local Task = Artillery:TaskFireAtPoint( DetectedUnit:GetVec2(), 500, 4 ) -- Fire 2 rockets to the target point.
+      Artillery:SetTask( Task, 0.5 )
+      ArtilleryTime[Artillery] = timer.getTime()
+    end
+    
   end
 end

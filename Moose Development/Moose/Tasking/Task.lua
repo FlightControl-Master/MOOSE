@@ -182,7 +182,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
-  Mission:AddTask( self )
   
   return self
 end

@@ -1,3 +1,10 @@
+2017-02-17
+
+	- Added ACT_ROUTE_POINT
+		-- Routes a controllable to a point with a defined distance.
+		-- Upon arrived within the engagement distance, an arrival text is shown.
+
+
 2016-12-06
 
 	- Renamed the documentation references following the structure of the files.

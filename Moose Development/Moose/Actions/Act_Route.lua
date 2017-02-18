@@ -177,6 +177,89 @@ do -- ACT_ROUTE
 end -- ACT_ROUTE
 
 
+do -- ACT_ROUTE_POINT
+
+  --- ACT_ROUTE_POINT class
+  -- @type ACT_ROUTE_POINT
+  -- @field Tasking.Task#TASK TASK
+  -- @extends #ACT_ROUTE
+  ACT_ROUTE_POINT = { 
+    ClassName = "ACT_ROUTE_POINT",
+  }
+
+
+  --- Creates a new routing state machine. 
+  -- The task will route a controllable to a TargetPointVec2 until the controllable is within the TargetDistance.
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Core.Point#POINT_VEC2 The PointVec2 to Target.
+  -- @param #number TargetDistance The Distance to Target.
+  -- @param Core.Zone#ZONE_BASE TargetZone
+  function ACT_ROUTE_POINT:New( TargetPointVec2, TargetDistance )
+    local self = BASE:Inherit( self, ACT_ROUTE:New() ) -- #ACT_ROUTE_POINT
+
+    self.TargetPointVec2 = TargetPointVec2
+    self.TargetDistance = TargetDistance
+    
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    
+    return self
+  end
+  
+  function ACT_ROUTE_POINT:Init( FsmRoute )
+  
+    self.TargetPointVec2 = FsmRoute.TargetPointVec2
+    self.TargetDistance = FsmRoute.TargetDistance
+    
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+  end  
+
+  --- Set PointVec2
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Core.Point#POINT_VEC2 TargetPointVec2 The PointVec2 to Target.
+  function ACT_ROUTE_POINT:SetTargetPointVec2( TargetPointVec2 )
+    self.TargetPointVec2 = TargetPointVec2
+  end  
+  
+  --- Method override to check if the controllable has arrived.
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @return #boolean
+  function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
+
+    local Distance = self.TargetPointVec2:Get2DDistance( ProcessUnit:GetPointVec2() )
+    
+    if Distance <= self.TargetDistance then
+      local RouteText = "You have arrived within engagement range."
+      self:Message( RouteText )
+      return true
+    end
+
+    return false
+  end
+  
+  --- Task Events
+  
+  --- StateMachine callback function
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function ACT_ROUTE_POINT:onenterReporting( ProcessUnit, From, Event, To )
+  
+    local TaskUnitPointVec2 = ProcessUnit:GetPointVec2()
+    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( self.TargetPointVec2 ) .. " km to target."
+    self:Message( RouteText )
+  end
+
+end -- ACT_ROUTE_POINT
+
 
 do -- ACT_ROUTE_ZONE
 

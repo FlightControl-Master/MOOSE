@@ -2,7 +2,6 @@
 -- 
 -- ===
 -- 
--- 
 -- # 1) @{#DETECTION_BASE} class, extends @{Fsm#FSM}
 -- 
 -- The @{#DETECTION_BASE} class defines the core functions to administer detected objects.
@@ -473,16 +472,20 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     function DETECTION_BASE:onafterDetect(From,Event,To)
-      self:F( {From,Event,To})
+      self:E( {From,Event,To})
 
-      local DetectDelay = 0.01
+      local DetectDelay = 0.1
       self.DetectionCount = 0
       self.DetectionRun = 0
       self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
+      
+      self.DetectionSetGroup:Flush()
   
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
+        self:E( {DetectionGroupData})
         self:__DetectionGroup( DetectDelay, DetectionGroupData ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
+        DetectDelay = DetectDelay + 0.1
       end
     end
     
@@ -492,13 +495,9 @@ do -- DETECTION_BASE
     -- @param #string To The To State string.
     -- @param Wrapper.Group#GROUP DetectionGroup
     function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup  )
-      self:F( {From,Event,To})
-  
-      self:__Detect( self.DetectionInterval )
+      self:E( {From,Event,To})
       
       self.DetectionRun = self.DetectionRun + 1
-      
-      self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
       
       local HasDetectedObjects = false
       
@@ -506,7 +505,7 @@ do -- DETECTION_BASE
     
         local DetectionGroupName = DetectionGroup:GetName()
         
-        local DetectionGroupObjects = {}
+        local DetectedUnits = {}
         
         local DetectedTargets = DetectionGroup:GetDetectedTargets(
           self.DetectVisual,
@@ -537,7 +536,7 @@ do -- DETECTION_BASE
               ( DetectedObjectVec3.z - DetectionGroupVec3.z )^2
               ) ^ 0.5 / 1000
     
-            self:T2( { DetectionGroupName, DetectedObjectName, Distance } )
+            self:T( { DetectionGroupName, DetectedObjectName, Distance } )
     
             -- Calculate Acceptance
     
@@ -614,6 +613,8 @@ do -- DETECTION_BASE
             end
             
             if DetectionAccepted then
+              
+              HasDetectedObjects = true
     
               if not self.DetectedObjects[DetectedObjectName] then
                 self.DetectedObjects[DetectedObjectName] = {}
@@ -623,7 +624,9 @@ do -- DETECTION_BASE
               self.DetectedObjects[DetectedObjectName].Type = Detection.type
               self.DetectedObjects[DetectedObjectName].Distance = Distance
               
-              DetectionGroupObjects[DetectedObjectName] = DetectedObject
+              local DetectedUnit = UNIT:FindByName( DetectedObjectName )
+              
+              DetectedUnits[DetectedObjectName] = DetectedUnit
             else
               -- if beyond the DetectionRange then nullify...
               if self.DetectedObjects[DetectedObjectName] then
@@ -636,13 +639,14 @@ do -- DETECTION_BASE
         end
         
         if HasDetectedObjects then
-          self:__Detected( 0.1, DetectionGroupObjects )
+          self:__Detected( 0.1, DetectedUnits )
         end
         
       end
       
-      if self.DetectionRun == self.DetectionCount then
-        self:CreateDetectionSets()
+      if self.DetectionCount > 0 and self.DetectionRun == self.DetectionCount then
+        self:__Detect( self.DetectionInterval )
+        --self:CreateDetectionSets()
       end
 
     end
@@ -896,11 +900,14 @@ do -- DETECTION_BASE
   --- Adds a new DetectedItem to the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
+  -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
+  -- @param Core.Zone#ZONE_UNIT Zone (optional) The Zone to be added where the Units are located.
   -- @return #DETECTION_BASE.DetectedItem
-  function DETECTION_BASE:AddDetectedItem()
+  function DETECTION_BASE:AddDetectedItem( Set, Zone )
   
     local DetectedItem = {}
-    DetectedItem.Set = SET_UNIT:New()
+    DetectedItem.Set = Set or SET_UNIT:New()
+    DetectedItem.Zone = Zone
     
     table.insert( self.DetectedItems, DetectedItem )
     
@@ -962,6 +969,24 @@ do -- DETECTION_BASE
     
     return nil
   end
+
+  do -- Zones
+  
+    --- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
+    -- @param #DETECTION_BASE self
+    -- @param #number Index
+    -- @return Core.Zone#ZONE_UNIT DetectedZone
+    function DETECTION_BASE:GetDetectedZone( Index )
+    
+      local DetectedZone = self.DetectedItems[Index].Zone
+      if DetectedZone then
+        return DetectedZone
+      end
+      
+      return nil
+    end
+
+  end  
   
   
   --- Report summary of a detected item using a given numeric index.
@@ -1057,7 +1082,7 @@ do -- DETECTION_UNITS
     
     for DetectedUnitName, DetectedObjectData in pairs( self.DetectedObjects ) do
   
-      self:E( { "Detected Unit #", DetectedUnitName } )
+      self:T( { "Detected Unit #", DetectedUnitName } )
   
       local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
       
@@ -1091,10 +1116,8 @@ do -- DETECTION_UNITS
   
       local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
       
-      self:E( DetectedItemUnit )
-  
       if DetectedItemUnit then
-        self:E(DetectedItemUnit)
+        self:T(DetectedItemUnit)
   
         local UnitCategoryName = DetectedItemUnit:GetCategoryName()
         local UnitCategoryType = DetectedItemUnit:GetTypeName()
@@ -1244,7 +1267,7 @@ do -- DETECTION_TYPES
     
     for DetectedUnitName, DetectedObjectData in pairs( self.DetectedObjects ) do
   
-      self:E( { "Detected Unit #", DetectedUnitName } )
+      self:T( { "Detected Unit #", DetectedUnitName } )
   
       local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
       
@@ -1361,32 +1384,16 @@ do -- DETECTION_AREAS
   -- @return #DETECTION_AREAS.DetectedItem DetectedItem
   function DETECTION_AREAS:AddDetectedItem( Set, Zone )
     self:F( { Set, Zone } )
-  --  local Detected = self:GetDetectedItems()
   
-    local DetectedItem = {}
-    DetectedItem.Set = Set
-    DetectedItem.Zone = Zone
+    local DetectedItem = self:GetParent( self ).AddDetectedItem( self, Set, Zone )
+  
     DetectedItem.Removed = false
     DetectedItem.AreaID = #self.DetectedItems+1
     
-    self:E( { #self.DetectedItems, DetectedItem } )
+    self:T( { #self.DetectedItems, DetectedItem } )
   
-    table.insert( self.DetectedItems, DetectedItem )
-    
     return DetectedItem
     
-  end
-  
-  --- Remove a detected @{#DETECTION_AREAS.DetectedItem} with a given Index.
-  -- @param #DETECTION_AREAS self
-  -- @param #number Index The DetectedItemIndex of the DetectedItems list are to be removed.
-  -- @return #nil
-  function DETECTION_AREAS:RemoveDetectedItem( DetectedItemIndex )
-    local DetectedItems = self:GetDetectedItems()
-    local DetectedCount = self:GetDetectedItemsCount()
-    local DetectedArea = self:GetDetectedItem( Index )
-    DetectedArea[Index] = nil
-    return nil
   end
   
   --- Report summary of a detected item using a given numeric index.
@@ -1414,20 +1421,6 @@ do -- DETECTION_AREAS
       )
       
       return ReportSummary
-    end
-    
-    return nil
-  end
-  
-  --- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
-  -- @param #DETECTION_AREAS self
-  -- @param #number Index
-  -- @return Core.Zone#ZONE_UNIT DetectedZone
-  function DETECTION_AREAS:GetDetectedZone( Index )
-  
-    local DetectedZone = self.DetectedItems[Index].Zone
-    if DetectedZone then
-      return DetectedZone
     end
     
     return nil
