@@ -38,6 +38,8 @@
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-02-18: POINT_VEC3:**NewFromVec2( Vec2, LandHeightAdd )** added.
+-- 
 -- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
 -- 
 -- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
@@ -124,6 +126,24 @@ function POINT_VEC3:New( x, y, z )
   self.y = y
   self.z = z
   
+  return self
+end
+
+--- Create a new POINT_VEC3 object from Vec2 coordinates.
+-- @param #POINT_VEC3 self
+-- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
+-- @return Core.Point#POINT_VEC3 self
+function POINT_VEC3:NewFromVec2( Vec2, LandHeightAdd )
+
+  local LandHeight = land.getHeight( Vec2 )
+
+  LandHeightAdd = LandHeightAdd or 0
+  LandHeight = LandHeight + LandHeightAdd
+  
+  self = self:New( Vec2.x, LandHeight, Vec2.y )
+  
+  self:F2( self )
+
   return self
 end
 
