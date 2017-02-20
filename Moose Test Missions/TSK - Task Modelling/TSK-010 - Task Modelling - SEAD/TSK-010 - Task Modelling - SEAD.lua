@@ -90,6 +90,9 @@ SEADSet:Flush()
 -- and will not be continuously updated!
 local TargetSet = SET_UNIT:New():FilterPrefixes( "US Hawk SR" ):FilterOnce()
 
+-- Define the RendezVous Zone where the pilot needs to RendezVous with other players before engaging.
+local RendezVousZone = ZONE:New( "RendezVous Zone" )
+
 -- Define the zone to where the pilot needs to navigate.
 local TargetZone = ZONE:New( "Target Zone" )
 
@@ -109,7 +112,10 @@ local SEADTask = TASK_SEAD:New(
   SEADSet, 
   "SEAD Radars Vector 1", 
   TargetSet,
-  15000 ) -- Tasking.Task#TASK_SEAD
+  15000 ) -- Tasking.Task_SEAD#TASK_SEAD
+
+SEADTask:SetRendezVousPointVec2( TargetZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
+SEADTask:SetTargetZone( TargetZone )
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".

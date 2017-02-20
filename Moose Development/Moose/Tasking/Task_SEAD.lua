@@ -40,7 +40,7 @@ do -- TASK_SEAD
   -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
   -- @return #TASK_SEAD self
-  function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TargetDistance )
+  function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, "SEAD" ) ) -- Tasking.Task#TASK_SEAD
     self:F()
   
@@ -52,79 +52,102 @@ do -- TASK_SEAD
     local Fsm = self:GetUnitProcess()
     
 
-    Fsm:AddProcess   ( "Planned",                   "Accept",         ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Route", Rejected = "Reject" }  )
-    Fsm:AddTransition( "Assigned",                  "Route",          "Routing" )
-    Fsm:AddProcess   ( "Routing",                   "RouteToPoint",   ACT_ROUTE_POINT:New( self.TargetPointVec2, self.TargetDistance ), { Arrived = "Arrive" } )
-    Fsm:AddProcess   ( "Routing",                   "RouteToZone",    ACT_ROUTE_ZONE:New( self.TargetZone ), { Arrived = "Arrive" } )
+    Fsm:AddProcess   ( "Planned",                   "Accept",         ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "RouteToRendezVous", Rejected = "Reject" }  )
+    
+    Fsm:AddTransition( "Assigned",                  "RouteToRendezVous",          "RoutingToRendezVous" )
+    Fsm:AddProcess   ( "RoutingToRendezVous",       "RouteToRendezVousPoint",   ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtRendezVous" } )
+    Fsm:AddProcess   ( "RoutingToRendezVous",       "RouteToRendezVousZone",    ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtRendezVous" } )
+    
+    Fsm:AddTransition( "Arrived",                   "ArriveAtRendezVous",         "ArrivedAtRendezVous" )
+    
+    Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" },    "Engage",         "Engaging" )
+    Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" },    "HoldAtRendezVous",         "HoldingAtRendezVous" )
+     
+    Fsm:AddProcess   ( "Engaging",                  "Account",        ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
+    --Fsm:AddProcess   ( "Accounting",                "Smoke",          ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
+    Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
+    Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
+    Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
+    Fsm:AddTransition( "Engaging", "RouteToTargets", "Engaging" )
+    
+    Fsm:AddTransition( "Accounted",                "DestroyedAll",        "Accounted" )
     Fsm:AddTransition( "Rejected",                  "Reject",         "Aborted" )
-    Fsm:AddTransition( "Arrived",                   "Arrive",         "Accounting" ) 
-    Fsm:AddProcess   ( "Accounting",                "Account",        ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, "SEAD" ), { Accounted = "Success" } )
-    Fsm:AddProcess   ( "Accounting",                "Smoke",          ACT_ASSIST_SMOKE_TARGETS_ZONE:New( self.TargetSetUnit, self.TargetZone ) )
-    Fsm:AddTransition( "Accounting",                "CheckRange",     "Accounting" )
-    Fsm:AddTransition( "Accounting",                "InRange",        "Accounting" )
-    Fsm:AddTransition( "Accounting",                "NotInRange",     "Assigned" )
-    Fsm:AddTransition( "Accounting",                "Success",        "Success" )
     Fsm:AddTransition( "Failed",                    "Fail",           "Failed" )
     
     
     --- Test 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_SEAD#TASK_SEAD Task
+    function Fsm:onafterRouteToRendezVous( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      -- Determine the first Unit from the self.RendezVousSetUnit
+      
+      if Task:GetRendezVousZone() then
+        self:__RouteToRendezVousZone( 0.1 )
+      else
+        if Task:GetRendezVousPointVec2() then
+          self:__RouteToPoint( 0.1 )
+        else
+          self:__ArriveAtRendezVous( 0.1 )
+        end
+      end
+    end
+
+    --- Test 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_SEAD Task
-    function Fsm:onenterRouting( TaskUnit, Task )
+    function Fsm:OnAfterArriveAtRendezVous( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
-      local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-      if TargetUnit then
-        self:E( { TargetZone = Task.TargetZone } )
-        if Task.TargetZone then
-          self:__RouteToZone( 0.1 )
+      self:__Engage( 0.1 )      
+    end
+    
+    --- Test 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task#TASK_SEAD Task
+    function Fsm:onafterEngage( TaskUnit, Task )
+      self:E( { self } )
+      self:__Account( 0.1 )
+      self:__RouteToTarget(0.1 )
+      self:__RouteToTargets( -10 )
+    end
+    
+    --- Test 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_SEAD#TASK_SEAD Task
+    function Fsm:onafterRouteToTarget( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      -- Determine the first Unit from the self.TargetSetUnit
+      
+        if Task:GetTargetZone() then
+          self:__RouteToTargetZone( 0.1 )
         else
-          local TargetPointVec2 = TargetUnit:GetPointVec2()
-          local RoutePointProcess = self:GetProcess( "Routing", "RouteToPoint" )
-          RoutePointProcess:SetTargetPointVec2( TargetPointVec2 )
-          self:__RouteToPoint( 0.1 )
+          if Task:GetTargetPointVec2() then
+            local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
+            if TargetUnit then
+              Task:SetTargetPointVec2( TargetUnit:GetPointVec2() )
+            end
+            self:__RouteToTargetPoint( 0.1 )
+          end
         end
       end        
     end
     
-    function Fsm:onenterAccounting( TaskUnit, Task )
-      self:E( { self } )
-      self:Account()
-      self:Smoke()
-      self:__CheckRange( -5 )
-    end
-    
-    --- @param #FSM_PROCESS self
+    --- Test 
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    function Fsm:onafterCheckRange( TaskUnit, Task )
-      self:E( "CheckRange" )
+    -- @param Tasking.Task_SEAD#TASK_SEAD Task
+    function Fsm:onafterRouteToTargets( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
       if TargetUnit then
-        local PointVec2 = TargetUnit:GetPointVec2()
-        local Distance = PointVec2:Get2DDistance( TaskUnit:GetPointVec2() )
-        if Distance > Task.TargetDistance then
-          self:NotInRange()
-        else
-          self:InRange()
-        end
+        Task:SetTargetPointVec2( TargetUnit:GetPointVec2() )
       end
-    end  
-    
-    function Fsm:onafterNotInRange( TaskUnit )
-      self:E( "Not In Range" )
-      -- Stop accounting etc. and go back to routing.
-      local FsmAccount = self:GetProcess( "Accounting", "Account" )
-      local FsmSmoke = self:GetProcess( "Accounting", "Smoke" )
-      FsmAccount:Stop() -- Stop the Accounting
-      FsmSmoke:Stop() -- Stop the Smoking
-      self:__Route( 1 )
-    end
-
-    function Fsm:onafterInRange( TaskUnit )
-      self:E( "In Range" )
-      self:__CheckRange( -5 )
     end
     
     return self
@@ -137,8 +160,72 @@ do -- TASK_SEAD
   end
 
   --- @param #TASK_SEAD self
+  -- @param Core.Point#POINT_VEC2 RendezVousPointVec2 The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.
+  -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  function TASK_SEAD:SetRendezVousPointVec2( RendezVousPointVec2, RendezVousRange )
+  
+    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    ActRouteRendezVous:SetPointVec2( RendezVousPointVec2 )
+    ActRouteRendezVous:SetRange( RendezVousRange )
+  end
+  
+  --- @param #TASK_SEAD self
+  -- @return Core.Point#POINT_VEC2 The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.
+  -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
+  function TASK_SEAD:GetRendezVousPointVec2()
+  
+    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    return ActRouteRendezVous:GetPointVec2(), ActRouteRendezVous:GetRange()
+  end
+  
+  
+  
+  --- @param #TASK_SEAD self
+  -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
+  function TASK_SEAD:SetRendezVousZone( RendezVousZone )
+  
+    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    ActRouteRendezVous:SetZone( RendezVousZone )
+  end
+
+  --- @param #TASK_SEAD self
+  -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
+  function TASK_SEAD:GetRendezVousZone()
+    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    return ActRouteRendezVous:GetZone()
+  end
+  
+  --- @param #TASK_SEAD self
+  -- @param Core.Point#POINT_VEC2 TargetPointVec2 The PointVec2 object where the Target is located on the map.
+  function TASK_SEAD:SetTargetPointVec2( TargetPointVec2 )
+  
+    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    ActRouteTarget:SetPointVec2( TargetPointVec2 )
+  end
+   
+
+  --- @param #TASK_SEAD self
+  -- @return Core.Point#POINT_VEC2 The PointVec2 object where the Target is located on the map.
+  function TASK_SEAD:GetTargetPointVec2()
+    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    return ActRouteTarget:GetPointVec2()
+  end
+
+
+  --- @param #TASK_SEAD self
+  -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
   function TASK_SEAD:SetTargetZone( TargetZone )
-    self.TargetZone = TargetZone
+  
+    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    ActRouteTarget:SetZone( TargetZone )
+  end
+   
+
+  --- @param #TASK_SEAD self
+  -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
+  function TASK_SEAD:GetTargetZone()
+    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    return ActRouteTarget:GetZone()
   end
   
 end 
