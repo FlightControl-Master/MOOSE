@@ -124,18 +124,17 @@ do -- TASK_SEAD
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
-        if Task:GetTargetZone() then
-          self:__RouteToTargetZone( 0.1 )
-        else
-          if Task:GetTargetPointVec2() then
-            local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-            if TargetUnit then
-              Task:SetTargetPointVec2( TargetUnit:GetPointVec2() )
-            end
-            self:__RouteToTargetPoint( 0.1 )
+      if Task:GetTargetZone() then
+        self:__RouteToTargetZone( 0.1 )
+      else
+        if Task:GetTargetPointVec2() then
+          local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
+          if TargetUnit then
+            Task:SetTargetPointVec2( TargetUnit:GetPointVec2() )
           end
+          self:__RouteToTargetPoint( 0.1 )
         end
-      end        
+      end
     end
     
     --- Test 
