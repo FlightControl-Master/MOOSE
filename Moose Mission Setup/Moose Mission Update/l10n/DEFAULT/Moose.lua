@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170221_1153' ) 
+env.info( 'Moose Generation Timestamp: 20170223_1723' ) 
 local base = _G
 
 Include = {}
@@ -15359,7 +15359,7 @@ function GROUP:IsAlive()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist()
+    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
     self:T3( GroupIsAlive )
     return GroupIsAlive
   end
