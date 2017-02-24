@@ -38,7 +38,7 @@
 -- 
 -- ![Objects](..\Presentations\EVENT\Dia6.JPG)
 -- 
--- For most DCS events, the above order of updating will be followed.1
+-- For most DCS events, the above order of updating will be followed.
 -- 
 -- ![Objects](..\Presentations\EVENT\Dia7.JPG)
 -- 
@@ -124,6 +124,22 @@
 -- 
 -- ![Objects](..\Presentations\EVENT\Dia14.JPG)
 -- 
+-- **IMPORTANT NOTE:** Some events can involve not just UNIT objects, but also STATIC objects!!! 
+-- In that case the initiator or target unit fields will refer to a STATIC object!
+-- In case a STATIC object is involved, the documentation indicates which fields will and won't not be populated.
+-- The fields **IniCategory** and **TgtCategory** contain the indicator which **kind of object is involved** in the event.
+-- You can use the enumerator **Object.Category.UNIT** and **Object.Category.STATIC** to check on IniCategory and TgtCategory.
+-- Example code snippet:
+--      
+--      if Event.IniCategory == Object.Category.UNIT then
+--       ...
+--      end
+--      if Event.IniCategory == Object.Category.STATIC then
+--       ...
+--      end 
+-- 
+-- When a static object is involved in the event, the Group and Player fields won't be populated.
+-- 
 -- ====
 -- 
 -- # **API CHANGE HISTORY**
@@ -152,7 +168,8 @@
 --
 -- @module Event
 
-
+-- TODO: Need to update the EVENTDATA documentation with IniPlayerName and TgtPlayerName
+-- TODO: Need to update the EVENTDATA documentation with IniCategory and TgtCategory
 
 
 
@@ -195,23 +212,39 @@ EVENTS = {
 }
 
 --- The Event structure
+-- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
+--   
+--   * A (Object.Category.)UNIT : A UNIT object type is involved in the Event.
+--   * A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+--   
 -- @type EVENTDATA
--- @field id
--- @field initiator
--- @field target
--- @field weapon
--- @field IniDCSUnit
--- @field IniDCSUnitName
--- @field Wrapper.Unit#UNIT           IniUnit
--- @field #string             IniUnitName
--- @field IniDCSGroup
--- @field IniDCSGroupName
--- @field TgtDCSUnit
--- @field TgtDCSUnitName
--- @field Wrapper.Unit#UNIT           TgtUnit
--- @field #string             TgtUnitName
--- @field TgtDCSGroup
--- @field TgtDCSGroupName
+-- @field #number id The identifier of the event.
+-- 
+-- @field Dcs.DCSUnit#Unit                  initiator         (UNIT/STATIC) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category     IniCategory       (UNIT/STATIC) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit                  IniDCSUnit        (UNIT/STATIC) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field #string                           IniDCSUnitName    (UNIT/STATIC) The initiating Unit name.
+-- @field Wrapper.Unit#UNIT                 IniUnit           (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
+-- @field #string                           IniUnitName       (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+-- @field Dcs.DCSGroup#Group                IniDCSGroup       (UNIT) The initiating {Dcs.DCSGroup#Group}.
+-- @field #string                           IniDCSGroupName   (UNIT) The initiating Group name.
+-- @field Wrapper.Group#GROUP               IniGroup          (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
+-- @field #string                           IniGroupName      (UNIT) The initiating GROUP name (same as IniDCSGroupName).
+-- @field #string                           IniPlayerName     (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+-- 
+-- @field Dcs.DCSUnit#Unit                  target            (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category     TgtCategory       (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit                  TgtDCSUnit        (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field #string                           TgtDCSUnitName    (UNIT/STATIC) The target Unit name.
+-- @field Wrapper.Unit#UNIT                 TgtUnit           (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
+-- @field #string                           TgtUnitName       (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+-- @field Dcs.DCSGroup#Group                TgtDCSGroup       (UNIT) The target {Dcs.DCSGroup#Group}.
+-- @field #string                           TgtDCSGroupName   (UNIT) The target Group name.
+-- @field Wrapper.Group#GROUP               TgtGroup          (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
+-- @field #string                           TgtGroupName      (UNIT) The target GROUP name (same as TgtDCSGroupName).
+-- @field #string                           TgtPlayerName     (UNIT) The name of the target player in case the Unit is a client or player slot.
+-- 
+-- @field weapon The weapon used during the event.
 -- @field Weapon
 -- @field WeaponName
 -- @field WeaponTgtDCSUnit
@@ -1014,25 +1047,40 @@ function EVENT:onEvent( Event )
   end
 
   if self and self.Events and self.Events[Event.id] then
-    if Event.initiator and Event.initiator:getCategory() == Object.Category.UNIT then
-      Event.IniDCSUnit = Event.initiator
-      Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
-      Event.IniDCSUnitName = Event.IniDCSUnit:getName()
-      Event.IniUnitName = Event.IniDCSUnitName
-      Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
-      if not Event.IniUnit then
-        -- Unit can be a CLIENT. Most likely this will be the case ...
-        Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
+  
+
+    if Event.initiator then    
+      Event.IniCategory = Event.initiator:getCategory()
+      if Event.IniCategory == Object.Category.UNIT then
+        Event.IniDCSUnit = Event.initiator
+        Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+        Event.IniUnitName = Event.IniDCSUnitName
+        Event.IniDCSGroup = Event.IniDCSUnit:getGroup()
+        Event.IniUnit = UNIT:FindByName( Event.IniDCSUnitName )
+        if not Event.IniUnit then
+          -- Unit can be a CLIENT. Most likely this will be the case ...
+          Event.IniUnit = CLIENT:FindByName( Event.IniDCSUnitName, '', true )
+        end
+        Event.IniDCSGroupName = ""
+        if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
+          Event.IniDCSGroupName = Event.IniDCSGroup:getName()
+          Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+          self:E( { IniGroup = Event.IniGroup } )
+        end
+        Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
       end
-      Event.IniDCSGroupName = ""
-      if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
-        Event.IniDCSGroupName = Event.IniDCSGroup:getName()
-        Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-        self:E( { IniGroup = Event.IniGroup } )
+      
+      if Event.IniCategory == Object.Category.STATIC then
+        Event.IniDCSUnit = Event.initiator
+        Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+        Event.IniUnitName = Event.IniDCSUnitName
+        Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName )
       end
     end
+    
     if Event.target then
-      if Event.target and Event.target:getCategory() == Object.Category.UNIT then
+      Event.TgtCategory = Event.target:getCategory()
+      if Event.TgtCategory == Object.Category.UNIT then 
         Event.TgtDCSUnit = Event.target
         Event.TgtDCSGroup = Event.TgtDCSUnit:getGroup()
         Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
@@ -1042,8 +1090,19 @@ function EVENT:onEvent( Event )
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
         end
+        Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
+      end
+      
+      if Event.TgtCategory == Object.Category.STATIC then
+        Event.TgtDCSUnit = Event.target
+        Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+        Event.TgtUnitName = Event.TgtDCSUnitName
+        Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName )
       end
     end
+    
+    
+    
     if Event.weapon then
       Event.Weapon = Event.weapon
       Event.WeaponName = Event.Weapon:getTypeName()

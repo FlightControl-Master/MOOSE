@@ -122,7 +122,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
     TargetUnitName = Event.IniDCSUnitName
     TargetGroup = Event.IniDCSGroup
     TargetGroupName = Event.IniDCSGroupName
-    TargetPlayerName = TargetUnit:getPlayerName()
+    TargetPlayerName = Event.IniPlayerName
 
     TargetCoalition = TargetUnit:getCoalition()
     --TargetCategory = TargetUnit:getCategory()
@@ -369,7 +369,7 @@ function SCORING:_EventOnHit( Event )
     InitUnitName = Event.IniDCSUnitName
     InitGroup = Event.IniDCSGroup
     InitGroupName = Event.IniDCSGroupName
-    InitPlayerName = InitUnit:getPlayerName()
+    InitPlayerName = Event.IniPlayerName
 
     InitCoalition = InitUnit:getCoalition()
     --TODO: Workaround Client DCS Bug
@@ -391,7 +391,7 @@ function SCORING:_EventOnHit( Event )
     TargetUnitName = Event.TgtDCSUnitName
     TargetGroup = Event.TgtDCSGroup
     TargetGroupName = Event.TgtDCSGroupName
-    TargetPlayerName = TargetUnit:getPlayerName()
+    TargetPlayerName = Event.TgtPlayerName
 
     TargetCoalition = TargetUnit:getCoalition()
     --TODO: Workaround Client DCS Bug
