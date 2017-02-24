@@ -184,7 +184,7 @@ function GROUP:IsAlive()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist()
+    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
     self:T3( GroupIsAlive )
     return GroupIsAlive
   end
