@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170226_0752' ) 
+env.info( 'Moose Generation Timestamp: 20170226_1154' ) 
 local base = _G
 
 Include = {}
@@ -16671,45 +16671,123 @@ end
 --   * Threat level  8: Unit is a Short Range SAM, radar guided.
 --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
 --   * Threat level 10: Unit is a Long Range SAM, radar guided.
+--   @param #UNIT self
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
+  self:T( Attributes )
+
   local ThreatLevel = 0
+  local ThreatText = ""
+
+  if self:IsGround() then
   
-  local ThreatLevels = {
-    "Unarmed", 
-    "Infantry", 
-    "Old Tanks & APCs", 
-    "Tanks & IFVs without ATGM",   
-    "Tanks & IFV with ATGM",
-    "Modern Tanks",
-    "AAA",
-    "IR Guided SAMs",
-    "SR SAMs",
-    "MR SAMs",
-    "LR SAMs"
-  }
+    local ThreatLevels = {
+      "Unarmed", 
+      "Infantry", 
+      "Old Tanks & APCs", 
+      "Tanks & IFVs without ATGM",   
+      "Tanks & IFV with ATGM",
+      "Modern Tanks",
+      "AAA",
+      "IR Guided SAMs",
+      "SR SAMs",
+      "MR SAMs",
+      "LR SAMs"
+    }
+    
+    
+    if     Attributes["LR SAM"]                                   then ThreatLevel = 10
+    elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
+    elseif Attributes["SR SAM"] and
+           not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
+    elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
+           Attributes["IR Guided SAM"]                            then ThreatLevel = 7
+    elseif Attributes["AAA"]                                      then ThreatLevel = 6
+    elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
+    elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+           Attributes["ATGM"]                                     then ThreatLevel = 4
+    elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+           not Attributes["ATGM"]                                 then ThreatLevel = 3
+    elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
+    elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+    end
+    
+    ThreatText = ThreatLevels[ThreatLevel+1]
+  end
   
-  self:T2( Attributes )
+  if self:IsAir() then
   
-  if     Attributes["LR SAM"]                                   then ThreatLevel = 10
-  elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
-  elseif Attributes["SR SAM"] and
-         not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
-  elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
-         Attributes["IR Guided SAM"]                            then ThreatLevel = 7
-  elseif Attributes["AAA"]                                      then ThreatLevel = 6
-  elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
-  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-         Attributes["ATGM"]                                     then ThreatLevel = 4
-  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-         not Attributes["ATGM"]                                 then ThreatLevel = 3
-  elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
-  elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+    local ThreatLevels = {
+      "Unarmed", 
+      "Tanker", 
+      "AWACS", 
+      "Transport Helicpter",   
+      "UAV",
+      "Bomber",
+      "Strategic Bomber",
+      "Attack Helicopter",
+      "Interceptor",
+      "Multirole Fighter",
+      "Fighter"
+    }
+    
+    
+    if     Attributes["Fighters"]                                 then ThreatLevel = 10
+    elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
+    elseif Attributes["Interceptors"]                             then ThreatLevel = 8
+    elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
+    elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
+    elseif Attributes["Bombers"]                                  then ThreatLevel = 5
+    elseif Attributes["UAVs"]                                     then ThreatLevel = 4
+    elseif Attributes["Transport helicopters"]                    then ThreatLevel = 3
+    elseif Attributes["AWACS"]                                    then ThreatLevel = 2
+    elseif Attributes["Tankers"]                                  then ThreatLevel = 1
+    end
+
+    ThreatText = ThreatLevels[ThreatLevel+1]
+  end
+  
+  if self:IsShip() then
+
+--["Aircraft Carriers"] = {"Heavy armed ships",},
+--["Cruisers"] = {"Heavy armed ships",},
+--["Destroyers"] = {"Heavy armed ships",},
+--["Frigates"] = {"Heavy armed ships",},
+--["Corvettes"] = {"Heavy armed ships",},
+--["Heavy armed ships"] = {"Armed ships", "Armed Air Defence", "HeavyArmoredUnits",},
+--["Light armed ships"] = {"Armed ships","NonArmoredUnits"},
+--["Armed ships"] = {"Ships"},
+--["Unarmed ships"] = {"Ships","HeavyArmoredUnits",},
+  
+    local ThreatLevels = {
+      "Unarmed ship", 
+      "Light armed ships", 
+      "Corvettes",
+      "",
+      "Frigates",
+      "",
+      "Cruiser",
+      "",
+      "Destroyer",
+      "",
+      "Aircraft Carrier"
+    }
+    
+    
+    if     Attributes["Aircraft Carriers"]                        then ThreatLevel = 10
+    elseif Attributes["Destroyers"]                               then ThreatLevel = 8
+    elseif Attributes["Cruisers"]                                 then ThreatLevel = 6
+    elseif Attributes["Frigates"]                                 then ThreatLevel = 4
+    elseif Attributes["Corvettes"]                                then ThreatLevel = 2
+    elseif Attributes["Light armed ships"]                        then ThreatLevel = 1
+    end
+
+    ThreatText = ThreatLevels[ThreatLevel+1]
   end
 
   self:T2( ThreatLevel )
-  return ThreatLevel, ThreatLevels[ThreatLevel+1]
+  return ThreatLevel, ThreatText
 
 end
 
@@ -17552,7 +17630,11 @@ function STATIC:GetDCSObject()
     
   return nil
 end
---- This module contains the AIRBASE classes.
+
+function STATIC:GetThreatLevel()
+
+  return 0, "Static"
+end--- This module contains the AIRBASE classes.
 -- 
 -- ===
 -- 
@@ -17661,7 +17743,19 @@ end
 
 
 
---- Scoring system for MOOSE.
+--- Single-Player:**Yes** / Multi-Player:**Yes** / Core:**Yes** -- **Administer the scoring of player achievements, 
+-- and create a CSV file logging the scoring events for use at team or squadron websites.**
+-- 
+-- -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
+--  
+-- ===
+-- 
+-- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
+-- 
+-- The @{#SCORING} class administers the scoring of player achievements, 
+-- and creates a CSV file logging the scoring events for use at team or squadron websites.
+-- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
+-- 
 -- This scoring class calculates the hits and kills that players make within a simulation session.
 -- Scoring is calculated using a defined algorithm.
 -- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
@@ -17719,7 +17813,7 @@ function SCORING:New( GameName )
   self:HandleEvent( EVENTS.Hit, self._EventOnHit )
 
   --self.SchedulerId = routines.scheduleFunction( SCORING._FollowPlayersScheduled, { self }, 0, 5 )
-  self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )
+  --self.SchedulerId = SCHEDULER:New( self, self._FollowPlayersScheduled, {}, 0, 5 )
 
   self:ScoreMenu()
   
@@ -17764,16 +17858,18 @@ end
 
 
 --- Add a new player entering a Unit.
+-- @param #SCORING self
+-- @param Wrapper.Unit#UNIT UnitData
 function SCORING:_AddPlayerFromUnit( UnitData )
   self:F( UnitData )
 
-  if UnitData and UnitData:isExist() then
-    local UnitName = UnitData:getName()
-    local PlayerName = UnitData:getPlayerName()
-    local UnitDesc = UnitData:getDesc()
+  if UnitData:IsAlive() then
+    local UnitName = UnitData:GetName()
+    local PlayerName = UnitData:GetPlayerName()
+    local UnitDesc = UnitData:GetDesc()
     local UnitCategory = UnitDesc.category
-    local UnitCoalition = UnitData:getCoalition()
-    local UnitTypeName = UnitData:getTypeName()
+    local UnitCoalition = UnitData:GetCoalition()
+    local UnitTypeName = UnitData:GetTypeName()
 
     self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
@@ -17812,6 +17908,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UnitCoalition = UnitCoalition
     self.Players[PlayerName].UnitCategory = UnitCategory
     self.Players[PlayerName].UnitType = UnitTypeName
+    self.Players[PlayerName].UNIT = UnitData 
 
     if self.Players[PlayerName].Penalty > 100 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
@@ -17823,7 +17920,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     end
 
     if self.Players[PlayerName].Penalty > 150 then
-      ClientGroup = GROUP:NewFromDCSUnit( UnitData )
+      local ClientGroup = GROUP:NewFromDCSUnit( UnitData )
       ClientGroup:Destroy()
       MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
@@ -17909,6 +18006,7 @@ function SCORING:_EventOnHit( Event )
   self:F( { Event } )
 
   local InitUnit = nil
+  local InitUNIT = nil
   local InitUnitName = ""
   local InitGroup = nil
   local InitGroupName = ""
@@ -17922,6 +18020,7 @@ function SCORING:_EventOnHit( Event )
   local InitUnitType = nil
 
   local TargetUnit = nil
+  local TargetUNIT = nil
   local TargetUnitName = ""
   local TargetGroup = nil
   local TargetGroupName = ""
@@ -17937,10 +18036,11 @@ function SCORING:_EventOnHit( Event )
   if Event.IniDCSUnit then
 
     InitUnit = Event.IniDCSUnit
+    InitUNIT = Event.IniUnit
     InitUnitName = Event.IniDCSUnitName
     InitGroup = Event.IniDCSGroup
     InitGroupName = Event.IniDCSGroupName
-    InitPlayerName = Event.IniPlayerName or ""
+    InitPlayerName = Event.IniPlayerName
 
     InitCoalition = InitUnit:getCoalition()
     --TODO: Workaround Client DCS Bug
@@ -17959,10 +18059,11 @@ function SCORING:_EventOnHit( Event )
   if Event.TgtDCSUnit then
 
     TargetUnit = Event.TgtDCSUnit
+    TargetUNIT = Event.TgtUnit
     TargetUnitName = Event.TgtDCSUnitName
     TargetGroup = Event.TgtDCSGroup
     TargetGroupName = Event.TgtDCSGroupName
-    TargetPlayerName = Event.TgtPlayerName or ""
+    TargetPlayerName = Event.TgtPlayerName
 
     TargetCoalition = TargetUnit:getCoalition()
     --TODO: Workaround Client DCS Bug
@@ -17978,10 +18079,10 @@ function SCORING:_EventOnHit( Event )
   end
 
   if InitPlayerName ~= nil then -- It is a player that is hitting something
-    self:_AddPlayerFromUnit( InitUnit )
+    self:_AddPlayerFromUnit( InitUNIT )
     if self.Players[InitPlayerName] then -- This should normally not happen, but i'll test it anyway.
       if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-        self:_AddPlayerFromUnit( TargetUnit )
+        self:_AddPlayerFromUnit( TargetUNIT )
       end
 
       self:T( "Hitting Something" )
@@ -18004,51 +18105,58 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.Penalty = PlayerHit.Penalty or 0
         PlayerHit.ScoreHit = PlayerHit.ScoreHit or 0
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
+        PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
+        PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+
+        -- Only grant hit scores if there was more than one second between the last hit.        
+        if timer.getTime() - PlayerHit.TimeStamp > 1 then
+          PlayerHit.TimeStamp = timer.getTime()
         
-        if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-  
-          -- Ensure there is a Player to Player hit reference table.
-          Player.HitPlayers[TargetPlayerName] = true
-        end
-        
-        local Score = 0
-        if InitCoalition == TargetCoalition then
-          Player.Penalty = Player.Penalty + 10
-          PlayerHit.Penalty = PlayerHit.Penalty + 10
-          PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
-  
           if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-            MESSAGE:New( "Player '" .. InitPlayerName .. "' hit friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-              PlayerHit.PenaltyHit .. " times. Penalty: -" .. PlayerHit.Penalty ..
-              ".  Score Total:" .. Player.Score - Player.Penalty,
-              2
-            ):ToAll()
-          else
-            MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-              PlayerHit.PenaltyHit .. " times. Penalty: -" .. PlayerHit.Penalty ..
-              ".  Score Total:" .. Player.Score - Player.Penalty,
-              2
-            ):ToAll()
+    
+            -- Ensure there is a Player to Player hit reference table.
+            Player.HitPlayers[TargetPlayerName] = true
           end
-          self:ScoreCSV( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-        else
-          Player.Score = Player.Score + 1
-          PlayerHit.Score = PlayerHit.Score + 1
-          PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
-          if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-            MESSAGE:New( "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' "  .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-              PlayerHit.ScoreHit .. " times. Score: " .. PlayerHit.Score ..
-              ".  Score Total:" .. Player.Score - Player.Penalty,
-              2
-            ):ToAll()
+          
+          local Score = 0
+          if InitCoalition == TargetCoalition then
+            Player.Penalty = Player.Penalty + 10
+            PlayerHit.Penalty = PlayerHit.Penalty + 10
+            PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
+    
+            if TargetPlayerName ~= nil then -- It is a player hitting another player ...
+              MESSAGE:New( "Player '" .. InitPlayerName .. "' hit friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+                PlayerHit.PenaltyHit .. " times. Penalty: -" .. PlayerHit.Penalty ..
+                ".  Score Total:" .. Player.Score - Player.Penalty,
+                2
+              ):ToAll()
+            else
+              MESSAGE:New( "Player '" .. InitPlayerName .. "' hit a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+                PlayerHit.PenaltyHit .. " times. Penalty: -" .. PlayerHit.Penalty ..
+                ".  Score Total:" .. Player.Score - Player.Penalty,
+                2
+              ):ToAll()
+            end
+            self:ScoreCSV( InitPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-            MESSAGE:New( "Player '" .. InitPlayerName .. "' hit an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
-              PlayerHit.ScoreHit .. " times. Score: " .. PlayerHit.Score ..
-              ".  Score Total:" .. Player.Score - Player.Penalty,
-              2
-            ):ToAll()
+            Player.Score = Player.Score + 1
+            PlayerHit.Score = PlayerHit.Score + 1
+            PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
+            if TargetPlayerName ~= nil then -- It is a player hitting another player ...
+              MESSAGE:New( "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' "  .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+                PlayerHit.ScoreHit .. " times. Score: " .. PlayerHit.Score ..
+                ".  Score Total:" .. Player.Score - Player.Penalty,
+                2
+              ):ToAll()
+            else
+              MESSAGE:New( "Player '" .. InitPlayerName .. "' hit an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+                PlayerHit.ScoreHit .. " times. Score: " .. PlayerHit.Score ..
+                ".  Score Total:" .. Player.Score - Player.Penalty,
+                2
+              ):ToAll()
+            end
+            self:ScoreCSV( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           end
-          self:ScoreCSV( InitPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
         end
       end
     end
@@ -18081,7 +18189,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
     TargetUnitName = Event.IniDCSUnitName
     TargetGroup = Event.IniDCSGroup
     TargetGroupName = Event.IniDCSGroupName
-    TargetPlayerName = Event.IniPlayerName or ""
+    TargetPlayerName = Event.IniPlayerName
 
     TargetCoalition = TargetUnit:getCoalition()
     --TargetCategory = TargetUnit:getCategory()
@@ -18125,10 +18233,14 @@ function SCORING:_EventOnDeadOrCrash( Event )
           PlayerKill.ScoreKill = PlayerKill.ScoreKill or 0
           PlayerKill.Penalty =  PlayerKill.Penalty or 0
           PlayerKill.PenaltyKill = PlayerKill.PenaltyKill or 0
+          PlayerKill.UNIT = PlayerKill.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
   
           if InitCoalition == TargetCoalition then
-            Player.Penalty = Player.Penalty + 25
-            PlayerKill.Penalty = PlayerKill.Penalty + 25
+            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
+            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            Player.Penalty = Player.Penalty + ThreatLevel * 4
+            PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel * 4
             PlayerKill.PenaltyKill = PlayerKill.PenaltyKill + 1
             
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
@@ -18144,8 +18256,11 @@ function SCORING:_EventOnDeadOrCrash( Event )
             end
             self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-            Player.Score = Player.Score + 10
-            PlayerKill.Score = PlayerKill.Score + 10
+            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
+            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            Player.Score = Player.Score + ThreatLevel
+            PlayerKill.Score = PlayerKill.Score + ThreatLevel
             PlayerKill.ScoreKill = PlayerKill.ScoreKill + 1
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
               MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
@@ -18856,7 +18971,7 @@ function CLEANUP:_CleanUpScheduler()
 	return true
 end
 
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** --  
+--- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** --  
 -- **Spawn groups of units dynamically in your missions.**
 --  
 -- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
@@ -24895,7 +25010,7 @@ function DETECTION_AREAS:CreateDetectionSets()
 end
 
 
---- Single-Player:**No** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
+--- Single-Player:**No** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 -- even when there are hardly any players in the mission.**
 -- 
@@ -25198,7 +25313,7 @@ end
 
 
 
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+--- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
 -- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
@@ -26089,7 +26204,7 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
+--- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
 -- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
@@ -26661,7 +26776,7 @@ function AI_CAS_ZONE:OnDead( EventData )
 end
 
 
---- Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
+--- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
@@ -27189,7 +27304,7 @@ function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
 end
 
 
----Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
+---Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
 -- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
 --
 -- ![Banner Image](..\Presentations\AI_CARGO\CARGO.JPG)
