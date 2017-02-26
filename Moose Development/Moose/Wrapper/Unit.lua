@@ -540,12 +540,14 @@ end
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
-  self:T( Attributes )
+  self:E( Attributes )
 
   local ThreatLevel = 0
   local ThreatText = ""
 
   if self:IsGround() then
+  
+    self:E( "Ground" )
   
     local ThreatLevels = {
       "Unarmed", 
@@ -562,20 +564,20 @@ function UNIT:GetThreatLevel()
     }
     
     
-    if     Attributes["LR SAM"]                                   then ThreatLevel = 10
-    elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
+    if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
+    elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
     elseif Attributes["SR SAM"] and
-           not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
+           not Attributes["IR Guided SAM"]                                          then ThreatLevel = 8
     elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
-           Attributes["IR Guided SAM"]                            then ThreatLevel = 7
-    elseif Attributes["AAA"]                                      then ThreatLevel = 6
-    elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
+           Attributes["IR Guided SAM"]                                              then ThreatLevel = 7
+    elseif Attributes["AAA"]                                                        then ThreatLevel = 6
+    elseif Attributes["Modern Tanks"]                                               then ThreatLevel = 5
     elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-           Attributes["ATGM"]                                     then ThreatLevel = 4
+           Attributes["ATGM"]                                                       then ThreatLevel = 4
     elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-           not Attributes["ATGM"]                                 then ThreatLevel = 3
-    elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
-    elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+           not Attributes["ATGM"]                                                   then ThreatLevel = 3
+    elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
+    elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
     end
     
     ThreatText = ThreatLevels[ThreatLevel+1]
@@ -583,6 +585,8 @@ function UNIT:GetThreatLevel()
   
   if self:IsAir() then
   
+    self:E( "Air" )
+
     local ThreatLevels = {
       "Unarmed", 
       "Tanker", 
@@ -600,7 +604,7 @@ function UNIT:GetThreatLevel()
     
     if     Attributes["Fighters"]                                 then ThreatLevel = 10
     elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
-    elseif Attributes["Interceptors"]                             then ThreatLevel = 8
+    elseif Attributes["Battleplanes"]                             then ThreatLevel = 8
     elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
     elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
     elseif Attributes["Bombers"]                                  then ThreatLevel = 5
@@ -614,6 +618,8 @@ function UNIT:GetThreatLevel()
   end
   
   if self:IsShip() then
+
+    self:E( "Ship" )
 
 --["Aircraft Carriers"] = {"Heavy armed ships",},
 --["Cruisers"] = {"Heavy armed ships",},

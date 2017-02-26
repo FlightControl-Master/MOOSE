@@ -279,7 +279,7 @@ function SCORING:_EventOnHit( Event )
   local TargetUnitName = ""
   local TargetGroup = nil
   local TargetGroupName = ""
-  local TargetPlayerName = ""
+  local TargetPlayerName = nil
 
   local TargetCoalition = nil
   local TargetCategory = nil
@@ -491,39 +491,44 @@ function SCORING:_EventOnDeadOrCrash( Event )
           PlayerKill.UNIT = PlayerKill.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
   
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+            
             Player.Penalty = Player.Penalty + ThreatLevel * 4
             PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel * 4
             PlayerKill.PenaltyKill = PlayerKill.PenaltyKill + 1
             
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             end
             self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+
+            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+
             Player.Score = Player.Score + ThreatLevel
             PlayerKill.Score = PlayerKill.Score + ThreatLevel
             PlayerKill.ScoreKill = PlayerKill.ScoreKill + 1
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()

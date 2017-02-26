@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170226_1154' ) 
+env.info( 'Moose Generation Timestamp: 20170226_1524' ) 
 local base = _G
 
 Include = {}
@@ -16675,12 +16675,14 @@ end
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
-  self:T( Attributes )
+  self:E( Attributes )
 
   local ThreatLevel = 0
   local ThreatText = ""
 
   if self:IsGround() then
+  
+    self:E( "Ground" )
   
     local ThreatLevels = {
       "Unarmed", 
@@ -16697,20 +16699,20 @@ function UNIT:GetThreatLevel()
     }
     
     
-    if     Attributes["LR SAM"]                                   then ThreatLevel = 10
-    elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
+    if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
+    elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
     elseif Attributes["SR SAM"] and
-           not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
+           not Attributes["IR Guided SAM"]                                          then ThreatLevel = 8
     elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
-           Attributes["IR Guided SAM"]                            then ThreatLevel = 7
-    elseif Attributes["AAA"]                                      then ThreatLevel = 6
-    elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
+           Attributes["IR Guided SAM"]                                              then ThreatLevel = 7
+    elseif Attributes["AAA"]                                                        then ThreatLevel = 6
+    elseif Attributes["Modern Tanks"]                                               then ThreatLevel = 5
     elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-           Attributes["ATGM"]                                     then ThreatLevel = 4
+           Attributes["ATGM"]                                                       then ThreatLevel = 4
     elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-           not Attributes["ATGM"]                                 then ThreatLevel = 3
-    elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
-    elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+           not Attributes["ATGM"]                                                   then ThreatLevel = 3
+    elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
+    elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
     end
     
     ThreatText = ThreatLevels[ThreatLevel+1]
@@ -16718,6 +16720,8 @@ function UNIT:GetThreatLevel()
   
   if self:IsAir() then
   
+    self:E( "Air" )
+
     local ThreatLevels = {
       "Unarmed", 
       "Tanker", 
@@ -16735,7 +16739,7 @@ function UNIT:GetThreatLevel()
     
     if     Attributes["Fighters"]                                 then ThreatLevel = 10
     elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
-    elseif Attributes["Interceptors"]                             then ThreatLevel = 8
+    elseif Attributes["Battleplanes"]                             then ThreatLevel = 8
     elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
     elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
     elseif Attributes["Bombers"]                                  then ThreatLevel = 5
@@ -16749,6 +16753,8 @@ function UNIT:GetThreatLevel()
   end
   
   if self:IsShip() then
+
+    self:E( "Ship" )
 
 --["Aircraft Carriers"] = {"Heavy armed ships",},
 --["Cruisers"] = {"Heavy armed ships",},
@@ -18024,7 +18030,7 @@ function SCORING:_EventOnHit( Event )
   local TargetUnitName = ""
   local TargetGroup = nil
   local TargetGroupName = ""
-  local TargetPlayerName = ""
+  local TargetPlayerName = nil
 
   local TargetCoalition = nil
   local TargetCategory = nil
@@ -18236,39 +18242,44 @@ function SCORING:_EventOnDeadOrCrash( Event )
           PlayerKill.UNIT = PlayerKill.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
   
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+            
             Player.Penalty = Player.Penalty + ThreatLevel * 4
             PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel * 4
             PlayerKill.PenaltyKill = PlayerKill.PenaltyKill + 1
             
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             end
             self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-            local ThreatLevelTarget = PlayerKill.UNIT:GetThreatLevel()
+
+            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = ThreatLevelTarget / ThreatLevelPlayer * 10
+            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+
             Player.Score = Player.Score + ThreatLevel
             PlayerKill.Score = PlayerKill.Score + ThreatLevel
             PlayerKill.ScoreKill = PlayerKill.ScoreKill + 1
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 5 ):ToAll()
