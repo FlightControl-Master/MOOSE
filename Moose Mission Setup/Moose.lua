@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170226_1524' ) 
+env.info( 'Moose Generation Timestamp: 20170226_1531' ) 
 local base = _G
 
 Include = {}
@@ -17639,7 +17639,7 @@ end
 
 function STATIC:GetThreatLevel()
 
-  return 0, "Static"
+  return 1, "Static"
 end--- This module contains the AIRBASE classes.
 -- 
 -- ===

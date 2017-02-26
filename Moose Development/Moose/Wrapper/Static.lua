@@ -82,5 +82,5 @@ end
 
 function STATIC:GetThreatLevel()
 
-  return 0, "Static"
+  return 1, "Static"
 end
