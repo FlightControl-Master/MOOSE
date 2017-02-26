@@ -18,4 +18,10 @@ local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
 
 local Scoring = SCORING:New( "Detect Demo" )
 
+Scoring:SetMultiplierKillScore( 10 )
+
+Scoring:SetMultiplierKillPenalty( 40 )
+
+Scoring:SetScoreUnit( UNIT:FindByName( "Unit #001" ), 200 )
+
 

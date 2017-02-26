@@ -71,22 +71,86 @@
 	<div id="content">
    <h1>Module <code>Scoring</code></h1>
    
-<p>Scoring system for MOOSE.</p>
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
+and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
+
+<p>-- <img src="..\Presentations\AI_Balancer\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
+and creates a CSV file logging the scoring events for use at team or squadron websites.</p>
 
    
-<p>This scoring class calculates the hits and kills that players make within a simulation session.
-Scoring is calculated using a defined algorithm.
-With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
+
+<p>The scores are calculated by scoring the hits and kills of objects that players make, 
+which are <a href="Unit.html">Unit</a> and <a href="Static.html">Static</a>s can be defined for which scores are also granted when a <a href="Scenery.html">Scenery</a> object is hit and killed within that Zone.</p>
+
+<p>Scores are calculated based on the threat level of the objects involved.
+The threat level of a unit can be a value between 0 and 10.
+A calculated score takes the threat level of the target divided by the threat level of the player unit.
+This provides a value between 0.1 and 10. 
+The stronger or the higher the threat of the player unit, the less score will be given in kills.</p>
+
+
+
+<p>That value can then be multiplied by a multiplier. A multiplier can be set for enemies and friendlies kills.</p>
+
+<p>Special scores can be given to specific units. These scores are added when player(s) kill that unit.</p>
+
+<p>With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
 to a database or a BI tool to publish the scoring results to the player community.</p>
+
+<h2>1.1) Set the kill score or penalty multiplier</h2>
+
+<p>Score multipliers can be set for scores granted when enemies or friendlies are killed.
+Use the method <a href="##(SCORING).SetMultiplierKillScore">SCORING.SetMultiplierKillScore</a>() to set the multiplier of enemy kills (positive kills). 
+Use the method <a href="##(SCORING).SetMultiplierKillPenalty">SCORING.SetMultiplierKillPenalty</a>() to set the multiplier of friendly kills (negative kills).</p>
+
+<h2>1.2) Define special targets in the mission that will give extra scores.</h2>
+
+<p>Special targets can be set that will give extra scores to the players when these are killed.
+Use the method <a href="##(SCORING).SetScoreUnit">SCORING.SetScoreUnit</a>() to specify a special additional score for a specific <a href="Unit.html">Unit</a>.
+Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() to specify a special additional score for a specific <a href="Group.html">Group</a>.</p>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-02-26: Initial class and API.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong>Wingthor</strong>: Testing &amp; Advice.</li>
+    <li><strong>Dutch-Baron</strong>: Testing &amp; Advice.</li>
+    <li>**<a href="http://forums.eagle.ru/member.php?u=3829">Whisper</a>: Testing.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
+</ul>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#ClientGroup">ClientGroup</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SCORING">SCORING</a></td>
 		<td class="summary">
@@ -140,6 +204,18 @@ to a database or a BI tool to publish the scoring results to the player communit
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).Menu">SCORING.Menu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierKillPenalty">SCORING.MultiplierKillPenalty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierKillScore">SCORING.MultiplierKillScore</a></td>
 		<td class="summary">
 
 </td>
@@ -205,6 +281,30 @@ to a database or a BI tool to publish the scoring results to the player communit
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierKillPenalty">SCORING:SetMultiplierKillPenalty(Multiplier)</a></td>
+		<td class="summary">
+<p>Set the multiplier for scoring penalty kills (friendly kills).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierKillScore">SCORING:SetMultiplierKillScore(Multiplier)</a></td>
+		<td class="summary">
+<p>Set the multiplier for scoring valid kills (enemy kills).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScoreGroup">SCORING:SetScoreGroup(ScoreGroup, Score)</a></td>
+		<td class="summary">
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScoreUnit">SCORING:SetScoreUnit(ScoreUnit, Score)</a></td>
+		<td class="summary">
+<p>Specify a special additional score for a <a href="Unit.html">Unit</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionScore">SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</a></td>
 		<td class="summary">
 <p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
@@ -243,20 +343,6 @@ to a database or a BI tool to publish the scoring results to the player communit
 	</table>
 
 	<h2>Global(s)</h2>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="ClientGroup" >
-<strong>ClientGroup</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -381,6 +467,34 @@ to a database or a BI tool to publish the scoring results to the player communit
 		<em></em>
 <a id="#(SCORING).Menu" >
 <strong>SCORING.Menu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MultiplierKillPenalty" >
+<strong>SCORING.MultiplierKillPenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MultiplierKillScore" >
+<strong>SCORING.MultiplierKillScore</strong>
 </a>
 </dt>
 <dd>
@@ -656,6 +770,114 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SCORING).SetMultiplierKillPenalty" >
+<strong>SCORING:SetMultiplierKillPenalty(Multiplier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the multiplier for scoring penalty kills (friendly kills).</p>
+
+	
+<p>A calculated score is a value between 0.1 and 10.
+The multiplier magnifies the scores given to the players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Multiplier </em></code>: 
+The multiplier of the score given.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMultiplierKillScore" >
+<strong>SCORING:SetMultiplierKillScore(Multiplier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the multiplier for scoring valid kills (enemy kills).</p>
+
+	
+<p>A calculated score is a value between 0.1 and 10.
+The multiplier magnifies the scores given to the players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Multiplier </em></code>: 
+The multiplier of the score given.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetScoreGroup" >
+<strong>SCORING:SetScoreGroup(ScoreGroup, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ScoreGroup </em></code>: 
+The <a href="Group.html">Group</a> for which each <a href="Unit.html">Unit</a> a Score is given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetScoreUnit" >
+<strong>SCORING:SetScoreUnit(ScoreUnit, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Specify a special additional score for a <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
+The <a href="Unit.html">Unit</a> for which the Score is given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SCORING)._AddMissionScore" >
 <strong>SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</strong>
 </a>
@@ -740,7 +962,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> UnitData </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> UnitData </em></code>: </p>
 
 				</li>
 		</ul>

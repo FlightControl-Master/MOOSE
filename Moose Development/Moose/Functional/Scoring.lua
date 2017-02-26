@@ -1,7 +1,7 @@
 --- Single-Player:**Yes** / Multi-Player:**Yes** / Core:**Yes** -- **Administer the scoring of player achievements, 
 -- and create a CSV file logging the scoring events for use at team or squadron websites.**
 -- 
--- -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
+-- -- ![Banner Image](..\Presentations\Scoring\Dia1.JPG)
 --  
 -- ===
 -- 
@@ -9,14 +9,66 @@
 -- 
 -- The @{#SCORING} class administers the scoring of player achievements, 
 -- and creates a CSV file logging the scoring events for use at team or squadron websites.
--- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
--- This scoring class calculates the hits and kills that players make within a simulation session.
--- Scoring is calculated using a defined algorithm.
+-- The scores are calculated by scoring the hits and kills of objects that players make, 
+-- which are @{Unit} and @{Static) objects within your mission.
+-- On top, @{Zone}s can be defined for which scores are also granted when a @{Scenery} object is hit and killed within that Zone.
+-- 
+-- Scores are calculated based on the threat level of the objects involved.
+-- The threat level of a unit can be a value between 0 and 10.
+-- A calculated score takes the threat level of the target divided by the threat level of the player unit.
+-- This provides a value between 0.1 and 10. 
+-- The stronger or the higher the threat of the player unit, the less score will be given in kills.
+-- 
+-- 
+-- 
+-- That value can then be multiplied by a multiplier. A multiplier can be set for enemies and friendlies kills.
+-- 
+-- Special scores can be given to specific units. These scores are added when player(s) kill that unit.
+-- 
 -- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
 -- to a database or a BI tool to publish the scoring results to the player community.
+-- 
+-- ## 1.1) Set the kill score or penalty multiplier
+-- 
+-- Score multipliers can be set for scores granted when enemies or friendlies are killed.
+-- Use the method @{#SCORING.SetMultiplierKillScore}() to set the multiplier of enemy kills (positive kills). 
+-- Use the method @{#SCORING.SetMultiplierKillPenalty}() to set the multiplier of friendly kills (negative kills).
+-- 
+-- ## 1.2) Define special targets in the mission that will give extra scores.
+-- 
+-- Special targets can be set that will give extra scores to the players when these are killed.
+-- Use the method @{#SCORING.SetScoreUnit}() to specify a special additional score for a specific @{Unit}.
+-- Use the method @{#SCORING.SetScoreGroup}() to specify a special additional score for a specific @{Group}.
+-- 
+-- ====
+--
+-- # **API CHANGE HISTORY**
+--
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+--
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+--
+-- Hereby the change log:
+--
+-- 2017-02-26: Initial class and API.
+--
+-- ===
+--
+-- # **AUTHORS and CONTRIBUTIONS**
+--
+-- ### Contributions:
+--
+--   * **Wingthor**: Testing & Advice.
+--   * **Dutch-Baron**: Testing & Advice.
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--        
+-- ### Authors:
+--
+--   * **FlightControl**: Concept, Design & Programming.
+-- 
 -- @module Scoring
--- @author FlightControl
 
 
 --- The Scoring class
@@ -62,6 +114,12 @@ function SCORING:New( GameName )
     error( "A game name must be given to register the scoring results" )
   end
   
+  -- Multipliers
+  self.MultiplierKillScore = 10
+  self.MultiplierKillPenalty = 20
+  
+  -- Additional Scores
+  self.ScoreUnits = {}
   
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -77,6 +135,61 @@ function SCORING:New( GameName )
   return self
   
 end
+
+--- Set the multiplier for scoring valid kills (enemy kills).
+-- A calculated score is a value between 0.1 and 10.
+-- The multiplier magnifies the scores given to the players.
+-- @param #SCORING self
+-- @param #number Multiplier The multiplier of the score given.
+function SCORING:SetMultiplierKillScore( Multiplier )
+
+  self.MultiplierKillScore = Multiplier
+  
+  return self
+end
+
+--- Set the multiplier for scoring penalty kills (friendly kills).
+-- A calculated score is a value between 0.1 and 10.
+-- The multiplier magnifies the scores given to the players.
+-- @param #SCORING self
+-- @param #number Multiplier The multiplier of the score given.
+function SCORING:SetMultiplierKillPenalty( Multiplier )
+
+  self.MultiplierKillPenalty = Multiplier
+  
+  return self
+end
+
+--- Specify a special additional score for a @{Unit}.
+-- @param #SCORING self
+-- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score is given.
+-- @param #number Score The Score value.
+function SCORING:SetScoreUnit( ScoreUnit, Score )
+
+  local UnitName = ScoreUnit:GetName()
+
+  self.ScoreUnits[UnitName] = Score
+  
+  return self
+end
+
+--- Specify a special additional score for a @{Group}.
+-- @param #SCORING self
+-- @param Wrapper.Group#GROUP ScoreGroup The @{Group} for which each @{Unit} a Score is given.
+-- @param #number Score The Score value.
+function SCORING:SetScoreGroup( ScoreGroup, Score )
+
+  local ScoreUnits = ScoreGroup:GetUnits()
+
+  for ScoreUnitID, ScoreUnit in pairs( ScoreUnits ) do
+    local UnitName = ScoreUnit:GetName()
+    self.ScoreUnits[UnitName] = Score
+  end
+  
+  return self
+end
+
+
 
 --- Creates a score radio menu. Can be accessed using Radio -> F10.
 -- @param #SCORING self
@@ -493,30 +606,30 @@ function SCORING:_EventOnDeadOrCrash( Event )
           if InitCoalition == TargetCoalition then
             local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierKillPenalty )
             self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
             
-            Player.Penalty = Player.Penalty + ThreatLevel * 4
-            PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel * 4
+            Player.Penalty = Player.Penalty + ThreatLevel
+            PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel
             PlayerKill.PenaltyKill = PlayerKill.PenaltyKill + 1
             
             if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
               MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
-                5 ):ToAll()
+                15 ):ToAll()
             else
               MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
-                5 ):ToAll()
+                15 ):ToAll()
             end
             self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
 
             local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = math.ceil( ThreatLevelTarget / ThreatLevelPlayer * 100 )
+            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierKillScore )
             self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
 
             Player.Score = Player.Score + ThreatLevel
@@ -526,13 +639,22 @@ function SCORING:_EventOnDeadOrCrash( Event )
               MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
-                5 ):ToAll()
+                15 ):ToAll()
             else
               MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                 PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
-                ".  Score Total:" .. Player.Score - Player.Penalty,
-                5 ):ToAll()
+                ".  Total:" .. Player.Score - Player.Penalty,
+                15 ):ToAll()
             end
+            
+            local UnitName = PlayerKill.UNIT:GetName()
+            local ScoreUnit = self.ScoreUnits[UnitName]
+            if ScoreUnit then
+              Player.Score = Player.Score + ScoreUnit
+              PlayerKill.Score = PlayerKill.Score + ScoreUnit
+              MESSAGE:New( "Player '" .. PlayerName .. "' receives an extra " .. ScoreUnit .. " points! Total: " .. Player.Score - Player.Penalty,
+                15 ):ToAll()
+            end              
             self:ScoreCSV( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           end
         end
