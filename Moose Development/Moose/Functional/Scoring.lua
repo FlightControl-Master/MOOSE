@@ -1,7 +1,7 @@
 --- Single-Player:**Yes** / Multi-Player:**Yes** / Core:**Yes** -- **Administer the scoring of player achievements, 
 -- and create a CSV file logging the scoring events for use at team or squadron websites.**
 -- 
--- -- ![Banner Image](..\Presentations\SCORING\Dia1.JPG)
+-- ![Banner Image](..\Presentations\SCORING\Dia1.JPG)
 --  
 -- ===
 -- 
@@ -10,36 +10,53 @@
 -- The @{#SCORING} class administers the scoring of player achievements, 
 -- and creates a CSV file logging the scoring events for use at team or squadron websites.
 -- 
--- The scores are calculated by scoring the hits and kills of objects that players make, 
+-- The scores are calculated by scoring the hits and destroys of objects that players make, 
 -- which are @{Unit} and @{Static) objects within your mission.
--- On top, @{Zone}s can be defined for which scores are also granted when a @{Scenery} object is hit and killed within that Zone.
 -- 
 -- Scores are calculated based on the threat level of the objects involved.
 -- The threat level of a unit can be a value between 0 and 10.
 -- A calculated score takes the threat level of the target divided by the threat level of the player unit.
 -- This provides a value between 0.1 and 10. 
--- The stronger or the higher the threat of the player unit, the less score will be given in kills.
+-- The stronger or the higher the threat of the player unit, the less score will be given in destroys.
+-- That value can then be multiplied by a multiplier. A specific multiplier can be set for enemies and friendlies destroys.
 -- 
+-- If multiple players hit the same target, and finally the target gets destroyed, each player who contributed to the target
+-- destruction, will receive a score. This is important for targets that require significant damage before it can be destroyed, like
+-- ships or heavy planes.
 -- 
+-- **Additional scores** can be granted to **specific objects**, when the player(s) destroy these objects.
+-- **Various @{Zone}s** can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
+-- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 -- 
--- That value can then be multiplied by a multiplier. A multiplier can be set for enemies and friendlies kills.
+-- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file.
+-- That file can then be:
 -- 
--- Special scores can be given to specific units. These scores are added when player(s) kill that unit.
+--   * Uploaded to a database or a BI tool to publish the scoring results to the player community.
+--   * Uploaded in an (online) Excel like tool, using pivot tables and pivot charts to show mission results.
+--   * Share amoung players after the mission to discuss mission results.
 -- 
--- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
--- to a database or a BI tool to publish the scoring results to the player community.
+-- ## 1.1) Set the destroy score or penalty multiplier
 -- 
--- ## 1.1) Set the kill score or penalty multiplier
+-- Score multipliers can be set for scores granted when enemies or friendlies are destroyed.
+-- Use the method @{#SCORING.SetMultiplierDestroyScore}() to set the multiplier of enemy destroys (positive destroys). 
+-- Use the method @{#SCORING.SetMultiplierDestroyPenalty}() to set the multiplier of friendly destroys (negative destroys).
 -- 
--- Score multipliers can be set for scores granted when enemies or friendlies are killed.
--- Use the method @{#SCORING.SetMultiplierKillScore}() to set the multiplier of enemy kills (positive kills). 
--- Use the method @{#SCORING.SetMultiplierKillPenalty}() to set the multiplier of friendly kills (negative kills).
+-- ## 1.2) Define special targets that will give extra scores.
 -- 
--- ## 1.2) Define special targets in the mission that will give extra scores.
+-- Special targets can be set that will give extra scores to the players when these are destroyed.
+-- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Unit}s.
+-- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Static}s.
+-- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Group}s.
 -- 
--- Special targets can be set that will give extra scores to the players when these are killed.
--- Use the method @{#SCORING.SetScoreUnit}() to specify a special additional score for a specific @{Unit}.
--- Use the method @{#SCORING.SetScoreGroup}() to specify a special additional score for a specific @{Group}.
+-- ## 1.3) Define destruction zones that will give extra scores.
+-- 
+-- Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
+-- Use the method @{#SCORING.AddZoneScore} to add a @{Zone} for additional scoring.
+-- Use the method @{#SCORING.RemoveZoneScore} to remove a @{Zone} for additional scoring.
+-- There are interesting variations that can be achieved with this functionality. For example, if the @{Zone} is a @{Zone#ZONE_UNIT}, 
+-- then the zone is a moving zone, and anything destroyed within that @{Zone} will generate points.
+-- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone}, 
+-- just large enough around that building.
 -- 
 -- ====
 --
@@ -115,11 +132,14 @@ function SCORING:New( GameName )
   end
   
   -- Multipliers
-  self.MultiplierKillScore = 10
-  self.MultiplierKillPenalty = 20
+  self.MultiplierDestroyScore = 10
+  self.MultiplierDestroyPenalty = 20
   
-  -- Additional Scores
-  self.ScoreUnits = {}
+  -- Additional Object scores
+  self.ScoringObjects = {}
+  
+  -- Additional Zone scores.
+  self.ScoringZones = {}
   
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
@@ -136,55 +156,138 @@ function SCORING:New( GameName )
   
 end
 
---- Set the multiplier for scoring valid kills (enemy kills).
+--- Set the multiplier for scoring valid destroys (enemy destroys).
 -- A calculated score is a value between 0.1 and 10.
 -- The multiplier magnifies the scores given to the players.
 -- @param #SCORING self
 -- @param #number Multiplier The multiplier of the score given.
-function SCORING:SetMultiplierKillScore( Multiplier )
+function SCORING:SetMultiplierDestroyScore( Multiplier )
 
-  self.MultiplierKillScore = Multiplier
+  self.MultiplierDestroyScore = Multiplier
   
   return self
 end
 
---- Set the multiplier for scoring penalty kills (friendly kills).
+--- Set the multiplier for scoring penalty destroys (friendly destroys).
 -- A calculated score is a value between 0.1 and 10.
 -- The multiplier magnifies the scores given to the players.
 -- @param #SCORING self
 -- @param #number Multiplier The multiplier of the score given.
-function SCORING:SetMultiplierKillPenalty( Multiplier )
+-- @return #SCORING
+function SCORING:SetMultiplierDestroyPenalty( Multiplier )
 
-  self.MultiplierKillPenalty = Multiplier
+  self.MultiplierDestroyPenalty = Multiplier
   
   return self
 end
 
---- Specify a special additional score for a @{Unit}.
+--- Add a @{Unit} for additional scoring when the @{Unit} is destroyed.
+-- Note that if there was already a @{Unit} declared within the scoring with the same name, 
+-- then the old @{Unit}  will be replaced with the new @{Unit}.
 -- @param #SCORING self
--- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score is given.
+-- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score needs to be given.
 -- @param #number Score The Score value.
-function SCORING:SetScoreUnit( ScoreUnit, Score )
+-- @return #SCORING
+function SCORING:AddUnitScore( ScoreUnit, Score )
 
   local UnitName = ScoreUnit:GetName()
 
-  self.ScoreUnits[UnitName] = Score
+  self.ScoringObjects[UnitName] = Score
   
   return self
 end
+
+--- Removes a @{Unit} for additional scoring when the @{Unit} is destroyed.
+-- @param #SCORING self
+-- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score needs to be given.
+-- @return #SCORING
+function SCORING:RemoveUnitScore( ScoreUnit )
+
+  local UnitName = ScoreUnit:GetName()
+
+  self.ScoringObjects[UnitName] = nil
+  
+  return self
+end
+
+--- Add a @{Static} for additional scoring when the @{Static} is destroyed.
+-- Note that if there was already a @{Static} declared within the scoring with the same name, 
+-- then the old @{Static}  will be replaced with the new @{Static}.
+-- @param #SCORING self
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddStaticScore( ScoreStatic, Score )
+
+  local StaticName = ScoreStatic:GetName()
+
+  self.ScoringObjects[StaticName] = Score
+  
+  return self
+end
+
+--- Removes a @{Static} for additional scoring when the @{Static} is destroyed.
+-- @param #SCORING self
+-- @param Wrapper.Static#UNIT ScoreStatic The @{Static} for which the Score needs to be given.
+-- @return #SCORING
+function SCORING:RemoveStaticScore( ScoreStatic )
+
+  local StaticName = ScoreStatic:GetName()
+
+  self.ScoringObjects[StaticName] = nil
+  
+  return self
+end
+
 
 --- Specify a special additional score for a @{Group}.
 -- @param #SCORING self
 -- @param Wrapper.Group#GROUP ScoreGroup The @{Group} for which each @{Unit} a Score is given.
 -- @param #number Score The Score value.
-function SCORING:SetScoreGroup( ScoreGroup, Score )
+-- @return #SCORING
+function SCORING:AddScoreGroup( ScoreGroup, Score )
 
   local ScoreUnits = ScoreGroup:GetUnits()
 
   for ScoreUnitID, ScoreUnit in pairs( ScoreUnits ) do
     local UnitName = ScoreUnit:GetName()
-    self.ScoreUnits[UnitName] = Score
+    self.ScoringObjects[UnitName] = Score
   end
+  
+  return self
+end
+
+--- Add a @{Zone} to define additional scoring when any object is destroyed in that zone.
+-- Note that if a @{Zone} with the same name is already within the scoring added, the @{Zone} (type) and Score will be replaced!
+-- This allows for a dynamic destruction zone evolution within your mission.
+-- @param #SCORING self
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters. 
+-- Note that a zone can be a polygon or a moving zone.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreZone( ScoreZone, Score )
+
+  local ZoneName = ScoreZone:GetName()
+
+  self.ScoringZones[ZoneName] = {}
+  self.ScoringZones[ZoneName].ScoreZone = ScoreZone
+  self.ScoringZones[ZoneName].Score = Score
+  
+  return self
+end
+
+--- Remove a @{Zone} for additional scoring.
+-- The scoring will search if any @{Zone} is added with the given name, and will remove that zone from the scoring.
+-- This allows for a dynamic destruction zone evolution within your mission.
+-- @param #SCORING self
+-- @param Core.Zone#ZONE_BASE ScoreZone The @{Zone} which defines the destruction score perimeters. 
+-- Note that a zone can be a polygon or a moving zone.
+-- @return #SCORING
+function SCORING:RemoveScoreZone( ScoreZone )
+
+  local ZoneName = ScoreZone:GetName()
+
+  self.ScoringZones[ZoneName] = nil
   
   return self
 end
@@ -244,12 +347,12 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     if self.Players[PlayerName] == nil then -- I believe this is the place where a Player gets a life in a mission when he enters a unit ...
       self.Players[PlayerName] = {}
       self.Players[PlayerName].Hit = {}
-      self.Players[PlayerName].Kill = {}
+      self.Players[PlayerName].Destroy = {}
       self.Players[PlayerName].Mission = {}
 
       -- for CategoryID, CategoryName in pairs( SCORINGCategory ) do
       -- self.Players[PlayerName].Hit[CategoryID] = {}
-      -- self.Players[PlayerName].Kill[CategoryID] = {}
+      -- self.Players[PlayerName].Destroy[CategoryID] = {}
       -- end
       self.Players[PlayerName].HitPlayers = {}
       self.Players[PlayerName].Score = 0
@@ -574,7 +677,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
   -- Player contains the score and reference data for the player.
   for PlayerName, Player in pairs( self.Players ) do
     if Player then -- This should normally not happen, but i'll test it anyway.
-      self:T( "Something got killed" )
+      self:T( "Something got destroyed" )
 
       -- Some variables
       local InitUnitName = Player.UnitName
@@ -591,71 +694,86 @@ function SCORING:_EventOnDeadOrCrash( Event )
         if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] then -- Was there a hit for this unit for this player before registered???
         
           
-          Player.Kill[TargetCategory] = Player.Kill[TargetCategory] or {}
-          Player.Kill[TargetCategory][TargetType] = Player.Kill[TargetCategory][TargetType] or {}
+          Player.Destroy[TargetCategory] = Player.Destroy[TargetCategory] or {}
+          Player.Destroy[TargetCategory][TargetType] = Player.Destroy[TargetCategory][TargetType] or {}
 
-          -- PlayerKill contains the kill score data per category and target type of the player.
-          local PlayerKill = Player.Kill[TargetCategory][TargetType]
-          Player.Kill[TargetCategory][TargetType] = {}
-          PlayerKill.Score = PlayerKill.Score or 0
-          PlayerKill.ScoreKill = PlayerKill.ScoreKill or 0
-          PlayerKill.Penalty =  PlayerKill.Penalty or 0
-          PlayerKill.PenaltyKill = PlayerKill.PenaltyKill or 0
-          PlayerKill.UNIT = PlayerKill.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
+          -- PlayerDestroy contains the destroy score data per category and target type of the player.
+          local TargetDestroy = Player.Destroy[TargetCategory][TargetType]
+          Player.Destroy[TargetCategory][TargetType] = {}
+          TargetDestroy.Score = TargetDestroy.Score or 0
+          TargetDestroy.ScoreDestroy = TargetDestroy.ScoreDestroy or 0
+          TargetDestroy.Penalty =  TargetDestroy.Penalty or 0
+          TargetDestroy.PenaltyDestroy = TargetDestroy.PenaltyDestroy or 0
+          TargetDestroy.UNIT = TargetDestroy.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
   
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierKillPenalty )
+            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierDestroyPenalty )
             self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
             
             Player.Penalty = Player.Penalty + ThreatLevel
-            PlayerKill.Penalty = PlayerKill.Penalty + ThreatLevel
-            PlayerKill.PenaltyKill = PlayerKill.PenaltyKill + 1
+            TargetDestroy.Penalty = TargetDestroy.Penalty + ThreatLevel
+            TargetDestroy.PenaltyDestroy = TargetDestroy.PenaltyDestroy + 1
             
-            if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
+            if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
+              MESSAGE:New( "Player '" .. PlayerName .. "' destroyed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
+                TargetDestroy.PenaltyDestroy .. " times. Penalty: -" .. TargetDestroy.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 15 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed a friendly " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                PlayerKill.PenaltyKill .. " times. Penalty: -" .. PlayerKill.Penalty ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' destroyed a friendly " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
+                TargetDestroy.PenaltyDestroy .. " times. Penalty: -" .. TargetDestroy.Penalty ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 15 ):ToAll()
             end
-            self:ScoreCSV( PlayerName, "KILL_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            self:ScoreCSV( PlayerName, "DESTROY_PENALTY", 1, -125, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
 
-            local ThreatLevelTarget, ThreatTypeTarget = PlayerKill.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierKillScore )
+            local ThreatLevel = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierDestroyScore )
             self:E( { ThreatLevel = ThreatLevel, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
 
             Player.Score = Player.Score + ThreatLevel
-            PlayerKill.Score = PlayerKill.Score + ThreatLevel
-            PlayerKill.ScoreKill = PlayerKill.ScoreKill + 1
-            if Player.HitPlayers[TargetPlayerName] then -- A player killed another player
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
+            TargetDestroy.Score = TargetDestroy.Score + ThreatLevel
+            TargetDestroy.ScoreDestroy = TargetDestroy.ScoreDestroy + 1
+            if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
+              MESSAGE:New( "Player '" .. PlayerName .. "' destroyed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
+                TargetDestroy.ScoreDestroy .. " times. Score: " .. TargetDestroy.Score ..
                 ".  Score Total:" .. Player.Score - Player.Penalty,
                 15 ):ToAll()
             else
-              MESSAGE:New( "Player '" .. PlayerName .. "' killed an enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
-                PlayerKill.ScoreKill .. " times. Score: " .. PlayerKill.Score ..
+              MESSAGE:New( "Player '" .. PlayerName .. "' destroyed an enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
+                TargetDestroy.ScoreDestroy .. " times. Score: " .. TargetDestroy.Score ..
                 ".  Total:" .. Player.Score - Player.Penalty,
                 15 ):ToAll()
             end
             
-            local UnitName = PlayerKill.UNIT:GetName()
-            local ScoreUnit = self.ScoreUnits[UnitName]
-            if ScoreUnit then
-              Player.Score = Player.Score + ScoreUnit
-              PlayerKill.Score = PlayerKill.Score + ScoreUnit
-              MESSAGE:New( "Player '" .. PlayerName .. "' receives an extra " .. ScoreUnit .. " points! Total: " .. Player.Score - Player.Penalty,
+            local UnitName = TargetDestroy.UNIT:GetName()
+            local Score = self.ScoringObjects[UnitName]
+            if Score then
+              Player.Score = Player.Score + Score
+              TargetDestroy.Score = TargetDestroy.Score + Score
+              MESSAGE:New( "Special target '" .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. " destroyed! " .. 
+                "Player '" .. PlayerName .. "' receives an extra " .. Score .. " points! Total: " .. Player.Score - Player.Penalty,
                 15 ):ToAll()
-            end              
-            self:ScoreCSV( PlayerName, "KILL_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            end
+            
+            -- Check if there are Zones where the destruction happened.
+            for ZoneName, ScoreZoneData in pairs( self.ScoreZones ) do
+              local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
+              local Score = ScoreZoneData.Score
+              if ScoreZone:IsPointVec2InZone( TargetDestroy.UNIT:GetPointVec2() ) then
+                Player.Score = Player.Score + Score
+                TargetDestroy.Score = TargetDestroy.Score + Score
+                MESSAGE:New( "Target hit in zone '" .. ScoreZone:GetName() .. "'." .. 
+                  "Player '" .. PlayerName .. "' receives an extra " .. Score .. " points! Total: " .. Player.Score - Player.Penalty,
+                  15 ):ToAll()
+              end
+            end
+                          
+            self:ScoreCSV( PlayerName, "DESTROY_SCORE", 1, 10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           end
         end
       end
@@ -717,34 +835,34 @@ function SCORING:ReportScoreAll()
         ScoreMessage = ScoreMessage .. "  Hits: " .. ScoreMessageHits .. "\n"
       end
 
-      local ScoreMessageKills = ""
+      local ScoreMessageDestroys = ""
       for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
-        self:T( "Kill scores exist for player " .. PlayerName )
-        if PlayerData.Kill[CategoryID] then
+        self:T( "Destroy scores exist for player " .. PlayerName )
+        if PlayerData.Destroy[CategoryID] then
           local Score = 0
-          local ScoreKill = 0
+          local ScoreDestroy = 0
           local Penalty = 0
-          local PenaltyKill = 0
+          local PenaltyDestroy = 0
 
-          for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
+          for UnitName, UnitData in pairs( PlayerData.Destroy[CategoryID] ) do
             Score = Score + UnitData.Score
-            ScoreKill = ScoreKill + UnitData.ScoreKill
+            ScoreDestroy = ScoreDestroy + UnitData.ScoreDestroy
             Penalty = Penalty + UnitData.Penalty
-            PenaltyKill = PenaltyKill + UnitData.PenaltyKill
+            PenaltyDestroy = PenaltyDestroy + UnitData.PenaltyDestroy
           end
 
-          local ScoreMessageKill = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
-          self:T( ScoreMessageKill )
-          ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+          local ScoreMessageDestroy = string.format( "  %s:%d  ", CategoryName, Score - Penalty )
+          self:T( ScoreMessageDestroy )
+          ScoreMessageDestroys = ScoreMessageDestroys .. ScoreMessageDestroy
 
           PlayerScore = PlayerScore + Score
           PlayerPenalty = PlayerPenalty + Penalty
         else
-        --ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        --ScoreMessageDestroys = ScoreMessageDestroys .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
         end
       end
-      if ScoreMessageKills ~= "" then
-        ScoreMessage = ScoreMessage .. "  Kills: " .. ScoreMessageKills .. "\n"
+      if ScoreMessageDestroys ~= "" then
+        ScoreMessage = ScoreMessage .. "  Destroys: " .. ScoreMessageDestroys .. "\n"
       end
 
       local ScoreMessageCoalitionChangePenalties = ""
@@ -830,34 +948,34 @@ function SCORING:ReportScorePlayer()
         ScoreMessage = ScoreMessage .. "\n  Hits: " .. ScoreMessageHits .. " "
       end
 
-      local ScoreMessageKills = ""
+      local ScoreMessageDestroys = ""
       for CategoryID, CategoryName in pairs( _SCORINGCategory ) do
-        self:T( "Kill scores exist for player " .. PlayerName )
-        if PlayerData.Kill[CategoryID] then
+        self:T( "Destroy scores exist for player " .. PlayerName )
+        if PlayerData.Destroy[CategoryID] then
           local Score = 0
-          local ScoreKill = 0
+          local ScoreDestroy = 0
           local Penalty = 0
-          local PenaltyKill = 0
+          local PenaltyDestroy = 0
 
-          for UnitName, UnitData in pairs( PlayerData.Kill[CategoryID] ) do
+          for UnitName, UnitData in pairs( PlayerData.Destroy[CategoryID] ) do
             Score = Score + UnitData.Score
-            ScoreKill = ScoreKill + UnitData.ScoreKill
+            ScoreDestroy = ScoreDestroy + UnitData.ScoreDestroy
             Penalty = Penalty + UnitData.Penalty
-            PenaltyKill = PenaltyKill + UnitData.PenaltyKill
+            PenaltyDestroy = PenaltyDestroy + UnitData.PenaltyDestroy
           end
 
-          local ScoreMessageKill = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreKill, PenaltyKill )
-          self:T( ScoreMessageKill )
-          ScoreMessageKills = ScoreMessageKills .. ScoreMessageKill
+          local ScoreMessageDestroy = string.format( "\n    %s = %d score(%d;-%d) hits(#%d;#-%d)", CategoryName, Score - Penalty, Score, Penalty, ScoreDestroy, PenaltyDestroy )
+          self:T( ScoreMessageDestroy )
+          ScoreMessageDestroys = ScoreMessageDestroys .. ScoreMessageDestroy
 
           PlayerScore = PlayerScore + Score
           PlayerPenalty = PlayerPenalty + Penalty
         else
-        --ScoreMessageKills = ScoreMessageKills .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
+        --ScoreMessageDestroys = ScoreMessageDestroys .. string.format( "%s:%d  ", string.format(CategoryName, 1, 1), 0 )
         end
       end
-      if ScoreMessageKills ~= "" then
-        ScoreMessage = ScoreMessage .. "\n  Kills: " .. ScoreMessageKills .. " "
+      if ScoreMessageDestroys ~= "" then
+        ScoreMessage = ScoreMessage .. "\n  Destroys: " .. ScoreMessageDestroys .. " "
       end
 
       local ScoreMessageCoalitionChangePenalties = ""
