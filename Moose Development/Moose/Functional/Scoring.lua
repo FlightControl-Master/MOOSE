@@ -1,7 +1,7 @@
 --- Single-Player:**Yes** / Multi-Player:**Yes** / Core:**Yes** -- **Administer the scoring of player achievements, 
 -- and create a CSV file logging the scoring events for use at team or squadron websites.**
 -- 
--- -- ![Banner Image](..\Presentations\Scoring\Dia1.JPG)
+-- -- ![Banner Image](..\Presentations\SCORING\Dia1.JPG)
 --  
 -- ===
 -- 
