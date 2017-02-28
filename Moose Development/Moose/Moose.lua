@@ -27,6 +27,7 @@ Include.File( "Wrapper/Unit" )
 Include.File( "Wrapper/Client" )
 Include.File( "Wrapper/Static" )
 Include.File( "Wrapper/Airbase" )
+Include.File( "Wrapper/Scenery" )
 
 --- Functional Classes
 Include.File( "Functional/Scoring" )

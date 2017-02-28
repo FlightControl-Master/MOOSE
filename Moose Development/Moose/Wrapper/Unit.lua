@@ -673,7 +673,7 @@ function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = Zone:IsPointVec3InZone( self:GetVec3() )
+    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
   
     self:T( { IsInZone } )
     return IsInZone 
@@ -690,7 +690,7 @@ function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = not Zone:IsPointVec3InZone( self:GetVec3() )
+    local IsInZone = not Zone:IsVec3InZone( self:GetVec3() )
     
     self:T( { IsInZone } )
     return IsInZone 

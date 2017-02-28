@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -136,6 +137,12 @@ To send messages, you need to use the To functions.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToAllIf">MESSAGE:ToAllIf(Condition)</a></td>
+		<td class="summary">
+<p>Sends a MESSAGE to all players if the given Condition is true.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToBlue">MESSAGE:ToBlue()</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to the Blue coalition.</p>
@@ -151,6 +158,12 @@ To send messages, you need to use the To functions.</p>
 		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToCoalition">MESSAGE:ToCoalition(CoalitionSide)</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to a Coalition. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToCoalitionIf">MESSAGE:ToCoalitionIf(CoalitionSide, Condition)</a></td>
+		<td class="summary">
+<p>Sends a MESSAGE to a Coalition if the given Condition is true. </p>
 </td>
 		</tr>
 		<tr>
@@ -314,6 +327,32 @@ MessageAll:ToAll()</code></pre>
 		<dl class="function">
 <dt>
 
+<a id="#(MESSAGE).ToAllIf" >
+<strong>MESSAGE:ToAllIf(Condition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sends a MESSAGE to all players if the given Condition is true.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Condition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MESSAGE)">#MESSAGE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MESSAGE).ToBlue" >
 <strong>MESSAGE:ToBlue()</strong>
 </a>
@@ -417,6 +456,38 @@ MESSAGE:New( "To the RED Players: You receive a penalty because you've killed on
 or
 MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 MessageRED:ToCoalition( coalition.side.RED )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MESSAGE).ToCoalitionIf" >
+<strong>MESSAGE:ToCoalitionIf(CoalitionSide, Condition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sends a MESSAGE to a Coalition if the given Condition is true. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> CoalitionSide </em></code>: 
+needs to be filled out by the defined structure of the standard scripting engine <a href="coalition.side.html">coalition.side</a>. </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Condition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MESSAGE)">#MESSAGE</a>:</em></p>
+
 
 </dd>
 </dl>

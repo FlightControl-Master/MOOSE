@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -74,7 +75,7 @@
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Balancer.html">AI_Balancer</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>No</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
+<p>Single-Player:<strong>No</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
 non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 even when there are hardly any players in the mission.</strong></p>
 
@@ -91,7 +92,7 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cap.html">AI_Cap</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
 
 <p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -106,7 +107,7 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cas.html">AI_Cas</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
 <strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
@@ -121,7 +122,7 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Patrol.html">AI_Patrol</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
 <strong>Air Patrolling or Staging.</strong></p>
 
 <p><img src="..\Presentations\AI_PATROL\Dia1.JPG" alt="Banner Image"/></p>
@@ -166,7 +167,7 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
 <strong>Management of logical cargo objects, that can be transported from and to transportation carriers.</strong></p>
 
 <p><img src="..\Presentations\AI_CARGO\CARGO.JPG" alt="Banner Image"/></p>
@@ -320,6 +321,12 @@ following a given priority.</p>
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Scenery.html">Scenery</a></td>
+			<td class="summary">
+<p>This module contains the SCENERY class.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></td>
 			<td class="summary">
 <p>This module defines the SCHEDULEDISPATCHER class, which is used by a central object called _SCHEDULEDISPATCHER.</p>
@@ -334,7 +341,17 @@ following a given priority.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Scoring.html">Scoring</a></td>
 			<td class="summary">
-<p>Scoring system for MOOSE.</p>
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
+and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
+
+<p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
+and creates a CSV file logging the scoring events for use at team or squadron websites.</p>
 </td>
 			</tr>
 			<tr>
@@ -358,7 +375,7 @@ following a given priority.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Spawn.html">Spawn</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
 <strong>Spawn groups of units dynamically in your missions.</strong></p>
 
 <p><img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>

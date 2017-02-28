@@ -217,10 +217,7 @@ function IDENTIFIABLE:GetCallsign()
 end
 
 
+function IDENTIFIABLE:GetThreatLevel()
 
-
-
-
-
-
-
+  return 0, "Scenery"
+end

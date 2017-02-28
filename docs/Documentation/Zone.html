@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -119,8 +120,8 @@
 <h2>1.2) Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> is within the zone.</li>
-    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsVec2InZone">ZONE_BASE.IsVec2InZone</a>(): Returns if a Vec2 is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsVec3InZone">ZONE_BASE.IsVec3InZone</a>(): Returns if a Vec3 is within the zone.</li>
 </ul>
 
 <h2>1.3) A zone has a probability factor that can be set to randomize a selection between zones:</h2>
@@ -249,9 +250,16 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 
 <p>Hereby the change log:</p>
 
-<p>2017-02-18: ZONE<em>POLYGON</em>BASE:<strong>GetRandomPointVec2()</strong> added.</p>
+<p>2017-02-28: ZONE_BASE:<strong>IsVec2InZone()</strong> replaces ZONE_BASE:<em>IsPointVec2InZone()</em>. <br/>
+2017-02-28: ZONE_BASE:<strong>IsVec3InZone()</strong> replaces ZONE_BASE:<em>IsPointVec3InZone()</em>. <br/>
+2017-02-28: ZONE_RADIUS:<strong>IsVec2InZone()</strong> replaces ZONE_RADIUS:<em>IsPointVec2InZone()</em>. <br/>
+2017-02-28: ZONE_RADIUS:<strong>IsVec3InZone()</strong> replaces ZONE_RADIUS:<em>IsPointVec3InZone()</em>. <br/>
+2017-02-28: ZONE_POLYGON:<strong>IsVec2InZone()</strong> replaces ZONE_POLYGON:<em>IsPointVec2InZone()</em>. <br/>
+2017-02-28: ZONE_POLYGON:<strong>IsVec3InZone()</strong> replaces ZONE_POLYGON:<em>IsPointVec3InZone()</em>.  </p>
 
-<p>2017-02-18: ZONE<em>POLYGON</em>BASE:<strong>GetRandomPointVec3()</strong> added.</p>
+<p>2017-02-18: ZONE_POLYGON_BASE:<strong>GetRandomPointVec2()</strong> added.</p>
+
+<p>2017-02-18: ZONE_POLYGON_BASE:<strong>GetRandomPointVec3()</strong> added.</p>
 
 <p>2017-02-18: ZONE_RADIUS:<strong>GetRandomPointVec3( inner, outer )</strong> added.</p>
 
@@ -380,13 +388,13 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE:IsPointVec2InZone(Vec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsVec2InZone">ZONE_BASE:IsVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE:IsPointVec3InZone(Vec3)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).IsVec3InZone">ZONE_BASE:IsVec3InZone(Vec3)</a></td>
 		<td class="summary">
 <p>Returns if a point is within the zone.</p>
 </td>
@@ -540,7 +548,7 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsPointVec2InZone">ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).IsVec2InZone">ZONE_POLYGON_BASE:IsVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
@@ -616,13 +624,13 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec2InZone">ZONE_RADIUS:IsPointVec2InZone(Vec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsVec2InZone">ZONE_RADIUS:IsVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsPointVec3InZone">ZONE_RADIUS:IsPointVec3InZone(Vec3)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsVec3InZone">ZONE_RADIUS:IsVec3InZone(Vec3)</a></td>
 		<td class="summary">
 <p>Returns if a point is within the zone.</p>
 </td>
@@ -1020,8 +1028,8 @@ A value between 0 and 1. 0 = 0% and 1 = 100% probability.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_BASE).IsPointVec2InZone" >
-<strong>ZONE_BASE:IsPointVec2InZone(Vec2)</strong>
+<a id="#(ZONE_BASE).IsVec2InZone" >
+<strong>ZONE_BASE:IsVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1047,8 +1055,8 @@ true if the location is within the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_BASE).IsPointVec3InZone" >
-<strong>ZONE_BASE:IsPointVec3InZone(Vec3)</strong>
+<a id="#(ZONE_BASE).IsVec3InZone" >
+<strong>ZONE_BASE:IsVec3InZone(Vec3)</strong>
 </a>
 </dt>
 <dd>
@@ -1510,8 +1518,8 @@ The Vec2 coordinate.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_POLYGON_BASE).IsPointVec2InZone" >
-<strong>ZONE_POLYGON_BASE:IsPointVec2InZone(Vec2)</strong>
+<a id="#(ZONE_POLYGON_BASE).IsVec2InZone" >
+<strong>ZONE_POLYGON_BASE:IsVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1845,8 +1853,8 @@ The point of the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_RADIUS).IsPointVec2InZone" >
-<strong>ZONE_RADIUS:IsPointVec2InZone(Vec2)</strong>
+<a id="#(ZONE_RADIUS).IsVec2InZone" >
+<strong>ZONE_RADIUS:IsVec2InZone(Vec2)</strong>
 </a>
 </dt>
 <dd>
@@ -1872,8 +1880,8 @@ true if the location is within the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_RADIUS).IsPointVec3InZone" >
-<strong>ZONE_RADIUS:IsPointVec3InZone(Vec3)</strong>
+<a id="#(ZONE_RADIUS).IsVec3InZone" >
+<strong>ZONE_RADIUS:IsVec3InZone(Vec3)</strong>
 </a>
 </dt>
 <dd>

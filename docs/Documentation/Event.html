@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -115,7 +116,7 @@ in the correct processing order.</p>
 
 <p><img src="..\Presentations\EVENT\Dia6.JPG" alt="Objects"/></p>
 
-<p>For most DCS events, the above order of updating will be followed.1</p>
+<p>For most DCS events, the above order of updating will be followed.</p>
 
 <p><img src="..\Presentations\EVENT\Dia7.JPG" alt="Objects"/></p>
 
@@ -205,6 +206,23 @@ There are basically 4 main categories of information stored in the EVENTDATA str
 <p>Find below an overview which events populate which information categories:</p>
 
 <p><img src="..\Presentations\EVENT\Dia14.JPG" alt="Objects"/></p>
+
+<p><strong>IMPORTANT NOTE:</strong> Some events can involve not just UNIT objects, but also STATIC objects!!! 
+In that case the initiator or target unit fields will refer to a STATIC object!
+In case a STATIC object is involved, the documentation indicates which fields will and won't not be populated.
+The fields <strong>IniObjectCategory</strong> and <strong>TgtObjectCategory</strong> contain the indicator which <strong>kind of object is involved</strong> in the event.
+You can use the enumerator <strong>Object.Category.UNIT</strong> and <strong>Object.Category.STATIC</strong> to check on IniObjectCategory and TgtObjectCategory.
+Example code snippet:</p>
+
+<pre><code> if Event.IniObjectCategory == Object.Category.UNIT then
+  ...
+ end
+ if Event.IniObjectCategory == Object.Category.STATIC then
+  ...
+ end 
+</code></pre>
+
+<p>When a static object is involved in the event, the Group and Player fields won't be populated.</p>
 
 <hr/>
 
@@ -571,81 +589,182 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 			<h2><a id="#(EVENTDATA)">Type <code>EVENTDATA</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniCategory">EVENTDATA.IniCategory</a></td>
+		<td class="summary">
+<pre><code>  (UNIT) The category of the initiator.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniCoalition">EVENTDATA.IniCoalition</a></td>
+		<td class="summary">
+<pre><code> (UNIT) The coalition of the initiator.
+</code></pre>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniDCSGroup">EVENTDATA.IniDCSGroup</a></td>
 		<td class="summary">
-
+<pre><code>  (UNIT) The initiating {Dcs.DCSGroup#Group}.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniDCSGroupName">EVENTDATA.IniDCSGroupName</a></td>
 		<td class="summary">
-
+<p>  (UNIT) The initiating Group name.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniDCSUnit">EVENTDATA.IniDCSUnit</a></td>
 		<td class="summary">
-
+<pre><code>   (UNIT/STATIC) The initiating &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniDCSUnitName">EVENTDATA.IniDCSUnitName</a></td>
 		<td class="summary">
-
+<p>   (UNIT/STATIC) The initiating Unit name.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniGroup">EVENTDATA.IniGroup</a></td>
 		<td class="summary">
+<pre><code>     (UNIT) The initiating MOOSE wrapper &lt;a href="Wrapper.Group.html##(GROUP)"&gt;Wrapper.Group#GROUP&lt;/a&gt; of the initiator Group object.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniGroupName">EVENTDATA.IniGroupName</a></td>
+		<td class="summary">
+<pre><code> (UNIT) The initiating GROUP name (same as IniDCSGroupName).
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniObjectCategory">EVENTDATA.IniObjectCategory</a></td>
+		<td class="summary">
+<p>(UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniPlayerName">EVENTDATA.IniPlayerName</a></td>
+		<td class="summary">
+<pre><code>(UNIT) The name of the initiating player in case the Unit is a client or player slot.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniTypeName">EVENTDATA.IniTypeName</a></td>
+		<td class="summary">
+<pre><code>  (UNIT) The type name of the initiator.
+</code></pre>
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniUnit">EVENTDATA.IniUnit</a></td>
 		<td class="summary">
-
+<pre><code>      (UNIT/STATIC) The initiating MOOSE wrapper &lt;a href="Wrapper.Unit.html##(UNIT)"&gt;Wrapper.Unit#UNIT&lt;/a&gt; of the initiator Unit object.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniUnitName">EVENTDATA.IniUnitName</a></td>
 		<td class="summary">
-
+<pre><code>  (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtCategory">EVENTDATA.TgtCategory</a></td>
+		<td class="summary">
+<pre><code>  (UNIT) The category of the target.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtCoalition">EVENTDATA.TgtCoalition</a></td>
+		<td class="summary">
+<pre><code> (UNIT) The coalition of the target.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtDCSGroup">EVENTDATA.TgtDCSGroup</a></td>
 		<td class="summary">
-
+<pre><code>  (UNIT) The target {Dcs.DCSGroup#Group}.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtDCSGroupName">EVENTDATA.TgtDCSGroupName</a></td>
 		<td class="summary">
-
+<p>  (UNIT) The target Group name.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtDCSUnit">EVENTDATA.TgtDCSUnit</a></td>
 		<td class="summary">
-
+<pre><code>   (UNIT/STATIC) The target &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtDCSUnitName">EVENTDATA.TgtDCSUnitName</a></td>
 		<td class="summary">
+<p>   (UNIT/STATIC) The target Unit name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtGroup">EVENTDATA.TgtGroup</a></td>
+		<td class="summary">
+<pre><code>     (UNIT) The target MOOSE wrapper &lt;a href="Wrapper.Group.html##(GROUP)"&gt;Wrapper.Group#GROUP&lt;/a&gt; of the target Group object.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtGroupName">EVENTDATA.TgtGroupName</a></td>
+		<td class="summary">
+<pre><code> (UNIT) The target GROUP name (same as TgtDCSGroupName).
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtObjectCategory">EVENTDATA.TgtObjectCategory</a></td>
+		<td class="summary">
+<pre><code>  (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtPlayerName">EVENTDATA.TgtPlayerName</a></td>
+		<td class="summary">
+<pre><code>(UNIT) The name of the target player in case the Unit is a client or player slot.
+</code></pre>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtTypeName">EVENTDATA.TgtTypeName</a></td>
+		<td class="summary">
+<pre><code>  (UNIT) The type name of the target.
+</code></pre>
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtUnit">EVENTDATA.TgtUnit</a></td>
 		<td class="summary">
-
+<pre><code>      (UNIT/STATIC) The target MOOSE wrapper &lt;a href="Wrapper.Unit.html##(UNIT)"&gt;Wrapper.Unit#UNIT&lt;/a&gt; of the target Unit object.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).TgtUnitName">EVENTDATA.TgtUnitName</a></td>
 		<td class="summary">
-
+<pre><code>  (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+</code></pre>
 </td>
 		</tr>
 		<tr>
@@ -669,25 +788,28 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).id">EVENTDATA.id</a></td>
 		<td class="summary">
+<p>The identifier of the event.</p>
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).initiator">EVENTDATA.initiator</a></td>
 		<td class="summary">
-
+<pre><code>    (UNIT/STATIC/SCENERY) The initiating &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).target">EVENTDATA.target</a></td>
 		<td class="summary">
-
+<pre><code>       (UNIT/STATIC) The target &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).weapon">EVENTDATA.weapon</a></td>
 		<td class="summary">
-
+<p>The weapon used during the event.</p>
 </td>
 		</tr>
 	</table>
@@ -2438,71 +2560,179 @@ The self instance of the class for which the event is.</p>
 
 			<h2><a id="#(EVENTDATA)" >Type <code>EVENTDATA</code></a></h2>
 				
-<p>The Event structure</p>
+<p>The Event structure
+Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:</p>
+
+<ul>
+    <li>A (Object.Category.)UNIT : A UNIT object type is involved in the Event.</li>
+</ul>
+
+	
+<ul>
+    <li>A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+    </li>
+</ul>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit.Category)">Dcs.DCSUnit#Unit.Category</a></em>
+<a id="#(EVENTDATA).IniCategory" >
+<strong>EVENTDATA.IniCategory</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>  (UNIT) The category of the initiator.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCScoalition.html##(coalition.side)">Dcs.DCScoalition#coalition.side</a></em>
+<a id="#(EVENTDATA).IniCoalition" >
+<strong>EVENTDATA.IniCoalition</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code> (UNIT) The coalition of the initiator.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSGroup.html##(Group)">Dcs.DCSGroup#Group</a></em>
 <a id="#(EVENTDATA).IniDCSGroup" >
 <strong>EVENTDATA.IniDCSGroup</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>  (UNIT) The initiating {Dcs.DCSGroup#Group}.
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
 <a id="#(EVENTDATA).IniDCSGroupName" >
 <strong>EVENTDATA.IniDCSGroupName</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>  (UNIT) The initiating Group name.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit)">Dcs.DCSUnit#Unit</a></em>
 <a id="#(EVENTDATA).IniDCSUnit" >
 <strong>EVENTDATA.IniDCSUnit</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>   (UNIT/STATIC) The initiating &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
 <a id="#(EVENTDATA).IniDCSUnitName" >
 <strong>EVENTDATA.IniDCSUnitName</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>   (UNIT/STATIC) The initiating Unit name.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
 <a id="#(EVENTDATA).IniGroup" >
 <strong>EVENTDATA.IniGroup</strong>
 </a>
 </dt>
 <dd>
 	
+<pre><code>     (UNIT) The initiating MOOSE wrapper &lt;a href="Wrapper.Group.html##(GROUP)"&gt;Wrapper.Group#GROUP&lt;/a&gt; of the initiator Group object.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).IniGroupName" >
+<strong>EVENTDATA.IniGroupName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code> (UNIT) The initiating GROUP name (same as IniDCSGroupName).
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSObject.html##(Object.Category)">Dcs.DCSObject#Object.Category</a></em>
+<a id="#(EVENTDATA).IniObjectCategory" >
+<strong>EVENTDATA.IniObjectCategory</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).IniPlayerName" >
+<strong>EVENTDATA.IniPlayerName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>(UNIT) The name of the initiating player in case the Unit is a client or player slot.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).IniTypeName" >
+<strong>EVENTDATA.IniTypeName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>  (UNIT) The type name of the initiator.
+</code></pre>
 
 
 </dd>
@@ -2517,7 +2747,8 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-
+<pre><code>      (UNIT/STATIC) The initiating MOOSE wrapper &lt;a href="Wrapper.Unit.html##(UNIT)"&gt;Wrapper.Unit#UNIT&lt;/a&gt; of the initiator Unit object.
+</code></pre>
 
 </dd>
 </dl>
@@ -2531,58 +2762,171 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-
+<pre><code>  (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit.Category)">Dcs.DCSUnit#Unit.Category</a></em>
+<a id="#(EVENTDATA).TgtCategory" >
+<strong>EVENTDATA.TgtCategory</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>  (UNIT) The category of the target.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCScoalition.html##(coalition.side)">Dcs.DCScoalition#coalition.side</a></em>
+<a id="#(EVENTDATA).TgtCoalition" >
+<strong>EVENTDATA.TgtCoalition</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code> (UNIT) The coalition of the target.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSGroup.html##(Group)">Dcs.DCSGroup#Group</a></em>
 <a id="#(EVENTDATA).TgtDCSGroup" >
 <strong>EVENTDATA.TgtDCSGroup</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>  (UNIT) The target {Dcs.DCSGroup#Group}.
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
 <a id="#(EVENTDATA).TgtDCSGroupName" >
 <strong>EVENTDATA.TgtDCSGroupName</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>  (UNIT) The target Group name.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit)">Dcs.DCSUnit#Unit</a></em>
 <a id="#(EVENTDATA).TgtDCSUnit" >
 <strong>EVENTDATA.TgtDCSUnit</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>   (UNIT/STATIC) The target &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
 <a id="#(EVENTDATA).TgtDCSUnitName" >
 <strong>EVENTDATA.TgtDCSUnitName</strong>
 </a>
 </dt>
 <dd>
 	
+<p>   (UNIT/STATIC) The target Unit name.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
+<a id="#(EVENTDATA).TgtGroup" >
+<strong>EVENTDATA.TgtGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>     (UNIT) The target MOOSE wrapper &lt;a href="Wrapper.Group.html##(GROUP)"&gt;Wrapper.Group#GROUP&lt;/a&gt; of the target Group object.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).TgtGroupName" >
+<strong>EVENTDATA.TgtGroupName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code> (UNIT) The target GROUP name (same as TgtDCSGroupName).
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSObject.html##(Object.Category)">Dcs.DCSObject#Object.Category</a></em>
+<a id="#(EVENTDATA).TgtObjectCategory" >
+<strong>EVENTDATA.TgtObjectCategory</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>  (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).TgtPlayerName" >
+<strong>EVENTDATA.TgtPlayerName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>(UNIT) The name of the target player in case the Unit is a client or player slot.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(EVENTDATA).TgtTypeName" >
+<strong>EVENTDATA.TgtTypeName</strong>
+</a>
+</dt>
+<dd>
+	
+<pre><code>  (UNIT) The type name of the target.
+</code></pre>
 
 
 </dd>
@@ -2597,7 +2941,8 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-
+<pre><code>      (UNIT/STATIC) The target MOOSE wrapper &lt;a href="Wrapper.Unit.html##(UNIT)"&gt;Wrapper.Unit#UNIT&lt;/a&gt; of the target Unit object.
+</code></pre>
 
 </dd>
 </dl>
@@ -2611,7 +2956,8 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-
+<pre><code>  (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+</code></pre>
 
 </dd>
 </dl>
@@ -2657,12 +3003,14 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(EVENTDATA).id" >
 <strong>EVENTDATA.id</strong>
 </a>
 </dt>
 <dd>
 	
+<p>The identifier of the event.</p>
 
 
 </dd>
@@ -2670,26 +3018,30 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit)">Dcs.DCSUnit#Unit</a></em>
 <a id="#(EVENTDATA).initiator" >
 <strong>EVENTDATA.initiator</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>    (UNIT/STATIC/SCENERY) The initiating &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+		<em><a href="Dcs.DCSUnit.html##(Unit)">Dcs.DCSUnit#Unit</a></em>
 <a id="#(EVENTDATA).target" >
 <strong>EVENTDATA.target</strong>
 </a>
 </dt>
 <dd>
 	
-
+<pre><code>       (UNIT/STATIC) The target &lt;a href="Dcs.DCSUnit.html##(Unit)"&gt;Dcs.DCSUnit#Unit&lt;/a&gt; or &lt;a href="Dcs.DCSStaticObject.html##(StaticObject)"&gt;Dcs.DCSStaticObject#StaticObject&lt;/a&gt;.
+</code></pre>
 
 </dd>
 </dl>
@@ -2702,7 +3054,7 @@ The self instance of the class for which the event is.</p>
 </dt>
 <dd>
 	
-
+<p>The weapon used during the event.</p>
 
 </dd>
 </dl>
