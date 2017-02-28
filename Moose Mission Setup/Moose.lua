@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170228_1815' ) 
+env.info( 'Moose Generation Timestamp: 20170228_1851' ) 
 local base = _G
 
 Include = {}
@@ -18007,9 +18007,9 @@ end
 --
 -- ### Contributions:
 --
---   * **Wingthor**: Testing & Advice.
---   * **Dutch-Baron**: Testing & Advice.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--   * **Wingthor (TAW)**: Testing & Advice.
+--   * **Dutch-Baron (TAW)**: Testing & Advice.
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing and Advice.
 --        
 -- ### Authors:
 --
