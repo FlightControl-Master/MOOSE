@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li>Scoring</li>
@@ -74,7 +75,7 @@
 <p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
 and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
 
-<p>-- <img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -85,35 +86,77 @@ and creates a CSV file logging the scoring events for use at team or squadron we
 
    
 
-<p>The scores are calculated by scoring the hits and kills of objects that players make, 
-which are <a href="Unit.html">Unit</a> and <a href="Static.html">Static</a>s can be defined for which scores are also granted when a <a href="Scenery.html">Scenery</a> object is hit and killed within that Zone.</p>
+<p>The scores are calculated by scoring the hits and destroys of objects that players make, 
+which are <a href="Unit.html">Unit</a> and <a href="Static.html">Static</a>s** can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
+This is <strong>specifically useful</strong> to designate <strong>scenery targets on the map</strong> that will generate points when destroyed.</p>
 
-<p>Scores are calculated based on the threat level of the objects involved.
-The threat level of a unit can be a value between 0 and 10.
-A calculated score takes the threat level of the target divided by the threat level of the player unit.
-This provides a value between 0.1 and 10. 
-The stronger or the higher the threat of the player unit, the less score will be given in kills.</p>
+<p>With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file. <br/>
+The CSV files can be used to:</p>
+
+<ul>
+    <li>Upload scoring to a database or a BI tool to publish the scoring results to the player community.</li>
+    <li>Upload scoring in an (online) Excel like tool, using pivot tables and pivot charts to show mission results.</li>
+    <li>Share scoring amoung players after the mission to discuss mission results.</li>
+</ul>
+
+<h2>1.1) Set the destroy score or penalty multiplier</h2>
+
+<p>Score multipliers can be set for scores granted when enemies or friendlies are destroyed.
+Use the method <a href="##(SCORING).SetMultiplierDestroyScore">SCORING.SetMultiplierDestroyScore</a>() to set the multiplier of enemy destroys (positive destroys). 
+Use the method <a href="##(SCORING).SetMultiplierDestroyPenalty">SCORING.SetMultiplierDestroyPenalty</a>() to set the multiplier of friendly destroys (negative destroys).</p>
+
+<pre><code> local Scoring = SCORING:New( "Scoring File" )
+ Scoring:SetMultiplierDestroyScore( 10 )
+ Scoring:SetMultiplierDestroyPenalty( 40 )
+</code></pre>
+
+<p>The above sets the multiplier for valid scores to 10. So scores will be given in a scale from 0 to 10.
+The penalties will be given in a scale from 0 to 40.</p>
+
+<h2>1.2) Define special targets that will give extra scores.</h2>
+
+<p>Special targets can be set that will give extra scores to the players when these are destroyed.
+Use the methods <a href="##(SCORING).AddUnitScore">SCORING.AddUnitScore</a>() and <a href="##(SCORING).RemoveUnitScore">SCORING.RemoveUnitScore</a>() to specify a special additional score for a specific <a href="Unit.html">Unit</a>s. <br/>
+Use the methods <a href="##(SCORING).AddStaticScore">SCORING.AddStaticScore</a>() and <a href="##(SCORING).RemoveStaticScore">SCORING.RemoveStaticScore</a>() to specify a special additional score for a specific <a href="Static.html">Static</a>s. <br/>
+Use the method <a href="##(SCORING).SetGroupGroup">SCORING.SetGroupGroup</a>() to specify a special additional score for a specific <a href="Group.html">Group</a>s.  </p>
+
+<pre><code> local Scoring = SCORING:New( "Scoring File" )
+ Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
+ Scoring:AddStaticScore( STATIC:FindByName( "Static #1" ), 100 )
+</code></pre>
+
+<p>The above grants an additional score of 200 points for Unit #001 and an additional 100 points of Static #1 if these are destroyed.
+Note that later in the mission, one can remove these scores set, for example, when the a goal achievement time limit is over.
+For example, this can be done as follows:</p>
+
+<pre><code> Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
+</code></pre>
 
 
 
-<p>That value can then be multiplied by a multiplier. A multiplier can be set for enemies and friendlies kills.</p>
+<h2>1.3) Define destruction zones that will give extra scores.</h2>
 
-<p>Special scores can be given to specific units. These scores are added when player(s) kill that unit.</p>
+<p>Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
+Use the method <a href="##(SCORING).AddZoneScore">SCORING.AddZoneScore</a> to add a <a href="Zone.html">Zone</a> for additional scoring. <br/>
+Use the method <a href="##(SCORING).RemoveZoneScore">SCORING.RemoveZoneScore</a> to remove a <a href="Zone.html">Zone</a> for additional scoring. <br/>
+There are interesting variations that can be achieved with this functionality. For example, if the <a href="Zone.html">Zone</a> is a <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>, 
+then the zone is a moving zone, and anything destroyed within that <a href="Zone.html">Zone</a> will generate points.
+The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a <a href="Zone.html">Zone</a>, 
+just large enough around that building.</p>
 
-<p>With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file, that can then be uploaded
-to a database or a BI tool to publish the scoring results to the player community.</p>
+<h2>1.4) Define output CSV files.</h2>
 
-<h2>1.1) Set the kill score or penalty multiplier</h2>
+<p>The CSV file is given the name of the string given in the <a href="##(SCORING).New">SCORING.New</a>{} constructor, followed by the .csv extension.
+The file is incrementally saved in the **<User>\Saved Games\DCS\Logs** folder, and has a time stamp indicating each mission run.
+See the following example:</p>
 
-<p>Score multipliers can be set for scores granted when enemies or friendlies are killed.
-Use the method <a href="##(SCORING).SetMultiplierKillScore">SCORING.SetMultiplierKillScore</a>() to set the multiplier of enemy kills (positive kills). 
-Use the method <a href="##(SCORING).SetMultiplierKillPenalty">SCORING.SetMultiplierKillPenalty</a>() to set the multiplier of friendly kills (negative kills).</p>
+<pre><code>local ScoringFirstMission = SCORING:New( "FirstMission" )
+local ScoringSecondMission = SCORING:New( "SecondMission" )
+</code></pre>
 
-<h2>1.2) Define special targets in the mission that will give extra scores.</h2>
+<p>The above documents that 2 Scoring objects are created, ScoringFirstMission and ScoringSecondMission. </p>
 
-<p>Special targets can be set that will give extra scores to the players when these are killed.
-Use the method <a href="##(SCORING).SetScoreUnit">SCORING.SetScoreUnit</a>() to specify a special additional score for a specific <a href="Unit.html">Unit</a>.
-Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() to specify a special additional score for a specific <a href="Group.html">Group</a>.</p>
+
 
 <hr/>
 
@@ -179,6 +222,30 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 			<h2><a id="#(SCORING)">Type <code>SCORING</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddScoreGroup">SCORING:AddScoreGroup(ScoreGroup, Score)</a></td>
+		<td class="summary">
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddStaticScore">SCORING:AddStaticScore(ScoreStatic, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddUnitScore">SCORING:AddUnitScore(ScoreUnit, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddZoneScore">SCORING:AddZoneScore(ScoreZone, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Zone.html">Zone</a> to define additional scoring when any object is destroyed in that zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).AllScoresMenu">SCORING.AllScoresMenu</a></td>
 		<td class="summary">
 
@@ -209,13 +276,13 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierKillPenalty">SCORING.MultiplierKillPenalty</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierDestroyPenalty">SCORING.MultiplierDestroyPenalty</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierKillScore">SCORING.MultiplierKillScore</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierDestroyScore">SCORING.MultiplierDestroyScore</a></td>
 		<td class="summary">
 
 </td>
@@ -236,6 +303,24 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).Players">SCORING.Players</a></td>
 		<td class="summary">
 <p>A collection of the current players that have joined the game.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveStaticScore">SCORING:RemoveStaticScore(ScoreStatic)</a></td>
+		<td class="summary">
+<p>Removes a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveUnitScore">SCORING:RemoveUnitScore(ScoreUnit)</a></td>
+		<td class="summary">
+<p>Removes a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveZoneScore">SCORING:RemoveZoneScore(ScoreZone)</a></td>
+		<td class="summary">
+<p>Remove a <a href="Zone.html">Zone</a> for additional scoring.</p>
 </td>
 		</tr>
 		<tr>
@@ -281,27 +366,15 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierKillPenalty">SCORING:SetMultiplierKillPenalty(Multiplier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierDestroyPenalty">SCORING:SetMultiplierDestroyPenalty(Multiplier)</a></td>
 		<td class="summary">
-<p>Set the multiplier for scoring penalty kills (friendly kills).</p>
+<p>Set the multiplier for scoring penalty destroys (friendly destroys).</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierKillScore">SCORING:SetMultiplierKillScore(Multiplier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierDestroyScore">SCORING:SetMultiplierDestroyScore(Multiplier)</a></td>
 		<td class="summary">
-<p>Set the multiplier for scoring valid kills (enemy kills).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScoreGroup">SCORING:SetScoreGroup(ScoreGroup, Score)</a></td>
-		<td class="summary">
-<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScoreUnit">SCORING:SetScoreUnit(ScoreUnit, Score)</a></td>
-		<td class="summary">
-<p>Specify a special additional score for a <a href="Unit.html">Unit</a>.</p>
+<p>Set the multiplier for scoring valid destroys (enemy destroys).</p>
 </td>
 		</tr>
 		<tr>
@@ -409,6 +482,151 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 		<dl class="function">
 <dt>
 
+<a id="#(SCORING).AddScoreGroup" >
+<strong>SCORING:AddScoreGroup(ScoreGroup, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ScoreGroup </em></code>: 
+The <a href="Group.html">Group</a> for which each <a href="Unit.html">Unit</a> a Score is given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddStaticScore" >
+<strong>SCORING:AddStaticScore(ScoreStatic, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+
+	
+<p>Note that if there was already a <a href="Static.html">Static</a> declared within the scoring with the same name, 
+then the old <a href="Static.html">Static</a>  will be replaced with the new <a href="Static.html">Static</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(UNIT)">Wrapper.Static#UNIT</a> ScoreStatic </em></code>: 
+The <a href="Static.html">Static</a> for which the Score needs to be given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddUnitScore" >
+<strong>SCORING:AddUnitScore(ScoreUnit, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+
+	
+<p>Note that if there was already a <a href="Unit.html">Unit</a> declared within the scoring with the same name, 
+then the old <a href="Unit.html">Unit</a>  will be replaced with the new <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
+The <a href="Unit.html">Unit</a> for which the Score needs to be given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddZoneScore" >
+<strong>SCORING:AddZoneScore(ScoreZone, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Zone.html">Zone</a> to define additional scoring when any object is destroyed in that zone.</p>
+
+	
+<p>Note that if a <a href="Zone.html">Zone</a> with the same name is already within the scoring added, the <a href="Zone.html">Zone</a> (type) and Score will be replaced!
+This allows for a dynamic destruction zone evolution within your mission.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> ScoreZone </em></code>: 
+The <a href="Zone.html">Zone</a> which defines the destruction score perimeters. 
+Note that a zone can be a polygon or a moving zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(SCORING).AllScoresMenu" >
 <strong>SCORING.AllScoresMenu</strong>
@@ -479,8 +697,8 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 <dt>
 
 		<em></em>
-<a id="#(SCORING).MultiplierKillPenalty" >
-<strong>SCORING.MultiplierKillPenalty</strong>
+<a id="#(SCORING).MultiplierDestroyPenalty" >
+<strong>SCORING.MultiplierDestroyPenalty</strong>
 </a>
 </dt>
 <dd>
@@ -493,8 +711,8 @@ Use the method <a href="##(SCORING).SetScoreGroup">SCORING.SetScoreGroup</a>() t
 <dt>
 
 		<em></em>
-<a id="#(SCORING).MultiplierKillScore" >
-<strong>SCORING.MultiplierKillScore</strong>
+<a id="#(SCORING).MultiplierDestroyScore" >
+<strong>SCORING.MultiplierDestroyScore</strong>
 </a>
 </dt>
 <dd>
@@ -575,6 +793,92 @@ ScoringObject:OpenCSV( "Player Scores" )</code></pre>
 <dd>
 	
 <p>A collection of the current players that have joined the game.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveStaticScore" >
+<strong>SCORING:RemoveStaticScore(ScoreStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(UNIT)">Wrapper.Static#UNIT</a> ScoreStatic </em></code>: 
+The <a href="Static.html">Static</a> for which the Score needs to be given.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveUnitScore" >
+<strong>SCORING:RemoveUnitScore(ScoreUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
+The <a href="Unit.html">Unit</a> for which the Score needs to be given.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveZoneScore" >
+<strong>SCORING:RemoveZoneScore(ScoreZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove a <a href="Zone.html">Zone</a> for additional scoring.</p>
+
+	
+<p>The scoring will search if any <a href="Zone.html">Zone</a> is added with the given name, and will remove that zone from the scoring.
+This allows for a dynamic destruction zone evolution within your mission.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> ScoreZone </em></code>: 
+The <a href="Zone.html">Zone</a> which defines the destruction score perimeters. 
+Note that a zone can be a polygon or a moving zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -770,13 +1074,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SCORING).SetMultiplierKillPenalty" >
-<strong>SCORING:SetMultiplierKillPenalty(Multiplier)</strong>
+<a id="#(SCORING).SetMultiplierDestroyPenalty" >
+<strong>SCORING:SetMultiplierDestroyPenalty(Multiplier)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the multiplier for scoring penalty kills (friendly kills).</p>
+<p>Set the multiplier for scoring penalty destroys (friendly destroys).</p>
 
 	
 <p>A calculated score is a value between 0.1 and 10.
@@ -791,18 +1095,23 @@ The multiplier of the score given.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(SCORING).SetMultiplierKillScore" >
-<strong>SCORING:SetMultiplierKillScore(Multiplier)</strong>
+<a id="#(SCORING).SetMultiplierDestroyScore" >
+<strong>SCORING:SetMultiplierDestroyScore(Multiplier)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the multiplier for scoring valid kills (enemy kills).</p>
+<p>Set the multiplier for scoring valid destroys (enemy destroys).</p>
 
 	
 <p>A calculated score is a value between 0.1 and 10.
@@ -814,62 +1123,6 @@ The multiplier magnifies the scores given to the players.</p>
 				
 <p><code><em>#number Multiplier </em></code>: 
 The multiplier of the score given.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SCORING).SetScoreGroup" >
-<strong>SCORING:SetScoreGroup(ScoreGroup, Score)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ScoreGroup </em></code>: 
-The <a href="Group.html">Group</a> for which each <a href="Unit.html">Unit</a> a Score is given.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The Score value.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SCORING).SetScoreUnit" >
-<strong>SCORING:SetScoreUnit(ScoreUnit, Score)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Specify a special additional score for a <a href="Unit.html">Unit</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
-The <a href="Unit.html">Unit</a> for which the Score is given.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The Score value.</p>
 
 				</li>
 		</ul>

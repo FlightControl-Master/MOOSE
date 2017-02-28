@@ -44,13 +44,13 @@
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
-					<li>Object</li>
+					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
-					<li><a href="Scenery.html">Scenery</a></li>
+					<li>Scenery</li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -70,87 +70,56 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Object</code></h1>
+   <h1>Module <code>Scenery</code></h1>
    
-<p>This module contains the OBJECT class.</p>
+<p>This module contains the SCENERY class.</p>
 
    
 
-<h1>1) <a href="Object.html##(OBJECT)">Object#OBJECT</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="Object.html##(OBJECT)">Object#OBJECT</a> class is a wrapper class to handle the DCS Object objects:</p>
+<h1>1) <a href="Scenery.html##(SCENERY)">Scenery#SCENERY</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+<p>Scenery objects are defined on the map.
+The <a href="Scenery.html##(SCENERY)">Scenery#SCENERY</a> class is a wrapper class to handle the DCS Scenery objects:</p>
 
 <ul>
-    <li>Support all DCS Object APIs.</li>
-    <li>Enhance with Object specific APIs not in the DCS Object API set.</li>
-    <li>Manage the "state" of the DCS Object.</li>
+    <li>Wraps the DCS Scenery objects.</li>
+    <li>Support all DCS Scenery APIs.</li>
+    <li>Enhance with Scenery specific APIs not in the DCS API set.</li>
 </ul>
-
-<h2>1.1) OBJECT constructor:</h2>
-<p>The OBJECT class provides the following functions to construct a OBJECT instance:</p>
-
-<ul>
-    <li><a href="Object.html##(OBJECT).New">Object#OBJECT.New</a>(): Create a OBJECT instance.</li>
-</ul>
-
-<h2>1.2) OBJECT methods:</h2>
-<p>The following methods can be used to identify an Object object:</p>
-
-<ul>
-    <li><a href="Object.html##(OBJECT).GetID">Object#OBJECT.GetID</a>(): Returns the ID of the Object object.</li>
-</ul>
-
-<hr/>
 
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#OBJECT">OBJECT</a></td>
+		<td class="name" nowrap="nowrap"><a href="#SCENERY">SCENERY</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(DCSObject)">Type <code>DCSObject</code></a></h2>
+			<h2><a id="#(SCENERY)">Type <code>SCENERY</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DCSObject).id_">DCSObject.id_</a></td>
-		<td class="summary">
-<p>The ID of the controllable in DCS</p>
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(OBJECT)">Type <code>OBJECT</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).ClassName">OBJECT.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCENERY).ClassName">SCENERY.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).Destroy">OBJECT:Destroy()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCENERY).GetDCSObject">SCENERY:GetDCSObject()</a></td>
 		<td class="summary">
-<p>Destroys the OBJECT.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).GetID">OBJECT:GetID()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCENERY).GetThreatLevel">SCENERY:GetThreatLevel()</a></td>
 		<td class="summary">
-<p>Returns the unit's unique identifier.</p>
+
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).New">OBJECT:New(ObjectName, Test)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCENERY).Register">SCENERY:Register(SceneryName, SceneryObject)</a></td>
 		<td class="summary">
-<p>Create a new OBJECT from a DCSObject</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(OBJECT).ObjectName">OBJECT.ObjectName</a></td>
-		<td class="summary">
-<p>The name of the Object.</p>
+
 </td>
 		</tr>
 	</table>
@@ -159,9 +128,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(OBJECT)">#OBJECT</a></em>
-<a id="OBJECT" >
-<strong>OBJECT</strong>
+		<em><a href="##(SCENERY)">#SCENERY</a></em>
+<a id="SCENERY" >
+<strong>SCENERY</strong>
 </a>
 </dt>
 <dd>
@@ -170,38 +139,19 @@
 
 </dd>
 </dl>
-	<h2><a id="#(Object)" >Type <code>Object</code></a></h2>
+	<h2><a id="#(Scenery)" >Type <code>Scenery</code></a></h2>
 	
-			<h2><a id="#(DCSObject)" >Type <code>DCSObject</code></a></h2>
+			<h2><a id="#(SCENERY)" >Type <code>SCENERY</code></a></h2>
 				
-<p>A DCSObject</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(DCSObject).id_" >
-<strong>DCSObject.id_</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The ID of the controllable in DCS</p>
-
-</dd>
-</dl>
-
-			<h2><a id="#(OBJECT)" >Type <code>OBJECT</code></a></h2>
-				
-<p>The OBJECT class</p>
+<p>The SCENERY class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(OBJECT).ClassName" >
-<strong>OBJECT.ClassName</strong>
+<a id="#(SCENERY).ClassName" >
+<strong>SCENERY.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -213,93 +163,53 @@
 		<dl class="function">
 <dt>
 
-<a id="#(OBJECT).Destroy" >
-<strong>OBJECT:Destroy()</strong>
+<a id="#(SCENERY).GetDCSObject" >
+<strong>SCENERY:GetDCSObject()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Destroys the OBJECT.</p>
 
-		<h3>Return value</h3>
-				
-<p><em>#nil:</em>
-The DCS Unit is not existing or alive.  </p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(OBJECT).GetID" >
-<strong>OBJECT:GetID()</strong>
+<a id="#(SCENERY).GetThreatLevel" >
+<strong>SCENERY:GetThreatLevel()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns the unit's unique identifier.</p>
 
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="Dcs.DCSWrapper.Object.html##(Object.ID)">Dcs.DCSWrapper.Object#Object.ID</a>:</em>
-ObjectID</p>
 
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The DCS Object is not existing or alive.  </p>
-
-				</li>
-			</ol>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(OBJECT).New" >
-<strong>OBJECT:New(ObjectName, Test)</strong>
+<a id="#(SCENERY).Register" >
+<strong>SCENERY:Register(SceneryName, SceneryObject)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Create a new OBJECT from a DCSObject</p>
+
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSWrapper.Object.html##(Object)">Dcs.DCSWrapper.Object#Object</a> ObjectName </em></code>: 
-The Object name</p>
+<p><code><em> SceneryName </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Test </em></code>: </p>
+<p><code><em> SceneryObject </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(OBJECT)">#OBJECT</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(OBJECT).ObjectName" >
-<strong>OBJECT.ObjectName</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The name of the Object.</p>
-
 </dd>
 </dl>
 

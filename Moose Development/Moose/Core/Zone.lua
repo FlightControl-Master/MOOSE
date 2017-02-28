@@ -35,8 +35,8 @@
 -- 
 -- ## 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
---   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a @{Point#POINT_VEC2} is within the zone.
---   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a @{Point#POINT_VEC3} is within the zone.
+--   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a Vec2 is within the zone.
+--   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a Vec3 is within the zone.
 --   
 -- ## 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
 -- 
@@ -145,21 +145,28 @@
 -- 
 -- Hereby the change log:
 -- 
--- 2017-02-18: ZONE_POLYGON_BASE:**GetRandomPointVec2()** added.
+-- 2017-02-28: ZONE\_BASE:**IsVec2InZone()** replaces ZONE\_BASE:_IsPointVec2InZone()_.  
+-- 2017-02-28: ZONE\_BASE:**IsVec3InZone()** replaces ZONE\_BASE:_IsPointVec3InZone()_.  
+-- 2017-02-28: ZONE\_RADIUS:**IsVec2InZone()** replaces ZONE\_RADIUS:_IsPointVec2InZone()_.  
+-- 2017-02-28: ZONE\_RADIUS:**IsVec3InZone()** replaces ZONE\_RADIUS:_IsPointVec3InZone()_.  
+-- 2017-02-28: ZONE\_POLYGON:**IsVec2InZone()** replaces ZONE\_POLYGON:_IsPointVec2InZone()_.  
+-- 2017-02-28: ZONE\_POLYGON:**IsVec3InZone()** replaces ZONE\_POLYGON:_IsPointVec3InZone()_.  
 -- 
--- 2017-02-18: ZONE_POLYGON_BASE:**GetRandomPointVec3()** added.
+-- 2017-02-18: ZONE\_POLYGON_BASE:**GetRandomPointVec2()** added.
 -- 
--- 2017-02-18: ZONE_RADIUS:**GetRandomPointVec3( inner, outer )** added.
+-- 2017-02-18: ZONE\_POLYGON_BASE:**GetRandomPointVec3()** added.
 -- 
--- 2017-02-18: ZONE_RADIUS:**GetRandomPointVec2( inner, outer )** added.
+-- 2017-02-18: ZONE\_RADIUS:**GetRandomPointVec3( inner, outer )** added.
 -- 
--- 2016-08-15: ZONE_BASE:**GetName()** added.
+-- 2017-02-18: ZONE\_RADIUS:**GetRandomPointVec2( inner, outer )** added.
 -- 
--- 2016-08-15: ZONE_BASE:**SetZoneProbability( ZoneProbability )** added.
+-- 2016-08-15: ZONE\_BASE:**GetName()** added.
 -- 
--- 2016-08-15: ZONE_BASE:**GetZoneProbability()** added.
+-- 2016-08-15: ZONE\_BASE:**SetZoneProbability( ZoneProbability )** added.
 -- 
--- 2016-08-15: ZONE_BASE:**GetZoneMaybe()** added.
+-- 2016-08-15: ZONE\_BASE:**GetZoneProbability()** added.
+-- 
+-- 2016-08-15: ZONE\_BASE:**GetZoneMaybe()** added.
 -- 
 -- ===
 -- 
@@ -212,7 +219,7 @@ end
 -- @param #ZONE_BASE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_BASE:IsPointVec2InZone( Vec2 )
+function ZONE_BASE:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
 
   return false
@@ -222,10 +229,10 @@ end
 -- @param #ZONE_BASE self
 -- @param Dcs.DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
-function ZONE_BASE:IsPointVec3InZone( Vec3 )
+function ZONE_BASE:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
 
-  local InZone = self:IsPointVec2InZone( { x = Vec3.x, y = Vec3.z } )
+  local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
@@ -455,7 +462,7 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_RADIUS:IsPointVec2InZone( Vec2 )
+function ZONE_RADIUS:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
   
   local ZoneVec2 = self:GetVec2()
@@ -473,10 +480,10 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Dcs.DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
-function ZONE_RADIUS:IsPointVec3InZone( Vec3 )
+function ZONE_RADIUS:IsVec3InZone( Vec3 )
   self:F2( Vec3 )
 
-  local InZone = self:IsPointVec2InZone( { x = Vec3.x, y = Vec3.z } )
+  local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
   return InZone
 end
@@ -795,7 +802,7 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
-function ZONE_POLYGON_BASE:IsPointVec2InZone( Vec2 )
+function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   self:F2( Vec2 )
 
   local Next 
@@ -837,7 +844,7 @@ function ZONE_POLYGON_BASE:GetRandomVec2()
   while Vec2Found == false do
     Vec2 = { x = math.random( BS.x1, BS.x2 ), y = math.random( BS.y1, BS.y2 ) }
     self:T2( Vec2 )
-    if self:IsPointVec2InZone( Vec2 ) then
+    if self:IsVec2InZone( Vec2 ) then
       Vec2Found = true
     end
   end
