@@ -189,7 +189,7 @@ end
 function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )
   self:F( CoalitionSide )
 
-  if CoalitionSide then
+  if Condition and Condition == true then
     self:ToCoalition( CoalitionSide )
   end
   
@@ -222,7 +222,7 @@ end
 -- @return #MESSAGE
 function MESSAGE:ToAllIf( Condition )
 
-  if Condition then
+  if Condition and Condition == true then
   	self:ToCoalition( coalition.side.RED )
   	self:ToCoalition( coalition.side.BLUE )
   end
