@@ -148,9 +148,9 @@
 --
 -- ### Contributions:
 --
---   * **Wingthor**: Testing & Advice.
---   * **Dutch-Baron**: Testing & Advice.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--   * **Wingthor (TAW)**: Testing & Advice.
+--   * **Dutch-Baron (TAW)**: Testing & Advice.
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing and Advice.
 --        
 -- ### Authors:
 --
