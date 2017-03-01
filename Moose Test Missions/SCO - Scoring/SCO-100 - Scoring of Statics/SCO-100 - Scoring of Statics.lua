@@ -14,9 +14,9 @@
 
 local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
-local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
+local CommandCenter = COMMANDCENTER:New( HQ, "Bravo" )
 
-local Scoring = SCORING:New( "Detect Demo" )
+local Scoring = SCORING:New( "Shooting Range 1" )
 
 Scoring:SetMultiplierDestroyScore( 10 )
 
@@ -25,17 +25,14 @@ Scoring:SetMultiplierDestroyPenalty( 40 )
 Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
 
 -- Test for zone scores.
--- First declare the zone objects.
 
 -- This one is to test scoring on normal units.
 local ShootingRangeZone = ZONE:New( "ScoringZone1" )
+Scoring:AddZoneScore( ShootingRangeZone, 200 )
 
 -- This one is to test scoring on scenery.
 -- Note that you can only destroy scenery with heavy weapons.
 local SceneryZone = ZONE:New( "ScoringZone2" )
-
--- We add the zones to the scoring object, to add points when one of the objects are hit within the zone.
-Scoring:AddZoneScore( ShootingRangeZone, 200 )
 Scoring:AddZoneScore( SceneryZone, 200 )
 
 
