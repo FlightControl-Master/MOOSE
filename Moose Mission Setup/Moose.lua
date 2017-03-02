@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170302_1226' ) 
+env.info( 'Moose Generation Timestamp: 20170302_1741' ) 
 local base = _G
 
 Include = {}
@@ -17872,26 +17872,36 @@ end
 -- SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
 -- which can be @{Unit}, @{Static) and @{Scenery} objects.
 -- 
--- Positive score points are granted when enemy or neutral targets are destroyed.  
--- Negative score points or penalties are given when a friendly target is hit or destroyed.  
+-- Positive score points are granted when enemy or neutral targets are destroyed. 
+-- Negative score points or penalties are given when a friendly target is hit or destroyed. 
 -- This brings a lot of dynamism in the scoring, where players need to take care to inflict damage on the right target.
 -- By default, penalties weight heavier in the scoring, to ensure that players don't commit fratricide.
 -- The total score of the player is calculated by **adding the scores minus the penalties**.
 -- 
--- The score value is calculated based on the **threat level of the player** and the **threat level of the target**.
--- The threat level of an object can be a value between 0 and 10.  
--- A calculated score takes the threat level of the target divided by the threat level of the player unit.
--- This provides a value between 0.1 and 10.   
--- As such, if the threat level of the target is high, and the player threat level is low, a high score will be given.
--- However, the **stronger or the higher** the threat level of the player unit, the **less score** will be given in enemy target destroys.
+-- ![Banner Image](..\Presentations\SCORING\Dia4.JPG)
 -- 
--- If multiple players hit the same target, and finally succeed in destroying the target, then each player who contributed to the target
+-- The score value is calculated based on the **threat level of the player** and the **threat level of the target**.
+-- A calculated score takes the threat level of the target divided by a balanced threat level of the player unit.   
+-- As such, if the threat level of the target is high, and the player threat level is low, a higher score will be given than 
+-- if the threat level of the player would be high too.
+-- 
+-- ![Banner Image](..\Presentations\SCORING\Dia5.JPG)
+-- 
+-- When multiple players hit the same target, and finally succeed in destroying the target, then each player who contributed to the target
 -- destruction, will receive a score. This is important for targets that require significant damage before it can be destroyed, like
 -- ships or heavy planes.
 -- 
--- Optionally, the score values can be **scaled** by a **multiplier**. Specific multipliers can be set for positive cores or negative penalties.
+-- ![Banner Image](..\Presentations\SCORING\Dia13.JPG)
+-- 
+-- Optionally, the score values can be **scaled** by a **scale**. Specific scales can be set for positive cores or negative penalties.
+-- The default range of the scores granted is a value between 0 and 10. The default range of penalties given is a value between 0 and 30.
+-- 
+-- ![Banner Image](..\Presentations\SCORING\Dia7.JPG)
 -- 
 -- **Additional scores** can be granted to **specific objects**, when the player(s) destroy these objects.
+-- 
+-- ![Banner Image](..\Presentations\SCORING\Dia9.JPG)
+-- 
 -- **Various @{Zone}s** can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
 -- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 -- 
@@ -17906,17 +17916,17 @@ end
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
--- ## 1.1) Set the destroy score or penalty multiplier
+-- ## 1.1) Set the destroy score or penalty scale
 -- 
--- Score multipliers can be set for scores granted when enemies or friendlies are destroyed.
--- Use the method @{#SCORING.SetMultiplierDestroyScore}() to set the multiplier of enemy destroys (positive destroys). 
--- Use the method @{#SCORING.SetMultiplierDestroyPenalty}() to set the multiplier of friendly destroys (negative destroys).
+-- Score scales can be set for scores granted when enemies or friendlies are destroyed.
+-- Use the method @{#SCORING.SetScaleDestroyScore}() to set the scale of enemy destroys (positive destroys). 
+-- Use the method @{#SCORING.SetScaleDestroyPenalty}() to set the scale of friendly destroys (negative destroys).
 -- 
 --      local Scoring = SCORING:New( "Scoring File" )
---      Scoring:SetMultiplierDestroyScore( 10 )
---      Scoring:SetMultiplierDestroyPenalty( 40 )
+--      Scoring:SetScaleDestroyScore( 10 )
+--      Scoring:SetScaleDestroyPenalty( 40 )
 --      
--- The above sets the multiplier for valid scores to 10. So scores will be given in a scale from 0 to 10.
+-- The above sets the scale for valid scores to 10. So scores will be given in a scale from 0 to 10.
 -- The penalties will be given in a scale from 0 to 40.
 -- 
 -- ## 1.2) Define special targets that will give extra scores.
@@ -17958,7 +17968,7 @@ end
 -- 
 -- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
--- By default, the penalty for changing coalition is the default penalty multiplier.  
+-- By default, the penalty for changing coalition is the default penalty scale.  
 -- 
 -- ## 1.8) Define output CSV files.
 -- 
@@ -18069,9 +18079,6 @@ function SCORING:New( GameName )
     error( "A game name must be given to register the scoring results" )
   end
   
-  -- Multipliers
-  self.MultiplierDestroyScore = 10
-  self.MultiplierDestroyPenalty = 20
   
   -- Additional Object scores
   self.ScoringObjects = {}
@@ -18085,12 +18092,16 @@ function SCORING:New( GameName )
   self:SetMessagesDestroy( true )
   self:SetMessagesScore( true )
   self:SetMessagesZone( true )
+  
+  -- Scales
+  self:SetScaleDestroyScore( 10 )
+  self:SetScaleDestroyPenalty( 30 )
 
   -- Default fratricide penalty level (maximum penalty that can be assigned to a player before he gets kicked).
-  self:SetFratricide( self.MultiplierDestroyPenalty * 2 )
+  self:SetFratricide( self.ScaleDestroyPenalty * 3 )
   
   -- Default penalty when a player changes coalition.
-  self:SetCoalitionChangePenalty( self.MultiplierDestroyPenalty )
+  self:SetCoalitionChangePenalty( self.ScaleDestroyPenalty )
   
   -- Event handlers  
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
@@ -18106,27 +18117,27 @@ function SCORING:New( GameName )
   
 end
 
---- Set the multiplier for scoring valid destroys (enemy destroys).
--- A calculated score is a value between 0.1 and 10.
--- The multiplier magnifies the scores given to the players.
+--- Set the scale for scoring valid destroys (enemy destroys).
+-- A default calculated score is a value between 1 and 10.
+-- The scale magnifies the scores given to the players.
 -- @param #SCORING self
--- @param #number Multiplier The multiplier of the score given.
-function SCORING:SetMultiplierDestroyScore( Multiplier )
+-- @param #number Scale The scale of the score given.
+function SCORING:SetScaleDestroyScore( Scale )
 
-  self.MultiplierDestroyScore = Multiplier
+  self.ScaleDestroyScore = Scale
   
   return self
 end
 
---- Set the multiplier for scoring penalty destroys (friendly destroys).
--- A calculated score is a value between 0.1 and 10.
--- The multiplier magnifies the scores given to the players.
+--- Set the scale for scoring penalty destroys (friendly destroys).
+-- A default calculated penalty is a value between 1 and 10.
+-- The scale magnifies the scores given to the players.
 -- @param #SCORING self
--- @param #number Multiplier The multiplier of the score given.
+-- @param #number Scale The scale of the score given.
 -- @return #SCORING
-function SCORING:SetMultiplierDestroyPenalty( Multiplier )
+function SCORING:SetScaleDestroyPenalty( Scale )
 
-  self.MultiplierDestroyPenalty = Multiplier
+  self.ScaleDestroyPenalty = Scale
   
   return self
 end
@@ -18364,7 +18375,7 @@ end
 
 --- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
--- By default, the penalty for changing coalition is the default penalty multiplier.  
+-- By default, the penalty for changing coalition is the default penalty scale.  
 -- @param #SCORING self
 -- @param #number CoalitionChangePenalty The amount of penalty that is given. 
 -- @return #SCORING
@@ -18430,7 +18441,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
 
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
-        MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than 150, you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
+        MESSAGE:New( "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
           30
         ):ToAll()
         self.Players[PlayerName].PenaltyWarning = self.Players[PlayerName].PenaltyWarning + 1
@@ -18806,8 +18817,8 @@ function SCORING:_EventOnDeadOrCrash( Event )
         if TargetCoalition then
           if InitCoalition == TargetCoalition then
             local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
-            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierDestroyPenalty )
+            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
+            local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.ScaleDestroyPenalty / 10 )
             self:E( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
             
             Player.Penalty = Player.Penalty + ThreatPenalty
@@ -18837,8 +18848,9 @@ function SCORING:_EventOnDeadOrCrash( Event )
           else
   
             local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
-            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel()
-            local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.MultiplierDestroyScore )
+            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
+            local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
+            
             self:E( { ThreatLevel = ThreatScore, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
   
             Player.Score = Player.Score + ThreatScore
