@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170302_1741' ) 
+env.info( 'Moose Generation Timestamp: 20170302_2326' ) 
 local base = _G
 
 Include = {}
@@ -3875,7 +3875,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
+  self.ObjectSchedulers = self.ObjectSchedulers or {} -- setmetatable( {}, { __mode = "v" } )
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
@@ -31345,6 +31345,7 @@ end
 --   * @{#TASK.HasStateMachine}():Enquire if the task has a @{Fsm}
 --   * @{#TASK.AssignToUnit}(): Assign a task to a unit. (Needs to be implemented in the derived classes from @{#TASK}.
 --   * @{#TASK.UnAssignFromUnit}(): Unassign the task from a unit.
+--   * @{#TASK.SetTimeOut}(): Set timer in seconds before task gets cancelled if not assigned.
 --   
 -- 1.2) Set and enquire task status (beyond the task state machine processing).
 -- ----------------------------------------------------------------------------
@@ -31401,6 +31402,7 @@ TASK = {
   FsmTemplate = nil,
   Mission = nil,
   CommandCenter = nil,
+  TimeOut = 0,
 }
 
 --- FSM PlayerAborted event handler prototype for TASK.
@@ -31494,6 +31496,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:AddTransition( "*", "PlayerAborted", "*" )
   self:AddTransition( "*", "PlayerDead", "*" )
   self:AddTransition( { "Failed", "Aborted", "Cancelled" }, "Replan", "Planned" )
+  self:AddTransition( "*", "TimeOut", "Cancelled" )
 
   self:E( "New TASK " .. TaskName )
 
@@ -31732,6 +31735,17 @@ function TASK:UnAssignFromUnit( TaskUnit )
   
   self:RemoveStateMachine( TaskUnit )
 
+  return self
+end
+
+--- Sets the TimeOut for the @{Task}. If @{Task} stayed planned for longer than TimeOut, it gets into Cancelled status.
+-- @param #TASK self
+-- @param #integer Timer in seconds
+-- @return #TASK self
+function TASK:SetTimeOut ( Timer )
+  self:F( Timer )
+  self.TimeOut = Timer
+  self:__TimeOut( self.TimeOut )
   return self
 end
 
@@ -32264,6 +32278,30 @@ function TASK:onstatechange( From, Event, To )
     end
   end
 
+end
+
+--- FSM function for a TASK
+-- @param #TASK self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function TASK:onenterPlanned( From, Event, To)
+  if not self.TimeOut == 0 then 
+    self.__TimeOut( self.TimeOut )
+  end
+end
+
+--- FSM function for a TASK
+-- @param #TASK self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function TASK:onbeforeTimeOut( From, Event, To )
+  if From == "Planned" then
+    self:RemoveMenu()
+    return true
+  end
+  return false
 end
 
 do -- Reporting

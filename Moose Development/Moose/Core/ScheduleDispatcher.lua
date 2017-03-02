@@ -64,7 +64,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
+  self.ObjectSchedulers = self.ObjectSchedulers or {} -- setmetatable( {}, { __mode = "v" } )
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
