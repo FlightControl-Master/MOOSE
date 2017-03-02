@@ -116,6 +116,7 @@ function AI_BALANCER:New( SetClient, SpawnAI )
   -- Inherits from BASE
   local self = BASE:Inherit( self, FSM_SET:New( SET_GROUP:New() ) ) -- AI.AI_Balancer#AI_BALANCER
   
+  -- TODO: Define the OnAfterSpawned event
   self:SetStartState( "None" )
   self:AddTransition( "*", "Monitor", "Monitoring" )
   self:AddTransition( "*", "Spawn", "Spawning" )
@@ -179,15 +180,17 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
 
   -- OK, Spawn a new group from the default SpawnAI object provided.
   local AIGroup = self.SpawnAI:Spawn() -- Wrapper.Group#GROUP
-  AIGroup:E( "Spawning new AIGroup" )
-  --TODO: need to rework UnitName thing ...
-  
-  SetGroup:Add( ClientName, AIGroup )
-  self.SpawnQueue[ClientName] = nil
-  
-  -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
-  -- Mission designers can catch this event to bind further actions to the AIGroup.
-  self:Spawned( AIGroup )
+  if AIGroup then
+    AIGroup:E( "Spawning new AIGroup" )
+    --TODO: need to rework UnitName thing ...
+    
+    SetGroup:Add( ClientName, AIGroup )
+    self.SpawnQueue[ClientName] = nil
+    
+    -- Fire the Spawned event. The first parameter is the AIGroup just Spawned.
+    -- Mission designers can catch this event to bind further actions to the AIGroup.
+    self:Spawned( AIGroup )
+  end
 end
 
 --- @param #AI_BALANCER self

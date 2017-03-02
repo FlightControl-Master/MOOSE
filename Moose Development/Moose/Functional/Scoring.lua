@@ -8,34 +8,42 @@
 -- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
 -- 
 -- The @{#SCORING} class administers the scoring of player achievements, 
--- and creates a CSV file logging the scoring events for use at team or squadron websites.
+-- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 -- 
--- The scores are calculated by scoring the hits and destroys of objects that players make, 
--- which are @{Unit} and @{Static) objects within your mission.
+-- SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
+-- which can be @{Unit}, @{Static) and @{Scenery} objects.
 -- 
--- Scores are calculated based on the threat level of the objects involved.
--- The threat level of a unit can be a value between 0 and 10.
+-- Positive score points are granted when enemy or neutral targets are destroyed.  
+-- Negative score points or penalties are given when a friendly target is hit or destroyed.  
+-- This brings a lot of dynamism in the scoring, where players need to take care to inflict damage on the right target.
+-- By default, penalties weight heavier in the scoring, to ensure that players don't commit fratricide.
+-- The total score of the player is calculated by **adding the scores minus the penalties**.
+-- 
+-- The score value is calculated based on the **threat level of the player** and the **threat level of the target**.
+-- The threat level of an object can be a value between 0 and 10.  
 -- A calculated score takes the threat level of the target divided by the threat level of the player unit.
--- This provides a value between 0.1 and 10. 
--- The stronger or the higher the threat of the player unit, the less score will be given in destroys.
--- That value can then be multiplied by a multiplier. A specific multiplier can be set for enemies and friendlies destroys.
+-- This provides a value between 0.1 and 10.   
+-- As such, if the threat level of the target is high, and the player threat level is low, a high score will be given.
+-- However, the **stronger or the higher** the threat level of the player unit, the **less score** will be given in enemy target destroys.
 -- 
--- If multiple players hit the same target, and finally the target gets destroyed, each player who contributed to the target
+-- If multiple players hit the same target, and finally succeed in destroying the target, then each player who contributed to the target
 -- destruction, will receive a score. This is important for targets that require significant damage before it can be destroyed, like
 -- ships or heavy planes.
+-- 
+-- Optionally, the score values can be **scaled** by a **multiplier**. Specific multipliers can be set for positive cores or negative penalties.
 -- 
 -- **Additional scores** can be granted to **specific objects**, when the player(s) destroy these objects.
 -- **Various @{Zone}s** can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
 -- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 -- 
--- With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file.  
--- The CSV files can be used to:
+-- With a small change in MissionScripting.lua, the scoring results can also be logged in a **CSV file**.  
+-- These CSV files can be used to:
 -- 
 --   * Upload scoring to a database or a BI tool to publish the scoring results to the player community.
 --   * Upload scoring in an (online) Excel like tool, using pivot tables and pivot charts to show mission results.
 --   * Share scoring amoung players after the mission to discuss mission results.
 -- 
--- Scores can be reported. Menu options are automatically added to each group when a player joins a client slot or a CA unit.
+-- Scores can be **reported**. **Menu options** are automatically added to **each player group** when a player joins a client slot or a CA unit.
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
