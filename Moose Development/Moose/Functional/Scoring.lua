@@ -560,7 +560,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
           2
         ):ToAll()
         self:ScoreCSV( PlayerName, "COALITION_PENALTY",  1, -50, self.Players[PlayerName].UnitName, _SCORINGCoalition[self.Players[PlayerName].UnitCoalition], _SCORINGCategory[self.Players[PlayerName].UnitCategory], self.Players[PlayerName].UnitType,
-          UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:getTypeName() )
+          UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
     self.Players[PlayerName].UnitName = UnitName
@@ -579,8 +579,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     end
 
     if self.Players[PlayerName].Penalty > self.Fratricide then
-      local ClientGroup = GROUP:NewFromDCSUnit( UnitData )
-      ClientGroup:Destroy()
+      UnitData:Destroy()
       MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
       ):ToAll()
