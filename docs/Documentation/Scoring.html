@@ -82,16 +82,48 @@ and create a CSV file logging the scoring events for use at team or squadron web
 <h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
 <p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
-and creates a CSV file logging the scoring events for use at team or squadron websites.</p>
+and creates a CSV file logging the scoring events and results for use at team or squadron websites.</p>
 
    
 
-<p>The scores are calculated by scoring the hits and destroys of objects that players make, 
-which are <a href="Unit.html">Unit</a> and <a href="Static.html">Static</a>s** can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
+<p>SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
+which can be <a href="Unit.html">Unit</a>, <a href="Static.html">Static</a> objects.</p>
+
+<p>Positive score points are granted when enemy or neutral targets are destroyed. 
+Negative score points or penalties are given when a friendly target is hit or destroyed. 
+This brings a lot of dynamism in the scoring, where players need to take care to inflict damage on the right target.
+By default, penalties weight heavier in the scoring, to ensure that players don't commit fratricide.
+The total score of the player is calculated by <strong>adding the scores minus the penalties</strong>.</p>
+
+<p><img src="..\Presentations\SCORING\Dia4.JPG" alt="Banner Image"/></p>
+
+<p>The score value is calculated based on the <strong>threat level of the player</strong> and the <strong>threat level of the target</strong>.
+A calculated score takes the threat level of the target divided by a balanced threat level of the player unit. <br/>
+As such, if the threat level of the target is high, and the player threat level is low, a higher score will be given than 
+if the threat level of the player would be high too.</p>
+
+<p><img src="..\Presentations\SCORING\Dia5.JPG" alt="Banner Image"/></p>
+
+<p>When multiple players hit the same target, and finally succeed in destroying the target, then each player who contributed to the target
+destruction, will receive a score. This is important for targets that require significant damage before it can be destroyed, like
+ships or heavy planes.</p>
+
+<p><img src="..\Presentations\SCORING\Dia13.JPG" alt="Banner Image"/></p>
+
+<p>Optionally, the score values can be <strong>scaled</strong> by a <strong>scale</strong>. Specific scales can be set for positive cores or negative penalties.
+The default range of the scores granted is a value between 0 and 10. The default range of penalties given is a value between 0 and 30.</p>
+
+<p><img src="..\Presentations\SCORING\Dia7.JPG" alt="Banner Image"/></p>
+
+<p><strong>Additional scores</strong> can be granted to <strong>specific objects</strong>, when the player(s) destroy these objects.</p>
+
+<p><img src="..\Presentations\SCORING\Dia9.JPG" alt="Banner Image"/></p>
+
+<p>**Various <a href="Zone.html">Zone</a>s** can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
 This is <strong>specifically useful</strong> to designate <strong>scenery targets on the map</strong> that will generate points when destroyed.</p>
 
-<p>With a small change in MissionScripting.lua, the scoring can also be logged in a CSV file. <br/>
-The CSV files can be used to:</p>
+<p>With a small change in MissionScripting.lua, the scoring results can also be logged in a <strong>CSV file</strong>. <br/>
+These CSV files can be used to:</p>
 
 <ul>
     <li>Upload scoring to a database or a BI tool to publish the scoring results to the player community.</li>
@@ -99,22 +131,22 @@ The CSV files can be used to:</p>
     <li>Share scoring amoung players after the mission to discuss mission results.</li>
 </ul>
 
-<p>Scores can be reported. Menu options are automatically added to each group when a player joins a client slot or a CA unit.
+<p>Scores can be <strong>reported</strong>. <strong>Menu options</strong> are automatically added to <strong>each player group</strong> when a player joins a client slot or a CA unit.
 Use the radio menu F10 to consult the scores while running the mission. 
 Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.</p>
 
-<h2>1.1) Set the destroy score or penalty multiplier</h2>
+<h2>1.1) Set the destroy score or penalty scale</h2>
 
-<p>Score multipliers can be set for scores granted when enemies or friendlies are destroyed.
-Use the method <a href="##(SCORING).SetMultiplierDestroyScore">SCORING.SetMultiplierDestroyScore</a>() to set the multiplier of enemy destroys (positive destroys). 
-Use the method <a href="##(SCORING).SetMultiplierDestroyPenalty">SCORING.SetMultiplierDestroyPenalty</a>() to set the multiplier of friendly destroys (negative destroys).</p>
+<p>Score scales can be set for scores granted when enemies or friendlies are destroyed.
+Use the method <a href="##(SCORING).SetScaleDestroyScore">SCORING.SetScaleDestroyScore</a>() to set the scale of enemy destroys (positive destroys). 
+Use the method <a href="##(SCORING).SetScaleDestroyPenalty">SCORING.SetScaleDestroyPenalty</a>() to set the scale of friendly destroys (negative destroys).</p>
 
 <pre><code> local Scoring = SCORING:New( "Scoring File" )
- Scoring:SetMultiplierDestroyScore( 10 )
- Scoring:SetMultiplierDestroyPenalty( 40 )
+ Scoring:SetScaleDestroyScore( 10 )
+ Scoring:SetScaleDestroyPenalty( 40 )
 </code></pre>
 
-<p>The above sets the multiplier for valid scores to 10. So scores will be given in a scale from 0 to 10.
+<p>The above sets the scale for valid scores to 10. So scores will be given in a scale from 0 to 10.
 The penalties will be given in a scale from 0 to 40.</p>
 
 <h2>1.2) Define special targets that will give extra scores.</h2>
@@ -158,7 +190,7 @@ By default, the fratricide level is the default penalty mutiplier * 2 for the pe
 
 <p>When a player changes the coalition, he can receive a penalty score.
 Use the method <a href="##(SCORING).SetCoalitionChangePenalty">SCORING.SetCoalitionChangePenalty</a>() to define the penalty when a player changes coalition.
-By default, the penalty for changing coalition is the default penalty multiplier.  </p>
+By default, the penalty for changing coalition is the default penalty scale.  </p>
 
 <h2>1.8) Define output CSV files.</h2>
 
@@ -393,18 +425,6 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierDestroyPenalty">SCORING.MultiplierDestroyPenalty</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).MultiplierDestroyScore">SCORING.MultiplierDestroyScore</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).New">SCORING:New(GameName)</a></td>
 		<td class="summary">
 <p>Creates a new SCORING object to administer the scoring achieved by players.</p>
@@ -501,6 +521,18 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScaleDestroyPenalty">SCORING.ScaleDestroyPenalty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScaleDestroyScore">SCORING.ScaleDestroyScore</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoreCSV">SCORING:ScoreCSV(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</a></td>
 		<td class="summary">
 <p>Registers a score for a player.</p>
@@ -579,15 +611,15 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierDestroyPenalty">SCORING:SetMultiplierDestroyPenalty(Multiplier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScaleDestroyPenalty">SCORING:SetScaleDestroyPenalty(Scale)</a></td>
 		<td class="summary">
-<p>Set the multiplier for scoring penalty destroys (friendly destroys).</p>
+<p>Set the scale for scoring penalty destroys (friendly destroys).</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMultiplierDestroyScore">SCORING:SetMultiplierDestroyScore(Multiplier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScaleDestroyScore">SCORING:SetScaleDestroyScore(Scale)</a></td>
 		<td class="summary">
-<p>Set the multiplier for scoring valid destroys (enemy destroys).</p>
+<p>Set the scale for scoring valid destroys (enemy destroys).</p>
 </td>
 		</tr>
 		<tr>
@@ -1095,37 +1127,6 @@ The Score value.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(SCORING).MultiplierDestroyPenalty" >
-<strong>SCORING.MultiplierDestroyPenalty</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(SCORING).MultiplierDestroyScore" >
-<strong>SCORING.MultiplierDestroyScore</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> Multipliers</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SCORING).New" >
 <strong>SCORING:New(GameName)</strong>
 </a>
@@ -1517,6 +1518,34 @@ The player group.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SCORING).ScaleDestroyPenalty" >
+<strong>SCORING.ScaleDestroyPenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScaleDestroyScore" >
+<strong>SCORING.ScaleDestroyScore</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SCORING).ScoreCSV" >
 <strong>SCORING:ScoreCSV(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</strong>
 </a>
@@ -1689,7 +1718,7 @@ self</p>
 
 	
 <p>Use the method <a href="##(SCORING).SetCoalitionChangePenalty">SCORING.SetCoalitionChangePenalty</a>() to define the penalty when a player changes coalition.
-By default, the penalty for changing coalition is the default penalty multiplier.  </p>
+By default, the penalty for changing coalition is the default penalty scale.  </p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1885,24 +1914,24 @@ If true is given, the messages are sent. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(SCORING).SetMultiplierDestroyPenalty" >
-<strong>SCORING:SetMultiplierDestroyPenalty(Multiplier)</strong>
+<a id="#(SCORING).SetScaleDestroyPenalty" >
+<strong>SCORING:SetScaleDestroyPenalty(Scale)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the multiplier for scoring penalty destroys (friendly destroys).</p>
+<p>Set the scale for scoring penalty destroys (friendly destroys).</p>
 
 	
-<p>A calculated score is a value between 0.1 and 10.
-The multiplier magnifies the scores given to the players.</p>
+<p>A default calculated penalty is a value between 1 and 10.
+The scale magnifies the scores given to the players.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number Multiplier </em></code>: 
-The multiplier of the score given.</p>
+<p><code><em>#number Scale </em></code>: 
+The scale of the score given.</p>
 
 				</li>
 		</ul>
@@ -1916,24 +1945,24 @@ The multiplier of the score given.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SCORING).SetMultiplierDestroyScore" >
-<strong>SCORING:SetMultiplierDestroyScore(Multiplier)</strong>
+<a id="#(SCORING).SetScaleDestroyScore" >
+<strong>SCORING:SetScaleDestroyScore(Scale)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the multiplier for scoring valid destroys (enemy destroys).</p>
+<p>Set the scale for scoring valid destroys (enemy destroys).</p>
 
 	
-<p>A calculated score is a value between 0.1 and 10.
-The multiplier magnifies the scores given to the players.</p>
+<p>A default calculated score is a value between 1 and 10.
+The scale magnifies the scores given to the players.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number Multiplier </em></code>: 
-The multiplier of the score given.</p>
+<p><code><em>#number Scale </em></code>: 
+The scale of the score given.</p>
 
 				</li>
 		</ul>
