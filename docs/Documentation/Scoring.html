@@ -119,7 +119,7 @@ The default range of the scores granted is a value between 0 and 10. The default
 
 <p><img src="..\Presentations\SCORING\Dia9.JPG" alt="Banner Image"/></p>
 
-<p>**Various <a href="Zone.html">Zone</a>s** can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
+<p>Various <a href="Zone.html">Zone</a>s can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
 This is <strong>specifically useful</strong> to designate <strong>scenery targets on the map</strong> that will generate points when destroyed.</p>
 
 <p>With a small change in MissionScripting.lua, the scoring results can also be logged in a <strong>CSV file</strong>. <br/>
@@ -180,13 +180,18 @@ then the zone is a moving zone, and anything destroyed within that <a href="Zone
 The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a <a href="Zone.html">Zone</a>, 
 just large enough around that building.</p>
 
-<h2>1.4) Configure fratricide level.</h2>
+<h2>1.4) Add extra Goal scores upon an event or a condition.</h2>
+
+<p>A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
+Use the method <a href="##(SCORING).AddGoalScore">SCORING.AddGoalScore</a>() to add a score for a Player at any time in your mission.</p>
+
+<h2>1.5) Configure fratricide level.</h2>
 
 <p>When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 Use the method <a href="##(SCORING).SetFratricide">SCORING.SetFratricide</a>() to define the level when a player gets kicked. <br/>
 By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.</p>
 
-<h2>1.5) Penalty score when a player changes the coalition.</h2>
+<h2>1.6) Penalty score when a player changes the coalition.</h2>
 
 <p>When a player changes the coalition, he can receive a penalty score.
 Use the method <a href="##(SCORING).SetCoalitionChangePenalty">SCORING.SetCoalitionChangePenalty</a>() to define the penalty when a player changes coalition.
@@ -298,6 +303,12 @@ Various methods exist to configure:</p>
 	</table>
 			<h2><a id="#(SCORING)">Type <code>SCORING</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddGoalScore">SCORING:AddGoalScore(PlayerUnit, GoalTag, Text, Score)</a></td>
+		<td class="summary">
+<p>Add a goal score for a player.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddScoreGroup">SCORING:AddScoreGroup(ScoreGroup, Score)</a></td>
 		<td class="summary">
@@ -493,7 +504,7 @@ Various methods exist to configure:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerMissions">SCORING:ReportDetailedPlayerMissions(PlayerName)</a></td>
 		<td class="summary">
-<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+<p>Produce detailed report of player goal scores.</p>
 </td>
 		</tr>
 		<tr>
@@ -718,6 +729,52 @@ Various methods exist to configure:</p>
 <p>The Scoring class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddGoalScore" >
+<strong>SCORING:AddGoalScore(PlayerUnit, GoalTag, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a goal score for a player.</p>
+
+	
+<p>The method takes the PlayerUnit for which the Goal score needs to be set.
+The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+A free text can be given that is shown to the players.
+The Score can be both positive and negative.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GoalTag </em></code>: 
+The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+A free text that is shown to the players.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score can be both positive or negative ( Penalty ).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -1417,7 +1474,7 @@ The report.</p>
 </dt>
 <dd>
 	
-<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+<p>Produce detailed report of player goal scores.</p>
 
 		<h3>Parameter</h3>
 		<ul>
