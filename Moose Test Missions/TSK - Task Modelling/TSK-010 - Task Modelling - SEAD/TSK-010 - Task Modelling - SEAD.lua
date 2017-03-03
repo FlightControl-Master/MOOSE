@@ -110,10 +110,11 @@ local TargetZone = ZONE:New( "Target Zone" )
 local SEADTask = TASK_SEAD:New( 
   Mission, 
   SEADSet, 
-  "SEAD Radars Vector 1"
+  "SEAD Radars Vector 1",
+  TargetSet
   ) -- Tasking.Task_SEAD#TASK_SEAD
 
-SEADTask:SetRendezVousPointVec2( TargetZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
+SEADTask:SetRendezVousPointVec2( RendezVousZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
 SEADTask:SetTargetZone( TargetZone )
 
 -- This is now an important part of the Task process definition.

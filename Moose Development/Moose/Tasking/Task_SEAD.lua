@@ -86,7 +86,7 @@ do -- TASK_SEAD
         self:__RouteToRendezVousZone( 0.1 )
       else
         if Task:GetRendezVousPointVec2() then
-          self:__RouteToPoint( 0.1 )
+          self:__RouteToRendezVousPoint( 0.1 )
         else
           self:__ArriveAtRendezVous( 0.1 )
         end
