@@ -57,7 +57,7 @@ do -- TASK_SEAD
     Fsm:AddProcess   ( "RoutingToRendezVous",       "RouteToRendezVousPoint",   ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtRendezVous" } )
     Fsm:AddProcess   ( "RoutingToRendezVous",       "RouteToRendezVousZone",    ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtRendezVous" } )
     
-    Fsm:AddTransition( "Arrived",                   "ArriveAtRendezVous",         "ArrivedAtRendezVous" )
+    Fsm:AddTransition( { "Arrived", "RoutingToRendezVous" },                   "ArriveAtRendezVous",         "ArrivedAtRendezVous" )
     
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" },    "Engage",         "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" },    "HoldAtRendezVous",         "HoldingAtRendezVous" )

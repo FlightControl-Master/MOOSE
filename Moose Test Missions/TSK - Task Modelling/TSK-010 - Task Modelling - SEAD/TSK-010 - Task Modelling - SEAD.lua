@@ -106,16 +106,29 @@ local TargetZone = ZONE:New( "Target Zone" )
 -- 1. The Mission for which the Task needs to be achieved.
 -- 2. The set of groups of planes that pilots can join.
 -- 3. The name of the Task... This can be any name, and will be provided when the Pilot joins the task.
--- 4. A type of the Task. When Tasks are in state Planned, then a menu can be provided that group the task based on this given type.
-local SEADTask = TASK_SEAD:New( 
-  Mission, 
-  SEADSet, 
-  "SEAD Radars Vector 1",
-  TargetSet
-  ) -- Tasking.Task_SEAD#TASK_SEAD
+-- 4. A set of Targets for the Task.
 
-SEADTask:SetRendezVousPointVec2( RendezVousZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
-SEADTask:SetTargetZone( TargetZone )
+-- We are going to create a couple of variations of TASK_SEAD...
+
+-- A TASK_SEAD that will route the player towards a Rendez-Vous point, and once arrived, route the player to the Target Zone.
+local SEADTaskRendezVousPoint = TASK_SEAD:New( Mission, SEADSet, "Route to Rendez-Vous Point, then route to Target Zone", TargetSet ) -- Tasking.Task_SEAD#TASK_SEAD
+SEADTaskRendezVousPoint:SetRendezVousPointVec2( RendezVousZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
+SEADTaskRendezVousPoint:SetTargetZone( TargetZone )
+
+-- A TASK_SEAD that will route the player towards a Rendez-Vous zone, 
+-- and once arrived, route the player to the Target Zone.
+local SEADTaskRendezVousZone = TASK_SEAD:New( Mission, SEADSet, "Route to Rendez-Vous Zone, then route to Target Zone", TargetSet ) -- Tasking.Task_SEAD#TASK_SEAD
+SEADTaskRendezVousZone:SetRendezVousZone( RendezVousZone ) -- Done to test the Route to Zone mechanism.
+SEADTaskRendezVousZone:SetTargetZone( TargetZone )
+
+-- A TASK_SEAD that has no Rendez_vous, 
+-- and routes the player straight to the Target Zone.
+local SEADTaskToTargetZone = TASK_SEAD:New( Mission, SEADSet, "Route to Target Zone", TargetSet ) -- Tasking.Task_SEAD#TASK_SEAD
+SEADTaskToTargetZone:SetTargetZone( TargetZone )
+
+-- A TASK_SEAD that has no Rendez_vous, 
+-- and routes the player to each Target in the Set.
+local SEADTaskToTargetNoZone = TASK_SEAD:New( Mission, SEADSet, "Route to Target per Target", TargetSet ) -- Tasking.Task_SEAD#TASK_SEAD
 
 -- This is now an important part of the Task process definition.
 -- Each TASK contains a "Process Template".
@@ -127,7 +140,7 @@ SEADTask:SetTargetZone( TargetZone )
 -- The reason why this is done, is that each unit as a role within the Task, and can have different status.
 -- Therefore, the FsmSEAD is a TEMPLATE PROCESS of the TASK, and must be designed as a UNIT with a player is executing that PROCESS. 
 
-local SEADProcess = SEADTask:GetUnitProcess() -- #SEADProcess
+local SEADProcess = SEADTaskToTargetNoZone:GetUnitProcess() -- #SEADProcess
 
 SEADProcess:AddScoreProcess( "Engaging", "Account", "Account", "destroyed a radar", 25 )
 SEADProcess:AddScoreProcess( "Engaging", "Account", "Failed", "failed to destroy a radar", -10 )
@@ -142,9 +155,9 @@ SEADProcess:AddScore( "Failed", "Failed to destroy all target radars", -100 )
 -- we check if the SEADTask has still AlivePlayers assigned to the Task.
 -- If not, the Task will Abort.
 -- And it will be Replanned within 30 seconds.
-function SEADTask:OnEnterPlayerCrashed( PlayerUnit, PlayerName )
-  if not SEADTask:HasAliveUnits() then
-    SEADTask:__Abort()
+function SEADTaskToTargetNoZone:OnEnterPlayerCrashed( PlayerUnit, PlayerName )
+  if not SEADTaskToTargetNoZone:HasAliveUnits() then
+    SEADTaskToTargetNoZone:__Abort()
   end 
 end
 

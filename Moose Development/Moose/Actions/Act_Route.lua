@@ -198,7 +198,7 @@ do -- ACT_ROUTE_POINT
     local self = BASE:Inherit( self, ACT_ROUTE:New() ) -- #ACT_ROUTE_POINT
 
     self.PointVec2 = PointVec2
-    self.Range = Range
+    self.Range = Range or 0
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
@@ -211,7 +211,7 @@ do -- ACT_ROUTE_POINT
   function ACT_ROUTE_POINT:Init( FsmRoute )
   
     self.PointVec2 = FsmRoute.PointVec2
-    self.Range = FsmRoute.Range
+    self.Range = FsmRoute.Range or 0
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
