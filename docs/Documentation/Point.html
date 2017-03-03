@@ -83,11 +83,49 @@
 In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.</p>
 
 <h2>1.1) POINT_VEC3 constructor</h2>
+
 <p>A new POINT_VEC3 instance can be created with:</p>
 
 <ul>
     <li><a href="Point.html##(POINT_VEC3).New">Point#POINT_VEC3.New</a>(): a 3D point.</li>
     <li><a href="Point.html##(POINT_VEC3).NewFromVec3">Point#POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
+</ul>
+
+<h2>1.2) Smoke, flare, explode, illuminate</h2>
+
+<p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
+
+<h3>1.2.1) Smoke</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Smoke">POINT_VEC3.Smoke</a>(): To smoke the point in a certain color.</li>
+    <li><a href="##(POINT_VEC3).SmokeBlue">POINT_VEC3.SmokeBlue</a>(): To smoke the point in blue.</li>
+    <li><a href="##(POINT_VEC3).SmokeRed">POINT_VEC3.SmokeRed</a>(): To smoke the point in red.</li>
+    <li><a href="##(POINT_VEC3).SmokeOrange">POINT_VEC3.SmokeOrange</a>(): To smoke the point in orange.</li>
+    <li><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3.SmokeWhite</a>(): To smoke the point in white.</li>
+    <li><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3.SmokeGreen</a>(): To smoke the point in green.</li>
+</ul>
+
+<h3>1.2.2) Flare</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Flare">POINT_VEC3.Flare</a>(): To flare the point in a certain color.</li>
+    <li><a href="##(POINT_VEC3).FlareRed">POINT_VEC3.FlareRed</a>(): To flare the point in red.</li>
+    <li><a href="##(POINT_VEC3).FlareYellow">POINT_VEC3.FlareYellow</a>(): To flare the point in yellow.</li>
+    <li><a href="##(POINT_VEC3).FlareWhite">POINT_VEC3.FlareWhite</a>(): To flare the point in white.</li>
+    <li><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3.FlareGreen</a>(): To flare the point in green.</li>
+</ul>
+
+<h3>1.2.3) Explode</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Explosion">POINT_VEC3.Explosion</a>(): To explode the point with a certain intensity.</li>
+</ul>
+
+<h3>1.2.4) Illuminate</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3.IlluminationBomb</a>(): To illuminate the point.</li>
 </ul>
 
 
@@ -114,6 +152,9 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </ul>
 
 <p>Hereby the change log:</p>
+
+<p>2017-03-03: POINT_VEC3:<strong>Explosion( ExplosionIntensity )</strong> added. <br/>
+2017-03-03: POINT_VEC3:<strong>IlluminationBomb()</strong> added.  </p>
 
 <p>2017-02-18: POINT_VEC3:<strong>NewFromVec2( Vec2, LandHeightAdd )</strong> added.</p>
 
@@ -255,6 +296,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Explosion">POINT_VEC3:Explosion(ExplosionIntensity)</a></td>
+		<td class="summary">
+<p>Creates an explosion at the point of a certain intensity.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Flare">POINT_VEC3:Flare(FlareColor, (, Azimuth)</a></td>
 		<td class="summary">
 <p>Flares the point in a color.</p>
@@ -384,6 +431,12 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetZ">POINT_VEC3:GetZ()</a></td>
 		<td class="summary">
 <p>Return the z coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3:IlluminationBomb()</a></td>
+		<td class="summary">
+<p>Creates an illumination bomb at the point.</p>
 </td>
 		</tr>
 		<tr>
@@ -1004,6 +1057,27 @@ The new calculated POINT_VEC2.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).Explosion" >
+<strong>POINT_VEC3:Explosion(ExplosionIntensity)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates an explosion at the point of a certain intensity.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number ExplosionIntensity </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC3).Flare" >
 <strong>POINT_VEC3:Flare(FlareColor, (, Azimuth)</strong>
 </a>
@@ -1531,6 +1605,19 @@ The y coodinate.</p>
 				
 <p><em>#number:</em>
 The z coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).IlluminationBomb" >
+<strong>POINT_VEC3:IlluminationBomb()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates an illumination bomb at the point.</p>
 
 </dd>
 </dl>
