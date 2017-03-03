@@ -89,6 +89,7 @@
     <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
     <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
     <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
+    <li><a href="##(TASK).SetTimeOut">TASK.SetTimeOut</a>(): Set timer in seconds before task gets cancelled if not assigned.</li>
 </ul>
 
 <h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
@@ -515,6 +516,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetTimeOut">TASK:SetTimeOut(Timer)</a></td>
+		<td class="summary">
+<p>Sets the TimeOut for the <a href="Task.html">Task</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetType">TASK:SetType(TaskType)</a></td>
 		<td class="summary">
 <p>Sets the Type of the Task</p>
@@ -599,6 +606,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TimeOut">TASK.TimeOut</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).UnAssignFromGroups">TASK:UnAssignFromGroups()</a></td>
 		<td class="summary">
 <p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
@@ -647,6 +660,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onbeforeTimeOut">TASK:onbeforeTimeOut(Event, From, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAborted">TASK:onenterAborted(From, Event, To)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
@@ -660,6 +679,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterFailed">TASK:onenterFailed(From, Event, To)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterPlanned">TASK:onenterPlanned(Event, From, To)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
 </td>
@@ -1994,6 +2019,36 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).SetTimeOut" >
+<strong>TASK:SetTimeOut(Timer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the TimeOut for the <a href="Task.html">Task</a>.</p>
+
+	
+<p>If <a href="Task.html">Task</a> stayed planned for longer than TimeOut, it gets into Cancelled status.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(integer)">#integer</a> Timer </em></code>: 
+in seconds</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).SetType" >
 <strong>TASK:SetType(TaskType)</strong>
 </a>
@@ -2206,6 +2261,20 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(TASK).TimeOut" >
+<strong>TASK.TimeOut</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).UnAssignFromGroups" >
 <strong>TASK:UnAssignFromGroups()</strong>
 </a>
@@ -2356,6 +2425,37 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).onbeforeTimeOut" >
+<strong>TASK:onbeforeTimeOut(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).onenterAborted" >
 <strong>TASK:onenterAborted(From, Event, To)</strong>
 </a>
@@ -2449,6 +2549,37 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).onenterPlanned" >
+<strong>TASK:onenterPlanned(Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).onenterSuccess" >
 <strong>TASK:onenterSuccess(Event, From, To)</strong>
 </a>
@@ -2509,6 +2640,8 @@ self</p>
 </dd>
 </dl>
 
+			<h2><a id="#(integer)" >Type <code>integer</code></a></h2>
+			
 </div>
 
 </div>

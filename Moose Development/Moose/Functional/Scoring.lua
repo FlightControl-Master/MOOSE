@@ -43,7 +43,7 @@
 -- 
 -- ![Banner Image](..\Presentations\SCORING\Dia9.JPG)
 -- 
--- **Various @{Zone}s** can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
+-- Various @{Zone}s can be defined for which scores are also granted when objects in that @{Zone} are destroyed.
 -- This is **specifically useful** to designate **scenery targets on the map** that will generate points when destroyed.
 -- 
 -- With a small change in MissionScripting.lua, the scoring results can also be logged in a **CSV file**.  
@@ -99,13 +99,18 @@
 -- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone}, 
 -- just large enough around that building.
 -- 
--- ## 1.4) Configure fratricide level.
+-- ## 1.4) Add extra Goal scores upon an event or a condition.
+-- 
+-- A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
+-- Use the method @{#SCORING.AddGoalScore}() to add a score for a Player at any time in your mission.
+-- 
+-- ## 1.5) Configure fratricide level.
 -- 
 -- When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 -- Use the method @{#SCORING.SetFratricide}() to define the level when a player gets kicked.  
 -- By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.
 -- 
--- ## 1.5) Penalty score when a player changes the coalition.
+-- ## 1.6) Penalty score when a player changes the coalition.
 -- 
 -- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
@@ -514,6 +519,7 @@ function SCORING:SetFratricide( Fratricide )
   return self
 end
 
+
 --- When a player changes the coalition, he can receive a penalty score.
 -- Use the method @{#SCORING.SetCoalitionChangePenalty}() to define the penalty when a player changes coalition.
 -- By default, the penalty for changing coalition is the default penalty scale.  
@@ -596,6 +602,37 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       ):ToAll()
     end
 
+  end
+end
+
+
+--- Add a goal score for a player.
+-- The method takes the PlayerUnit for which the Goal score needs to be set.
+-- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+-- A free text can be given that is shown to the players.
+-- The Score can be both positive and negative.
+-- @param #SCORING self
+-- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. 
+-- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
+-- @param #string Text A free text that is shown to the players.
+-- @param #number Score The score can be both positive or negative ( Penalty ).
+function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
+
+  local PlayerName = PlayerUnit:GetPlayerName()
+
+  self:E( { PlayerUnit.UnitName, PlayerName, GoalTag, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
+
+    PlayerData.Goals[GoalTag] = PlayerData.Goals[GoalTag] or { Score = 0 }
+    PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score  
+    PlayerData.Score = PlayerData.Score + Score
+  
+    MESSAGE:New( Text, 30 ):ToAll()
+  
+    self:ScoreCSV( PlayerName, "GOAL_" .. string.upper( GoalTag ), 1, Score, PlayerUnit:GetName() )
   end
 end
 
@@ -1223,6 +1260,43 @@ function SCORING:ReportDetailedPlayerCoalitionChanges( PlayerName )
   return ScoreMessage, PlayerScore, PlayerPenalty
 end
 
+--- Produce detailed report of player goal scores.
+-- @param #SCORING self
+-- @param #string PlayerName The name of the player.
+-- @return #string The report.
+function SCORING:ReportDetailedPlayerMissions( PlayerName )
+
+  local ScoreMessage = ""
+  local PlayerScore = 0
+  local PlayerPenalty = 0
+
+  local PlayerData = self.Players[PlayerName]
+  if PlayerData then -- This should normally not happen, but i'll test it anyway.
+    self:T( "Score Player: " .. PlayerName )
+
+    -- Some variables
+    local InitUnitCoalition = _SCORINGCoalition[PlayerData.UnitCoalition]
+    local InitUnitCategory = _SCORINGCategory[PlayerData.UnitCategory]
+    local InitUnitType = PlayerData.UnitType
+    local InitUnitName = PlayerData.UnitName
+
+    local ScoreMessageGoal = ""
+    local ScoreGoal = 0
+    local ScoreTask = 0
+    for GoalName, GoalData in pairs( PlayerData.Goals ) do
+      ScoreGoal = ScoreGoal + GoalData.Score
+      ScoreMessageGoal = ScoreMessageGoal .. "'" .. GoalName .. "':" .. GoalData.Score .. "; "
+    end
+    PlayerScore = PlayerScore + ScoreGoal
+
+    if ScoreMessageGoal ~= "" then
+      ScoreMessage = "Goals: " .. ScoreMessageGoal
+    end
+  end
+  
+  return ScoreMessage, PlayerScore, PlayerPenalty
+end
+
 --- Produce detailed report of player penalty scores because of changing the coalition.
 -- @param #SCORING self
 -- @param #string PlayerName The name of the player.
@@ -1243,9 +1317,6 @@ function SCORING:ReportDetailedPlayerMissions( PlayerName )
     local InitUnitType = PlayerData.UnitType
     local InitUnitName = PlayerData.UnitName
 
-    local PlayerScore = 0
-    local PlayerPenalty = 0
-
     local ScoreMessageMission = ""
     local ScoreMission = 0
     local ScoreTask = 0
@@ -1257,7 +1328,7 @@ function SCORING:ReportDetailedPlayerMissions( PlayerName )
     PlayerScore = PlayerScore + ScoreMission + ScoreTask
 
     if ScoreMessageMission ~= "" then
-      ScoreMessage = ScoreMessage .. "Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ")"
+      ScoreMessage = "Tasks: " .. ScoreTask .. " Mission: " .. ScoreMission .. " ( " .. ScoreMessageMission .. ")"
     end
   end
   
@@ -1284,18 +1355,25 @@ function SCORING:ReportScoreGroupSummary( PlayerGroup )
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
       self:E( { ReportHits, ScoreHits, PenaltyHits } )
+
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
       self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
       self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+
+      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
       self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyMissions
+      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
   
       PlayerMessage = 
         string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
@@ -1329,21 +1407,28 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
       self:E( { ReportHits, ScoreHits, PenaltyHits } )
+
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
       self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
       self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+      
+      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
       self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyMissions
+      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
   
       PlayerMessage = 
-        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s", 
+        string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )%s%s%s%s%s", 
                        PlayerName, 
                        PlayerScore - PlayerPenalty, 
                        PlayerScore, 
@@ -1351,6 +1436,7 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
                        ReportHits,
                        ReportDestroys,
                        ReportCoalitionChanges,
+                       ReportGoals,
                        ReportMissions
                      )
       MESSAGE:New( PlayerMessage, 30, "Player '" .. PlayerName .. "'" ):ToGroup( PlayerGroup )
@@ -1375,18 +1461,25 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
       self:E( { ReportHits, ScoreHits, PenaltyHits } )
+
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
       self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
       self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+
+      local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
+      ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
+      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
       self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
-      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreMissions
-      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + PenaltyMissions
+      local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
+      local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
   
       PlayerMessage = 
         string.format( "Player '%s' Score = %d ( %d Score, -%d Penalties )", 
