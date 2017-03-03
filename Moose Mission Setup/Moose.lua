@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170303_0807' ) 
+env.info( 'Moose Generation Timestamp: 20170303_0827' ) 
 local base = _G
 
 Include = {}
@@ -10177,13 +10177,42 @@ end
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 -- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
 -- 
--- 1.1) POINT_VEC3 constructor
--- ---------------------------
+-- ## 1.1) POINT_VEC3 constructor
+-- 
 -- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{Point#POINT_VEC3.New}(): a 3D point.
 --  * @{Point#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
---  
+-- 
+-- ## 1.2) Smoke, flare, explode, illuminate
+-- 
+-- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
+-- 
+-- ### 1.2.1) Smoke
+-- 
+--   * @{#POINT_VEC3.Smoke}(): To smoke the point in a certain color.
+--   * @{#POINT_VEC3.SmokeBlue}(): To smoke the point in blue.
+--   * @{#POINT_VEC3.SmokeRed}(): To smoke the point in red.
+--   * @{#POINT_VEC3.SmokeOrange}(): To smoke the point in orange.
+--   * @{#POINT_VEC3.SmokeWhite}(): To smoke the point in white.
+--   * @{#POINT_VEC3.SmokeGreen}(): To smoke the point in green.
+--   
+-- ### 1.2.2) Flare
+-- 
+--   * @{#POINT_VEC3.Flare}(): To flare the point in a certain color.
+--   * @{#POINT_VEC3.FlareRed}(): To flare the point in red.
+--   * @{#POINT_VEC3.FlareYellow}(): To flare the point in yellow.
+--   * @{#POINT_VEC3.FlareWhite}(): To flare the point in white.
+--   * @{#POINT_VEC3.FlareGreen}(): To flare the point in green.
+-- 
+-- ### 1.2.3) Explode
+-- 
+--   * @{#POINT_VEC3.Explosion}(): To explode the point with a certain intensity.
+--   
+-- ### 1.2.4) Illuminate
+-- 
+--   * @{#POINT_VEC3.IlluminationBomb}(): To illuminate the point.
+--   
 --
 -- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
@@ -10208,9 +10237,12 @@ end
 -- 
 -- Hereby the change log:
 -- 
--- 2017-02-18: POINT_VEC3:**NewFromVec2( Vec2, LandHeightAdd )** added.
+-- 2017-03-03: POINT\_VEC3:**Explosion( ExplosionIntensity )** added.  
+-- 2017-03-03: POINT\_VEC3:**IlluminationBomb()** added.  
 -- 
--- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
+-- 2017-02-18: POINT\_VEC3:**NewFromVec2( Vec2, LandHeightAdd )** added.
+-- 
+-- 2016-08-12: POINT\_VEC3:**Translate( Distance, Angle )** added.
 -- 
 -- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
 -- 
@@ -10669,6 +10701,21 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   
   
   return RoutePoint
+end
+
+--- Creates an explosion at the point of a certain intensity.
+-- @param #POINT_VEC3 self
+-- @param #number ExplosionIntensity
+function POINT_VEC3:Explosion( ExplosionIntensity )
+  self:F2( { ExplosionIntensity } )
+  trigger.action.explosion( self:GetVec3(), ExplosionIntensity )
+end
+
+--- Creates an illumination bomb at the point.
+-- @param #POINT_VEC3 self
+function POINT_VEC3:IlluminationBomb()
+  self:F2()
+  trigger.action.illuminationBomb( self:GetVec3() )
 end
 
 
