@@ -110,9 +110,8 @@ local TargetZone = ZONE:New( "Target Zone" )
 local SEADTask = TASK_SEAD:New( 
   Mission, 
   SEADSet, 
-  "SEAD Radars Vector 1", 
-  TargetSet,
-  15000 ) -- Tasking.Task_SEAD#TASK_SEAD
+  "SEAD Radars Vector 1"
+  ) -- Tasking.Task_SEAD#TASK_SEAD
 
 SEADTask:SetRendezVousPointVec2( TargetZone:GetPointVec2(), 6000 ) -- Done to test the RendezVousPointVec2 mechanism.
 SEADTask:SetTargetZone( TargetZone )
@@ -129,8 +128,8 @@ SEADTask:SetTargetZone( TargetZone )
 
 local SEADProcess = SEADTask:GetUnitProcess() -- #SEADProcess
 
-SEADProcess:AddScoreProcess( "Accounting", "Account", "Account", "destroyed a radar", 25 )
-SEADProcess:AddScoreProcess( "Accounting", "Account", "Failed", "failed to destroy a radar", -10 )
+SEADProcess:AddScoreProcess( "Engaging", "Account", "Account", "destroyed a radar", 25 )
+SEADProcess:AddScoreProcess( "Engaging", "Account", "Failed", "failed to destroy a radar", -10 )
 
 -- Now we will set the SCORING. Scoring is set using the TaskSEAD object.
 -- Scores can be set on the status of the Task, and on Process level.

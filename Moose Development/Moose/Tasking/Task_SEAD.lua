@@ -45,7 +45,6 @@ do -- TASK_SEAD
     self:F()
   
     self.TargetSetUnit = TargetSetUnit
-    self.TargetDistance = TargetDistance
 
     Mission:AddTask( self )
     
@@ -163,7 +162,9 @@ do -- TASK_SEAD
   -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   function TASK_SEAD:SetRendezVousPointVec2( RendezVousPointVec2, RendezVousRange )
   
-    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    local ProcessUnit = self:GetUnitProcess()
+  
+    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     ActRouteRendezVous:SetPointVec2( RendezVousPointVec2 )
     ActRouteRendezVous:SetRange( RendezVousRange )
   end
@@ -173,7 +174,9 @@ do -- TASK_SEAD
   -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   function TASK_SEAD:GetRendezVousPointVec2()
   
-    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     return ActRouteRendezVous:GetPointVec2(), ActRouteRendezVous:GetRange()
   end
   
@@ -183,14 +186,19 @@ do -- TASK_SEAD
   -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
   function TASK_SEAD:SetRendezVousZone( RendezVousZone )
   
-    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     ActRouteRendezVous:SetZone( RendezVousZone )
   end
 
   --- @param #TASK_SEAD self
   -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
   function TASK_SEAD:GetRendezVousZone()
-    local ActRouteRendezVous = self:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteRendezVous:GetZone()
   end
   
@@ -198,7 +206,9 @@ do -- TASK_SEAD
   -- @param Core.Point#POINT_VEC2 TargetPointVec2 The PointVec2 object where the Target is located on the map.
   function TASK_SEAD:SetTargetPointVec2( TargetPointVec2 )
   
-    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     ActRouteTarget:SetPointVec2( TargetPointVec2 )
   end
    
@@ -206,7 +216,10 @@ do -- TASK_SEAD
   --- @param #TASK_SEAD self
   -- @return Core.Point#POINT_VEC2 The PointVec2 object where the Target is located on the map.
   function TASK_SEAD:GetTargetPointVec2()
-    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     return ActRouteTarget:GetPointVec2()
   end
 
@@ -215,7 +228,9 @@ do -- TASK_SEAD
   -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
   function TASK_SEAD:SetTargetZone( TargetZone )
   
-    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     ActRouteTarget:SetZone( TargetZone )
   end
    
@@ -223,7 +238,9 @@ do -- TASK_SEAD
   --- @param #TASK_SEAD self
   -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_SEAD:GetTargetZone()
-    local ActRouteTarget = self:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    local ProcessUnit = self:GetUnitProcess()
+
+    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteTarget:GetZone()
   end
   
