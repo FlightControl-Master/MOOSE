@@ -536,45 +536,129 @@ end
 --   * Threat level  8: Unit is a Short Range SAM, radar guided.
 --   * Threat level  9: Unit is a Medium Range SAM, radar guided.
 --   * Threat level 10: Unit is a Long Range SAM, radar guided.
+--   @param #UNIT self
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
+  self:E( Attributes )
+
   local ThreatLevel = 0
+  local ThreatText = ""
+
+  if self:IsGround() then
   
-  local ThreatLevels = {
-    "Unarmed", 
-    "Infantry", 
-    "Old Tanks & APCs", 
-    "Tanks & IFVs without ATGM",   
-    "Tanks & IFV with ATGM",
-    "Modern Tanks",
-    "AAA",
-    "IR Guided SAMs",
-    "SR SAMs",
-    "MR SAMs",
-    "LR SAMs"
-  }
+    self:E( "Ground" )
   
-  self:T2( Attributes )
+    local ThreatLevels = {
+      "Unarmed", 
+      "Infantry", 
+      "Old Tanks & APCs", 
+      "Tanks & IFVs without ATGM",   
+      "Tanks & IFV with ATGM",
+      "Modern Tanks",
+      "AAA",
+      "IR Guided SAMs",
+      "SR SAMs",
+      "MR SAMs",
+      "LR SAMs"
+    }
+    
+    
+    if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
+    elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
+    elseif Attributes["SR SAM"] and
+           not Attributes["IR Guided SAM"]                                          then ThreatLevel = 8
+    elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
+           Attributes["IR Guided SAM"]                                              then ThreatLevel = 7
+    elseif Attributes["AAA"]                                                        then ThreatLevel = 6
+    elseif Attributes["Modern Tanks"]                                               then ThreatLevel = 5
+    elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+           Attributes["ATGM"]                                                       then ThreatLevel = 4
+    elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
+           not Attributes["ATGM"]                                                   then ThreatLevel = 3
+    elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
+    elseif Attributes["Infantry"]                                                   then ThreatLevel = 1
+    end
+    
+    ThreatText = ThreatLevels[ThreatLevel+1]
+  end
   
-  if     Attributes["LR SAM"]                                   then ThreatLevel = 10
-  elseif Attributes["MR SAM"]                                   then ThreatLevel = 9
-  elseif Attributes["SR SAM"] and
-         not Attributes["IR Guided SAM"]                        then ThreatLevel = 8
-  elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
-         Attributes["IR Guided SAM"]                            then ThreatLevel = 7
-  elseif Attributes["AAA"]                                      then ThreatLevel = 6
-  elseif Attributes["Modern Tanks"]                             then ThreatLevel = 5
-  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-         Attributes["ATGM"]                                     then ThreatLevel = 4
-  elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-         not Attributes["ATGM"]                                 then ThreatLevel = 3
-  elseif Attributes["Old Tanks"] or Attributes["APC"]           then ThreatLevel = 2
-  elseif Attributes["Infantry"]                                 then ThreatLevel = 1
+  if self:IsAir() then
+  
+    self:E( "Air" )
+
+    local ThreatLevels = {
+      "Unarmed", 
+      "Tanker", 
+      "AWACS", 
+      "Transport Helicpter",   
+      "UAV",
+      "Bomber",
+      "Strategic Bomber",
+      "Attack Helicopter",
+      "Interceptor",
+      "Multirole Fighter",
+      "Fighter"
+    }
+    
+    
+    if     Attributes["Fighters"]                                 then ThreatLevel = 10
+    elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
+    elseif Attributes["Battleplanes"]                             then ThreatLevel = 8
+    elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
+    elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
+    elseif Attributes["Bombers"]                                  then ThreatLevel = 5
+    elseif Attributes["UAVs"]                                     then ThreatLevel = 4
+    elseif Attributes["Transport helicopters"]                    then ThreatLevel = 3
+    elseif Attributes["AWACS"]                                    then ThreatLevel = 2
+    elseif Attributes["Tankers"]                                  then ThreatLevel = 1
+    end
+
+    ThreatText = ThreatLevels[ThreatLevel+1]
+  end
+  
+  if self:IsShip() then
+
+    self:E( "Ship" )
+
+--["Aircraft Carriers"] = {"Heavy armed ships",},
+--["Cruisers"] = {"Heavy armed ships",},
+--["Destroyers"] = {"Heavy armed ships",},
+--["Frigates"] = {"Heavy armed ships",},
+--["Corvettes"] = {"Heavy armed ships",},
+--["Heavy armed ships"] = {"Armed ships", "Armed Air Defence", "HeavyArmoredUnits",},
+--["Light armed ships"] = {"Armed ships","NonArmoredUnits"},
+--["Armed ships"] = {"Ships"},
+--["Unarmed ships"] = {"Ships","HeavyArmoredUnits",},
+  
+    local ThreatLevels = {
+      "Unarmed ship", 
+      "Light armed ships", 
+      "Corvettes",
+      "",
+      "Frigates",
+      "",
+      "Cruiser",
+      "",
+      "Destroyer",
+      "",
+      "Aircraft Carrier"
+    }
+    
+    
+    if     Attributes["Aircraft Carriers"]                        then ThreatLevel = 10
+    elseif Attributes["Destroyers"]                               then ThreatLevel = 8
+    elseif Attributes["Cruisers"]                                 then ThreatLevel = 6
+    elseif Attributes["Frigates"]                                 then ThreatLevel = 4
+    elseif Attributes["Corvettes"]                                then ThreatLevel = 2
+    elseif Attributes["Light armed ships"]                        then ThreatLevel = 1
+    end
+
+    ThreatText = ThreatLevels[ThreatLevel+1]
   end
 
   self:T2( ThreatLevel )
-  return ThreatLevel, ThreatLevels[ThreatLevel+1]
+  return ThreatLevel, ThreatText
 
 end
 
@@ -589,7 +673,7 @@ function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = Zone:IsPointVec3InZone( self:GetVec3() )
+    local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
   
     self:T( { IsInZone } )
     return IsInZone 
@@ -606,7 +690,7 @@ function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
   if self:IsAlive() then
-    local IsInZone = not Zone:IsPointVec3InZone( self:GetVec3() )
+    local IsInZone = not Zone:IsVec3InZone( self:GetVec3() )
     
     self:T( { IsInZone } )
     return IsInZone 

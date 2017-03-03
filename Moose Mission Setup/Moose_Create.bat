@@ -65,6 +65,7 @@ COPY /b Moose.lua + %1\Wrapper\Unit.lua                 Moose.lua
 COPY /b Moose.lua + %1\Wrapper\Client.lua               Moose.lua
 COPY /b Moose.lua + %1\Wrapper\Static.lua               Moose.lua
 COPY /b Moose.lua + %1\Wrapper\Airbase.lua              Moose.lua
+COPY /b Moose.lua + %1\Wrapper\Scenery.lua              Moose.lua
 
 rem Functional Classes
 COPY /b Moose.lua + %1\Functional\Scoring.lua           Moose.lua

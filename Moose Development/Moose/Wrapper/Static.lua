@@ -79,3 +79,8 @@ function STATIC:GetDCSObject()
     
   return nil
 end
+
+function STATIC:GetThreatLevel()
+
+  return 1, "Static"
+end

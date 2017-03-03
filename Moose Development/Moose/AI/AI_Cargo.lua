@@ -1,4 +1,4 @@
----Single-Player:**Yes** / Mulit-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
+---Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
 -- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
 --
 -- ![Banner Image](..\Presentations\AI_CARGO\CARGO.JPG)

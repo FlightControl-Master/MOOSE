@@ -1,6 +1,7 @@
+---
 -- Name: SPA-018 - Ground Ops - Randomize Templates
 -- Author: FlightControl
--- Date Created: 10 January 2017
+-- Date Created: 10 Jan 2017
 --
 -- # Situation:
 --
