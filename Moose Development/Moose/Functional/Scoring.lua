@@ -553,6 +553,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       self.Players[PlayerName] = {}
       self.Players[PlayerName].Hit = {}
       self.Players[PlayerName].Destroy = {}
+      self.Players[PlayerName].Goals = {}
       self.Players[PlayerName].Mission = {}
 
       -- for CategoryID, CategoryName in pairs( SCORINGCategory ) do
@@ -944,7 +945,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
 
   if Event.IniDCSUnit then
 
-    TargetUnit = Event.IniDCSUnit
+    TargetUnit = Event.IniUnit
     TargetUnitName = Event.IniDCSUnitName
     TargetGroup = Event.IniDCSGroup
     TargetGroupName = Event.IniDCSGroupName
@@ -990,11 +991,10 @@ function SCORING:_EventOnDeadOrCrash( Event )
         TargetDestroy.ScoreDestroy = TargetDestroy.ScoreDestroy or 0
         TargetDestroy.Penalty =  TargetDestroy.Penalty or 0
         TargetDestroy.PenaltyDestroy = TargetDestroy.PenaltyDestroy or 0
-        TargetDestroy.UNIT = TargetDestroy.UNIT or Player.Hit[TargetCategory][TargetUnitName].UNIT
 
         if TargetCoalition then
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
             local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.ScaleDestroyPenalty / 10 )
             self:E( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
@@ -1025,7 +1025,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             self:ScoreCSV( PlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
   
-            local ThreatLevelTarget, ThreatTypeTarget = TargetDestroy.UNIT:GetThreatLevel()
+            local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
             
@@ -1055,7 +1055,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             end
             self:ScoreCSV( PlayerName, "DESTROY_SCORE", 1, ThreatScore, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             
-            local UnitName = TargetDestroy.UNIT:GetName()
+            local UnitName = TargetUnit:GetName()
             local Score = self.ScoringObjects[UnitName]
             if Score then
               Player.Score = Player.Score + Score
@@ -1075,7 +1075,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
               self:E( { ScoringZone = ScoreZoneData } )
               local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
               local Score = ScoreZoneData.Score
-              if ScoreZone:IsVec2InZone( TargetDestroy.UNIT:GetVec2() ) then
+              if ScoreZone:IsVec2InZone( TargetUnit:GetVec2() ) then
                 Player.Score = Player.Score + Score
                 TargetDestroy.Score = TargetDestroy.Score + Score
                 MESSAGE
@@ -1096,7 +1096,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
               self:E( { ScoringZone = ScoreZoneData } )
             local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
             local Score = ScoreZoneData.Score
-            if ScoreZone:IsVec2InZone( TargetDestroy.UNIT:GetVec2() ) then
+            if ScoreZone:IsVec2InZone( TargetUnit:GetVec2() ) then
               Player.Score = Player.Score + Score
               TargetDestroy.Score = TargetDestroy.Score + Score
               MESSAGE
@@ -1264,7 +1264,7 @@ end
 -- @param #SCORING self
 -- @param #string PlayerName The name of the player.
 -- @return #string The report.
-function SCORING:ReportDetailedPlayerMissions( PlayerName )
+function SCORING:ReportDetailedPlayerGoals( PlayerName )
 
   local ScoreMessage = ""
   local PlayerScore = 0
