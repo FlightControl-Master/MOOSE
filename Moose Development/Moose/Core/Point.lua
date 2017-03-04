@@ -7,13 +7,56 @@
 -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
 -- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
 -- 
--- 1.1) POINT_VEC3 constructor
--- ---------------------------
+-- ## 1.1) POINT_VEC3 constructor
+-- 
 -- A new POINT_VEC3 instance can be created with:
 -- 
 --  * @{Point#POINT_VEC3.New}(): a 3D point.
 --  * @{Point#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
---  
+-- 
+-- ## 1.2) Manupulate the X, Y, Z coordinates of the point
+-- 
+-- A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
+-- Methods exist to manupulate these coordinates.
+-- 
+-- The current X, Y, Z axis can be retrieved with the methods @{#POINT_VEC3.GetX}(), @{#POINT_VEC3.GetY}(), @{#POINT_VEC3.GetZ}() respectively.
+-- The methods @{#POINT_VEC3.SetX}(), @{#POINT_VEC3.SetY}(), @{#POINT_VEC3.SetZ}() change the respective axis with a new value.
+-- The current axis values can be changed by using the methods @{#POINT_VEC3.AddX}(), @{#POINT_VEC3.AddY}(), @{#POINT_VEC3.AddZ}()
+-- to add or substract a value from the current respective axis value.
+-- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
+-- 
+--      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
+--      
+-- 
+-- ## 1.5) Smoke, flare, explode, illuminate
+-- 
+-- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
+-- 
+-- ### 1.5.1) Smoke
+-- 
+--   * @{#POINT_VEC3.Smoke}(): To smoke the point in a certain color.
+--   * @{#POINT_VEC3.SmokeBlue}(): To smoke the point in blue.
+--   * @{#POINT_VEC3.SmokeRed}(): To smoke the point in red.
+--   * @{#POINT_VEC3.SmokeOrange}(): To smoke the point in orange.
+--   * @{#POINT_VEC3.SmokeWhite}(): To smoke the point in white.
+--   * @{#POINT_VEC3.SmokeGreen}(): To smoke the point in green.
+--   
+-- ### 1.5.2) Flare
+-- 
+--   * @{#POINT_VEC3.Flare}(): To flare the point in a certain color.
+--   * @{#POINT_VEC3.FlareRed}(): To flare the point in red.
+--   * @{#POINT_VEC3.FlareYellow}(): To flare the point in yellow.
+--   * @{#POINT_VEC3.FlareWhite}(): To flare the point in white.
+--   * @{#POINT_VEC3.FlareGreen}(): To flare the point in green.
+-- 
+-- ### 1.5.3) Explode
+-- 
+--   * @{#POINT_VEC3.Explosion}(): To explode the point with a certain intensity.
+--   
+-- ### 1.5.4) Illuminate
+-- 
+--   * @{#POINT_VEC3.IlluminationBomb}(): To illuminate the point.
+-- 
 --
 -- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
 -- =========================================================
@@ -25,6 +68,19 @@
 -- 
 --  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
 --  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- 
+-- ## 1.2) Manupulate the X, Altitude, Y coordinates of the 2D point
+-- 
+-- A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+-- Methods exist to manupulate these coordinates.
+-- 
+-- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
+-- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
+-- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
+-- to add or substract a value from the current respective axis value.
+-- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
+-- 
+--      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
 -- 
 -- ===
 -- 
@@ -38,9 +94,12 @@
 -- 
 -- Hereby the change log:
 -- 
--- 2017-02-18: POINT_VEC3:**NewFromVec2( Vec2, LandHeightAdd )** added.
+-- 2017-03-03: POINT\_VEC3:**Explosion( ExplosionIntensity )** added.  
+-- 2017-03-03: POINT\_VEC3:**IlluminationBomb()** added.  
 -- 
--- 2016-08-12: POINT_VEC3:**Translate( Distance, Angle )** added.
+-- 2017-02-18: POINT\_VEC3:**NewFromVec2( Vec2, LandHeightAdd )** added.
+-- 
+-- 2016-08-12: POINT\_VEC3:**Translate( Distance, Angle )** added.
 -- 
 -- 2016-08-06: Made PointVec3 and Vec3, PointVec2 and Vec2 terminology used in the code consistent.
 -- 
@@ -196,21 +255,57 @@ function POINT_VEC3:GetZ()
 end
 
 --- Set the x coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
 -- @param #number x The x coordinate.
+-- @return #POINT_VEC3
 function POINT_VEC3:SetX( x )
   self.x = x
+  return self
 end
 
 --- Set the y coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
 -- @param #number y The y coordinate.
+-- @return #POINT_VEC3
 function POINT_VEC3:SetY( y )
   self.y = y
+  return self
 end
 
 --- Set the z coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
 -- @param #number z The z coordinate.
+-- @return #POINT_VEC3
 function POINT_VEC3:SetZ( z )
   self.z = z
+  return self
+end
+
+--- Add to the x coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #number x The x coordinate value to add to the current x coodinate.
+-- @return #POINT_VEC3
+function POINT_VEC3:AddX( x )
+  self.x = self.x + x
+  return self
+end
+
+--- Add to the y coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #number y The y coordinate value to add to the current y coodinate.
+-- @return #POINT_VEC3
+function POINT_VEC3:AddY( y )
+  self.y = self.y + y
+  return self
+end
+
+--- Add to the z coordinate of the POINT_VEC3.
+-- @param #POINT_VEC3 self
+-- @param #number z The z coordinate value to add to the current z coodinate.
+-- @return #POINT_VEC3
+function POINT_VEC3:AddZ( z )
+  self.z = self.z +z
+  return self
 end
 
 --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
@@ -501,6 +596,21 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   return RoutePoint
 end
 
+--- Creates an explosion at the point of a certain intensity.
+-- @param #POINT_VEC3 self
+-- @param #number ExplosionIntensity
+function POINT_VEC3:Explosion( ExplosionIntensity )
+  self:F2( { ExplosionIntensity } )
+  trigger.action.explosion( self:GetVec3(), ExplosionIntensity )
+end
+
+--- Creates an illumination bomb at the point.
+-- @param #POINT_VEC3 self
+function POINT_VEC3:IlluminationBomb()
+  self:F2()
+  trigger.action.illuminationBomb( self:GetVec3() )
+end
+
 
 --- Smokes the point in a color.
 -- @param #POINT_VEC3 self
@@ -666,15 +776,57 @@ function POINT_VEC2:GetAlt()
 end
 
 --- Set the x coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
 -- @param #number x The x coordinate.
+-- @return #POINT_VEC2
 function POINT_VEC2:SetX( x )
   self.x = x
+  return self
 end
 
 --- Set the y coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
 -- @param #number y The y coordinate.
+-- @return #POINT_VEC2
 function POINT_VEC2:SetY( y )
   self.z = y
+  return self
+end
+
+--- Set the altitude of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
+-- @return #POINT_VEC2
+function POINT_VEC2:SetAlt( Altitude )
+  self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
+  return self
+end
+
+--- Add to the x coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @param #number x The x coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:AddX( x )
+  self.x = self.x + x
+  return self
+end
+
+--- Add to the y coordinate of the POINT_VEC2.
+-- @param #POINT_VEC2 self
+-- @param #number y The y coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:AddY( y )
+  self.z = self.z + y
+  return self
+end
+
+--- Add to the current land height an altitude.
+-- @param #POINT_VEC2 self
+-- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
+-- @return #POINT_VEC2
+function POINT_VEC2:AddAlt( Altitude )
+  self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
+  return self
 end
 
 

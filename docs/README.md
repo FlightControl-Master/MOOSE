@@ -205,6 +205,8 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [DETECTION](Documentation/Detection.html): Detect other units using the available sensors of the detection unit. The DETECTION_BASE derived classes will provide different methods how the sets of detected objects are built.
 
+* [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+
 ## 7.4) MOOSE AI Controlling Classes
 
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  

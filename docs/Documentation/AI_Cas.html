@@ -50,6 +50,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
@@ -71,7 +72,7 @@
 	<div id="content">
    <h1>Module <code>AI_Cas</code></h1>
    
-<p>Single-Player:<strong>Yes</strong> / Mulit-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
 <strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
@@ -307,7 +308,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType, EngageZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>CAS</em>ZONE object</p>
 </td>
@@ -706,7 +707,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).New" >
-<strong>AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType, EngageZone)</strong>
+<strong>AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
@@ -747,13 +748,14 @@ The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
-The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> EngageZone </em></code>: 
+The zone where the engage will happen.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> EngageZone </em></code>: </p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
+The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 
 				</li>
 		</ul>

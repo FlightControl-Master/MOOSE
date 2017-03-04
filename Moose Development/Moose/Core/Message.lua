@@ -182,6 +182,20 @@ function MESSAGE:ToCoalition( CoalitionSide )
 	return self
 end
 
+--- Sends a MESSAGE to a Coalition if the given Condition is true. 
+-- @param #MESSAGE self
+-- @param CoalitionSide needs to be filled out by the defined structure of the standard scripting engine @{coalition.side}. 
+-- @return #MESSAGE
+function MESSAGE:ToCoalitionIf( CoalitionSide, Condition )
+  self:F( CoalitionSide )
+
+  if Condition and Condition == true then
+    self:ToCoalition( CoalitionSide )
+  end
+  
+  return self
+end
+
 --- Sends a MESSAGE to all players. 
 -- @param #MESSAGE self
 -- @return #MESSAGE
@@ -194,10 +208,24 @@ end
 -- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25, "Win" )
 -- MessageAll:ToAll()
 function MESSAGE:ToAll()
-	self:F()
+  self:F()
 
-	self:ToCoalition( coalition.side.RED )
-	self:ToCoalition( coalition.side.BLUE )
+  self:ToCoalition( coalition.side.RED )
+  self:ToCoalition( coalition.side.BLUE )
+
+  return self
+end
+
+
+--- Sends a MESSAGE to all players if the given Condition is true.
+-- @param #MESSAGE self
+-- @return #MESSAGE
+function MESSAGE:ToAllIf( Condition )
+
+  if Condition and Condition == true then
+  	self:ToCoalition( coalition.side.RED )
+  	self:ToCoalition( coalition.side.BLUE )
+  end
 
 	return self
 end

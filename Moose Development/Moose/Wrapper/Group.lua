@@ -455,8 +455,7 @@ function GROUP:IsCompletelyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
-    -- TODO: Rename IsPointVec3InZone to IsVec3InZone
-    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
     else
       return false
     end
@@ -474,7 +473,7 @@ function GROUP:IsPartlyInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
       return true
     end
   end
@@ -491,7 +490,7 @@ function GROUP:IsNotInZone( Zone )
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
-    if Zone:IsPointVec3InZone( Unit:GetVec3() ) then
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
       return false
     end
   end
