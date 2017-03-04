@@ -405,9 +405,10 @@ end
 function SET_BASE:GetFirst()
   self:F()
 
-  local t = self.List.first._
-  self:T3( { t } )
-  return t
+  local ObjectName = self.Index[1]
+  local FirstObject = self.Set[ObjectName]
+  self:T3( { FirstObject } )
+  return FirstObject 
 end
 
 --- Gets the last object from the @{Set#SET_BASE} and derived classes.
@@ -416,9 +417,10 @@ end
 function SET_BASE:GetLast()
   self:F()
 
-  local t = self.List.last._
-  self:T3( { t } )
-  return t
+  local ObjectName = self.Index[#self.Index]
+  local LastObject = self.Set[ObjectName]
+  self:T3( { LastObject } )
+  return LastObject 
 end
 
 --- Gets a random object from the @{Set#SET_BASE} and derived classes.

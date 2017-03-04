@@ -223,6 +223,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
   function ACT_ROUTE_POINT:SetPointVec2( PointVec2 )
+    self:F2( { PointVec2 } )
     self.PointVec2 = PointVec2
   end  
 
@@ -230,6 +231,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @return Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
   function ACT_ROUTE_POINT:GetPointVec2()
+    self:F2( { self.PointVec2 } )
     return self.PointVec2
   end  
 
@@ -237,6 +239,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @param #number Range The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:SetRange( Range )
+    self:F2( { self.Range } )
     self.Range = Range or 10000
   end  
   

@@ -192,9 +192,13 @@ end
 --- Get the Task FSM Process Template
 -- @param #TASK self
 -- @return Core.Fsm#FSM_PROCESS
-function TASK:GetUnitProcess()
+function TASK:GetUnitProcess( TaskUnit )
 
-  return self.FsmTemplate
+  if TaskUnit then
+    return self:GetStateMachine( TaskUnit )
+  else
+    return self.FsmTemplate
+  end
 end
 
 --- Sets the Task FSM Process Template
@@ -661,13 +665,24 @@ end
 --- Add a FiniteStateMachine to @{Task} with key Task@{Unit}
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT TaskUnit
+-- @param Core.Fsm#FSM_PROCESS Fsm
 -- @return #TASK self
 function TASK:SetStateMachine( TaskUnit, Fsm )
-  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
+  self:F2( { TaskUnit, self.Fsm[TaskUnit] ~= nil, Fsm:GetClassNameAndID() } )
 
   self.Fsm[TaskUnit] = Fsm
     
   return Fsm
+end
+
+--- Gets the FiniteStateMachine of @{Task} with key Task@{Unit}
+-- @param #TASK self
+-- @param Wrapper.Unit#UNIT TaskUnit
+-- @return Core.Fsm#FSM_PROCESS
+function TASK:GetStateMachine( TaskUnit )
+  self:F2( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
+
+  return self.Fsm[TaskUnit]
 end
 
 --- Remove FiniteStateMachines from @{Task} with key Task@{Unit}

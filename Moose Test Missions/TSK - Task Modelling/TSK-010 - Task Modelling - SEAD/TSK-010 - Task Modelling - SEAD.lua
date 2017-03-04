@@ -88,7 +88,7 @@ SEADSet:Flush()
 -- Define the set of units that are the targets.
 -- Note that I use FilterOnce, which means that the set will be defined only once,
 -- and will not be continuously updated!
-local TargetSet = SET_UNIT:New():FilterPrefixes( "US Hawk SR" ):FilterOnce()
+local TargetSet = SET_UNIT:New():FilterPrefixes( "US Hawk SR" ):FilterStart()
 
 -- Define the RendezVous Zone where the pilot needs to RendezVous with other players before engaging.
 local RendezVousZone = ZONE:New( "RendezVous Zone" )
