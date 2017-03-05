@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170304_1458' ) 
+env.info( 'Moose Generation Timestamp: 20170305_0931' ) 
 local base = _G
 
 Include = {}
@@ -4131,7 +4131,7 @@ end
 -- 
 -- # 3) EVENTDATA type
 -- 
--- The EVENTDATA contains all the fields that are populated with event information before 
+-- The @{Event#EVENTDATA} structure contains all the fields that are populated with event information before 
 -- an Event Handler method is being called by the event dispatcher.
 -- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
 -- There are basically 4 main categories of information stored in the EVENTDATA structure:
@@ -4140,6 +4140,17 @@ end
 --    * Target Unit data: Several fields documenting the target unit related to the event.
 --    * Weapon data: Certain events populate weapon information.
 --    * Place data: Certain events populate place information.
+-- 
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- EventData is an EVENTDATA structure.
+--      -- We use the EventData.IniUnit to smoke the tank Green.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        EventData.IniUnit:SmokeGreen()
+--      end
+-- 
 -- 
 -- Find below an overview which events populate which information categories:
 -- 
@@ -4241,35 +4252,35 @@ EVENTS = {
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
 -- 
--- @field Dcs.DCSUnit#Unit                  initiator         (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category     IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit                  IniDCSUnit        (UNIT/STATIC) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field #string                           IniDCSUnitName    (UNIT/STATIC) The initiating Unit name.
--- @field Wrapper.Unit#UNIT                 IniUnit           (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
--- @field #string                           IniUnitName       (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
--- @field Dcs.DCSGroup#Group                IniDCSGroup       (UNIT) The initiating {Dcs.DCSGroup#Group}.
--- @field #string                           IniDCSGroupName   (UNIT) The initiating Group name.
--- @field Wrapper.Group#GROUP               IniGroup          (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
--- @field #string                           IniGroupName      (UNIT) The initiating GROUP name (same as IniDCSGroupName).
--- @field #string                           IniPlayerName     (UNIT) The name of the initiating player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side   IniCoalition      (UNIT) The coalition of the initiator.
--- @field Dcs.DCSUnit#Unit.Category         IniCategory       (UNIT) The category of the initiator.
--- @field #string                           IniTypeName       (UNIT) The type name of the initiator.
+-- @field Dcs.DCSUnit#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
+-- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Unit#UNIT} of the initiator Unit object.
+-- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+-- @field Dcs.DCSGroup#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
+-- @field #string IniDCSGroupName (UNIT) The initiating Group name.
+-- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Group#GROUP} of the initiator Group object.
+-- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
+-- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+-- @field Dcs.DCScoalition#coalition.side IniCoalition (UNIT) The coalition of the initiator.
+-- @field Dcs.DCSUnit#Unit.Category IniCategory (UNIT) The category of the initiator.
+-- @field #string IniTypeName (UNIT) The type name of the initiator.
 -- 
--- @field Dcs.DCSUnit#Unit                  target            (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category     TgtObjectCategory       (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit                  TgtDCSUnit        (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field #string                           TgtDCSUnitName    (UNIT/STATIC) The target Unit name.
--- @field Wrapper.Unit#UNIT                 TgtUnit           (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
--- @field #string                           TgtUnitName       (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
--- @field Dcs.DCSGroup#Group                TgtDCSGroup       (UNIT) The target {Dcs.DCSGroup#Group}.
--- @field #string                           TgtDCSGroupName   (UNIT) The target Group name.
--- @field Wrapper.Group#GROUP               TgtGroup          (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
--- @field #string                           TgtGroupName      (UNIT) The target GROUP name (same as TgtDCSGroupName).
--- @field #string                           TgtPlayerName     (UNIT) The name of the target player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side   TgtCoalition      (UNIT) The coalition of the target.
--- @field Dcs.DCSUnit#Unit.Category         TgtCategory       (UNIT) The category of the target.
--- @field #string                           TgtTypeName       (UNIT) The type name of the target.
+-- @field Dcs.DCSUnit#Unit target (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
+-- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Unit#UNIT} of the target Unit object.
+-- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+-- @field Dcs.DCSGroup#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
+-- @field #string TgtDCSGroupName (UNIT) The target Group name.
+-- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Group#GROUP} of the target Group object.
+-- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
+-- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
+-- @field Dcs.DCScoalition#coalition.side TgtCoalition (UNIT) The coalition of the target.
+-- @field Dcs.DCSUnit#Unit.Category TgtCategory (UNIT) The category of the target.
+-- @field #string TgtTypeName (UNIT) The type name of the target.
 -- 
 -- @field weapon The weapon used during the event.
 -- @field Weapon
@@ -5106,7 +5117,7 @@ function EVENT:onEvent( Event )
         Event.IniDCSUnit = Event.initiator
         Event.IniDCSUnitName = Event.IniDCSUnit:getName()
         Event.IniUnitName = Event.IniDCSUnitName
-        Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName )
+        Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
         Event.IniCoalition = Event.IniDCSUnit:getCoalition()
         Event.IniCategory = Event.IniDCSUnit:getDesc().category
         Event.IniTypeName = Event.IniDCSUnit:getTypeName()
@@ -6339,7 +6350,6 @@ end
 -- ===
 -- 
 -- @module Zone
--- @author FlightControl
 
 
 --- The ZONE_BASE class
@@ -6436,6 +6446,12 @@ function ZONE_BASE:GetBoundingSquare()
   return nil
 end
 
+--- Bound the zone boundaries with a tires.
+-- @param #ZONE_BASE self
+function ZONE_BASE:BoundZone()
+  self:F2()
+
+end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
@@ -6496,7 +6512,7 @@ ZONE_RADIUS = {
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
-	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
 	self:F( { ZoneName, Vec2, Radius } )
 
 	self.Radius = Radius
@@ -6504,6 +6520,48 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	
 	return self
 end
+
+--- Bounds the zone with tires.
+-- @param #ZONE_RADIUS self
+-- @param #number Points (optional) The amount of points in the circle.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:BoundZone( Points )
+
+  local Point = {}
+  local Vec2 = self:GetVec2()
+
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  --
+  for Angle = 0, 360, (360 / Points ) do
+    local Radial = Angle * RadialBase / 360
+    Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
+    
+    local Tire = {
+        ["country"] = "USA", 
+        ["category"] = "Fortifications",
+        ["canCargo"] = false,
+        ["shape_name"] = "H-tyre_B_WF",
+        ["type"] = "Black_Tyre_WF",
+        --["unitId"] = Angle + 10000,
+        ["y"] = Point.y,
+        ["x"] = Point.x,
+        ["name"] = string.format( "%s-Tire #%0d", self:GetName(), Angle ),
+        ["heading"] = 0,
+    } -- end of ["group"]
+
+    self:E( Tire )
+    
+    coalition.addStaticObject( country.id.USA, Tire )
+  end
+
+  return self
+end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -6928,6 +6986,52 @@ function ZONE_POLYGON_BASE:Flush()
 
   return self
 end
+
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:BoundZone( )
+
+  local i 
+  local j 
+  local Segments = 10
+  
+  i = 1
+  j = #self.Polygon
+  
+  while i <= #self.Polygon do
+    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+    
+    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
+    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    
+    for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
+      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      local Tire = {
+          ["country"] = "USA", 
+          ["category"] = "Fortifications",
+          ["canCargo"] = false,
+          ["shape_name"] = "H-tyre_B_WF",
+          ["type"] = "Black_Tyre_WF",
+          ["y"] = PointY,
+          ["x"] = PointX,
+          ["name"] = string.format( "%s-Tire #%0d", self:GetName(), ((i - 1) * Segments) + Segment ),
+          ["heading"] = 0,
+      } -- end of ["group"]
+  
+      self:E( Tire )
+      
+      coalition.addStaticObject( country.id.USA, Tire )
+      
+    end
+    j = i
+    i = i + 1
+  end
+
+  return self
+end
+
 
 
 --- Smokes the zone boundaries in a color.
@@ -7642,8 +7746,14 @@ function DATABASE:_EventOnBirth( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    self:AddUnit( Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroupName )
+    if Event.IniObjectCategory == 3 then
+      self:AddStatic( Event.IniDCSUnitName )    
+    else
+      if Event.IniObjectCategory == 1 then
+        self:AddUnit( Event.IniDCSUnitName )
+        self:AddGroup( Event.IniDCSGroupName )
+      end
+    end
     self:_EventOnPlayerEnterUnit( Event )
   end
 end
@@ -10289,7 +10399,6 @@ end
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
--- @extends Core.Base#BASE
 -- @field #number x The x coordinate in 3D space.
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
@@ -10298,6 +10407,7 @@ end
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
+-- @extends Core.Base#BASE
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   Metric = true,
@@ -10316,9 +10426,9 @@ POINT_VEC3 = {
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
--- @extends #POINT_VEC3
 -- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
 -- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
+-- @extends Core.Point#POINT_VEC3
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }
@@ -17826,8 +17936,9 @@ STATIC = {
 -- As an optional parameter, a briefing text can be given also.
 -- @param #STATIC self
 -- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
+-- @param #boolean RaiseError Raise an error if not found.
 -- @return #STATIC
-function STATIC:FindByName( StaticName )
+function STATIC:FindByName( StaticName, RaiseError )
   local StaticFound = _DATABASE:FindStatic( StaticName )
 
   self.StaticName = StaticName
@@ -17837,8 +17948,12 @@ function STATIC:FindByName( StaticName )
 
   	return StaticFound
   end
-  
-  error( "STATIC not found for: " .. StaticName )
+
+  if RaiseError == nil or RaiseError == true then
+    error( "STATIC not found for: " .. StaticName )
+  end
+
+  return nil
 end
 
 function STATIC:Register( StaticName )
