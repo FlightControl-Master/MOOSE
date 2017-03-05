@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170305_1014' ) 
+env.info( 'Moose Generation Timestamp: 20170305_1027' ) 
 local base = _G
 
 Include = {}
@@ -6554,8 +6554,6 @@ function ZONE_RADIUS:BoundZone( Points )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    self:E( Tire )
-    
     coalition.addStaticObject( country.id.USA, Tire )
   end
 
@@ -7020,8 +7018,6 @@ function ZONE_POLYGON_BASE:BoundZone( )
           ["heading"] = 0,
       } -- end of ["group"]
   
-      self:E( Tire )
-      
       coalition.addStaticObject( country.id.USA, Tire )
       
     end
