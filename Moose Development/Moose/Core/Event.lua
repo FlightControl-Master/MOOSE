@@ -680,7 +680,7 @@ function EVENT:onEvent( Event )
         Event.IniDCSUnit = Event.initiator
         Event.IniDCSUnitName = Event.IniDCSUnit:getName()
         Event.IniUnitName = Event.IniDCSUnitName
-        Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName )
+        Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
         Event.IniCoalition = Event.IniDCSUnit:getCoalition()
         Event.IniCategory = Event.IniDCSUnit:getDesc().category
         Event.IniTypeName = Event.IniDCSUnit:getTypeName()

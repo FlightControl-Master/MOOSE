@@ -48,8 +48,9 @@ STATIC = {
 -- As an optional parameter, a briefing text can be given also.
 -- @param #STATIC self
 -- @param #string StaticName Name of the DCS **Static** as defined within the Mission Editor.
+-- @param #boolean RaiseError Raise an error if not found.
 -- @return #STATIC
-function STATIC:FindByName( StaticName )
+function STATIC:FindByName( StaticName, RaiseError )
   local StaticFound = _DATABASE:FindStatic( StaticName )
 
   self.StaticName = StaticName
@@ -59,8 +60,12 @@ function STATIC:FindByName( StaticName )
 
   	return StaticFound
   end
-  
-  error( "STATIC not found for: " .. StaticName )
+
+  if RaiseError == nil or RaiseError == true then
+    error( "STATIC not found for: " .. StaticName )
+  end
+
+  return nil
 end
 
 function STATIC:Register( StaticName )

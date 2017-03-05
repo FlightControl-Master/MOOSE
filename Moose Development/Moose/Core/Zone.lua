@@ -171,7 +171,6 @@
 -- ===
 -- 
 -- @module Zone
--- @author FlightControl
 
 
 --- The ZONE_BASE class
@@ -327,6 +326,12 @@ function ZONE_BASE:GetBoundingSquare()
   return nil
 end
 
+--- Bound the zone boundaries with a tires.
+-- @param #ZONE_BASE self
+function ZONE_BASE:BoundZone()
+  self:F2()
+
+end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_BASE self
@@ -387,7 +392,7 @@ ZONE_RADIUS = {
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
-	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
+	local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
 	self:F( { ZoneName, Vec2, Radius } )
 
 	self.Radius = Radius
@@ -395,6 +400,48 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius )
 	
 	return self
 end
+
+--- Bounds the zone with tires.
+-- @param #ZONE_RADIUS self
+-- @param #number Points (optional) The amount of points in the circle.
+-- @return #ZONE_RADIUS self
+function ZONE_RADIUS:BoundZone( Points )
+
+  local Point = {}
+  local Vec2 = self:GetVec2()
+
+  Points = Points and Points or 360
+
+  local Angle
+  local RadialBase = math.pi*2
+  
+  --
+  for Angle = 0, 360, (360 / Points ) do
+    local Radial = Angle * RadialBase / 360
+    Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
+    Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
+    
+    local Tire = {
+        ["country"] = "USA", 
+        ["category"] = "Fortifications",
+        ["canCargo"] = false,
+        ["shape_name"] = "H-tyre_B_WF",
+        ["type"] = "Black_Tyre_WF",
+        --["unitId"] = Angle + 10000,
+        ["y"] = Point.y,
+        ["x"] = Point.x,
+        ["name"] = string.format( "%s-Tire #%0d", self:GetName(), Angle ),
+        ["heading"] = 0,
+    } -- end of ["group"]
+
+    self:E( Tire )
+    
+    coalition.addStaticObject( country.id.USA, Tire )
+  end
+
+  return self
+end
+
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_RADIUS self
@@ -819,6 +866,52 @@ function ZONE_POLYGON_BASE:Flush()
 
   return self
 end
+
+--- Smokes the zone boundaries in a color.
+-- @param #ZONE_POLYGON_BASE self
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:BoundZone( )
+
+  local i 
+  local j 
+  local Segments = 10
+  
+  i = 1
+  j = #self.Polygon
+  
+  while i <= #self.Polygon do
+    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+    
+    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
+    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    
+    for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
+      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      local Tire = {
+          ["country"] = "USA", 
+          ["category"] = "Fortifications",
+          ["canCargo"] = false,
+          ["shape_name"] = "H-tyre_B_WF",
+          ["type"] = "Black_Tyre_WF",
+          ["y"] = PointY,
+          ["x"] = PointX,
+          ["name"] = string.format( "%s-Tire #%0d", self:GetName(), ((i - 1) * Segments) + Segment ),
+          ["heading"] = 0,
+      } -- end of ["group"]
+  
+      self:E( Tire )
+      
+      coalition.addStaticObject( country.id.USA, Tire )
+      
+    end
+    j = i
+    i = i + 1
+  end
+
+  return self
+end
+
 
 
 --- Smokes the zone boundaries in a color.

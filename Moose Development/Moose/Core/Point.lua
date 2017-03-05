@@ -119,7 +119,6 @@
 
 --- The POINT_VEC3 class
 -- @type POINT_VEC3
--- @extends Core.Base#BASE
 -- @field #number x The x coordinate in 3D space.
 -- @field #number y The y coordinate in 3D space.
 -- @field #number z The z coordiante in 3D space.
@@ -128,6 +127,7 @@
 -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
+-- @extends Core.Base#BASE
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   Metric = true,
@@ -146,9 +146,9 @@ POINT_VEC3 = {
 
 --- The POINT_VEC2 class
 -- @type POINT_VEC2
--- @extends #POINT_VEC3
 -- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
 -- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
+-- @extends Core.Point#POINT_VEC3
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }
