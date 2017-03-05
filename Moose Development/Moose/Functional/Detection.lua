@@ -293,6 +293,9 @@ do -- DETECTION_BASE
     -- Inherits from BASE
     local self = BASE:Inherit( self, FSM:New() ) -- #DETECTION_BASE
     
+    self.DetectedItemCount = 0
+    self.DetectedItems = {}
+    
     self.DetectionSetGroup = DetectionSetGroup
     
     self.DetectionInterval = 30
@@ -918,8 +921,9 @@ do -- DETECTION_BASE
     local DetectedItem = {}
     DetectedItem.Set = Set or SET_UNIT:New()
     DetectedItem.Zone = Zone
-    
-    table.insert( self.DetectedItems, DetectedItem )
+
+    self.DetectedItemCount = self.DetectedItemCount + 1
+    self.DetectedItems[self.DetectedItemCount] = DetectedItem
     
     return DetectedItem
   end
@@ -930,7 +934,8 @@ do -- DETECTION_BASE
   -- @param #number DetectedItemIndex The index or position in the DetectedItems list where the item needs to be removed.
   function DETECTION_BASE:RemoveDetectedItem( DetectedItemIndex )
     
-    table.remove( self.DetectedItems, DetectedItemIndex )
+    self.DetectedItemCount = self.DetectedItemCount + 1
+    self.DetectedItems[self.DetectedItemIndex] = nil
   end
   
   
@@ -947,7 +952,7 @@ do -- DETECTION_BASE
   -- @return #number Count
   function DETECTION_BASE:GetDetectedItemsCount()
   
-    local DetectedCount = #self.DetectedItems
+    local DetectedCount = self.DetectedItemCount
     return DetectedCount
   end
   
@@ -1392,6 +1397,7 @@ do -- DETECTION_AREAS
   end
   
   --- Add a detected @{#DETECTION_AREAS.DetectedItem}.
+  -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_UNIT Set -- The Set of Units in the detected area.
   -- @param Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
   -- @return #DETECTION_AREAS.DetectedItem DetectedItem
@@ -1401,7 +1407,7 @@ do -- DETECTION_AREAS
     local DetectedItem = self:GetParent( self ).AddDetectedItem( self, Set, Zone )
   
     DetectedItem.Removed = false
-    DetectedItem.AreaID = #self.DetectedItems+1
+    DetectedItem.AreaID = #self.DetectedItems + 1
     
     self:T( { #self.DetectedItems, DetectedItem } )
   

@@ -23,10 +23,12 @@ local HQ = GROUP:FindByName( "HQ" )
 
 local CC = COMMANDCENTER:New( HQ, "HQ" )
 
-local RecceDetection1 = DETECTION_UNITS:New( RecceSetGroup1 )
+local RecceDetection1 = DETECTION_AREAS:New( RecceSetGroup1, 1000 )
+RecceDetection1:BoundDetectedZones()
 
-local RecceDetection2 = DETECTION_UNITS:New( RecceSetGroup2 )
+local RecceDetection2 = DETECTION_AREAS:New( RecceSetGroup2, 1000 )
 RecceDetection2:SetDistanceProbability( 0.2 )  -- Set a 20% probability that a vehicle can be detected at 4km distance.
+RecceDetection1:BoundDetectedZones()
 
 RecceDetection1:Start()
 RecceDetection2:Start()

@@ -68,22 +68,23 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
-    --- @param Core.Event#EVENTDATA EventData
+    -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
-      self:E( { EventData } )
-      local EventGroup = GROUP:Find( EventData.IniDCSGroup )
-      if EventGroup and self:HasGroup( EventGroup ) then
-        local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-        local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
-        local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
-        self:ReportSummary( EventGroup )
-      end
-      local PlayerUnit = EventData.IniUnit
-      for MissionID, Mission in pairs( self:GetMissions() ) do
-        local Mission = Mission -- Tasking.Mission#MISSION
-        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
-        Mission:JoinUnit( PlayerUnit, PlayerGroup )
-        Mission:ReportDetails()
+      if EventData.IniObjectCategory == 1 then
+        local EventGroup = GROUP:Find( EventData.IniDCSGroup )
+        if EventGroup and self:HasGroup( EventGroup ) then
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
+          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
+          self:ReportSummary( EventGroup )
+        end
+        local PlayerUnit = EventData.IniUnit
+        for MissionID, Mission in pairs( self:GetMissions() ) do
+          local Mission = Mission -- Tasking.Mission#MISSION
+          local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+          Mission:JoinUnit( PlayerUnit, PlayerGroup )
+          Mission:ReportDetails()
+        end
       end
       
     end
