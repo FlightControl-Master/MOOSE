@@ -224,9 +224,15 @@
 -- 
 -- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
 -- 
--- ## 4.5) Flare or Smoke detected zones
+-- ## 4.5) Flare or Smoke or Bound detected zones
 -- 
--- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedZones}() or @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to flare or smoke the detected zones when a new detection has taken place.
+-- Use the methods:
+-- 
+--   * @{Detection#DETECTION_AREAS.FlareDetectedZones}() to flare in a color 
+--   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to smoke in a color
+--   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to bound with a tire with a white flag
+--   
+-- the detected zones when a new detection has taken place.
 -- 
 -- ===
 -- 
@@ -1071,6 +1077,7 @@ do -- DETECTION_UNITS
     self._FlareDetectedUnits = false
     self._SmokeDetectedZones = false
     self._FlareDetectedZones = false
+    self._BoundDetectedZones = false
     
     return self
   end
@@ -1194,6 +1201,7 @@ do -- DETECTION_TYPES
     self._FlareDetectedUnits = false
     self._SmokeDetectedZones = false
     self._FlareDetectedZones = false
+    self._BoundDetectedZones = false
     
     return self
   end
@@ -1378,6 +1386,7 @@ do -- DETECTION_AREAS
     self._FlareDetectedUnits = false
     self._SmokeDetectedZones = false
     self._FlareDetectedZones = false
+    self._BoundDetectedZones = false
     
     return self
   end
@@ -1590,6 +1599,16 @@ do -- DETECTION_AREAS
     self:F2()
   
     self._FlareDetectedZones = true
+    return self
+  end
+
+  --- Bound the detected zones
+  -- @param #DETECTION_AREAS self
+  -- @return #DETECTION_AREAS self
+  function DETECTION_AREAS:BoundDetectedZones()
+    self:F2()
+  
+    self._BoundDetectedZones = true
     return self
   end
   
@@ -1890,6 +1909,10 @@ do -- DETECTION_AREAS
       end
       if DETECTION_AREAS._SmokeDetectedZones or self._SmokeDetectedZones then
         DetectedZone:SmokeZone( SMOKECOLOR.White, 30 )
+      end
+
+      if DETECTION_AREAS._BoundDetectedZones or self._BoundDetectedZones then
+        DetectedZone:BoundZone( SMOKECOLOR.White, 30 )
       end
     end
   
