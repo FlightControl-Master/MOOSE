@@ -746,7 +746,9 @@ function EVENT:onEvent( Event )
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
-    self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    if Event.IniObjectCategory ~= 3 then
+      self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    end
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
     
@@ -776,7 +778,9 @@ function EVENT:onEvent( Event )
               if EventFunction and type( EventFunction ) == "function" then
                 
                 -- Now call the default event function.
-                self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                if Event.IniObjectCategory ~= 3 then
+                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                end
                 Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
                 
                 local Result, Value = xpcall( 
@@ -799,7 +803,9 @@ function EVENT:onEvent( Event )
                 if EventData.EventFunction then
                   
                   -- There is an EventFunction defined, so call the EventFunction.
-                  self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  if Event.IniObjectCategory ~= 3 then
+                    self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  end
                   Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
               
                   local Result, Value = xpcall( 
@@ -813,7 +819,9 @@ function EVENT:onEvent( Event )
                   if EventFunction and type( EventFunction ) == "function" then
                     
                     -- Now call the default event function.
-                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    if Event.IniObjectCategory ~= 3 then
+                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    end
                     Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
                     
                     local Result, Value = xpcall( 

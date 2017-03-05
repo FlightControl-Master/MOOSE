@@ -21,4 +21,4 @@ local FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
 
 local FACDetection = DETECTION_AREAS:New( FACSetGroup, 150, 250 ):BoundDetectedZones():SmokeDetectedUnits()
 
-FACDetection:Start()
+FACDetection:__Start( 5 )
