@@ -493,7 +493,7 @@ do -- DETECTION_BASE
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
-    -- @param Wrapper.Group#GROUP DetectionGroup
+    -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
     function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup  )
       self:E( {From,Event,To})
       
@@ -503,6 +503,8 @@ do -- DETECTION_BASE
       
       if DetectionGroup:IsAlive() then
     
+        self:T( { "DetectionGroup is Alive", DetectionGroup:GetName() } )
+        
         local DetectionGroupName = DetectionGroup:GetName()
         
         local DetectedUnits = {}
@@ -515,6 +517,8 @@ do -- DETECTION_BASE
           self.DetectRWR,
           self.DetectDLINK
         )
+        
+        self:T( DetectedTargets )
         
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
           local DetectedObject = Detection.object -- Dcs.DCSWrapper.Object#Object
@@ -646,7 +650,7 @@ do -- DETECTION_BASE
       
       if self.DetectionCount > 0 and self.DetectionRun == self.DetectionCount then
         self:__Detect( self.DetectionInterval )
-        --self:CreateDetectionSets()
+        self:CreateDetectionSets()
       end
 
     end
