@@ -35,4 +35,4 @@ Scoring:AddZoneScore( ShootingRangeZone, 200 )
 local SceneryZone = ZONE:New( "ScoringZone2" )
 Scoring:AddZoneScore( SceneryZone, 200 )
 
-
+Scoring:AddStaticScore(STATIC:FindByName( "Shooting Range #010" ), 100 )
