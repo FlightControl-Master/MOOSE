@@ -542,8 +542,14 @@ function DATABASE:_EventOnBirth( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    self:AddUnit( Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroupName )
+    if Event.IniObjectCategory == 3 then
+      self:AddStatic( Event.IniDCSUnitName )    
+    else
+      if Event.IniObjectCategory == 1 then
+        self:AddUnit( Event.IniDCSUnitName )
+        self:AddGroup( Event.IniDCSGroupName )
+      end
+    end
     self:_EventOnPlayerEnterUnit( Event )
   end
 end
