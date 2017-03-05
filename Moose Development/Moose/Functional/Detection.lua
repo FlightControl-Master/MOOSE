@@ -1912,7 +1912,7 @@ do -- DETECTION_AREAS
       end
 
       if DETECTION_AREAS._BoundDetectedZones or self._BoundDetectedZones then
-        DetectedZone:BoundZone( SMOKECOLOR.White, 30 )
+        DetectedZone:BoundZone( 30 )
       end
     end
   
