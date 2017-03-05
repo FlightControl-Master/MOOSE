@@ -496,6 +496,12 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerGoals">SCORING:ReportDetailedPlayerGoals(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player goal scores.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerHits">SCORING:ReportDetailedPlayerHits(PlayerName)</a></td>
 		<td class="summary">
 <p>Produce detailed report of player hit scores.</p>
@@ -504,7 +510,7 @@ Various methods exist to configure:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerMissions">SCORING:ReportDetailedPlayerMissions(PlayerName)</a></td>
 		<td class="summary">
-<p>Produce detailed report of player goal scores.</p>
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
 </td>
 		</tr>
 		<tr>
@@ -1441,6 +1447,33 @@ The report.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SCORING).ReportDetailedPlayerGoals" >
+<strong>SCORING:ReportDetailedPlayerGoals(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player goal scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SCORING).ReportDetailedPlayerHits" >
 <strong>SCORING:ReportDetailedPlayerHits(PlayerName)</strong>
 </a>
@@ -1474,7 +1507,7 @@ The report.</p>
 </dt>
 <dd>
 	
-<p>Produce detailed report of player goal scores.</p>
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
 
 		<h3>Parameter</h3>
 		<ul>
