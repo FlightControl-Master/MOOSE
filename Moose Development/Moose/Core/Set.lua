@@ -591,7 +591,7 @@ function SET_BASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     local ObjectName, Object = self:AddInDatabase( Event )
     self:T3( ObjectName, Object )
-    if self:IsIncludeObject( Object ) then
+    if Object and self:IsIncludeObject( Object ) then
       self:Add( ObjectName, Object )
       --self:_EventOnPlayerEnterUnit( Event )
     end
@@ -962,9 +962,11 @@ end
 function SET_GROUP:AddInDatabase( Event )
   self:F3( { Event } )
 
-  if not self.Database[Event.IniDCSGroupName] then
-    self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
-    self:T3( self.Database[Event.IniDCSGroupName] )
+  if Event.IniObjectCategory == 1 then
+    if not self.Database[Event.IniDCSGroupName] then
+      self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
+      self:T3( self.Database[Event.IniDCSGroupName] )
+    end
   end
   
   return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
@@ -1387,9 +1389,11 @@ end
 function SET_UNIT:AddInDatabase( Event )
   self:F3( { Event } )
 
-  if not self.Database[Event.IniDCSUnitName] then
-    self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
-    self:T3( self.Database[Event.IniDCSUnitName] )
+  if Event.IniObjectCategory == 1 then
+    if not self.Database[Event.IniDCSUnitName] then
+      self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
+      self:T3( self.Database[Event.IniDCSUnitName] )
+    end
   end
   
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
