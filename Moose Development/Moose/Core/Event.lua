@@ -110,7 +110,7 @@
 -- 
 -- # 3) EVENTDATA type
 -- 
--- The EVENTDATA contains all the fields that are populated with event information before 
+-- The @{Event#EVENTDATA} structure contains all the fields that are populated with event information before 
 -- an Event Handler method is being called by the event dispatcher.
 -- The Event Handler received the EVENTDATA object as a parameter, and can be used to investigate further the different events.
 -- There are basically 4 main categories of information stored in the EVENTDATA structure:
@@ -119,6 +119,17 @@
 --    * Target Unit data: Several fields documenting the target unit related to the event.
 --    * Weapon data: Certain events populate weapon information.
 --    * Place data: Certain events populate place information.
+-- 
+--      --- This function is an Event Handling function that will be called when Tank1 is Dead.
+--      -- EventData is an EVENTDATA structure.
+--      -- We use the EventData.IniUnit to smoke the tank Green.
+--      -- @param Wrapper.Unit#UNIT self 
+--      -- @param Core.Event#EVENTDATA EventData
+--      function Tank1:OnEventDead( EventData )
+--
+--        EventData.IniUnit:SmokeGreen()
+--      end
+-- 
 -- 
 -- Find below an overview which events populate which information categories:
 -- 
@@ -220,35 +231,35 @@ EVENTS = {
 -- @type EVENTDATA
 -- @field #number id The identifier of the event.
 -- 
--- @field Dcs.DCSUnit#Unit                  initiator         (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category     IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit                  IniDCSUnit        (UNIT/STATIC) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field #string                           IniDCSUnitName    (UNIT/STATIC) The initiating Unit name.
--- @field Wrapper.Unit#UNIT                 IniUnit           (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
--- @field #string                           IniUnitName       (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
--- @field Dcs.DCSGroup#Group                IniDCSGroup       (UNIT) The initiating {Dcs.DCSGroup#Group}.
--- @field #string                           IniDCSGroupName   (UNIT) The initiating Group name.
--- @field Wrapper.Group#GROUP               IniGroup          (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
--- @field #string                           IniGroupName      (UNIT) The initiating GROUP name (same as IniDCSGroupName).
--- @field #string                           IniPlayerName     (UNIT) The name of the initiating player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side   IniCoalition      (UNIT) The coalition of the initiator.
--- @field Dcs.DCSUnit#Unit.Category         IniCategory       (UNIT) The category of the initiator.
--- @field #string                           IniTypeName       (UNIT) The type name of the initiator.
+-- @field Dcs.DCSUnit#Unit initiator (UNIT/STATIC/SCENERY) The initiating @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
+-- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Unit#UNIT} of the initiator Unit object.
+-- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
+-- @field Dcs.DCSGroup#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
+-- @field #string IniDCSGroupName (UNIT) The initiating Group name.
+-- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Group#GROUP} of the initiator Group object.
+-- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
+-- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
+-- @field Dcs.DCScoalition#coalition.side IniCoalition (UNIT) The coalition of the initiator.
+-- @field Dcs.DCSUnit#Unit.Category IniCategory (UNIT) The category of the initiator.
+-- @field #string IniTypeName (UNIT) The type name of the initiator.
 -- 
--- @field Dcs.DCSUnit#Unit                  target            (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field Dcs.DCSObject#Object.Category     TgtObjectCategory       (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
--- @field Dcs.DCSUnit#Unit                  TgtDCSUnit        (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{Dcs.DCSStaticObject#StaticObject}.
--- @field #string                           TgtDCSUnitName    (UNIT/STATIC) The target Unit name.
--- @field Wrapper.Unit#UNIT                 TgtUnit           (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
--- @field #string                           TgtUnitName       (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
--- @field Dcs.DCSGroup#Group                TgtDCSGroup       (UNIT) The target {Dcs.DCSGroup#Group}.
--- @field #string                           TgtDCSGroupName   (UNIT) The target Group name.
--- @field Wrapper.Group#GROUP               TgtGroup          (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
--- @field #string                           TgtGroupName      (UNIT) The target GROUP name (same as TgtDCSGroupName).
--- @field #string                           TgtPlayerName     (UNIT) The name of the target player in case the Unit is a client or player slot.
--- @field Dcs.DCScoalition#coalition.side   TgtCoalition      (UNIT) The coalition of the target.
--- @field Dcs.DCSUnit#Unit.Category         TgtCategory       (UNIT) The category of the target.
--- @field #string                           TgtTypeName       (UNIT) The type name of the target.
+-- @field Dcs.DCSUnit#Unit target (UNIT/STATIC) The target @{Dcs.DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field Dcs.DCSObject#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
+-- @field Dcs.DCSUnit#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCSUnit#Unit} or @{DCSStaticObject#StaticObject}.
+-- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
+-- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Unit#UNIT} of the target Unit object.
+-- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
+-- @field Dcs.DCSGroup#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
+-- @field #string TgtDCSGroupName (UNIT) The target Group name.
+-- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Group#GROUP} of the target Group object.
+-- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
+-- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
+-- @field Dcs.DCScoalition#coalition.side TgtCoalition (UNIT) The coalition of the target.
+-- @field Dcs.DCSUnit#Unit.Category TgtCategory (UNIT) The category of the target.
+-- @field #string TgtTypeName (UNIT) The type name of the target.
 -- 
 -- @field weapon The weapon used during the event.
 -- @field Weapon
