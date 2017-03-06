@@ -1089,7 +1089,7 @@ function ESCORT:_FollowScheduler()
       self:T( { "Client Speed, Escort Speed, Speed, FollowDistance, Time:", CS, GS, Speed, FollowDistance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
-      self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+      self.EscortGroup:RouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
 
     return true

@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170305_1014' ) 
+env.info( 'Moose Generation Timestamp: 20170306_1142' ) 
 local base = _G
 
 Include = {}
@@ -6554,8 +6554,6 @@ function ZONE_RADIUS:BoundZone( Points )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    self:E( Tire )
-    
     coalition.addStaticObject( country.id.USA, Tire )
   end
 
@@ -7020,8 +7018,6 @@ function ZONE_POLYGON_BASE:BoundZone( )
           ["heading"] = 0,
       } -- end of ["group"]
   
-      self:E( Tire )
-      
       coalition.addStaticObject( country.id.USA, Tire )
       
     end
@@ -10321,7 +10317,11 @@ end
 -- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
 -- 
 --      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
---      
+-- 
+-- ## 1.3) Create waypoints for routes
+-- 
+-- A POINT_VEC3 can prepare waypoints for Ground, Air and Naval groups to be embedded into a Route.
+-- 
 -- 
 -- ## 1.5) Smoke, flare, explode, illuminate
 -- 
@@ -14743,7 +14743,7 @@ end
 -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskRouteToVec2( Point, Speed )
+function CONTROLLABLE:RouteToVec2( Point, Speed )
   self:F2( { Point, Speed } )
 
   local ControllablePoint = self:GetUnit( 1 ):GetVec2()
@@ -14794,7 +14794,7 @@ end
 -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskRouteToVec3( Point, Speed )
+function CONTROLLABLE:RouteToVec3( Point, Speed )
   self:F2( { Point, Speed } )
 
   local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
@@ -23049,7 +23049,7 @@ function ESCORT:_FollowScheduler()
       self:T( { "Client Speed, Escort Speed, Speed, FollowDistance, Time:", CS, GS, Speed, FollowDistance, Time } )
 
       -- Now route the escort to the desired point with the desired speed.
-      self.EscortGroup:TaskRouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+      self.EscortGroup:RouteToVec3( GDV, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
     end
 
     return true

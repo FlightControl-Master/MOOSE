@@ -18,9 +18,9 @@ local CommandCenter = COMMANDCENTER:New( HQ, "Bravo" )
 
 local Scoring = SCORING:New( "Shooting Range 1" )
 
-Scoring:SetMultiplierDestroyScore( 10 )
+Scoring:SetScaleDestroyScore( 10 )
 
-Scoring:SetMultiplierDestroyPenalty( 40 )
+Scoring:SetScaleDestroyPenalty( 40 )
 
 Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
 
@@ -35,4 +35,4 @@ Scoring:AddZoneScore( ShootingRangeZone, 200 )
 local SceneryZone = ZONE:New( "ScoringZone2" )
 Scoring:AddZoneScore( SceneryZone, 200 )
 
-
+Scoring:AddStaticScore(STATIC:FindByName( "Shooting Range #010" ), 100 )
