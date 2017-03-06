@@ -26,7 +26,11 @@
 -- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
 -- 
 --      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
---      
+-- 
+-- ## 1.3) Create waypoints for routes
+-- 
+-- A POINT_VEC3 can prepare waypoints for Ground, Air and Naval groups to be embedded into a Route.
+-- 
 -- 
 -- ## 1.5) Smoke, flare, explode, illuminate
 -- 

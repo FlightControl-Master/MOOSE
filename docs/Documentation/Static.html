@@ -125,7 +125,7 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATIC).FindByName">STATIC:FindByName(StaticName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(STATIC).FindByName">STATIC:FindByName(StaticName, RaiseError)</a></td>
 		<td class="summary">
 <p>Finds a STATIC from the _DATABASE using the relevant Static Name.</p>
 </td>
@@ -196,7 +196,7 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 <dt>
 
 <a id="#(STATIC).FindByName" >
-<strong>STATIC:FindByName(StaticName)</strong>
+<strong>STATIC:FindByName(StaticName, RaiseError)</strong>
 </a>
 </dt>
 <dd>
@@ -206,12 +206,18 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 	
 <p>As an optional parameter, a briefing text can be given also.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#string StaticName </em></code>: 
 Name of the DCS <strong>Static</strong> as defined within the Mission Editor.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean RaiseError </em></code>: 
+Raise an error if not found.</p>
 
 				</li>
 		</ul>

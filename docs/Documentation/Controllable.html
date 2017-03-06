@@ -486,6 +486,18 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteToVec2">CONTROLLABLE:RouteToVec2(Point, Speed)</a></td>
+		<td class="summary">
+<p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteToVec3">CONTROLLABLE:RouteToVec3(Point, Speed)</a></td>
+		<td class="summary">
+<p>(AIR + GROUND) Make the Controllable move to a given point.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE:SetCommand(DCSCommand)</a></td>
 		<td class="summary">
 <p>Executes a command action</p>
@@ -639,18 +651,6 @@ A speed can be given in km/h.</p>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRoute">CONTROLLABLE:TaskRoute(Points)</a></td>
 		<td class="summary">
 <p>Return a Misson task to follow a given route defined by Points.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToVec2">CONTROLLABLE:TaskRouteToVec2(Point, Speed)</a></td>
-		<td class="summary">
-<p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToVec3">CONTROLLABLE:TaskRouteToVec3(Point, Speed)</a></td>
-		<td class="summary">
-<p>(AIR + GROUND) Make the Controllable move to a given point.</p>
 </td>
 		</tr>
 		<tr>
@@ -1866,6 +1866,72 @@ The route</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).RouteToVec2" >
+<strong>CONTROLLABLE:RouteToVec2(Point, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
+The destination point in Vec3 format.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+The speed to travel.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).RouteToVec3" >
+<strong>CONTROLLABLE:RouteToVec3(Point, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR + GROUND) Make the Controllable move to a given point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
+The destination point in Vec3 format.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+The speed to travel.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).SetCommand" >
 <strong>CONTROLLABLE:SetCommand(DCSCommand)</strong>
 </a>
@@ -2895,72 +2961,6 @@ A table of route points.</p>
 				
 <p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).TaskRouteToVec2" >
-<strong>CONTROLLABLE:TaskRouteToVec2(Point, Speed)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
-The destination point in Vec3 format.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Speed </em></code>: 
-The speed to travel.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).TaskRouteToVec3" >
-<strong>CONTROLLABLE:TaskRouteToVec3(Point, Speed)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>(AIR + GROUND) Make the Controllable move to a given point.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Point </em></code>: 
-The destination point in Vec3 format.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Speed </em></code>: 
-The speed to travel.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
-self</p>
 
 </dd>
 </dl>

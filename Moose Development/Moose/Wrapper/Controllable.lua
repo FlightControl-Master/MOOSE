@@ -1442,7 +1442,7 @@ end
 -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskRouteToVec2( Point, Speed )
+function CONTROLLABLE:RouteToVec2( Point, Speed )
   self:F2( { Point, Speed } )
 
   local ControllablePoint = self:GetUnit( 1 ):GetVec2()
@@ -1493,7 +1493,7 @@ end
 -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
 -- @param #number Speed The speed to travel.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskRouteToVec3( Point, Speed )
+function CONTROLLABLE:RouteToVec3( Point, Speed )
   self:F2( { Point, Speed } )
 
   local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
