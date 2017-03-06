@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170305_0931' ) 
+env.info( 'Moose Generation Timestamp: 20170305_1434' ) 
 local base = _G
 
 Include = {}
@@ -6554,8 +6554,6 @@ function ZONE_RADIUS:BoundZone( Points )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    self:E( Tire )
-    
     coalition.addStaticObject( country.id.USA, Tire )
   end
 
@@ -7020,8 +7018,6 @@ function ZONE_POLYGON_BASE:BoundZone( )
           ["heading"] = 0,
       } -- end of ["group"]
   
-      self:E( Tire )
-      
       coalition.addStaticObject( country.id.USA, Tire )
       
     end
@@ -7766,9 +7762,16 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self.UNITS[Event.IniDCSUnitName] then
-      self:DeleteUnit( Event.IniDCSUnitName )
-      -- add logic to correctly remove a group once all units are destroyed...
+    if Event.IniObjectCategory == 3 then
+      if self.STATICS[Event.IniDCSUnitName] then
+        self:DeleteStatic( Event.IniDCSUnitName )
+      end    
+    else
+      if Event.IniObjectCategory == 1 then
+        if self.UNITS[Event.IniDCSUnitName] then
+          self:DeleteUnit( Event.IniDCSUnitName )
+        end
+      end
     end
   end
 end
@@ -7781,11 +7784,13 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
-    self:AddUnit( Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroupName )
-    local PlayerName = Event.IniUnit:GetPlayerName()
-    if not self.PLAYERS[PlayerName] then
-      self:AddPlayer( Event.IniUnitName, PlayerName )
+    if Event.IniObjectCategory == 1 then
+      self:AddUnit( Event.IniDCSUnitName )
+      self:AddGroup( Event.IniDCSGroupName )
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if not self.PLAYERS[PlayerName] then
+        self:AddPlayer( Event.IniUnitName, PlayerName )
+      end
     end
   end
 end
@@ -7798,9 +7803,11 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
-    local PlayerName = Event.IniUnit:GetPlayerName()
-    if self.PLAYERS[PlayerName] then
-      self:DeletePlayer( PlayerName )
+    if Event.IniObjectCategory == 1 then
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if self.PLAYERS[PlayerName] then
+        self:DeletePlayer( PlayerName )
+      end
     end
   end
 end
@@ -8535,7 +8542,7 @@ function SET_BASE:_EventOnBirth( Event )
   if Event.IniDCSUnit then
     local ObjectName, Object = self:AddInDatabase( Event )
     self:T3( ObjectName, Object )
-    if self:IsIncludeObject( Object ) then
+    if Object and self:IsIncludeObject( Object ) then
       self:Add( ObjectName, Object )
       --self:_EventOnPlayerEnterUnit( Event )
     end
@@ -8905,9 +8912,11 @@ end
 function SET_GROUP:AddInDatabase( Event )
   self:F3( { Event } )
 
-  if not self.Database[Event.IniDCSGroupName] then
-    self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
-    self:T3( self.Database[Event.IniDCSGroupName] )
+  if Event.IniObjectCategory == 1 then
+    if not self.Database[Event.IniDCSGroupName] then
+      self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
+      self:T3( self.Database[Event.IniDCSGroupName] )
+    end
   end
   
   return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
@@ -9330,9 +9339,11 @@ end
 function SET_UNIT:AddInDatabase( Event )
   self:F3( { Event } )
 
-  if not self.Database[Event.IniDCSUnitName] then
-    self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
-    self:T3( self.Database[Event.IniDCSUnitName] )
+  if Event.IniObjectCategory == 1 then
+    if not self.Database[Event.IniDCSUnitName] then
+      self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
+      self:T3( self.Database[Event.IniDCSUnitName] )
+    end
   end
   
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]

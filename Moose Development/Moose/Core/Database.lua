@@ -562,9 +562,16 @@ function DATABASE:_EventOnDeadOrCrash( Event )
   self:F2( { Event } )
 
   if Event.IniDCSUnit then
-    if self.UNITS[Event.IniDCSUnitName] then
-      self:DeleteUnit( Event.IniDCSUnitName )
-      -- add logic to correctly remove a group once all units are destroyed...
+    if Event.IniObjectCategory == 3 then
+      if self.STATICS[Event.IniDCSUnitName] then
+        self:DeleteStatic( Event.IniDCSUnitName )
+      end    
+    else
+      if Event.IniObjectCategory == 1 then
+        if self.UNITS[Event.IniDCSUnitName] then
+          self:DeleteUnit( Event.IniDCSUnitName )
+        end
+      end
     end
   end
 end
@@ -577,11 +584,13 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
-    self:AddUnit( Event.IniDCSUnitName )
-    self:AddGroup( Event.IniDCSGroupName )
-    local PlayerName = Event.IniUnit:GetPlayerName()
-    if not self.PLAYERS[PlayerName] then
-      self:AddPlayer( Event.IniUnitName, PlayerName )
+    if Event.IniObjectCategory == 1 then
+      self:AddUnit( Event.IniDCSUnitName )
+      self:AddGroup( Event.IniDCSGroupName )
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if not self.PLAYERS[PlayerName] then
+        self:AddPlayer( Event.IniUnitName, PlayerName )
+      end
     end
   end
 end
@@ -594,9 +603,11 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
   self:F2( { Event } )
 
   if Event.IniUnit then
-    local PlayerName = Event.IniUnit:GetPlayerName()
-    if self.PLAYERS[PlayerName] then
-      self:DeletePlayer( PlayerName )
+    if Event.IniObjectCategory == 1 then
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if self.PLAYERS[PlayerName] then
+        self:DeletePlayer( PlayerName )
+      end
     end
   end
 end
