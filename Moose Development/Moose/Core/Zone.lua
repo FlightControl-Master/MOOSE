@@ -404,8 +404,9 @@ end
 --- Bounds the zone with tires.
 -- @param #ZONE_RADIUS self
 -- @param #number Points (optional) The amount of points in the circle.
+-- @param #boolean UnBound If true the tyres will be destroyed.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:BoundZone( Points )
+function ZONE_RADIUS:BoundZone( Points, UnBound )
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -434,7 +435,10 @@ function ZONE_RADIUS:BoundZone( Points )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    coalition.addStaticObject( country.id.USA, Tire )
+    local Group = coalition.addStaticObject( country.id.USA, Tire )
+    if UnBound and UnBound == true then
+      Group:destroy()
+    end
   end
 
   return self
@@ -867,8 +871,9 @@ end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
+-- @param #boolean UnBound If true, the tyres will be destroyed.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:BoundZone( )
+function ZONE_POLYGON_BASE:BoundZone( UnBound )
 
   local i 
   local j 
@@ -897,8 +902,11 @@ function ZONE_POLYGON_BASE:BoundZone( )
           ["name"] = string.format( "%s-Tire #%0d", self:GetName(), ((i - 1) * Segments) + Segment ),
           ["heading"] = 0,
       } -- end of ["group"]
-  
-      coalition.addStaticObject( country.id.USA, Tire )
+      
+      local Group = coalition.addStaticObject( country.id.USA, Tire )
+      if UnBound and UnBound == true then
+        Group:destroy()
+      end
       
     end
     j = i

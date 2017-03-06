@@ -934,8 +934,8 @@ do -- DETECTION_BASE
   -- @param #number DetectedItemIndex The index or position in the DetectedItems list where the item needs to be removed.
   function DETECTION_BASE:RemoveDetectedItem( DetectedItemIndex )
     
-    self.DetectedItemCount = self.DetectedItemCount + 1
-    self.DetectedItems[self.DetectedItemIndex] = nil
+    self.DetectedItemCount = self.DetectedItemCount - 1
+    self.DetectedItems[DetectedItemIndex] = nil
   end
   
   
@@ -1734,21 +1734,26 @@ do -- DETECTION_AREAS
   function DETECTION_AREAS:CreateDetectionSets()
     self:F2()
   
+  
+    self:T( "Checking Detected Items for new Detected Units ..." )
     -- First go through all detected sets, and check if there are new detected units, match all existing detected units and identify undetected units.
     -- Regroup when needed, split groups when needed.
-    for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedItems ) do
+    for DetectedAreaID, DetectedAreaData in pairs( self.DetectedItems ) do
       
       local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
       if DetectedArea then
+      
+        self:T( { "Detected Area ID:", DetectedAreaID } )
+        
       
         local DetectedSet = DetectedArea.Set
         
         local AreaExists = false -- This flag will determine of the detected area is still existing.
               
         -- First test if the center unit is detected in the detection area.
-        self:T3( DetectedArea.Zone.ZoneUNIT.UnitName )
+        self:T3( { "Zone Center Unit:", DetectedArea.Zone.ZoneUNIT.UnitName } )
         local DetectedZoneObject = self:GetDetectedObject( DetectedArea.Zone.ZoneUNIT.UnitName )
-        self:T3( { "Detecting Zone Object", DetectedArea.AreaID, DetectedArea.Zone, DetectedZoneObject } )
+        self:T3( { "Detected Zone Object:", DetectedArea.Zone:GetName(), DetectedZoneObject } )
         
         if DetectedZoneObject then
   
@@ -1775,6 +1780,8 @@ do -- DETECTION_AREAS
             if DetectedObject then
               self:IdentifyDetectedObject( DetectedObject )
               AreaExists = true
+  
+              DetectedArea.Zone:BoundZone( 30, true)
   
               -- Assign the Unit as the new center unit of the detected area.
               DetectedArea.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
@@ -1827,7 +1834,8 @@ do -- DETECTION_AREAS
             end
           end
         else
-          self:RemoveDetectedArea( DetectedAreaID )
+          DetectedArea.Zone:BoundZone( 30, true)
+          self:RemoveDetectedItem( DetectedAreaID )
           self:AddChangeArea( DetectedArea, "RA" )
         end
       end
@@ -1851,7 +1859,7 @@ do -- DETECTION_AREAS
         
         local AddedToDetectionArea = false
       
-        for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedItems ) do
+        for DetectedAreaID, DetectedAreaData in pairs( self.DetectedItems ) do
           
           local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
           if DetectedArea then
@@ -1883,7 +1891,7 @@ do -- DETECTION_AREAS
     -- Now all the tests should have been build, now make some smoke and flares...
     -- We also report here the friendlies within the detected areas.
     
-    for DetectedAreaID, DetectedAreaData in ipairs( self.DetectedItems ) do
+    for DetectedAreaID, DetectedAreaData in pairs( self.DetectedItems ) do
   
       local DetectedArea = DetectedAreaData -- #DETECTION_AREAS.DetectedArea
       local DetectedSet = DetectedArea.Set
