@@ -340,6 +340,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 			<h2><a id="#(ZONE_BASE)">Type <code>ZONE_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).BoundZone">ZONE_BASE:BoundZone()</a></td>
+		<td class="summary">
+<p>Bound the zone boundaries with a tires.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).ClassName">ZONE_BASE.ClassName</a></td>
 		<td class="summary">
 
@@ -512,6 +518,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 			<h2><a id="#(ZONE_POLYGON_BASE)">Type <code>ZONE_POLYGON_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).BoundZone">ZONE_POLYGON_BASE:BoundZone()</a></td>
+		<td class="summary">
+<p>Smokes the zone boundaries in a color.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).ClassName">ZONE_POLYGON_BASE.ClassName</a></td>
 		<td class="summary">
 
@@ -575,6 +587,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 
 			<h2><a id="#(ZONE_RADIUS)">Type <code>ZONE_RADIUS</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).BoundZone">ZONE_RADIUS:BoundZone(Points)</a></td>
+		<td class="summary">
+<p>Bounds the zone with tires.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ClassName">ZONE_RADIUS.ClassName</a></td>
 		<td class="summary">
@@ -875,6 +893,19 @@ The name of the zone as defined within the mission editor.</p>
 <p>The ZONE_BASE class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).BoundZone" >
+<strong>ZONE_BASE:BoundZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Bound the zone boundaries with a tires.</p>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -1414,6 +1445,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_POLYGON_BASE).BoundZone" >
+<strong>ZONE_POLYGON_BASE:BoundZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smokes the zone boundaries in a color.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(ZONE_POLYGON_BASE).ClassName" >
 <strong>ZONE_POLYGON_BASE.ClassName</strong>
@@ -1635,6 +1684,33 @@ self</p>
 <p>The ZONE_RADIUS class, defined by a zone name, a location and a radius.</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).BoundZone" >
+<strong>ZONE_RADIUS:BoundZone(Points)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Bounds the zone with tires.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Points </em></code>: 
+(optional) The amount of points in the circle.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
+self</p>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
