@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170306_1629' ) 
+env.info( 'Moose Generation Timestamp: 20170306_1631' ) 
 local base = _G
 
 Include = {}
@@ -27817,7 +27817,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, 
       true 
     )
     
-    ToTargetPointVec3:SmokeBlue()
+    --ToTargetPointVec3:SmokeBlue()
 
     EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
     
