@@ -1,7 +1,7 @@
 ---
--- Name: EVT-104 - OnEventCrash Example
+-- Name: EVT-104 - UNIT OnEventCrash Example
 -- Author: FlightControl
--- Date Created: 7 February 2017
+-- Date Created: 7 Feb 2017
 --
 -- # Situation:
 --

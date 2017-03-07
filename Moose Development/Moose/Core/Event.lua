@@ -64,6 +64,13 @@
 -- 
 --   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
 --   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+--   
+-- Note that for a UNIT, the event will be handled **for that UNIT only**!
+-- Note that for a GROUP, the event will be handled **for all the UNITs in that GROUP only**!
+-- 
+-- For all objects of other classes, the subscribed events will be handled for **all UNITs within the Mission**!
+-- So if a UNIT within the mission has the subscribed event for that object, 
+-- then the object event handler will receive the event for that UNIT!
 -- 
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
@@ -165,7 +172,9 @@
 -- 
 -- Hereby the change log:
 -- 
---   * 2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.
+--   * 2017-03-07: Added the correct event dispatching in case the event is subscribed by a GROUP.
+-- 
+--   * 2017-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.
 -- 
 -- ===
 -- 
@@ -178,10 +187,6 @@
 --   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
 --
 -- @module Event
-
--- TODO: Need to update the EVENTDATA documentation with IniPlayerName and TgtPlayerName
--- TODO: Need to update the EVENTDATA documentation with IniObjectCategory and TgtObjectCategory
-
 
 
 --- The EVENT structure
@@ -443,8 +448,9 @@ function EVENT:Remove( EventClass, EventID  )
   self.Events[EventID][EventPriority][EventClass] = nil
 end
 
---- Removes an Events entry for a Unit
+--- Removes an Events entry for a UNIT.
 -- @param #EVENT self
+-- @param #string UnitName The name of the UNIT.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
@@ -455,6 +461,21 @@ function EVENT:RemoveForUnit( UnitName, EventClass, EventID  )
   local EventPriority = EventClass:GetEventPriority()
   local Event = self.Events[EventID][EventPriority][EventClass]
   Event.IniUnit[UnitName] = nil
+end
+
+--- Removes an Events entry for a GROUP.
+-- @param #EVENT self
+-- @param #string GroupName The name of the GROUP.
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+-- @param Dcs.DCSWorld#world.event EventID
+-- @return #EVENT.Events
+function EVENT:RemoveForGroup( GroupName, EventClass, EventID  )
+  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
+
+  local EventClass = EventClass
+  local EventPriority = EventClass:GetEventPriority()
+  local Event = self.Events[EventID][EventPriority][EventClass]
+  Event.IniGroup[GroupName] = nil
 end
 
 --- Clears all event subscriptions for a @{Base#BASE} derived object.
@@ -505,23 +526,43 @@ function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
 end
 
 
---- Set a new listener for an S_EVENT_X event
+--- Set a new listener for an S_EVENT_X event for a UNIT.
 -- @param #EVENT self
--- @param #string EventDCSUnitName
--- @param #function EventFunction The function to be called when the event occurs for the unit.
+-- @param #string UnitName The name of the UNIT.
+-- @param #function EventFunction The function to be called when the event occurs for the GROUP.
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param EventID
 -- @return #EVENT
-function EVENT:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, EventID )
-  self:F2( EventDCSUnitName )
+function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
+  self:F2( UnitName )
 
   local Event = self:Init( EventID, EventClass )
   if not Event.IniUnit then
     Event.IniUnit = {}
   end
-  Event.IniUnit[EventDCSUnitName] = {}
-  Event.IniUnit[EventDCSUnitName].EventFunction = EventFunction
-  Event.IniUnit[EventDCSUnitName].EventClass = EventClass
+  Event.IniUnit[UnitName] = {}
+  Event.IniUnit[UnitName].EventFunction = EventFunction
+  Event.IniUnit[UnitName].EventClass = EventClass
+  return self
+end
+
+--- Set a new listener for an S_EVENT_X event for a GROUP.
+-- @param #EVENT self
+-- @param #string GroupName The name of the GROUP.
+-- @param #function EventFunction The function to be called when the event occurs for the GROUP.
+-- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
+-- @param EventID
+-- @return #EVENT
+function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID )
+  self:F2( GroupName )
+
+  local Event = self:Init( EventID, EventClass )
+  if not Event.IniGroup then
+    Event.IniGroup = {}
+  end
+  Event.IniGroup[GroupName] = {}
+  Event.IniGroup[GroupName].EventFunction = EventFunction
+  Event.IniGroup[GroupName].EventClass = EventClass
   return self
 end
 
@@ -1084,7 +1125,9 @@ function EVENT:onEvent( Event )
         if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
           Event.IniDCSGroupName = Event.IniDCSGroup:getName()
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-          self:E( { IniGroup = Event.IniGroup } )
+          if Event.IniGroup then
+            Event.IniGroupName = Event.IniDCSGroupName
+          end
         end
         Event.IniPlayerName = Event.IniDCSUnit:getPlayerName()
         Event.IniCoalition = Event.IniDCSUnit:getCoalition()
@@ -1125,6 +1168,10 @@ function EVENT:onEvent( Event )
         Event.TgtDCSGroupName = ""
         if Event.TgtDCSGroup and Event.TgtDCSGroup:isExist() then
           Event.TgtDCSGroupName = Event.TgtDCSGroup:getName()
+          Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
+          if Event.TgtGroup then
+            Event.TgtGroupName = Event.TgtDCSGroupName
+          end
         end
         Event.TgtPlayerName = Event.TgtDCSUnit:getPlayerName()
         Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
@@ -1170,6 +1217,8 @@ function EVENT:onEvent( Event )
       
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
+
+          Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
           if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
@@ -1177,8 +1226,7 @@ function EVENT:onEvent( Event )
             -- First test if a EventFunction is Set, otherwise search for the default function
             if EventData.IniUnit[Event.IniDCSUnitName].EventFunction then
           
-              self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-              Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+              self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
               
               local Result, Value = xpcall( 
                 function() 
@@ -1193,7 +1241,6 @@ function EVENT:onEvent( Event )
                 
                 -- Now call the default event function.
                 self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
                 
                 local Result, Value = xpcall( 
                   function() 
@@ -1204,38 +1251,69 @@ function EVENT:onEvent( Event )
             end
           
           else
-          
-            -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
-            -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-            if Event.IniDCSUnit and not EventData.IniUnit then
+
+            -- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
+            if Event.IniDCSUnitName and Event.IniDCSGroupName and Event.IniGroupName and EventData.IniGroup and EventData.IniGroup[Event.IniGroupName] then 
+  
+              -- First test if a EventFunction is Set, otherwise search for the default function
+              if EventData.IniGroup[Event.IniGroupName].EventFunction then
             
-              if EventClass == EventData.EventClass then
+                self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
                 
-                -- First test if a EventFunction is Set, otherwise search for the default function
-                if EventData.EventFunction then
+                local Result, Value = xpcall( 
+                  function() 
+                    return EventData.IniGroup[Event.IniGroupName].EventFunction( EventClass, Event ) 
+                  end, ErrorHandler )
+  
+              else
+  
+                -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                if EventFunction and type( EventFunction ) == "function" then
                   
-                  -- There is an EventFunction defined, so call the EventFunction.
-                  self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                  Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-              
+                  -- Now call the default event function.
+                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                  
                   local Result, Value = xpcall( 
                     function() 
-                      return EventData.EventFunction( EventClass, Event ) 
+                      return EventFunction( EventClass, Event ) 
                     end, ErrorHandler )
-                else
+                end
+                
+              end
+              
+            else
+          
+              -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
+              -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
+              if Event.IniDCSUnit and not EventData.IniUnit then
+              
+                if EventClass == EventData.EventClass then
                   
-                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
-                  if EventFunction and type( EventFunction ) == "function" then
+                  -- First test if a EventFunction is Set, otherwise search for the default function
+                  if EventData.EventFunction then
                     
-                    -- Now call the default event function.
-                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                    Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
-                    
+                    -- There is an EventFunction defined, so call the EventFunction.
+                    self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                
                     local Result, Value = xpcall( 
                       function() 
-                        return EventFunction( EventClass, Event ) 
+                        return EventData.EventFunction( EventClass, Event ) 
                       end, ErrorHandler )
+                  else
+                    
+                    -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                    local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                    if EventFunction and type( EventFunction ) == "function" then
+                      
+                      -- Now call the default event function.
+                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      
+                      local Result, Value = xpcall( 
+                        function() 
+                          return EventFunction( EventClass, Event ) 
+                        end, ErrorHandler )
+                    end
                   end
                 end
               end

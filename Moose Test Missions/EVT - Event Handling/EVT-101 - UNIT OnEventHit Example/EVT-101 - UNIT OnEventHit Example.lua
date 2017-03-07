@@ -1,7 +1,7 @@
 ---
--- Name: EVT-101 - OnEventHit Example
+-- Name: EVT-101 - UNIT OnEventHit Example
 -- Author: FlightControl
--- Date Created: 7 February 2017
+-- Date Created: 7 Feb 2017
 --
 -- # Situation:
 --
