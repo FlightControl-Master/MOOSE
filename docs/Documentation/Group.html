@@ -162,6 +162,9 @@ Use the following Zone validation methods on the group:</p>
 
 <p>Hereby the change log:</p>
 
+<p>2017-03-07: GROUP:<strong>HandleEvent( Event, EventFunction )</strong> added. <br/>
+2017-03-07: GROUP:<strong>UnHandleEvent( Event )</strong> added.</p>
+
 <p>2017-01-24: GROUP:<strong>SetAIOnOff( AIOnOff )</strong> added.  </p>
 
 <p>2017-01-24: GROUP:<strong>SetAIOn()</strong> added.  </p>
@@ -379,6 +382,12 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).HandleEvent">GROUP:HandleEvent(Event, EventFunction)</a></td>
+		<td class="summary">
+<p>Subscribe to a DCS Event.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).InAir">GROUP:InAir()</a></td>
 		<td class="summary">
 <p>Returns true if the first unit of the GROUP is in the air.</p>
@@ -490,6 +499,12 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetTemplateCountry">GROUP:SetTemplateCountry(CountryID, Template)</a></td>
 		<td class="summary">
 <p>Sets the CountryID of the group in a Template.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).UnHandleEvent">GROUP:UnHandleEvent(Event)</a></td>
+		<td class="summary">
+<p>UnSubscribe to a DCS event.</p>
 </td>
 		</tr>
 	</table>
@@ -1144,6 +1159,38 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).HandleEvent" >
+<strong>GROUP:HandleEvent(Event, EventFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Subscribe to a DCS Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+(optional) The function to be called when the event occurs for the GROUP.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).InAir" >
 <strong>GROUP:InAir()</strong>
 </a>
@@ -1611,6 +1658,32 @@ The country ID.</p>
 		<h3>Return value</h3>
 				
 <p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).UnHandleEvent" >
+<strong>GROUP:UnHandleEvent(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnSubscribe to a DCS event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
 
 
 </dd>

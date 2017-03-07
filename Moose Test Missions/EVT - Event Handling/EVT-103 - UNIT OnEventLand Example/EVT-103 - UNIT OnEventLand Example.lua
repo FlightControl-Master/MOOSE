@@ -1,7 +1,7 @@
 ---
--- Name: EVT-103 - OnEventLand Example
+-- Name: EVT-103 - UNIT OnEventLand Example
 -- Author: FlightControl
--- Date Created: 7 February 2017
+-- Date Created: 7 Feb 2017
 --
 -- # Situation:
 --
