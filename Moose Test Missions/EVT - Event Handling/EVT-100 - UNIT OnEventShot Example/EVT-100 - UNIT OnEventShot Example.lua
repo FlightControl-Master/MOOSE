@@ -1,7 +1,7 @@
 ---
--- Name: EVT-100 - OnEventShot Example
+-- Name: EVT-100 - UNIT OnEventShot Example
 -- Author: FlightControl
--- Date Created: 7 February 2017
+-- Date Created: 7 Feb 2017
 --
 -- # Situation:
 --

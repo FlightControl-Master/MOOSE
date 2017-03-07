@@ -1,7 +1,7 @@
 ---
--- Name: EVT-102 - OnEventTakeoff Example
+-- Name: EVT-102 - UNIT OnEventTakeoff Example
 -- Author: FlightControl
--- Date Created: 7 February 2017
+-- Date Created: 7 Feb 2017
 --
 -- # Situation:
 --
