@@ -50,11 +50,14 @@
 -- 
 --   * **None** ( Group ): The process is not started yet.
 --   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
---   * **Returning** ( Group ): The AI is returning to Base..
+--   * **Returning** ( Group ): The AI is returning to Base.
+--   * **Stopped** ( Group ): The process is stopped.
+--   * **Crashed** ( Group ): The AI has crashed or is dead.
 -- 
 -- ### 1.2.2) AI_PATROL_ZONE Events
 -- 
 --   * **Start** ( Group ): Start the process.
+--   * **Stop** ( Group ): Stop the process.
 --   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
 --   * **RTB** ( Group ): Route the AI to the home base.
 --   * **Detect** ( Group ): The AI is detecting targets.
