@@ -201,6 +201,51 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   
   self:SetStartState( "None" ) 
 
+  self:AddTransition( "*", "Stop", "Stopped" )
+
+--- OnLeave Transition Handler for State Stopped.
+-- @function [parent=#AI_PATROL_ZONE] OnLeaveStopped
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnEnter Transition Handler for State Stopped.
+-- @function [parent=#AI_PATROL_ZONE] OnEnterStopped
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+
+--- OnBefore Transition Handler for Event Stop.
+-- @function [parent=#AI_PATROL_ZONE] OnBeforeStop
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @return #boolean Return false to cancel Transition.
+
+--- OnAfter Transition Handler for Event Stop.
+-- @function [parent=#AI_PATROL_ZONE] OnAfterStop
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+	
+--- Synchronous Event Trigger for Event Stop.
+-- @function [parent=#AI_PATROL_ZONE] Stop
+-- @param #AI_PATROL_ZONE self
+
+--- Asynchronous Event Trigger for Event Stop.
+-- @function [parent=#AI_PATROL_ZONE] __Stop
+-- @param #AI_PATROL_ZONE self
+-- @param #number Delay The delay in seconds.
+
   self:AddTransition( "None", "Start", "Patrolling" )
 
 --- OnBefore Transition Handler for Event Start.
