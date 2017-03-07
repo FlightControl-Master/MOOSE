@@ -64,6 +64,13 @@
 -- 
 --   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
 --   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+--   
+-- Note that for a UNIT, the event will be handled **for that UNIT only**!
+-- Note that for a GROUP, the event will be handled **for all the UNITs in that GROUP only**!
+-- 
+-- For all objects of other classes, the subscribed events will be handled for **all UNITs within the Mission**!
+-- So if a UNIT within the mission has the subscribed event for that object, 
+-- then the object event handler will receive the event for that UNIT!
 -- 
 -- ### 1.3.2 Event Handling of DCS Events
 -- 
