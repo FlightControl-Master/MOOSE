@@ -1088,7 +1088,6 @@ do -- OnPlayerLeaveUnit
 end
 
 
-
 --- @param #EVENT self
 -- @param #EVENTDATA Event
 function EVENT:onEvent( Event )
@@ -1250,35 +1249,34 @@ function EVENT:onEvent( Event )
                       return EventFunction( EventClass, Event ) 
                     end, ErrorHandler )
                 end
-                
               end
-            else
-              if EventData.EventUnit[Event.TgtDCSUnitName] then
+            end
+            
+            if EventData.EventUnit[Event.TgtDCSUnitName] then
+
+              -- First test if a EventFunction is Set, otherwise search for the default function
+              if EventData.EventUnit[Event.TgtDCSUnitName].EventFunction then
+            
+                self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                
+                local Result, Value = xpcall( 
+                  function() 
+                    return EventData.EventUnit[Event.TgtDCSUnitName].EventFunction( EventClass, Event ) 
+                  end, ErrorHandler )
   
-                -- First test if a EventFunction is Set, otherwise search for the default function
-                if EventData.EventUnit[Event.TgtDCSUnitName].EventFunction then
-              
-                  self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+              else
+  
+                -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                if EventFunction and type( EventFunction ) == "function" then
+                  
+                  -- Now call the default event function.
+                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                   
                   local Result, Value = xpcall( 
                     function() 
-                      return EventData.EventUnit[Event.TgtDCSUnitName].EventFunction( EventClass, Event ) 
+                      return EventFunction( EventClass, Event ) 
                     end, ErrorHandler )
-    
-                else
-    
-                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
-                  if EventFunction and type( EventFunction ) == "function" then
-                    
-                    -- Now call the default event function.
-                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                    
-                    local Result, Value = xpcall( 
-                      function() 
-                        return EventFunction( EventClass, Event ) 
-                      end, ErrorHandler )
-                  end
                 end
               end
             end
@@ -1315,31 +1313,31 @@ function EVENT:onEvent( Event )
                       end, ErrorHandler )
                   end
                 end
-              else
-                if EventData.EventGroup[Event.TgtGroupName] then  
-                  if EventData.EventGroup[Event.TgtGroupName].EventFunction then
-                
-                    self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+              end
+
+              if EventData.EventGroup[Event.TgtGroupName] then  
+                if EventData.EventGroup[Event.TgtGroupName].EventFunction then
+              
+                  self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                  
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventGroup[Event.TgtGroupName].EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+    
+                else
+    
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
                     
                     local Result, Value = xpcall( 
                       function() 
-                        return EventData.EventGroup[Event.TgtGroupName].EventFunction( EventClass, Event ) 
+                        return EventFunction( EventClass, Event ) 
                       end, ErrorHandler )
-      
-                  else
-      
-                    -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                    local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
-                    if EventFunction and type( EventFunction ) == "function" then
-                      
-                      -- Now call the default event function.
-                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
-                      
-                      local Result, Value = xpcall( 
-                        function() 
-                          return EventFunction( EventClass, Event ) 
-                        end, ErrorHandler )
-                    end
                   end
                 end
               end
