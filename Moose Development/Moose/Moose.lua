@@ -1,4 +1,5 @@
 --- The main include file for the MOOSE system.
+-- Test of permissions
 
 --- Core Routines
 Include.File( "Utilities/Routines" )
