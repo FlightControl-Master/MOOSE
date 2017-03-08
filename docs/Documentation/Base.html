@@ -99,7 +99,8 @@
 
 <h2>1.1) BASE constructor</h2>
 
-<p>Any class derived from BASE, must use the <a href="Base.html##(BASE).New">Base#BASE.New</a> method how this is done.</p>
+<p>Any class derived from BASE, will use the <a href="Base.html##(BASE).New">Base#BASE.New</a> constructor embedded in the <a href="Base.html##(BASE).Inherit">Base#BASE.Inherit</a> method. 
+See an example at the <a href="Base.html##(BASE).New">Base#BASE.New</a> method how this is done.</p>
 
 <h2>1.2) Trace information for debugging</h2>
 
@@ -447,7 +448,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).New">BASE:New()</a></td>
 		<td class="summary">
-
+<p>BASE constructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -1114,6 +1115,14 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 	
 <p>This is the worker method to retrieve the Parent class.</p>
 
+	
+<p>Note that the Parent class must be passed to call the parent class method.</p>
+
+<pre><code>self:GetParent(self):ParentMethod()
+
+
+</code></pre>
+
 		<h3>Parameter</h3>
 		<ul>
 				<li>
@@ -1264,10 +1273,23 @@ Child</p>
 </dt>
 <dd>
 	
-
+<p>BASE constructor.</p>
 
 	
-<p> @todo need to investigate if the deepCopy is really needed... Don't think so.</p>
+
+<p>This is an example how to use the BASE:New() constructor in a new class definition when inheriting from BASE.</p>
+
+<pre><code>function EVENT:New()
+  local self = BASE:Inherit( self, BASE:New() ) -- #EVENT
+  return self
+end
+  
+</code></pre>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
 
 </dd>
 </dl>

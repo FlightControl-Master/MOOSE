@@ -20,7 +20,7 @@
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
+-- Any class derived from BASE, will use the @{Base#BASE.New} constructor embedded in the @{Base#BASE.Inherit} method. 
 -- See an example at the @{Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) Trace information for debugging
@@ -227,7 +227,17 @@ FORMATION = {
 
 
 
--- @todo need to investigate if the deepCopy is really needed... Don't think so.
+--- BASE constructor.  
+-- 
+-- This is an example how to use the BASE:New() constructor in a new class definition when inheriting from BASE.
+--  
+--     function EVENT:New()
+--       local self = BASE:Inherit( self, BASE:New() ) -- #EVENT
+--       return self
+--     end
+--       
+-- @param #BASE self
+-- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
 	local MetaTable = {}
@@ -288,7 +298,12 @@ function BASE:Inherit( Child, Parent )
 	return Child
 end
 
---- This is the worker method to retrieve the Parent class.
+--- This is the worker method to retrieve the Parent class.  
+-- Note that the Parent class must be passed to call the parent class method.
+-- 
+--     self:GetParent(self):ParentMethod()
+--     
+--     
 -- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE

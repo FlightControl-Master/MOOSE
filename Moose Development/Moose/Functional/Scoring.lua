@@ -1529,7 +1529,7 @@ function SCORING:OpenCSV( ScoringCSV )
         error( "Error: Cannot open CSV file in " .. lfs.writedir() )
       end
 
-      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
+      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","TargetPlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
   
       self.RunTime = os.date("%y-%m-%d_%H-%M-%S")
     else
