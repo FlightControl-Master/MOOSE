@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170307_1202' ) 
+env.info( 'Moose Generation Timestamp: 20170308_2000' ) 
 local base = _G
 
 Include = {}
@@ -2790,37 +2790,69 @@ function UTILS.DoString( s )
     return false, err
   end
 end
---- This module contains the BASE class.
+--- **Core** - BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
 -- 
--- 1) @{#BASE} class
--- =================
--- The @{#BASE} class is the super class for all the classes defined within MOOSE.
+-- ![Banner Image](..\Presentations\BASE\Dia1.JPG)
 -- 
--- It handles:
+-- ===
 -- 
---   * The construction and inheritance of child classes.
---   * The tracing of objects during mission execution within the **DCS.log** file, under the **"Saved Games\DCS\Logs"** folder.
+-- # 1) @{#BASE} class
 -- 
--- Note: Normally you would not use the BASE class unless you are extending the MOOSE framework with new classes.
+-- All classes within the MOOSE framework are derived from the @{#BASE} class. 
+--  
+-- BASE provides facilities for :
+-- 
+--   * The construction and inheritance of MOOSE classes.
+--   * The class naming and numbering system.
+--   * The class hierarchy search system.
+--   * The tracing of information or objects during mission execution for debuggin purposes.
+--   * The subscription to DCS events for event handling in MOOSE objects.
+-- 
+-- Note: The BASE class is an abstract class and is not meant to be used directly.
 -- 
 -- ## 1.1) BASE constructor
 -- 
 -- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
 -- See an example at the @{Base#BASE.New} method how this is done.
 -- 
--- ## 1.2) BASE Trace functionality
+-- ## 1.2) Trace information for debugging
 -- 
 -- The BASE class contains trace methods to trace progress within a mission execution of a certain object.
--- Note that these trace methods are inherited by each MOOSE class interiting BASE.
--- As such, each object created from derived class from BASE can use the tracing functions to trace its execution.
+-- These trace methods are inherited by each MOOSE class interiting BASE, soeach object created from derived class from BASE can use the tracing methods to trace its execution.
 -- 
--- ### 1.2.1) Tracing functions
+-- Any type of information can be passed to these tracing methods. See the following examples:
+-- 
+--     self:E( "Hello" )
+-- 
+-- Result in the word "Hello" in the dcs.log.
+-- 
+--     local Array = { 1, nil, "h", { "a","b" }, "x" }
+--     self:E( Array )
+--     
+-- Results with the text [1]=1,[3]="h",[4]={[1]="a",[2]="b"},[5]="x"} in the dcs.log.   
+-- 
+--     local Object1 = "Object1"
+--     local Object2 = 3
+--     local Object3 = { Object 1, Object 2 }
+--     self:E( { Object1, Object2, Object3 } )
+--     
+-- Results with the text [1]={[1]="Object",[2]=3,[3]={[1]="Object",[2]=3}} in the dcs.log.
+--     
+--     local SpawnObject = SPAWN:New( "Plane" )
+--     local GroupObject = GROUP:FindByName( "Group" )
+--     self:E( { Spawn = SpawnObject, Group = GroupObject } )
+-- 
+-- Results with the text [1]={Spawn={....),Group={...}} in the dcs.log.  
+-- 
+-- Below a more detailed explanation of the different method types for tracing.
+-- 
+-- ### 1.2.1) Tracing methods categories
 --
--- There are basically 3 types of tracing methods available within BASE:
+-- There are basically 3 types of tracing methods available:
 -- 
---   * @{#BASE.F}: Trace the beginning of a function and its given parameters. An F is indicated at column 44 in the DCS.log file.
---   * @{#BASE.T}: Trace further logic within a function giving optional variables or parameters. A T is indicated at column 44 in the DCS.log file.
---   * @{#BASE.E}: Trace an exception within a function giving optional variables or parameters. An E is indicated at column 44 in the DCS.log file. An exception will always be traced.
+--   * @{#BASE.F}: Used to trace the entrance of a function and its given parameters. An F is indicated at column 44 in the DCS.log file.
+--   * @{#BASE.T}: Used to trace further logic within a function giving optional variables or parameters. A T is indicated at column 44 in the DCS.log file.
+--   * @{#BASE.E}: Used to always trace information giving optional variables or parameters. An E is indicated at column 44 in the DCS.log file.
 -- 
 -- ### 1.2.2) Tracing levels
 --
@@ -2843,6 +2875,7 @@ end
 --   * Activate only the tracing of a certain class (name) through the @{#BASE.TraceClass}() method.
 --   * Activate only the tracing of a certain method of a certain class through the @{#BASE.TraceClassMethod}() method.
 --   * Activate only the tracing of a certain level through the @{#BASE.TraceLevel}() method.
+-- 
 -- ### 1.2.4) Check if tracing is on.
 -- 
 -- The method @{#BASE.IsTrace}() will validate if tracing is activated or not.
@@ -2856,7 +2889,7 @@ end
 -- 
 -- At first, the mission designer will need to **Subscribe** to a specific DCS event for the class.
 -- So, when the DCS event occurs, the class will be notified of that event.
--- There are two functions which you use to subscribe to or unsubscribe from an event.
+-- There are two methods which you use to subscribe to or unsubscribe from an event.
 -- 
 --   * @{#BASE.HandleEvent}(): Subscribe to a DCS Event.
 --   * @{#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
@@ -2906,10 +2939,12 @@ end
 -- 
 -- ## 1.5) All objects derived from BASE can have "States"
 -- 
--- A mechanism is in place in MOOSE, that allows to let the objects administer **states**. 
--- States are essentially properties of objects, which are identified by a **Key** and a **Value**.
--- The method @{#BASE.SetState}() can be used to set a Value with a reference Key to the object.
--- To **read or retrieve** a state Value based on a Key, use the @{#BASE.GetState} method.
+-- A mechanism is in place in MOOSE, that allows to let the objects administer **states**.  
+-- States are essentially properties of objects, which are identified by a **Key** and a **Value**.  
+-- 
+-- The method @{#BASE.SetState}() can be used to set a Value with a reference Key to the object.  
+-- To **read or retrieve** a state Value based on a Key, use the @{#BASE.GetState} method.  
+-- 
 -- These two methods provide a very handy way to keep state at long lasting processes.
 -- Values can be stored within the objects, and later retrieved or changed when needed.
 -- There is one other important thing to note, the @{#BASE.SetState}() and @{#BASE.GetState} methods
@@ -2917,9 +2952,9 @@ end
 -- Thus, if the state is to be set for the same object as the object for which the method is used, then provide the same
 -- object name to the method.
 -- 
--- ## 1.10) BASE Inheritance (tree) support
+-- ## 1.10) Inheritance
 -- 
--- The following methods are available to support inheritance:
+-- The following methods are available to implement inheritance
 -- 
 --   * @{#BASE.Inherit}: Inherits from a class.
 --   * @{#BASE.GetParent}: Returns the parent object from the object it is handling, or nil if there is no parent object.
@@ -4019,8 +4054,7 @@ end
 
 
 
---- This core module models the dispatching of DCS Events to subscribed MOOSE classes,
--- following a given priority.
+--- **Core** - EVENT models DCS **event dispatching** using a **publish-subscribe** model.
 -- 
 -- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
@@ -4481,7 +4515,7 @@ function EVENT:RemoveForUnit( UnitName, EventClass, EventID  )
   local EventClass = EventClass
   local EventPriority = EventClass:GetEventPriority()
   local Event = self.Events[EventID][EventPriority][EventClass]
-  Event.IniUnit[UnitName] = nil
+  Event.EventUnit[UnitName] = nil
 end
 
 --- Removes an Events entry for a GROUP.
@@ -4496,7 +4530,7 @@ function EVENT:RemoveForGroup( GroupName, EventClass, EventID  )
   local EventClass = EventClass
   local EventPriority = EventClass:GetEventPriority()
   local Event = self.Events[EventID][EventPriority][EventClass]
-  Event.IniGroup[GroupName] = nil
+  Event.EventGroup[GroupName] = nil
 end
 
 --- Clears all event subscriptions for a @{Base#BASE} derived object.
@@ -4558,12 +4592,12 @@ function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
   self:F2( UnitName )
 
   local Event = self:Init( EventID, EventClass )
-  if not Event.IniUnit then
-    Event.IniUnit = {}
+  if not Event.EventUnit then
+    Event.EventUnit = {}
   end
-  Event.IniUnit[UnitName] = {}
-  Event.IniUnit[UnitName].EventFunction = EventFunction
-  Event.IniUnit[UnitName].EventClass = EventClass
+  Event.EventUnit[UnitName] = {}
+  Event.EventUnit[UnitName].EventFunction = EventFunction
+  Event.EventUnit[UnitName].EventClass = EventClass
   return self
 end
 
@@ -4578,12 +4612,12 @@ function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID )
   self:F2( GroupName )
 
   local Event = self:Init( EventID, EventClass )
-  if not Event.IniGroup then
-    Event.IniGroup = {}
+  if not Event.EventGroup then
+    Event.EventGroup = {}
   end
-  Event.IniGroup[GroupName] = {}
-  Event.IniGroup[GroupName].EventFunction = EventFunction
-  Event.IniGroup[GroupName].EventClass = EventClass
+  Event.EventGroup[GroupName] = {}
+  Event.EventGroup[GroupName].EventFunction = EventFunction
+  Event.EventGroup[GroupName].EventClass = EventClass
   return self
 end
 
@@ -5240,50 +5274,22 @@ function EVENT:onEvent( Event )
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
 
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
+          Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
-          if Event.IniDCSUnitName and EventData.IniUnit and EventData.IniUnit[Event.IniDCSUnitName] then 
+          if ( Event.IniDCSUnitName and EventData.EventUnit and EventData.EventUnit[Event.IniDCSUnitName] ) or
+             ( Event.TgtDCSUnitName and EventData.EventUnit and EventData.EventUnit[Event.TgtDCSUnitName] ) then 
 
-            -- First test if a EventFunction is Set, otherwise search for the default function
-            if EventData.IniUnit[Event.IniDCSUnitName].EventFunction then
-          
-              self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-              
-              local Result, Value = xpcall( 
-                function() 
-                  return EventData.IniUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
-                end, ErrorHandler )
+            if EventData.EventUnit[Event.IniDCSUnitName] then
 
-            else
-
-              -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-              local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
-              if EventFunction and type( EventFunction ) == "function" then
-                
-                -- Now call the default event function.
-                self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                
-                local Result, Value = xpcall( 
-                  function() 
-                    return EventFunction( EventClass, Event ) 
-                  end, ErrorHandler )
-              end
-              
-            end
-          
-          else
-
-            -- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
-            if Event.IniDCSUnitName and Event.IniDCSGroupName and Event.IniGroupName and EventData.IniGroup and EventData.IniGroup[Event.IniGroupName] then 
-  
               -- First test if a EventFunction is Set, otherwise search for the default function
-              if EventData.IniGroup[Event.IniGroupName].EventFunction then
+              if EventData.EventUnit[Event.IniDCSUnitName].EventFunction then
             
-                self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
                 
                 local Result, Value = xpcall( 
                   function() 
-                    return EventData.IniGroup[Event.IniGroupName].EventFunction( EventClass, Event ) 
+                    return EventData.EventUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
                   end, ErrorHandler )
   
               else
@@ -5293,7 +5299,7 @@ function EVENT:onEvent( Event )
                 if EventFunction and type( EventFunction ) == "function" then
                   
                   -- Now call the default event function.
-                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                   
                   local Result, Value = xpcall( 
                     function() 
@@ -5302,12 +5308,103 @@ function EVENT:onEvent( Event )
                 end
                 
               end
+            else
+              if EventData.EventUnit[Event.TgtDCSUnitName] then
+  
+                -- First test if a EventFunction is Set, otherwise search for the default function
+                if EventData.EventUnit[Event.TgtDCSUnitName].EventFunction then
+              
+                  self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                  
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventUnit[Event.TgtDCSUnitName].EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+    
+                else
+    
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+                  end
+                end
+              end
+            end
+          
+          else
+
+            -- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
+            if ( Event.IniDCSUnitName and Event.IniDCSGroupName and Event.IniGroupName and EventData.EventGroup and EventData.EventGroup[Event.IniGroupName] ) or
+               ( Event.TgtDCSUnitName and Event.TgtDCSGroupName and Event.TgtGroupName and EventData.EventGroup and EventData.EventGroup[Event.TgtGroupName] ) then 
+
+              if EventData.EventGroup[Event.IniGroupName] then  
+                -- First test if a EventFunction is Set, otherwise search for the default function
+                if EventData.EventGroup[Event.IniGroupName].EventFunction then
+              
+                  self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                  
+                  local Result, Value = xpcall( 
+                    function() 
+                      return EventData.EventGroup[Event.IniGroupName].EventFunction( EventClass, Event ) 
+                    end, ErrorHandler )
+    
+                else
+    
+                  -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  if EventFunction and type( EventFunction ) == "function" then
+                    
+                    -- Now call the default event function.
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+                  end
+                end
+              else
+                if EventData.EventGroup[Event.TgtGroupName] then  
+                  if EventData.EventGroup[Event.TgtGroupName].EventFunction then
+                
+                    self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                    
+                    local Result, Value = xpcall( 
+                      function() 
+                        return EventData.EventGroup[Event.TgtGroupName].EventFunction( EventClass, Event ) 
+                      end, ErrorHandler )
+      
+                  else
+      
+                    -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
+                    local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                    if EventFunction and type( EventFunction ) == "function" then
+                      
+                      -- Now call the default event function.
+                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                      
+                      local Result, Value = xpcall( 
+                        function() 
+                          return EventFunction( EventClass, Event ) 
+                        end, ErrorHandler )
+                    end
+                  end
+                end
+              end
               
             else
           
               -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
               -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-              if Event.IniDCSUnit and not EventData.IniUnit then
+              if Event.IniDCSUnit and not EventData.EventUnit then
               
                 if EventClass == EventData.EventClass then
                   
@@ -5363,7 +5460,7 @@ function EVENTHANDLER:New()
   self = BASE:Inherit( self, BASE:New() ) -- #EVENTHANDLER
   return self
 end
---- This module contains the MENU classes.
+--- **Core** -- MENU_ classes model the definition of **hierarchical menu structures** and **commands for players** within a mission.
 -- 
 -- ===
 -- 
@@ -6255,7 +6352,9 @@ do
 
 end
 
---- This core module contains the ZONE classes, inherited from @{Zone#ZONE_BASE}.
+--- **Core** - ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
+-- 
+-- ===
 -- 
 -- There are essentially two core functions that zones accomodate:
 -- 
@@ -8080,7 +8179,7 @@ end
 
 
 
---- This module contains the SET classes.
+--- **Core** - SET classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
 -- ===
 -- 
@@ -10367,7 +10466,7 @@ function SET_AIRBASE:IsIncludeObject( MAirbase )
   self:T2( MAirbaseInclude )
   return MAirbaseInclude
 end
---- This module contains the POINT classes.
+--- **Core** - **POINT\_VEC** classes define an **extensive API** to **manage 3D points** in the simulation space.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
 -- ==================================================
@@ -11256,29 +11355,43 @@ end
 end
 
 
---- This module contains the MESSAGE class.
+--- **Core** - MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
 -- 
--- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
--- =================================================
+-- ![Banner Image](..\Presentations\MESSAGE\Dia1.JPG)
+-- 
+-- ===
+-- 
+-- # 1) @{Message#MESSAGE} class, extends @{Base#BASE}
+-- 
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
 -- Messages can contain a category which is indicating the category of the message.
 -- 
--- 1.1) MESSAGE construction methods
--- ---------------------------------
+-- ## 1.1) MESSAGE construction
+-- 
 -- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
--- 1.2) Send messages with MESSAGE To methods
--- ------------------------------------------
--- Messages are sent to:
+-- ## 1.2) Send messages to an audience
+-- 
+-- Messages are sent:
 --
---   * Clients with @{Message#MESSAGE.ToClient}.
---   * Coalitions with @{Message#MESSAGE.ToCoalition}.
---   * All Players with @{Message#MESSAGE.ToAll}.
+--   * To a @{Client} using @{Message#MESSAGE.ToClient}().
+--   * To a @{Group} using @{Message#MESSAGE.ToGroup}()
+--   * To a coalition using @{Message#MESSAGE.ToCoalition}().
+--   * To the red coalition using @{Message#MESSAGE.ToRed}().
+--   * To the blue coalition using @{Message#MESSAGE.ToBlue}().
+--   * To all Players using @{Message#MESSAGE.ToAll}().
+-- 
+-- ## 1.3) Send conditionally to an audience
+-- 
+-- Messages can be sent conditionally to an audience (when a condition is true):
 --   
+--   * To all players using @{Message#MESSAGE.ToAllIf}().
+--   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
+-- 
+-- 
 -- @module Message
--- @author FlightControl
 
 --- The MESSAGE class
 -- @type MESSAGE
@@ -11487,85 +11600,8 @@ function MESSAGE:ToAllIf( Condition )
 
 	return self
 end
-
-
-
------ The MESSAGEQUEUE class
----- @type MESSAGEQUEUE
---MESSAGEQUEUE = {
---	ClientGroups = {},
---	CoalitionSides = {}
---}
---
---function MESSAGEQUEUE:New( RefreshInterval )
---	local self = BASE:Inherit( self, BASE:New() )
---	self:F( { RefreshInterval } )
---	
---	self.RefreshInterval = RefreshInterval
---
---	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
---  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
---
---	return self
---end
---
------ This function is called automatically by the MESSAGEQUEUE scheduler.
---function MESSAGEQUEUE:_DisplayMessages()
---
---	-- First we display all messages that a coalition needs to receive... Also those who are not in a client (CA module clients...).
---	for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
---		for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
---			if MessageData.MessageSent == false then
---				--trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---				MessageData.MessageSent = true
---			end
---			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---			if MessageTimeLeft <= 0 then
---				MessageData = nil
---			end
---		end
---	end
---
---	-- Then we send the messages for each individual client, but also to be included are those Coalition messages for the Clients who belong to a coalition.
---	-- Because the Client messages will overwrite the Coalition messages (for that Client).
---	for ClientGroupName, ClientGroupData in pairs( self.ClientGroups ) do
---		for MessageID, MessageData in pairs( ClientGroupData.Messages ) do
---			if MessageData.MessageGroup == false then
---				trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---				MessageData.MessageGroup = true
---			end
---			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---			if MessageTimeLeft <= 0 then
---				MessageData = nil
---			end
---		end
---		
---		-- Now check if the Client also has messages that belong to the Coalition of the Client...
---		for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
---			for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
---				local CoalitionGroup = Group.getByName( ClientGroupName )
---				if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
---					if MessageData.MessageCoalition == false then
---						trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---						MessageData.MessageCoalition = true
---					end
---				end
---				local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---				if MessageTimeLeft <= 0 then
---					MessageData = nil
---				end
---			end
---		end
---	end
---	
---	return true
---end
---
------ The _MessageQueue object is created when the MESSAGE class module is loaded.
-----_MessageQueue = MESSAGEQUEUE:New( 0.5 )
---
---- This module contains the **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes.
--- ## Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.
+--- **Core** - The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
+-- are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
 -- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
 -- 
@@ -33567,6 +33603,7 @@ do -- TASK_A2G
 
 
 --- The main include file for the MOOSE system.
+-- Test of permissions
 
 --- Core Routines
 Include.File( "Utilities/Routines" )
