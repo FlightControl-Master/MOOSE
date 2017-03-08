@@ -586,9 +586,9 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
-  RoutePoint.alt = self:GetY()
+  RoutePoint.x = self:GetLat()   -- Not sure if this is really necessary but it is clearer
+  RoutePoint.y = self:GetLon()   -- Not sure if this is really necessary but it is clearer
+  RoutePoint.alt = self:GetAlt() -- This is the tricky bit
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
@@ -627,8 +627,9 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
+  RoutePoint.x = self:GetLat()   -- Not sure if this is really necessary but it is clearer
+  RoutePoint.y = self:GetLon()   -- Not sure if this is really necessary but it is clearer
+  -- Should RoutePoint.alt not be set? Or is a nil value for RoutePoint.alt handled whereever it is used?
   
   RoutePoint.action = Formation or ""
     
