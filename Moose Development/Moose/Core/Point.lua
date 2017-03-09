@@ -364,7 +364,7 @@ function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
 
   local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
   local y = self:GetY() + math.random( InnerRadius, OuterRadius )
-  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.z }
+  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.y }
 
   return RandomVec3
 end
