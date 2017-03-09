@@ -219,7 +219,6 @@ do -- TASK_A2G_DISPATCHER
           local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", AreaID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           SEADTask = Mission:AddTask( Task )
-          
         end
       end        
       if SEADTask and SEADTask:IsStatePlanned() then
