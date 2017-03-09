@@ -530,9 +530,9 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
-  RoutePoint.alt = self:GetY()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
+  RoutePoint.alt = self.y
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
@@ -571,8 +571,8 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
   
   RoutePoint.action = Formation or ""
     
