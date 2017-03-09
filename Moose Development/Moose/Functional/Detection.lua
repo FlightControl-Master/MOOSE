@@ -1408,7 +1408,7 @@ do -- DETECTION_AREAS
     local DetectedItem = self:GetParent( self ).AddDetectedItem( self, Set, Zone )
   
     DetectedItem.Removed = false
-    DetectedItem.AreaID = #self.DetectedItems + 1
+    DetectedItem.AreaID = #self.DetectedItems
     
     self:T( { #self.DetectedItems, DetectedItem } )
   
@@ -1433,8 +1433,7 @@ do -- DETECTION_AREAS
       local DetectedItemPointVec3 = DetectedZone:GetPointVec3()
       local DetectedAreaPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
       local ReportSummary = string.format( 
-        "Area #%d - %s - Threat Level [%s] (%2d)", 
-        Index,
+        "%s - Threat Level [%s] (%2d)", 
         DetectedAreaPointLL,
         string.rep(  "■", ThreatLevelA2G ),
         ThreatLevelA2G

@@ -185,7 +185,7 @@ do -- TASK_A2G_DISPATCHER
 
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_AREAS} object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
     self:F2()
@@ -195,6 +195,9 @@ do -- TASK_A2G_DISPATCHER
     local ChangeMsg = {}
     
     local Mission = self.Mission
+    local ReportSEAD = REPORT:New( " - SEAD Tasks:")
+    local ReportCAS = REPORT:New( " - CAS Tasks:")
+    local ReportBAI = REPORT:New( " - BAI Tasks:")
 
     --- First we need to  the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -208,65 +211,51 @@ do -- TASK_A2G_DISPATCHER
       local AreaID = DetectedItem.AreaID
       
       -- Evaluate SEAD Tasking
-      local SEADTask = Mission:GetTask( "SEAD." .. AreaID )
+      local SEADTask = Mission:GetTask( string.format( "SEAD.%03d", AreaID ) )
       SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedItem )
       if not SEADTask then
         local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_SEAD:New( Mission, self.SetGroup, "SEAD." .. AreaID, TargetSetUnit )
+          local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", AreaID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           SEADTask = Mission:AddTask( Task )
           
         end
       end        
       if SEADTask and SEADTask:IsStatePlanned() then
-        TaskMsg[#TaskMsg+1] = "  - " .. SEADTask:GetStateString() .. " SEAD " .. AreaID .. " - " .. SEADTask.TargetSetUnit:GetUnitTypesText()
+        ReportSEAD:Add( string.format( " - %s.%02d - %s", "SEAD", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
       -- Evaluate CAS Tasking
-      local CASTask = Mission:GetTask( "CAS." .. AreaID )
+      local CASTask = Mission:GetTask( string.format( "CAS.%03d", AreaID ) )
       CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedItem )
       if not CASTask then
         local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_CAS:New( Mission, self.SetGroup, "CAS." .. AreaID, TargetSetUnit )
+          local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", AreaID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           CASTask = Mission:AddTask( Task )
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
-        TaskMsg[#TaskMsg+1] = "  - " .. CASTask:GetStateString() .. " CAS " .. AreaID .. " - " .. CASTask.TargetSetUnit:GetUnitTypesText()
+        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS.", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
       -- Evaluate BAI Tasking
-      local BAITask = Mission:GetTask( "BAI." .. AreaID )
+      local BAITask = Mission:GetTask( string.format( "BAI.%03d", AreaID ) )
       BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedItem )
       if not BAITask then
         local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_BAI:New( Mission, self.SetGroup, "BAI." .. AreaID, TargetSetUnit )
+          local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", AreaID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           BAITask = Mission:AddTask( Task )
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
-        TaskMsg[#TaskMsg+1] = "  - " .. BAITask:GetStateString() .. " BAI "  .. AreaID .. " - " .. BAITask.TargetSetUnit:GetUnitTypesText()
+        ReportBAI:Add( string.format( " - %s.%02d - %s", "BAI", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
---      if #TaskMsg > 0 then
---    
---        local ThreatLevel = Detection:GetTreatLevelA2G( DetectedItem )
---
---        local DetectedAreaVec3 = DetectedZone:GetVec3()
---        local DetectedAreaPointVec3 = POINT_VEC3:New( DetectedAreaVec3.x, DetectedAreaVec3.y, DetectedAreaVec3.z )
---        local DetectedAreaPointLL = DetectedAreaPointVec3:ToStringLL( 3, true )
---        AreaMsg[#AreaMsg+1] = string.format( "  - Area #%d - %s - Threat Level [%s] (%2d)", 
---                                                     DetectedItemID,
---                                                     DetectedAreaPointLL,
---                                                     string.rep(  "■", ThreatLevel ),
---                                                     ThreatLevel
---                                      )
---        
 --        -- Loop through the changes ...
 --        local ChangeText = Detection:GetChangeText( DetectedItem )
 --        
@@ -283,16 +272,14 @@ do -- TASK_A2G_DISPATCHER
     -- TODO set menus using the HQ coordinator
     Mission:GetCommandCenter():SetMenu()
     
-    if #TaskMsg > 0 then
-      for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-          self.CommandCenter:MessageToGroup( 
-            string.format( "HQ Reporting - Target areas for mission '%s':\nTasks:\n%s ", 
-                           self.Mission:GetName(),
-                           table.concat( TaskMsg, "\n" )
-            ), self:GetReportDisplayTime(), TaskGroup  
-          )
-        end
+    for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+      if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
+        self.CommandCenter:MessageToGroup( 
+          string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
+                         self.Mission:GetName(),
+                         string.format( "%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text() )
+          ), self:GetReportDisplayTime(), TaskGroup  
+        )
       end
     end
     
