@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170308_2139' ) 
+env.info( 'Moose Generation Timestamp: 20170309_1200EST' ) 
 local base = _G
 
 Include = {}
@@ -10561,6 +10561,7 @@ end
 -- 
 -- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
 -- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
+-- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
 -- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
 -- to add or substract a value from the current respective axis value.
 -- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
@@ -10844,7 +10845,7 @@ function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
 
   local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
   local y = self:GetY() + math.random( InnerRadius, OuterRadius )
-  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.z }
+  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.y }
 
   return RandomVec3
 end
@@ -11010,9 +11011,9 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
-  RoutePoint.alt = self:GetY()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
+  RoutePoint.alt = self.y
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
@@ -11051,8 +11052,8 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
   
   RoutePoint.action = Formation or ""
     
@@ -11253,11 +11254,25 @@ function POINT_VEC2:GetY()
   return self.z
 end
 
---- Return the altitude of the land at the POINT_VEC2.
+--- Return the altitude (height) of the land at the POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @return #number The land altitude.
 function POINT_VEC2:GetAlt()
   return land.getHeight( { x = self.x, y = self.z } )
+end
+
+--- Return Return the Lat(itude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.x).
+-- @param #POINT_VEC2 self
+-- @return #number The x coodinate.
+function POINT_VEC2:GetLat()
+  return self.x
+end
+
+--- Return the Lon(gitude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.z).
+-- @param #POINT_VEC2 self
+-- @return #number The y coodinate.
+function POINT_VEC2:GetLon()
+  return self.z
 end
 
 --- Set the x coordinate of the POINT_VEC2.
@@ -11278,12 +11293,30 @@ function POINT_VEC2:SetY( y )
   return self
 end
 
+--- Set the Lat(itude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.x).
+-- @param #POINT_VEC2 self
+-- @param #number x The x coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:SetLat( x )
+  self.x = x
+  return self
+end
+
 --- Set the altitude of the POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
 -- @return #POINT_VEC2
 function POINT_VEC2:SetAlt( Altitude )
   self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
+  return self
+end
+
+--- Set the Lon(gitude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.z).
+-- @param #POINT_VEC2 self
+-- @param #number y The y coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:SetLon( z )
+  self.z = z
   return self
 end
 
