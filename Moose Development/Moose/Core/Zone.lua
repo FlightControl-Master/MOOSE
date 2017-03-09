@@ -408,7 +408,7 @@ end
 -- @param #number Points (optional) The amount of points in the circle.
 -- @param #boolean UnBound If true the tyres will be destroyed.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:BoundZone( Points, UnBound )
+function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -424,8 +424,10 @@ function ZONE_RADIUS:BoundZone( Points, UnBound )
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
     
+    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    
     local Tire = {
-        ["country"] = "USA", 
+        ["country"] = CountryName, 
         ["category"] = "Fortifications",
         ["canCargo"] = false,
         ["shape_name"] = "H-tyre_B_WF",
@@ -437,7 +439,7 @@ function ZONE_RADIUS:BoundZone( Points, UnBound )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    local Group = coalition.addStaticObject( country.id.USA, Tire )
+    local Group = coalition.addStaticObject( CountryID, Tire )
     if UnBound and UnBound == true then
       Group:destroy()
     end

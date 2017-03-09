@@ -310,6 +310,7 @@ do -- DETECTION_BASE
     -- Create FSM transitions.
     
     self:SetStartState( "Stopped" )
+    self.CountryID = DetectionSetGroup:GetFirst():GetCountry()
     
     self:AddTransition( "Stopped", "Start", "Detecting")
     
@@ -1781,7 +1782,7 @@ do -- DETECTION_AREAS
               self:IdentifyDetectedObject( DetectedObject )
               AreaExists = true
   
-              DetectedArea.Zone:BoundZone( 30, true)
+              DetectedArea.Zone:BoundZone( 12, self.CountryID, true)
   
               -- Assign the Unit as the new center unit of the detected area.
               DetectedArea.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
@@ -1834,7 +1835,7 @@ do -- DETECTION_AREAS
             end
           end
         else
-          DetectedArea.Zone:BoundZone( 30, true)
+          DetectedArea.Zone:BoundZone( 12, self.CountryID, true)
           self:RemoveDetectedItem( DetectedAreaID )
           self:AddChangeArea( DetectedArea, "RA" )
         end
@@ -1926,7 +1927,7 @@ do -- DETECTION_AREAS
       end
 
       if DETECTION_AREAS._BoundDetectedZones or self._BoundDetectedZones then
-        DetectedZone:BoundZone( 30 )
+        DetectedZone:BoundZone( 12, self.CountryID )
       end
     end
   

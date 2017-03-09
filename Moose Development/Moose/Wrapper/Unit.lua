@@ -540,14 +540,14 @@ end
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
-  self:E( Attributes )
+  self:T( Attributes )
 
   local ThreatLevel = 0
   local ThreatText = ""
 
   if self:IsGround() then
   
-    self:E( "Ground" )
+    self:T( "Ground" )
   
     local ThreatLevels = {
       "Unarmed", 
@@ -585,7 +585,7 @@ function UNIT:GetThreatLevel()
   
   if self:IsAir() then
   
-    self:E( "Air" )
+    self:T( "Air" )
 
     local ThreatLevels = {
       "Unarmed", 
@@ -619,7 +619,7 @@ function UNIT:GetThreatLevel()
   
   if self:IsShip() then
 
-    self:E( "Ship" )
+    self:T( "Ship" )
 
 --["Aircraft Carriers"] = {"Heavy armed ships",},
 --["Cruisers"] = {"Heavy armed ships",},

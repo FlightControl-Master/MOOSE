@@ -26,9 +26,9 @@ local Mission = MISSION
   :AddScoring( Scoring )
 
 local FACSet = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterCoalitions("red"):FilterStart()
-local FACDetection = DETECTION_AREAS:New( FACSet, 500, 3000 )
-FACDetection:BoundDetectedZones()
+local FACAreas = DETECTION_AREAS:New( FACSet, 500, 3000 )
+FACAreas:BoundDetectedZones()
 
 local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
-local TaskDispatcher = DETECTION_DISPATCHER:New( Mission, HQ, AttackGroups, FACDetection )
+local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, HQ, AttackGroups, FACAreas )
 
