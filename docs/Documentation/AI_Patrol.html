@@ -129,13 +129,16 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 <ul>
     <li><strong>None</strong> ( Group ): The process is not started yet.</li>
     <li><strong>Patrolling</strong> ( Group ): The AI is patrolling the Patrol Zone.</li>
-    <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
+    <li><strong>Returning</strong> ( Group ): The AI is returning to Base.</li>
+    <li><strong>Stopped</strong> ( Group ): The process is stopped.</li>
+    <li><strong>Crashed</strong> ( Group ): The AI has crashed or is dead.</li>
 </ul>
 
 <h3>1.2.2) AI<em>PATROL</em>ZONE Events</h3>
 
 <ul>
     <li><strong>Start</strong> ( Group ): Start the process.</li>
+    <li><strong>Stop</strong> ( Group ): Stop the process.</li>
     <li><strong>Route</strong> ( Group ): Route the AI to a new random 3D point within the Patrol Zone.</li>
     <li><strong>RTB</strong> ( Group ): Route the AI to the home base.</li>
     <li><strong>Detect</strong> ( Group ): The AI is detecting targets.</li>
@@ -383,6 +386,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnAfterStop">AI_PATROL_ZONE:OnAfterStop(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeDetect">AI_PATROL_ZONE:OnBeforeDetect(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Detect.</p>
@@ -419,6 +428,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnBeforeStop">AI_PATROL_ZONE:OnBeforeStop(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnCrash">AI_PATROL_ZONE:OnCrash(EventData)</a></td>
 		<td class="summary">
 
@@ -443,6 +458,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnEnterStopped">AI_PATROL_ZONE:OnEnterStopped(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Stopped.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeavePatrolling">AI_PATROL_ZONE:OnLeavePatrolling(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Patrolling.</p>
@@ -452,6 +473,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeaveReturning">AI_PATROL_ZONE:OnLeaveReturning(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Returning.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).OnLeaveStopped">AI_PATROL_ZONE:OnLeaveStopped(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Stopped.</p>
 </td>
 		</tr>
 		<tr>
@@ -605,6 +632,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).Stop">AI_PATROL_ZONE:Stop()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE)._NewPatrolRoute">AI_PATROL_ZONE._NewPatrolRoute(AIControllable, self)</a></td>
 		<td class="summary">
 
@@ -644,6 +677,12 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Status">AI_PATROL_ZONE:__Status(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Status.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).__Stop">AI_PATROL_ZONE:__Stop(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Stop.</p>
 </td>
 		</tr>
 		<tr>
@@ -1286,6 +1325,46 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).OnAfterStop" >
+<strong>AI_PATROL_ZONE:OnAfterStop(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE).OnBeforeDetect" >
 <strong>AI_PATROL_ZONE:OnBeforeDetect(Controllable, From, Event, To)</strong>
 </a>
@@ -1556,6 +1635,51 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).OnBeforeStop" >
+<strong>AI_PATROL_ZONE:OnBeforeStop(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE).OnCrash" >
 <strong>AI_PATROL_ZONE:OnCrash(EventData)</strong>
 </a>
@@ -1678,6 +1802,46 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).OnEnterStopped" >
+<strong>AI_PATROL_ZONE:OnEnterStopped(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnEnter Transition Handler for State Stopped.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE).OnLeavePatrolling" >
 <strong>AI_PATROL_ZONE:OnLeavePatrolling(Controllable, From, Event, To)</strong>
 </a>
@@ -1730,6 +1894,51 @@ Return false to cancel Transition.</p>
 <dd>
 	
 <p>OnLeave Transition Handler for State Returning.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).OnLeaveStopped" >
+<strong>AI_PATROL_ZONE:OnLeaveStopped(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State Stopped.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2226,6 +2435,19 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_PATROL_ZONE).Stop" >
+<strong>AI_PATROL_ZONE:Stop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Stop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_PATROL_ZONE)._NewPatrolRoute" >
 <strong>AI_PATROL_ZONE._NewPatrolRoute(AIControllable, self)</strong>
 </a>
@@ -2371,6 +2593,28 @@ The delay in seconds.</p>
 <dd>
 	
 <p>Asynchronous Event Trigger for Event Status.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).__Stop" >
+<strong>AI_PATROL_ZONE:__Stop(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Stop.</p>
 
 		<h3>Parameter</h3>
 		<ul>

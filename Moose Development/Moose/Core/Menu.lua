@@ -1,4 +1,4 @@
---- This module contains the MENU classes.
+--- **Core** -- MENU_ classes model the definition of **hierarchical menu structures** and **commands for players** within a mission.
 -- 
 -- ===
 -- 

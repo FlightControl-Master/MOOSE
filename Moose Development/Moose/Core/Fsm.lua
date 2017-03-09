@@ -1,5 +1,5 @@
---- This module contains the **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes.
--- ## Finite State Machines (FSM) are design patterns allowing efficient (long-lasting) processes and workflows.
+--- **Core** - The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
+-- are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
 -- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
 -- 

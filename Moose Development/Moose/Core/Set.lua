@@ -1,4 +1,4 @@
---- This module contains the SET classes.
+--- **Core** - SET classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
 -- ===
 -- 

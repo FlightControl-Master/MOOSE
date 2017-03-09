@@ -492,7 +492,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, 
       true 
     )
     
-    ToTargetPointVec3:SmokeBlue()
+    --ToTargetPointVec3:SmokeBlue()
 
     EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
     

@@ -76,6 +76,9 @@
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-03-07: GROUP:**HandleEvent( Event, EventFunction )** added.  
+-- 2017-03-07: GROUP:**UnHandleEvent( Event )** added.
+-- 
 -- 2017-01-24: GROUP:**SetAIOnOff( AIOnOff )** added.  
 -- 
 -- 2017-01-24: GROUP:**SetAIOn()** added.  
@@ -897,4 +900,29 @@ function GROUP:OnReSpawn( ReSpawnFunction )
   self.ReSpawnFunction = ReSpawnFunction
 end
 
+do -- Event Handling
 
+  --- Subscribe to a DCS Event.
+  -- @param #GROUP self
+  -- @param Core.Event#EVENTS Event
+  -- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
+  -- @return #GROUP
+  function GROUP:HandleEvent( Event, EventFunction )
+  
+    self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event )
+    
+    return self
+  end
+  
+  --- UnSubscribe to a DCS event.
+  -- @param #GROUP self
+  -- @param Core.Event#EVENTS Event
+  -- @return #GROUP
+  function GROUP:UnHandleEvent( Event )
+  
+    self:EventDispatcher():RemoveForGroup( self:GetName(), self, Event )
+    
+    return self
+  end
+
+end

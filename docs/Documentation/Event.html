@@ -72,8 +72,7 @@
 	<div id="content">
    <h1>Module <code>Event</code></h1>
    
-<p>This core module models the dispatching of DCS Events to subscribed MOOSE classes,
-following a given priority.</p>
+<p><strong>Core</strong> - EVENT models DCS <strong>event dispatching</strong> using a <strong>publish-subscribe</strong> model.</p>
 
    
 
@@ -144,6 +143,13 @@ There are two functions which you use to subscribe to or unsubscribe from an eve
     <li><a href="Base.html##(BASE).HandleEvent">Base#BASE.HandleEvent</a>(): Subscribe to a DCS Event.</li>
     <li><a href="Base.html##(BASE).UnHandleEvent">Base#BASE.UnHandleEvent</a>(): Unsubscribe from a DCS Event.</li>
 </ul>
+
+<p>Note that for a UNIT, the event will be handled <strong>for that UNIT only</strong>!
+Note that for a GROUP, the event will be handled <strong>for all the UNITs in that GROUP only</strong>!</p>
+
+<p>For all objects of other classes, the subscribed events will be handled for <strong>all UNITs within the Mission</strong>!
+So if a UNIT within the mission has the subscribed event for that object, 
+then the object event handler will receive the event for that UNIT!</p>
 
 <h3>1.3.2 Event Handling of DCS Events</h3>
 
@@ -241,7 +247,8 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 <p>Hereby the change log:</p>
 
 <ul>
-    <li>2016-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.</li>
+    <li><p>2017-03-07: Added the correct event dispatching in case the event is subscribed by a GROUP.</p></li>
+    <li><p>2017-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.</p></li>
 </ul>
 
 <hr/>
@@ -341,15 +348,49 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+<<<<<<< HEAD
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForTemplate">EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventClass, OnEventFunction, EventID)</a></td>
+=======
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownForUnit">EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineShutDownRemove">EVENT:OnEngineShutDownRemove(EventClass)</a></td>
+		<td class="summary">
+<p>Stop listening to S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpForUnit">EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventClass)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>ENGINE_STARTUP event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEngineStartUpRemove">EVENT:OnEngineStartUpRemove(EventClass)</a></td>
+		<td class="summary">
+<p>Stop listening to S<em>EVENT</em>ENGINE_STARTUP event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForGroup">EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID)</a></td>
+		<td class="summary">
+<p>Set a new listener for an S<em>EVENT</em>X event for a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForTemplate">EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventClass, OnEventFunction)</a></td>
+>>>>>>> refs/remotes/origin/master
 		<td class="summary">
 <p>Create an OnDead event handler for a group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForUnit">EVENT:OnEventForUnit(EventDCSUnitName, EventFunction, EventClass, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForUnit">EVENT:OnEventForUnit(UnitName, EventFunction, EventClass, EventID)</a></td>
 		<td class="summary">
-<p>Set a new listener for an S<em>EVENT</em>X event</p>
+<p>Set a new listener for an S<em>EVENT</em>X event for a UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -383,9 +424,15 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForUnit">EVENT:RemoveForUnit(EventClass, EventID, UnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForGroup">EVENT:RemoveForGroup(GroupName, EventClass, EventID)</a></td>
 		<td class="summary">
-<p>Removes an Events entry for a Unit</p>
+<p>Removes an Events entry for a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForUnit">EVENT:RemoveForUnit(UnitName, EventClass, EventID)</a></td>
+		<td class="summary">
+<p>Removes an Events entry for a UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -1254,8 +1301,828 @@ The self instance of the class for which the event is captured. When the event h
 		<dl class="function">
 <dt>
 
+<<<<<<< HEAD
 <a id="#(EVENT).OnLandForTemplate" >
 <strong>EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventClass)</strong>
+=======
+<a id="#(EVENT).OnDeadForTemplate" >
+<strong>EVENT:OnDeadForTemplate(EventGroup, EventFunction, EventClass, EventTemplate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an OnDead event handler for a group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EventGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventTemplate </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnDeadForUnit" >
+<strong>EVENT:OnDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>DEAD event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnDeadRemove" >
+<strong>EVENT:OnDeadRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>DEAD event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEngineShutDownForTemplate" >
+<strong>EVENT:OnEngineShutDownForTemplate(EventTemplate, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an OnDead event handler for a group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table EventTemplate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEngineShutDownForUnit" >
+<strong>EVENT:OnEngineShutDownForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEngineShutDownRemove" >
+<strong>EVENT:OnEngineShutDownRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>ENGINE_SHUTDOWN event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEngineStartUpForUnit" >
+<strong>EVENT:OnEngineStartUpForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>ENGINE_STARTUP event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEngineStartUpRemove" >
+<strong>EVENT:OnEngineStartUpRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>ENGINE_STARTUP event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEventForGroup" >
+<strong>EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>X event for a GROUP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The name of the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEventForTemplate" >
+<strong>EVENT:OnEventForTemplate(EventTemplate, EventFunction, EventClass, OnEventFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an OnDead event handler for a group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table EventTemplate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventClass </em></code>: 
+The instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function OnEventFunction </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEventForUnit" >
+<strong>EVENT:OnEventForUnit(UnitName, EventFunction, EventClass, EventID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>X event for a UNIT.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UnitName </em></code>: 
+The name of the UNIT.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnEventGeneric" >
+<strong>EVENT:OnEventGeneric(EventFunction, EventClass, EventID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>X event independent from a unit or a weapon.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is captured. When the event happens, the event process will be called in this class provided.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnHit" >
+<strong>EVENT:OnHit(EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>HIT event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnHitForUnit" >
+<strong>EVENT:OnHitForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>HIT event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnHitRemove" >
+<strong>EVENT:OnHitRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>HIT event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnLandForTemplate" >
+<strong>EVENT:OnLandForTemplate(EventTemplate, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> EventTemplate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventFunction </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnLandForUnit" >
+<strong>EVENT:OnLandForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>LAND event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnLandRemove" >
+<strong>EVENT:OnLandRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>LAND event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPilotDead" >
+<strong>EVENT:OnPilotDead(EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPilotDeadForUnit" >
+<strong>EVENT:OnPilotDeadForUnit(EventDCSUnitName, EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PILOT_DEAD event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EventDCSUnitName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPilotDeadRemove" >
+<strong>EVENT:OnPilotDeadRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>PILOT_DEAD event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerEnterRemove" >
+<strong>EVENT:OnPlayerEnterRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerEnterUnit" >
+<strong>EVENT:OnPlayerEnterUnit(EventFunction, EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a new listener for an S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+The function to be called when the event occurs for the unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerLeaveRemove" >
+<strong>EVENT:OnPlayerLeaveRemove(EventClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop listening to S<em>EVENT</em>PLAYER<em>LEAVE</em>UNIT event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Base.html##(BASE)">Base#BASE</a> EventClass </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT)">#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).OnPlayerLeaveUnit" >
+<strong>EVENT:OnPlayerLeaveUnit(EventFunction, EventClass)</strong>
+>>>>>>> refs/remotes/origin/master
 </a>
 </dt>
 <dd>
@@ -1369,16 +2236,22 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).RemoveForUnit" >
-<strong>EVENT:RemoveForUnit(EventClass, EventID, UnitName)</strong>
+<a id="#(EVENT).RemoveForGroup" >
+<strong>EVENT:RemoveForGroup(GroupName, EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Removes an Events entry for a Unit</p>
+<p>Removes an Events entry for a GROUP.</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The name of the GROUP.</p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
@@ -1390,9 +2263,42 @@ The self instance of the class for which the event is.</p>
 <p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).RemoveForUnit" >
+<strong>EVENT:RemoveForUnit(UnitName, EventClass, EventID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes an Events entry for a UNIT.</p>
+
+		<h3>Parameters</h3>
+		<ul>
 				<li>
 				
-<p><code><em> UnitName </em></code>: </p>
+<p><code><em>#string UnitName </em></code>: 
+The name of the UNIT.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
+The self instance of the class for which the event is.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
 		</ul>

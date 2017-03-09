@@ -1,4 +1,6 @@
---- This core module contains the ZONE classes, inherited from @{Zone#ZONE_BASE}.
+--- **Core** - ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
+-- 
+-- ===
 -- 
 -- There are essentially two core functions that zones accomodate:
 -- 
