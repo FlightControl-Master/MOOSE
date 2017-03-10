@@ -25,7 +25,7 @@ RADIO = {
     Frequency = 0,
     Modulation = radio.modulation.AM,
     Subtitle = "",
-    SubtitleDuration = 10,
+    SubtitleDuration = 0,
     Power = 100,
     Loop = 0,   
 }
@@ -48,19 +48,116 @@ function RADIO:New(positionable)
     end
 end
 
---- Add the 'l10n/DEFAULT/' in the file name if necessary
+--- Check validity of the filename passed and sets RADIO.FileName
 -- @param #RADIO self
--- @param #string FileName Filename of the sound
--- @return #string FileName Corrected file name
+-- @param #string fileName Filename of the sound
+-- @return self
 -- @usage
--- -- internal use only
-function RADIO:_CorrectFileName(filename)
-  if filename:find("l10n/DEFAULT/") == nil then
-    filename = "l10n/DEFAULT/" .. filename
+function RADIO:SetFileName(filename)
+  self:F(filename)
+  if type(filename) == "string" then
+    if filename:find(".ogg") ~= nil or filename:find(".wav") ~= nil then
+      if filename:find("l10n/DEFAULT/") == nil then
+       filename = "l10n/DEFAULT/" .. filename
+       self.FileName = filename
+       return self
+      end
+    end
   end
-  return filename
+  self:E({"File name invalid. Maybe something wrong with the extension ?", self.FileName})
+  return self
 end
 
+--- Check validity of the frequency passed and sets RADIO.Frequency
+-- @param #RADIO self
+-- @param #number frequency
+-- @return self
+-- @usage
+function RADIO:SetFrequency(frequency)
+  self:F(frequency)
+  if type(frequency) == "number" then
+    if (frequency >= 30 and frequency < 88) or (frequency >= 108 and frequency < 152) or (frequency >= 225 and frequency < 400) then 
+      self.Frequency = frequency * 1000 -- Coversion in Hz
+      return self
+    end
+  end
+  self:E({"Frequency is outside of DCS Frequency ranges (30-80, 108-152, 225-400). Frequency unchanged.", self.Frequency})
+  return self
+end
+
+--- Check validity of the frequency passed and sets RADIO.Modulation
+-- @param #RADIO self
+-- @param #number modulation
+-- @return #self
+-- @usage
+function RADIO:SetModulation(modulation)
+  self:F(modulation)
+  if type(modulation) == "number" then
+      if modulation == radio.modulation.AM or modulation == radio.modulation.FM then --TODO Maybe make this future proof if ED decides to add an other modulation ?
+        self.Modulation = modulation
+        return self
+      end
+  end 
+  self:E({"Modulation is invalid. Use DCS's enum radio.modulation. Modulation unchanged.", self.Modulation})
+  return self
+end
+
+--- Check validity of the power passed and sets RADIO.Power
+-- @param #RADIO self
+-- @param #number Power
+-- @return #self
+-- @usage
+function RADIO:SetPower(power)
+  self:F(power)
+  if type(power) == "number" then
+    if math.floor(math.abs(power)) == power then
+       self.Power = power --TODO Find what is the maximum power allowed by DCS and limit power to that
+       return self
+     end
+  end
+  self:E({"Power is invalid. Power unchanged.", self.Power})
+  return self
+end
+
+--- Check validity of the loop passed and sets RADIO.Loop
+-- @param #RADIO self
+-- @param #bool Loop
+-- @return #self
+-- @usage
+function RADIO:SetLoop(loop)
+  self:F(loop)
+  if type(loop) == "boolean" then
+      self.Loop = loop
+      return self
+  end
+  self:E({"Loop is invalid. Loop unchanged.", self.Loop})
+  return self
+end
+
+--- Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
+-- @param #RADIO self
+-- @param #string Subtitle
+-- @param #number SubtitleDuration in s
+-- @return #self
+-- @usage
+-- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not it's duration
+function RADIO:SetSubtitle(subtitle, subtitleDuration)
+  self:F({subtitle, subtitleDuration})
+  if type(subtitle) == "string" then
+    self.Subtitle = subtitle
+  else
+    self.Subtitle = ""
+    self:E({"Subtitle is invalid. Subtitle reset.", self.Subtitle}) 
+  end
+  if type(subtitleDuration) == "number" then
+    if math.floor(math.abs(subtitleDuration)) == subtitleDuration then
+      self.SubtitleDuration = subtitleDuration
+      return self
+    end
+  end
+  self.SubtitleDuration = 0
+  self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})
+end
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param self
 -- @param #string Filename
@@ -72,36 +169,9 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
---TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewGenericTransmission(...)
-    self:F2(arg)
-    -- Check if the file has an extension
-    if arg[1]:find(".ogg") ~= nil or arg[1]:find(".wav") ~= nil then
-      self.FileName = RADIO:_CorrectFileName(arg[1])
-    else
-      self:E("File name invalid. Check the extension (Parameter [1] ignored, transmission not created)")
-    end
+    self:F(arg)
     
-    if arg[2] ~= nil then
-       -- Check if the frequency is in range allowed by DCS
-       if (arg[2] >= 30 and arg[2] < 88) or (arg[2] >= 108 and arg[2] < 152) or (arg[2] >= 225 and arg[2] < 400) then
-         self.Frequency = arg[2] * 1000 -- Convert to Hz
-       else
-         self:E("Frequency is outside of DCS Frequency ranges (30-80, 108-152, 225-400) (Parameter [2] ignored)")
-       end
-    end
-    
-    if arg[3] ~= nil then
-      if arg[3] == radio.modulation.AM or arg[3] == radio.modulation.FM then
-        self.Modulation = arg[3]
-      else
-        self:E("Modulation is invalid. Use DCS's enum radio.modulation (Parameter [3] ignored)")
-      end
-    end
-    
-    if arg[4] ~= nil then
-        self.Power = math.floor(math.abs(arg[4]))
-    end
     return self
 end
 
@@ -122,23 +192,8 @@ end
 -- -- Loop : O is no loop, 1 is loop
 -- -- @TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewUnitTransmission(...)
-    self:F2(arg)
-    self.FileName = RADIO:_CorrectFileName(arg[1])
-    if arg[2] ~= nil then
-        self.Subtitle = arg[2]
-    end 
-    if arg[3] ~= nil then
-        self.SubtitleDuration = arg[3]
-    end
-    if arg[4] ~= nil then
-        self.Frequency = arg[4] * 1000 -- Convert to Hz
-    end
-    if arg[5] ~= nil then
-        self.Modulation = arg[5]
-    end
-    if arg[6] ~= nil then
-        self.Loop = arg[6]
-    end
+    self:F(arg)
+    
     return self
 end
 
