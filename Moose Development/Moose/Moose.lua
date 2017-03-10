@@ -16,6 +16,7 @@ Include.File( "Core/Set" )
 Include.File( "Core/Point" )
 Include.File( "Core/Message" )
 Include.File( "Core/Fsm" )
+Include.File( "Core/Radio" )
 
 --- Wrapper Classes
 Include.File( "Wrapper/Object" )
