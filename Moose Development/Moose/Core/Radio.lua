@@ -43,7 +43,7 @@ function RADIO:New(positionable)
       self.Positionable = positionable
       return self
     else
-      self:E({"The passed positionable is invalid, no RADIO created : ", positionable})
+      self:E({"The passed positionable is invalid, no RADIO created", positionable})
       return nil
     end
 end
@@ -54,11 +54,11 @@ end
 -- @return #string FileName Corrected file name
 -- @usage
 -- -- internal use only
-function RADIO:_VerifyFileName(filename)
-    if filename:find("l10n/DEFAULT/") == nil then
-        filename = "l10n/DEFAULT/" .. filename
-    end 
-    return filename
+function RADIO:_CorrectFileName(filename)
+  if filename:find("l10n/DEFAULT/") == nil then
+    filename = "l10n/DEFAULT/" .. filename
+  end
+  return filename
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
@@ -72,21 +72,39 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
--- @TODO : Verify the type of passed args and throw errors when necessary
+--TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewGenericTransmission(...)
     self:F2(arg)
-    self.FileName = RADIO:_VerifyFileName(arg[1])
+    -- Check if the file has an extension
+    if arg[1]:find(".ogg") ~= nil or arg[1]:find(".wav") ~= nil then
+      self.FileName = RADIO:_CorrectFileName(arg[1])
+    else
+      self:E("File name invalid. Check the extension (Parameter [1] ignored, transmission not created)")
+    end
+    
     if arg[2] ~= nil then
-        self.Frequency = arg[2] * 1000 -- Convert to Hz
+       -- Check if the frequency is in range allowed by DCS
+       if (arg[2] >= 30 and arg[2] < 88) or (arg[2] >= 108 and arg[2] < 152) or (arg[2] >= 225 and arg[2] < 400) then
+         self.Frequency = arg[2] * 1000 -- Convert to Hz
+       else
+         self:E("Frequency is outside of DCS Frequency ranges (30-80, 108-152, 225-400) (Parameter [2] ignored)")
+       end
     end
+    
     if arg[3] ~= nil then
+      if arg[3] == radio.modulation.AM or arg[3] == radio.modulation.FM then
         self.Modulation = arg[3]
+      else
+        self:E("Modulation is invalid. Use DCS's enum radio.modulation (Parameter [3] ignored)")
+      end
     end
+    
     if arg[4] ~= nil then
-        self.Power = arg[4]
+        self.Power = math.floor(math.abs(arg[4]))
     end
     return self
 end
+
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param self
@@ -105,7 +123,7 @@ end
 -- -- @TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewUnitTransmission(...)
     self:F2(arg)
-    self.FileName = RADIO:_VerifyFileName(arg[1])
+    self.FileName = RADIO:_CorrectFileName(arg[1])
     if arg[2] ~= nil then
         self.Subtitle = arg[2]
     end 
