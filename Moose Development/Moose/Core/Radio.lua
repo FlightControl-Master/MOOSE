@@ -18,9 +18,9 @@
 --- The RADIO class
 -- @type RADIO
 -- @extends Core.Base#BASE
-MESSAGE = {
+RADIO = {
     ClassName = "RADIO",
-    Positionable = POSITIONABLE:New(),
+    Positionable,
     FileName = "",
     Frequency = 0,
     Modulation = 0,
@@ -37,20 +37,21 @@ MESSAGE = {
 -- @return self
 -- @usage
 -- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}
-function RADIO.New(positionable)
+function RADIO:New(positionable)
     local self = BASE:Inherit( self, BASE:New() )
-    -- self:F( { MessageText, MessageDuration, MessageCategory } )
+    self:F(positionable)
     
     self.Positionable = positionable
     return self
 end
 
 --- Add the 'l10n/DEFAULT/' in the file name if necessary
--- @param #string File name
--- @return #string Corrected file name
+-- @param #RADIO self
+-- @param #string FileName Filename of the sound
+-- @return #string FileName Corrected file name
 -- @usage
 -- -- internal use only
-function RADIO.VerifyFileName(filename)
+function RADIO:VerifyFileName(filename)
     if filename:find("l10n/DEFAULT/") == nil then
         filename = "l10n/DEFAULT/" .. filename
     end 
@@ -68,15 +69,16 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
-function RADIO:NewTransmission(filename, frequency, mod, power)
-    self.FileName = RADIO.VerifyFile(filename)
-    if frequency ~= nil then
+function RADIO:NewGenericTransmission(filename, frequency, mod, power)
+    self:F2({self, filename, frequency, mod, power})
+    self.FileName = RADIO:VerifyFileName(filename)
+    if frequency ~= "" then
         self.Frequecy = frequency * 1000 -- Convert to Hz
     end
-    if mod ~= nil then
+    if mod ~= 3 then
         self.Modulation = mod
     end
-    if power ~= nil then
+    if power ~= 0 then
         self.Power = power
     end
     return self
@@ -96,21 +98,22 @@ end
 -- -- but it will work for any POSITIONABLE
 -- -- Only the RADIO and the Filename are mandatory 
 -- -- Loop : O is no loop, 1 is loop
-function RADIO:NewTransmissionForUnit(filename, subtitle, subtitleDuraction, frequency, mod, loop)
-    self.FileName = RADIO.VerifyFile(filename)
-    if subtitle ~= nil then
+function RADIO:NewUnitTransmission(filename, subtitle, subtitleDuration, frequency, mod, loop)
+    self:F2({filename, subtitle, subtitleDuration, frequency, mod, loop})
+    self.FileName = RADIO:VerifyFileName(filename)
+    if subtitle ~= "" then
         self.Subtitle = subtitle
     end 
-    if subtitleDuration ~= nil then
+    if subtitleDuration ~= 0 then
         self.SubtitleDuration = subtitleDuration
     end
-    if frequency ~= nil then
-        self.Frequecy = frequency * 1000 -- Convert to Hz
+    if frequency ~= 0 then
+        self.Frequency = frequency * 1000 -- Convert to Hz
     end
-    if mod ~= nil then
+    if mod ~= 3 then
         self.Modulation = mod
     end
-    if loop ~= nil then
+    if loop ~= 3 then
         self.Loop = loop
     end
     return self
@@ -127,13 +130,14 @@ end
 -- -- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored 
 function RADIO:Broadcast() 
+    self:F()
     -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS function
-    if Positionable.ClassName == "UNIT" or Positionable.ClassName == "GROUP" then
+    if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
         -- If the user didn't change the frequency, he wants to use the on defined in the Mission Editor.
         -- Else we set the frequency of the UNIT or the GROUP in DCS
-        if self.Frequency == 0 then
-            self.Positionable:GetDCSUnit():getController():setCommand({ 
-                id = 'SetFrequency', 
+        if self.Frequency ~= 0 then
+            self.Positionable:GetDCSObject():getController():setCommand({ 
+                id = "SetFrequency", 
                 params = { 
                     frequency = self.Frequency, 
                     modulation = self.Modulation,
@@ -141,7 +145,7 @@ function RADIO:Broadcast()
                 })
         end
             
-        self.Positionable:GetDCSUnit():getController():setCommand({ 
+        self.Positionable:GetDCSObject():getController():setCommand({ 
             id = "TransmitMessage", 
             params = {
                 file = self.FileName,
@@ -152,7 +156,7 @@ function RADIO:Broadcast()
             })
     else
         -- If the POSITIONABLE is anything else, we revert to the general function
-        trigger.action.radioTransmission(ClassName, self.Positionable:PositionVec3(), Modulation, 1, Frequency, Power)
+        trigger.action.radioTransmission(self.FileName, self.Positionable:PositionVec3(), self.Modulation, 1, self.Frequency, self.Power)
     end
     return self
 end
