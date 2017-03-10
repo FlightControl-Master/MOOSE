@@ -30,15 +30,17 @@ MESSAGE = {
     SubtitleDuration = ""
 }
 
+-- @TODO Manage Trace in all functions below
+
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{Radio#RADIO.Broadcast} to actually broadcast
 -- @param self
--- @param 
--- @return #RADIO
+-- @param #IDENTIFIABLE Identifiable
+-- @return self
 -- @usage
 -- -- If you want to create a RADIO, you probably should use @{Identifiable#IDENIFIABLE.GetRadio}
 function RADIO:New(identifiable)
     local self = BASE:Inherit( self, BASE:New() )
-    self:F( { MessageText, MessageDuration, MessageCategory } )
+    -- self:F( { MessageText, MessageDuration, MessageCategory } )
     
     self.Identifiable = identifiable
     return self
@@ -57,21 +59,28 @@ function RADIO.VerifyFileName(filename)
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
+-- @param self
 -- @param #string Filename
 -- @param #number Frequency in kHz
 -- @param #number Modulation
--- @param #number Power
+-- @param #number Power in W
 -- @return self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- -- but it will work with a UNIT or a GROUP anyway
+-- -- Only the RADIO and the Filename are mandatory
 function RADIO:NewTransmission(filename, frequency, mod, power)
     self.FileName = RADIO.VerifyFile(filename)
-    self.Frequecy = frequency * 1000 -- Convert to Hz
-    self.Modulation = mod
-    self.Power = power
+    if frequency ~= nil then
+        self.Frequecy = frequency * 1000 -- Convert to Hz
+    end
+    if mod ~= nil then
+        self.Modulation = mod
+    end
+    if power ~= nil then
+        self.Power = power
+    end
 end
-
 
 
 
