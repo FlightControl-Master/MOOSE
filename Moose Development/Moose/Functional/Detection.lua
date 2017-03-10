@@ -1377,10 +1377,10 @@ do -- DETECTION_AREAS
   
   
   --- DETECTION_AREAS constructor.
-  -- @param Functional.Detection#DETECTION_AREAS self
+  -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
   -- @param Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @return Functional.Detection#DETECTION_AREAS self
+  -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
   
     -- Inherits from DETECTION_BASE

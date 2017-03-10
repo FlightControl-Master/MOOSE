@@ -247,6 +247,7 @@ function ESCORT:SetDetection( Detection )
   self.EscortGroup.Detection = self.Detection
   self.EscortClient._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
   
+  Detection:__Start( 1 )
   
 end
 
