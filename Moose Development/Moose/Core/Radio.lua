@@ -13,3 +13,18 @@
 --   
 -- @module Radio
 -- @author Grey-Echo
+
+--- The RADIO class
+-- @type RADIO
+-- @extends Core.Base#BASE
+MESSAGE = {
+    ClassName = "RADIO", 
+    Identifiable = IDENTIFIABLE:New(),
+    Frequency = 255000,
+    Power = 100,
+    Modulation = 0,
+    Loop = 0,
+    Subtitle = "",
+    SubtitleDuration = ""
+}
+
