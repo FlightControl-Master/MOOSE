@@ -121,10 +121,8 @@ end
 function RADIO:SetPower(power)
   self:F(power)
   if type(power) == "number" then
-    if math.floor(math.abs(power)) == power then
-      self.Power = power --TODO Find what is the maximum power allowed by DCS and limit power to that
-      return self
-    end
+    self.Power = math.floor(math.abs(power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
+    return self
   end
   self:E({"Power is invalid. Power unchanged.", self.Power})
   return self
@@ -169,6 +167,7 @@ function RADIO:SetSubtitle(subtitle, subtitleDuration)
   self.SubtitleDuration = 0
   self:E({"SubtitleDuration is invalid. SubtitleDuration reset.", self.SubtitleDuration})
 end
+
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param self
 -- @param #string Filename
