@@ -69,17 +69,18 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
-function RADIO:NewGenericTransmission(filename, frequency, mod, power)
-    self:F2({self, filename, frequency, mod, power})
-    self.FileName = RADIO:VerifyFileName(filename)
-    if frequency ~= "" then
-        self.Frequecy = frequency * 1000 -- Convert to Hz
+-- @TODO : Verify the type of passed args and throw errors when necessary
+function RADIO:NewGenericTransmission(...)
+    self:F2(arg)
+    self.FileName = RADIO:VerifyFileName(arg[1])
+    if arg[2] ~= nil then
+        self.Frequecy = arg[2] * 1000 -- Convert to Hz
     end
-    if mod ~= 3 then
-        self.Modulation = mod
+    if arg[3] ~= nil then
+        self.Modulation = arg[3]
     end
-    if power ~= 0 then
-        self.Power = power
+    if arg[4] ~= nil then
+        self.Power = arg[4]
     end
     return self
 end
@@ -98,23 +99,24 @@ end
 -- -- but it will work for any POSITIONABLE
 -- -- Only the RADIO and the Filename are mandatory 
 -- -- Loop : O is no loop, 1 is loop
-function RADIO:NewUnitTransmission(filename, subtitle, subtitleDuration, frequency, mod, loop)
-    self:F2({filename, subtitle, subtitleDuration, frequency, mod, loop})
-    self.FileName = RADIO:VerifyFileName(filename)
-    if subtitle ~= "" then
-        self.Subtitle = subtitle
+-- -- @TODO : Verify the type of passed args and throw errors when necessary
+function RADIO:NewUnitTransmission(...)
+    self:F2(arg)
+    self.FileName = RADIO:VerifyFileName(arg[1])
+    if arg[2] ~= nil then
+        self.Subtitle = arg[2]
     end 
-    if subtitleDuration ~= 0 then
-        self.SubtitleDuration = subtitleDuration
+    if arg[3] ~= nil then
+        self.SubtitleDuration = arg[3]
     end
-    if frequency ~= 0 then
-        self.Frequency = frequency * 1000 -- Convert to Hz
+    if arg[4] ~= nil then
+        self.Frequency = arg[4] * 1000 -- Convert to Hz
     end
-    if mod ~= 3 then
-        self.Modulation = mod
+    if arg[5] ~= nil then
+        self.Modulation = arg[5]
     end
-    if loop ~= 3 then
-        self.Loop = loop
+    if arg[6] ~= nil then
+        self.Loop = arg[6]
     end
     return self
 end
