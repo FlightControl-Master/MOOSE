@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -229,6 +229,12 @@ At random intervals, a new target is smoked.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).onafterStart">ACT_ASSIST:onafterStart(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIST).onafterStop">ACT_ASSIST:onafterStop(ProcessUnit, Event, From, To)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -463,6 +469,42 @@ At random intervals, a new target is smoked.</p>
 
 <a id="#(ACT_ASSIST).onafterStart" >
 <strong>ACT_ASSIST:onafterStart(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIST).onafterStop" >
+<strong>ACT_ASSIST:onafterStop(ProcessUnit, Event, From, To)</strong>
 </a>
 </dt>
 <dd>

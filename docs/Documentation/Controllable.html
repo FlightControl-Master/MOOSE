@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -522,7 +522,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack, Altitude, Visible)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -2110,7 +2110,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackUnit" >
-<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack, Altitude, Visible)</strong>
 </a>
 </dt>
 <dd>
@@ -2151,25 +2151,24 @@ The UNIT.</p>
 				</li>
 				<li>
 				
-<<<<<<< HEAD
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Altitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#boolean Visible </em></code>: 
-(optional) Unit must be visible.</p>
-=======
 <p><code><em>#boolean AttackQtyLimit </em></code>: 
 (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
->>>>>>> refs/remotes/origin/master
 
 				</li>
 				<li>
 				
 <p><code><em>#boolean ControllableAttack </em></code>: 
 (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Altitude </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Visible </em></code>: </p>
 
 				</li>
 		</ul>

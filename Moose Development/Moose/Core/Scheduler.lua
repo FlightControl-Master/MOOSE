@@ -1,5 +1,9 @@
---- This module contains the SCHEDULER class.
+--- **Core** - SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
 --
+-- ![Banner Image](..\Presentations\SCHEDULER\Dia1.JPG)
+-- 
+-- ===
+-- 
 -- # 1) @{Scheduler#SCHEDULER} class, extends @{Base#BASE}
 -- 
 -- The @{Scheduler#SCHEDULER} class creates schedule.

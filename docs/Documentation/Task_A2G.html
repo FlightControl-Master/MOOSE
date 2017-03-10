@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li>Task_A2G</li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -72,32 +72,82 @@
 	<div id="content">
    <h1>Module <code>Task_A2G</code></h1>
    
-<p>(AI) (SP) (MP) Tasking for Air to Ground Processes.</p>
+<p>This module contains the TASK_A2G classes.</p>
 
    
 
-<h1>1) <a href="##(TASK_A2G)">#TASK_A2G</a> class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
-<p>The <a href="##(TASK_A2G)">#TASK_A2G</a> class defines a CAS or BAI task of a <a href="Set.html">Set</a> of Target Units, 
-located at a Target Zone, based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TASK</a>.
+<h1>1) <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a> class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+
+<p>The <a href="##(TASK_A2G)">#TASK_A2G</a> class defines Air To Ground tasks for a <a href="Set.html">Set</a> of Target Units, 
+based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TASK</a>.
 The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Statemachine#FSM_TASK</a>, and has the following statuses:</p>
 
 <ul>
     <li><strong>None</strong>: Start of the process</li>
-    <li><strong>Planned</strong>: The SEAD task is planned. Upon Planned, the sub-process <a href="Process_Fsm.Assign.html##(ACT_ASSIGN_ACCEPT)">Process<em>Fsm.Assign#ACT</em>ASSIGN_ACCEPT</a> is started to accept the task.</li>
-    <li><strong>Assigned</strong>: The SEAD task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>. Upon Assigned, the sub-process <a href="Process_Fsm.Route.html##(ACT_ROUTE)">Process<em>Fsm.Route#ACT</em>ROUTE</a> is started to route the active Units in the Group to the attack zone.</li>
-    <li><strong>Success</strong>: The SEAD task is successfully completed. Upon Success, the sub-process <a href="Process_SEAD.html##(PROCESS_SEAD)">Process<em>SEAD#PROCESS</em>SEAD</a> is started to follow-up successful SEADing of the targets assigned in the task.</li>
-    <li><strong>Failed</strong>: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+    <li><strong>Planned</strong>: The A2G task is planned.</li>
+    <li><strong>Assigned</strong>: The A2G task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>.</li>
+    <li><strong>Success</strong>: The A2G task is successfully completed.</li>
+    <li><strong>Failed</strong>: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
 </ul>
+
+<h1>1) <a href="Task_A2G.html##(TASK_SEAD)">Task<em>A2G#TASK</em>SEAD</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
+
+<p>The <a href="##(TASK_SEAD)">#TASK_SEAD</a> class defines a SEAD task for a <a href="Set.html">Set</a> of Target Units.</p>
 
 <hr/>
 
-<h3>Authors: FlightControl - Design and Programming</h3>
+<h1><strong>API CHANGE HISTORY</strong></h1>
 
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-03-09: Revised version.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong>[WingThor]</strong>: Concept, Advice &amp; Testing.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.
+    </li>
+</ul>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK_A2G">TASK_A2G</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_BAI">TASK_BAI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_CAS">TASK_CAS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_SEAD">TASK_SEAD</a></td>
 		<td class="summary">
 
 </td>
@@ -118,9 +168,129 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, TaskType, UnitSetTargets, TargetZone, TargetSetUnit, FACUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetRendezVousPointVec2">TASK_A2G:GetRendezVousPointVec2(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetRendezVousZone">TASK_A2G:GetRendezVousZone(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetTargetPointVec2">TASK_A2G:GetTargetPointVec2(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetTargetZone">TASK_A2G:GetTargetZone(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_A2G.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousPointVec2">TASK_A2G:SetRendezVousPointVec2(RendezVousPointVec2, RendezVousRange, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousZone">TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetTargetPointVec2">TASK_A2G:SetTargetPointVec2(TargetPointVec2, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetTargetZone">TASK_A2G:SetTargetZone(TargetZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).TargetSetUnit">TASK_A2G.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_BAI)">Type <code>TASK_BAI</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).ClassName">TASK_BAI.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).New">TASK_BAI:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK_BAI.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).TargetSetUnit">TASK_BAI.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_CAS)">Type <code>TASK_CAS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).ClassName">TASK_CAS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).New">TASK_CAS:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK_CAS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).TargetSetUnit">TASK_CAS.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_SEAD)">Type <code>TASK_SEAD</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).ClassName">TASK_SEAD.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK_SEAD.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).TargetSetUnit">TASK_SEAD.TargetSetUnit</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -140,8 +310,52 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_BAI)">#TASK_BAI</a></em>
+<a id="TASK_BAI" >
+<strong>TASK_BAI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_CAS)">#TASK_CAS</a></em>
+<a id="TASK_CAS" >
+<strong>TASK_CAS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_SEAD)">#TASK_SEAD</a></em>
+<a id="TASK_SEAD" >
+<strong>TASK_SEAD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 	<h2><a id="#(Task_A2G)" >Type <code>Task_A2G</code></a></h2>
 	
+			<h2><a id="#(FSM_PROCESS)" >Type <code>FSM_PROCESS</code></a></h2>
+			
 			<h2><a id="#(TASK_A2G)" >Type <code>TASK_A2G</code></a></h2>
 				
 <p>The TASK_A2G class</p>
@@ -177,8 +391,122 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2G).GetRendezVousPointVec2" >
+<strong>TASK_A2G:GetRendezVousPointVec2(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.</p>
+
+				</li>
+				<li>
+				
+<p><em>#number:</em>
+The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).GetRendezVousZone" >
+<strong>TASK_A2G:GetRendezVousZone(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</em>
+The Zone object where the RendezVous is located on the map.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).GetTargetPointVec2" >
+<strong>TASK_A2G:GetTargetPointVec2(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The PointVec2 object where the Target is located on the map.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).GetTargetZone" >
+<strong>TASK_A2G:GetTargetZone(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</em>
+The Zone object where the Target is located on the map.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_A2G).New" >
-<strong>TASK_A2G:New(Mission, SetGroup, TaskName, TaskType, UnitSetTargets, TargetZone, TargetSetUnit, FACUnit)</strong>
+<strong>TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType)</strong>
 </a>
 </dt>
 <dd>
@@ -206,18 +534,20 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em>#string TaskType </em></code>: 
-BAI or CAS</p>
-
-				</li>
-				<li>
-				
 <p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+<p><code><em>#number TargetDistance </em></code>: 
+The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
+The target zone, if known.
+If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
 
 				</li>
 				<li>
@@ -227,7 +557,7 @@ BAI or CAS</p>
 				</li>
 				<li>
 				
-<p><code><em> FACUnit </em></code>: </p>
+<p><code><em> TaskType </em></code>: </p>
 
 				</li>
 		</ul>
@@ -235,6 +565,419 @@ BAI or CAS</p>
 				
 <p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetRendezVousPointVec2" >
+<strong>TASK_A2G:SetRendezVousPointVec2(RendezVousPointVec2, RendezVousRange, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> RendezVousPointVec2 </em></code>: 
+The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RendezVousRange </em></code>: 
+The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetRendezVousZone" >
+<strong>TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> RendezVousZone </em></code>: 
+The Zone object where the RendezVous is located on the map.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetTargetPointVec2" >
+<strong>TASK_A2G:SetTargetPointVec2(TargetPointVec2, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> TargetPointVec2 </em></code>: 
+The PointVec2 object where the Target is located on the map.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetTargetZone" >
+<strong>TASK_A2G:SetTargetZone(TargetZone, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
+The Zone object where the Target is located on the map.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_A2G).TargetSetUnit" >
+<strong>TASK_A2G.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_BAI)" >Type <code>TASK_BAI</code></a></h2>
+				
+<p>The TASK_BAI class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_BAI).ClassName" >
+<strong>TASK_BAI.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_BAI).New" >
+<strong>TASK_BAI:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK_BAI.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TargetDistance </em></code>: 
+The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
+The target zone, if known.
+If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetSetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_BAI)">#TASK_BAI</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_BAI).TargetSetUnit" >
+<strong>TASK_BAI.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_CAS)" >Type <code>TASK_CAS</code></a></h2>
+				
+<p>The TASK_CAS class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_CAS).ClassName" >
+<strong>TASK_CAS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CAS).New" >
+<strong>TASK_CAS:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK_CAS.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TargetDistance </em></code>: 
+The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
+The target zone, if known.
+If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetSetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CAS)">#TASK_CAS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_CAS).TargetSetUnit" >
+<strong>TASK_CAS.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_SEAD)" >Type <code>TASK_SEAD</code></a></h2>
+				
+<p>The TASK_SEAD class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_SEAD).ClassName" >
+<strong>TASK_SEAD.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_SEAD).New" >
+<strong>TASK_SEAD:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK_SEAD.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TargetDistance </em></code>: 
+The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
+The target zone, if known.
+If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> TargetSetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_SEAD)">#TASK_SEAD</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_SEAD).TargetSetUnit" >
+<strong>TASK_SEAD.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

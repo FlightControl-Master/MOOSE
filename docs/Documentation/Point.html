@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -91,11 +91,30 @@ In order to keep the credibility of the the author, I want to emphasize that the
     <li><a href="Point.html##(POINT_VEC3).NewFromVec3">Point#POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
 </ul>
 
-<h2>1.2) Smoke, flare, explode, illuminate</h2>
+<h2>1.2) Manupulate the X, Y, Z coordinates of the point</h2>
+
+<p>A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
+Methods exist to manupulate these coordinates.</p>
+
+<p>The current X, Y, Z axis can be retrieved with the methods <a href="##(POINT_VEC3).GetX">POINT_VEC3.GetX</a>(), <a href="##(POINT_VEC3).GetY">POINT_VEC3.GetY</a>(), <a href="##(POINT_VEC3).GetZ">POINT_VEC3.GetZ</a>() respectively.
+The methods <a href="##(POINT_VEC3).SetX">POINT_VEC3.SetX</a>(), <a href="##(POINT_VEC3).SetY">POINT_VEC3.SetY</a>(), <a href="##(POINT_VEC3).SetZ">POINT_VEC3.SetZ</a>() change the respective axis with a new value.
+The current axis values can be changed by using the methods <a href="##(POINT_VEC3).AddX">POINT_VEC3.AddX</a>(), <a href="##(POINT_VEC3).AddY">POINT_VEC3.AddY</a>(), <a href="##(POINT_VEC3).AddZ">POINT_VEC3.AddZ</a>()
+to add or substract a value from the current respective axis value.
+Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:</p>
+
+<pre><code> local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
+</code></pre>
+
+<h2>1.3) Create waypoints for routes</h2>
+
+<p>A POINT_VEC3 can prepare waypoints for Ground, Air and Naval groups to be embedded into a Route.</p>
+
+
+<h2>1.5) Smoke, flare, explode, illuminate</h2>
 
 <p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
 
-<h3>1.2.1) Smoke</h3>
+<h3>1.5.1) Smoke</h3>
 
 <ul>
     <li><a href="##(POINT_VEC3).Smoke">POINT_VEC3.Smoke</a>(): To smoke the point in a certain color.</li>
@@ -106,7 +125,7 @@ In order to keep the credibility of the the author, I want to emphasize that the
     <li><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3.SmokeGreen</a>(): To smoke the point in green.</li>
 </ul>
 
-<h3>1.2.2) Flare</h3>
+<h3>1.5.2) Flare</h3>
 
 <ul>
     <li><a href="##(POINT_VEC3).Flare">POINT_VEC3.Flare</a>(): To flare the point in a certain color.</li>
@@ -116,13 +135,13 @@ In order to keep the credibility of the the author, I want to emphasize that the
     <li><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3.FlareGreen</a>(): To flare the point in green.</li>
 </ul>
 
-<h3>1.2.3) Explode</h3>
+<h3>1.5.3) Explode</h3>
 
 <ul>
     <li><a href="##(POINT_VEC3).Explosion">POINT_VEC3.Explosion</a>(): To explode the point with a certain intensity.</li>
 </ul>
 
-<h3>1.2.4) Illuminate</h3>
+<h3>1.5.4) Illuminate</h3>
 
 <ul>
     <li><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3.IlluminationBomb</a>(): To illuminate the point.</li>
@@ -139,6 +158,21 @@ In order to keep the credibility of the the author, I want to emphasize that the
     <li><a href="Point.html##(POINT_VEC2).New">Point#POINT_VEC2.New</a>(): a 2D point, taking an additional height parameter.</li>
     <li><a href="Point.html##(POINT_VEC2).NewFromVec2">Point#POINT_VEC2.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
 </ul>
+
+<h2>1.2) Manupulate the X, Altitude, Y coordinates of the 2D point</h2>
+
+<p>A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+Methods exist to manupulate these coordinates.</p>
+
+<p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(POINT_VEC2).GetX">POINT_VEC2.GetX</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetY">POINT_VEC2.GetY</a>() respectively.
+The methods <a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX</a>(), <a href="##(POINT_VEC2).SetAlt">POINT_VEC2.SetAlt</a>(), <a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY</a>() change the respective axis with a new value.
+The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(POINT_VEC2).GetLat">POINT_VEC2.GetLat</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetLon">POINT_VEC2.GetLon</a>() respectively.
+The current axis values can be changed by using the methods <a href="##(POINT_VEC2).AddX">POINT_VEC2.AddX</a>(), <a href="##(POINT_VEC2).AddAlt">POINT_VEC2.AddAlt</a>(), <a href="##(POINT_VEC2).AddY">POINT_VEC2.AddY</a>()
+to add or substract a value from the current respective axis value.
+Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:</p>
+
+<pre><code> local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+</code></pre>
 
 <hr/>
 
@@ -196,6 +230,24 @@ In order to keep the credibility of the the author, I want to emphasize that the
 			<h2><a id="#(POINT_VEC2)">Type <code>POINT_VEC2</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).AddAlt">POINT_VEC2:AddAlt(Altitude)</a></td>
+		<td class="summary">
+<p>Add to the current land height an altitude.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).AddX">POINT_VEC2:AddX(x)</a></td>
+		<td class="summary">
+<p>Add to the x coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).AddY">POINT_VEC2:AddY(y)</a></td>
+		<td class="summary">
+<p>Add to the y coordinate of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).ClassName">POINT_VEC2.ClassName</a></td>
 		<td class="summary">
 
@@ -216,13 +268,25 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAlt">POINT_VEC2:GetAlt()</a></td>
 		<td class="summary">
-<p>Return the altitude of the land at the POINT_VEC2.</p>
+<p>Return the altitude (height) of the land at the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAltitudeText">POINT_VEC2:GetAltitudeText()</a></td>
 		<td class="summary">
 <p>Return no text for the altitude of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetLat">POINT_VEC2:GetLat()</a></td>
+		<td class="summary">
+<p>Return Return the Lat(itude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.x).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetLon">POINT_VEC2:GetLon()</a></td>
+		<td class="summary">
+<p>Return the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.z).</p>
 </td>
 		</tr>
 		<tr>
@@ -256,13 +320,31 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX(x, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetAlt">POINT_VEC2:SetAlt(Altitude)</a></td>
+		<td class="summary">
+<p>Set the altitude of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetLat">POINT_VEC2:SetLat(x)</a></td>
+		<td class="summary">
+<p>Set the Lat(itude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.x).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetLon">POINT_VEC2:SetLon(y, z)</a></td>
+		<td class="summary">
+<p>Set the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.z).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetX">POINT_VEC2:SetX(x)</a></td>
 		<td class="summary">
 <p>Set the x coordinate of the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY(y, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetY">POINT_VEC2:SetY(y)</a></td>
 		<td class="summary">
 <p>Set the y coordinate of the POINT_VEC2.</p>
 </td>
@@ -285,10 +367,34 @@ In order to keep the credibility of the the author, I want to emphasize that the
 <p>the y coordinate in meters.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).z">POINT_VEC2.z</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(POINT_VEC3)">Type <code>POINT_VEC3</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).AddX">POINT_VEC3:AddX(x)</a></td>
+		<td class="summary">
+<p>Add to the x coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).AddY">POINT_VEC3:AddY(y)</a></td>
+		<td class="summary">
+<p>Add to the y coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).AddZ">POINT_VEC3:AddZ(z)</a></td>
+		<td class="summary">
+<p>Add to the z coordinate of the POINT_VEC3.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ClassName">POINT_VEC3.ClassName</a></td>
 		<td class="summary">
@@ -506,19 +612,19 @@ In order to keep the credibility of the the author, I want to emphasize that the
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetX">POINT_VEC3.SetX(x, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetX">POINT_VEC3:SetX(x)</a></td>
 		<td class="summary">
 <p>Set the x coordinate of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetY">POINT_VEC3.SetY(y, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetY">POINT_VEC3:SetY(y)</a></td>
 		<td class="summary">
 <p>Set the y coordinate of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetZ">POINT_VEC3.SetZ(z, self)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).SetZ">POINT_VEC3:SetZ(z)</a></td>
 		<td class="summary">
 <p>Set the z coordinate of the POINT_VEC3.</p>
 </td>
@@ -684,6 +790,87 @@ In order to keep the credibility of the the author, I want to emphasize that the
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC2).AddAlt" >
+<strong>POINT_VEC2:AddAlt(Altitude)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the current land height an altitude.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Altitude </em></code>: 
+The Altitude to add. If nothing (nil) is given, then the current land altitude is set.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).AddX" >
+<strong>POINT_VEC2:AddX(x)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the x coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).AddY" >
+<strong>POINT_VEC2:AddY(y)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the y coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(POINT_VEC2).ClassName" >
 <strong>POINT_VEC2.ClassName</strong>
@@ -758,7 +945,7 @@ The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a
 </dt>
 <dd>
 	
-<p>Return the altitude of the land at the POINT_VEC2.</p>
+<p>Return the altitude (height) of the land at the POINT_VEC2.</p>
 
 		<h3>Return value</h3>
 				
@@ -782,6 +969,42 @@ The land altitude.</p>
 				
 <p><em>#string:</em>
 Empty string.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetLat" >
+<strong>POINT_VEC2:GetLat()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return Return the Lat(itude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.x).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The x coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetLon" >
+<strong>POINT_VEC2:GetLon()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.z).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The y coodinate.</p>
 
 </dd>
 </dl>
@@ -922,15 +1145,42 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(POINT_VEC2).SetX" >
-<strong>POINT_VEC2.SetX(x, self)</strong>
+<a id="#(POINT_VEC2).SetAlt" >
+<strong>POINT_VEC2:SetAlt(Altitude)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the x coordinate of the POINT_VEC2.</p>
+<p>Set the altitude of the POINT_VEC2.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Altitude </em></code>: 
+The land altitude. If nothing (nil) is given, then the current land altitude is set.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetLat" >
+<strong>POINT_VEC2:SetLat(x)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Lat(itude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.x).</p>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
@@ -938,24 +1188,24 @@ self</p>
 The x coordinate.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(POINT_VEC2).SetY" >
-<strong>POINT_VEC2.SetY(y, self)</strong>
+<a id="#(POINT_VEC2).SetLon" >
+<strong>POINT_VEC2:SetLon(y, z)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the y coordinate of the POINT_VEC2.</p>
+<p>Set the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.z).</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -967,10 +1217,69 @@ The y coordinate.</p>
 				</li>
 				<li>
 				
-<p><code><em> self </em></code>: </p>
+<p><code><em> z </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetX" >
+<strong>POINT_VEC2:SetX(x)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the x coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetY" >
+<strong>POINT_VEC2:SetY(y)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the y coordinate of the POINT_VEC2.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1034,8 +1343,6 @@ The new calculated POINT_VEC2.</p>
 
 </dd>
 </dl>
-<<<<<<< HEAD
-=======
 		<dl class="function">
 <dt>
 
@@ -1049,13 +1356,93 @@ The new calculated POINT_VEC2.</p>
 
 </dd>
 </dl>
->>>>>>> refs/remotes/origin/master
 
 			<h2><a id="#(POINT_VEC3)" >Type <code>POINT_VEC3</code></a></h2>
 				
 <p>The POINT_VEC3 class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).AddX" >
+<strong>POINT_VEC3:AddX(x)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the x coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate value to add to the current x coodinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).AddY" >
+<strong>POINT_VEC3:AddY(y)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the y coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate value to add to the current y coodinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).AddZ" >
+<strong>POINT_VEC3:AddZ(z)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add to the z coordinate of the POINT_VEC3.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number z </em></code>: 
+The z coordinate value to add to the current z coodinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -1919,14 +2306,14 @@ true means metric, false means NM.</p>
 <dt>
 
 <a id="#(POINT_VEC3).SetX" >
-<strong>POINT_VEC3.SetX(x, self)</strong>
+<strong>POINT_VEC3:SetX(x)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the x coordinate of the POINT_VEC3.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
@@ -1934,26 +2321,26 @@ true means metric, false means NM.</p>
 The x coordinate.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(POINT_VEC3).SetY" >
-<strong>POINT_VEC3.SetY(y, self)</strong>
+<strong>POINT_VEC3:SetY(y)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the y coordinate of the POINT_VEC3.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
@@ -1961,26 +2348,26 @@ The x coordinate.</p>
 The y coordinate.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(POINT_VEC3).SetZ" >
-<strong>POINT_VEC3.SetZ(z, self)</strong>
+<strong>POINT_VEC3:SetZ(z)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the z coordinate of the POINT_VEC3.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
@@ -1988,12 +2375,12 @@ The y coordinate.</p>
 The z coordinate.</p>
 
 				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
