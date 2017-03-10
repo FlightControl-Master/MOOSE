@@ -550,7 +550,7 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoreCSV">SCORING:ScoreCSV(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoreCSV">SCORING:ScoreCSV(PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</a></td>
 		<td class="summary">
 <p>Registers a score for a player.</p>
 </td>
@@ -1637,7 +1637,7 @@ The player group.</p>
 <dt>
 
 <a id="#(SCORING).ScoreCSV" >
-<strong>SCORING:ScoreCSV(PlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</strong>
+<strong>SCORING:ScoreCSV(PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</strong>
 </a>
 </dt>
 <dd>
@@ -1650,6 +1650,12 @@ The player group.</p>
 				
 <p><code><em>#string PlayerName </em></code>: 
 The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetPlayerName </em></code>: 
+The name of the target player.</p>
 
 				</li>
 				<li>

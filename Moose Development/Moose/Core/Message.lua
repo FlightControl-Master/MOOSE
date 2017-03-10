@@ -1,26 +1,40 @@
---- This module contains the MESSAGE class.
+--- **Core** - MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
 -- 
--- 1) @{Message#MESSAGE} class, extends @{Base#BASE}
--- =================================================
+-- ![Banner Image](..\Presentations\MESSAGE\Dia1.JPG)
+-- 
+-- ===
+-- 
+-- # 1) @{Message#MESSAGE} class, extends @{Base#BASE}
+-- 
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
 -- Messages can contain a category which is indicating the category of the message.
 -- 
--- 1.1) MESSAGE construction methods
--- ---------------------------------
+-- ## 1.1) MESSAGE construction
+-- 
 -- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
--- 1.2) Send messages with MESSAGE To methods
--- ------------------------------------------
--- Messages are sent to:
+-- ## 1.2) Send messages to an audience
+-- 
+-- Messages are sent:
 --
---   * Clients with @{Message#MESSAGE.ToClient}.
---   * Coalitions with @{Message#MESSAGE.ToCoalition}.
---   * All Players with @{Message#MESSAGE.ToAll}.
+--   * To a @{Client} using @{Message#MESSAGE.ToClient}().
+--   * To a @{Group} using @{Message#MESSAGE.ToGroup}()
+--   * To a coalition using @{Message#MESSAGE.ToCoalition}().
+--   * To the red coalition using @{Message#MESSAGE.ToRed}().
+--   * To the blue coalition using @{Message#MESSAGE.ToBlue}().
+--   * To all Players using @{Message#MESSAGE.ToAll}().
+-- 
+-- ## 1.3) Send conditionally to an audience
+-- 
+-- Messages can be sent conditionally to an audience (when a condition is true):
 --   
+--   * To all players using @{Message#MESSAGE.ToAllIf}().
+--   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
+-- 
+-- 
 -- @module Message
--- @author FlightControl
 
 --- The MESSAGE class
 -- @type MESSAGE
@@ -229,80 +243,3 @@ function MESSAGE:ToAllIf( Condition )
 
 	return self
 end
-
-
-
------ The MESSAGEQUEUE class
----- @type MESSAGEQUEUE
---MESSAGEQUEUE = {
---	ClientGroups = {},
---	CoalitionSides = {}
---}
---
---function MESSAGEQUEUE:New( RefreshInterval )
---	local self = BASE:Inherit( self, BASE:New() )
---	self:F( { RefreshInterval } )
---	
---	self.RefreshInterval = RefreshInterval
---
---	--self.DisplayFunction = routines.scheduleFunction( self._DisplayMessages, { self }, 0, RefreshInterval )
---  self.DisplayFunction = SCHEDULER:New( self, self._DisplayMessages, {}, 0, RefreshInterval )
---
---	return self
---end
---
------ This function is called automatically by the MESSAGEQUEUE scheduler.
---function MESSAGEQUEUE:_DisplayMessages()
---
---	-- First we display all messages that a coalition needs to receive... Also those who are not in a client (CA module clients...).
---	for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
---		for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
---			if MessageData.MessageSent == false then
---				--trigger.action.outTextForCoalition( CoalitionSideID, MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---				MessageData.MessageSent = true
---			end
---			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---			if MessageTimeLeft <= 0 then
---				MessageData = nil
---			end
---		end
---	end
---
---	-- Then we send the messages for each individual client, but also to be included are those Coalition messages for the Clients who belong to a coalition.
---	-- Because the Client messages will overwrite the Coalition messages (for that Client).
---	for ClientGroupName, ClientGroupData in pairs( self.ClientGroups ) do
---		for MessageID, MessageData in pairs( ClientGroupData.Messages ) do
---			if MessageData.MessageGroup == false then
---				trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---				MessageData.MessageGroup = true
---			end
---			local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---			if MessageTimeLeft <= 0 then
---				MessageData = nil
---			end
---		end
---		
---		-- Now check if the Client also has messages that belong to the Coalition of the Client...
---		for CoalitionSideID, CoalitionSideData in pairs( self.CoalitionSides ) do
---			for MessageID, MessageData in pairs( CoalitionSideData.Messages ) do
---				local CoalitionGroup = Group.getByName( ClientGroupName )
---				if CoalitionGroup and CoalitionGroup:getCoalition() == CoalitionSideID then 
---					if MessageData.MessageCoalition == false then
---						trigger.action.outTextForGroup( Group.getByName(ClientGroupName):getID(), MessageData.MessageCategory .. '\n' .. MessageData.MessageText:gsub("\n$",""):gsub("\n$",""), MessageData.MessageDuration )
---						MessageData.MessageCoalition = true
---					end
---				end
---				local MessageTimeLeft = ( MessageData.MessageTime + MessageData.MessageDuration ) - timer.getTime()
---				if MessageTimeLeft <= 0 then
---					MessageData = nil
---				end
---			end
---		end
---	end
---	
---	return true
---end
---
------ The _MessageQueue object is created when the MESSAGE class module is loaded.
-----_MessageQueue = MESSAGEQUEUE:New( 0.5 )
---

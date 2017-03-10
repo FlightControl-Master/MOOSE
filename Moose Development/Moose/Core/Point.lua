@@ -1,4 +1,4 @@
---- This module contains the POINT classes.
+--- **Core** - **POINT\_VEC** classes define an **extensive API** to **manage 3D points** in the simulation space.
 -- 
 -- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
 -- ==================================================
