@@ -1,18 +1,10 @@
 BASE:TraceAll(1)
-BASE:TraceLevel(3)
+BASE:TraceLevel(1)
 local Player = UNIT:FindByName("Player")
 Player:MessageToAll("MainScript Started 2", 10, "")
 
-local Transmiter = UNIT:FindByName("Transmiter")
+local Static = STATIC:FindByName("CommandCenter")
 
-local TransmiterRadio = Transmiter:GetRadio()
-TransmiterRadio:NewUnitTransmission("Noise.ogg", "Subtitle", 10, 251000, 0, 0)
-TransmiterRadio:E({
-                  TransmiterRadio.Positionable,
-                  TransmiterRadio.FileName,
-                  TransmiterRadio.Subtitle,
-                  TransmiterRadio.SubtitleDuration,
-                  TransmiterRadio.Frequency,
-                  TransmiterRadio.Modulation,
-                  })
-TransmiterRadio:Broadcast()
+local StaticRadio = Static:GetRadio()
+StaticRadio:NewGenericTransmission("Test Voice.ogg", 251000, radio.modulation.AM, 1000)
+StaticRadio:Broadcast()

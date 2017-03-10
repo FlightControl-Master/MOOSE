@@ -23,7 +23,7 @@ RADIO = {
     Positionable,
     FileName = "",
     Frequency = 0,
-    Modulation = 0,
+    Modulation = radio.modulation.AM,
     Subtitle = "",
     SubtitleDuration = 10,
     Power = 100,
@@ -74,7 +74,7 @@ function RADIO:NewGenericTransmission(...)
     self:F2(arg)
     self.FileName = RADIO:VerifyFileName(arg[1])
     if arg[2] ~= nil then
-        self.Frequecy = arg[2] * 1000 -- Convert to Hz
+        self.Frequency = arg[2] * 1000 -- Convert to Hz
     end
     if arg[3] ~= nil then
         self.Modulation = arg[3]
@@ -158,7 +158,7 @@ function RADIO:Broadcast()
             })
     else
         -- If the POSITIONABLE is anything else, we revert to the general function
-        trigger.action.radioTransmission(self.FileName, self.Positionable:PositionVec3(), self.Modulation, 1, self.Frequency, self.Power)
+        trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, false, self.Frequency, self.Power)
     end
     return self
 end
