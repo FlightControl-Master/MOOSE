@@ -108,7 +108,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 <p>Find below a list of the <strong>assigned task</strong> methods:</p>
 
 <ul>
-    <li><a href="##(CONTROLLABLE).TaskAttackControllable">CONTROLLABLE.TaskAttackControllable</a>: (AIR) Attack a Controllable.</li>
+    <li><a href="##(CONTROLLABLE).TaskAttackGroup">CONTROLLABLE.TaskAttackGroup</a>: (AIR) Attack a Controllable.</li>
     <li><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
     <li><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
     <li><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE.TaskBombing</a>: (AIR) Delivering weapon at the point on the ground.</li>
@@ -116,7 +116,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).TaskEmbarking">CONTROLLABLE.TaskEmbarking</a>: (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.</li>
     <li><a href="##(CONTROLLABLE).TaskEmbarkToTransport">CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
     <li><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne controllable. </li>
-    <li><a href="##(CONTROLLABLE).TaskFAC_AttackControllable">CONTROLLABLE.TaskFAC_AttackControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
+    <li><a href="##(CONTROLLABLE).TaskFAC_AttackGroup">CONTROLLABLE.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
     <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire some or all ammunition at a VEC2 point.</li>
     <li><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne controllable.</li>
     <li><a href="##(CONTROLLABLE).TaskHold">CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground controllable from moving.</li>
@@ -1011,7 +1011,7 @@ All en-route tasks have the priority parameter. This is a number (less value - h
 				<li>
 				
 <p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
 
 				</li>
 		</ul>
@@ -2038,7 +2038,7 @@ The Controllable to be attacked.</p>
 				<li>
 				
 <p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
 
 				</li>
 		</ul>
@@ -2152,7 +2152,7 @@ The unit.</p>
 				<li>
 				
 <p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackControllable" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
 
 				</li>
 				<li>
@@ -2203,7 +2203,7 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em>#number AttackQty </em></code>: 
-(optional) Desired quantity of passes. The parameter is not the same in AttackControllable and AttackUnit tasks. </p>
+(optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. </p>
 
 				</li>
 				<li>

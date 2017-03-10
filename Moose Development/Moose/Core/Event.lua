@@ -1,5 +1,4 @@
---- This core module models the dispatching of DCS Events to subscribed MOOSE classes,
--- following a given priority.
+--- **Core** - EVENT models DCS **event dispatching** using a **publish-subscribe** model.
 -- 
 -- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
