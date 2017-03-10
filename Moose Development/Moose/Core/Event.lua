@@ -284,7 +284,7 @@ local _EVENTMETA = {
    },
    [world.event.S_EVENT_TAKEOFF] = {
      Order = 1,
-     Event = "OnEventTakeOff",
+     Event = "OnEventTakeoff",
      Text = "S_EVENT_TAKEOFF" 
    },
    [world.event.S_EVENT_LAND] = {

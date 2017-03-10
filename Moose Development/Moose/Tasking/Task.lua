@@ -231,7 +231,7 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
     -- If the PlayerGroup is not assigned to the Task, the menu needs to be set. In that case, the PlayerUnit will become the GroupPlayer leader.
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( PlayerGroup )
-      self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
+      --self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
     end
     if self:IsStateAssigned() then
       local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )

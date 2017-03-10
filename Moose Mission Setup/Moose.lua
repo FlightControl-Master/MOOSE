@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170310_1431' ) 
+env.info( 'Moose Generation Timestamp: 20170310_2237' ) 
 local base = _G
 
 Include = {}
@@ -4379,7 +4379,7 @@ local _EVENTMETA = {
    },
    [world.event.S_EVENT_TAKEOFF] = {
      Order = 1,
-     Event = "OnEventTakeOff",
+     Event = "OnEventTakeoff",
      Text = "S_EVENT_TAKEOFF" 
    },
    [world.event.S_EVENT_LAND] = {
@@ -33206,7 +33206,7 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
     -- If the PlayerGroup is not assigned to the Task, the menu needs to be set. In that case, the PlayerUnit will become the GroupPlayer leader.
     if self:IsStatePlanned() or self:IsStateReplanned() then
       self:SetMenuForGroup( PlayerGroup )
-      self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
+      --self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
     end
     if self:IsStateAssigned() then
       local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
