@@ -794,8 +794,9 @@ do
   -- @param #MENU_GROUP self
   -- @return #MENU_GROUP self
   function MENU_GROUP:RemoveSubMenus()
-    self:F( self.MenuPath )
+    self:F2( self.MenuPath )
   
+    self:T( { "Removing Group SubMenus:", self.MenuGroup:GetName(), self.MenuPath } )
     for MenuID, Menu in pairs( self.Menus ) do
       Menu:Remove()
     end
@@ -806,7 +807,7 @@ do
   -- @param #MENU_GROUP self
   -- @return #nil
   function MENU_GROUP:Remove()
-    self:F( { self.MenuGroupID, self.MenuPath } )
+    self:F2( { self.MenuGroupID, self.MenuPath } )
   
     self:RemoveSubMenus()
   
@@ -817,7 +818,7 @@ do
       if self.ParentMenu then
         self.ParentMenu.Menus[self.MenuPath] = nil
       end
-      self:E( self.MenuGroup._Menus[self.Path] )
+      self:T( { "Removing Group Menu:", self.MenuGroup:GetName(), self.MenuGroup._Menus[self.Path].Path } )
       self.MenuGroup._Menus[self.Path] = nil
       self = nil
     end
@@ -856,7 +857,7 @@ do
       self.MenuText = MenuText
       self.ParentMenu = ParentMenu
 
-      self:T( { "Adding Command Menu ", MenuText, self.MenuParentPath } )
+      self:T( { "Adding Group Command Menu:", MenuGroup:GetName(), MenuText, self.MenuParentPath } )
       self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
 
       if ParentMenu and ParentMenu.Menus then
@@ -873,14 +874,14 @@ do
   -- @param #MENU_GROUP_COMMAND self
   -- @return #nil
   function MENU_GROUP_COMMAND:Remove()
-    self:F( { self.MenuGroupID, self.MenuPath } )
+    self:F2( { self.MenuGroupID, self.MenuPath } )
 
     if self.MenuGroup._Menus[self.Path] then
       self = self.MenuGroup._Menus[self.Path]
   
       missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
       self.ParentMenu.Menus[self.MenuPath] = nil
-      self:E( self.MenuGroup._Menus[self.Path] )
+      self:T( { "Removing Group Command Menu:", self.MenuGroup:GetName(), self.MenuGroup._Menus[self.Path].Path } )
       self.MenuGroup._Menus[self.Path] = nil
       self = nil
     end
