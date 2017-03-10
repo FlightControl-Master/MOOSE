@@ -59,9 +59,9 @@ function RADIO:SetFileName(filename)
     if filename:find(".ogg") ~= nil or filename:find(".wav") ~= nil then
       if filename:find("l10n/DEFAULT/") == nil then
         filename = "l10n/DEFAULT/" .. filename
-        self.FileName = filename
-        return self
       end
+      self.FileName = filename
+      return self
     end
   end
   self:E({"File name invalid. Maybe something wrong with the extension ?", self.FileName})
@@ -70,7 +70,7 @@ end
 
 --- Check validity of the frequency passed and sets RADIO.Frequency
 -- @param #RADIO self
--- @param #number frequency
+-- @param #number frequency in MHz
 -- @return self
 -- @usage
 function RADIO:SetFrequency(frequency)
@@ -78,7 +78,7 @@ function RADIO:SetFrequency(frequency)
   if type(frequency) == "number" then
     -- If frequency is in range
     if (frequency >= 30 and frequency < 88) or (frequency >= 108 and frequency < 152) or (frequency >= 225 and frequency < 400) then
-      self.Frequency = frequency * 1000 -- Coversion in Hz
+      self.Frequency = frequency * 1000000 -- Coversion in Hz
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
         self.Positionable:GetDCSObject():getController():setCommand({
@@ -222,6 +222,7 @@ function RADIO:Broadcast()
   self:F()
   -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS function
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
+    self:T2("Broadcasting from a UNIT or a GROUP")
     self.Positionable:GetDCSObject():getController():setCommand({
       id = "TransmitMessage",
       params = {
@@ -233,6 +234,7 @@ function RADIO:Broadcast()
     })
   else
     -- If the POSITIONABLE is anything else, we revert to the general function
+    self:T2("Broadcasting from a POSITIONABLE")
     trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, false, self.Frequency, self.Power)
   end
   return self
