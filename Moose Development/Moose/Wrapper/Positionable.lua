@@ -432,7 +432,11 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
-
-
-
-
+--- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE
+-- Set parameters with the methods provided, then use @{Radio#RADIO.Broadcast} to actually broadcast the message
+-- @param self
+-- @return #RADIO
+function POSITIONABLE:GetRadio()
+    local Radio = RADIO.New(self)
+    return Radio
+end

@@ -33,12 +33,11 @@ MESSAGE = {
 -- @TODO Manage Trace in all functions below
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{Radio#RADIO.Broadcast} to actually broadcast
--- @param self
 -- @param #POSITIONABLE Positionable
 -- @return self
 -- @usage
 -- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}
-function RADIO:New(positionable)
+function RADIO.New(positionable)
     local self = BASE:Inherit( self, BASE:New() )
     -- self:F( { MessageText, MessageDuration, MessageCategory } )
     
