@@ -30,19 +30,22 @@ RADIO = {
     Loop = 0,   
 }
 
--- @TODO Manage Trace in all functions below
-
---- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{Radio#RADIO.Broadcast} to actually broadcast
--- @param #POSITIONABLE Positionable
--- @return self
+--- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
+-- @param Wrapper.Positionable#POSITIONABLE Positionable
+-- @return #RADIO Radio
+-- @return #nil If Positionable is invalid
 -- @usage
--- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}
+-- -- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio} instead
 function RADIO:New(positionable)
     local self = BASE:Inherit( self, BASE:New() )
     self:F(positionable)
-    
-    self.Positionable = positionable
-    return self
+    if positionable:GetPointVec2() ~= nil then -- It's stupid, but the only way I found to make sure positionable is valid
+      self.Positionable = positionable
+      return self
+    else
+      self:E({"The passed positionable is invalid, no RADIO created : ", positionable})
+      return nil
+    end
 end
 
 --- Add the 'l10n/DEFAULT/' in the file name if necessary
@@ -51,7 +54,7 @@ end
 -- @return #string FileName Corrected file name
 -- @usage
 -- -- internal use only
-function RADIO:VerifyFileName(filename)
+function RADIO:_VerifyFileName(filename)
     if filename:find("l10n/DEFAULT/") == nil then
         filename = "l10n/DEFAULT/" .. filename
     end 
@@ -72,7 +75,7 @@ end
 -- @TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewGenericTransmission(...)
     self:F2(arg)
-    self.FileName = RADIO:VerifyFileName(arg[1])
+    self.FileName = RADIO:_VerifyFileName(arg[1])
     if arg[2] ~= nil then
         self.Frequency = arg[2] * 1000 -- Convert to Hz
     end
@@ -102,7 +105,7 @@ end
 -- -- @TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewUnitTransmission(...)
     self:F2(arg)
-    self.FileName = RADIO:VerifyFileName(arg[1])
+    self.FileName = RADIO:_VerifyFileName(arg[1])
     if arg[2] ~= nil then
         self.Subtitle = arg[2]
     end 
