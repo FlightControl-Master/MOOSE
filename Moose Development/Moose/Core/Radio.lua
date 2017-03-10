@@ -80,7 +80,40 @@ function RADIO:NewTransmission(filename, frequency, mod, power)
     if power ~= nil then
         self.Power = power
     end
+    return self
 end
 
-
+--- Create a new transmission, that is to say, populate the RADIO with relevant data
+-- @param self
+-- @param #string Filename
+-- @param #string Subtitle
+-- @param #number SubtitleDuration in s
+-- @param #number Frequency in kHz
+-- @param #number Modulation
+-- @param #bool Loop
+-- @return self
+-- @usage
+-- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
+-- -- but it will work for any IDENTIFIABLE
+-- -- Only the RADIO and the Filename are mandatory 
+-- -- Loop : O is no loop, 1 is loop
+function RADIO:NewTransmissionUnit(filename, subtitle, subtitleDuraction, frequency, mod, loop)
+    self.FileName = RADIO.VerifyFile(filename)
+    if subtitle ~= nil then
+        self.Subtitle = subtitle
+    end 
+    if subtitleDuration ~= nil then
+        self.SubtitleDuration = subtitleDuration
+    end
+    if frequency ~= nil then
+        self.Frequecy = frequency * 1000 -- Convert to Hz
+    end
+    if mod ~= nil then
+        self.Modulation = mod
+    end
+    if loop ~= nil then
+        self.Loop = loop
+    end
+    return self
+end
 
