@@ -56,26 +56,9 @@ function RADIO.VerifyFileName(filename)
     return filename
 end
 
---- Whatever the Frequency's unit is, returns the frequency in Hz.
--- @param #number Frequency
--- @return #string Frequency in Hz
--- @usage
--- -- internal use only
--- -- Frequency has to be an integer.
-function RADIO.ConvertFrequency(frequency)
-    local digitCount = 0
-    for i in string.gmatch(frequency, "%d") do
-        digitCount = digitCount + 1
-    end
-    for i = (9 - digitCount), 0, -1 do
-        frequency = frequency .. "0" 
-    end
-    return frequency
-end
-
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param #string Filename
--- @param #number Frequency
+-- @param #number Frequency in kHz
 -- @param #number Modulation
 -- @param #number Power
 -- @return self
@@ -84,11 +67,10 @@ end
 -- -- but it will work with a UNIT or a GROUP anyway
 function RADIO:NewTransmission(filename, frequency, mod, power)
     self.FileName = RADIO.VerifyFile(filename)
-    self.Frequecy = RADIO.ConvertFrequency(frequency)
+    self.Frequecy = frequency * 1000 -- Convert to Hz
     self.Modulation = mod
     self.Power = power
 end
-
 
 
 
