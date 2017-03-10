@@ -9,7 +9,7 @@
 -- 1.1) RADIO construction methods
 -- -------------------------------
 -- RADIO is created with @{Radio#RADIO.New}. This doesn't broadcast a transmission, but only create a RADIO object
--- It should only be used internally. To create a RADIO object, please use @{Identifiable#IDENIFIABLE.GetRadio}
+-- It should only be used internally. To create a RADIO object, please use @{Positionable#POSITIONABLE.GetRadio}
 -- To actually broadcast your transmission, you need to use @{Radio#RADIO.Broadcast}
 --   
 -- @module Radio
@@ -20,29 +20,29 @@
 -- @extends Core.Base#BASE
 MESSAGE = {
     ClassName = "RADIO",
-    Identifiable = IDENTIFIABLE:New(),
+    Positionable = POSITIONABLE:New(),
     FileName = "",
-    Frequency = 255000,
-    Power = 100,
+    Frequency = 0,
     Modulation = 0,
-    Loop = 0,
     Subtitle = "",
-    SubtitleDuration = ""
+    SubtitleDuration = 10,
+    Power = 100,
+    Loop = 0,   
 }
 
 -- @TODO Manage Trace in all functions below
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{Radio#RADIO.Broadcast} to actually broadcast
 -- @param self
--- @param #IDENTIFIABLE Identifiable
+-- @param #POSITIONABLE Positionable
 -- @return self
 -- @usage
--- -- If you want to create a RADIO, you probably should use @{Identifiable#IDENIFIABLE.GetRadio}
-function RADIO:New(identifiable)
+-- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}
+function RADIO:New(positionable)
     local self = BASE:Inherit( self, BASE:New() )
     -- self:F( { MessageText, MessageDuration, MessageCategory } )
     
-    self.Identifiable = identifiable
+    self.Positionable = positionable
     return self
 end
 
@@ -94,10 +94,10 @@ end
 -- @return self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
--- -- but it will work for any IDENTIFIABLE
+-- -- but it will work for any POSITIONABLE
 -- -- Only the RADIO and the Filename are mandatory 
 -- -- Loop : O is no loop, 1 is loop
-function RADIO:NewTransmissionUnit(filename, subtitle, subtitleDuraction, frequency, mod, loop)
+function RADIO:NewTransmissionForUnit(filename, subtitle, subtitleDuraction, frequency, mod, loop)
     self.FileName = RADIO.VerifyFile(filename)
     if subtitle ~= nil then
         self.Subtitle = subtitle
@@ -117,3 +117,43 @@ function RADIO:NewTransmissionUnit(filename, subtitle, subtitleDuraction, freque
     return self
 end
 
+--- Actually Broadcast the transmission
+-- @param self
+-- @return self
+-- @usage
+-- -- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
+-- -- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
+-- -- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
+-- -- In both case, you need to tell the class the name of the file to play with either @{Radio#RADIO.NewTransmission} or @{Radio#RADIO.NewTransmissionUnit}
+-- -- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
+-- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored 
+function RADIO:Broadcast() 
+    -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS function
+    if Positionable.ClassName == "UNIT" or Positionable.ClassName == "GROUP" then
+        -- If the user didn't change the frequency, he wants to use the on defined in the Mission Editor.
+        -- Else we set the frequency of the UNIT or the GROUP in DCS
+        if self.Frequency == 0 then
+            self.Positionable:GetDCSUnit():getController():setCommand({ 
+                id = 'SetFrequency', 
+                params = { 
+                    frequency = self.Frequency, 
+                    modulation = self.Modulation,
+                    }
+                })
+        end
+            
+        self.Positionable:GetDCSUnit():getController():setCommand({ 
+            id = "TransmitMessage", 
+            params = {
+                file = self.FileName,
+                duration = self.SubtitleDuration,
+                subtitle = self.Subtitle,
+                loop = self.Loop,
+                } 
+            })
+    else
+        -- If the POSITIONABLE is anything else, we revert to the general function
+        trigger.action.radioTransmission(ClassName, self.Positionable:PositionVec3(), Modulation, 1, Frequency, Power)
+    end
+    return self
+end
