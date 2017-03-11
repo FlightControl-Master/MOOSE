@@ -50,7 +50,7 @@ end
 
 --- Check validity of the filename passed and sets RADIO.FileName
 -- @param #RADIO self
--- @param #string fileName Filename of the sound
+-- @param #string fileName of the sound
 -- @return self
 -- @usage
 function RADIO:SetFileName(filename)
@@ -171,7 +171,7 @@ end
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param self
 -- @param #string Filename
--- @param #number Frequency in kHz
+-- @param #number Frequency in MHz
 -- @param #number Modulation
 -- @param #number Power in W
 -- @return self
@@ -181,7 +181,12 @@ end
 -- -- Only the RADIO and the Filename are mandatory
 function RADIO:NewGenericTransmission(...)
   self:F(arg)
-
+  
+  self:SetFileName(arg[1])
+  if arg[2] then self:SetFrequency(arg[2]) end
+  if arg[3] then self:SetModualtion(arg[3]) end
+  if arg[4] then self:SetPower(arg[4]) end
+  
   return self
 end
 
@@ -204,6 +209,13 @@ end
 function RADIO:NewUnitTransmission(...)
   self:F(arg)
 
+  self:SetFileName(arg[1])
+  if arg[2] then self:SetSubtitle(arg[2]) end
+  if arg[3] then self:SetSubtitleDuration(arg[3]) end
+  if arg[4] then self:SetFrequency(arg[4]) end
+  if arg[5] then self:SetModualtion(arg[5]) end
+  if arg[6] then self:SetLoop(arg[6]) end
+  
   return self
 end
 
