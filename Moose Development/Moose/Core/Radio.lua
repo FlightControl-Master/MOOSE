@@ -54,7 +54,7 @@ end
 -- @return self
 -- @usage
 function RADIO:SetFileName(filename)
-  self:F(filename)
+  self:F2(filename)
   if type(filename) == "string" then
     if filename:find(".ogg") ~= nil or filename:find(".wav") ~= nil then
       if filename:find("l10n/DEFAULT/") == nil then
@@ -74,7 +74,7 @@ end
 -- @return self
 -- @usage
 function RADIO:SetFrequency(frequency)
-  self:F(frequency)
+  self:F2(frequency)
   if type(frequency) == "number" then
     -- If frequency is in range
     if (frequency >= 30 and frequency < 88) or (frequency >= 108 and frequency < 152) or (frequency >= 225 and frequency < 400) then
@@ -102,7 +102,7 @@ end
 -- @return #self
 -- @usage
 function RADIO:SetModulation(modulation)
-  self:F(modulation)
+  self:F2(modulation)
   if type(modulation) == "number" then
     if modulation == radio.modulation.AM or modulation == radio.modulation.FM then --TODO Maybe make this future proof if ED decides to add an other modulation ?
       self.Modulation = modulation
@@ -119,7 +119,7 @@ end
 -- @return #self
 -- @usage
 function RADIO:SetPower(power)
-  self:F(power)
+  self:F2(power)
   if type(power) == "number" then
     self.Power = math.floor(math.abs(power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
     return self
@@ -134,7 +134,7 @@ end
 -- @return #self
 -- @usage
 function RADIO:SetLoop(loop)
-  self:F(loop)
+  self:F2(loop)
   if type(loop) == "boolean" then
     self.Loop = loop
     return self
@@ -151,7 +151,7 @@ end
 -- @usage
 -- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not it's duration
 function RADIO:SetSubtitle(subtitle, subtitleDuration)
-  self:F({subtitle, subtitleDuration})
+  self:F2({subtitle, subtitleDuration})
   if type(subtitle) == "string" then
     self.Subtitle = subtitle
   else
@@ -177,7 +177,7 @@ end
 -- @return self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
--- -- but it will work with a UNIT or a GROUP anyway
+-- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
 function RADIO:NewGenericTransmission(...)
   self:F(arg)
@@ -196,16 +196,14 @@ end
 -- @param #string Filename
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
--- @param #number Frequency in kHz
+-- @param #number Frequency in MHz
 -- @param #number Modulation
 -- @param #bool Loop
 -- @return self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
--- -- but it will work for any POSITIONABLE
+-- but it will work for any POSITIONABLE
 -- -- Only the RADIO and the Filename are mandatory
--- -- Loop : O is no loop, 1 is loop
--- -- @TODO : Verify the type of passed args and throw errors when necessary
 function RADIO:NewUnitTransmission(...)
   self:F(arg)
 
@@ -223,10 +221,11 @@ end
 -- @param self
 -- @return self
 -- @usage
+-- -- The Radio has to be populated with the new transmission before broadcasting.
+-- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
 -- -- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
 -- -- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
 -- -- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
--- -- In both case, you need to tell the class the name of the file to play with either @{Radio#RADIO.NewTransmission} or @{Radio#RADIO.NewTransmissionUnit}
 -- -- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
 -- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored
 function RADIO:Broadcast()
