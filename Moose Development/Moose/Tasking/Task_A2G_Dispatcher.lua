@@ -85,7 +85,7 @@ do -- TASK_A2G_DISPATCHER
   -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateSEAD( DetectedItem )
-    self:F( { DetectedItem.AreaID } )
+    self:F( { DetectedItem.ItemID } )
   
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
@@ -109,18 +109,18 @@ do -- TASK_A2G_DISPATCHER
 
   --- Creates a CAS task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
   -- @return Tasking.Task#TASK
-  function TASK_A2G_DISPATCHER:EvaluateCAS( DetectedArea )
-    self:F( { DetectedArea.AreaID } )
+  function TASK_A2G_DISPATCHER:EvaluateCAS( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
   
-    local DetectedSet = DetectedArea.Set
-    local DetectedZone = DetectedArea.Zone
+    local DetectedSet = DetectedItem.Set
+    local DetectedZone = DetectedItem.Zone
 
 
     -- Determine if the set has radar targets. If it does, construct a SEAD task.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedArea )
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
 
     if GroundUnitCount > 0 and FriendliesNearBy == true then
 
@@ -137,18 +137,18 @@ do -- TASK_A2G_DISPATCHER
   
   --- Creates a BAI task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
+  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
   -- @return Tasking.Task#TASK
-  function TASK_A2G_DISPATCHER:EvaluateBAI( DetectedArea, FriendlyCoalition )
-    self:F( { DetectedArea.AreaID } )
+  function TASK_A2G_DISPATCHER:EvaluateBAI( DetectedItem, FriendlyCoalition )
+    self:F( { DetectedItem.ItemID } )
   
-    local DetectedSet = DetectedArea.Set
-    local DetectedZone = DetectedArea.Zone
+    local DetectedSet = DetectedItem.Set
+    local DetectedZone = DetectedItem.Zone
 
 
     -- Determine if the set has radar targets. If it does, construct a SEAD task.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedArea )
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
 
     if GroundUnitCount > 0 and FriendliesNearBy == false then
 
@@ -164,7 +164,7 @@ do -- TASK_A2G_DISPATCHER
   end
   
   --- Evaluates the removal of the Task from the Mission.
-  -- Can only occur when the DetectedArea is Changed AND the state of the Task is "Planned".
+  -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Tasking.Task#TASK Task
@@ -205,54 +205,54 @@ do -- TASK_A2G_DISPATCHER
       local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set -- Functional.Detection#DETECTION_BASE.DetectedSet
       local DetectedZone = DetectedItem.Zone
-      self:E( { "Targets in DetectedArea", DetectedItem.AreaID, DetectedSet:Count(), tostring( DetectedItem ) } )
+      self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
       DetectedSet:Flush()
       
-      local AreaID = DetectedItem.AreaID
+      local ItemID = DetectedItem.ItemID
       
       -- Evaluate SEAD Tasking
-      local SEADTask = Mission:GetTask( string.format( "SEAD.%03d", AreaID ) )
+      local SEADTask = Mission:GetTask( string.format( "SEAD.%03d", ItemID ) )
       SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedItem )
       if not SEADTask then
         local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", AreaID ), TargetSetUnit )
+          local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           SEADTask = Mission:AddTask( Task )
         end
       end        
       if SEADTask and SEADTask:IsStatePlanned() then
-        ReportSEAD:Add( string.format( " - %s.%02d - %s", "SEAD", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
+        ReportSEAD:Add( string.format( " - %s.%02d - %s", "SEAD", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
       -- Evaluate CAS Tasking
-      local CASTask = Mission:GetTask( string.format( "CAS.%03d", AreaID ) )
+      local CASTask = Mission:GetTask( string.format( "CAS.%03d", ItemID ) )
       CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedItem )
       if not CASTask then
         local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", AreaID ), TargetSetUnit )
+          local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           CASTask = Mission:AddTask( Task )
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
-        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS.", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
+        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS.", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
       -- Evaluate BAI Tasking
-      local BAITask = Mission:GetTask( string.format( "BAI.%03d", AreaID ) )
+      local BAITask = Mission:GetTask( string.format( "BAI.%03d", ItemID ) )
       BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedItem )
       if not BAITask then
         local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
-          local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", AreaID ), TargetSetUnit )
+          local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           BAITask = Mission:AddTask( Task )
         end
       end        
       if BAITask and BAITask:IsStatePlanned() then
-        ReportBAI:Add( string.format( " - %s.%02d - %s", "BAI", AreaID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
+        ReportBAI:Add( string.format( " - %s.%02d - %s", "BAI", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
 --        -- Loop through the changes ...
