@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170308_2139' ) 
+env.info( 'Moose Generation Timestamp: 20170312_0717' ) 
 local base = _G
 
 Include = {}
@@ -10561,6 +10561,7 @@ end
 -- 
 -- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
 -- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
+-- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
 -- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
 -- to add or substract a value from the current respective axis value.
 -- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
@@ -10844,7 +10845,7 @@ function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
 
   local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
   local y = self:GetY() + math.random( InnerRadius, OuterRadius )
-  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.z }
+  local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.y }
 
   return RandomVec3
 end
@@ -11010,9 +11011,9 @@ function POINT_VEC3:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
   self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
-  RoutePoint.alt = self:GetY()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
+  RoutePoint.alt = self.y
   RoutePoint.alt_type = AltType
   
   RoutePoint.type = Type
@@ -11051,8 +11052,8 @@ function POINT_VEC3:RoutePointGround( Speed, Formation )
   self:F2( { Formation, Speed } )
 
   local RoutePoint = {}
-  RoutePoint.x = self:GetX()
-  RoutePoint.y = self:GetZ()
+  RoutePoint.x = self.x
+  RoutePoint.y = self.z
   
   RoutePoint.action = Formation or ""
     
@@ -11253,11 +11254,25 @@ function POINT_VEC2:GetY()
   return self.z
 end
 
---- Return the altitude of the land at the POINT_VEC2.
+--- Return the altitude (height) of the land at the POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @return #number The land altitude.
 function POINT_VEC2:GetAlt()
   return land.getHeight( { x = self.x, y = self.z } )
+end
+
+--- Return Return the Lat(itude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.x).
+-- @param #POINT_VEC2 self
+-- @return #number The x coodinate.
+function POINT_VEC2:GetLat()
+  return self.x
+end
+
+--- Return the Lon(gitude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.z).
+-- @param #POINT_VEC2 self
+-- @return #number The y coodinate.
+function POINT_VEC2:GetLon()
+  return self.z
 end
 
 --- Set the x coordinate of the POINT_VEC2.
@@ -11278,12 +11293,30 @@ function POINT_VEC2:SetY( y )
   return self
 end
 
+--- Set the Lat(itude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.x).
+-- @param #POINT_VEC2 self
+-- @param #number x The x coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:SetLat( x )
+  self.x = x
+  return self
+end
+
 --- Set the altitude of the POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
 -- @return #POINT_VEC2
 function POINT_VEC2:SetAlt( Altitude )
   self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
+  return self
+end
+
+--- Set the Lon(gitude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.z).
+-- @param #POINT_VEC2 self
+-- @param #number y The y coordinate.
+-- @return #POINT_VEC2
+function POINT_VEC2:SetLon( z )
+  self.z = z
   return self
 end
 
@@ -27883,7 +27916,7 @@ function AI_CAS_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
   self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
-  self:HandleEvent( EVENTS.Dead, self.OnDead )
+  self:HandleEvent( EVENTS.Dead )
   
   self:SetDetectionDeactivated() -- When not engaging, set the detection off.
 end
@@ -28067,20 +28100,6 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, 
   end
 end
 
---- @param #AI_CAS_ZONE self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
--- @param #string From The From State string.
--- @param #string Event The Event string.
--- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
-function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
-
-  if EventData.IniUnit then
-    self.DetectedUnits[EventData.IniUnit] = nil
-  end
-  
-  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
-end
 
 --- @param #AI_CAS_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
@@ -28092,13 +28111,30 @@ function AI_CAS_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self:SetDetectionDeactivated()
 end
 
+
+--- @param #AI_CAS_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAS_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
+
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
+end
+
+
 --- @param #AI_CAS_ZONE self
 -- @param Core.Event#EVENTDATA EventData
-function AI_CAS_ZONE:OnDead( EventData )
-  self:T( { "EventDead", EventData } )
+function AI_CAS_ZONE:OnEventDead( EventData )
+  self:F( { "EventDead", EventData } )
 
   if EventData.IniDCSUnit then
-    self:__Destroy( 1, EventData )
+    if self.DetectedUnits and self.DetectedUnits[EventData.IniUnit] then
+      self:__Destroy( 1, EventData )
+    end
   end
 end
 
@@ -28445,8 +28481,11 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
   self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
+  self:HandleEvent( EVENTS.Dead )
 
 end
+
+-- todo: need to fix this global function
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
 function _NewEngageCapRoute( AIControllable )
@@ -28610,14 +28649,9 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
-function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
-
-  if EventData.IniUnit then
-    self.DetectedUnits[EventData.IniUnit] = nil
-  end
-  
-  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
+function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
+  self.Accomplished = true
+  self:SetDetectionOff()
 end
 
 --- @param #AI_CAP_ZONE self
@@ -28625,12 +28659,25 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
-  self.Accomplished = true
-  self:SetDetectionOff()
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
+
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
 end
 
+--- @param #AI_CAP_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:OnEventDead( EventData )
+  self:F( { "EventDead", EventData } )
 
+  if EventData.IniDCSUnit then
+    if self.DetectedUnits and self.DetectedUnits[EventData.IniUnit] then
+      self:__Destroy( 1, EventData )
+    end
+  end
+end
 ---Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
 -- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
 --
