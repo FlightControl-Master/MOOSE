@@ -949,7 +949,7 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedObject DetectedObject
   function DETECTION_BASE:IdentifyDetectedObject( DetectedObject )
-    self:F( DetectedObject.Name )
+    self:F( { "Identified:", DetectedObject.Name } )
   
     local DetectedObjectName = DetectedObject.Name
     self.DetectedObjectsIdentified[DetectedObjectName] = true
@@ -976,7 +976,7 @@ do -- DETECTION_BASE
   -- @param #string ObjectName
   -- @return #DETECTION_BASE.DetectedObject
   function DETECTION_BASE:GetDetectedObject( ObjectName )
-  	self:F3( ObjectName )
+  	self:F( ObjectName )
     
     if ObjectName then
       local DetectedObject = self.DetectedObjects[ObjectName]
@@ -1330,11 +1330,11 @@ do -- DETECTION_TYPES
     for ChangeCode, ChangeData in pairs( DetectedItem.Changes ) do
   
       if ChangeCode == "AI" then
-        MT[#MT+1] = "Detected new type " .. ChangeData.ItemID .. ". The center target is a " .. ChangeData.ItemUnitType .. "."
+        MT[#MT+1] = "Detected targets of new type " .. ChangeData.ItemUnitType .. "."
       end
       
       if ChangeCode == "RI" then
-        MT[#MT+1] = "Removed old type " .. ChangeData.ItemID .. ". No more types detected."
+        MT[#MT+1] = "No more targets of type " .. ChangeData.ItemUnitType .. " detected."
       end
       
       if ChangeCode == "AU" then
@@ -1344,7 +1344,7 @@ do -- DETECTION_TYPES
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "New target(s) " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "New target(s) detected: " .. table.concat( MTUT, ", " ) .. "."
       end
   
       if ChangeCode == "RU" then
@@ -1354,7 +1354,7 @@ do -- DETECTION_TYPES
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "Invisible or destroyed target(s) " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "Invisible or destroyed target(s): " .. table.concat( MTUT, ", " ) .. "."
       end
       
     end
@@ -1371,8 +1371,6 @@ do -- DETECTION_TYPES
   function DETECTION_TYPES:CreateDetectionSets()
     self:F2( #self.DetectedObjects )
   
-    self.DetectedItems = {}
-
     -- Loop the current detected items, and check if each object still exists and is detected.
     
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
@@ -1380,10 +1378,10 @@ do -- DETECTION_TYPES
       local DetectedItemSet = DetectedItem:GetSet() -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.Type
       
-      for DetectedUnitName, DetectedUnit in pairs( DetectedItemSet ) do
-        local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
+        local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
-        local DetectedObject
+        local DetectedObject = nil
         if DetectedUnit:IsAlive() then
         --self:E(DetectedUnit:GetName())
           DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
