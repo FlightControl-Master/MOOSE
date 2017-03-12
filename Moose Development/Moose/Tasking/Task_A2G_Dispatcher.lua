@@ -198,6 +198,7 @@ do -- TASK_A2G_DISPATCHER
     local ReportSEAD = REPORT:New( " - SEAD Tasks:")
     local ReportCAS = REPORT:New( " - CAS Tasks:")
     local ReportBAI = REPORT:New( " - BAI Tasks:")
+    local ReportChanges = REPORT:New( " - Changes:" )
 
     --- First we need to  the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -254,14 +255,12 @@ do -- TASK_A2G_DISPATCHER
       if BAITask and BAITask:IsStatePlanned() then
         ReportBAI:Add( string.format( " - %s.%02d - %s", "BAI", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
+      
 
---        -- Loop through the changes ...
---        local ChangeText = Detection:GetChangeText( DetectedItem )
---        
---        if ChangeText ~= "" then
---          ChangeMsg[#ChangeMsg+1] = string.gsub( string.gsub( ChangeText, "\n", "%1  - " ), "^.", "  - %1" )
---        end
---      end
+      -- Loop through the changes ...
+      local ChangeText = Detection:GetChangeText( DetectedItem )
+      ReportChanges:Add( ChangeText )
+        
       
       -- OK, so the tasking has been done, now delete the changes reported for the area.
       Detection:AcceptChanges( DetectedItem )
@@ -276,7 +275,8 @@ do -- TASK_A2G_DISPATCHER
         self.CommandCenter:MessageToGroup( 
           string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
                          self.Mission:GetName(),
-                         string.format( "%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text() )
+                         string.format( "%s\n%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
+                       )
           ), self:GetReportDisplayTime(), TaskGroup  
         )
       end
