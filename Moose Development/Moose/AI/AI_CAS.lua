@@ -80,13 +80,15 @@
 -- 
 -- ### 1.2.2) AI_CAS_ZONE Events
 -- 
---   * **Start** ( Group ): Start the process.
---   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
---   * **Engage** ( Group ): Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
---   * **RTB** ( Group ): Route the AI to the home base.
---   * **Detect** ( Group ): The AI is detecting targets.
---   * **Detected** ( Group ): The AI has detected new targets.
---   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{#AI_CAS_ZONE.Engage}**: Engage the AI to provide CAS in the Engage Zone, destroying any target it finds.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Unit}.
+--   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the CAS task.
+--   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --    
 -- ====
 --
@@ -182,11 +184,21 @@ function AI_CAS_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   --- Synchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] Engage
   -- @param #AI_CAS_ZONE self
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
   
   --- Asynchronous Event Trigger for Event Engage.
   -- @function [parent=#AI_CAS_ZONE] __Engage
   -- @param #AI_CAS_ZONE self
   -- @param #number Delay The delay in seconds.
+  -- @param #number EngageSpeed (optional) The speed the Group will hold when engaging to the target zone.
+  -- @param Dcs.DCSTypes#AI.Task.WeaponExpend EngageWeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+  -- @param Dcs.DCSTypes#Distance EngageAltitude (optional) Desired altitude to perform the unit engagement.
+  -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+  -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_CAS_ZONE] OnLeaveEngaging
@@ -421,7 +433,7 @@ end
 -- @param #number EngageAttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth EngageDirection (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection )
-  self:E("onafterEngage")
+  self:F("onafterEngage")
 
   self.EngageSpeed = EngageSpeed or 400
   self.EngageAltitude = EngageAltitude or 2000

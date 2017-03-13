@@ -166,6 +166,7 @@ Methods exist to manupulate these coordinates.</p>
 
 <p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(POINT_VEC2).GetX">POINT_VEC2.GetX</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetY">POINT_VEC2.GetY</a>() respectively.
 The methods <a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX</a>(), <a href="##(POINT_VEC2).SetAlt">POINT_VEC2.SetAlt</a>(), <a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY</a>() change the respective axis with a new value.
+The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(POINT_VEC2).GetLat">POINT_VEC2.GetLat</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetLon">POINT_VEC2.GetLon</a>() respectively.
 The current axis values can be changed by using the methods <a href="##(POINT_VEC2).AddX">POINT_VEC2.AddX</a>(), <a href="##(POINT_VEC2).AddAlt">POINT_VEC2.AddAlt</a>(), <a href="##(POINT_VEC2).AddY">POINT_VEC2.AddY</a>()
 to add or substract a value from the current respective axis value.
 Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:</p>
@@ -267,13 +268,25 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAlt">POINT_VEC2:GetAlt()</a></td>
 		<td class="summary">
-<p>Return the altitude of the land at the POINT_VEC2.</p>
+<p>Return the altitude (height) of the land at the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAltitudeText">POINT_VEC2:GetAltitudeText()</a></td>
 		<td class="summary">
 <p>Return no text for the altitude of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetLat">POINT_VEC2:GetLat()</a></td>
+		<td class="summary">
+<p>Return Return the Lat(itude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.x).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetLon">POINT_VEC2:GetLon()</a></td>
+		<td class="summary">
+<p>Return the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.z).</p>
 </td>
 		</tr>
 		<tr>
@@ -310,6 +323,18 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetAlt">POINT_VEC2:SetAlt(Altitude)</a></td>
 		<td class="summary">
 <p>Set the altitude of the POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetLat">POINT_VEC2:SetLat(x)</a></td>
+		<td class="summary">
+<p>Set the Lat(itude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.x).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).SetLon">POINT_VEC2:SetLon(y, z)</a></td>
+		<td class="summary">
+<p>Set the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.z).</p>
 </td>
 		</tr>
 		<tr>
@@ -920,7 +945,7 @@ The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a
 </dt>
 <dd>
 	
-<p>Return the altitude of the land at the POINT_VEC2.</p>
+<p>Return the altitude (height) of the land at the POINT_VEC2.</p>
 
 		<h3>Return value</h3>
 				
@@ -944,6 +969,42 @@ The land altitude.</p>
 				
 <p><em>#string:</em>
 Empty string.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetLat" >
+<strong>POINT_VEC2:GetLat()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return Return the Lat(itude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.x).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The x coodinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).GetLon" >
+<strong>POINT_VEC2:GetLon()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: (parent)POINT</em>VEC3.z).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The y coodinate.</p>
 
 </dd>
 </dl>
@@ -1098,6 +1159,65 @@ self</p>
 				
 <p><code><em>#number Altitude </em></code>: 
 The land altitude. If nothing (nil) is given, then the current land altitude is set.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetLat" >
+<strong>POINT_VEC2:SetLat(x)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Lat(itude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.x).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number x </em></code>: 
+The x coordinate.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC2).SetLon" >
+<strong>POINT_VEC2:SetLon(y, z)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Lon(gitude) coordinate of the POINT<em>VEC2 (ie: POINT</em>VEC3.z).</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number y </em></code>: 
+The y coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> z </em></code>: </p>
 
 				</li>
 		</ul>
