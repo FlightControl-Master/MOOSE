@@ -53,7 +53,7 @@ AICasZone:SetControllable( CASPlane )
 AICasZone:__Start( 1 ) -- They should statup, and start patrolling in the PatrolZone.
 
 -- After 10 minutes, tell the group CASPlane to engage the targets located in the engagement zone called CASEngagement Zone. (600 is 600 seconds) 
-AICasZone:__Engage( 60, 400, 500 ) -- Engage after one minute with a speed of 400 km/h and an altitude of 500 meters.
+AICasZone:__Engage( 600, 350, 4000 ) -- Engage after 10 minutes with a speed of 350 km/h and an altitude of 4000 meters.
 
 -- Check every 60 seconds whether the Targets have been eliminated.
 -- When the trigger completed has been fired, the Plane will go back to the Patrol Zone.
