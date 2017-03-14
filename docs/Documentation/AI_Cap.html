@@ -135,12 +135,15 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 <h3>1.2.2) AI<em>CAP</em>ZONE Events</h3>
 
 <ul>
-    <li><strong>Start</strong> ( Group ): Start the process.</li>
-    <li><strong>Route</strong> ( Group ): Route the AI to a new random 3D point within the Patrol Zone.</li>
-    <li><strong>Engage</strong> ( Group ): Let the AI engage the bogeys.</li>
-    <li><strong>RTB</strong> ( Group ): Route the AI to the home base.</li>
-    <li><strong>Detect</strong> ( Group ): The AI is detecting targets.</li>
-    <li><strong>Detected</strong> ( Group ): The AI has detected new targets.</li>
+    <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Start">AI<em>Patrol#AI</em>PATROL_ZONE.Start</a>**: Start the process.</li>
+    <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Route">AI<em>Patrol#AI</em>PATROL_ZONE.Route</a>**: Route the AI to a new random 3D point within the Patrol Zone.</li>
+    <li>**<a href="##(AI_CAP_ZONE).Engage">AI<em>CAP</em>ZONE.Engage</a>**: Let the AI engage the bogeys.</li>
+    <li>**<a href="##(AI_CAP_ZONE).Abort">AI<em>CAP</em>ZONE.Abort</a>**: Aborts the engagement and return patrolling in the patrol zone.</li>
+    <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).RTB">AI<em>Patrol#AI</em>PATROL_ZONE.RTB</a>**: Route the AI to the home base.</li>
+    <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Detect">AI<em>Patrol#AI</em>PATROL_ZONE.Detect</a>**: The AI is detecting targets.</li>
+    <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Detected">AI<em>Patrol#AI</em>PATROL_ZONE.Detected</a>**: The AI has detected new targets.</li>
+    <li>**<a href="##(AI_CAP_ZONE).Destroy">AI<em>CAP</em>ZONE.Destroy</a>**: The AI has destroyed a bogey <a href="Unit.html">Unit</a>.</li>
+    <li>**<a href="##(AI_CAP_ZONE).Destroyed">AI<em>CAP</em>ZONE.Destroyed</a>**: The AI has destroyed all bogeys <a href="Unit.html">Unit</a>s assigned in the CAS task.</li>
     <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
 </ul>
 
@@ -411,6 +414,12 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Fired">AI_CAP_ZONE:__Fired(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterAbort">AI_CAP_ZONE:onafterAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -1404,6 +1413,46 @@ The delay in seconds.</p>
 				
 <p><code><em>#number Delay </em></code>: 
 The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAP_ZONE).onafterAbort" >
+<strong>AI_CAP_ZONE:onafterAbort(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
 
 				</li>
 		</ul>
