@@ -1620,7 +1620,7 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     PointFrom.x = ControllablePoint.x
     PointFrom.y = ControllablePoint.y
     PointFrom.type = "Turning Point"
-    PointFrom.action = "Cone"
+    PointFrom.action = Formation or "Cone"
     PointFrom.speed = 20 / 1.6
 
 
