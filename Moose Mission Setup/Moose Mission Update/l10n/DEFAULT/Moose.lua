@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170314_0643' ) 
+env.info( 'Moose Generation Timestamp: 20170314_0908' ) 
 local base = _G
 
 Include = {}
@@ -20351,6 +20351,7 @@ end
 --   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 --   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
@@ -20418,7 +20419,8 @@ end
 -- 
 -- Hereby the change log:
 -- 
--- 2017-03-14: SPAWN:**InitKeepUnitNames()** added.
+-- 2017-03-14: SPAWN:**InitKeepUnitNames()** added.  
+-- 2017-03-14: SPAWN:**InitRandomizePosition( RandomizePosition, OuterRadious, InnerRadius )** added.
 -- 
 -- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().
 -- 
@@ -20650,6 +20652,27 @@ function SPAWN:InitRandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, 
 	
 	return self
 end
+
+--- Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
+-- @param #SPAWN self
+-- @param #boolean RandomizePosition If true, SPAWN will perform the randomization of the @{Group}s position between a given outer and inner radius. 
+-- @param Dcs.DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param Dcs.DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @return #SPAWN
+function SPAWN:InitRandomizePosition( RandomizePosition, OuterRadius, InnerRadius )
+  self:F( { self.SpawnTemplatePrefix, RandomizePosition, OuterRadius, InnerRadius } )
+
+  self.SpawnRandomizePosition = RandomizePosition or false
+  self.SpawnRandomizePositionOuterRadius = OuterRadius or 0
+  self.SpawnRandomizePositionInnerRadius = InnerRadius or 0
+
+  for GroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeRoute( GroupID )
+  end
+  
+  return self
+end
+
 
 --- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
 -- @param #SPAWN self
@@ -20967,6 +20990,20 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 
         local PointVec3 = POINT_VEC3:New( SpawnTemplate.route.points[1].x, SpawnTemplate.route.points[1].alt, SpawnTemplate.route.points[1].y )
         self:T( { "Current point of ", self.SpawnTemplatePrefix, PointVec3 } )
+
+        -- If RandomizePosition, then Randomize the formation in the zone band, keeping the template.
+        if self.SpawnRandomizePosition then
+          local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnRandomizePositionOuterRadius, self.SpawnRandomizePositionInnerRadius )
+          local CurrentX = SpawnTemplate.units[1].x
+          local CurrentY = SpawnTemplate.units[1].y
+          SpawnTemplate.x = RandomVec2.x
+          SpawnTemplate.y = RandomVec2.y
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].x = SpawnTemplate.units[UnitID].x + ( RandomVec2.x - CurrentX )
+            SpawnTemplate.units[UnitID].y = SpawnTemplate.units[UnitID].y + ( RandomVec2.y - CurrentY )
+            self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+          end
+        end
         
         -- If RandomizeUnits, then Randomize the formation at the start point.
         if self.SpawnRandomizeUnits then
