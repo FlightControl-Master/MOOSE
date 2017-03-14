@@ -231,7 +231,7 @@ function GROUP:GetCategory()
   return nil
 end
 
---- Returns the category name of the DCS Group.
+--- Returns the category name of the #GROUP.
 -- @param #GROUP self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
 function GROUP:GetCategoryName()

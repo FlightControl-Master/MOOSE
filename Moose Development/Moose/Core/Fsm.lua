@@ -932,6 +932,22 @@ do -- FSM_PROCESS
   
     return NewFsm
   end
+
+  --- Removes an FSM_PROCESS object.
+  -- @param #FSM_PROCESS self
+  -- @return #FSM_PROCESS
+  function FSM_PROCESS:Remove()
+    self:T( { self:GetClassNameAndID() } )
+  
+    -- Copy Processes
+    for ProcessID, Process in pairs( self:GetProcesses() ) do
+      self:E( { Process} )
+      Process.fsm:Remove()
+      Process.fsm = nil
+    end
+  
+    return self
+  end
   
   --- Sets the task of the process.
   -- @param #FSM_PROCESS self

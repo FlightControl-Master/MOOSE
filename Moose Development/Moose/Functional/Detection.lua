@@ -930,6 +930,58 @@ do -- DETECTION_BASE
       return DetectedItem.FriendliesNearBy or false
     end
   
+    --- Background worker function to determine if there are friendlies nearby ...
+    -- @param #DETECTION_BASE self
+    function DETECTION_BASE:ReportFriendliesNearBy( ReportGroupData )
+      self:F2()
+      
+      local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+      local DetectedSet = ReportGroupData.DetectedItem.Set
+      local DetectedUnit = DetectedSet:GetFirst()
+    
+      DetectedItem.FriendliesNearBy = false
+      
+      local SphereSearch = {
+       id = world.VolumeType.SPHERE,
+        params = {
+         point = DetectedUnit:GetVec3(),
+         radius = 6000,
+        }
+        
+       }
+       
+       --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+       -- @param Wrapper.Group#GROUP ReportGroup
+       -- @param Set#SET_GROUP ReportSetGroup
+       local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
+          
+          local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+          local DetectedSet = ReportGroupData.DetectedItem.Set
+          local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+          local ReportSetGroup = ReportGroupData.ReportSetGroup
+    
+          local EnemyCoalition = DetectedUnit:GetCoalition()
+          
+          local FoundUnitCoalition = FoundDCSUnit:getCoalition()
+          local FoundUnitName = FoundDCSUnit:getName()
+          local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
+          local EnemyUnitName = DetectedUnit:GetName()
+          local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
+          
+          self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          
+          if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
+            DetectedItem.FriendliesNearBy = true
+            return false
+          end
+          
+          return true
+      end
+      
+      world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
+    
+    end
+  
   end
   
   --- Determines if a detected object has already been identified during detection processing.
@@ -1193,6 +1245,44 @@ do -- DETECTION_UNITS
     
     return self
   end
+
+  --- Make text documenting the changes of the detected zone.
+  -- @param #DETECTION_UNITS self
+  -- @param #DETECTION_UNITS.DetectedItem DetectedItem
+  -- @return #string The Changes text
+  function DETECTION_UNITS:GetChangeText( DetectedItem )
+    self:F( DetectedItem )
+    
+    local MT = {}
+    
+    for ChangeCode, ChangeData in pairs( DetectedItem.Changes ) do
+  
+      if ChangeCode == "AU" then
+        local MTUT = {}
+        for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
+          if ChangeUnitType  ~= "ItemID" then
+            MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
+          end
+        end
+        MT[#MT+1] = "   New target(s) detected: " .. table.concat( MTUT, ", " ) .. "."
+      end
+  
+      if ChangeCode == "RU" then
+        local MTUT = {}
+        for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
+          if ChangeUnitType  ~= "ItemID" then
+            MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
+          end
+        end
+        MT[#MT+1] = "   Invisible or destroyed target(s): " .. table.concat( MTUT, ", " ) .. "."
+      end
+      
+    end
+    
+    return table.concat( MT, "\n" )
+    
+  end
+  
   
   --- Create the DetectedItems list from the DetectedObjects table. 
   -- For each DetectedItem, a one field array is created containing the Unit detected.
@@ -1201,24 +1291,70 @@ do -- DETECTION_UNITS
   function DETECTION_UNITS:CreateDetectionSets()
     self:F2( #self.DetectedObjects )
   
-    self.DetectedItems = {}
+    -- Loop the current detected items, and check if each object still exists and is detected.
     
+    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+    
+      local DetectedItemSet = DetectedItem:GetSet() -- Core.Set#SET_UNIT
+      local DetectedTypeName = DetectedItem.Type
+      
+      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
+        local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
+
+        local DetectedObject = nil
+        if DetectedUnit:IsAlive() then
+        --self:E(DetectedUnit:GetName())
+          DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
+        end
+        if DetectedObject then
+            
+          -- Yes, the DetectedUnit is still detected or exists. Flag as identified.
+          self:IdentifyDetectedObject( DetectedObject )
+        else
+          -- There was no DetectedObject, remove DetectedUnit from the Set.
+          self:AddChangeUnit( DetectedItem, "RU", DetectedUnitName )
+          DetectedItemSet:Remove( DetectedUnitName )
+        end
+      end
+    end
+
+
+    -- Now we need to loop through the unidentified detected units and add these... These are all new items.
     for DetectedUnitName, DetectedObjectData in pairs( self.DetectedObjects ) do
   
-      self:T( { "Detected Unit #", DetectedUnitName } )
-  
-      local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
-      
-      if DetectedUnit then
-      
-        local DetectedItem = self:AddDetectedItem()
-        DetectedItem.Type = DetectedObjectData.Type
-        DetectedItem.Name = DetectedObjectData.Name
-        DetectedItem.Visible = DetectedObjectData.Visible
-        DetectedItem.Distance = DetectedObjectData.Distance
-        DetectedItem.Set:AddUnit( DetectedUnit )
+      local DetectedObject = self:GetDetectedObject( DetectedUnitName )
+      if DetectedObject then
+        self:T( { "Detected Unit #", DetectedUnitName } )
+    
+        local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
+        
+        if DetectedUnit then
+          local DetectedTypeName = DetectedUnit:GetTypeName()
+          local DetectedItem = self:GetDetectedItem( DetectedUnitName )
+          if not DetectedItem then
+            self:T( "Added new DetectedItem" )
+            DetectedItem = self:AddDetectedItem( DetectedUnitName )
+            DetectedItem.Type = DetectedUnit:GetTypeName()
+            DetectedItem.Name = DetectedObjectData.Name
+            DetectedItem.Visible = DetectedObjectData.Visible
+            DetectedItem.Distance = DetectedObjectData.Distance
+          end
+        
+          DetectedItem.Set:AddUnit( DetectedUnit )
+          self:AddChangeUnit( DetectedItem, "AU", DetectedTypeName )
+        end
       end    
     end
+    
+    for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
+  
+      local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
+      local DetectedSet = DetectedItem.Set
+  
+      self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      --self:NearestFAC( DetectedItem )
+    end
+    
   end
   
   --- Report summary of a DetectedItem using a given numeric index.
@@ -1329,14 +1465,6 @@ do -- DETECTION_TYPES
     
     for ChangeCode, ChangeData in pairs( DetectedItem.Changes ) do
   
-      if ChangeCode == "AI" then
-        MT[#MT+1] = "Detected targets of new type " .. ChangeData.ItemUnitType .. "."
-      end
-      
-      if ChangeCode == "RI" then
-        MT[#MT+1] = "No more targets of type " .. ChangeData.ItemUnitType .. " detected."
-      end
-      
       if ChangeCode == "AU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
@@ -1344,7 +1472,7 @@ do -- DETECTION_TYPES
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "New target(s) detected: " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "   New target(s) detected: " .. table.concat( MTUT, ", " ) .. "."
       end
   
       if ChangeCode == "RU" then
@@ -1354,7 +1482,7 @@ do -- DETECTION_TYPES
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "Invisible or destroyed target(s): " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "   Invisible or destroyed target(s): " .. table.concat( MTUT, ", " ) .. "."
       end
       
     end
@@ -1396,11 +1524,6 @@ do -- DETECTION_TYPES
           DetectedItemSet:Remove( DetectedUnitName )
         end
       end
-      
-      -- If all the detected units are removed from the DetectedItemSet, then we need to notify that.
-      if DetectedItemSet:Count() == 0 then
-        self:AddChangeItem( DetectedItem, "RI", DetectedTypeName )
-      end
     end
 
 
@@ -1419,7 +1542,6 @@ do -- DETECTION_TYPES
           if not DetectedItem then
             DetectedItem = self:AddDetectedItem( DetectedTypeName )
             DetectedItem.Type = DetectedUnit:GetTypeName()
-            self:AddChangeItem( DetectedItem, "AI", DetectedTypeName )
           end
         
           DetectedItem.Set:AddUnit( DetectedUnit )
@@ -1427,6 +1549,16 @@ do -- DETECTION_TYPES
         end
       end    
     end
+    
+    for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
+  
+      local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
+      local DetectedSet = DetectedItem.Set
+  
+      self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      --self:NearestFAC( DetectedItem )
+    end
+    
   end
   
   --- Report summary of a DetectedItem using a given numeric index.
@@ -1540,60 +1672,6 @@ do -- DETECTION_AREAS
     return nil
   end
   
-  --- Background worker function to determine if there are friendlies nearby ...
-  -- @param #DETECTION_AREAS self
-  -- @param Wrapper.Unit#UNIT ReportUnit
-  function DETECTION_AREAS:ReportFriendliesNearBy( ReportGroupData )
-    self:F2()
-    
-    local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
-    local DetectedSet = ReportGroupData.DetectedItem.Set
-    local DetectedZone = ReportGroupData.DetectedItem.Zone
-    local DetectedZoneUnit = DetectedZone.ZoneUNIT
-  
-    DetectedItem.FriendliesNearBy = false
-    
-    local SphereSearch = {
-     id = world.VolumeType.SPHERE,
-      params = {
-       point = DetectedZoneUnit:GetVec3(),
-       radius = 6000,
-      }
-      
-     }
-     
-     --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
-     -- @param Wrapper.Group#GROUP ReportGroup
-     -- @param Set#SET_GROUP ReportSetGroup
-     local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
-        
-        local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
-        local DetectedSet = ReportGroupData.DetectedItem.Set
-        local DetectedZone = ReportGroupData.DetectedItem.Zone
-        local DetectedZoneUnit = DetectedZone.ZoneUNIT -- Wrapper.Unit#UNIT
-        local ReportSetGroup = ReportGroupData.ReportSetGroup
-  
-        local EnemyCoalition = DetectedZoneUnit:GetCoalition()
-        
-        local FoundUnitCoalition = FoundDCSUnit:getCoalition()
-        local FoundUnitName = FoundDCSUnit:getName()
-        local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
-        local EnemyUnitName = DetectedZoneUnit:GetName()
-        local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
-        
-        self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
-        
-        if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
-          DetectedItem.FriendliesNearBy = true
-          return false
-        end
-        
-        return true
-    end
-    
-    world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
-  
-  end
   
   --- Returns if there are friendlies nearby the FAC units ...
   -- @param #DETECTION_AREAS self

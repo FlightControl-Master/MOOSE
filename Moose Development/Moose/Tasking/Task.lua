@@ -713,7 +713,9 @@ end
 function TASK:RemoveStateMachine( TaskUnit )
   self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
+  self.Fsm[TaskUnit]:Remove()
   self.Fsm[TaskUnit] = nil
+  
   collectgarbage()
   self:T( "Garbage Collected, Processes should be finalized now ...")
 end
@@ -828,6 +830,32 @@ end
 -- @param #TASK self
 function TASK:IsStatePlanned()
   return self:Is( "Planned" )
+end
+
+--- Sets a @{Task} to status **Aborted**.
+-- @param #TASK self
+function TASK:StateAborted()
+  self:SetState( self, "State", "Aborted" )
+  return self
+end
+
+--- Is the @{Task} status **Aborted**.
+-- @param #TASK self
+function TASK:IsStateAborted()
+  return self:Is( "Aborted" )
+end
+
+--- Sets a @{Task} to status **Cancelled**.
+-- @param #TASK self
+function TASK:StateCancelled()
+  self:SetState( self, "State", "Cancelled" )
+  return self
+end
+
+--- Is the @{Task} status **Cancelled**.
+-- @param #TASK self
+function TASK:IsStateCancelled()
+  return self:Is( "Cancelled" )
 end
 
 --- Sets a @{Task} to status **Assigned**.
