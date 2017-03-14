@@ -44,12 +44,14 @@
 -- 
 -- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
 -- 
+--   * @{#SPAWN.InitKeepUnitNames}(): Keeps the unit names as defined within the mission editor, but note that anything after a # mark is ignored, and any spaces before and after the resulting name are removed. IMPORTANT! This method MUST be the first used after :New !!!
 --   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
 --   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
 --   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
 --   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
 --   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
 --   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
@@ -116,6 +118,9 @@
 --   * _Removed_ parts are expressed in italic type face.
 -- 
 -- Hereby the change log:
+-- 
+-- 2017-03-14: SPAWN:**InitKeepUnitNames()** added.  
+-- 2017-03-14: SPAWN:**InitRandomizePosition( RandomizePosition, OuterRadious, InnerRadius )** added.
 -- 
 -- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().
 -- 
@@ -214,12 +219,14 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
 		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
+    self.SpawnInitLimit = false                       -- By default, no InitLimit
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
 		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
+    self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -253,12 +260,14 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
 		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
 		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
+		self.SpawnInitLimit = false                       -- By default, no InitLimit
 		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
 		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
 		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
     self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
+    self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -287,6 +296,7 @@ end
 function SPAWN:InitLimit( SpawnMaxUnitsAlive, SpawnMaxGroups )
 	self:F( { self.SpawnTemplatePrefix, SpawnMaxUnitsAlive, SpawnMaxGroups } )
 
+  self.SpawnInitLimit = true
 	self.SpawnMaxUnitsAlive = SpawnMaxUnitsAlive				-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
 	self.SpawnMaxGroups = SpawnMaxGroups						-- The maximum amount of groups that can be spawned.
 	
@@ -295,6 +305,20 @@ function SPAWN:InitLimit( SpawnMaxUnitsAlive, SpawnMaxGroups )
 	end
 
 	return self
+end
+
+--- Keeps the unit names as defined within the mission editor, 
+-- but note that anything after a # mark is ignored, 
+-- and any spaces before and after the resulting name are removed.
+-- IMPORTANT! This method MUST be the first used after :New !!!
+-- @param #SPAWN self
+-- @return #SPAWN self
+function SPAWN:InitKeepUnitNames()
+  self:F( )
+
+  self.SpawnInitKeepUnitNames = true
+  
+  return self
 end
 
 
@@ -328,6 +352,27 @@ function SPAWN:InitRandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, 
 	
 	return self
 end
+
+--- Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
+-- @param #SPAWN self
+-- @param #boolean RandomizePosition If true, SPAWN will perform the randomization of the @{Group}s position between a given outer and inner radius. 
+-- @param Dcs.DCSTypes#Distance OuterRadius (optional) The outer radius in meters where the new group will be spawned.
+-- @param Dcs.DCSTypes#Distance InnerRadius (optional) The inner radius in meters where the new group will NOT be spawned.
+-- @return #SPAWN
+function SPAWN:InitRandomizePosition( RandomizePosition, OuterRadius, InnerRadius )
+  self:F( { self.SpawnTemplatePrefix, RandomizePosition, OuterRadius, InnerRadius } )
+
+  self.SpawnRandomizePosition = RandomizePosition or false
+  self.SpawnRandomizePositionOuterRadius = OuterRadius or 0
+  self.SpawnRandomizePositionInnerRadius = InnerRadius or 0
+
+  for GroupID = 1, self.SpawnMaxGroups do
+    self:_RandomizeRoute( GroupID )
+  end
+  
+  return self
+end
+
 
 --- Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.
 -- @param #SPAWN self
@@ -645,6 +690,20 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 
         local PointVec3 = POINT_VEC3:New( SpawnTemplate.route.points[1].x, SpawnTemplate.route.points[1].alt, SpawnTemplate.route.points[1].y )
         self:T( { "Current point of ", self.SpawnTemplatePrefix, PointVec3 } )
+
+        -- If RandomizePosition, then Randomize the formation in the zone band, keeping the template.
+        if self.SpawnRandomizePosition then
+          local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnRandomizePositionOuterRadius, self.SpawnRandomizePositionInnerRadius )
+          local CurrentX = SpawnTemplate.units[1].x
+          local CurrentY = SpawnTemplate.units[1].y
+          SpawnTemplate.x = RandomVec2.x
+          SpawnTemplate.y = RandomVec2.y
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].x = SpawnTemplate.units[UnitID].x + ( RandomVec2.x - CurrentX )
+            SpawnTemplate.units[UnitID].y = SpawnTemplate.units[UnitID].y + ( RandomVec2.y - CurrentY )
+            self:T( 'SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+          end
+        end
         
         -- If RandomizeUnits, then Randomize the formation at the start point.
         if self.SpawnRandomizeUnits then
@@ -1088,7 +1147,8 @@ end
 function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
 	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 
-  local DCSUnitName = ( DCSUnit and DCSUnit:getName() ) or nil
+  local DCSGroup = DCSUnit:getGroup()
+  local DCSUnitName = ( DCSGroup and DCSGroup:getName() ) or nil
 	if DCSUnitName then
 		local SpawnPrefix = string.match( DCSUnitName, ".*#" )
 		if SpawnPrefix then
@@ -1142,6 +1202,7 @@ function SPAWN:_GetLastIndex()
 end
 
 --- Initalize the SpawnGroups collection.
+-- @param #SPAWN self
 function SPAWN:_InitializeSpawnGroups( SpawnIndex )
 	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnIndex } )
 
@@ -1245,11 +1306,20 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 		SpawnTemplate.visible = false 
 	end
 	
-
-	for UnitID = 1, #SpawnTemplate.units do
-		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
-		SpawnTemplate.units[UnitID].unitId = nil
-	end
+  if self.SpawnInitKeepUnitNames == false then
+  	for UnitID = 1, #SpawnTemplate.units do
+  		SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
+  		SpawnTemplate.units[UnitID].unitId = nil
+  	end
+  else
+    for UnitID = 1, #SpawnTemplate.units do
+      local UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
+      self:T( { UnitPrefix, Rest } )
+      
+      SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
+      SpawnTemplate.units[UnitID].unitId = nil
+    end
+  end
 	
 	self:T3( { "Template:", SpawnTemplate } )
 	return SpawnTemplate

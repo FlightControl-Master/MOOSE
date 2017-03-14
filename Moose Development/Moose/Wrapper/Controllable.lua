@@ -222,6 +222,24 @@ end
 
 -- Tasks
 
+--- Clear all tasks from the controllable.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE
+function CONTROLLABLE:ClearTasks()
+  self:F2()
+
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+    local Controller = self:_GetController()
+    Controller:resetTask()
+    return self
+  end
+
+  return nil
+end
+
+
 --- Popping current Task from the controllable.
 -- @param #CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE self
