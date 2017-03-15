@@ -192,15 +192,6 @@ do -- ACT_ACCOUNT_DEADS
     self.TaskName = FsmAccount.TaskName
   end
 
-
-  
-  function ACT_ACCOUNT_DEADS:_Destructor()
-    self:E("_Destructor")
-  
-    self:EventRemoveAll()
-  
-  end
-  
   --- Process Events
   
   --- StateMachine callback function

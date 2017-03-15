@@ -68,6 +68,7 @@ do -- TASK_A2G
     self:F()
   
     self.TargetSetUnit = TargetSetUnit
+    self.TaskType = TaskType
 
     Mission:AddTask( self )
     
@@ -85,7 +86,7 @@ do -- TASK_A2G
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
      
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, TaskType ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), { Accounted = "Success" } )
     Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
     Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )

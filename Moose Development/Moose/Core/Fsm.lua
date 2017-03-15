@@ -896,6 +896,7 @@ do -- FSM_PROCESS
   -- @return #FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
     self:T( { self:GetClassNameAndID() } )
+
   
     local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
   
