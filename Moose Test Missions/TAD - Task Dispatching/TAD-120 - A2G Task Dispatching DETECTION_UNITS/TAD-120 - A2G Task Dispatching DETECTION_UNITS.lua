@@ -30,11 +30,16 @@ local FACAreas = DETECTION_UNITS:New( FACSet )
 
 
 local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
-local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, HQ, AttackGroups, FACAreas )
 
+local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, HQ, AttackGroups, FACAreas )
 
 -- Now this is REALLY neat. I set the goal of the mission to be the destruction of Target #004.
 -- This is just an example, but many more examples can follow...
+
+-- Every time a Task becomes Successful, it will trigger the Complete event in the Mission.
+-- The mission designer NEED TO OVERRIDE the OnBeforeComplete to prevent the mission from getting into completion 
+-- too early!
+
 function Mission:OnBeforeComplete( From, Event, To )
   local Group004 = GROUP:FindByName( "Target #004" )
   if Group004:IsAlive() == false then
