@@ -238,7 +238,7 @@ do -- TASK_A2G_DISPATCHER
         end
       end        
       if CASTask and CASTask:IsStatePlanned() then
-        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS.", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
+        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
       end
 
       -- Evaluate BAI Tasking

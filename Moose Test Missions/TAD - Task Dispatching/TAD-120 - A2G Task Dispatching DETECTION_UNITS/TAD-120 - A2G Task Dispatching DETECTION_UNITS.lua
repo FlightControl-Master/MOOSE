@@ -32,3 +32,14 @@ local FACAreas = DETECTION_UNITS:New( FACSet )
 local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
 local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, HQ, AttackGroups, FACAreas )
 
+
+-- Now this is REALLY neat. I set the goal of the mission to be the destruction of Target #004.
+-- This is just an example, but many more examples can follow...
+function Mission:OnBeforeComplete( From, Event, To )
+  local Group004 = GROUP:FindByName( "Target #004" )
+  if Group004:IsAlive() == false then
+    Mission:GetCommandCenter():MessageToCoalition( "Mission Complete!" )
+    return true
+  end
+  return false
+end

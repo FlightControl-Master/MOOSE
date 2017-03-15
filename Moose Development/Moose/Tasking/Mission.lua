@@ -45,9 +45,183 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   self:SetStartState( "Idle" )
   
   self:AddTransition( "Idle", "Start", "Ongoing" )
+  
+  --- OnLeave Transition Handler for State Idle.
+  -- @function [parent=#MISSION] OnLeaveIdle
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnEnter Transition Handler for State Idle.
+  -- @function [parent=#MISSION] OnEnterIdle
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  
+  --- OnLeave Transition Handler for State Ongoing.
+  -- @function [parent=#MISSION] OnLeaveOngoing
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnEnter Transition Handler for State Ongoing.
+  -- @function [parent=#MISSION] OnEnterOngoing
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  
+  --- OnBefore Transition Handler for Event Start.
+  -- @function [parent=#MISSION] OnBeforeStart
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Start.
+  -- @function [parent=#MISSION] OnAfterStart
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Start.
+  -- @function [parent=#MISSION] Start
+  -- @param #MISSION self
+  
+  --- Asynchronous Event Trigger for Event Start.
+  -- @function [parent=#MISSION] __Start
+  -- @param #MISSION self
+  -- @param #number Delay The delay in seconds.
+  
   self:AddTransition( "Ongoing", "Stop", "Idle" )
+  
+  --- OnLeave Transition Handler for State Idle.
+  -- @function [parent=#MISSION] OnLeaveIdle
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnEnter Transition Handler for State Idle.
+  -- @function [parent=#MISSION] OnEnterIdle
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  
+  --- OnBefore Transition Handler for Event Stop.
+  -- @function [parent=#MISSION] OnBeforeStop
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Stop.
+  -- @function [parent=#MISSION] OnAfterStop
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Stop.
+  -- @function [parent=#MISSION] Stop
+  -- @param #MISSION self
+  
+  --- Asynchronous Event Trigger for Event Stop.
+  -- @function [parent=#MISSION] __Stop
+  -- @param #MISSION self
+  -- @param #number Delay The delay in seconds.
+  
   self:AddTransition( "Ongoing", "Complete", "Completed" )
+  
+  --- OnLeave Transition Handler for State Completed.
+  -- @function [parent=#MISSION] OnLeaveCompleted
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnEnter Transition Handler for State Completed.
+  -- @function [parent=#MISSION] OnEnterCompleted
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  
+  --- OnBefore Transition Handler for Event Complete.
+  -- @function [parent=#MISSION] OnBeforeComplete
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Complete.
+  -- @function [parent=#MISSION] OnAfterComplete
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Complete.
+  -- @function [parent=#MISSION] Complete
+  -- @param #MISSION self
+  
+  --- Asynchronous Event Trigger for Event Complete.
+  -- @function [parent=#MISSION] __Complete
+  -- @param #MISSION self
+  -- @param #number Delay The delay in seconds.
+  
   self:AddTransition( "*", "Fail", "Failed" )
+  
+  --- OnLeave Transition Handler for State Failed.
+  -- @function [parent=#MISSION] OnLeaveFailed
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnEnter Transition Handler for State Failed.
+  -- @function [parent=#MISSION] OnEnterFailed
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  
+  --- OnBefore Transition Handler for Event Fail.
+  -- @function [parent=#MISSION] OnBeforeFail
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  -- @return #boolean Return false to cancel Transition.
+  
+  --- OnAfter Transition Handler for Event Fail.
+  -- @function [parent=#MISSION] OnAfterFail
+  -- @param #MISSION self
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  	
+  --- Synchronous Event Trigger for Event Fail.
+  -- @function [parent=#MISSION] Fail
+  -- @param #MISSION self
+  
+  --- Asynchronous Event Trigger for Event Fail.
+  -- @function [parent=#MISSION] __Fail
+  -- @param #MISSION self
+  -- @param #number Delay The delay in seconds.
   
 	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
@@ -64,10 +238,10 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 	return self
 end
 
---- FSM function for a MISSION
+-- FSM function for a MISSION
 -- @param #MISSION self
--- @param #string Event
 -- @param #string From
+-- @param #string Event
 -- @param #string To
 function MISSION:onbeforeComplete( From, Event, To )
 
@@ -80,10 +254,10 @@ function MISSION:onbeforeComplete( From, Event, To )
   return true -- Allow Mission completion.
 end
 
---- FSM function for a MISSION
+-- FSM function for a MISSION
 -- @param #MISSION self
--- @param #string Event
 -- @param #string From
+-- @param #string Event
 -- @param #string To
 function MISSION:onenterCompleted( From, Event, To )
 

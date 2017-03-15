@@ -1295,7 +1295,7 @@ do -- DETECTION_UNITS
     
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
     
-      local DetectedItemSet = DetectedItem:GetSet() -- Core.Set#SET_UNIT
+      local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.Type
       
       for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
