@@ -394,6 +394,7 @@ function TASK:AssignToUnit( TaskUnit )
   self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   FsmUnit:SetStartState( "Planned" )
+  
   FsmUnit:Accept() -- Each Task needs to start with an Accept event to start the flow.
 
   return self
@@ -404,7 +405,7 @@ end
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
 function TASK:UnAssignFromUnit( TaskUnit )
-  self:F( TaskUnit )
+  self:F( TaskUnit:GetName() )
   
   self:RemoveStateMachine( TaskUnit )
 
@@ -637,11 +638,10 @@ function TASK:MenuTaskStatus( TaskGroup )
 
 end
 
-function TASK.MenuTaskAbort( MenuParam )
+--- Report the task status.
+-- @param #TASK self
+function TASK:MenuTaskAbort( TaskGroup )
 
-  local self = MenuParam.self
-  local TaskGroup = MenuParam.TaskGroup
-  
   self:Abort()
 end
 
@@ -713,11 +713,15 @@ end
 function TASK:RemoveStateMachine( TaskUnit )
   self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
-  self.Fsm[TaskUnit]:Remove()
+  self:E( self.Fsm )
+  for TaskUnitT, Fsm in pairs( self.Fsm ) do
+    self:E( TaskUnitT )
+  end
+
   self.Fsm[TaskUnit] = nil
   
   collectgarbage()
-  self:T( "Garbage Collected, Processes should be finalized now ...")
+  self:E( "Garbage Collected, Processes should be finalized now ...")
 end
 
 --- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}
