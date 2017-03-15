@@ -300,9 +300,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateAborted">TASK:IsStateAborted()</a></td>
+		<td class="summary">
+<p>Is the <a href="Task.html">Task</a> status <strong>Aborted</strong>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateAssigned">TASK:IsStateAssigned()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Assigned</strong>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateCancelled">TASK:IsStateCancelled()</a></td>
+		<td class="summary">
+<p>Is the <a href="Task.html">Task</a> status <strong>Cancelled</strong>.</p>
 </td>
 		</tr>
 		<tr>
@@ -354,9 +366,9 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskAbort">TASK.MenuTaskAbort(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskAbort">TASK:MenuTaskAbort(TaskGroup)</a></td>
 		<td class="summary">
-
+<p>Report the task status.</p>
 </td>
 		</tr>
 		<tr>
@@ -540,9 +552,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateAborted">TASK:StateAborted()</a></td>
+		<td class="summary">
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Aborted</strong>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).StateAssigned">TASK:StateAssigned()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Assigned</strong>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateCancelled">TASK:StateCancelled()</a></td>
+		<td class="summary">
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Cancelled</strong>.</p>
 </td>
 		</tr>
 		<tr>
@@ -1304,6 +1328,19 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).IsStateAborted" >
+<strong>TASK:IsStateAborted()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is the <a href="Task.html">Task</a> status <strong>Aborted</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).IsStateAssigned" >
 <strong>TASK:IsStateAssigned()</strong>
 </a>
@@ -1311,6 +1348,19 @@ self</p>
 <dd>
 	
 <p>Is the <a href="Task.html">Task</a> status <strong>Assigned</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsStateCancelled" >
+<strong>TASK:IsStateCancelled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is the <a href="Task.html">Task</a> status <strong>Cancelled</strong>.</p>
 
 </dd>
 </dl>
@@ -1456,18 +1506,18 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).MenuTaskAbort" >
-<strong>TASK.MenuTaskAbort(MenuParam)</strong>
+<strong>TASK:MenuTaskAbort(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Report the task status.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> MenuParam </em></code>: </p>
+<p><code><em> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2143,6 +2193,19 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).StateAborted" >
+<strong>TASK:StateAborted()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Aborted</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).StateAssigned" >
 <strong>TASK:StateAssigned()</strong>
 </a>
@@ -2150,6 +2213,19 @@ Fsm#FSM_PROCESS</p>
 <dd>
 	
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Assigned</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).StateCancelled" >
+<strong>TASK:StateCancelled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Cancelled</strong>.</p>
 
 </dd>
 </dl>

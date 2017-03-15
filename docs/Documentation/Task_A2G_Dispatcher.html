@@ -153,13 +153,13 @@ Find a summary below describing for which situation a task type is created:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateBAI">TASK_A2G_DISPATCHER:EvaluateBAI(DetectedArea, FriendlyCoalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateBAI">TASK_A2G_DISPATCHER:EvaluateBAI(DetectedItem, FriendlyCoalition)</a></td>
 		<td class="summary">
 <p>Creates a BAI task when there are targets for it.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateCAS">TASK_A2G_DISPATCHER:EvaluateCAS(DetectedArea)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateCAS">TASK_A2G_DISPATCHER:EvaluateCAS(DetectedItem)</a></td>
 		<td class="summary">
 <p>Creates a CAS task when there are targets for it.</p>
 </td>
@@ -270,7 +270,7 @@ Find a summary below describing for which situation a task type is created:</p>
 <dt>
 
 <a id="#(TASK_A2G_DISPATCHER).EvaluateBAI" >
-<strong>TASK_A2G_DISPATCHER:EvaluateBAI(DetectedArea, FriendlyCoalition)</strong>
+<strong>TASK_A2G_DISPATCHER:EvaluateBAI(DetectedItem, FriendlyCoalition)</strong>
 </a>
 </dt>
 <dd>
@@ -281,7 +281,7 @@ Find a summary below describing for which situation a task type is created:</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedArea)">Functional.Detection#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 				<li>
@@ -301,7 +301,7 @@ Find a summary below describing for which situation a task type is created:</p>
 <dt>
 
 <a id="#(TASK_A2G_DISPATCHER).EvaluateCAS" >
-<strong>TASK_A2G_DISPATCHER:EvaluateCAS(DetectedArea)</strong>
+<strong>TASK_A2G_DISPATCHER:EvaluateCAS(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
@@ -312,7 +312,7 @@ Find a summary below describing for which situation a task type is created:</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedArea)">Functional.Detection#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -335,7 +335,7 @@ Find a summary below describing for which situation a task type is created:</p>
 <p>Evaluates the removal of the Task from the Mission.</p>
 
 	
-<p>Can only occur when the DetectedArea is Changed AND the state of the Task is "Planned".</p>
+<p>Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".</p>
 
 		<h3>Parameters</h3>
 		<ul>
