@@ -108,7 +108,7 @@ do -- ACT_ASSIST
   function ACT_ASSIST:onafterStart( ProcessUnit, From, Event, To )
   
     local ProcessGroup = ProcessUnit:GetGroup()
-    local MissionMenu = self:GetMission():GetMissionMenu( ProcessGroup )
+    local MissionMenu = self:GetMission():GetMenu( ProcessGroup )
      
     local function MenuSmoke( MenuParam )
       self:E( MenuParam )

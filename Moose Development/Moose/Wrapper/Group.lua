@@ -926,3 +926,29 @@ do -- Event Handling
   end
 
 end
+
+do -- Players
+
+  --- Get player names
+  -- @param #GROUP self
+  -- @return #table The group has players, an array of player names is returned.
+  -- @return #nil The group has no players
+  function GROUP:GetPlayerNames()
+  
+    local PlayerNames = nil
+    
+    local Units = self:GetUnits()
+    for UnitID, UnitData in pairs( Units ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = Unit:GetPlayerName()
+      if PlayerName and PlayerName ~= "" then
+        PlayerNames = PlayerNames or {}
+        table.insert( PlayerNames, PlayerName )
+      end   
+    end
+    
+    self:F( PlayerNames )
+    return PlayerNames
+  end
+  
+end

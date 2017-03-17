@@ -1298,10 +1298,11 @@ do -- DETECTION_UNITS
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.Type
       
-      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
+      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet:GetSet() ) do
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
         local DetectedObject = nil
+        self:E( DetectedUnit )
         if DetectedUnit:IsAlive() then
         --self:E(DetectedUnit:GetName())
           DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )

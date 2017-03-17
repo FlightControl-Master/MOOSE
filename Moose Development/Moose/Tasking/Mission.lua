@@ -363,23 +363,25 @@ end
 
 --- Sets the Planned Task menu.
 -- @param #MISSION self
-function MISSION:SetMenu()
+-- @param #number MenuTime
+function MISSION:SetMenu( MenuTime )
   self:F()
   
-  for _, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK
-    Task:SetMenu()  
+  for _, TaskData in pairs( self:GetTasks() ) do
+    local Task = TaskData -- Tasking.Task#TASK
+    Task:SetMenu( MenuTime )  
   end
 end
 
 --- Removes the Planned Task menu.
 -- @param #MISSION self
-function MISSION:RemoveMenu()
+-- @param #number MenuTime
+function MISSION:RemoveMenu( MenuTime )
   self:F()
   
   for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    Task:RemoveMenu()  
+    Task:RemoveMenu( MenuTime )
   end
 end
 
@@ -391,20 +393,6 @@ function MISSION:GetCommandCenter()
   return self.CommandCenter
 end
 
---- Sets the Assigned Task menu.
--- @param #MISSION self
--- @param Tasking.Task#TASK Task
--- @param #string MenuText The menu text.
--- @return #MISSION self
-function MISSION:SetAssignedMenu( Task )
-  
-  for _, Task in pairs( self.Tasks ) do
-    local Task = Task -- Tasking.Task#TASK
-    Task:RemoveMenu()
-    Task:SetAssignedMenu()  
-  end
-  
-end
 
 --- Removes a Task menu.
 -- @param #MISSION self
@@ -420,27 +408,17 @@ end
 -- @param #MISSION self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @return Core.Menu#MENU_COALITION self
-function MISSION:GetMissionMenu( TaskGroup )
+function MISSION:GetMenu( TaskGroup )
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter.CommandCenterMenu
+  local CommandCenterMenu = CommandCenter:GetMenu()
 
   local MissionName = self:GetName()
-
-  local TaskGroupName = TaskGroup:GetName()
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu )
+  local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
   return MissionMenu
 end
 
-
---- Clears the mission menu for the coalition.
--- @param #MISSION self
--- @return #MISSION self
-function MISSION:ClearMissionMenu()
-  self.MissionMenu:Remove()
-  self.MissionMenu = nil
-end
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
