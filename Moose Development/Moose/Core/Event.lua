@@ -977,7 +977,8 @@ function EVENT:onEvent( Event )
                                     
                       local Result, Value = xpcall( 
                         function() 
-                          return EventFunction( EventClass, Event ) 
+                          local Result, Value = EventFunction( EventClass, Event )
+                          return Result, Value 
                         end, ErrorHandler )
                     end
                   end
@@ -991,6 +992,8 @@ function EVENT:onEvent( Event )
   else
     self:E( { _EVENTMETA[Event.id].Text, Event } )    
   end
+  
+  Event = nil
 end
 
 --- The EVENTHANDLER structure

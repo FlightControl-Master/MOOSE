@@ -999,7 +999,7 @@ function TASK:onenterSuccess( From, Event, To )
 
   self:E( "Task Success" )
   
-  self:MessageToGroups( "Task " .. self:GetName() .. " is successful! Good job!" )
+  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
   self:GetMission():__Complete( 1 )
